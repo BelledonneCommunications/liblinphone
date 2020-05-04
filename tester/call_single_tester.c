@@ -2293,10 +2293,10 @@ static void call_with_custom_headers(void) {
 	BC_ASSERT_STRING_EQUAL(hvalue,"myUriHeader");
 
 	// FIXME: we have to strdup because successive calls to get_remote_params erase the returned const char*!!
-	pauline_remote_contact        = ms_strdup(linphone_call_get_remote_contact(call_pauline));
+	pauline_remote_contact        =  linphone_call_get_remote_contact(call_pauline);
 	pauline_remote_contact_header = ms_strdup(linphone_call_params_get_custom_header(linphone_call_get_remote_params(call_pauline), "Contact"));
 
-	marie_remote_contact        = ms_strdup(linphone_call_get_remote_contact(call_marie));
+	marie_remote_contact        = linphone_call_get_remote_contact(call_marie);
 	marie_remote_contact_header = ms_strdup(linphone_call_params_get_custom_header(linphone_call_get_remote_params(call_marie), "Contact"));
 
 	BC_ASSERT_PTR_NOT_NULL(pauline_remote_contact);

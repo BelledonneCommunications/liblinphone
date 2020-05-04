@@ -204,13 +204,13 @@ void linphone_chat_room_compose (LinphoneChatRoom *cr) {
 LinphoneCall *linphone_chat_room_get_call (const LinphoneChatRoom *cr) {
 	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
 		return nullptr;
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->getCall());
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->getCall()->toC();
 }
 
 void linphone_chat_room_set_call (LinphoneChatRoom *cr, LinphoneCall *call) {
 	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
 		return;
-	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->call = L_GET_CPP_PTR_FROM_C_OBJECT(call);
+	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->call = LinphonePrivate::Call::toCpp(call)->getSharedFromThis();
 }
 
 void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {

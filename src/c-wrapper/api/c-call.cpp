@@ -23,10 +23,7 @@
 #include "linphone/wrapper_utils.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
 #include "call/call.h"
-#include "call/local-conference-call.h"
-#include "call/remote-conference-call.h"
 #include "chat/chat-room/real-time-text-chat-room.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
@@ -36,52 +33,21 @@
 // =============================================================================
 
 using namespace std;
+using namespace LinphonePrivate;
 
-static void _linphone_call_constructor (LinphoneCall *call);
-static void _linphone_call_destructor (LinphoneCall *call);
-
-L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(Call,
-	_linphone_call_constructor, _linphone_call_destructor,
-	bctbx_list_t *callbacks; /* A list of LinphoneCallCbs object */
-	LinphoneCallCbs *currentCbs; /* The current LinphoneCallCbs object used to call a callback */
-	char *authenticationTokenCache;
-	mutable char *referToCache;
-	char *remoteContactCache;
-	char *remoteUserAgentCache;
-	mutable char *toHeaderCache;
-	/* TODO: all the fields need to be removed */
-	LinphoneConference *confRef; /**> Point on the associated conference if this call is part of a conference. NULL instead. */
-	MSAudioEndpoint *endpoint; /*used for conferencing*/
-	LinphoneChatRoom *chat_room;
-)
-
-static void _linphone_call_constructor (LinphoneCall *call) {}
-
-static void _linphone_call_destructor (LinphoneCall *call) {
-	if (call->referToCache)
-		bctbx_free(call->referToCache);
-	if (call->remoteContactCache)
-		bctbx_free(call->remoteContactCache);
-	if (call->remoteUserAgentCache)
-		bctbx_free(call->remoteUserAgentCache);
-	if (call->toHeaderCache)
-		bctbx_free(call->toHeaderCache);
-	bctbx_list_free_with_data(call->callbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
-}
 
 // =============================================================================
 // TODO: To remove!
 // =============================================================================
 
-
 /*This function is not static because used internally in linphone-daemon project*/
 void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t muted) {
-	LinphonePrivate::MS2AudioStream::postConfigureAudioStream(st, lc, !!muted);
+	MS2AudioStream::postConfigureAudioStream(st, lc, !!muted);
 }
 
 /* Internal version that does not play tone indication*/
 int _linphone_call_pause (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->pause();
+	return Call::toCpp(call)->pause();
 }
 
 
@@ -90,48 +56,44 @@ int _linphone_call_pause (LinphoneCall *call) {
 // =============================================================================
 
 void _linphone_call_set_conf_ref (LinphoneCall *call, LinphoneConference *ref) {
-	call->confRef = ref;
+	Call::toCpp(call)->setConference(ref);
 }
 
 MSAudioEndpoint *_linphone_call_get_endpoint (const LinphoneCall *call) {
-	return call->endpoint;
+	return Call::toCpp(call)->getEndpoint();
 }
 
 void _linphone_call_set_endpoint (LinphoneCall *call, MSAudioEndpoint *endpoint) {
-	call->endpoint = endpoint;
+	Call::toCpp(call)->setEndpoint(endpoint);
 }
 
 MediaStream *linphone_call_get_stream (LinphoneCall *call, LinphoneStreamType type) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getMediaStream(type);
+	return Call::toCpp(call)->getMediaStream(type);
 }
 
 LinphonePrivate::SalCallOp * linphone_call_get_op (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getOp();
+	return Call::toCpp(call)->getOp();
 }
 
 LinphoneProxyConfig * linphone_call_get_dest_proxy (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getDestProxy();
-}
-
-LinphoneCallLog * linphone_call_get_log (const LinphoneCall *call) {
-	return linphone_call_get_call_log(call);
+	return Call::toCpp(call)->getDestProxy();
 }
 
 IceSession * linphone_call_get_ice_session (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getIceSession();
+	return Call::toCpp(call)->getIceSession();
 }
 
 bool_t linphone_call_get_all_muted (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAllMuted();
+	return Call::toCpp(call)->getAllMuted();
 }
 
 #define NOTIFY_IF_EXIST(cbName, functionName, ...) \
-	for (bctbx_list_t *it = call->callbacks; it; it = bctbx_list_next(it)) { \
-		call->currentCbs = reinterpret_cast<LinphoneCallCbs *>(bctbx_list_get_data(it)); \
-		LinphoneCallCbs ## cbName ## Cb cb = linphone_call_cbs_get_ ## functionName (call->currentCbs); \
-		if (cb) \
-			cb(__VA_ARGS__); \
-	}
+for (bctbx_list_t *it = Call::toCpp(call)->getCallbacksList(); it; it = bctbx_list_next(it)) { \
+	Call::toCpp(call)->setCurrentCbs(reinterpret_cast<LinphoneCallCbs *>(bctbx_list_get_data(it))); \
+	LinphoneCallCbs ## cbName ## Cb cb = linphone_call_cbs_get_ ## functionName (Call::toCpp(call)->getCurrentCbs()); \
+	if (cb) \
+		cb(__VA_ARGS__); \
+}
 
 void linphone_call_notify_state_changed (LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	NOTIFY_IF_EXIST(StateChanged, state_changed, call, cstate, message)
@@ -192,11 +154,11 @@ void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudio
 // =============================================================================
 
 LinphoneCore *linphone_call_get_core (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getCore()->getCCore();
+	return Call::toCpp(call)->getCore()->getCCore();
 }
 
 LinphoneCallState linphone_call_get_state (const LinphoneCall *call) {
-	return static_cast<LinphoneCallState>(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getState());
+	return static_cast<LinphoneCallState>(Call::toCpp(call)->getState());
 }
 
 bool_t linphone_call_asked_to_autoanswer (LinphoneCall *call) {
@@ -207,172 +169,142 @@ bool_t linphone_call_asked_to_autoanswer (LinphoneCall *call) {
 }
 
 const LinphoneAddress *linphone_call_get_remote_address (const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(&L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteAddress());
+	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getRemoteAddress());
 }
 
 const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(&L_GET_CPP_PTR_FROM_C_OBJECT(call)->getToAddress());
+	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getToAddress());
 }
 
-const char *linphone_call_get_to_header (const LinphoneCall *call, const char *name) {
-	string header = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getToHeader(name);
-	if (header.empty())
-		return nullptr;
-	if (call->toHeaderCache)
-		bctbx_free(call->toHeaderCache);
-	call->toHeaderCache = bctbx_strdup(header.c_str());
-	return call->toHeaderCache;
+char *linphone_call_get_to_header (LinphoneCall *call, const char *name) {
+	return ms_strdup(Call::toCpp(call)->getToHeader(name).c_str());
 }
 
 char *linphone_call_get_remote_address_as_string (const LinphoneCall *call) {
-	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteAddress().asString().c_str());
+	return ms_strdup(Call::toCpp(call)->getRemoteAddress().asString().c_str());
 }
 
 const LinphoneAddress *linphone_call_get_diversion_address (const LinphoneCall *call) {
-	const LinphonePrivate::Address &diversionAddress = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getDiversionAddress();
+	const LinphonePrivate::Address &diversionAddress = Call::toCpp(call)->getDiversionAddress();
 	return diversionAddress.isValid() ? L_GET_C_BACK_PTR(&diversionAddress) : nullptr;
 }
 
 LinphoneCallDir linphone_call_get_dir (const LinphoneCall *call) {
-	return linphone_call_log_get_dir(linphone_call_get_log(call));
+	return linphone_call_log_get_dir(linphone_call_get_call_log(call));
 }
 
 LinphoneCallLog *linphone_call_get_call_log (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getLog();
+	return Call::toCpp(call)->getLog();
 }
 
-const char *linphone_call_get_refer_to (const LinphoneCall *call) {
-	string referTo = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getReferTo();
-	if (referTo.empty())
-		return nullptr;
-	if (call->referToCache)
-		bctbx_free(call->referToCache);
-	call->referToCache = bctbx_strdup(referTo.c_str());
-	return call->referToCache;
+char *linphone_call_get_refer_to (LinphoneCall *call) {
+	return ms_strdup(Call::toCpp(call)->getReferTo().c_str());
 }
 
 bool_t linphone_call_has_transfer_pending (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->hasTransferPending();
+	return Call::toCpp(call)->hasTransferPending();
 }
 
 LinphoneCall *linphone_call_get_transferer_call (const LinphoneCall *call) {
-	shared_ptr<LinphonePrivate::Call> referer = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getReferer();
+	shared_ptr<Call> referer = Call::toCpp(call)->getReferer();
 	if (!referer)
 		return nullptr;
-	return L_GET_C_BACK_PTR(referer);
+	return referer->toC();
 }
 
 LinphoneCall *linphone_call_get_transfer_target_call (const LinphoneCall *call) {
-	shared_ptr<LinphonePrivate::Call> transferTarget = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getTransferTarget();
+	shared_ptr<Call> transferTarget = Call::toCpp(call)->getTransferTarget();
 	if (!transferTarget)
 		return nullptr;
-	return L_GET_C_BACK_PTR(transferTarget);
+	return transferTarget->toC();
 }
 
 LinphoneCall *linphone_call_get_replaced_call (LinphoneCall *call) {
-	shared_ptr<LinphonePrivate::Call> replacedCall = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getReplacedCall();
+	shared_ptr<Call> replacedCall = Call::toCpp(call)->getReplacedCall();
 	if (!replacedCall)
 		return nullptr;
-	return L_GET_C_BACK_PTR(replacedCall);
+	return replacedCall->toC();
 }
 
 int linphone_call_get_duration (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getDuration();
+	return Call::toCpp(call)->getDuration();
 }
 
 const LinphoneCallParams *linphone_call_get_current_params (LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getCurrentParams());
+	return L_GET_C_BACK_PTR(Call::toCpp(call)->getCurrentParams());
 }
 
 const LinphoneCallParams *linphone_call_get_remote_params(LinphoneCall *call) {
-	const LinphonePrivate::MediaSessionParams *remoteParams = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteParams();
+	const LinphonePrivate::MediaSessionParams *remoteParams = Call::toCpp(call)->getRemoteParams();
 	return remoteParams ? L_GET_C_BACK_PTR(remoteParams) : nullptr;
 }
 
 void linphone_call_enable_camera (LinphoneCall *call, bool_t enable) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->enableCamera(!!enable);
+	Call::toCpp(call)->enableCamera(!!enable);
 }
 
 bool_t linphone_call_camera_enabled (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->cameraEnabled();
+	return Call::toCpp(call)->cameraEnabled();
 }
 
 LinphoneStatus linphone_call_take_video_snapshot (LinphoneCall *call, const char *file) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->takeVideoSnapshot(L_C_TO_STRING(file));
+	return Call::toCpp(call)->takeVideoSnapshot(L_C_TO_STRING(file));
 }
 
 LinphoneStatus linphone_call_take_preview_snapshot (LinphoneCall *call, const char *file) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->takePreviewSnapshot(L_C_TO_STRING(file));
+	return Call::toCpp(call)->takePreviewSnapshot(L_C_TO_STRING(file));
 }
 
 LinphoneReason linphone_call_get_reason (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getReason();
+	return Call::toCpp(call)->getReason();
 }
 
 const LinphoneErrorInfo *linphone_call_get_error_info (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getErrorInfo();
+	return Call::toCpp(call)->getErrorInfo();
 }
 
-const char *linphone_call_get_remote_user_agent (LinphoneCall *call) {
-	string ua = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteUserAgent();
-	if (ua.empty())
-		return nullptr;
-	if (call->remoteUserAgentCache)
-		bctbx_free(call->remoteUserAgentCache);
-	call->remoteUserAgentCache = bctbx_strdup(ua.c_str());
-	return call->remoteUserAgentCache;
+char *linphone_call_get_remote_user_agent (LinphoneCall *call) {
+	return ms_strdup(Call::toCpp(call)->getRemoteUserAgent().c_str());
 }
 
-const char * linphone_call_get_remote_contact (LinphoneCall *call) {
-	string contact = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRemoteContact();
-	if (contact.empty())
-		return nullptr;
-	if (call->remoteContactCache)
-		bctbx_free(call->remoteContactCache);
-	call->remoteContactCache = bctbx_strdup(contact.c_str());
-	return call->remoteContactCache;
+char *linphone_call_get_remote_contact (LinphoneCall *call) {
+	return ms_strdup(Call::toCpp(call)->getRemoteContact().c_str());
 }
 
-const char *linphone_call_get_authentication_token (LinphoneCall *call) {
-	string token = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAuthenticationToken();
-	if (token.empty())
-		return nullptr;
-	if (call->authenticationTokenCache)
-		bctbx_free(call->authenticationTokenCache);
-	call->authenticationTokenCache = bctbx_strdup(token.c_str());
-	return call->authenticationTokenCache;
+char *linphone_call_get_authentication_token (LinphoneCall *call) {
+	return ms_strdup(Call::toCpp(call)->getAuthenticationToken().c_str());
 }
 
 bool_t linphone_call_get_authentication_token_verified (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAuthenticationTokenVerified();
+	return Call::toCpp(call)->getAuthenticationTokenVerified();
 }
 
 void linphone_call_set_authentication_token_verified (LinphoneCall *call, bool_t verified) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAuthenticationTokenVerified(!!verified);
+	Call::toCpp(call)->setAuthenticationTokenVerified(!!verified);
 }
 
 void linphone_call_send_vfu_request (LinphoneCall *call) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->sendVfuRequest();
+	Call::toCpp(call)->sendVfuRequest();
 }
 
 void linphone_call_set_next_video_frame_decoded_callback (LinphoneCall *call, LinphoneCallCbFunc cb, void *ud) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setNextVideoFrameDecodedCallback(cb, ud);
+	Call::toCpp(call)->setNextVideoFrameDecodedCallback(cb, ud);
 }
 
 void linphone_call_request_notify_next_video_frame_decoded(LinphoneCall *call){
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->requestNotifyNextVideoFrameDecoded();
+	Call::toCpp(call)->requestNotifyNextVideoFrameDecoded();
 }
 
 LinphoneCallState linphone_call_get_transfer_state (LinphoneCall *call) {
-	return static_cast<LinphoneCallState>(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getTransferState());
+	return static_cast<LinphoneCallState>(Call::toCpp(call)->getTransferState());
 }
 
 void linphone_call_zoom_video (LinphoneCall* call, float zoom_factor, float* cx, float* cy) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->zoomVideo(zoom_factor, cx, cy);
+	Call::toCpp(call)->zoomVideo(zoom_factor, cx, cy);
 }
 
 void linphone_call_zoom (LinphoneCall *call, float zoom_factor, float cx, float cy) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->zoomVideo(zoom_factor, cx, cy);
+	Call::toCpp(call)->zoomVideo(zoom_factor, cx, cy);
 }
 
 LinphoneStatus linphone_call_send_dtmf (LinphoneCall *call, char dtmf) {
@@ -380,7 +312,7 @@ LinphoneStatus linphone_call_send_dtmf (LinphoneCall *call, char dtmf) {
 		ms_warning("linphone_call_send_dtmf(): invalid call, canceling DTMF");
 		return -1;
 	}
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->sendDtmf(dtmf);
+	return Call::toCpp(call)->sendDtmf(dtmf);
 }
 
 LinphoneStatus linphone_call_send_dtmfs (LinphoneCall *call, const char *dtmfs) {
@@ -388,208 +320,208 @@ LinphoneStatus linphone_call_send_dtmfs (LinphoneCall *call, const char *dtmfs) 
 		ms_warning("linphone_call_send_dtmfs(): invalid call, canceling DTMF sequence");
 		return -1;
 	}
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->sendDtmfs(dtmfs);
+	return Call::toCpp(call)->sendDtmfs(dtmfs);
 }
 
 void linphone_call_cancel_dtmfs (LinphoneCall *call) {
 	if (!call)
 		return;
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->cancelDtmfs();
+	Call::toCpp(call)->cancelDtmfs();
 }
 
 bool_t linphone_call_is_in_conference (const LinphoneCall *call) {
-	return !!L_GET_CPP_PTR_FROM_C_OBJECT(call)->isInConference();
+	return !!Call::toCpp(call)->isInConference();
 }
 
 LinphoneConference *linphone_call_get_conference (const LinphoneCall *call) {
-	return call->confRef;
+	return Call::toCpp(call)->getConference();
 }
 
 void linphone_call_set_audio_route (LinphoneCall *call, LinphoneAudioRoute route) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setAudioRoute(route);
+	Call::toCpp(call)->setAudioRoute(route);
 }
 
 int linphone_call_get_stream_count (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getStreamCount();
+	return Call::toCpp(call)->getStreamCount();
 }
 
 MSFormatType linphone_call_get_stream_type (const LinphoneCall *call, int stream_index) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getStreamType(stream_index);
+	return Call::toCpp(call)->getStreamType(stream_index);
 }
 
 RtpTransport *linphone_call_get_meta_rtp_transport (const LinphoneCall *call, int stream_index) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getMetaRtpTransport(stream_index);
+	return Call::toCpp(call)->getMetaRtpTransport(stream_index);
 }
 
 RtpTransport *linphone_call_get_meta_rtcp_transport (const LinphoneCall *call, int stream_index) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getMetaRtcpTransport(stream_index);
+	return Call::toCpp(call)->getMetaRtcpTransport(stream_index);
 }
 
 LinphoneStatus linphone_call_pause (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->pause();
+	return Call::toCpp(call)->pause();
 }
 
 LinphoneStatus linphone_call_resume (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->resume();
+	return Call::toCpp(call)->resume();
 }
 
 LinphoneStatus linphone_call_terminate (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->terminate();
+	return Call::toCpp(call)->terminate();
 }
 
 LinphoneStatus linphone_call_terminate_with_error_info (LinphoneCall *call , const LinphoneErrorInfo *ei) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->terminate(ei);
+	return Call::toCpp(call)->terminate(ei);
 }
 
 LinphoneStatus linphone_call_redirect (LinphoneCall *call, const char *redirect_uri) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->redirect(redirect_uri);
+	return Call::toCpp(call)->redirect(redirect_uri);
 }
 
 LinphoneStatus linphone_call_decline (LinphoneCall *call, LinphoneReason reason) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->decline(reason);
+	return Call::toCpp(call)->decline(reason);
 }
 
 LinphoneStatus linphone_call_decline_with_error_info (LinphoneCall *call, const LinphoneErrorInfo *ei) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->decline(ei);
+	return Call::toCpp(call)->decline(ei);
 }
 
 LinphoneStatus linphone_call_accept (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->accept(nullptr);
+	return Call::toCpp(call)->accept(nullptr);
 }
 
 LinphoneStatus linphone_call_accept_with_params (LinphoneCall *call, const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->accept(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
+	return Call::toCpp(call)->accept(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_accept_early_media (LinphoneCall* call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->acceptEarlyMedia();
+	return Call::toCpp(call)->acceptEarlyMedia();
 }
 
 LinphoneStatus linphone_call_accept_early_media_with_params (LinphoneCall *call, const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->acceptEarlyMedia(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
+	return Call::toCpp(call)->acceptEarlyMedia(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_update (LinphoneCall *call, const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->update(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
+	return Call::toCpp(call)->update(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_defer_update (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->deferUpdate();
+	return Call::toCpp(call)->deferUpdate();
 }
 
 LinphoneStatus linphone_call_accept_update (LinphoneCall *call, const LinphoneCallParams *params) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->acceptUpdate(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
+	return Call::toCpp(call)->acceptUpdate(params ? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
 }
 
 LinphoneStatus linphone_call_transfer (LinphoneCall *call, const char *referTo) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->transfer(referTo);
+	return Call::toCpp(call)->transfer(referTo);
 }
 
 LinphoneStatus linphone_call_transfer_to_another (LinphoneCall *call, LinphoneCall *dest) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->transfer(L_GET_CPP_PTR_FROM_C_OBJECT(dest));
+	return Call::toCpp(call)->transfer(Call::toCpp(dest)->getSharedFromThis());
 }
 
 void *linphone_call_get_native_video_window_id (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getNativeVideoWindowId();
+	return Call::toCpp(call)->getNativeVideoWindowId();
 }
 
 void linphone_call_set_native_video_window_id (LinphoneCall *call, void *id) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setNativeVideoWindowId(id);
+	Call::toCpp(call)->setNativeVideoWindowId(id);
 }
 
 void linphone_call_enable_echo_cancellation (LinphoneCall *call, bool_t enable) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->enableEchoCancellation(!!enable);
+	Call::toCpp(call)->enableEchoCancellation(!!enable);
 }
 
 bool_t linphone_call_echo_cancellation_enabled (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->echoCancellationEnabled();
+	return Call::toCpp(call)->echoCancellationEnabled();
 }
 
 void linphone_call_enable_echo_limiter (LinphoneCall *call, bool_t val) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->enableEchoLimiter(!!val);
+	Call::toCpp(call)->enableEchoLimiter(!!val);
 }
 
 bool_t linphone_call_echo_limiter_enabled (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->echoLimiterEnabled();
+	return Call::toCpp(call)->echoLimiterEnabled();
 }
 
 LinphoneChatRoom *linphone_call_get_chat_room (LinphoneCall *call) {
-	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> acr = L_GET_PRIVATE_FROM_C_OBJECT(call)->getChatRoom();
+	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> acr = Call::toCpp(call)->getChatRoom();
 	if (acr)
 		return L_GET_C_BACK_PTR(acr);
 	return nullptr;
 }
 
 float linphone_call_get_play_volume (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getPlayVolume();
+	return Call::toCpp(call)->getPlayVolume();
 }
 
 float linphone_call_get_record_volume (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getRecordVolume();
+	return Call::toCpp(call)->getRecordVolume();
 }
 
 float linphone_call_get_speaker_volume_gain (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getSpeakerVolumeGain();
+	return Call::toCpp(call)->getSpeakerVolumeGain();
 }
 
 void linphone_call_set_speaker_volume_gain( LinphoneCall *call, float volume) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setSpeakerVolumeGain(volume);
+	Call::toCpp(call)->setSpeakerVolumeGain(volume);
 }
 
 float linphone_call_get_microphone_volume_gain (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getMicrophoneVolumeGain();
+	return Call::toCpp(call)->getMicrophoneVolumeGain();
 }
 
 void linphone_call_set_microphone_volume_gain (LinphoneCall *call, float volume) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setMicrophoneVolumeGain(volume);
+	Call::toCpp(call)->setMicrophoneVolumeGain(volume);
 }
 
 bool_t linphone_call_get_speaker_muted (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getSpeakerMuted();
+	return Call::toCpp(call)->getSpeakerMuted();
 }
 
 void linphone_call_set_speaker_muted (LinphoneCall *call, bool_t muted) {
-	L_GET_PRIVATE_FROM_C_OBJECT(call)->setSpeakerMuted(!!muted);
+	Call::toCpp(call)->setSpeakerMuted(!!muted);
 }
 
 bool_t linphone_call_get_microphone_muted (const LinphoneCall *call) {
-	return L_GET_PRIVATE_FROM_C_OBJECT(call)->getMicrophoneMuted();
+	return Call::toCpp(call)->getMicrophoneMuted();
 }
 
 void linphone_call_set_microphone_muted (LinphoneCall *call, bool_t muted) {
-	L_GET_PRIVATE_FROM_C_OBJECT(call)->setMicrophoneMuted(!!muted);
+	Call::toCpp(call)->setMicrophoneMuted(!!muted);
 }
 
 float linphone_call_get_current_quality (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getCurrentQuality();
+	return Call::toCpp(call)->getCurrentQuality();
 }
 
 float linphone_call_get_average_quality (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAverageQuality();
+	return Call::toCpp(call)->getAverageQuality();
 }
 
 void linphone_call_start_recording (LinphoneCall *call) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->startRecording();
+	Call::toCpp(call)->startRecording();
 }
 
 void linphone_call_stop_recording (LinphoneCall *call) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->stopRecording();
+	Call::toCpp(call)->stopRecording();
 }
 
 bool_t linphone_call_is_recording (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->isRecording();
+	return Call::toCpp(call)->isRecording();
 }
 
 LinphonePlayer *linphone_call_get_player (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getPlayer();
+	return Call::toCpp(call)->getPlayer();
 }
 
 bool_t linphone_call_media_in_progress (const LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->mediaInProgress();
+	return Call::toCpp(call)->mediaInProgress();
 }
 
 void linphone_call_ogl_render (const LinphoneCall *call) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->oglRender();
+	Call::toCpp(call)->oglRender();
 }
 
 LinphoneStatus linphone_call_send_info_message (LinphoneCall *call, const LinphoneInfoMessage *info) {
@@ -599,44 +531,43 @@ LinphoneStatus linphone_call_send_info_message (LinphoneCall *call, const Linpho
 }
 
 LinphoneCallStats *linphone_call_get_stats (LinphoneCall *call, LinphoneStreamType type) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getStats(type);
+	return Call::toCpp(call)->getStats(type);
 }
 
 LinphoneCallStats *linphone_call_get_audio_stats (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getAudioStats();
+	return Call::toCpp(call)->getAudioStats();
 }
 
 LinphoneCallStats *linphone_call_get_video_stats (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getVideoStats();
+	return Call::toCpp(call)->getVideoStats();
 }
 
 LinphoneCallStats *linphone_call_get_text_stats (LinphoneCall *call) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(call)->getTextStats();
+	return Call::toCpp(call)->getTextStats();
 }
 
 void linphone_call_add_callbacks (LinphoneCall *call, LinphoneCallCbs *cbs) {
-	call->callbacks = bctbx_list_append(call->callbacks, linphone_call_cbs_ref(cbs));
+	Call::toCpp(call)->addCallbacks(cbs);
 }
 
 void linphone_call_remove_callbacks (LinphoneCall *call, LinphoneCallCbs *cbs) {
-	call->callbacks = bctbx_list_remove(call->callbacks, cbs);
-	linphone_call_cbs_unref(cbs);
+	Call::toCpp(call)->removeCallbacks(cbs);
 }
 
 LinphoneCallCbs *linphone_call_get_current_callbacks (const LinphoneCall *call) {
-	return call->currentCbs;
+	return Call::toCpp(call)->getCurrentCbs();
 }
 
 const bctbx_list_t *linphone_call_get_callbacks_list(const LinphoneCall *call) {
-	return call->callbacks;
+	return Call::toCpp(call)->getCallbacksList();
 }
 
 void linphone_call_set_params (LinphoneCall *call, const LinphoneCallParams *params) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(call)->setParams(L_GET_CPP_PTR_FROM_C_OBJECT(params));
+	Call::toCpp(call)->setParams(L_GET_CPP_PTR_FROM_C_OBJECT(params));
 }
 
 const LinphoneCallParams *linphone_call_get_params (LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams());
+	return L_GET_C_BACK_PTR(Call::toCpp(call)->getParams());
 }
 
 // =============================================================================
@@ -644,20 +575,20 @@ const LinphoneCallParams *linphone_call_get_params (LinphoneCall *call) {
 // =============================================================================
 
 LinphoneCall *linphone_call_ref (LinphoneCall *call) {
-	belle_sip_object_ref(call);
+	Call::toCpp(call)->ref();
 	return call;
 }
 
 void linphone_call_unref (LinphoneCall *call) {
-	belle_sip_object_unref(call);
+	Call::toCpp(call)->unref();
 }
 
 void *linphone_call_get_user_data (const LinphoneCall *call) {
-	return L_GET_USER_DATA_FROM_C_OBJECT(call);
+	return Call::toCpp(call)->getUserData();
 }
 
 void linphone_call_set_user_data (LinphoneCall *call, void *ud) {
-	L_SET_USER_DATA_FROM_C_OBJECT(call, ud);
+	Call::toCpp(call)->setUserData(ud);
 }
 
 // =============================================================================
@@ -665,61 +596,46 @@ void linphone_call_set_user_data (LinphoneCall *call, void *ud) {
 // =============================================================================
 
 LinphoneCall *linphone_call_new_outgoing (LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg) {
-	LinphoneCall *lcall = L_INIT(Call);
-	shared_ptr<LinphonePrivate::Call> call;
-	string confType = lp_config_get_string(linphone_core_get_config(lc), "misc", "conference_type", "local");
-	if (confType == "remote") {
-		call = make_shared<LinphonePrivate::RemoteConferenceCall>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
-			*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
-			cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
-	} else {
-		call = make_shared<LinphonePrivate::LocalConferenceCall>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
-			*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
-			cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
-	}
-	L_SET_CPP_PTR_FROM_C_OBJECT(lcall, call);
+	/*Call *call = new Call(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
+	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
+	cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));*/
+	
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
+	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
+											  cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
+	
 	return lcall;
 }
 
 LinphoneCall *linphone_call_new_incoming (LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op) {
-	LinphoneCall *lcall = L_INIT(Call);
-	shared_ptr<LinphonePrivate::Call> call;
-	string confType = lp_config_get_string(linphone_core_get_config(lc), "misc", "conference_type", "local");
-	if (confType == "remote") {
-		call = make_shared<LinphonePrivate::RemoteConferenceCall>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
-			*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
-			nullptr, op, nullptr);
-	} else {
-		call = make_shared<LinphonePrivate::LocalConferenceCall>(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
-			*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
-			nullptr, op, nullptr);
-	}
-	L_SET_CPP_PTR_FROM_C_OBJECT(lcall, call);
-	L_GET_PRIVATE_FROM_C_OBJECT(lcall)->initiateIncoming();
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
+	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
+	nullptr, op, nullptr);
+	
 	return lcall;
 }
 
 void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		Call::toCpp(call)->setInputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
 	}
 }
 
 void linphone_call_set_output_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {
 	if (audio_device) {
-		L_GET_CPP_PTR_FROM_C_OBJECT(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
+		Call::toCpp(call)->setOutputAudioDevice(LinphonePrivate::AudioDevice::toCpp(audio_device));
 	}
 }
 
 const LinphoneAudioDevice* linphone_call_get_input_audio_device(const LinphoneCall *call) {
-	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getInputAudioDevice();
+	LinphonePrivate::AudioDevice *audioDevice = Call::toCpp(call)->getInputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}
 	return NULL;
 }
 const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call) {
-	LinphonePrivate::AudioDevice *audioDevice = L_GET_CPP_PTR_FROM_C_OBJECT(call)->getOutputAudioDevice();
+	LinphonePrivate::AudioDevice *audioDevice = Call::toCpp(call)->getOutputAudioDevice();
 	if (audioDevice) {
 		return audioDevice->toC();
 	}

@@ -18,15 +18,17 @@
  */
 
 #include "c-wrapper/c-wrapper.h"
-#include "call-p.h"
+#include "call.h"
 #include "chat/chat-room/real-time-text-chat-room-p.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session-p.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
+#include "conference/participant-p.h"
 
 #include "conference_private.h"
+#include "conference/conference-p.h"
 
 // =============================================================================
 
@@ -34,42 +36,46 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-shared_ptr<RealTimeTextChatRoom> CallPrivate::getChatRoom () {
-	L_Q();
-	if (!chatRoom && (q->getState() != CallSession::State::End) && (q->getState() != CallSession::State::Released)) {
-		chatRoom = static_pointer_cast<RealTimeTextChatRoom>(q->getCore()->getOrCreateBasicChatRoom(q->getRemoteAddress(), true));
-		if (chatRoom) chatRoom->getPrivate()->setCall(q->getSharedFromThis());
-	}
-	return chatRoom;
+// =============================================================================
+shared_ptr<CallSession> Call::getActiveSession () const {
+	return mParticipant->getPrivate()->getSession();
 }
 
-LinphoneProxyConfig *CallPrivate::getDestProxy () const {
+shared_ptr<RealTimeTextChatRoom> Call::getChatRoom () {
+	if (!mChatRoom && (getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
+		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(getRemoteAddress(), true));
+		if (mChatRoom) mChatRoom->getPrivate()->setCall(getSharedFromThis());
+	}
+	return mChatRoom;
+}
+
+LinphoneProxyConfig *Call::getDestProxy () const {
 	return getActiveSession()->getPrivate()->getDestProxy();
 }
 
 /* This a test-only method.*/
-IceSession *CallPrivate::getIceSession () const {
+IceSession *Call::getIceSession () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getIceSession();
 	return nullptr;
 }
 
-unsigned int CallPrivate::getAudioStartCount () const {
+unsigned int Call::getAudioStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getAudioStartCount();
 }
 
-unsigned int CallPrivate::getVideoStartCount () const {
+unsigned int Call::getVideoStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getVideoStartCount();
 }
 
-unsigned int CallPrivate::getTextStartCount () const {
+unsigned int Call::getTextStartCount () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getTextStartCount();
 }
 
-std::shared_ptr<MediaSession> CallPrivate::getMediaSession()const{
+std::shared_ptr<MediaSession> Call::getMediaSession()const{
 	return static_pointer_cast<MediaSession>(getActiveSession());
 }
 
-MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {
+MediaStream *Call::getMediaStream (LinphoneStreamType type) const {
 	auto ms = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate();
 	StreamsGroup & sg = ms->getStreamsGroup();
 	MS2Stream *s = nullptr;
@@ -93,113 +99,107 @@ MediaStream *CallPrivate::getMediaStream (LinphoneStreamType type) const {
 	return s->getMediaStream();
 }
 
-SalCallOp * CallPrivate::getOp () const {
+SalCallOp * Call::getOp () const {
 	return getActiveSession()->getPrivate()->getOp();
 }
 
-bool CallPrivate::getSpeakerMuted () const {
+bool Call::getSpeakerMuted () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getSpeakerMuted();
 }
 
-void CallPrivate::setSpeakerMuted (bool muted) {
+void Call::setSpeakerMuted (bool muted) {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setSpeakerMuted(muted);
 }
 
-bool CallPrivate::getMicrophoneMuted () const {
+bool Call::getMicrophoneMuted () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getMicrophoneMuted();
 }
 
-void CallPrivate::setMicrophoneMuted (bool muted) {
+void Call::setMicrophoneMuted (bool muted) {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setMicrophoneMuted(muted);
 }
 
-LinphoneCallStats *CallPrivate::getStats (LinphoneStreamType type) const {
+LinphoneCallStats *Call::getPrivateStats (LinphoneStreamType type) const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getPrivate()->getStats(type);
 }
 
-// -----------------------------------------------------------------------------
+// =============================================================================
 
-void CallPrivate::initiateIncoming () {
+void Call::initiateIncoming () {
 	getActiveSession()->initiateIncoming();
 }
 
-bool CallPrivate::initiateOutgoing () {
-	L_Q();
+bool Call::initiateOutgoing () {
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing();
 	
-	AudioDevice *outputAudioDevice = q->getCore()->getDefaultOutputAudioDevice();
+	AudioDevice *outputAudioDevice = getCore()->getDefaultOutputAudioDevice();
 	if (outputAudioDevice) {
-		setOutputAudioDevice(outputAudioDevice);
+		setOutputAudioDevicePrivate(outputAudioDevice);
 	} else {
-		lWarning() << "Failed to find audio device matching default output sound card [" << q->getCore()->getCCore()->sound_conf.play_sndcard << "]";
+		lWarning() << "Failed to find audio device matching default output sound card [" << getCore()->getCCore()->sound_conf.play_sndcard << "]";
 	}
 
-	AudioDevice *inputAudioDevice = q->getCore()->getDefaultInputAudioDevice();
+	AudioDevice *inputAudioDevice = getCore()->getDefaultInputAudioDevice();
 	if (inputAudioDevice) {
-		setInputAudioDevice(inputAudioDevice);
+		setInputAudioDevicePrivate(inputAudioDevice);
 	} else {
-		lWarning() << "Failed to find audio device matching default input sound card [" << q->getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+		lWarning() << "Failed to find audio device matching default input sound card [" << getCore()->getCCore()->sound_conf.capt_sndcard << "]";
 	}
 
 	session->getPrivate()->createOp();
 	return defer;
 }
 
-void CallPrivate::iterate (time_t currentRealTime, bool oneSecondElapsed) {
+void Call::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	getActiveSession()->iterate(currentRealTime, oneSecondElapsed);
 }
 
-void CallPrivate::startIncomingNotification () {
+void Call::startIncomingNotification () {
 	getActiveSession()->startIncomingNotification();
 }
 
-void CallPrivate::pauseForTransfer () {
+void Call::pauseForTransfer () {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->pauseForTransfer();
 }
 
-int CallPrivate::startInvite (const Address *destination) {
+int Call::startInvite (const Address *destination) {
 	return getActiveSession()->startInvite(destination, "");
 }
 
-shared_ptr<Call> CallPrivate::startReferredCall (const MediaSessionParams *params) {
-	L_Q();
-	if (q->getState() != CallSession::State::Paused) {
+shared_ptr<Call> Call::startReferredCall (const MediaSessionParams *params) {
+	if (getState() != CallSession::State::Paused) {
 		pauseForTransfer();
 	}
 	MediaSessionParams msp;
 	if (params)
 		msp = *params;
 	else {
-		msp.initDefault(q->getCore(), LinphoneCallOutgoing);
-		msp.enableAudio(q->getCurrentParams()->audioEnabled());
-		msp.enableVideo(q->getCurrentParams()->videoEnabled());
+		msp.initDefault(getCore(), LinphoneCallOutgoing);
+		msp.enableAudio(getCurrentParams()->audioEnabled());
+		msp.enableVideo(getCurrentParams()->videoEnabled());
 	}
-	lInfo() << "Starting new call to referred address " << q->getReferTo();
+	lInfo() << "Starting new call to referred address " << getActiveSession()->getReferTo();
 	L_GET_PRIVATE(&msp)->setReferer(getActiveSession());
 	L_GET_PRIVATE(getActiveSession())->setReferPending(false);
 	LinphoneCallParams *lcp = L_GET_C_BACK_PTR(&msp);
-	LinphoneCall *newCall = linphone_core_invite_with_params(q->getCore()->getCCore(), q->getReferTo().c_str(), lcp);
+	LinphoneCall *newCall = linphone_core_invite_with_params(getCore()->getCCore(), getActiveSession()->getReferTo().c_str(), lcp);
 	if (newCall) {
-		getActiveSession()->getPrivate()->setTransferTarget(L_GET_PRIVATE_FROM_C_OBJECT(newCall)->getActiveSession());
-		L_GET_PRIVATE_FROM_C_OBJECT(newCall)->getActiveSession()->getPrivate()->notifyReferState();
+		getActiveSession()->getPrivate()->setTransferTarget(Call::toCpp(newCall)->getActiveSession());
+		Call::toCpp(newCall)->getActiveSession()->getPrivate()->notifyReferState();
 	}
-	return L_GET_CPP_PTR_FROM_C_OBJECT(newCall);
+	return Call::toCpp(newCall)->getSharedFromThis();
+}
+
+// =============================================================================
+
+void Call::createPlayer () const{
+	mPlayer = linphone_call_build_player((LinphoneCall *)(this->toC()));
 }
 
 // -----------------------------------------------------------------------------
-
-void CallPrivate::createPlayer () const {
-	L_Q();
-	player = linphone_call_build_player(L_GET_C_BACK_PTR(q));
-}
-
-// -----------------------------------------------------------------------------
-
-
-void CallPrivate::startRemoteRing () {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
+void Call::startRemoteRing () {
+	LinphoneCore *lc = getCore()->getCCore();
 	if (!lc->sound_conf.play_sndcard)
 		return;
 
@@ -216,15 +216,14 @@ void CallPrivate::startRemoteRing () {
 	}
 }
 
-void CallPrivate::terminateBecauseOfLostMedia () {
-	L_Q();
-	lInfo() << "Call [" << q << "]: Media connectivity with " << q->getRemoteAddress().asString()
+void Call::terminateBecauseOfLostMedia () {
+	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress().asString()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
-	q->getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
+	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
 }
 
-void CallPrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+void Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return;
@@ -232,26 +231,24 @@ void CallPrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 
 }
 
-void CallPrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
-	L_Q();
-	
+void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
 	}
 
 	RingStream *ringStream = nullptr;
-	switch (q->getState()) {
+	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
-			ringStream = q->getCore()->getCCore()->ringstream;
+			ringStream = getCore()->getCCore()->ringstream;
 			if (ringStream) {
 				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
 			}
 			break;
 		case CallSession::State::IncomingReceived:
-			ringStream = linphone_ringtoneplayer_get_stream(q->getCore()->getCCore()->ringtoneplayer);
+			ringStream = linphone_ringtoneplayer_get_stream(getCore()->getCCore()->ringtoneplayer);
 			if (ringStream) {
 				ring_stream_set_output_ms_snd_card(ringStream, audioDevice->getSoundCard());
 			}
@@ -264,98 +261,88 @@ void CallPrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 
 // -----------------------------------------------------------------------------
 
-void CallPrivate::onAckBeingSent (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
-	L_Q();
-	linphone_call_notify_ack_processing(L_GET_C_BACK_PTR(q), headers, false);
+void Call::onAckBeingSent (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
+	linphone_call_notify_ack_processing(this->toC(), headers, false);
 }
 
-void CallPrivate::onAckReceived (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
-	L_Q();
-	linphone_call_notify_ack_processing(L_GET_C_BACK_PTR(q), headers, true);
+void Call::onAckReceived (const shared_ptr<CallSession> &session, LinphoneHeaders *headers) {
+	linphone_call_notify_ack_processing(this->toC(), headers, true);
 }
 
-void CallPrivate::onBackgroundTaskToBeStarted (const shared_ptr<CallSession> &session) {
-	L_Q();
-	bgTask.start(q->getCore(),30);
+void Call::onBackgroundTaskToBeStarted (const shared_ptr<CallSession> &session) {
+	mBgTask.start(getCore(),30);
 }
 
-void CallPrivate::onBackgroundTaskToBeStopped (const shared_ptr<CallSession> &session) {
-	bgTask.stop();
+void Call::onBackgroundTaskToBeStopped (const shared_ptr<CallSession> &session) {
+	mBgTask.stop();
 }
 
-bool CallPrivate::onCallSessionAccepted (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
+bool Call::onCallSessionAccepted (const shared_ptr<CallSession> &session) {
+	LinphoneCore *lc = getCore()->getCCore();
 	bool wasRinging = false;
 
-	if (q->getCore()->getCurrentCall() != q->getSharedFromThis())
+	if (getCore()->getCurrentCall() != getSharedFromThis())
 		linphone_core_preempt_sound_resources(lc);
 
 	return wasRinging;
 }
 
-void CallPrivate::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
-	L_Q();
+void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
 	LinphoneCallLog *log = session->getLog();
-	linphone_core_report_early_failed_call(q->getCore()->getCCore(),
+	linphone_core_report_early_failed_call(getCore()->getCCore(),
 		linphone_call_log_get_dir(log),
 		linphone_address_clone(linphone_call_log_get_from(log)),
 		linphone_address_clone(linphone_call_log_get_to(log)),
 		ei,
 		log->call_id);
-	linphone_call_unref(L_GET_C_BACK_PTR(q));
+	linphone_call_unref(this->toC());
 }
 
-void CallPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
-	L_Q();
-	linphone_call_unref(L_GET_C_BACK_PTR(q));
+void Call::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
+	linphone_call_unref(this->toC());
 }
 
-void CallPrivate::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *core = q->getCore()->getCCore();
-	LinphoneCall *call = L_GET_C_BACK_PTR(q);
-	LinphoneConference *conf = linphone_call_get_conference(call);
+void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
+	LinphoneCore *core = getCore()->getCCore();
 	
-	if (q->getSharedFromThis() == q->getCore()->getCurrentCall()) {
+	if (getSharedFromThis() == getCore()->getCurrentCall()) {
 		lInfo() << "Resetting the current call";
-		q->getCore()->getPrivate()->setCurrentCall(nullptr);
+		getCore()->getPrivate()->setCurrentCall(nullptr);
 	}
-	if (q->getCore()->getPrivate()->removeCall(q->getSharedFromThis()) != 0)
+	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
-	if (conf)
-		MediaConference::Conference::toCpp(conf)->removeParticipant(call);
+	if (getConference())
+		MediaConference::Conference::toCpp(getConference())->removeParticipant(this->toC());
 #if 0
-	if (lcall->chat_room)
-		linphone_chat_room_set_call(lcall->chat_room, nullptr);
+	if (mChatRoom)
+		linphone_chat_room_set_call(mChatRoom, nullptr);
 #endif // if 0
-	if (!q->getCore()->getPrivate()->hasCalls())
+	if (!getCore()->getPrivate()->hasCalls())
 		ms_bandwidth_controller_reset_state(core->bw_controller);
 }
 
-void CallPrivate::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
+void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 	startReferredCall(nullptr);
 }
 
-void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
-	L_Q();
-	q->getCore()->getPrivate()->getToneManager()->update(session);
+void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
+	getCore()->getPrivate()->getToneManager()->update(session);
 
-	LinphoneCore *lc = q->getCore()->getCCore();
-	switch(state) {
+	LinphoneCore *lc = getCore()->getCCore();
+	switch(state){
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
-			getPlatformHelpers(q->getCore()->getCCore())->acquireWifiLock();
-			getPlatformHelpers(q->getCore()->getCCore())->acquireMcastLock();
-			getPlatformHelpers(q->getCore()->getCCore())->acquireCpuLock();
+			getPlatformHelpers(lc)->acquireWifiLock();
+			getPlatformHelpers(lc)->acquireMcastLock();
+			getPlatformHelpers(lc)->acquireCpuLock();
 			if (linphone_core_get_calls_nb(lc) == 1) {
 				linphone_core_notify_first_call_started(lc);
 			}
 			break;
 		case CallSession::State::Released:
-			getPlatformHelpers(q->getCore()->getCCore())->releaseWifiLock();
-			getPlatformHelpers(q->getCore()->getCCore())->releaseMcastLock();
-			getPlatformHelpers(q->getCore()->getCCore())->releaseCpuLock();
+			getPlatformHelpers(lc)->releaseWifiLock();
+			getPlatformHelpers(lc)->releaseMcastLock();
+			getPlatformHelpers(lc)->releaseCpuLock();
 			break;
 		case CallSession::State::End:
 		case CallSession::State::Error:
@@ -365,18 +352,16 @@ void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &sess
 		default:
 			break;
 	}
-	linphone_call_notify_state_changed(L_GET_C_BACK_PTR(q), static_cast<LinphoneCallState>(state), message.c_str());
+	linphone_call_notify_state_changed(this->toC(), static_cast<LinphoneCallState>(state), message.c_str());
 }
 
-void CallPrivate::onCallSessionTransferStateChanged (const shared_ptr<CallSession> &session, CallSession::State state) {
-	L_Q();
-	linphone_call_notify_transfer_state_changed(L_GET_C_BACK_PTR(q), static_cast<LinphoneCallState>(state));
+void Call::onCallSessionTransferStateChanged (const shared_ptr<CallSession> &session, CallSession::State state) {
+	linphone_call_notify_transfer_state_changed(this->toC(), static_cast<LinphoneCallState>(state));
 }
 
-void CallPrivate::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
-	L_Q();
-	list<shared_ptr<Call>> calls = q->getCore()->getCalls();
-	shared_ptr<Call> currentCall = q->getSharedFromThis();
+void Call::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
+	list<shared_ptr<Call>> calls = getCore()->getCalls();
+	shared_ptr<Call> currentCall = getSharedFromThis();
 	for (const auto &call : calls) {
 		if (call == currentCall)
 			continue;
@@ -395,267 +380,245 @@ void CallPrivate::onCheckForAcceptation (const shared_ptr<CallSession> &session)
 	}
 }
 
-void CallPrivate::onDtmfReceived (const shared_ptr<CallSession> &session, char dtmf) {
-	L_Q();
-	linphone_call_notify_dtmf_received(L_GET_C_BACK_PTR(q), dtmf);
+void Call::onDtmfReceived (const shared_ptr<CallSession> &session, char dtmf) {
+	linphone_call_notify_dtmf_received(this->toC(), dtmf);
 }
 
-void CallPrivate::onIncomingCallSessionNotified (const shared_ptr<CallSession> &session) {
-	L_Q();
+void Call::onIncomingCallSessionNotified (const shared_ptr<CallSession> &session) {
 	/* The call is acceptable so we can now add it to our list */
-	q->getCore()->getPrivate()->addCall(q->getSharedFromThis());
+	getCore()->getPrivate()->addCall(getSharedFromThis());
 }
 
-void CallPrivate::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
-	L_Q();
-	if (linphone_core_get_calls_nb(q->getCore()->getCCore()) == 1 && !q->isInConference()) {
-		L_GET_PRIVATE_FROM_C_OBJECT(q->getCore()->getCCore())->setCurrentCall(q->getSharedFromThis());
+void Call::onIncomingCallSessionStarted (const shared_ptr<CallSession> &session) {
+	if (linphone_core_get_calls_nb(getCore()->getCCore()) == 1 && !isInConference()) {
+		L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(getSharedFromThis());
 	}
-	q->getCore()->getPrivate()->getToneManager()->startRingtone(session);
+	getCore()->getPrivate()->getToneManager()->startRingtone(session);
 }
 
-void CallPrivate::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {
-	L_Q();
+void Call::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {
 	if (oneSecondElapsed)
 		lInfo() << "Incoming call ringing for " << elapsed << " seconds";
-	if (elapsed > q->getCore()->getCCore()->sip_conf.inc_timeout) {
-		lInfo() << "Incoming call timeout (" << q->getCore()->getCCore()->sip_conf.inc_timeout << ")";
-		auto config = linphone_core_get_config(q->getCore()->getCCore());
+	if (elapsed > getCore()->getCCore()->sip_conf.inc_timeout) {
+		lInfo() << "Incoming call timeout (" << getCore()->getCCore()->sip_conf.inc_timeout << ")";
+		auto config = linphone_core_get_config(getCore()->getCCore());
 		int statusCode = linphone_config_get_int(config, "sip", "inc_timeout_status_code", 486);
 		getActiveSession()->declineNotAnswered(linphone_error_code_to_reason(statusCode));
 	}
 }
 
-void CallPrivate::onInfoReceived (const shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {
-	L_Q();
-	linphone_call_notify_info_message_received(L_GET_C_BACK_PTR(q), im);
+void Call::onInfoReceived (const shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {
+	linphone_call_notify_info_message_received(this->toC(), im);
 }
 
-void CallPrivate::onLossOfMediaDetected (const shared_ptr<CallSession> &session) {
+void Call::onLossOfMediaDetected (const shared_ptr<CallSession> &session) {
 	terminateBecauseOfLostMedia();
 }
 
-void CallPrivate::onEncryptionChanged (const shared_ptr<CallSession> &session, bool activated, const string &authToken) {
-	L_Q();
-	linphone_call_notify_encryption_changed(L_GET_C_BACK_PTR(q), activated, authToken.empty() ? nullptr : authToken.c_str());
+void Call::onEncryptionChanged (const shared_ptr<CallSession> &session, bool activated, const string &authToken) {
+	linphone_call_notify_encryption_changed(this->toC(), activated, authToken.empty() ? nullptr : authToken.c_str());
 }
 
-void CallPrivate::onCallSessionStateChangedForReporting (const shared_ptr<CallSession> &session) {
-	L_Q();
-	linphone_reporting_call_state_updated(L_GET_C_BACK_PTR(q));
+void Call::onCallSessionStateChangedForReporting (const shared_ptr<CallSession> &session) {
+	linphone_reporting_call_state_updated(this->toC());
 }
 
-void CallPrivate::onRtcpUpdateForReporting (const shared_ptr<CallSession> &session, SalStreamType type) {
-	L_Q();
-	linphone_reporting_on_rtcp_update(L_GET_C_BACK_PTR(q), type);
+void Call::onRtcpUpdateForReporting (const shared_ptr<CallSession> &session, SalStreamType type) {
+	linphone_reporting_on_rtcp_update(this->toC(), type);
 }
 
-void CallPrivate::onStatsUpdated (const shared_ptr<CallSession> &session, const LinphoneCallStats *stats) {
-	L_Q();
-	linphone_call_notify_stats_updated(L_GET_C_BACK_PTR(q), stats);
+void Call::onStatsUpdated (const shared_ptr<CallSession> &session, const LinphoneCallStats *stats) {
+	linphone_call_notify_stats_updated(this->toC(), stats);
 }
 
-void CallPrivate::onUpdateMediaInfoForReporting (const shared_ptr<CallSession> &session, int statsType) {
-	L_Q();
-	linphone_reporting_update_media_info(L_GET_C_BACK_PTR(q), statsType);
+void Call::onUpdateMediaInfoForReporting (const shared_ptr<CallSession> &session, int statsType) {
+	linphone_reporting_update_media_info(this->toC(), statsType);
 }
 
-void CallPrivate::onResetCurrentSession (const shared_ptr<CallSession> &session) {
-	L_Q();
-	q->getCore()->getPrivate()->setCurrentCall(nullptr);
+void Call::onResetCurrentSession (const shared_ptr<CallSession> &session) {
+	getCore()->getPrivate()->setCurrentCall(nullptr);
 }
 
-void CallPrivate::onSetCurrentSession (const shared_ptr<CallSession> &session) {
-	L_Q();
-	q->getCore()->getPrivate()->setCurrentCall(q->getSharedFromThis());
+void Call::onSetCurrentSession (const shared_ptr<CallSession> &session) {
+	getCore()->getPrivate()->setCurrentCall(getSharedFromThis());
 }
 
-void CallPrivate::onFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
-	L_Q();
-	if (nextVideoFrameDecoded._func) {
-		nextVideoFrameDecoded._func(L_GET_C_BACK_PTR(q), nextVideoFrameDecoded._user_data);
-		nextVideoFrameDecoded._func = nullptr;
-		nextVideoFrameDecoded._user_data = nullptr;
+void Call::onFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
+	if (mNextVideoFrameDecoded._func) {
+		mNextVideoFrameDecoded._func(this->toC(), mNextVideoFrameDecoded._user_data);
+		mNextVideoFrameDecoded._func = nullptr;
+		mNextVideoFrameDecoded._user_data = nullptr;
 	}
-	linphone_call_notify_next_video_frame_decoded(L_GET_C_BACK_PTR(q));
+	linphone_call_notify_next_video_frame_decoded(this->toC());
 }
 
-void CallPrivate::onResetFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
+void Call::onResetFirstVideoFrameDecoded (const shared_ptr<CallSession> &session) {
 	/*we are called here by the MediaSession when the stream start to know whether there is the deprecated nextVideoFrameDecoded callback set,
 	 * so that we can request the notification of the next frame decoded.*/
 #ifdef VIDEO_ENABLED
-	if (nextVideoFrameDecoded._func)
+	if (mNextVideoFrameDecoded._func)
 		requestNotifyNextVideoFrameDecoded();
 #endif // ifdef VIDEO_ENABLED
 }
 
-void CallPrivate::requestNotifyNextVideoFrameDecoded(){
+void Call::requestNotifyNextVideoFrameDecoded(){
 	static_pointer_cast<MediaSession>(getActiveSession())->requestNotifyNextVideoFrameDecoded();
 }
 
-void CallPrivate::onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {
-	L_Q();
-	linphone_call_notify_camera_not_working(L_GET_C_BACK_PTR(q), camera_name);
+void Call::onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) {
+	linphone_call_notify_camera_not_working(this->toC(), camera_name);
 }
 
-bool CallPrivate::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {
-	L_Q();
-	LinphoneCore *lc = q->getCore()->getCCore();
-	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
-	return !linphone_core_is_in_conference(lc) && (!currentCall || (currentCall == q->getSharedFromThis()));
+bool Call::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {
+	LinphoneCore *lc = getCore()->getCCore();
+	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
+	return !linphone_core_is_in_conference(lc) && (!currentCall || (currentCall == getSharedFromThis()));
 }
 
-bool CallPrivate::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
-	return playingRingbackTone;
+bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
+	return mPlayingRingbackTone;
 }
 
-void CallPrivate::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
-	L_Q();
+void Call::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
 	shared_ptr<RealTimeTextChatRoom> cr = getChatRoom();
-	if (cr) cr->getPrivate()->realtimeTextReceived(data->character, q->getSharedFromThis());
+	if (cr) cr->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
 	else lError()<<"CallPrivate::onRealTimeTextCharacterReceived: no chatroom.";
 }
 
-void CallPrivate::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {
-	L_Q();
-	linphone_call_notify_tmmbr_received(L_GET_C_BACK_PTR(q), streamIndex, tmmbr);
+void Call::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {
+	linphone_call_notify_tmmbr_received(this->toC(), streamIndex, tmmbr);
 }
 
-void CallPrivate::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
-	L_Q();
-	linphone_call_notify_snapshot_taken(L_GET_C_BACK_PTR(q), file_path);
+void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
+	linphone_call_notify_snapshot_taken(this->toC(), file_path);
 }
 
 // =============================================================================
 
-Call::Call (CallPrivate &p, shared_ptr<Core> core) : Object(p), CoreAccessor(core) {
-	L_D();
-	d->nextVideoFrameDecoded._func = nullptr;
-	d->nextVideoFrameDecoded._user_data = nullptr;
+Call::Call (
+	shared_ptr<Core> core,
+	LinphoneCallDir direction,
+	const Address &from,
+	const Address &to,
+	LinphoneProxyConfig *cfg,
+	SalCallOp *op,
+	const MediaSessionParams *msp
+) : CoreAccessor(core) {
+	mNextVideoFrameDecoded._func = nullptr;
+	mNextVideoFrameDecoded._user_data = nullptr;
 
-	d->bgTask.setName("Liblinphone call notification");
+	mBgTask.setName("Liblinphone call notification");
+	
+	//create session
+	mParticipant = make_shared<Participant>(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant->getPrivate()->createSession(getCore(), msp, TRUE, this);
+	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
 }
 
-// -----------------------------------------------------------------------------
+Call::~Call () {
+	auto session = getActiveSession();
+	if (session)
+		session->getPrivate()->setCallSessionListener(nullptr);
+	
+	bctbx_list_free_with_data(mCallbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
+}
+
+// =============================================================================
 
 LinphoneStatus Call::accept (const MediaSessionParams *msp) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->accept(msp);
+	return static_pointer_cast<MediaSession>(getActiveSession())->accept(msp);
 }
 
 LinphoneStatus Call::acceptEarlyMedia (const MediaSessionParams *msp) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->acceptEarlyMedia(msp);
+	return static_pointer_cast<MediaSession>(getActiveSession())->acceptEarlyMedia(msp);
 }
 
 LinphoneStatus Call::acceptUpdate (const MediaSessionParams *msp) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->acceptUpdate(msp);
+	return static_pointer_cast<MediaSession>(getActiveSession())->acceptUpdate(msp);
 }
 
 void Call::cancelDtmfs () {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->cancelDtmfs();
+	static_pointer_cast<MediaSession>(getActiveSession())->cancelDtmfs();
 }
 
 LinphoneStatus Call::decline (LinphoneReason reason) {
-	L_D();
-	return d->getActiveSession()->decline(reason);
+	return getActiveSession()->decline(reason);
 }
 
 LinphoneStatus Call::decline (const LinphoneErrorInfo *ei) {
-	L_D();
-	return d->getActiveSession()->decline(ei);
+	return getActiveSession()->decline(ei);
 }
 
 LinphoneStatus Call::deferUpdate () {
-	L_D();
-	return d->getActiveSession()->deferUpdate();
+	return getActiveSession()->deferUpdate();
 }
 
 bool Call::hasTransferPending () const {
-	L_D();
-	return d->getActiveSession()->hasTransferPending();
+	return getActiveSession()->hasTransferPending();
 }
 
 void Call::oglRender () const {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->getPrivate()->oglRender();
+	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->oglRender();
 }
 
 LinphoneStatus Call::pause () {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->pause();
+	return static_pointer_cast<MediaSession>(getActiveSession())->pause();
 }
 
 LinphoneStatus Call::redirect (const string &redirectUri) {
-	L_D();
-	return d->getActiveSession()->redirect(redirectUri);
+	return getActiveSession()->redirect(redirectUri);
 }
 
 LinphoneStatus Call::resume () {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->resume();
+	return static_pointer_cast<MediaSession>(getActiveSession())->resume();
 }
 
 LinphoneStatus Call::sendDtmf (char dtmf) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->sendDtmf(dtmf);
+	return static_pointer_cast<MediaSession>(getActiveSession())->sendDtmf(dtmf);
 }
 
 LinphoneStatus Call::sendDtmfs (const string &dtmfs) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->sendDtmfs(dtmfs);
+	return static_pointer_cast<MediaSession>(getActiveSession())->sendDtmfs(dtmfs);
 }
 
 void Call::sendVfuRequest () {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->sendVfuRequest();
+	static_pointer_cast<MediaSession>(getActiveSession())->sendVfuRequest();
 }
 
 void Call::startRecording () {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->startRecording();
+	static_pointer_cast<MediaSession>(getActiveSession())->startRecording();
 }
 
 void Call::stopRecording () {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->stopRecording();
+	static_pointer_cast<MediaSession>(getActiveSession())->stopRecording();
 }
 
 bool Call::isRecording () {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->isRecording();
+	return static_pointer_cast<MediaSession>(getActiveSession())->isRecording();
 }
 
 LinphoneStatus Call::takePreviewSnapshot (const string &file) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->takePreviewSnapshot(file);
+	return static_pointer_cast<MediaSession>(getActiveSession())->takePreviewSnapshot(file);
 }
 
 LinphoneStatus Call::takeVideoSnapshot (const string &file) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->takeVideoSnapshot(file);
+	return static_pointer_cast<MediaSession>(getActiveSession())->takeVideoSnapshot(file);
 }
 
 LinphoneStatus Call::terminate (const LinphoneErrorInfo *ei) {
-	L_D();
-	return d->getActiveSession()->terminate(ei);
+	return getActiveSession()->terminate(ei);
 }
 
 LinphoneStatus Call::transfer (const shared_ptr<Call> &dest) {
-	L_D();
-	return d->getActiveSession()->transfer(dest->getPrivate()->getActiveSession());
+	return getActiveSession()->transfer(dest->getActiveSession());
 }
 
 LinphoneStatus Call::transfer (const string &dest) {
-	L_D();
-	return d->getActiveSession()->transfer(dest);
+	return getActiveSession()->transfer(dest);
 }
 
 LinphoneStatus Call::update (const MediaSessionParams *msp) {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->update(msp);
+	return static_pointer_cast<MediaSession>(getActiveSession())->update(msp);
 }
 
 void Call::zoomVideo (float zoomFactor, float *cx, float *cy) {
@@ -663,345 +626,277 @@ void Call::zoomVideo (float zoomFactor, float *cx, float *cy) {
 }
 
 void Call::zoomVideo (float zoomFactor, float cx, float cy) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->zoomVideo(zoomFactor, cx, cy);
+	static_pointer_cast<MediaSession>(getActiveSession())->zoomVideo(zoomFactor, cx, cy);
 }
 
 // -----------------------------------------------------------------------------
 
 bool Call::cameraEnabled () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->cameraEnabled();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->cameraEnabled();
 }
 
 bool Call::echoCancellationEnabled () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->echoCancellationEnabled();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->echoCancellationEnabled();
 }
 
 bool Call::echoLimiterEnabled () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->echoLimiterEnabled();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->echoLimiterEnabled();
 }
 
 void Call::enableCamera (bool value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->enableCamera(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->enableCamera(value);
 }
 
 void Call::enableEchoCancellation (bool value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->enableEchoCancellation(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->enableEchoCancellation(value);
 }
 
 void Call::enableEchoLimiter (bool value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->enableEchoLimiter(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->enableEchoLimiter(value);
 }
 
 bool Call::getAllMuted () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getAllMuted();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAllMuted();
 }
 
 LinphoneCallStats *Call::getAudioStats () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getAudioStats();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAudioStats();
 }
 
-string Call::getAuthenticationToken () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getAuthenticationToken();
+string Call::getAuthenticationToken ()  {
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationToken();
 }
 
 bool Call::getAuthenticationTokenVerified () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getAuthenticationTokenVerified();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationTokenVerified();
 }
 
 float Call::getAverageQuality () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getAverageQuality();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getAverageQuality();
 }
 
 const MediaSessionParams *Call::getCurrentParams () const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getCurrentParams();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getCurrentParams();
 }
 
 float Call::getCurrentQuality () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getCurrentQuality();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getCurrentQuality();
 }
 
 LinphoneCallDir Call::getDirection () const {
-	L_D();
-	return d->getActiveSession()->getDirection();
+	return getActiveSession()->getDirection();
 }
 
 const Address &Call::getDiversionAddress () const {
-	L_D();
-	return d->getActiveSession()->getDiversionAddress();
+	return getActiveSession()->getDiversionAddress();
 }
 
 int Call::getDuration () const {
-	L_D();
-	return d->getActiveSession()->getDuration();
+	return getActiveSession()->getDuration();
 }
 
 const LinphoneErrorInfo *Call::getErrorInfo () const {
-	L_D();
-	return d->getActiveSession()->getErrorInfo();
+	return getActiveSession()->getErrorInfo();
 }
 
 const Address &Call::getLocalAddress () const {
-	L_D();
-	return d->getActiveSession()->getLocalAddress();
+	return getActiveSession()->getLocalAddress();
 }
 
 LinphoneCallLog *Call::getLog () const {
-	L_D();
-	return d->getActiveSession()->getLog();
+	return getActiveSession()->getLog();
 }
 
 RtpTransport *Call::getMetaRtcpTransport (int streamIndex) const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getMetaRtcpTransport(streamIndex);
+	return static_pointer_cast<MediaSession>(getActiveSession())->getMetaRtcpTransport(streamIndex);
 }
 
 RtpTransport *Call::getMetaRtpTransport (int streamIndex) const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getMetaRtpTransport(streamIndex);
+	return static_pointer_cast<MediaSession>(getActiveSession())->getMetaRtpTransport(streamIndex);
 }
 
 float Call::getMicrophoneVolumeGain () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getMicrophoneVolumeGain();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getMicrophoneVolumeGain();
 }
 
 void *Call::getNativeVideoWindowId () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getNativeVideoWindowId();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getNativeVideoWindowId();
 }
 
 const MediaSessionParams *Call::getParams () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getMediaParams();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getMediaParams();
 }
 
 LinphonePlayer *Call::getPlayer () const {
-	L_D();
-	if (!d->player)
-		d->createPlayer();
-	return d->player;
+	if (!mPlayer)
+		createPlayer();
+	return mPlayer;
 }
 
 float Call::getPlayVolume () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getPlayVolume();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getPlayVolume();
 }
 
 LinphoneReason Call::getReason () const {
-	L_D();
-	return d->getActiveSession()->getReason();
+	return getActiveSession()->getReason();
 }
 
 float Call::getRecordVolume () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getRecordVolume();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getRecordVolume();
 }
 
 shared_ptr<Call> Call::getReferer () const {
-	L_D();
-	shared_ptr<CallSession> referer = d->getActiveSession()->getReferer();
+	shared_ptr<CallSession> referer = getActiveSession()->getReferer();
 	if (!referer)
 		return nullptr;
 	for (const auto &call : getCore()->getCalls()) {
-		if (call->getPrivate()->getActiveSession() == referer)
+		if (call->getActiveSession() == referer)
 			return call;
 	}
 	return nullptr;
 }
 
-string Call::getReferTo () const {
-	L_D();
-	return d->getActiveSession()->getReferTo();
+string Call::getReferTo () {
+	return getActiveSession()->getReferTo();
 }
 
 const Address &Call::getRemoteAddress () const {
-	L_D();
-	return d->getActiveSession()->getRemoteAddress();
+	return getActiveSession()->getRemoteAddress();
 }
 
-string Call::getRemoteContact () const {
-	L_D();
-	return d->getActiveSession()->getRemoteContact();
+string Call::getRemoteContact () {
+	return getActiveSession()->getRemoteContact();
 }
 
 const MediaSessionParams *Call::getRemoteParams () const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getRemoteParams();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getRemoteParams();
 }
 
-string Call::getRemoteUserAgent () const {
-	L_D();
-	return d->getActiveSession()->getRemoteUserAgent();
+string Call::getRemoteUserAgent () {
+	return getActiveSession()->getRemoteUserAgent();
 }
 
 shared_ptr<Call> Call::getReplacedCall () const {
-	L_D();
-	shared_ptr<CallSession> replacedCallSession = d->getActiveSession()->getReplacedCallSession();
+	shared_ptr<CallSession> replacedCallSession = getActiveSession()->getReplacedCallSession();
 	if (!replacedCallSession)
 		return nullptr;
 	for (const auto &call : getCore()->getCalls()) {
-		if (call->getPrivate()->getActiveSession() == replacedCallSession)
+		if (call->getActiveSession() == replacedCallSession)
 			return call;
 	}
 	return nullptr;
 }
 
 float Call::getSpeakerVolumeGain () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getSpeakerVolumeGain();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getSpeakerVolumeGain();
 }
 
 CallSession::State Call::getState () const {
-	L_D();
-	return d->getActiveSession()->getState();
+	return getActiveSession()->getState();
 }
 
 LinphoneCallStats *Call::getStats (LinphoneStreamType type) const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getStats(type);
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getStats(type);
 }
 
 int Call::getStreamCount () const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getStreamCount();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getStreamCount();
 }
 
 MSFormatType Call::getStreamType (int streamIndex) const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getStreamType(streamIndex);
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getStreamType(streamIndex);
 }
 
 LinphoneCallStats *Call::getTextStats () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getTextStats();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getTextStats();
 }
 
 const Address &Call::getToAddress () const {
-	L_D();
-	return d->getActiveSession()->getToAddress();
+	return getActiveSession()->getToAddress();
 }
 
-string Call::getToHeader (const string &name) const {
-	L_D();
-	return d->getActiveSession()->getToHeader(name);
+string Call::getToHeader (const string &name) {
+	return getActiveSession()->getToHeader(name);
 }
 
 CallSession::State Call::getTransferState () const {
-	L_D();
-	return d->getActiveSession()->getTransferState();
+	return getActiveSession()->getTransferState();
 }
 
 shared_ptr<Call> Call::getTransferTarget () const {
-	L_D();
-	shared_ptr<CallSession> transferTarget = d->getActiveSession()->getTransferTarget();
+	shared_ptr<CallSession> transferTarget = getActiveSession()->getTransferTarget();
 	if (!transferTarget)
 		return nullptr;
 	for (const auto &call : getCore()->getCalls()) {
-		if (call->getPrivate()->getActiveSession() == transferTarget)
+		if (call->getActiveSession() == transferTarget)
 			return call;
 	}
 	return nullptr;
 }
 
 LinphoneCallStats *Call::getVideoStats () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->getVideoStats();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->getVideoStats();
 }
 
 bool Call::isInConference () const {
-	L_D();
-	return d->getActiveSession()->getPrivate()->isInConference();
+	return getActiveSession()->getPrivate()->isInConference();
 }
 
 bool Call::mediaInProgress () const {
-	L_D();
-	return static_pointer_cast<const MediaSession>(d->getActiveSession())->mediaInProgress();
+	return static_pointer_cast<const MediaSession>(getActiveSession())->mediaInProgress();
 }
 
 void Call::setAudioRoute (LinphoneAudioRoute route) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setAudioRoute(route);
+	static_pointer_cast<MediaSession>(getActiveSession())->setAudioRoute(route);
 }
 
 void Call::setAuthenticationTokenVerified (bool value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setAuthenticationTokenVerified(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->setAuthenticationTokenVerified(value);
 }
 
 void Call::setMicrophoneVolumeGain (float value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setMicrophoneVolumeGain(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->setMicrophoneVolumeGain(value);
 }
 
 void Call::setNativeVideoWindowId (void *id) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setNativeVideoWindowId(id);
+	static_pointer_cast<MediaSession>(getActiveSession())->setNativeVideoWindowId(id);
 }
 
 void Call::setNextVideoFrameDecodedCallback (LinphoneCallCbFunc cb, void *user_data) {
-	L_D();
-	d->nextVideoFrameDecoded._func = cb;
-	d->nextVideoFrameDecoded._user_data = user_data;
-	d->requestNotifyNextVideoFrameDecoded();
-}
-
-void Call::requestNotifyNextVideoFrameDecoded (){
-	L_D();
-	d->requestNotifyNextVideoFrameDecoded();
+	mNextVideoFrameDecoded._func = cb;
+	mNextVideoFrameDecoded._user_data = user_data;
+	requestNotifyNextVideoFrameDecoded();
 }
 
 void Call::setParams (const MediaSessionParams *msp) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setParams(msp);
+	static_pointer_cast<MediaSession>(getActiveSession())->setParams(msp);
 }
 
 void Call::setSpeakerVolumeGain (float value) {
-	L_D();
-	static_pointer_cast<MediaSession>(d->getActiveSession())->setSpeakerVolumeGain(value);
+	static_pointer_cast<MediaSession>(getActiveSession())->setSpeakerVolumeGain(value);
 }
 
 void Call::setInputAudioDevice(AudioDevice *audioDevice) {
-	L_D();
-	d->setInputAudioDevice(audioDevice);
+	setInputAudioDevicePrivate(audioDevice);
 
-	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
 
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {
-	L_D();
-	d->setOutputAudioDevice(audioDevice);
+	setOutputAudioDevicePrivate(audioDevice);
 
-	linphone_call_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
 }
 
 AudioDevice* Call::getInputAudioDevice() const {
-	L_D();
-	return static_pointer_cast<MediaSession>(d->getActiveSession())->getInputAudioDevice();
+	return static_pointer_cast<MediaSession>(getActiveSession())->getInputAudioDevice();
 }
 
 AudioDevice* Call::getOutputAudioDevice() const {
-	L_D();
-
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
-		case CallSession::State::Pausing:
-		case CallSession::State::Paused:
 			ringStream = getCore()->getCCore()->ringstream;
 			if (ringStream) {
 				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
@@ -1020,10 +915,57 @@ AudioDevice* Call::getOutputAudioDevice() const {
 			}
 			break;
 		default:
-			return static_pointer_cast<MediaSession>(d->getActiveSession())->getOutputAudioDevice();
+			return static_pointer_cast<MediaSession>(getActiveSession())->getOutputAudioDevice();
 	}
 
 	return nullptr;
+}
+
+// -----------------------------------------------------------------------------
+
+LinphoneConference *Call::getConference () const{
+	return mConfRef;
+}
+
+void Call::setConference (LinphoneConference *ref) {
+	mConfRef = ref;
+}
+
+MSAudioEndpoint *Call::getEndpoint () const {
+	return mEndpoint;
+}
+
+void Call::setEndpoint (MSAudioEndpoint *endpoint) {
+	mEndpoint = endpoint;
+}
+
+bctbx_list_t *Call::getCallbacksList () const {
+	return mCallbacks;
+}
+
+LinphoneCallCbs *Call::getCurrentCbs () const{
+	return mCurrentCbs;
+}
+
+void Call::setCurrentCbs (LinphoneCallCbs *cbs) {
+	mCurrentCbs = cbs;
+}
+
+void Call::addCallbacks (LinphoneCallCbs *cbs) {
+	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
+}
+
+void Call::removeCallbacks (LinphoneCallCbs *cbs) {
+	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
+	belle_sip_object_unref(cbs);
+}
+
+void *Call::getUserData () const{
+	return mUserData;
+}
+
+void Call::setUserData (void *ud) {
+	mUserData = ud;
 }
 
 LINPHONE_END_NAMESPACE

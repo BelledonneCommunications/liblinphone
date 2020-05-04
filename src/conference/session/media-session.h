@@ -28,7 +28,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallPrivate;
 class Core;
 class IceAgent;
 class MediaSessionPrivate;
@@ -37,7 +36,6 @@ class StreamsGroup;
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Call;
-	friend class CallPrivate;
 	friend class IceAgent;
 	friend class ToneManager;
 	friend class Stream;
