@@ -244,7 +244,7 @@ void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
 	}
 
 	if (needUnlock) {
-		lInfo() << "[push] unlock executorCoreMutex";
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 		IosSharedCoreHelpers::executorCoreMutex.unlock();
 	}
 }
@@ -263,7 +263,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificationMes
 
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
-			lInfo() << "[push] unlock executorCoreMutex";
+			lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
@@ -272,7 +272,13 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificationMes
 		case SharedCoreState::executorCoreStarted:
 		case SharedCoreState::noCoreStarted:
 			addNewCallIdToList(callId);
-			IosSharedCoreHelpers::executorCoreMutex.lock();
+			if (IosSharedCoreHelpers::executorCoreMutex.try_lock()) {
+				lInfo() << "[push] try_lock success executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
+			} else {
+				lInfo() << "[push] try_lock failure executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
+				IosSharedCoreHelpers::executorCoreMutex.lock();
+			}
+			lInfo() << "[push] lock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			if (getSharedCoreState() == executorCoreStopped ||
 				getSharedCoreState() == mainCoreStarted ||
 				getSharedCoreState() == executorCoreStopping) {
@@ -475,7 +481,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore
 	if (chatMessage) {
 		/* if we are here, the mutex is locked but won't be unlocked during
 		linphone_core_stop because this executor core doesn't need to be started */
-		lInfo() << "[push] unlock executorCoreMutex";
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 		IosSharedCoreHelpers::executorCoreMutex.unlock();
 		return chatMessage;
 	}
@@ -557,7 +563,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getPushNotificationChatRoom(const str
 
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
-			lInfo() << "[push] unlock executorCoreMutex";
+			lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
@@ -728,7 +734,7 @@ void IosSharedCoreHelpers::unlockSharedCoreIfNeeded() {
 		lInfo() << "[SHARED] " << __FUNCTION__ << " : no update during last 30 sec";
 		resetSharedCoreState();
 		IosSharedCoreHelpers::callIdListMutex.unlock();
-		lInfo() << "[push] unlock executorCoreMutex";
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 		IosSharedCoreHelpers::executorCoreMutex.unlock();
 		IosSharedCoreHelpers::userDefaultMutex.unlock();
 	}
