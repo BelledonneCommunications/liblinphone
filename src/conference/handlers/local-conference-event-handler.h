@@ -26,10 +26,8 @@
 
 #include "address/address.h"
 #include "core/core-accessor.h"
-#include "object/object.h"
 
 #include "conference/conference-id.h"
-#include "object/object-p.h"
 #include "xml/conference-info.h"
 
 // =============================================================================
@@ -44,7 +42,7 @@ class LocalConference;
 class Participant;
 class ParticipantDevice;
 
-class LocalConferenceEventHandler : public Object {
+class LocalConferenceEventHandler {
 friend class LocalConferenceListEventHandler;
 #ifdef LINPHONE_TESTER
 	friend class Tester;

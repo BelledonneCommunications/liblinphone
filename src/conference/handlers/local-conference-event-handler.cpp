@@ -34,7 +34,6 @@
 #include "event-log/events.h"
 #include "local-conference-event-handler.h"
 #include "logger/logger.h"
-#include "object/object-p.h"
 
 // TODO: remove me.
 #include "private.h"
@@ -49,8 +48,7 @@ using namespace Xsd::ConferenceInfo;
 
 // =============================================================================
 
-LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify) :
-	Object(*new ObjectPrivate) {
+LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference, unsigned int notify) {
 	conf = localConference;
 	lastNotify = notify;
 }
