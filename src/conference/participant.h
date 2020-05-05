@@ -40,7 +40,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoom;
 class Conference;
-class ParticipantPrivate;
 
 class Participant : public Object {
 	// TODO: Remove... It's ugly.
@@ -54,7 +53,6 @@ class Participant : public Object {
 	friend class LocalConferenceCall;
 	friend class LocalConferenceCallPrivate;
 	friend class LocalConferenceEventHandler;
-	friend class LocalConferenceEventHandlerPrivate;
 	friend class LocalConferenceListEventHandler;
 	friend class MainDb;
 	friend class MainDbPrivate;

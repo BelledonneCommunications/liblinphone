@@ -33,17 +33,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Core;
 
-class ParticipantDevicePrivate : public ObjectPrivate {
-private:
-	L_DECLARE_PUBLIC(Participant);
-};
-
 // =============================================================================
 
-ParticipantDevice::ParticipantDevice () : Object(*new ParticipantDevicePrivate) {}
+ParticipantDevice::ParticipantDevice () : Object(*new ObjectPrivate) {}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
-	:  Object(*new ParticipantDevicePrivate), mParticipant(participant), mGruu(gruu), mName(name) {}
+	:  Object(*new ObjectPrivate), mParticipant(participant), mGruu(gruu), mName(name) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)
