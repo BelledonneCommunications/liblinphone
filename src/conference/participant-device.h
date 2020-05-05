@@ -37,7 +37,6 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSession;
 class Core;
 class Participant;
-class ParticipantDevicePrivate;
 
 class ParticipantDevice : public Object {
 public:
