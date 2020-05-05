@@ -20,12 +20,10 @@
 #ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
 #define _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
 
-#include "object/object.h"
 #include "linphone/types.h"
 
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
-#include "object/object-p.h"
 
 // =============================================================================
 
@@ -34,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceId;
 class RemoteConference;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public Object, public CoreListener {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:
