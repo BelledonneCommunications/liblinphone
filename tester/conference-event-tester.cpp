@@ -25,7 +25,7 @@
 #include "conference/handlers/local-conference-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/local-conference.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/remote-conference.h"
 #include "liblinphone_tester.h"
 #include "linphone/core.h"
@@ -841,7 +841,7 @@ void send_first_notify() {
 	localConf->addParticipant(aliceAddr, &params, false);
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -893,7 +893,7 @@ void send_added_notify() {
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -952,7 +952,7 @@ void send_removed_notify() {
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -1008,7 +1008,7 @@ void send_admined_notify() {
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -1063,7 +1063,7 @@ void send_unadmined_notify() {
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -1119,7 +1119,7 @@ void send_subject_changed_notify () {
 	localConf->addParticipant(aliceAddr, &params, false);
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -1181,7 +1181,7 @@ void send_device_added_notify() {
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
@@ -1241,7 +1241,7 @@ void send_device_removed_notify() {
 	localConf->addParticipant(aliceAddr, &params, false);
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
-	L_GET_PRIVATE(alice)->setAdmin(true);
+	alice->setAdmin(true);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);

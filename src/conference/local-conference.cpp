@@ -26,7 +26,7 @@
 #endif
 #include "local-conference.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 
 // =============================================================================
 
@@ -56,7 +56,7 @@ bool LocalConference::addParticipant (const IdentityAddress &addr, const CallSes
 		return false;
 	}
 	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, listener);
+	participant->createSession(*this, params, hasMedia, listener);
 	participants.push_back(participant);
 	if (!activeParticipant)
 		activeParticipant = participant;

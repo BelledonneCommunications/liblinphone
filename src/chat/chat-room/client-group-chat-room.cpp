@@ -27,7 +27,7 @@
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/participant-device.h"
 #include "conference/remote-conference.h"
 #include "conference/session/call-session-p.h"
@@ -74,11 +74,11 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
 		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
-	ParticipantPrivate *dFocus = qConference->focus->getPrivate();
-	shared_ptr<CallSession> session = dFocus->createSession(*q, &csp, false, callSessionListener);
+	shared_ptr<Participant> focus = qConference->focus;
+	shared_ptr<CallSession> session = focus->createSession(*q, &csp, false, callSessionListener);
 	Address myCleanedAddress(q->getMe()->getAddress());
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
-	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, dFocus->getDevices().front()->getAddress());
+	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, focus->getDevices().front()->getAddress());
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
 	return session;
@@ -101,11 +101,11 @@ void ClientGroupChatRoomPrivate::setCallSessionListener (CallSessionListener *li
 	L_Q_T(RemoteConference, qConference);
 
 	callSessionListener = listener;
-	shared_ptr<CallSession> session = qConference->focus->getPrivate()->getSession();
+	shared_ptr<CallSession> session = qConference->focus->getSession();
 	if (session)
 		session->getPrivate()->setCallSessionListener(listener);
 	for (const auto &participant : q->getParticipants()) {
-		session = participant->getPrivate()->getSession();
+		session = participant->getSession();
 		if (session)
 			session->getPrivate()->setCallSessionListener(listener);
 	}
@@ -127,8 +127,8 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	L_Q_T(RemoteConference, qConference);
 
 	auto focus = qConference->focus;
-	bool previousSession = (focus->getPrivate()->getSession() != nullptr);
-	auto session = focus->getPrivate()->createSession(*q, nullptr, false, this);
+	bool previousSession = (focus->getSession() != nullptr);
+	auto session = focus->createSession(*q, nullptr, false, this);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
 
@@ -173,9 +173,9 @@ void ClientGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 void ClientGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
 	L_Q_T(RemoteConference, qConference);
 
-	ParticipantPrivate *participantPrivate = qConference->focus->getPrivate();
-	if (session == participantPrivate->getSession())
-		participantPrivate->removeSession();
+	shared_ptr<Participant> participant = qConference->focus;
+	if (session == participant->getSession())
+		participant->removeSession();
 }
 
 void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
@@ -194,7 +194,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			 * In this case, defer the sending of the bye so that it is sent after the ACK.
 			 * Indeed, the ACK is sent immediately after being notified of the Connected state.*/
 			q->getCore()->doLater([qConference](){
-				qConference->focus->getPrivate()->getSession()->terminate();
+				qConference->focus->getSession()->terminate();
 			});
 		}
 	} else if (newState == CallSession::State::End) {
@@ -276,7 +276,7 @@ RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 	focus = make_shared<Participant>(this, identity);
-	focus->getPrivate()->addDevice(identity);
+	focus->addDevice(identity);
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -312,14 +312,14 @@ RemoteConference(core, me->getAddress(), nullptr) {
 
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	focus = make_shared<Participant>(this, peerAddress);
-	focus->getPrivate()->addDevice(peerAddress);
+	focus->addDevice(peerAddress);
 	conferenceAddress = peerAddress;
 	subject = newSubject;
 	participants = move(newParticipants);
 
-	getMe()->getPrivate()->setAdmin(me->isAdmin());
-	for (const auto &device : me->getPrivate()->getDevices())
-		getMe()->getPrivate()->addDevice(device->getAddress(), device->getName());
+	getMe()->setAdmin(me->isAdmin());
+	for (const auto &device : me->getDevices())
+		getMe()->addDevice(device->getAddress(), device->getName());
 
 	eventHandler->setConferenceId(conferenceId);
 
@@ -401,7 +401,7 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 	}
 
 	// check self other devices
-	for (const auto &selfDevice : getMe()->getPrivate()->getDevices()) {
+	for (const auto &selfDevice : getMe()->getDevices()) {
 		if (selfDevice->getAddress() != getLocalAddress()) { // ignore local device
 			auto level = selfDevice->getSecurityLevel();
 			switch (level) {
@@ -614,7 +614,7 @@ void ClientGroupChatRoom::setSubject (const string &subject) {
 		return;
 	}
 
-	shared_ptr<CallSession> session = focus->getPrivate()->getSession();
+	shared_ptr<CallSession> session = focus->getSession();
 	if (session)
 		session->update(nullptr, subject);
 	else {
@@ -626,7 +626,7 @@ void ClientGroupChatRoom::setSubject (const string &subject) {
 void ClientGroupChatRoom::join () {
 	L_D();
 
-	shared_ptr<CallSession> session = focus->getPrivate()->getSession();
+	shared_ptr<CallSession> session = focus->getSession();
 	if (!session && ((getState() == ChatRoom::State::Instantiated) || (getState() == ChatRoom::State::Terminated))) {
 		session = d->createSession();
 	}
@@ -642,7 +642,7 @@ void ClientGroupChatRoom::leave () {
 	L_D();
 
 	eventHandler->unsubscribe();
-	shared_ptr<CallSession> session = focus->getPrivate()->getSession();
+	shared_ptr<CallSession> session = focus->getSession();
 	if (session)
 		session->terminate();
 	else {
@@ -658,9 +658,9 @@ void ClientGroupChatRoom::leave () {
 void ClientGroupChatRoom::onConferenceCreated (const IdentityAddress &addr) {
 	L_D();
 	conferenceAddress = addr;
-	focus->getPrivate()->setAddress(addr);
-	focus->getPrivate()->clearDevices();
-	focus->getPrivate()->addDevice(addr);
+	focus->setAddress(addr);
+	focus->clearDevices();
+	focus->addDevice(addr);
 	d->conferenceId = ConferenceId(addr, d->conferenceId.getLocalAddress());
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	d->setState(ChatRoom::State::Created);
@@ -807,7 +807,7 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 	bool isAdmin = event->getType() == EventLog::Type::ConferenceParticipantSetAdmin;
 	if (participant->isAdmin() == isAdmin)
 		return; // No change in the local admin status, do not notify
-	participant->getPrivate()->setAdmin(isAdmin);
+	participant->setAdmin(isAdmin);
 
 	if (isFullState)
 		return;
@@ -872,7 +872,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	}
 
 	ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevel();
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->addDevice(event->getDeviceAddress());
+	shared_ptr<ParticipantDevice> device = participant->addDevice(event->getDeviceAddress());
 	const string &deviceName = event->getDeviceName();
 	if (!deviceName.empty())
 		device->setName(deviceName);
@@ -910,7 +910,7 @@ void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<Conferenc
 		lWarning() << "Participant " << addr.asString() << " removed a device but is not in the list of participants!";
 		return;
 	}
-	participant->getPrivate()->removeDevice(event->getDeviceAddress());
+	participant->removeDevice(event->getDeviceAddress());
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
@@ -921,7 +921,7 @@ void ClientGroupChatRoom::onParticipantsCleared () {
 	//clear from db as well
 	for (const auto &participant : participants) {
 		getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(getSharedFromThis(), participant->getAddress());
-		for (const auto &device : participant->getPrivate()->getDevices())
+		for (const auto &device : participant->getDevices())
 			getCore()->getPrivate()->mainDb->deleteChatRoomParticipantDevice(getSharedFromThis(), device);
 	}
 	participants.clear();

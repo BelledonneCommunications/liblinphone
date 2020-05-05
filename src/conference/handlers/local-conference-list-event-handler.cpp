@@ -25,7 +25,7 @@
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-room/abstract-chat-room.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/participant-device.h"
 #include "content/content.h"
 #include "content/content-manager.h"
@@ -140,7 +140,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 				lError() << "Received subscribe for unknown participant: " << participantAddr <<  " for chat room: " << conferenceId;
 				continue;
 			}
-			shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceAddr);
+			shared_ptr<ParticipantDevice> device = participant->findDevice(deviceAddr);
 			if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
 				lError() << "Received subscribe for unknown device: " << deviceAddr << " for participant: "
 					<< participantAddr <<  " for chat room: " << conferenceId;

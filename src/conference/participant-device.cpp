@@ -20,7 +20,7 @@
 #include "chat/encryption/encryption-engine.h"
 #include "object/object-p.h"
 #include "participant-device.h"
-#include "participant-p.h"
+#include "participant.h"
 #include "core/core.h"
 
 #include "linphone/event.h"
@@ -55,7 +55,7 @@ bool ParticipantDevice::operator== (const ParticipantDevice &device) const {
 }
 
 shared_ptr<Core> ParticipantDevice::getCore () const {
-	return mParticipant ? mParticipant->getPrivate()->getCore() : nullptr;
+	return mParticipant ? mParticipant->getCore() : nullptr;
 }
 
 void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {

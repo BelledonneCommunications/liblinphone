@@ -160,7 +160,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/participant-device.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
-	conference/participant-p.h
 	conference/participant.h
 	conference/remote-conference.h
 	conference/session/call-session-listener.h

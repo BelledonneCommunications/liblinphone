@@ -21,7 +21,7 @@
 
 #include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/participant-device.h"
 
 // =============================================================================
@@ -66,12 +66,12 @@ LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const Lin
 }
 
 bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_PRIVATE_FROM_C_OBJECT(participant)->getDevices());
+	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getDevices());
 }
 
 LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {
 	char *addrStr = linphone_address_as_string(address);
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
-	return L_GET_C_BACK_PTR(L_GET_PRIVATE_FROM_C_OBJECT(participant)->findDevice(deviceAddress));
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(participant)->findDevice(deviceAddress));
 }

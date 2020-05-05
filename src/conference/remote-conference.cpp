@@ -25,7 +25,7 @@
 #include "handlers/remote-conference-event-handler.h"
 #endif
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 #include "remote-conference.h"
 
 // =============================================================================
@@ -57,7 +57,7 @@ bool RemoteConference::addParticipant (const IdentityAddress &addr, const CallSe
 		return false;
 	}
 	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, listener);
+	participant->createSession(*this, params, hasMedia, listener);
 	participants.push_back(participant);
 	if (!activeParticipant)
 		activeParticipant = participant;

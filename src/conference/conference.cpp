@@ -24,7 +24,7 @@
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
@@ -137,7 +137,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
-		if (participant->getPrivate()->getSession() == session)
+		if (participant->getSession() == session)
 			return participant;
 	}
 
@@ -147,7 +147,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
 
 	for (const auto &participant : participants) {
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+		for (const auto &device : participant->getDevices()) {
 			if (device->getSession() == session)
 				return device;
 		}

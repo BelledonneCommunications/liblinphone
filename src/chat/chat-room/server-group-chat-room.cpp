@@ -29,7 +29,7 @@
 #include "conference/handlers/local-conference-event-handler.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/local-conference.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/session/call-session-p.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
@@ -101,7 +101,7 @@ void ServerGroupChatRoomPrivate::setState (ChatRoom::State state) {
 				bool atLeastOneDeviceJoining = false;
 				bool atLeastOneDevicePresent = false;
 				bool atLeastOneDeviceLeaving = false;
-				for (const auto &device : participant->getPrivate()->getDevices()) {
+				for (const auto &device : participant->getDevices()) {
 					switch (device->getState()) {
 						case ParticipantDevice::State::ScheduledForLeaving:
 						case ParticipantDevice::State::Leaving:
@@ -154,7 +154,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 /* This function is used to re-join devices of a participant that has left previously. Its device are still referenced until they 're all left. */
 void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Participant> &participant){
 	addParticipant(participant->getAddress());
-	for (auto device : participant->getPrivate()->getDevices()){
+	for (auto device : participant->getDevices()){
 		switch(device->getState()){
 			case ParticipantDevice::State::Leaving:
 			case ParticipantDevice::State::Left:
@@ -199,7 +199,7 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	L_Q();
 
 	shared_ptr<Participant> me = q->getMe();
-	shared_ptr<CallSession> session = me->getPrivate()->getSession();
+	shared_ptr<CallSession> session = me->getSession();
 	session->startIncomingNotification(false);
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
@@ -217,7 +217,7 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	 */
 	for (auto participant : q->getParticipants()){
 		unSubscribeRegistrationForParticipant(participant->getAddress());
-		for (auto devices : participant->getPrivate()->getDevices()){
+		for (auto devices : participant->getDevices()){
 			auto session = devices->getSession();
 			if (session) session->setListener(nullptr);
 		}
@@ -269,8 +269,8 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (joiningPendingAfterCreation) {
 		// Check if the participant is already there, this INVITE may come from an unknown device of an already present participant
 		participant = addParticipant(IdentityAddress(op->getFrom()));
-		participant->getPrivate()->setAdmin(true);
-		device = participant->getPrivate()->addDevice(gruu);
+		participant->setAdmin(true);
+		device = participant->addDevice(gruu);
 		session = device->getSession();
 		mInitiatorDevice = device;
 
@@ -295,19 +295,19 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			op->decline(SalReasonNotAcceptable);
 			return;
 		}
-		device = participant->getPrivate()->addDevice(gruu);
+		device = participant->addDevice(gruu);
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne){
 			if (device->getState() == ParticipantDevice::State::Left){
 				lInfo() << q << " " << gruu << " is reconnected to the one to one chatroom.";
 				setParticipantDeviceState(device, ParticipantDevice::State::Joining);
 			}
-			participant->getPrivate()->setAdmin(true);
+			participant->setAdmin(true);
 		}
 		session = device->getSession();
 	}
 
 	if (!session || (session->getPrivate()->getOp() != op)) {
-		session = participant->getPrivate()->createSession(*q, nullptr, false, this);
+		session = participant->createSession(*q, nullptr, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->getTo()));
 		session->startIncomingNotification(false);
 		Address addr = qConference->conferenceAddress;
@@ -355,7 +355,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	Address addr(confAddr);
 	addr.setParam("isfocus");
 	shared_ptr<Participant> me = q->getMe();
-	shared_ptr<CallSession> session = me->getPrivate()->createSession(*q, nullptr, false, this);
+	shared_ptr<CallSession> session = me->createSession(*q, nullptr, false, this);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
 	session->redirect(addr);
@@ -373,7 +373,7 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 		 * is found is Left state, it must be invited first.
 		 */
 
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+		for (const auto &device : participant->getDevices()) {
 
 			string uri(device->getAddress().asString());
 			auto & msgQueue = queuedMessages[uri];
@@ -402,7 +402,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 
-	for (const auto &device : participant->getPrivate()->getDevices()) {
+	for (const auto &device : participant->getDevices()) {
 		if ((device->getState() == ParticipantDevice::State::Leaving)
 			|| (device->getState() == ParticipantDevice::State::Left)
 		)
@@ -430,8 +430,8 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (const shared_ptr<const CallSession> &session) const {
 	for (const auto &participant : authorizedParticipants) {
-		shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(session);
-		if (device || (participant->getPrivate()->getSession() == session))
+		shared_ptr<ParticipantDevice> device = participant->findDevice(session);
+		if (device || (participant->getSession() == session))
 			return participant;
 	}
 	return nullptr;
@@ -566,7 +566,7 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &co
 	L_Q_T(LocalConference, qConference);
 
 	if (!conferenceAddress.isValid()) {
-		shared_ptr<CallSession> session = q->getMe()->getPrivate()->getSession();
+		shared_ptr<CallSession> session = q->getMe()->getSession();
 		LinphoneErrorInfo *ei = linphone_error_info_new();
 		linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
 		session->decline(ei);
@@ -630,7 +630,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 
 	// Remove devices that are in the chatroom but no longer in the given list
 	list<shared_ptr<ParticipantDevice>> devicesToRemove;
-	for (const auto &device : participant->getPrivate()->getDevices()) {
+	for (const auto &device : participant->getDevices()) {
 		auto predicate = [device] (const ParticipantDeviceIdentity & deviceIdentity) {
 			return device->getAddress() == deviceIdentity.getAddress();
 		};
@@ -737,7 +737,7 @@ void ServerGroupChatRoomPrivate::updateParticipantsSessions(){
 	L_Q();
 
 	for (const auto &p : q->getParticipants()){
-		for (const auto &device : p->getPrivate()->getDevices()){
+		for (const auto &device : p->getDevices()){
 			updateParticipantDeviceSession(device);
 		}
 	}
@@ -746,17 +746,17 @@ void ServerGroupChatRoomPrivate::updateParticipantsSessions(){
 void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(deviceInfo.getAddress());
+	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo.getAddress());
 
 	if (device) {
 		// Nothing to do, but set the name because the user-agent is not known for the initiator device.
 		device->setName(deviceInfo.getName());
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
-		bool allDevLeft = !participant->getPrivate()->getDevices().empty() && allDevicesLeft(participant);
+		bool allDevLeft = !participant->getDevices().empty() && allDevicesLeft(participant);
 		/*
 		 * This is a really new device.
 		 */
-		device = participant->getPrivate()->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
+		device = participant->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
 
 		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
@@ -804,10 +804,10 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
-	me->getPrivate()->setAddress(confAddr);
+	me->setAddress(confAddr);
 	Address addr(confAddr);
 	addr.setParam("isfocus");
-	shared_ptr<CallSession> session = me->getPrivate()->getSession();
+	shared_ptr<CallSession> session = me->getSession();
 	session->redirect(addr);
 	joiningPendingAfterCreation = true;
 	chatRoomListener->onChatRoomInsertRequested(q->getSharedFromThis());
@@ -839,7 +839,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		if (capabilities & ServerGroupChatRoom::Capabilities::Encrypted)
 			csp.addCustomHeader("End-To-End-Encrypted", "true");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
-		session = participant->getPrivate()->createSession(*q, &csp, false, this);
+		session = participant->createSession(*q, &csp, false, this);
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->conferenceAddress, device->getAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
@@ -919,7 +919,7 @@ void ServerGroupChatRoomPrivate::notifyParticipantDeviceRegistration(const Ident
 		lError() << q << ": " << participantDevice << " is not part of the chatroom.";
 		return;
 	}
-	shared_ptr<ParticipantDevice> pd = participant->getPrivate()->findDevice(participantDevice);
+	shared_ptr<ParticipantDevice> pd = participant->findDevice(participantDevice);
 	if (!pd){
 		/* A device that does not have the required capabilities may be notified. */
 		lInfo() << q << ": device " << participantDevice << " is not part of any participant of the chatroom.";
@@ -939,7 +939,7 @@ bool ServerGroupChatRoomPrivate::isAdminLeft () const {
 void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg) {
 	L_Q();
 	for (const auto &participant : q->getParticipants()) {
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+		for (const auto &device : participant->getDevices()) {
 			// Queue the message for all devices except the one that sent it
 			if (msg->fromAddr != device->getAddress()){
 				queueMessage(msg, device->getAddress());
@@ -971,7 +971,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 	L_Q_T(LocalConference, qConference);
 	shared_ptr<Participant> participantCopy = participant; // make a copy of the shared_ptr because the participant may be removed by setParticipantDeviceState().
 	lInfo() << q << " device " << deviceAddress << " is removed because it is has unregistered.";
-	auto participantDevice = participant->getPrivate()->findDevice(deviceAddress);
+	auto participantDevice = participant->findDevice(deviceAddress);
 	if (!participantDevice){
 		lError() << q << " device " << deviceAddress << " is removed, but we can't find it in this chatroom.";
 		return;
@@ -981,7 +981,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
 	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
-	participantCopy->getPrivate()->removeDevice(deviceAddress);
+	participantCopy->removeDevice(deviceAddress);
 }
 
 // -----------------------------------------------------------------------------
@@ -989,7 +989,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 bool ServerGroupChatRoomPrivate::allDevicesLeft(const std::shared_ptr<Participant> &participant){
 	bool allDevicesLeft = true;
 
-	for (const auto &device : participant->getPrivate()->getDevices()) {
+	for (const auto &device : participant->getDevices()) {
 		if (device->getState() != ParticipantDevice::State::Left) {
 			allDevicesLeft = false;
 			break;
@@ -1132,7 +1132,7 @@ LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_
 
 	d->params = ChatRoomParams::fromCapabilities(d->capabilities);
 
-	shared_ptr<CallSession> session = getMe()->getPrivate()->createSession(*this, nullptr, false, d);
+	shared_ptr<CallSession> session = getMe()->createSession(*this, nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 }
 
@@ -1274,7 +1274,7 @@ void ServerGroupChatRoom::leave () {}
 void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
 	for (const auto &participant : getParticipants()) {
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+		for (const auto &device : participant->getDevices()) {
 			if (device->getAddress() == addr) {
 				d->setParticipantDeviceState(device, ParticipantDevice::State::Present);
 				d->dispatchQueuedMessages();
@@ -1297,7 +1297,7 @@ bool ServerGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>
 void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
 	L_D();
 	if (isAdmin != participant->isAdmin()) {
-		participant->getPrivate()->setAdmin(isAdmin);
+		participant->setAdmin(isAdmin);
 		if (!(d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
 			shared_ptr<ConferenceParticipantEvent> event = eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
 			getCore()->getPrivate()->mainDb->addEvent(event);
