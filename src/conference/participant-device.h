@@ -83,7 +83,6 @@ private:
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 
-	L_DECLARE_PRIVATE(ParticipantDevice);
 	L_DISABLE_COPY(ParticipantDevice);
 };
 
