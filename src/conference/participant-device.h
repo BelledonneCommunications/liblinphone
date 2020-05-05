@@ -22,13 +22,14 @@
 
 #include <string>
 
+#include <belle-sip/object++.hh>
+
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "chat/encryption/encryption-engine.h"
 
 #include "linphone/types.h"
 #include "linphone/utils/general.h"
-#include "object/object.h"
 
 // =============================================================================
 
@@ -38,7 +39,7 @@ class CallSession;
 class Core;
 class Participant;
 
-class ParticipantDevice : public Object {
+class ParticipantDevice : public bellesip::HybridObject<LinphoneParticipantDevice, ParticipantDevice> {
 public:
 	enum class State {
 		Joining, //an INVITE has been sent
@@ -74,8 +75,6 @@ public:
 	bool isValid () const { return mGruu.isValid(); }
 
 private:
-	L_OVERRIDE_SHARED_FROM_THIS(ParticipantDevice);
-
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
 	std::string mName;
