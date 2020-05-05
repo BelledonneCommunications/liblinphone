@@ -44,8 +44,7 @@ using namespace Xsd::ConferenceInfo;
 
 // -----------------------------------------------------------------------------
 
-RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) :
-Object(*new ObjectPrivate) {
+RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) {
 	conf = remoteConference;
 	conf->getCore()->getPrivate()->registerListener(this);
 }
