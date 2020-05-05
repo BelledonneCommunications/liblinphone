@@ -24,7 +24,7 @@
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"

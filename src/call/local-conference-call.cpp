@@ -18,7 +18,7 @@
  */
 
 #include "conference/local-conference.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "local-conference-call-p.h"
 
@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 shared_ptr<CallSession> LocalConferenceCallPrivate::getActiveSession () const {
 	L_Q();
-	return q->getActiveParticipant()->getPrivate()->getSession();
+	return q->getActiveParticipant()->getSession();
 }
 
 // =============================================================================
@@ -48,7 +48,7 @@ LocalConferenceCall::LocalConferenceCall (
 	LocalConference(getCore(), IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate()) {
 	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
 	shared_ptr<Participant> participant = getParticipants().front();
-	participant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+	participant->getSession()->configure(direction, cfg, op, from, to);
 }
 
 LocalConferenceCall::~LocalConferenceCall () {

@@ -29,7 +29,7 @@
 #include "chat/chat-room/server-group-chat-room.h"
 #endif
 #include "conference/participant-device.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "core/core-p.h"
 #include "event-log/event-log-p.h"
 #include "event-log/events.h"
@@ -409,7 +409,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			insertSipAddress(me->getAddress().asString()),
 			me->isAdmin()
 		);
-		for (const auto &device : me->getPrivate()->getDevices())
+		for (const auto &device : me->getDevices())
 			insertChatRoomParticipantDevice(meId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
@@ -419,7 +419,7 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 			insertSipAddress(participant->getAddress().asString()),
 			participant->isAdmin()
 		);
-		for (const auto &device : participant->getPrivate()->getDevices())
+		for (const auto &device : participant->getDevices())
 			insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
 	}
 
@@ -3195,8 +3195,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
 					shared_ptr<Participant> participant = make_shared<Participant>(nullptr, IdentityAddress(row.get<string>(1)));
-					ParticipantPrivate *dParticipant = participant->getPrivate();
-					dParticipant->setAdmin(!!row.get<int>(2));
+					participant->setAdmin(!!row.get<int>(2));
 
 					// Fetch devices.
 					{
@@ -3207,7 +3206,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 
 						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(participantId));
 						for (const auto &row : rows) {
-							shared_ptr<ParticipantDevice> device = dParticipant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
+							shared_ptr<ParticipantDevice> device = participant->addDevice(IdentityAddress(row.get<string>(0)), row.get<string>(2, ""));
 							device->setState(ParticipantDevice::State(static_cast<unsigned int>(row.get<int>(1, 0))));
 						}
 					}
@@ -3262,7 +3261,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					dChatRoom->setState(ChatRoom::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())
-					participant->getPrivate()->setConference(conference);
+					participant->setConference(conference);
 #else
 				lWarning() << "Advanced IM such as group chat is disabled!";
 #endif
@@ -3356,7 +3355,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 			d->insertSipAddress(me->getAddress().asString()),
 			true
 		);
-		for (const auto &device : me->getPrivate()->getDevices())
+		for (const auto &device : me->getDevices())
 			d->insertChatRoomParticipantDevice(meId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 
 		for (const auto &participant : clientGroupChatRoom->getParticipants()) {
@@ -3365,7 +3364,7 @@ void MainDb::migrateBasicToClientGroupChatRoom (
 				d->insertSipAddress(participant->getAddress().asString()),
 				true
 			);
-			for (const auto &device : participant->getPrivate()->getDevices())
+			for (const auto &device : participant->getDevices())
 				d->insertChatRoomParticipantDevice(participantId, d->insertSipAddress(device->getAddress().asString()), device->getName());
 		}
 

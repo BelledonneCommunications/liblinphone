@@ -25,7 +25,7 @@
 #include "c-wrapper/c-wrapper.h"
 #include "conference/local-conference.h"
 #include "conference/participant-device.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -97,7 +97,7 @@ string LocalConferenceEventHandler::createNotifyFullState (int notifyId, bool on
 		user.getRoles()->getEntry().push_back(participant->isAdmin() ? "admin" : "participant");
 		user.setState(StateType::full);
 
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+		for (const auto &device : participant->getDevices()) {
 			const string &gruu = device->getAddress().asString();
 			EndpointType endpoint = EndpointType();
 			endpoint.setEntity(gruu);
@@ -220,7 +220,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address 
 
 	shared_ptr<Participant> p = conf->findParticipant(addr);
 	if (p) {
-		for (const auto &device : p->getPrivate()->getDevices()) {
+		for (const auto &device : p->getDevices()) {
 			const string &gruu = device->getAddress().asString();
 			EndpointType endpoint = EndpointType();
 			endpoint.setEntity(gruu);
@@ -289,7 +289,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Ad
 	endpoint.setEntity(gruu.asStringUriOnly());
 	shared_ptr<Participant> p = conf->findParticipant(addr);
 	if (p) {
-		shared_ptr<ParticipantDevice> device = p->getPrivate()->findDevice(gruu);
+		shared_ptr<ParticipantDevice> device = p->findDevice(gruu);
 		if (device) {
 			const string &displayName = device->getName();
 			if (!displayName.empty())
@@ -343,7 +343,7 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 		return;
 
 	for (const auto &p : handler->conf->getParticipants()) {
-		for (const auto &d : p->getPrivate()->getDevices()) {
+		for (const auto &d : p->getDevices()) {
 			if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
 				handler->conf->onFirstNotifyReceived(d->getAddress());
 				return;
@@ -384,7 +384,7 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 }
 
 void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
-	for (const auto &device : participant->getPrivate()->getDevices())
+	for (const auto &device : participant->getDevices())
 		notifyParticipantDevice(notify, device);
 }
 
@@ -430,7 +430,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 	char *contactAddrStr = linphone_address_as_string(lContactAddr);
 	IdentityAddress contactAddr(contactAddrStr);
 	bctbx_free(contactAddrStr);
-	shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(contactAddr);
+	shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 	if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
 		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 			<< "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
@@ -469,7 +469,7 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 		char *contactAddrStr = linphone_address_as_string(lContactAddr);
 		IdentityAddress contactAddr(contactAddrStr);
 		bctbx_free(contactAddrStr);
-		shared_ptr<ParticipantDevice> device = participant->getPrivate()->findDevice(contactAddr);
+		shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
 		if (!device)
 			return;
 		lInfo() << "End of subscription for device [" << device->getAddress()
