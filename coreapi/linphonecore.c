@@ -1160,8 +1160,13 @@ static void net_config_read(LinphoneCore *lc) {
 	nat_policy_ref = lp_config_get_string(lc->config, "net", "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
 		LinphoneNatPolicy *nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
-		linphone_core_set_nat_policy(lc, nat_policy);
-		linphone_nat_policy_unref(nat_policy);
+		if (nat_policy) {
+			linphone_core_set_nat_policy(lc, nat_policy);
+			linphone_nat_policy_unref(nat_policy);
+		} else {
+			bcbtx_warning("Failed to create nat policy from ref [%s]", nat_policy_ref);
+		}
+		
 	}
 	if (lc->nat_policy == NULL){
 		/*this will create a default nat policy according to deprecated config keys, or an empty nat policy otherwise*/
