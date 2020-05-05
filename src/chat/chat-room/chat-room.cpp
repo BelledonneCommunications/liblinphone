@@ -482,6 +482,7 @@ void ChatRoom::deleteFromDb () {
 	L_D();
 	// Keep a ref, otherwise the object might be destroyed before we can set the Deleted state
 	shared_ptr<AbstractChatRoom> ref = this->getSharedFromThis();
+printf("DADA - charroom %p\n", this); 
 	Core::deleteChatRoom(ref);
 	d->setState(ChatRoom::State::Deleted);
 }

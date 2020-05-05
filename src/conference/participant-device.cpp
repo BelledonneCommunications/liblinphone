@@ -18,7 +18,6 @@
  */
 
 #include "chat/encryption/encryption-engine.h"
-#include "object/object-p.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -35,10 +34,10 @@ class Core;
 
 // =============================================================================
 
-ParticipantDevice::ParticipantDevice () : Object(*new ObjectPrivate) {}
+ParticipantDevice::ParticipantDevice () {}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
-	:  Object(*new ObjectPrivate), mParticipant(participant), mGruu(gruu), mName(name) {}
+	:  mParticipant(participant), mGruu(gruu), mName(name) {}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)

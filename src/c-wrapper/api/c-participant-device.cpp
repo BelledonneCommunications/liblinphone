@@ -27,9 +27,10 @@
 
 using namespace std;
 
-L_DECLARE_C_OBJECT_IMPL(ParticipantDevice,
+/*L_DECLARE_C_OBJECT_IMPL(ParticipantDevice,
 	mutable LinphoneAddress *addressCache;
 );
+*/
 
 LinphoneParticipantDevice *linphone_participant_device_ref (LinphoneParticipantDevice *participant_device) {
 	belle_sip_object_ref(participant_device);
@@ -41,25 +42,23 @@ void linphone_participant_device_unref (LinphoneParticipantDevice *participant_d
 }
 
 void *linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device) {
-	return L_GET_USER_DATA_FROM_C_OBJECT(participant_device);
+	//return L_GET_USER_DATA_FROM_C_OBJECT(participant_device);
+	return nullptr;
 }
 
 void linphone_participant_device_set_user_data(LinphoneParticipantDevice *participant_device, void *ud) {
-	L_SET_USER_DATA_FROM_C_OBJECT(participant_device, ud);
+	//L_SET_USER_DATA_FROM_C_OBJECT(participant_device, ud);
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
-	LinphonePrivate::Address addr(L_GET_CPP_PTR_FROM_C_OBJECT(participant_device)->getAddress());
-	if (participant_device->addressCache)
-		linphone_address_unref(participant_device->addressCache);
-	participant_device->addressCache = linphone_address_new(addr.asString().c_str());
-	return participant_device->addressCache;
+	LinphonePrivate::Address addr(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAddress());
+	return linphone_address_new(addr.asString().c_str());
 }
 
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
-	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(participant_device)->getSecurityLevel();
+	return (LinphoneChatRoomSecurityLevel)(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getSecurityLevel());
 }
 
 const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
-	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(participant_device)->getName());
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getName().c_str();
 }

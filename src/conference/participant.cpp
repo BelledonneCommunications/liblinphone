@@ -59,7 +59,7 @@ shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gru
 	shared_ptr<ParticipantDevice> device = findDevice(gruu);
 	if (device)
 		return device;
-	device = make_shared<ParticipantDevice>(this, gruu, name);
+	device = std::shared_ptr<ParticipantDevice>(new ParticipantDevice(this, gruu, name),[](ParticipantDevice* p){p->unref();}) ;
 	devices.push_back(device);
 	return device;
 }
