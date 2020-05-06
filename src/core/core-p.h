@@ -53,8 +53,7 @@ public:
 	void unregisterListener (CoreListener *listener);
 	void uninit ();
 	void shutdown();
-	void stop();
-	bool asyncStopDone();
+	bool isShutdownDone();
 
 	void notifyGlobalStateChanged (LinphoneGlobalState state);
 	void notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable);

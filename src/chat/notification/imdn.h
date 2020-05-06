@@ -62,12 +62,13 @@ public:
 	void notifyDisplay (const std::shared_ptr<ChatMessage> &message);
 
 	void onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message);
+	bool hasUndeliveredImdnMessage();
 
 	// CoreListener
-	void onGlobalStateChanged (LinphoneGlobalState state) override;
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
 	void onRegistrationStateChanged(LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
 	bool aggregationEnabled () const;
+	void onLinphoneCoreStop();
 
 	static std::string createXml (const std::string &id, time_t time, Imdn::Type imdnType, LinphoneReason reason);
 	static void parse (const std::shared_ptr<ChatMessage> &chatMessage);

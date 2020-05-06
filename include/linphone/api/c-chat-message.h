@@ -485,6 +485,13 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_sta
 );
 
 /**
+ * Gets the callId accociated with the message
+ * @param[in] msg #LinphoneChatMessage object.
+ * @return the call Id
+ */
+LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *msg);
+
+/**
  * @}
  */
 

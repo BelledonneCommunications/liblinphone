@@ -270,7 +270,8 @@ void CallPrivate::onCallSessionEarlyFailed (const shared_ptr<CallSession> &sessi
 		linphone_call_log_get_dir(log),
 		linphone_address_clone(linphone_call_log_get_from(log)),
 		linphone_address_clone(linphone_call_log_get_to(log)),
-		ei);
+		ei,
+		log->call_id);
 	linphone_call_unref(L_GET_C_BACK_PTR(q));
 }
 

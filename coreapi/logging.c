@@ -35,6 +35,7 @@ struct _LinphoneLoggingService {
 	LinphoneLoggingServiceCbs *cbs; // Deprecated, use a list of Cbs instead
 	bctbx_list_t *callbacks;
 	bctbx_log_handler_t *log_handler;
+	char *domain;
 };
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneLoggingService);
@@ -241,12 +242,20 @@ void linphone_logging_service_set_log_level(LinphoneLoggingService *log_service,
 	for (domain=_linphone_logging_service_log_domains; *domain; domain++) {
 		bctbx_set_log_level(*domain, _linphone_log_level_to_bctbx_log_level(loglevel));
 	}
+
+	if (log_service->domain) {
+		bctbx_set_log_level(log_service->domain, _linphone_log_level_to_bctbx_log_level(loglevel));
+	}
 }
 
 void linphone_logging_service_set_log_level_mask(LinphoneLoggingService *log_service, unsigned int mask) {
 	const char **domain;
 	for (domain=_linphone_logging_service_log_domains; *domain; domain++) {
 		bctbx_set_log_level_mask(*domain, (int)_linphone_log_mask_to_bctbx_log_mask(mask));
+	}
+
+	if (log_service->domain) {
+		bctbx_set_log_level_mask(log_service->domain, (int)_linphone_log_mask_to_bctbx_log_mask(mask));
 	}
 }
 
@@ -257,6 +266,47 @@ unsigned int linphone_logging_service_get_log_level_mask(const LinphoneLoggingSe
 void linphone_logging_service_set_log_file(const LinphoneLoggingService *service, const char *dir, const char *filename, size_t max_size) {
 	bctbx_log_handler_t *log_handler = bctbx_create_file_log_handler((uint64_t)max_size, dir, filename);
 	bctbx_add_log_handler(log_handler);
+}
+
+void linphone_logging_service_set_domain(LinphoneLoggingService *log_service, const char *domain) {
+	log_service->domain = bctbx_strdup(domain);
+}
+
+const char *linphone_logging_service_get_domain(LinphoneLoggingService *log_service) {
+	return log_service->domain;
+}
+
+void _linphone_logging_service_print(LinphoneLoggingService *log_service, const char *msg, _LinphoneLogLevel log_level, int dummy, ...) {
+	if (log_service->domain) {
+		va_list empty_va_list;
+		va_start(empty_va_list, dummy);
+		bctbx_logv(log_service->domain, _linphone_log_level_to_bctbx_log_level(log_level), msg, empty_va_list);
+		va_end(empty_va_list);
+	}
+}
+
+void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelDebug, 0);
+}
+
+void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelTrace, 0);
+}
+
+void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelMessage, 0);
+}
+
+void linphone_logging_service_warning(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelWarning, 0);
+}
+
+void linphone_logging_service_error(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelError, 0);
+}
+
+void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *msg) {
+	_linphone_logging_service_print(log_service, msg, LinphoneLogLevelFatal, 0);
 }
 
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneLoggingService, belle_sip_object_t,

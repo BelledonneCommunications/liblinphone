@@ -192,6 +192,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	core/core.h
 	core/paths/paths.h
 	core/platform-helpers/platform-helpers.h
+	core/shared-core-helpers/shared-core-helpers.h
 	db/abstract/abstract-db-p.h
 	db/abstract/abstract-db.h
 	db/internal/statements.h
@@ -233,6 +234,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/object.h
 	object/property-container.h
 	object/singleton.h
+	push-notification-message/push-notification-message.h
 	sal/sal.h
 	search/magic-search-p.h
 	search/magic-search.h
@@ -302,6 +304,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-device-identity.cpp
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
+	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -365,6 +368,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	core/core.cpp
 	core/paths/paths.cpp
 	core/platform-helpers/platform-helpers.cpp
+	core/shared-core-helpers/shared-core-helpers.cpp
 	db/abstract/abstract-db.cpp
 	db/internal/statements.cpp
 	db/main-db-chat-message-key.cpp
@@ -391,6 +395,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/clonable-object.cpp
 	object/object.cpp
 	object/property-container.cpp
+	push-notification-message/push-notification-message.cpp
 	sal/call-op.cpp
 	sal/event-op.cpp
 	sal/message-op.cpp
@@ -440,6 +445,7 @@ if (APPLE)
 	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/paths/paths-apple.mm)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-apple.h)
 	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/platform-helpers/ios-platform-helpers.mm)
+	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/shared-core-helpers/ios-shared-core-helpers.mm)
 elseif (ANDROID)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-android.cpp core/platform-helpers/android-platform-helpers.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-android.h)

@@ -125,6 +125,18 @@ static void core_init_stop_test(void) {
 	}
 }
 
+static void core_init_unref_test(void) {
+	LinphoneCore* lc;
+	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
+
+	/* until we have good certificates on our test server... */
+	linphone_core_verify_server_certificates(lc,FALSE);
+	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
+		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
+		linphone_core_unref(lc);
+	}
+}
+
 static void core_init_stop_start_test(void) {
 	LinphoneCore* lc;
 	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
@@ -1704,6 +1716,7 @@ test_t setup_tests[] = {
 	TEST_NO_TAG("Linphone core init/uninit", core_init_test),
 	TEST_NO_TAG("Linphone core init/uninit from existing rc", core_init_test_2),
 	TEST_NO_TAG("Linphone core init/stop/uninit", core_init_stop_test),
+	TEST_NO_TAG("Linphone core init/unref", core_init_unref_test),
 	TEST_NO_TAG("Linphone core init/stop/start/uninit", core_init_stop_start_test),
 	TEST_NO_TAG("Linphone random transport port",core_sip_transport_test),
 	TEST_NO_TAG("Linphone interpret url", linphone_interpret_url_test),
