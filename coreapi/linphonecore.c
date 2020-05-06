@@ -2586,7 +2586,7 @@ char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *
 	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
 	
 	bool_t use_legacy_params = !!lp_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
-	const char *format = "pn-provider=%s;pn-params=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
+	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
 	if (use_legacy_params) {
 		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
 	}
