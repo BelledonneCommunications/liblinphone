@@ -28,13 +28,15 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceIdPrivate;
 
-class LINPHONE_PUBLIC ConferenceId : public ClonableObject {
+class LINPHONE_PUBLIC ConferenceId {
 public:
 	ConferenceId ();
 	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
 	ConferenceId (const ConferenceId &other);
 
-	ConferenceId *clone () const override {
+	virtual ~ConferenceId() = default;
+
+	ConferenceId *clone () const {
 		return new ConferenceId(*this);
 	}
 
@@ -51,7 +53,10 @@ public:
 	bool isValid () const;
 
 private:
-	L_DECLARE_PRIVATE(ConferenceId);
+
+	IdentityAddress peerAddress;
+	IdentityAddress localAddress;
+
 };
 
 inline std::ostream &operator<< (std::ostream &os, const ConferenceId &conferenceId) {
