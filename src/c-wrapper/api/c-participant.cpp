@@ -28,10 +28,6 @@
 
 using namespace std;
 
-L_DECLARE_C_OBJECT_IMPL(Participant,
-	mutable LinphoneAddress *addressCache;
-);
-
 LinphoneParticipant *linphone_participant_ref (LinphoneParticipant *participant) {
 	belle_sip_object_ref(participant);
 	return participant;
@@ -42,36 +38,34 @@ void linphone_participant_unref (LinphoneParticipant *participant) {
 }
 
 void *linphone_participant_get_user_data(const LinphoneParticipant *participant) {
-	return L_GET_USER_DATA_FROM_C_OBJECT(participant);
+//	return L_GET_USER_DATA_FROM_C_OBJECT(participant);
+	return nullptr;
 }
 
 void linphone_participant_set_user_data(LinphoneParticipant *participant, void *ud) {
-	L_SET_USER_DATA_FROM_C_OBJECT(participant, ud);
+//	L_SET_USER_DATA_FROM_C_OBJECT(participant, ud);
 }
 
 const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipant *participant) {
-	LinphonePrivate::Address addr(L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getAddress());
-	if (participant->addressCache)
-		linphone_address_unref(participant->addressCache);
-	participant->addressCache = linphone_address_new(addr.asString().c_str());
-	return participant->addressCache;
+	LinphonePrivate::Address addr(LinphonePrivate::Participant::toCpp(participant)->getAddress());
+	return linphone_address_new(addr.asString().c_str());
 }
 
 bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(participant)->isAdmin();
+	return LinphonePrivate::Participant::toCpp(participant)->isAdmin();
 }
 
 LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant) {
-	return (LinphoneChatRoomSecurityLevel)L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getSecurityLevel();
+	return (LinphoneChatRoomSecurityLevel)LinphonePrivate::Participant::toCpp(participant)->getSecurityLevel();
 }
 
 bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *participant) {
-	return LinphonePrivate::ParticipantDevice::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(participant)->getDevices());
+	return LinphonePrivate::ParticipantDevice::getCListFromCppList(LinphonePrivate::Participant::toCpp(participant)->getDevices());
 }
 
 LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {
 	char *addrStr = linphone_address_as_string(address);
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
-	return linphone_participant_device_ref (L_GET_CPP_PTR_FROM_C_OBJECT(participant)->findDevice(deviceAddress)->toC());
+	return linphone_participant_device_ref (LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress)->toC());
 }

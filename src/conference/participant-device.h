@@ -53,6 +53,8 @@ public:
 	ParticipantDevice ();
 	explicit ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const std::string &name = "");
 	virtual ~ParticipantDevice ();
+	// non clonable object
+	ParticipantDevice *clone() const override { return nullptr; }
 
 	bool operator== (const ParticipantDevice &device) const;
 

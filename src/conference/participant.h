@@ -22,12 +22,11 @@
 
 #include <list>
 
+#include <belle-sip/object++.hh>
+
 #include "address/identity-address.h"
 #include "chat/chat-room/abstract-chat-room.h"
 #include "conference/params/call-session-params.h"
-#include "object/object.h"
-
-#include "object/object-p.h"
 
 #include "conference/participant-device.h"
 #include "conference/session/call-session.h"
@@ -41,7 +40,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ClientGroupChatRoom;
 class Conference;
 
-class Participant : public Object {
+class Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
 	// TODO: Remove... It's ugly.
 	friend class Call;
 	friend class CallPrivate;
@@ -65,10 +64,10 @@ class Participant : public Object {
 	friend class ServerGroupChatRoomPrivate;
 
 public:
-	L_OVERRIDE_SHARED_FROM_THIS(Participant);
-
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 	virtual ~Participant();
+	// non clonable object
+	Participant *clone() const override { return nullptr; }
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;

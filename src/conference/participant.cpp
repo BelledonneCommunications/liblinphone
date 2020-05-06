@@ -19,9 +19,6 @@
 
 #include <algorithm>
 
-#include "object/object-p.h"
-#include "participant.h"
-
 #include "participant.h"
 #include "params/media-session-params.h"
 #include "session/media-session.h"
@@ -32,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-Participant::Participant (Conference *conference, const IdentityAddress &address) : Object(*new ObjectPrivate) {
+Participant::Participant (Conference *conference, const IdentityAddress &address) {
 	mConference = conference;
 	addr = address.getAddressWithoutGruu();
 }
@@ -46,7 +43,7 @@ shared_ptr<CallSession> Participant::createSession (
 	const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
 ) {
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(conference.getCore(), getSharedFromThis(), params, listener);
+		session = make_shared<MediaSession>(conference.getCore(), this, params, listener);
 	} else {
 		session = make_shared<CallSession>(conference.getCore(), params, listener);
 	}
@@ -59,7 +56,7 @@ shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gru
 	shared_ptr<ParticipantDevice> device = findDevice(gruu);
 	if (device)
 		return device;
-	device = std::shared_ptr<ParticipantDevice>(new ParticipantDevice(this, gruu, name),[](ParticipantDevice* p){p->unref();}) ;
+	device = ParticipantDevice::create(this, gruu, name);
 	devices.push_back(device);
 	return device;
 }

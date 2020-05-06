@@ -591,13 +591,12 @@ int MediaSessionPrivate::sendDtmf (void *data, unsigned int revents) {
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<Participant> MediaSessionPrivate::getMe () const {
-	shared_ptr<Participant> participant = me.lock();
-	if (!participant) {
+Participant* MediaSessionPrivate::getMe () const {
+	if (!me) {
 		lWarning() << "Unable to get valid Participant instance";
 		throw std::bad_weak_ptr();
 	}
-	return participant;
+	return me;
 }
 
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
@@ -2106,7 +2105,7 @@ IceSession *MediaSessionPrivate::getIceSession()const{
 
 // =============================================================================
 
-MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener)
+MediaSession::MediaSession (const shared_ptr<Core> &core, Participant* me, const CallSessionParams *params, CallSessionListener *listener)
 	: CallSession(*new MediaSessionPrivate, core) {
 	L_D();
 	d->me = me;
