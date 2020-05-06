@@ -228,6 +228,7 @@ void IosSharedCoreHelpers::onLinphoneCoreStop() {
 }
 
 void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
+	lInfo() << "[SHARED] " << __FUNCTION__;
 	struct _LpConfig *config = lc->config;
 	string appGroupId = linphone_config_get_string(config, "shared_core", "app_group_id", "");
 
@@ -243,7 +244,7 @@ void IosSharedCoreHelpers::uninitSharedCore(LinphoneCore *lc) {
 	}
 
 	if (needUnlock) {
-		lInfo() << "[push] unlock executorCoreMutex";
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 		IosSharedCoreHelpers::executorCoreMutex.unlock();
 	}
 }
@@ -262,6 +263,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificationMes
 
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
+			lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
@@ -271,6 +273,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getPushNotificationMes
 		case SharedCoreState::noCoreStarted:
 			addNewCallIdToList(callId);
 			IosSharedCoreHelpers::executorCoreMutex.lock();
+			lInfo() << "[push] lock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			if (getSharedCoreState() == executorCoreStopped ||
 				getSharedCoreState() == mainCoreStarted ||
 				getSharedCoreState() == executorCoreStopping) {
@@ -442,7 +445,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(con
 }
 
 void IosSharedCoreHelpers::onMsgWrittenInUserDefaults() {
-   	lDebug() << "[SHARED] " << __FUNCTION__;
+   	lInfo() << "[SHARED] " << __FUNCTION__;
 	mMsgWrittenInUserDefaults = true;
 }
 
@@ -470,6 +473,10 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromExecutorCore
 	chatMessage = getChatMsgAndUpdateList(callId);
 	lInfo() << "[push] message found? " << (chatMessage ? "yes" : "no");
 	if (chatMessage) {
+		/* if we are here, the mutex is locked but won't be unlocked during
+		linphone_core_stop because this executor core doesn't need to be started */
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
+		IosSharedCoreHelpers::executorCoreMutex.unlock();
 		return chatMessage;
 	}
 
@@ -520,14 +527,14 @@ void IosSharedCoreHelpers::clearCallIdList() {
 	IosSharedCoreHelpers::callIdListMutex.lock();
 	IosSharedCoreHelpers::callIdList.clear();
 	IosSharedCoreHelpers::callIdListMutex.unlock();
-	lDebug() << "[push] clear callIdList";
+	lInfo() << "[push] clear callIdList";
 }
 
 void IosSharedCoreHelpers::addNewCallIdToList(string callId) {
 	IosSharedCoreHelpers::callIdListMutex.lock();
 	IosSharedCoreHelpers::callIdList.insert(callId);
 	IosSharedCoreHelpers::callIdListMutex.unlock();
-	lDebug() << "[push] add " << callId.c_str() << " to callIdList if not already present";
+	lInfo() << "[push] add " << callId.c_str() << " to callIdList if not already present";
 }
 
 void IosSharedCoreHelpers::removeCallIdFromList(string callId) {
@@ -550,6 +557,7 @@ shared_ptr<ChatRoom> IosSharedCoreHelpers::getPushNotificationChatRoom(const str
 
 	switch(getSharedCoreState()) {
 		case SharedCoreState::mainCoreStarted:
+			lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 			IosSharedCoreHelpers::executorCoreMutex.unlock();
 		case SharedCoreState::executorCoreStopping:
 		case SharedCoreState::executorCoreStopped:
@@ -699,7 +707,7 @@ void IosSharedCoreHelpers::resetSharedCoreState() {
 
 void IosSharedCoreHelpers::resetSharedCoreLastUpdateTime() {
 	userDefaultMutex.lock();
-	lDebug() <<"[SHARED] " << __FUNCTION__;
+	lInfo() <<"[SHARED] " << __FUNCTION__;
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
     [defaults setInteger:(NSInteger)ms_get_cur_time_ms() forKey:@LAST_UPDATE_TIME_SHARED_CORE];
 	[defaults release];
@@ -720,6 +728,7 @@ void IosSharedCoreHelpers::unlockSharedCoreIfNeeded() {
 		lInfo() << "[SHARED] " << __FUNCTION__ << " : no update during last 30 sec";
 		resetSharedCoreState();
 		IosSharedCoreHelpers::callIdListMutex.unlock();
+		lInfo() << "[push] unlock executorCoreMutex [" << &IosSharedCoreHelpers::executorCoreMutex << "]";
 		IosSharedCoreHelpers::executorCoreMutex.unlock();
 		IosSharedCoreHelpers::userDefaultMutex.unlock();
 	}
