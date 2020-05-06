@@ -590,11 +590,11 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	BC_ASSERT_PTR_NOT_NULL(uriParams);
 	if (uriParams) {
 #ifdef __ANDROID__
-		const char *expected = "pn-provider=fcm;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=fcm;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #elif TARGET_OS_IPHONE
-		const char *expected = "pn-provider=apple;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=apple;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #else
-		const char *expected = "pn-provider=liblinphone_tester;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=liblinphone_tester;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #endif
 		if (use_legacy_format) {
 #ifdef __ANDROID__
@@ -705,11 +705,11 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	BC_ASSERT_PTR_NOT_NULL(uriParams);
 	if (uriParams) {
 #ifdef __ANDROID__
-		const char *expected = "pn-provider=fcm;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=fcm;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #elif TARGET_OS_IPHONE
-		const char *expected = "pn-provider=apple;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=apple;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #else
-		const char *expected = "pn-provider=liblinphone_tester;pn-params=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
+		const char *expected = "pn-provider=liblinphone_tester;pn-param=test-app-id;pn-prid=test-push-token;pn-timeout=0;pn-silent=1";
 #endif
 		if (use_legacy_format) {
 #ifdef __ANDROID__
