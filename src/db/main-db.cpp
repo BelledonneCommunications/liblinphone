@@ -3194,7 +3194,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 				shared_ptr<Participant> me;
 				for (const auto &row : rows) {
-					shared_ptr<Participant> participant = make_shared<Participant>(nullptr, IdentityAddress(row.get<string>(1)));
+					shared_ptr<Participant> participant = Participant::create(nullptr, IdentityAddress(row.get<string>(1)));
 					participant->setAdmin(!!row.get<int>(2));
 
 					// Fetch devices.

@@ -139,7 +139,7 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		for (const auto &addr : identAddresses) {
 			auto participant = q->findParticipant(addr);
 			if (!participant) {
-				participant = make_shared<Participant>(q, addr);
+				participant = Participant::create(q,addr);
 				qConference->participants.push_back(participant);
 			}
 		}
@@ -270,12 +270,12 @@ RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
 	RemoteConference::setSubject(newSubject);
 	for (const auto &addr : Conference::parseResourceLists(content))
-		participants.push_back(make_shared<Participant>(this, addr));
+		participants.push_back(Participant::create(this,addr));
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
 	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
-	focus = make_shared<Participant>(this, identity);
+	focus = Participant::create(this,identity);
 	focus->addDevice(identity);
 }
 
@@ -311,7 +311,7 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
-	focus = make_shared<Participant>(this, peerAddress);
+	focus = Participant::create(this,peerAddress);
 	focus->addDevice(peerAddress);
 	conferenceAddress = peerAddress;
 	subject = newSubject;
@@ -555,8 +555,8 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 	return true;
 }
 
-bool ClientGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
-	return RemoteConference::removeParticipants(participants);
+bool ClientGroupChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participantsToDelete) {
+	return RemoteConference::removeParticipants(participantsToDelete);
 }
 
 shared_ptr<Participant> ClientGroupChatRoom::findParticipant (const IdentityAddress &addr) const {
@@ -759,7 +759,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 		return;
 	}
 
-	participant = make_shared<Participant>(this, addr);
+	participant = Participant::create(this,addr);
 	participants.push_back(participant);
 
 	if (isFullState)

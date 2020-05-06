@@ -27,11 +27,6 @@
 
 using namespace std;
 
-/*L_DECLARE_C_OBJECT_IMPL(ParticipantDevice,
-	mutable LinphoneAddress *addressCache;
-);
-*/
-
 LinphoneParticipantDevice *linphone_participant_device_ref (LinphoneParticipantDevice *participant_device) {
 	belle_sip_object_ref(participant_device);
 	return participant_device;

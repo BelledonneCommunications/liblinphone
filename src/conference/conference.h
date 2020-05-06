@@ -63,7 +63,7 @@ public:
 	void join () override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participantsToDelete) override;
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &newSubject) override;
 

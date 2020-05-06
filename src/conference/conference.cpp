@@ -41,7 +41,7 @@ Conference::Conference (
 	const IdentityAddress &myAddress,
 	CallSessionListener *newListener
 ) : CoreAccessor(core) {
-	me = make_shared<Participant>(this, myAddress);
+	me = Participant::create(this,myAddress);
 	listener = newListener;
 }
 
@@ -105,9 +105,9 @@ bool Conference::removeParticipant (const shared_ptr<Participant> &participant) 
 	return false;
 }
 
-bool Conference::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+bool Conference::removeParticipants (const list<shared_ptr<Participant>> &participantsToDelete) {
 	bool soFarSoGood = true;
-	for (const auto &p : participants)
+	for (const auto &p : participantsToDelete)
 		soFarSoGood &= removeParticipant(p);
 	return soFarSoGood;
 }

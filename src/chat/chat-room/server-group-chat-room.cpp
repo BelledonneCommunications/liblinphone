@@ -138,7 +138,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 
 	shared_ptr<Participant> participant = q->findParticipant(addr);
 	if (!participant) {
-		participant = make_shared<Participant>(qConference, addr);
+		participant = Participant::create(qConference,addr);
 		qConference->participants.push_back(participant);
 	}
 	/* Case of participant that is still referenced in the chatroom, but no longer authorized because it has been removed
