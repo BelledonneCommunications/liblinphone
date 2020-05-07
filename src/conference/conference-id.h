@@ -26,8 +26,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceIdPrivate;
-
 class LINPHONE_PUBLIC ConferenceId {
 public:
 	ConferenceId ();
