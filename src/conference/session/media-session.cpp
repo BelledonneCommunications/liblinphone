@@ -20,7 +20,7 @@
 //#include <iomanip>
 //#include <math.h>
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "call/call-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
@@ -986,7 +986,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 		if (destProxy && destProxy->op) {
 			// We can determine from the proxy connection whether IPv6 works - this is the most reliable
 			af = destProxy->op->getAddressFamily();
-		} else if (sal_address_is_ipv6(L_GET_PRIVATE_FROM_C_OBJECT(to)->getInternalAddress())) {
+		} else if (sal_address_is_ipv6(L_GET_CPP_PTR_FROM_C_OBJECT(to)->getInternalAddress())) {
 			af = AF_INET6;
 		}
 

@@ -19,7 +19,6 @@
 
 #include <algorithm>
 
-#include "address/address-p.h"
 #include "address/address.h"
 #include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -312,7 +311,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		session->startIncomingNotification(false);
 		Address addr = qConference->conferenceAddress;
 		addr.setParam("isfocus");
-		session->getPrivate()->getOp()->setContactAddress(addr.getPrivate()->getInternalAddress());
+		session->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
 		device->setSession(session);
 	}
 
@@ -847,7 +846,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		Address contactAddr(qConference->conferenceAddress);
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
-		session->getPrivate()->getOp()->setContactAddress(contactAddr.getPrivate()->getInternalAddress());
+		session->getPrivate()->getOp()->setContactAddress(contactAddr.getInternalAddress());
 	}
 	return session;
 }

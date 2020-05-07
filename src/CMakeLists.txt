@@ -100,7 +100,6 @@ endif()
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-	address/address-p.h
 	address/address.h
 	address/identity-address.h
 	address/identity-address-parser.h

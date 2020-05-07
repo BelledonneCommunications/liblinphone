@@ -21,7 +21,7 @@
 
 #include "linphone/utils/utils.h"
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "basic-to-client-group-chat-room.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/handlers/remote-conference-event-handler.h"
@@ -531,7 +531,7 @@ bool ClientGroupChatRoom::addParticipants (
 		for (const auto &addr : addresses) {
 			Address referToAddr = addr;
 			referToAddr.setParam("text");
-			referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
+			referOp->sendRefer(referToAddr.getInternalAddress());
 		}
 		referOp->unref();
 	}
@@ -549,7 +549,7 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
-	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
+	referOp->sendRefer(referToAddr.getInternalAddress());
 	referOp->unref();
 
 	return true;
@@ -593,7 +593,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	Address referToAddr = participant->getAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
-	referOp->sendRefer(referToAddr.getPrivate()->getInternalAddress());
+	referOp->sendRefer(referToAddr.getInternalAddress());
 	referOp->unref();
 }
 
