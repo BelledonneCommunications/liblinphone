@@ -105,9 +105,9 @@ bool Conference::removeParticipant (const shared_ptr<Participant> &participant) 
 	return false;
 }
 
-bool Conference::removeParticipants (const list<shared_ptr<Participant>> &participantsToDelete) {
+bool Conference::removeParticipants (const list<shared_ptr<Participant>> &participants) {
 	bool soFarSoGood = true;
-	for (const auto &p : participantsToDelete)
+	for (const auto &p : participants)
 		soFarSoGood &= removeParticipant(p);
 	return soFarSoGood;
 }

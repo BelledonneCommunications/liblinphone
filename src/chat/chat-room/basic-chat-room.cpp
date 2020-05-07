@@ -43,7 +43,7 @@ BasicChatRoom::BasicChatRoom (
 ) : ChatRoom(p, core, conferenceId, params) {
 	L_D();
 
-	d->me = Participant::create(nullptr, getPeerAddress());
+	d->me = Participant::create(nullptr, getLocalAddress());
 	d->participants.push_back(Participant::create(nullptr, getPeerAddress()));
 }
 

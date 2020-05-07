@@ -58,9 +58,9 @@ bool RemoteConference::addParticipant (const IdentityAddress &addr, const CallSe
 	}
 	participant = Participant::create(this,addr);
 	participant->createSession(*this, params, hasMedia, listener);
-	participants.push_back(participant->getSharedFromThis());
+	participants.push_back(participant);
 	if (!activeParticipant)
-		activeParticipant = participant->getSharedFromThis();
+		activeParticipant = participant;
 	return true;
 }
 

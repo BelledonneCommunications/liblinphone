@@ -334,7 +334,7 @@ unsigned int RemoteConferenceEventHandler::getLastNotify () const {
 };
 
 void RemoteConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
-	lastNotify = lastNotify;
+	this->lastNotify = lastNotify;
 }
 
 void RemoteConferenceEventHandler::resetLastNotify () {

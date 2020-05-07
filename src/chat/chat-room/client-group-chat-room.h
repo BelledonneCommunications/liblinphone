@@ -67,7 +67,7 @@ public:
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participantsToDelete) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 
@@ -92,7 +92,7 @@ public:
 private:
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const IdentityAddress &identity,
+		const IdentityAddress &focus,
 		const ConferenceId &conferenceId,
 		const std::string &subject,
 		const Content &content,
@@ -117,7 +117,7 @@ private:
 		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params,
 		const std::string &subject,
-		std::list<std::shared_ptr<Participant>> &&newParticipants,
+		std::list<std::shared_ptr<Participant>> &&participants,
 		unsigned int lastNotifyId,
 		bool hasBeenLeft = false
 	);
