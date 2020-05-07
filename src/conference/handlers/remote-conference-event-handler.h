@@ -44,11 +44,11 @@ public:
 	void multipartNotifyReceived (const std::string &xmlBody);
 	void unsubscribe ();
 
-	void setConferenceId (ConferenceId newConferenceId);
+	void setConferenceId (ConferenceId conferenceId);
 	const ConferenceId &getConferenceId () const;
 
 	unsigned int getLastNotify () const;
-	void setLastNotify (unsigned int newLastNotify);
+	void setLastNotify (unsigned int lastNotify);
 	void resetLastNotify ();
 	void invalidateSubscription ();
 

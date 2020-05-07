@@ -551,12 +551,12 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConferenceEventHandler::notify
 	return event;
 }
 
-void LocalConferenceEventHandler::setLastNotify (unsigned int newLastNotify) {
-	lastNotify = newLastNotify;
+void LocalConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
+	this->lastNotify = lastNotify;
 }
 
-void LocalConferenceEventHandler::setConferenceId (const ConferenceId &newConferenceId) {
-	conferenceId = newConferenceId;
+void LocalConferenceEventHandler::setConferenceId (const ConferenceId &conferenceId) {
+	this->conferenceId = conferenceId;
 }
 
 const ConferenceId &LocalConferenceEventHandler::getConferenceId () const {

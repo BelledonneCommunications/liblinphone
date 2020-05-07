@@ -65,7 +65,7 @@ public:
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participantsToDelete) override;
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
-	void setSubject (const std::string &newSubject) override;
+	void setSubject (const std::string &subject) override;
 
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
@@ -74,7 +74,7 @@ protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
 		const IdentityAddress &myAddress,
-		CallSessionListener *newListener
+		CallSessionListener *listener
 	);
 
 	bool isMe (const IdentityAddress &addr) const;

@@ -87,7 +87,7 @@ protected:
 	std::shared_ptr<CallSession> createSession (const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
 	inline std::shared_ptr<CallSession> getSession () const { return session; }
 	inline void removeSession () { session.reset(); }
-	inline void setAddress (const IdentityAddress &newAddr) { addr = newAddr; }
+	inline void setAddress (const IdentityAddress &addr) { this->addr = addr; }
 
 	std::shared_ptr<ParticipantDevice> addDevice (const IdentityAddress &gruu, const std::string &name = "");
 	void clearDevices ();

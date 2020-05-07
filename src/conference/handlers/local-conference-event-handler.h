@@ -60,8 +60,8 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
 
-	void setLastNotify (unsigned int newLastNotify);
-	void setConferenceId (const ConferenceId &newConferenceId);
+	void setLastNotify (unsigned int lastNotify);
+	void setConferenceId (const ConferenceId &conferenceId);
 	const ConferenceId &getConferenceId () const;
 
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);

@@ -39,10 +39,10 @@ LINPHONE_BEGIN_NAMESPACE
 Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
-	CallSessionListener *newListener
+	CallSessionListener *listener
 ) : CoreAccessor(core) {
-	me = Participant::create(this,myAddress);
-	listener = newListener;
+	this->me = Participant::create(this,myAddress);
+	this->listener = listener;
 }
 
 Conference::~Conference () {
@@ -116,8 +116,8 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 	lError() << "Conference class does not handle setParticipantAdminStatus() generically";
 }
 
-void Conference::setSubject (const string &newSubject) {
-	subject = newSubject;
+void Conference::setSubject (const string &subject) {
+	this->subject = subject;
 }
 
 // -----------------------------------------------------------------------------

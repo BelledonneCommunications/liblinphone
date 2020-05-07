@@ -1140,18 +1140,18 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const IdentityAddress &peerAddress,
 	AbstractChatRoom::CapabilitiesMask capabilities,
 	const shared_ptr<ChatRoomParams> &params,
-	const string &newSubject,
-	list<shared_ptr<Participant>> &&newParticipants,
+	const string &subject,
+	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress), params),
 LocalConference(getCore(), peerAddress, nullptr) {
 	L_D();
 
-	subject = newSubject;
-	participants = move(newParticipants);
-	conferenceAddress = peerAddress;
-	eventHandler->setLastNotify(lastNotifyId);
-	eventHandler->setConferenceId(d->conferenceId);
+	this->subject = subject;
+	this->participants = move(participants);
+	this->conferenceAddress = peerAddress;
+	this->eventHandler->setLastNotify(lastNotifyId);
+	this->eventHandler->setConferenceId(d->conferenceId);
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 

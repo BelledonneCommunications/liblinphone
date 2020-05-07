@@ -258,9 +258,9 @@ void ClientGroupChatRoomPrivate::acceptSession (const shared_ptr<CallSession> &s
 
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
-	const IdentityAddress &identity,
+	const IdentityAddress &focus,
 	const ConferenceId &conferenceId,
-	const string &newSubject,
+	const string &subject,
 	const Content &content,
 	CapabilitiesMask capabilities,
 	const std::shared_ptr<ChatRoomParams> &params
@@ -268,29 +268,29 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::Conference), core, conferenceId, params),
 RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
-	RemoteConference::setSubject(newSubject);
+	RemoteConference::setSubject(subject);
 	for (const auto &addr : Conference::parseResourceLists(content))
 		participants.push_back(Participant::create(this,addr));
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
 	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
-	focus = Participant::create(this,identity);
-	focus->addDevice(identity);
+	this->focus = Participant::create(this,focus);
+	this->focus->addDevice(focus);
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
 	const shared_ptr<Core> &core,
 	const string &factoryUri,
 	const IdentityAddress &me,
-	const string &newSubject,
+	const string &subject,
 	CapabilitiesMask capabilities,
 	const std::shared_ptr<ChatRoomParams> &params
 ) : ClientGroupChatRoom(
 	core,
 	IdentityAddress(factoryUri),
 	ConferenceId(IdentityAddress(), me),
-	newSubject,
+	subject,
 	Content(),
 	capabilities,
 	params
@@ -302,7 +302,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	shared_ptr<Participant> &me,
 	AbstractChatRoom::CapabilitiesMask capabilities,
 	const std::shared_ptr<ChatRoomParams> &params,
-	const string &newSubject,
+	const string &subject,
 	list<shared_ptr<Participant>> &&newParticipants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
@@ -311,11 +311,11 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
-	focus = Participant::create(this,peerAddress);
-	focus->addDevice(peerAddress);
-	conferenceAddress = peerAddress;
-	subject = newSubject;
-	participants = move(newParticipants);
+	this->focus = Participant::create(this,peerAddress);
+	this->focus->addDevice(peerAddress);
+	this->conferenceAddress = peerAddress;
+	this->subject = subject;
+	this->participants = move(newParticipants);
 
 	getMe()->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices())

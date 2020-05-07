@@ -287,8 +287,8 @@ void RemoteConferenceEventHandler::invalidateSubscription () {
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::subscribe (const ConferenceId &newConferenceId) {
-	conferenceId = newConferenceId;
+void RemoteConferenceEventHandler::subscribe (const ConferenceId &conferenceId) {
+	this->conferenceId = conferenceId;
 	subscriptionWanted = true;
 	subscribe();
 }
@@ -321,8 +321,8 @@ void RemoteConferenceEventHandler::multipartNotifyReceived (const string &xmlBod
 
 // -----------------------------------------------------------------------------
 
-void RemoteConferenceEventHandler::setConferenceId (ConferenceId newConferenceId) {
-	conferenceId = newConferenceId;
+void RemoteConferenceEventHandler::setConferenceId (ConferenceId conferenceId) {
+	this->conferenceId = conferenceId;
 }
 
 const ConferenceId &RemoteConferenceEventHandler::getConferenceId () const {
@@ -333,8 +333,8 @@ unsigned int RemoteConferenceEventHandler::getLastNotify () const {
 	return lastNotify;
 };
 
-void RemoteConferenceEventHandler::setLastNotify (unsigned int newLastNotify) {
-	lastNotify = newLastNotify;
+void RemoteConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
+	lastNotify = lastNotify;
 }
 
 void RemoteConferenceEventHandler::resetLastNotify () {
