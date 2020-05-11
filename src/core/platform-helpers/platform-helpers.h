@@ -52,6 +52,7 @@ public:
 	virtual void releaseMcastLock () = 0;
 	virtual void acquireCpuLock () = 0;
 	virtual void releaseCpuLock () = 0;
+	virtual void startPushLongRunningTask(const std::string &loc_key, const std::string &callId) = 0;
 
 	virtual std::string getConfigPath () const = 0;
 	virtual std::string getDataPath () const = 0;
@@ -107,6 +108,7 @@ public:
 	void releaseMcastLock () override;
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
+	void startPushLongRunningTask(const std::string &loc_key, const std::string &callId) override;
 
 	std::string getConfigPath () const override;
 	std::string getDataPath () const override;

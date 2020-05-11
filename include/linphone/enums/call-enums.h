@@ -29,11 +29,13 @@
 typedef enum _LinphoneCallState{
 	LinphoneCallStateIdle, /**< Initial state */
 	LinphoneCallStateIncomingReceived, /**< Incoming call received */
+	LinphoneCallStatePushIncomingReceived, /**< PushIncoming call received */
 	LinphoneCallStateOutgoingInit, /**< Outgoing call initialized */
 	LinphoneCallStateOutgoingProgress, /**< Outgoing call in progress */
 	LinphoneCallStateOutgoingRinging, /**< Outgoing call ringing */
 	LinphoneCallStateOutgoingEarlyMedia, /**< Outgoing call early media */
 	LinphoneCallStateConnected, /**< Connected */
+	LinphoneCallStatePushConnected, /**<Push Connected*/
 	LinphoneCallStateStreamsRunning, /**< Streams running */
 	LinphoneCallStatePausing, /**< Pausing */
 	LinphoneCallStatePaused, /**< Paused */
@@ -83,11 +85,13 @@ typedef enum _LinphoneAudioDeviceCapabilities {
 
 #define LinphoneCallIdle LinphoneCallStateIdle
 #define LinphoneCallIncomingReceived LinphoneCallStateIncomingReceived
+#define LinphoneCallPushIncomingReceived LinphoneCallStatePushIncomingReceived
 #define LinphoneCallOutgoingInit LinphoneCallStateOutgoingInit
 #define LinphoneCallOutgoingProgress LinphoneCallStateOutgoingProgress
 #define LinphoneCallOutgoingRinging LinphoneCallStateOutgoingRinging
 #define LinphoneCallOutgoingEarlyMedia LinphoneCallStateOutgoingEarlyMedia
 #define LinphoneCallConnected LinphoneCallStateConnected
+#define LinphoneCallPushConnected LinphoneCallStatePushConnected
 #define LinphoneCallStreamsRunning LinphoneCallStateStreamsRunning
 #define LinphoneCallPausing LinphoneCallStatePausing
 #define LinphoneCallPaused LinphoneCallStatePaused

@@ -54,6 +54,8 @@ void GenericPlatformHelpers::acquireCpuLock () {}
 
 void GenericPlatformHelpers::releaseCpuLock () {}
 
+void GenericPlatformHelpers::startPushLongRunningTask(const string &loc_key, const string &callId) {}
+
 
 string GenericPlatformHelpers::getConfigPath () const {
 	return "";

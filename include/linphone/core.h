@@ -4566,6 +4566,9 @@ LINPHONE_PUBLIC int linphone_core_get_calls_nb(const LinphoneCore *lc);
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc);
 
+
+LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_callid(LinphoneCore *lc, const char *call_id);
+
 LINPHONE_PUBLIC LinphoneGlobalState linphone_core_get_global_state(const LinphoneCore *lc);
 
 /**
@@ -6427,7 +6430,7 @@ LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore 
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
 
 /**
- * Gets the default output audio device 
+ * Gets the default output audio device
  * @param[in] core The #LinphoneCore
  * @returns The default output audio device
  * @ingroup audio
