@@ -31,7 +31,7 @@ class ConferenceIdPrivate;
 class LINPHONE_PUBLIC ConferenceId : public ClonableObject {
 public:
 	ConferenceId ();
-	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
+	ConferenceId (const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
 	ConferenceId (const ConferenceId &other);
 
 	ConferenceId *clone () const override {

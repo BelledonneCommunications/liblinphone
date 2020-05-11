@@ -80,7 +80,7 @@ bool RemoteConference::removeParticipant (const shared_ptr<Participant> &partici
 
 // -----------------------------------------------------------------------------
 
-void RemoteConference::onConferenceCreated (const IdentityAddress &) {}
+void RemoteConference::onConferenceCreated (const ConferenceAddress &) {}
 
 void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 #ifdef HAVE_ADVANCED_IM

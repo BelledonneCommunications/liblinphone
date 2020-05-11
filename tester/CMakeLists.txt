@@ -230,6 +230,7 @@ set(SOURCE_FILES_C
 	vcard_tester.c
 	video_tester.c
 	video_quality_tester.c
+	local_conference_tester.cpp
 )
 
 set(SOURCE_FILES_CXX

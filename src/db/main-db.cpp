@@ -3413,7 +3413,7 @@ IdentityAddress MainDb::findMissingOneToOneConferenceChatRoomParticipantAddress 
 #endif
 }
 
-IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
+ConferenceAddress MainDb::findOneToOneConferenceChatRoomAddress (
 	const IdentityAddress &participantA,
 	const IdentityAddress &participantB,
 	bool encrypted
@@ -3425,11 +3425,11 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 		const long long &participantASipAddressId = d->selectSipAddressId(participantA.asString());
 		const long long &participantBSipAddressId = d->selectSipAddressId(participantB.asString());
 		if (participantASipAddressId == -1 || participantBSipAddressId == -1)
-			return IdentityAddress();
+			return ConferenceAddress();
 
 		const long long &chatRoomId = d->selectOneToOneChatRoomId(participantASipAddressId, participantBSipAddressId, encrypted);
 		if (chatRoomId == -1)
-			return IdentityAddress();
+			return ConferenceAddress();
 
 		string chatRoomAddress;
 		*d->dbSession.getBackendSession() << "SELECT sip_address.value"
@@ -3437,10 +3437,10 @@ IdentityAddress MainDb::findOneToOneConferenceChatRoomAddress (
 			" WHERE chat_room.id = :chatRoomId AND peer_sip_address_id = sip_address.id",
 			soci::use(chatRoomId), soci::into(chatRoomAddress);
 
-		return IdentityAddress(chatRoomAddress);
+		return ConferenceAddress(chatRoomAddress);
 	};
 #else
-	return IdentityAddress();
+	return ConferenceAddress();
 #endif
 }
 

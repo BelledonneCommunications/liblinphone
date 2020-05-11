@@ -34,7 +34,7 @@ class ConferencePrivate {
 public:
 	virtual ~ConferencePrivate () = default;
 
-	IdentityAddress conferenceAddress;
+	ConferenceAddress conferenceAddress;
 	std::list<std::shared_ptr<Participant>> participants;
 	std::string subject;
 

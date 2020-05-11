@@ -29,8 +29,8 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceIdPrivate : public ClonableObjectPrivate {
 public:
-	IdentityAddress peerAddress;
-	IdentityAddress localAddress;
+	ConferenceAddress peerAddress;
+	ConferenceAddress localAddress;
 };
 
 // -----------------------------------------------------------------------------
@@ -38,14 +38,15 @@ public:
 ConferenceId::ConferenceId () : ClonableObject(*new ConferenceIdPrivate) {}
 
 ConferenceId::ConferenceId (
-	const IdentityAddress &peerAddress,
-	const IdentityAddress &localAddress
+	const ConferenceAddress &peerAddress,
+	const ConferenceAddress &localAddress
 ) : ClonableObject(*new ConferenceIdPrivate) {
 	L_D();
 	d->peerAddress = peerAddress;
 	d->localAddress = localAddress;
-}
 
+	
+}
 L_USE_DEFAULT_CLONABLE_OBJECT_SHARED_IMPL(ConferenceId);
 
 bool ConferenceId::operator== (const ConferenceId &other) const {

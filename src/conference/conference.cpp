@@ -81,7 +81,7 @@ bool Conference::canHandleParticipants () const {
 	return true;
 }
 
-const IdentityAddress &Conference::getConferenceAddress () const {
+const ConferenceAddress &Conference::getConferenceAddress () const {
 	L_D();
 	return d->conferenceAddress;
 }

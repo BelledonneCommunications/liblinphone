@@ -660,8 +660,11 @@ void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
 	}
 }
-
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
+	linphone_core_manager_uninit2(mgr);
+	ms_free(mgr);
+}
+void linphone_core_manager_uninit2(LinphoneCoreManager* mgr) {
 	if (mgr->lc && !linphone_core_is_network_reachable(mgr->lc)) {
 		int previousNbRegistrationOk = mgr->stat.number_of_LinphoneRegistrationOk;
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
@@ -669,7 +672,6 @@ void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
 	}
 	linphone_core_manager_stop(mgr);
 	linphone_core_manager_uninit(mgr);
-	ms_free(mgr);
 }
 
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr) {

@@ -233,7 +233,7 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	L_Q();
 	L_Q_T(RemoteConference, qConference);
 
-	IdentityAddress addr(remoteContact);
+	ConferenceAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
 		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
@@ -438,7 +438,7 @@ bool ClientGroupChatRoom::canHandleParticipants () const {
 	return RemoteConference::canHandleParticipants();
 }
 
-const IdentityAddress &ClientGroupChatRoom::getConferenceAddress () const {
+const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress () const {
 	return RemoteConference::getConferenceAddress();
 }
 
@@ -661,7 +661,7 @@ void ClientGroupChatRoom::leave () {
 
 // -----------------------------------------------------------------------------
 
-void ClientGroupChatRoom::onConferenceCreated (const IdentityAddress &addr) {
+void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	L_D();
 	L_D_T(RemoteConference, dConference);
 	dConference->conferenceAddress = addr;
