@@ -423,15 +423,18 @@ void on_msg_written_in_user_defaults(CFNotificationCenterRef center, void *obser
 // The message has been received by the main core and we will just fetch it into the user defaults
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(const string &callId) {
 	lInfo() << "[push] subscribe to main core notif: receive a notif when msg is written in user defaults";
-   	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+	CFStringRef notificationName;
 
 	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
-	   	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+		notificationName = CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8);
 	} else {
-   		CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, CFStringCreateWithCString(NULL, TEST_CALL_ID, kCFStringEncodingUTF8), NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+		notificationName = CFStringCreateWithCString(NULL, TEST_CALL_ID, kCFStringEncodingUTF8);
 	}
 
- 	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
+	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, notificationName, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
+
+	shared_ptr<PushNotificationMessage> msg = fetchUserDefaultsMsg(callId);
 	if (msg) return msg;
 
 	reinitTimer();
@@ -439,6 +442,8 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(con
 		lInfo() << "[push] wait for msg to be written in user defaults";
 		ms_usleep(50000);
 	}
+
+	CFNotificationCenterRemoveObserver(notification, (__bridge const void *)(this), notificationName, NULL);
 
 	msg = fetchUserDefaultsMsg(callId);
 	return msg;
