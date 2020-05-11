@@ -42,6 +42,7 @@ public:
 	std::string username;
 	std::string domain;
 	std::string gruu;
+	std::string displayName;
 };
 
 // -----------------------------------------------------------------------------
@@ -55,6 +56,9 @@ IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new I
 		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
 		d->username = tmp;
 		ms_free(tmp);
+		tmp = belle_sip_to_unescaped_string(parsedAddress->getDisplayName().c_str());
+		d->displayName = tmp;
+		ms_free(tmp);
 		d->domain = parsedAddress->getDomain();
 		d->gruu = parsedAddress->getGruu();
 	} else {
@@ -62,6 +66,7 @@ IdentityAddress::IdentityAddress (const string &address) : ClonableObject(*new I
 		if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
 			d->scheme = tmpAddress.getScheme();
 			d->username = tmpAddress.getUsername();
+			d->displayName = tmpAddress.getDisplayName();
 			d->domain = tmpAddress.getDomain();
 			d->gruu = tmpAddress.getUriParamValue("gr");
 		}
@@ -72,6 +77,7 @@ IdentityAddress::IdentityAddress (const Address &address) : ClonableObject(*new 
 	L_D();
 	d->scheme = address.getScheme();
 	d->username = address.getUsername();
+	d->displayName = address.getDisplayName();
 	d->domain = address.getDomain();
 	if (address.hasUriParam("gr"))
 		d->gruu = address.getUriParamValue("gr");
@@ -81,6 +87,7 @@ IdentityAddress::IdentityAddress (const IdentityAddress &other) : ClonableObject
 	L_D();
 	d->scheme = other.getScheme();
 	d->username = other.getUsername();
+	d->displayName = other.getDisplayName();
 	d->domain = other.getDomain();
 	d->gruu = other.getGruu();
 }
@@ -94,6 +101,7 @@ IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
 		d->scheme = other.getScheme();
 		d->username = other.getUsername();
+		d->displayName = other.getDisplayName();
 		d->domain = other.getDomain();
 		d->gruu = other.getGruu();
 	}
@@ -118,6 +126,8 @@ bool IdentityAddress::operator< (const IdentityAddress &other) const {
 		diff = d->domain.compare(other.getDomain());
 		if (diff == 0){
 			diff = d->gruu.compare(other.getGruu());
+			if (diff == 0)
+				diff = d->displayName.compare(other.getDisplayName());
 		}
 	}
 	return diff < 0;
@@ -147,7 +157,15 @@ void IdentityAddress::setUsername (const string &username) {
 	L_D();
 	d->username = username;
 }
+const string &IdentityAddress::getDisplayName() const {
+	L_D();
+	return d->displayName;
+}
 
+void IdentityAddress::setDisplayName (const string &displayName) {
+	L_D();
+	d->displayName = displayName;
+}
 const string &IdentityAddress::getDomain () const {
 	L_D();
 	return d->domain;
@@ -182,6 +200,11 @@ IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
 string IdentityAddress::asString () const {
 	L_D();
 	ostringstream res;
+	if (!d->displayName.empty()){
+		char *tmp = belle_sip_uri_to_escaped_username(d->displayName.c_str());
+		res <<"\""<< tmp << "\" <";
+		ms_free(tmp);
+	}
 	res << d->scheme << ":";
 	if (!d->username.empty()){
 		char *tmp = belle_sip_uri_to_escaped_username(d->username.c_str());
@@ -194,10 +217,12 @@ string IdentityAddress::asString () const {
 	} else {
 		res << d->domain;
 	}
-	
+	if (!d->displayName.empty())
+		res << ">";
 	if (!d->gruu.empty()){
 		res << ";gr=" << d->gruu;
 	}
+	
 	return res.str();
 }
 

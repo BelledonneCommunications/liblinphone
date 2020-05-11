@@ -57,6 +57,9 @@ public:
 
 	const std::string &getUsername () const;
 	void setUsername (const std::string &username);
+	
+	const std::string &getDisplayName () const;
+	void setDisplayName (const std::string &displayName);
 
 	const std::string &getDomain () const;
 	void setDomain (const std::string &domain);
