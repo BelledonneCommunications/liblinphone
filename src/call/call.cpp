@@ -127,8 +127,21 @@ bool CallPrivate::initiateOutgoing () {
 	L_Q();
 	shared_ptr<CallSession> session = getActiveSession();
 	bool defer = session->initiateOutgoing();
-	setOutputAudioDevice(q->getCore()->getDefaultOutputAudioDevice());
-	setInputAudioDevice(q->getCore()->getDefaultInputAudioDevice());
+	
+	AudioDevice *outputAudioDevice = q->getCore()->getDefaultOutputAudioDevice();
+	if (outputAudioDevice) {
+		setOutputAudioDevice(outputAudioDevice);
+	} else {
+		lWarning() << "Failed to find audio device matching default output sound card [" << q->getCore()->getCCore()->sound_conf.play_sndcard << "]";
+	}
+
+	AudioDevice *inputAudioDevice = q->getCore()->getDefaultInputAudioDevice();
+	if (inputAudioDevice) {
+		setInputAudioDevice(inputAudioDevice);
+	} else {
+		lWarning() << "Failed to find audio device matching default input sound card [" << q->getCore()->getCCore()->sound_conf.capt_sndcard << "]";
+	}
+
 	session->getPrivate()->createOp();
 	return defer;
 }
@@ -221,6 +234,7 @@ void CallPrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 
 void CallPrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_Q();
+	
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return;
