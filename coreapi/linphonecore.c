@@ -2606,13 +2606,18 @@ char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *
 	else
 		provider = "fcm";
 #elif TARGET_OS_IPHONE
-	provider = "apple";
+	provider = "apns";
 #endif
 	if (provider == NULL) return NULL;
 
 	char contactUriParams[512];
 	memset(contactUriParams, 0, sizeof(contactUriParams));
+#if TARGET_OS_IPHONE
+	format = "pn-provider=apns%s;pn-prid=%s;pn-param=%s;pn-msg-str=IM_MSG;pn-call-str=IC_MSG;pn-groupchat-str=GC_MSG;pn-""call-snd=%s;pn-msg-snd=msg.caf;pn-timeout=0;pn-silent=1";
+	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, prid,params, core->sound_conf.local_ring);
+#else
 	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
+#endif
 	return ms_strdup(contactUriParams);
 }
 
@@ -4214,7 +4219,7 @@ bool_t linphone_core_is_incoming_invite_pending(LinphoneCore*lc) {
 	LinphoneCall *call = linphone_core_get_current_call(lc);
 	if (call) {
 		if ((linphone_call_get_dir(call) == LinphoneCallIncoming)
-			&& ((linphone_call_get_state(call) == LinphoneCallIncomingReceived) || (linphone_call_get_state(call) ==  LinphoneCallIncomingEarlyMedia)))
+			&& ((linphone_call_get_state(call) == LinphoneCallIncomingReceived) || (linphone_call_get_state(call) == LinphoneCallPushIncomingReceived) || (linphone_call_get_state(call) ==  LinphoneCallIncomingEarlyMedia)))
 			return TRUE;
 	}
 	return FALSE;
@@ -4301,6 +4306,28 @@ const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
 	}
 	lc->callsCache = Call::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls());
 	return lc->callsCache;
+}
+
+static int comp_call_id(const LinphoneCall *call, const char *callid) {
+	if (linphone_call_log_get_call_id(linphone_call_get_call_log(call)) == nullptr) {
+		ms_error("no callid for call [%p]", call);
+		return 1;
+	}
+	return strcmp(linphone_call_log_get_call_id(linphone_call_get_call_log(call)), callid);
+}
+
+LinphoneCall *linphone_core_get_call_by_callid(LinphoneCore *lc, const char *call_id) {
+	const bctbx_list_t *calls = linphone_core_get_calls(lc);
+	if (!calls || !call_id) {
+		return nullptr;
+	}
+	
+	bctbx_list_t *call_tmp = bctbx_list_find_custom(calls, (bctbx_compare_func)comp_call_id, call_id);
+	if (!call_tmp) {
+		return nullptr;
+	}
+	LinphoneCall *call = (LinphoneCall *)call_tmp->data;
+	return call;
 }
 
 bool_t linphone_core_in_call(const LinphoneCore *lc){

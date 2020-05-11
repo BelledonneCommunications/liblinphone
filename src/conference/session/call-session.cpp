@@ -358,6 +358,7 @@ void CallSessionPrivate::replaceOp (SalCallOp *newOp) {
 	switch (state) {
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 			op->notifyRinging((state == CallSession::State::IncomingEarlyMedia) ? true : false);
 			break;
 		case CallSession::State::Connected:
@@ -371,6 +372,7 @@ void CallSessionPrivate::replaceOp (SalCallOp *newOp) {
 	switch (oldState) {
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 			oldOp->setUserPointer(nullptr); // In order for the call session to not get terminated by terminating this op
 			// Do not terminate a forked INVITE
 			lInfo() << "CallSessionPrivate::replaceOp(): terminating old session in early state.";
@@ -401,6 +403,7 @@ void CallSessionPrivate::terminated () {
 			return;
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
+		case CallSession::State::PushIncomingReceived:
 			if (!op->getReasonErrorInfo()->protocol || strcmp(op->getReasonErrorInfo()->protocol, "") == 0) {
 				linphone_error_info_set(ei, nullptr, LinphoneReasonNotAnswered, 0, "Incoming call cancelled", nullptr);
 				nonOpError = true;
@@ -451,6 +454,7 @@ void CallSessionPrivate::updated (bool isUpdate) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::End:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::Referred:
 		case CallSession::State::Error:
@@ -536,6 +540,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 	L_Q();
 	switch (state) {
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			break;
 		default:
@@ -578,6 +583,7 @@ bool CallSessionPrivate::isReadyForInvite () const {
 bool CallSessionPrivate::isUpdateAllowed (CallSession::State &nextState) const {
 	switch (state) {
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
@@ -673,7 +679,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 }
 
 void CallSessionPrivate::terminate () {
-	if ((state == CallSession::State::IncomingReceived) && (linphone_error_info_get_reason(ei) != LinphoneReasonNotAnswered)) {
+	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::PushIncomingReceived) && (linphone_error_info_get_reason(ei) != LinphoneReasonNotAnswered)) {
 		linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
 		nonOpError = true;
 	}
@@ -692,6 +698,7 @@ void CallSessionPrivate::setBroken () {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			// During the early states, the SAL layer reports the failure from the dialog or transaction layer,
 			// hence, there is nothing special to do
@@ -880,6 +887,7 @@ void CallSessionPrivate::repairIfBroken () {
 			break;
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 			// Keep the call broken until a forked INVITE is received from the server
 			break;
 		default:
@@ -967,6 +975,11 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
 		d->destProxy = linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr);
 	}
+	
+	if (d->log) {
+		// already done for push
+		linphone_call_log_unref(d->log);
+	}
 	d->log = linphone_call_log_new(direction, fromAddr, toAddr);
 
 	if (op) {
@@ -991,6 +1004,19 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	}
 }
 
+void CallSession::configure (LinphoneCallDir direction, const string &callid) {
+	L_D();
+	d->direction = direction;
+	
+	d->log = linphone_call_log_new(direction, nullptr, nullptr);
+	linphone_call_log_set_call_id(d->log, callid.c_str());
+}
+
+bool CallSession::isOpConfigured () {
+	L_D();
+	return d->op ? true : false;
+}
+
 LinphoneStatus CallSession::decline (LinphoneReason reason) {
 	LinphoneErrorInfo *ei = linphone_error_info_new();
 	linphone_error_info_set(ei, "SIP", reason, linphone_reason_to_error_code(reason), nullptr, nullptr);
@@ -1006,7 +1032,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 	memset(&sei, 0, sizeof(sei));
 	memset(&sub_sei, 0, sizeof(sub_sei));
 	sei.sub_sei = &sub_sei;
-	if ((d->state != CallSession::State::IncomingReceived) && (d->state != CallSession::State::IncomingEarlyMedia)) {
+	if ((d->state != CallSession::State::IncomingReceived) && (d->state != CallSession::State::PushIncomingReceived) && (d->state != CallSession::State::IncomingEarlyMedia)) {
 		lError() << "Cannot decline a CallSession that is in state " << Utils::toString(d->state);
 		return -1;
 	}
@@ -1063,7 +1089,7 @@ void CallSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 		/* Start the call even if the OPTIONS reply did not arrive */
 		startInvite(nullptr, "");
 	}
-	if ((d->state == CallSession::State::IncomingReceived) || (d->state == CallSession::State::IncomingEarlyMedia)) {
+	if ((d->state == CallSession::State::IncomingReceived) || (d->state == CallSession::State::PushIncomingReceived) || (d->state == CallSession::State::IncomingEarlyMedia)) {
 		if (d->listener)
 			d->listener->onIncomingCallSessionTimeoutCheck(getSharedFromThis(), elapsed, oneSecondElapsed);
 	}
@@ -1086,7 +1112,7 @@ LinphoneStatus CallSession::redirect (const string &redirectUri) {
 
 LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	L_D();
-	if (d->state != CallSession::State::IncomingReceived) {
+	if (d->state != CallSession::State::IncomingReceived && d->state != CallSession::State::PushIncomingReceived) {
 		lError() << "Bad state for CallSession redirection";
 		return -1;
 	}
@@ -1103,6 +1129,13 @@ LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 
 void CallSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
+	startBasicIncomingNotification(notifyRinging);
+
+	d->startIncomingNotification();
+}
+
+void CallSession::startBasicIncomingNotification (bool notifyRinging) {
+	L_D();
 	d->notifyRinging = notifyRinging;
 	if (d->listener) {
 		d->listener->onIncomingCallSessionNotified(getSharedFromThis());
@@ -1114,9 +1147,22 @@ void CallSession::startIncomingNotification (bool notifyRinging) {
 		lInfo() << "Defer incoming notification";
 		return;
 	}
-
-	d->startIncomingNotification();
 }
+
+void CallSession::startPushIncomingNotification () {
+	L_D();
+	if (d->listener)
+		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
+
+	d->setState(CallSession::State::PushIncomingReceived, "PushIncoming CallSession");
+
+	// From now on, the application is aware of the call and supposed to take background task or already submitted
+	// notification to the user. We can then drop our background task.
+	if (d->listener)
+		d->listener->onBackgroundTaskToBeStopped(getSharedFromThis());
+
+}
+
 
 int CallSession::startInvite (const Address *destination, const string &subject, const Content *content) {
 	L_D();
@@ -1170,6 +1216,7 @@ LinphoneStatus CallSession::terminate (const LinphoneErrorInfo *ei) {
 			lWarning() << "No need to terminate CallSession [" << this << "] in state [" << Utils::toString(d->state) << "]";
 			return -1;
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			return decline(ei);
 		case CallSession::State::OutgoingInit:
@@ -1290,10 +1337,11 @@ string CallSession::getReferTo () const {
 	return d->referTo;
 }
 
-const Address& CallSession::getRemoteAddress () const {
+const Address *CallSession::getRemoteAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT((d->direction == LinphoneCallIncoming)
-		? linphone_call_log_get_from(d->log) : linphone_call_log_get_to(d->log));
+	const LinphoneAddress *address = (d->direction == LinphoneCallIncoming)
+	? linphone_call_log_get_from(d->log) : linphone_call_log_get_to(d->log);
+	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
 string CallSession::getRemoteContact () const {
@@ -1406,6 +1454,7 @@ bool CallSession::isEarlyState (CallSession::State state) {
 		case CallSession::State::OutgoingRinging:
 		case CallSession::State::OutgoingProgress:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::EarlyUpdatedByRemote:
 		case CallSession::State::EarlyUpdating:

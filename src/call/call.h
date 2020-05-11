@@ -57,7 +57,25 @@ public:
 		SalCallOp *op,
 		const MediaSessionParams *msp
 	);
+	
+	Call (
+		std::shared_ptr<Core> core,
+		LinphoneCallDir direction,
+		const std::string &callid
+	);
+	
 	~Call ();
+	
+	void configure (
+		LinphoneCallDir direction,
+		const Address &from,
+		const Address &to,
+		LinphoneProxyConfig *cfg,
+		SalCallOp *op,
+		const MediaSessionParams *msp
+	);
+	
+	bool isOpConfigured () const;
 	
 	LinphoneStatus accept (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus acceptEarlyMedia (const MediaSessionParams *msp = nullptr);
@@ -117,7 +135,7 @@ public:
 	float getRecordVolume () const;
 	std::shared_ptr<Call> getReferer () const;
 	std::string getReferTo ();
-	const Address &getRemoteAddress () const;
+	const Address *getRemoteAddress () const;
 	std::string getRemoteContact ();
 	const MediaSessionParams *getRemoteParams () const;
 	std::string getRemoteUserAgent ();
@@ -160,6 +178,8 @@ public:
 	bool initiateOutgoing ();
 	void iterate (time_t currentRealTime, bool oneSecondElapsed);
 	void startIncomingNotification ();
+	void startPushIncomingNotification ();
+	void startBasicIncomingNotification ();
 	void pauseForTransfer ();
 	int startInvite (const Address *destination);
 	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
@@ -234,6 +254,7 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 	
+	bool isAccepting () const;
 
 private:
 	std::shared_ptr<Participant> mParticipant;
@@ -241,6 +262,7 @@ private:
 	CallCallbackObj mNextVideoFrameDecoded;
 	mutable std::shared_ptr<RealTimeTextChatRoom> mChatRoom = nullptr;
 	bool mPlayingRingbackTone = false;
+	bool mAccepting = false;
 
 	BackgroundTask mBgTask;
 	

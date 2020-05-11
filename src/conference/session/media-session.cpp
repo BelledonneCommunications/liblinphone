@@ -186,6 +186,7 @@ void MediaSessionPrivate::accepted () {
 			case CallSession::State::OutgoingRinging:
 			case CallSession::State::OutgoingEarlyMedia:
 			case CallSession::State::IncomingReceived:
+			case CallSession::State::PushIncomingReceived:
 			case CallSession::State::IncomingEarlyMedia:
 				lError() << "Incompatible SDP answer received, need to abort the call";
 				abort("Incompatible, check codecs or security settings...");
@@ -1493,6 +1494,7 @@ void MediaSessionPrivate::onGatheringFinished(IceService &service){
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	switch (state) {
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			if (callAcceptanceDefered) startAccept();
 			break;
@@ -1950,6 +1952,11 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 		setParams(new MediaSessionParams(*msp));
 	}
 	if (msp || localDesc == nullptr) makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
+	
+	L_Q();
+	// accepting for push ? 
+	if (!msp && params && localDesc == nullptr) makeLocalMediaDescription(state == CallSession::State::OutgoingInit ?
+	!q->getCore()->getCCore()->sip_conf.sdp_200_ack : false);
 
 	updateRemoteSessionIdAndVer();
 
@@ -2166,7 +2173,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 
 LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 	L_D();
-	if (d->state != CallSession::State::IncomingReceived) {
+	if (d->state != CallSession::State::IncomingReceived && d->state != CallSession::State::PushIncomingReceived) {
 		lError() << "Bad state " << Utils::toString(d->state) << " for MediaSession::acceptEarlyMedia()";
 		return -1;
 	}
@@ -2859,6 +2866,7 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	switch(d->state){
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 			d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
 			// Update the local media description.
 			d->makeLocalMediaDescription(d->state == CallSession::State::OutgoingInit ?
