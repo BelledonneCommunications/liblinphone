@@ -39,6 +39,7 @@
 // TODO: Remove me
 #include "private.h"
 
+#include "core/PushRegistry.h"
 // =============================================================================
 
 using namespace std;
@@ -56,6 +57,7 @@ public:
 	void releaseMcastLock () override {}
 	void acquireCpuLock () override;
 	void releaseCpuLock () override;
+	void startPushLongRunningTask(const string &loc_key, const string &callId) override;
 
 	string getConfigPath () const override { return ""; }
 	string getDataPath () const override { return ""; }
@@ -104,7 +106,10 @@ private:
 	SCNetworkReachabilityRef reachabilityRef = NULL;
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
+	PKPushRegistry *voipRegistry;
+
 	static const string Framework;
+	static void requestPushNotification (void *data);
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -117,6 +122,18 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
+
+	ms_message("[PushKit] Connecting for push notifications");
+	voipRegistry = [[PKPushRegistry alloc] initWithQueue:dispatch_get_main_queue()];
+	RegistryDelegate *delegate = [[RegistryDelegate alloc] init];
+	[delegate setCore:core];
+	voipRegistry.delegate = delegate;
+	voipRegistry.desiredPushTypes = [NSSet setWithObject:PKPushTypeVoIP];
+	
+	// Register for remote notifications.
+    ms_message("[APNs] register for push notif");
+    [[UIApplication sharedApplication] registerForRemoteNotifications];
+	
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -174,6 +191,28 @@ void IosPlatformHelpers::sBgTaskTimeout (void *data) {
 	zis->bgTaskTimeout();
 }
 
+void IosPlatformHelpers::requestPushNotification (void *data) {
+	if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive) {
+		//ms_warning("Incomming message with call-id [%s] couldn't be received", callId.UTF8String);
+		UNMutableNotificationContent *content = [[UNMutableNotificationContent alloc] init];
+		content.title = NSLocalizedString(@"Message received", nil);
+		content.body = NSLocalizedString(@"You have received a message.", nil);
+		content.categoryIdentifier = @"push_msg";
+
+		UNNotificationRequest *req =
+		[UNNotificationRequest requestWithIdentifier:@"push_msg" content:content trigger:NULL];
+		[[UNUserNotificationCenter currentNotificationCenter]
+		 addNotificationRequest:req
+		 withCompletionHandler:^(NSError *_Nullable error) {
+			 // Enable or disable features based on authorization.
+			 if (error) {
+				 ms_error("Error while adding notification request :");
+				 ms_error("%s", error.description.UTF8String);
+			 }
+		 }];
+	}
+	sBgTaskTimeout(data);
+}
 // -----------------------------------------------------------------------------
 
 void IosPlatformHelpers::acquireCpuLock () {
@@ -261,7 +300,7 @@ void IosPlatformHelpers::startAudioForEchoTestOrCalibration () {
 }
 
 void IosPlatformHelpers::stopAudioForEchoTestOrCalibration () {
-	
+
 }
 
 void IosPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
@@ -592,6 +631,27 @@ string IosPlatformHelpers::getWifiSSID(void) {
 #endif
 }
 
+void IosPlatformHelpers::startPushLongRunningTask(const string &loc_key, const string &callId) {
+	if (callId.empty())
+		return;
+
+	if (loc_key.compare("IM_MSG") == 0) {
+		if (mCpuLockCount == 0)
+		mCpuLockTaskId = static_cast<long>(belle_sip_begin_background_task("request push notification", requestPushNotification, this));
+
+		mCpuLockCount++;
+		ms_message("Message long running task started for call-id [%s], remaining [%f] because a push has been received",
+				   callId.c_str(), [[UIApplication sharedApplication] backgroundTimeRemaining]);
+	} else if (loc_key.compare("IC_MSG") == 0) {
+		acquireCpuLock();
+		ms_message("Call long running task started for call-id [%s], remaining [%f] because a push has been received",
+				   callId.c_str(), [[UIApplication sharedApplication] backgroundTimeRemaining]);
+	} else if (loc_key.compare("IC_SIL") == 0) {
+		acquireCpuLock();
+		ms_message("Refer long running task started for call-id [%s], remaining [%f] because a push has been received",
+				   callId.c_str(), [[UIApplication sharedApplication] backgroundTimeRemaining]);
+	}
+}
 // -----------------------------------------------------------------------------
 
 PlatformHelpers *createIosPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {

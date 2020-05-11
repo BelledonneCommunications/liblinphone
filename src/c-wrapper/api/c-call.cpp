@@ -169,7 +169,7 @@ bool_t linphone_call_asked_to_autoanswer (LinphoneCall *call) {
 }
 
 const LinphoneAddress *linphone_call_get_remote_address (const LinphoneCall *call) {
-	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getRemoteAddress());
+	return L_GET_C_BACK_PTR(Call::toCpp(call)->getRemoteAddress());
 }
 
 const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall *call) {
@@ -181,7 +181,7 @@ char *linphone_call_get_to_header (LinphoneCall *call, const char *name) {
 }
 
 char *linphone_call_get_remote_address_as_string (const LinphoneCall *call) {
-	return ms_strdup(Call::toCpp(call)->getRemoteAddress().asString().c_str());
+	return Call::toCpp(call)->getRemoteAddress()? ms_strdup(Call::toCpp(call)->getRemoteAddress()->asString().c_str()) : nullptr;
 }
 
 const LinphoneAddress *linphone_call_get_diversion_address (const LinphoneCall *call) {
@@ -596,10 +596,6 @@ void linphone_call_set_user_data (LinphoneCall *call, void *ud) {
 // =============================================================================
 
 LinphoneCall *linphone_call_new_outgoing (LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg) {
-	/*Call *call = new Call(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
-	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
-	cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));*/
-	
 	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallOutgoing,
 	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
 											  cfg, nullptr, L_GET_CPP_PTR_FROM_C_OBJECT(params));
@@ -613,6 +609,23 @@ LinphoneCall *linphone_call_new_incoming (LinphoneCore *lc, const LinphoneAddres
 	nullptr, op, nullptr);
 	
 	return lcall;
+}
+
+LinphoneCall *linphone_call_new_incoming_for_push (LinphoneCore *lc, const char *callid) {
+	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc),LinphoneCallIncoming,callid);
+	return lcall;
+}
+
+void linphone_call_start_push_incoming_notification(LinphoneCall *call) {
+	Call::toCpp(call)->startPushIncomingNotification();
+}
+
+void linphone_call_basic_start_incoming_notification(LinphoneCall *call) {
+	Call::toCpp(call)->basicStartPushIncomingNotification();
+}
+
+void linphone_call_incoming_complete (LinphoneCall *call, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op) {
+	Call::toCpp(call)->complateCall(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to), nullptr, op, nullptr);
 }
 
 void linphone_call_set_input_audio_device(LinphoneCall *call, LinphoneAudioDevice *audio_device) {

@@ -104,6 +104,15 @@ Participant::Participant (Conference *conference, const IdentityAddress &address
 	d->addr = address.getAddressWithoutGruu();
 }
 
+Participant::Participant () : Object(*new ParticipantPrivate) {
+}
+
+void Participant::configure (Conference *conference, const IdentityAddress &address) {
+	L_D();
+	d->mConference = conference;
+	d->addr = address.getAddressWithoutGruu();
+}
+
 // -----------------------------------------------------------------------------
 
 const IdentityAddress& Participant::getAddress () const {

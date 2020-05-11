@@ -934,6 +934,8 @@ void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
 }
 
 void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei){
+	// todo end call
+	
 	LinphoneCallLog *l = linphone_call_log_new(dir, from, to);
 	l->error_info = ei;
 	l->status = LinphoneCallEarlyAborted;

@@ -51,11 +51,13 @@ public:
 	enum class State{
 		Idle = LinphoneCallStateIdle,
 		IncomingReceived = LinphoneCallStateIncomingReceived,
+		PushIncomingReceived = LinphoneCallStatePushIncomingReceived,
 		OutgoingInit = LinphoneCallStateOutgoingInit,
 		OutgoingProgress = LinphoneCallStateOutgoingProgress,
 		OutgoingRinging = LinphoneCallStateOutgoingRinging,
 		OutgoingEarlyMedia = LinphoneCallStateOutgoingEarlyMedia,
 		Connected = LinphoneCallStateConnected,
+		PushConnected = LinphoneCallStatePushConnected,
 		StreamsRunning = LinphoneCallStateStreamsRunning,
 		Pausing = LinphoneCallStatePausing,
 		Paused = LinphoneCallStatePaused,
@@ -84,6 +86,8 @@ public:
 	LinphoneStatus accept (const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp = nullptr);
 	virtual void configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to);
+	void configureForPush (LinphoneCallDir direction, const std::string &callid);
+	bool isOpConfigured ();
 	LinphoneStatus decline (LinphoneReason reason);
 	LinphoneStatus decline (const LinphoneErrorInfo *ei);
 	LinphoneStatus declineNotAnswered (LinphoneReason reason);
@@ -95,6 +99,8 @@ public:
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus redirect (const Address &redirectAddr);
 	virtual void startIncomingNotification (bool notifyRinging = true);
+	void basicStartIncomingNotification (bool notifyRinging = true);
+	void startPushIncomingNotification ();
 	virtual int startInvite (const Address *destination, const std::string &subject = "", const Content *content = nullptr);
 	LinphoneStatus terminate (const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer (const std::shared_ptr<CallSession> &dest);
@@ -112,7 +118,7 @@ public:
 	LinphoneReason getReason () const;
 	std::shared_ptr<CallSession> getReferer () const;
 	std::string getReferTo () const;
-	const Address &getRemoteAddress () const;
+	const Address *getRemoteAddress () const;
 	std::string getRemoteContact () const;
 	const Address *getRemoteContactAddress () const;
 	const CallSessionParams *getRemoteParams ();

@@ -271,7 +271,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 				 * Special case: the last remote participant is in StreamsRunning state and we are still in the conference.
 				 * Then directly reconnect to it, as a normal call.
 				 */
-				lInfo() << "Call [" << call << "] with " << Call::toCpp(call)->getRemoteAddress().asString() <<
+				lInfo() << "Call [" << call << "] with " << Call::toCpp(call)->getRemoteAddress()->asString() <<
 					" is our last call in our conference, we will reconnect directly to it.";
 				LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
 				linphone_call_params_set_in_conference(params, FALSE);

@@ -242,7 +242,7 @@ void CorePrivate::notifyEnteringForeground () {
 		listener->onEnteringForeground();
 
 	if (isFriendListSubscriptionEnabled)
-		enableFriendListsSubscription(true);	
+		enableFriendListsSubscription(true);
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop(){
@@ -665,7 +665,7 @@ const list<AudioDevice *> Core::getAudioDevices() const {
 
 const list<AudioDevice *> Core::getExtendedAudioDevices() const {
 	L_D();
-	return d->audioDevices; 
+	return d->audioDevices;
 }
 
 void Core::setInputAudioDevice(AudioDevice *audioDevice) {
@@ -752,7 +752,7 @@ void Core::pushNotificationReceived () const {
 	lInfo() << "Push notification received";
 
 	// We can assume network should be reachable when a push notification is received.
-	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
+	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration
 	linphone_core_set_network_reachable_internal(lc, TRUE);
 
 	/*

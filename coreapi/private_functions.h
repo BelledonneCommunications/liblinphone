@@ -56,6 +56,10 @@ void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudio
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
+LinphoneCall *linphone_call_new_incoming_for_push (LinphoneCore *lc, const char *callid);
+void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+void linphone_call_basic_start_incoming_notification(LinphoneCall *call);
+void linphone_call_incoming_complete (LinphoneCall *call, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
 LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_new(LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 LinphonePlayer *linphone_call_build_player(LinphoneCall*call);

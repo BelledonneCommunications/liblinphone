@@ -31,6 +31,8 @@ const char *linphone_call_state_to_string(LinphoneCallState cs){
 			return "LinphoneCallIdle";
 		case LinphoneCallIncomingReceived:
 			return "LinphoneCallIncomingReceived";
+		case LinphoneCallPushIncomingReceived:
+			return "LinphoneCallPushIncomingReceived";
 		case LinphoneCallOutgoingInit:
 			return "LinphoneCallOutgoingInit";
 		case LinphoneCallOutgoingProgress:
@@ -41,6 +43,8 @@ const char *linphone_call_state_to_string(LinphoneCallState cs){
 			return "LinphoneCallOutgoingEarlyMedia";
 		case LinphoneCallConnected:
 			return "LinphoneCallConnected";
+		case LinphoneCallStatePushConnected:
+			return "LinphoneCallPushConnected";
 		case LinphoneCallStreamsRunning:
 			return "LinphoneCallStreamsRunning";
 		case LinphoneCallPausing:

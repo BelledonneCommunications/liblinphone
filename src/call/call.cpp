@@ -43,7 +43,7 @@ shared_ptr<CallSession> Call::getActiveSession () const {
 
 shared_ptr<RealTimeTextChatRoom> Call::getChatRoom () {
 	if (!mChatRoom && (getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
-		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(getRemoteAddress(), true));
+		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(*getRemoteAddress(), true));
 		if (mChatRoom) mChatRoom->getPrivate()->setCall(getSharedFromThis());
 	}
 	return mChatRoom;
@@ -141,7 +141,15 @@ void Call::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 void Call::startIncomingNotification () {
-	getActiveSession()->startIncomingNotification();
+	getActiveSession()->getPrivate()->startIncomingNotification();
+}
+
+void Call::startPushIncomingNotification () {
+	getActiveSession()->startPushIncomingNotification();
+}
+
+void Call::basicStartPushIncomingNotification () {
+	getActiveSession()->basicStartIncomingNotification();
 }
 
 void Call::pauseForTransfer () {
@@ -202,7 +210,7 @@ void Call::startRemoteRing () {
 }
 
 void Call::terminateBecauseOfLostMedia () {
-	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress().asString()
+	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
@@ -463,6 +471,21 @@ Call::Call (
 	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
 }
 
+Call::Call (
+	std::shared_ptr<Core> core,
+	LinphoneCallDir direction,
+			const string &callid
+): CoreAccessor(core) {
+	mNextVideoFrameDecoded._func = nullptr;
+	mNextVideoFrameDecoded._user_data = nullptr;
+
+	mBgTask.setName("Liblinphone call notification");
+	
+	mParticipant = make_shared<Participant>();
+	mParticipant->getPrivate()->createSession(getCore(), nullptr, TRUE, this);
+	mParticipant->getPrivate()->getSession()->configureForPush(direction, callid);
+}
+
 Call::~Call () {
 	auto session = getActiveSession();
 	if (session)
@@ -471,9 +494,36 @@ Call::~Call () {
 	bctbx_list_free_with_data(mCallbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
 }
 
+void Call::complateCall (
+	LinphoneCallDir direction,
+	const Address &from,
+	const Address &to,
+	LinphoneProxyConfig *cfg,
+	SalCallOp *op,
+	const MediaSessionParams *msp
+) {
+	mParticipant->configure(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+}
+
+bool Call::isOpConfigured () const {
+	return getActiveSession()->isOpConfigured();
+}
+
 // =============================================================================
 
+LinphoneStatus Call::acceptPush () {
+	return static_pointer_cast<MediaSession>(getActiveSession())->accept(mParams);
+}
+
 LinphoneStatus Call::accept (const MediaSessionParams *msp) {
+	if (!isOpConfigured()) {
+		lInfo() << "CallSession push accepted";
+		static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->setState(CallSession::State::PushConnected, "Push connected");
+		setParams(new MediaSessionParams(*msp));
+		//mParams = msp;
+		return 0;
+	}
 	return static_pointer_cast<MediaSession>(getActiveSession())->accept(msp);
 }
 
@@ -708,7 +758,7 @@ string Call::getReferTo () {
 	return getActiveSession()->getReferTo();
 }
 
-const Address &Call::getRemoteAddress () const {
+const Address *Call::getRemoteAddress () const {
 	return getActiveSession()->getRemoteAddress();
 }
 
