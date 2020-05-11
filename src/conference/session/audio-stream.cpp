@@ -264,57 +264,105 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
-	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
-	MSSndCard * playcard = NULL;
+	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	MSSndCard *playcard = nullptr;
 
 	// try to get currently used playcard if it was already set
 	if (audioDevice) {
 		playcard = audioDevice->getSoundCard();
+		if (playcard) {
+			playcard = ms_snd_card_ref(playcard);
+		}
 	}
 
 	// If stream doesn't have a playcard associated with it, then use the default values
-	if (!playcard)
+	if (!playcard) {
 		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+		if (playcard) {
+			playcard = ms_snd_card_ref(playcard);
+		}
+	}
 
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
+
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
-	if (!captcard)
-		lWarning() << "No card defined for capture!";
+	if (captcard) {
+		captcard = ms_snd_card_ref(captcard);
+	} else lWarning() << "No card defined for capture!";
+
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
 	string recfile = L_C_TO_STRING(getCCore()->rec_file);
+
 	/* Don't use file or soundcard capture when placed in recv-only mode */
 	if ((stream->rtp_port == 0) || (stream->dir == SalStreamRecvOnly) || (stream->multicast_role == SalMulticastReceiver)) {
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		captcard = nullptr;
 		playfile = "";
 	}
 
 	if (targetState == CallSession::State::Paused) {
 		// In paused state, we never use soundcard
+		if (playcard) {
+			ms_snd_card_unref(playcard);
+		}
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		playcard = captcard = nullptr;
 		recfile = "";
 		// And we will eventually play "playfile" if set by the user
 	}
+
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())) {
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		captcard = nullptr;
 		playfile = ""; /* It is setup later */
 		if (lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "send_ringback_without_playback", 0) == 1) {
+			if (playcard) {
+				ms_snd_card_unref(playcard);
+			}
 			playcard = nullptr;
 			recfile = "";
 		}
 	}
+
 	// If playfile are supplied don't use soundcards
 	bool useRtpIo = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io", false);
 	bool useRtpIoEnableLocalOutput = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io_enable_local_output", false);
 	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
+		if (playcard) {
+			ms_snd_card_unref(playcard);
+		}
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		captcard = playcard = nullptr;
 	}
+
 	if (audioMixer) {
 		// Create the graph without soundcard resources.
+		if (playcard) {
+			ms_snd_card_unref(playcard);
+		}
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		captcard = playcard = nullptr;
 	}
+
 	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
+		if (playcard) {
+			ms_snd_card_unref(playcard);
+		}
+		if (captcard) {
+			ms_snd_card_unref(captcard);
+		}
 		captcard = playcard = nullptr;
 	}
 
@@ -436,6 +484,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	if (targetState == CallSession::State::StreamsRunning){
 		setupMediaLossCheck();
+	}
+
+	if (playcard) {
+		ms_snd_card_unref(playcard);
+	}
+	if (captcard) {
+		ms_snd_card_unref(captcard);
 	}
 	
 	return;
