@@ -826,9 +826,13 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 	const char *initialSubject = "Friends";
 	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	BC_ASSERT_PTR_NOT_NULL(confAddr);
+	if (confAddr) {
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+	}
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
+	if (!paulineCr) goto end;
 
 	// Check LIME X3DH and ZRTP status
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
