@@ -71,6 +71,7 @@ public:
 	IdentityAddress getAddressWithoutGruu () const;
 
 	virtual std::string asString () const;
+	virtual std::string asStringUriOnly () const;
 
 private:
 	L_DECLARE_PRIVATE(IdentityAddress);

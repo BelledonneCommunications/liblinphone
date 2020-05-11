@@ -226,4 +226,25 @@ string IdentityAddress::asString () const {
 	return res.str();
 }
 
+string IdentityAddress::asStringUriOnly () const {
+	L_D();
+	ostringstream res;
+	res << d->scheme << ":";
+	if (!d->username.empty()){
+		char *tmp = belle_sip_uri_to_escaped_username(d->username.c_str());
+		res << tmp << "@";
+		ms_free(tmp);
+	}
+	
+	if (d->domain.find(":") != string::npos) {
+		res << "[" << d->domain << "]";
+	} else {
+		res << d->domain;
+	}
+	if (!d->gruu.empty()){
+		res << ";gr=" << d->gruu;
+	}
+	
+	return res.str();
+}
 LINPHONE_END_NAMESPACE
