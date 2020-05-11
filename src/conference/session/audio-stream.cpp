@@ -264,8 +264,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
-	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
-	MSSndCard * playcard = NULL;
+	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	MSSndCard *playcard = nullptr;
 
 	// try to get currently used playcard if it was already set
 	if (audioDevice) {
