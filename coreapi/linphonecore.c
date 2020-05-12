@@ -33,7 +33,7 @@
 #include "conference_private.h"
 #include "logger/logger.h"
 
-#include "sqlite3_bctbx_vfs.h"
+#include "bctoolbox/sqlite3_vfs.h"
 
 #include <math.h>
 #include <sys/types.h>
@@ -7125,7 +7125,7 @@ int _linphone_sqlite3_open(const char *db_file, sqlite3 **db) {
 	/*since we plug our vfs into sqlite, we convert to UTF-8.
 	 * On Windows, the filename has to be converted back to windows native charset.*/
 	char *utf8_filename = bctbx_locale_to_utf8(db_file);
-	ret = sqlite3_open_v2(utf8_filename, db, flags, LINPHONE_SQLITE3_VFS);
+	ret = sqlite3_open_v2(utf8_filename, db, flags, BCTBX_SQLITE3_VFS);
 	ms_free(utf8_filename);
 
 	if (ret != SQLITE_OK) return ret;
