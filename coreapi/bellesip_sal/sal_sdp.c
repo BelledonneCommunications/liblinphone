@@ -861,7 +861,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	/* Get media specific RTCP attribute */
 	stream->rtcp_port = stream->rtp_port + 1;
-	snprintf(stream->rtcp_addr, sizeof(stream->rtcp_addr), "%s", stream->rtp_addr);
+	strncpy(stream->rtcp_addr, stream->rtp_addr, sizeof(stream->rtcp_addr));
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 		char *tmp = (char *)ms_malloc0(strlen(value));
