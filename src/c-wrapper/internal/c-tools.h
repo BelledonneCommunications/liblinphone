@@ -698,6 +698,7 @@ LINPHONE_END_NAMESPACE
 		__VA_ARGS__ \
 	}; \
 
+
 #define L_INTERNAL_DECLARE_C_CLONABLE_OBJECT_FUNCTIONS(C_TYPE, CONSTRUCTOR, DESTRUCTOR, CLONE_C) \
 	BELLE_SIP_DECLARE_VPTR_NO_EXPORT(Linphone ## C_TYPE); \
 	Linphone ## C_TYPE *_linphone_ ## C_TYPE ## _init () { \
@@ -732,7 +733,7 @@ LINPHONE_END_NAMESPACE
 // -----------------------------------------------------------------------------
 
 #define L_REGISTER_TYPE(CPP_TYPE, C_TYPE) \
-	extern Linphone ## C_TYPE *_linphone_ ## C_TYPE ## _init (); \
+	extern LINPHONE_PUBLIC Linphone ## C_TYPE *_linphone_ ## C_TYPE ## _init (); \
 	LINPHONE_BEGIN_NAMESPACE \
 	class CPP_TYPE; \
 	template<> \

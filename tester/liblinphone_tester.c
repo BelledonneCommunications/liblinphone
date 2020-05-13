@@ -326,6 +326,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
+	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
