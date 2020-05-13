@@ -56,6 +56,7 @@ LocalConference::~LocalConference () {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif
+	confListeners.clear();
 }
 
 // -----------------------------------------------------------------------------
