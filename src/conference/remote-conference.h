@@ -46,7 +46,7 @@ protected:
 
 
 	/* ConferenceListener */
-	void onConferenceCreated (const IdentityAddress &addr) override;
+	void onConferenceCreated (const ConferenceAddress &addr) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
