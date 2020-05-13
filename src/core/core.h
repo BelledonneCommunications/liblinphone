@@ -34,6 +34,10 @@ L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
 
+namespace LinphoneTest {
+	class LocalConferenceTester;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 class AbstractChatRoom;
@@ -74,6 +78,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ToneManager;
 	friend class EventLog;
 
+	friend class LinphoneTest::LocalConferenceTester;
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
 
