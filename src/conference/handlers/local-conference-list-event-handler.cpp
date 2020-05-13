@@ -31,6 +31,7 @@
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "core/core.h"
+#include "conference/local-conference.h"
 #include "local-conference-event-handler.h"
 #include "local-conference-list-event-handler.h"
 #include "logger/logger.h"
@@ -43,6 +44,8 @@
 // =============================================================================
 
 using namespace std;
+
+class LocalConference;
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -216,17 +219,17 @@ void LocalConferenceListEventHandler::addHandler (LocalConferenceEventHandler *h
 		return;
 	}
 
-	if(findHandler(handler->getConferenceId())) {
-		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->getConferenceId();
+	if(findHandler(handler->conf->getConferenceId())) {
+		lError() << "Trying to insert an already present handler in the local conference handler list: " << handler->conf->getConferenceId();
 		return;
 	}
 
-	handlers[handler->getConferenceId()] = handler;
+	handlers[handler->conf->getConferenceId()] = handler;
 }
 
 void LocalConferenceListEventHandler::removeHandler (LocalConferenceEventHandler *handler) {
 	if (handler){
-		auto it = handlers.find(handler->getConferenceId());
+		auto it = handlers.find(handler->conf->getConferenceId());
 		if (it != handlers.end()){
 			handlers.erase(it);
 			lInfo() << "Handler removed.";

@@ -32,7 +32,7 @@ class LINPHONE_PUBLIC ConferenceListener {
 public:
 	virtual ~ConferenceListener () = default;
 
-	virtual void onConferenceCreated (const IdentityAddress &addr) {}
+	virtual void onConferenceCreated (const ConferenceAddress &addr) {}
 	virtual void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) {}
 	virtual void onConferenceTerminated (const IdentityAddress &addr) {}
 	virtual void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
