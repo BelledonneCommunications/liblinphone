@@ -183,7 +183,7 @@ public:
 		const std::shared_ptr<AbstractChatRoom> &chatRoom,
 		const IdentityAddress &presentParticipantAddr
 	);
-	IdentityAddress findOneToOneConferenceChatRoomAddress (
+	ConferenceAddress findOneToOneConferenceChatRoomAddress (
 		const IdentityAddress &participantA,
 		const IdentityAddress &participantB,
 		bool encrypted

@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC ConferenceId {
 public:
 	ConferenceId ();
-	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
+	ConferenceId (const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
 	ConferenceId (const ConferenceId &other);
 
 	virtual ~ConferenceId() = default;
@@ -52,8 +52,8 @@ public:
 
 private:
 
-	IdentityAddress peerAddress;
-	IdentityAddress localAddress;
+	ConferenceAddress peerAddress;
+	ConferenceAddress localAddress;
 
 };
 
