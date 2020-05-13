@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
-class ClientGroupChatRoom : public ChatRoom, public RemoteConference {
+class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class CorePrivate;
