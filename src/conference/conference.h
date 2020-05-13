@@ -55,7 +55,7 @@ public:
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 	bool canHandleParticipants () const override;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
-	const IdentityAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 	std::shared_ptr<Participant> getMe () const override;
 	int getParticipantCount () const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
@@ -70,6 +70,10 @@ public:
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
+		confListeners.push_back(listener);
+	}
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
@@ -79,12 +83,14 @@ protected:
 
 	bool isMe (const IdentityAddress &addr) const;
 
-	IdentityAddress conferenceAddress;
+	ConferenceAddress conferenceAddress;
 	std::list<std::shared_ptr<Participant>> participants;
 	std::string subject;
 
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
+
+	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 
 	CallSessionListener *listener = nullptr;
 

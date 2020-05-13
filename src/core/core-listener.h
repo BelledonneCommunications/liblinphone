@@ -22,11 +22,13 @@
 
 #include "linphone/types.h"
 
+#include "linphone/utils/general.h"
+
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CoreListener {
+class LINPHONE_PUBLIC CoreListener {
 public:
 	virtual ~CoreListener () = default;
 
