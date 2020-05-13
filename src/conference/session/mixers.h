@@ -76,7 +76,6 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
-	
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
@@ -179,6 +178,7 @@ private:
 /**
  * A video mixer based on mediastreamer2.
  * It inherits from MS2VideoControl (which is in fact a VideoControlInterface) to let control the local participant, if any.
+ * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
  */
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
@@ -196,6 +196,7 @@ private:
 	void addLocalParticipant();
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
+	int getOutputBandwidth();
 	MSVideoConference *mConference = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;
