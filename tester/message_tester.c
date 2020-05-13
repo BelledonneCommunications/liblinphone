@@ -823,6 +823,72 @@ static void transfer_message_download_cancelled(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void transfer_message_auto_download_aborted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	/* Enable auto download on marie's Core */
+	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+
+	/* create a chatroom on pauline's side */
+	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatMessage* msg = create_message_from_sintel_trailer(chat_room);
+	linphone_chat_message_send(msg);
+
+	/* wait for marie to receive pauline's msg */
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
+	linphone_chat_message_unref(msg);
+
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	linphone_core_manager_restart(marie, TRUE);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+
+	LinphoneChatRoom *marie_cr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatMessage *marie_msg = linphone_chat_room_get_last_message_in_history(marie_cr);
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	if (marie_msg) {
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie_msg);
+		BC_ASSERT_PTR_NOT_NULL(contents);
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int, "%d");
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "vnd.gsma.rcs-ft-http+xml");
+
+		LinphoneChatMessageState state = linphone_chat_message_get_state(marie_msg);
+		BC_ASSERT_EQUAL(state, LinphoneChatMessageStateDelivered, int, "%d");
+
+		// Auto download isn't resumed automatically, and since the manager restarted the stats are reset
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 0, int, "%d");
+
+		char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+		char *receive_filepath = bc_tester_file("receive_file.dump");
+		/* Remove any previously downloaded file */
+		remove(receive_filepath);
+		
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(marie_msg);
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+		linphone_chat_message_download_file(marie_msg);
+
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+		if (BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000))) {
+			compare_files(send_filepath, receive_filepath);
+		}
+
+		linphone_chat_message_unref(marie_msg);
+		bc_free(send_filepath);
+		bc_free(receive_filepath);
+	}
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void file_transfer_2_messages_simultaneously(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -1122,6 +1188,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	linphone_core_get_chat_room(marie->lc, pauline->identity); /*make marie create the chatroom with pauline, which is necessary for receiving the is-composing*/
 	linphone_chat_room_compose(pauline_chat_room);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 0));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
 	BC_ASSERT_GREATER(bctbx_list_size(composing_addresses), 0, int, "%i");
 	if (bctbx_list_size(composing_addresses) > 0) {
@@ -1158,6 +1225,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	}
 	linphone_chat_room_send_message(pauline_chat_room, "Composing a msg");
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingIdleReceived, 2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
 	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
 
@@ -1203,6 +1271,7 @@ static void _imdn_notifications(bool_t with_lime) {
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(sent_cm);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 	marie_chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	history = linphone_chat_room_get_history(marie_chat_room, 1);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(history), 1, int, "%d");
@@ -1212,6 +1281,7 @@ static void _imdn_notifications(bool_t with_lime) {
 		if (received_cm != NULL) {
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 0));
 			LinphoneChatMessage *imdn_message = pauline->stat.last_received_chat_message;
 			if (BC_ASSERT_PTR_NOT_NULL(imdn_message)) {
 				const char *priority = linphone_chat_message_get_custom_header(imdn_message, "Priority");
@@ -1221,6 +1291,7 @@ static void _imdn_notifications(bool_t with_lime) {
 			linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 2));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 0));
 			imdn_message = pauline->stat.last_received_chat_message;
 			if (BC_ASSERT_PTR_NOT_NULL(imdn_message)) {
 				const char *priority = linphone_chat_message_get_custom_header(imdn_message, "Priority");
@@ -2628,7 +2699,7 @@ void chat_message_custom_headers(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-void _text_message_with_custom_content_type(bool_t with_lime) {
+void _text_message_with_custom_content_type(bool_t with_lime, bool_t is_supported) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
@@ -2640,8 +2711,10 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	size_t file_size;
 	char *buf;
 
-	linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
 	linphone_core_add_content_type_support(pauline->lc, "image/svg+xml");
+	if (is_supported) {
+		linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
+	}
 
 	if (with_lime) {
 		if (enable_lime_for_message_test(marie, pauline) < 0) goto end;
@@ -2662,15 +2735,29 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
+	if (is_supported) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
+	} else {
+		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
+		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1, 5000));
+	}
 
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(msg), "image/svg+xml");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), buf);
 
-	if (marie->stat.last_received_chat_message) {
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(marie->stat.last_received_chat_message), "image/svg+xml");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), buf);
+	if (is_supported) {
+		if (marie->stat.last_received_chat_message) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(marie->stat.last_received_chat_message), "image/svg+xml");
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), buf);
+		}
+	} else {
+		BC_ASSERT_PTR_NULL(marie->stat.last_received_chat_message);
+		LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		BC_ASSERT_PTR_NOT_NULL(marie_room);
+		if (marie_room) {
+			BC_ASSERT_PTR_NULL(linphone_chat_room_get_last_message_in_history(marie_room));
+		}
 	}
 
 	bctbx_free(buf);
@@ -2684,13 +2771,20 @@ end:
 }
 
 void text_message_with_custom_content_type(void) {
-	_text_message_with_custom_content_type(FALSE);
+	_text_message_with_custom_content_type(FALSE, TRUE);
 }
 
 void text_message_with_custom_content_type_and_lime(void) {
-	_text_message_with_custom_content_type(TRUE);
+	_text_message_with_custom_content_type(TRUE, TRUE);
 }
 
+void text_message_with_unsupported_content_type(void) {
+	_text_message_with_custom_content_type(FALSE, FALSE);
+}
+
+void text_message_with_unsupported_content_type_and_lime(void) {
+	_text_message_with_custom_content_type(TRUE, FALSE);
+}
 
 static int im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	ms_debug("IM encryption process incoming message with content type %s", linphone_chat_message_get_content_type(msg));
@@ -2949,6 +3043,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message with download io error", transfer_message_with_download_io_error),
 	TEST_NO_TAG("Transfer message upload cancelled", transfer_message_upload_cancelled),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
+	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
@@ -3004,7 +3099,9 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT"),
 	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
 	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
+	TEST_NO_TAG("Text message with unsupported content-type", text_message_with_unsupported_content_type),
 	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
+	TEST_ONE_TAG("Text message with unsupported content-type and lime", text_message_with_unsupported_content_type_and_lime, "LIME"),
 	TEST_NO_TAG("IM Encryption Engine b64", im_encryption_engine_b64),
 	TEST_NO_TAG("IM Encryption Engine b64 async", im_encryption_engine_b64_async),
 	TEST_NO_TAG("Text message within call dialog", text_message_within_call_dialog),

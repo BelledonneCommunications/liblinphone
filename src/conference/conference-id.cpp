@@ -28,8 +28,8 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceId::ConferenceId () {}
 
 ConferenceId::ConferenceId (
-	const IdentityAddress &peerAddress,
-	const IdentityAddress &localAddress
+	const ConferenceAddress &peerAddress,
+	const ConferenceAddress &localAddress
 ) {
 	this->peerAddress = peerAddress;
 	this->localAddress = localAddress;
@@ -59,11 +59,11 @@ bool ConferenceId::operator< (const ConferenceId &other) const {
 		|| (peerAddress == other.peerAddress && localAddress < other.localAddress);
 }
 
-const IdentityAddress &ConferenceId::getPeerAddress () const {
+const ConferenceAddress &ConferenceId::getPeerAddress () const {
 	return peerAddress;
 }
 
-const IdentityAddress &ConferenceId::getLocalAddress () const {
+const ConferenceAddress &ConferenceId::getLocalAddress () const {
 	return localAddress;
 }
 

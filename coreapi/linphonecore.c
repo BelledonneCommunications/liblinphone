@@ -2410,8 +2410,8 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
 		));
 		if (!chatRoom)
 			return;
@@ -2450,11 +2450,11 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
 	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
+		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 #else
@@ -2480,8 +2480,8 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
 	if (chatRoom)
 		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
@@ -5767,6 +5767,7 @@ LinphoneStatus linphone_core_set_video_device(LinphoneCore *lc, const char *id){
 		lc->video_conf.device=ms_web_cam_manager_get_default_cam(ms_factory_get_web_cam_manager(lc->factory));
 	if (olddev!=NULL && olddev!=lc->video_conf.device){
 		relaunch_video_preview(lc);
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->updateVideoDevice();
 	}
 	if ( linphone_core_ready(lc) && lc->video_conf.device){
 		vd=ms_web_cam_get_string_id(lc->video_conf.device);
@@ -7707,7 +7708,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
-		if (!serverMode) linphone_conference_params_set_state_changed_callback(params2, _linphone_core_conference_state_changed, lc);
+		
 		conf_method_name = lp_config_get_string(lc->config, "misc", "conference_type", "local");
 		if (strcasecmp(conf_method_name, "local") == 0) {
 			conf = linphone_local_conference_new_with_params(lc, params2);
@@ -7719,7 +7720,10 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			return NULL;
 		}
 		linphone_conference_params_unref(params2);
-		if (!serverMode) linphone_core_set_conference(lc, conf);
+		if (!serverMode) {
+			linphone_core_set_conference(lc, conf);
+			linphone_conference_set_state_changed_callback(conf, _linphone_core_conference_state_changed, lc);
+		}
 	} else {
 		ms_error("Could not create a conference: a conference instance already exists");
 		return NULL;

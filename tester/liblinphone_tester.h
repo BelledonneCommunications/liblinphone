@@ -92,6 +92,7 @@ extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
 extern test_suite_t shared_core_test_suite;
+extern test_suite_t local_conference_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -366,6 +367,7 @@ typedef struct _LinphoneCoreManager {
 	char *lime_database_path;
 	char *app_group_id;
 	bool_t main_core;
+	void * user_info;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -404,12 +406,14 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 /* This function is used to restore the fake DNS which is lost after a linphone_core_stop() */
 void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
+void linphone_core_manager_uninit2(LinphoneCoreManager* mgr);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
 void start_core_for_conference(bctbx_list_t *coreManagerList);
+bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri);
 
 void reset_counters(stats* counters);
 
@@ -487,6 +491,7 @@ void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
+void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);

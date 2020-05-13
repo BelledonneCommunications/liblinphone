@@ -29,7 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LINPHONE_PUBLIC ConferenceId {
 public:
 	ConferenceId ();
-	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
+	ConferenceId (const ConferenceAddress &peerAddress, const ConferenceAddress &localAddress);
 	ConferenceId (const ConferenceId &other);
 
 	virtual ~ConferenceId() = default;
@@ -45,15 +45,15 @@ public:
 
 	bool operator< (const ConferenceId &other) const;
 
-	const IdentityAddress &getPeerAddress () const;
-	const IdentityAddress &getLocalAddress () const;
+	const ConferenceAddress &getPeerAddress () const;
+	const ConferenceAddress &getLocalAddress () const;
 
 	bool isValid () const;
 
 private:
 
-	IdentityAddress peerAddress;
-	IdentityAddress localAddress;
+	ConferenceAddress peerAddress;
+	ConferenceAddress localAddress;
 
 };
 

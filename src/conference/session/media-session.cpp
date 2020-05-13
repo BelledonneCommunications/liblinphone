@@ -2490,8 +2490,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			as->stop();
 			d->updateStreams(d->resultDesc, d->state);
 		}else{
-			VideoControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-			if (i) i->parametersChanged();
+			// Done directly by linphone_core_set_video_device().
 		}
 	}
 	return result;
@@ -2871,6 +2870,11 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
+
 void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
@@ -2882,11 +2886,6 @@ void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	d->setCurrentOutputAudioDevice(audioDevice);
 	if (i) i->setOutputDevice(audioDevice);
-}
-
-StreamsGroup & MediaSession::getStreamsGroup()const{
-	L_D();
-	return d->getStreamsGroup();
 }
 
 AudioDevice* MediaSession::getInputAudioDevice() const {
