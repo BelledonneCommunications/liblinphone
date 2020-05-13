@@ -28,8 +28,8 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceId::ConferenceId () {}
 
 ConferenceId::ConferenceId (
-	const IdentityAddress &peerAddress,
-	const IdentityAddress &localAddress
+	const ConferenceAddress &peerAddress,
+	const ConferenceAddress &localAddress
 ) {
 	this->peerAddress = peerAddress;
 	this->localAddress = localAddress;
