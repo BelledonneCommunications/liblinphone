@@ -76,7 +76,6 @@ public:
 	void setFocus(StreamsGroup *sg);
 	Core & getCore() const;
 	LinphoneCore *getCCore()const;
-	
 protected:
 	virtual void onActiveTalkerChanged(StreamsGroup *sg) override;
 private:
