@@ -21,6 +21,7 @@
 #define _L_IDENTITY_ADDRESS_H_
 
 #include <ostream>
+#include <string>
 
 #include "linphone/utils/general.h"
 
@@ -38,7 +39,7 @@ public:
 	IdentityAddress ();
 	virtual ~IdentityAddress () = default;
 
-	IdentityAddress *clone () const {
+	virtual IdentityAddress *clone () const {
 		return new IdentityAddress(*this);
 	}
 
@@ -79,6 +80,34 @@ inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identi
 	os << "IdentityAddress(" << identityAddress.asString() << ")";
 	return os;
 }
+class LINPHONE_PUBLIC ConferenceAddress : public IdentityAddress {
+public:
+	ConferenceAddress (const std::string &address);
+	ConferenceAddress (const Address &address);
+	ConferenceAddress (const IdentityAddress &other);
+	ConferenceAddress (const ConferenceAddress &other);
+	ConferenceAddress() : IdentityAddress(){};
+	~ConferenceAddress () = default;
+	
+	ConferenceAddress *clone () const override {
+		return new ConferenceAddress(*this);
+	}
+
+	ConferenceAddress &operator= (const ConferenceAddress &other);
+	ConferenceAddress &operator= (const IdentityAddress &other){
+		return dynamic_cast<ConferenceAddress&>(IdentityAddress::operator=(other));
+	} ;
+
+	bool operator== (const ConferenceAddress &other) const;
+	bool operator!= (const ConferenceAddress &other) const;
+
+	bool operator< (const ConferenceAddress &other) const;
+
+	virtual std::string asString () const override;
+	
+private:
+	std::string mConfId;
+};
 
 LINPHONE_END_NAMESPACE
 

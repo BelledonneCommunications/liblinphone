@@ -32,8 +32,11 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LocalConferenceEventHandler;
 
-class LINPHONE_PUBLIC LocalConference : public Conference {
+class LINPHONE_PUBLIC LocalConference : 
+	public Conference,
+	public ConferenceListenerInterface {
 	friend class ServerGroupChatRoomPrivate;
+	friend class LocalConferenceEventHandler;
 public:
 	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
 	virtual ~LocalConference ();
@@ -42,13 +45,38 @@ public:
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
-//protected:
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (const Address &addr, bool isAdmin);
+	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged ();
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
+
+//	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
+
+	const ConferenceId &getConferenceId () const;
+	inline unsigned int getLastNotify () const { return lastNotify; };
+
+	void subscribeReceived (LinphoneEvent *event);
+
+protected:
+	void setLastNotify (unsigned int lastNotify);
+	void setConferenceId (const ConferenceId &conferenceId);
+
+	ConferenceId conferenceId;
+
+	// lastNotify belongs to the conference and not the the event handler.
+	// The event handler can access it using the getter
+	unsigned int lastNotify = 1;
+
 #ifdef HAVE_ADVANCED_IM
-	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
+	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
 #endif
 
 private:
+
 	L_DISABLE_COPY(LocalConference);
+
 };
 
 LINPHONE_END_NAMESPACE

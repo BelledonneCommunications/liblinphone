@@ -281,6 +281,7 @@ if(MSVC)
 	list(APPEND STRICT_OPTIONS_CPP "/wd4995") # Disable "name was marked as #pragma deprecated" warnings
 	list(APPEND STRICT_OPTIONS_CPP "/wd4996") # Disable deprecated function warnings
 	list(APPEND STRICT_OPTIONS_CPP "/wd4800") # Disable warning for cast from bool_t to bool
+	list(APPEND STRICT_OPTIONS_CPP "/wd4251") # Disable warning for missing dll export
 	if(ENABLE_STRICT)
 		list(APPEND STRICT_OPTIONS_CPP "/WX")
 	endif()
