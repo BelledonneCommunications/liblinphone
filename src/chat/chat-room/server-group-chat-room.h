@@ -60,7 +60,7 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
-	const IdentityAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 
 	bool canHandleParticipants () const override;
 
