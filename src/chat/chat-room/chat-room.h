@@ -93,8 +93,14 @@ public:
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
+		chatListeners.push_back(listener);
+	}
+
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+
+	std::list<std::shared_ptr<ConferenceListenerInterface>> chatListeners;
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);
