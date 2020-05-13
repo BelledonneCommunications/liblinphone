@@ -36,7 +36,7 @@ class CallSessionPrivate;
 class Content;
 class ParticipantDevice;
 
-class LINPHONE_PUBLIC Conference :
+class Conference :
 	public ConferenceInterface,
 	public ConferenceListener,
 	public CoreAccessor {
