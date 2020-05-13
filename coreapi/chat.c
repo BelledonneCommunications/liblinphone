@@ -81,7 +81,37 @@ const bctbx_list_t *linphone_core_get_chat_rooms (LinphoneCore *lc) {
 	return lc->chat_rooms;
 }
 
-//Deprecated see linphone_core_create_chat_room_6
+static LinphoneChatRoom *linphone_chat_room_new (LinphoneCore *core, const LinphoneAddress *addr) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getOrCreateBasicChatRoom(
+		*L_GET_CPP_PTR_FROM_C_OBJECT(addr),
+		!!linphone_core_realtime_text_enabled(core)
+	));
+}
+
+LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call){
+	LinphoneChatRoom *cr = linphone_chat_room_new(linphone_call_get_core(call),
+		linphone_address_clone(linphone_call_get_remote_address(call)));
+	linphone_chat_room_set_call(cr, call);
+	return cr;
+}
+
+LinphoneChatRoom *linphone_core_get_chat_room (LinphoneCore *lc, const LinphoneAddress *peerAddr) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(*L_GET_CPP_PTR_FROM_C_OBJECT(peerAddr)));
+}
+
+LinphoneChatRoom *linphone_core_get_chat_room_2 (
+	LinphoneCore *lc,
+	const LinphoneAddress *peer_addr,
+	const LinphoneAddress *local_addr
+) {
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getOrCreateBasicChatRoom(LinphonePrivate::ConferenceId(
+		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
+		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
+	)));
+}
+
+//Deprecated
+>>>>>>> Add listener to LocalConference and edit conference event tester to reflect changes
 LinphoneChatRoom *linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback) {
 	return linphone_core_create_client_group_chat_room_2(lc, subject, fallback, FALSE);
 }
@@ -217,8 +247,10 @@ LinphoneChatRoom *linphone_core_find_chat_room(
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
-	return result;
+	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
+		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
+	)));
 }
 
 //Deprecated see linphone_core_search_chat_room
@@ -268,8 +300,8 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 	}
 
 	LinphonePrivate::ConferenceId conferenceId{
-		LinphonePrivate::IdentityAddress(peerAddress),
-		LinphonePrivate::IdentityAddress(localAddress)
+		LinphonePrivate::ConferenceAddress(LinphonePrivate::Address(peerAddress)),
+		LinphonePrivate::ConferenceAddress(LinphonePrivate::Address(localAddress))
 	};
 	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	if (chatRoom)

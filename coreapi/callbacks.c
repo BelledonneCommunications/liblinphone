@@ -101,56 +101,53 @@ static void call_received(SalCallOp *h) {
 		fromAddr = linphone_address_new(h->getFrom().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(h->getTo().c_str());
 
-	if (_linphone_core_is_conference_creation(lc, toAddr)) {
-#ifdef HAVE_ADVANCED_IM
-		linphone_address_unref(toAddr);
-		linphone_address_unref(fromAddr);
-		if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
-			string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
-			if (oneToOneChatRoom == "true") {
-				bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
-				if (!oneToOneChatRoomEnabled) {
-					h->decline(SalReasonNotAcceptable);
-					h->release();
-					return;
-				}
-				IdentityAddress from(h->getFrom());
-				list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
-				if (identAddresses.size() != 1) {
-					h->decline(SalReasonNotAcceptable);
-					h->release();
-					return;
-				}
-				const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
-				bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
-
-				IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
-				if (confAddr.isValid()) {
-					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
-					L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
-					return;
-				}
-			}
-			_linphone_core_create_server_group_chat_room(lc, h);
-		}
-		// TODO: handle media conference creation if the "text" feature tag is not present
-		return;
-#else
-		ms_warning("Advanced IM such as group chat is disabled!");
-		return;
-#endif
-	}
 
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 #ifdef HAVE_ADVANCED_IM
-		linphone_address_unref(toAddr);
-		linphone_address_unref(fromAddr);
 		if (linphone_core_conference_server_enabled(lc)) {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-				ConferenceId(IdentityAddress(h->getTo()), IdentityAddress(h->getTo()))
+				ConferenceId(ConferenceAddress(Address(h->getTo())), ConferenceAddress(Address(h->getTo())))
 			);
 			if (chatRoom) {
 				L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
+			} else if (_linphone_core_is_conference_creation(lc, toAddr)) {
+#ifdef HAVE_ADVANCED_IM 
+				linphone_address_unref(toAddr);
+				linphone_address_unref(fromAddr);
+				if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
+					string oneToOneChatRoom = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room"));
+					if (oneToOneChatRoom == "true") {
+						bool_t oneToOneChatRoomEnabled = linphone_config_get_bool(linphone_core_get_config(lc), "misc", "enable_one_to_one_chat_room", TRUE);
+						if (!oneToOneChatRoomEnabled) {
+							h->decline(SalReasonNotAcceptable);
+							h->release();
+							return;
+						}
+						IdentityAddress from(h->getFrom());
+						list<IdentityAddress> identAddresses = ServerGroupChatRoom::parseResourceLists(h->getRemoteBody());
+						if (identAddresses.size() != 1) {
+							h->decline(SalReasonNotAcceptable);
+							h->release();
+							return;
+						}
+						const char *endToEndEncryptedStr = sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted");
+						bool encrypted = endToEndEncryptedStr && strcmp(endToEndEncryptedStr, "true") == 0;
+						
+						IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
+						if (confAddr.isValid()) {
+							shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
+							L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
+							return;
+						}
+					}
+					_linphone_core_create_server_group_chat_room(lc, h);
+				}
+				// TODO: handle media conference creation if the "text" feature tag is not present
+				return;
+#else
+				ms_warning("Advanced IM such as group chat is disabled!");
+				return;
+#endif
 			} else {
 				//invite is for an unknown chatroom
 				h->decline(SalReasonNotFound);
@@ -158,7 +155,7 @@ static void call_received(SalCallOp *h) {
 			}
 		} else {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-				ConferenceId(IdentityAddress(h->getFrom()), IdentityAddress(h->getTo()))
+				ConferenceId(ConferenceAddress(Address(h->getFrom())), ConferenceAddress(Address(h->getTo())))
 			);
 			if (chatRoom && chatRoom->getCapabilities() & ChatRoom::Capabilities::Basic) {
 				lError() << "Invalid basic chat room found. It should have been a ClientGroupChatRoom... Recreating it...";
@@ -169,7 +166,7 @@ static void call_received(SalCallOp *h) {
 				string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(),
-					ConferenceId(IdentityAddress(h->getRemoteContact()), IdentityAddress(h->getTo())),
+					ConferenceId(ConferenceAddress(Address(h->getRemoteContact())), ConferenceAddress(Address(h->getTo()))),
 					h->getRemoteBody(),
 					endToEndEncrypted == "true"
 				);
@@ -180,6 +177,8 @@ static void call_received(SalCallOp *h) {
 				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);
 		}
+		linphone_address_unref(toAddr);
+		linphone_address_unref(fromAddr);
 		return;
 #else
 		ms_warning("Advanced IM such as group chat is disabled!");
@@ -188,7 +187,9 @@ static void call_received(SalCallOp *h) {
 	} else {
 		// TODO: handle media conference joining if the "text" feature tag is not present
 	}
+		
 
+	
 	/* First check if we can answer successfully to this invite */
 	LinphonePresenceActivity *activity = nullptr;
 	if ((linphone_presence_model_get_basic_status(lc->presence_model) == LinphonePresenceBasicStatusClosed)
@@ -851,7 +852,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				if (linphone_core_conference_server_enabled(lc)) {
 					// Removal of a participant at the server side
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
+						ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
 					);
 					if (chatRoom) {
 						std::shared_ptr<Participant> participant = chatRoom->findParticipant(IdentityAddress(op->getFrom()));

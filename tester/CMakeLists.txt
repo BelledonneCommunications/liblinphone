@@ -243,6 +243,7 @@ set(SOURCE_FILES_C
 	video_tester.c
 	video_quality_tester.c
 	shared_core_tester.c
+	local_conference_tester.cpp
 )
 
 set(SOURCE_FILES_CXX
