@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class Core;
 class RemoteConferenceCallPrivate;
 
-class LINPHONE_PUBLIC RemoteConferenceCall : public Call, public RemoteConference {
+class RemoteConferenceCall : public Call, public RemoteConference {
 public:
 	// TODO: Make me private.
 	RemoteConferenceCall (

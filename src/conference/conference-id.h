@@ -26,7 +26,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LINPHONE_PUBLIC ConferenceId {
+class ConferenceId {
 public:
 	ConferenceId ();
 	ConferenceId (const IdentityAddress &peerAddress, const IdentityAddress &localAddress);
