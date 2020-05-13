@@ -243,6 +243,7 @@ set(SOURCE_FILES_C
 	video_tester.c
 	video_quality_tester.c
 	shared_core_tester.c
+	local_conference_tester.cpp
 )
 if(ENABLE_LIME_X3DH)
     list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)

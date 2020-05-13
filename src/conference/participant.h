@@ -35,12 +35,16 @@
 
 // =============================================================================
 
+namespace LinphoneTest {
+	class LocalConferenceTester;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoom;
 class Conference;
 
-class Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
+class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
 	// TODO: Remove... It's ugly.
 	friend class Call;
 	friend class ClientGroupChatRoom;
@@ -58,6 +62,7 @@ class Participant : public bellesip::HybridObject<LinphoneParticipant, Participa
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
+	friend class LinphoneTest::LocalConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 	Participant ();
