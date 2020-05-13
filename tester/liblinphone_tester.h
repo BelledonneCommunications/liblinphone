@@ -65,6 +65,7 @@ extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
 extern test_suite_t group_chat_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
+extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
 extern test_suite_t session_timers_test_suite;
@@ -561,6 +562,16 @@ extern MSSndCardDesc dummy_test_snd_card_desc;
 
 extern MSSndCardDesc dummy2_test_snd_card_desc;
 #define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
+
+/**
+ * Set the requested curve and matching lime server url in the given core manager
+ * WARNING: uses a dirty trick: the linphone_core_set_lime_x3dh_server_url will actually restart
+ * the encryption engine (only if the given url is different than the current one). It will thus parse
+ * again the curve setting that is changed BEFORE.
+ */
+void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
+void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
+
 
 #ifdef __cplusplus
 };
