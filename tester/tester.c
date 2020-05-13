@@ -2396,3 +2396,24 @@ static MSSndCard* create_dummy2_test_snd_card(void) {
 static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy2_test_snd_card());
 }
+
+void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
+	if (curveId == 448) {
+		// Change the curve setting before the server URL
+		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
+		// changing the url will restart the encryption engine allowing to also use the changed curve config
+		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_url);
+	} else {
+		// Change the curve setting before the server URL
+		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
+		// changing the url will restart the encryption engine allowing to also use the changed curve config
+		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_url);
+	}
+}
+
+void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
+	bctbx_list_t *item = managerList;
+	for (item = managerList; item; item = bctbx_list_next(item)) {
+		set_lime_curve(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)));
+	}
+}
