@@ -714,7 +714,6 @@ VideoControlInterface * RemoteConference::getVideoControlInterface() const{
 	return ms->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 }
 
-
 AudioStream *RemoteConference::getAudioStream(){
 	if (!m_focusCall) return nullptr;
 	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
