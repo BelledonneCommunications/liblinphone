@@ -243,10 +243,6 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 	return linphone_core_echo_cancellation_enabled(getSession().getCCore());
 }
 
-AudioStream * MS2AudioMixer::getAudioStream(){
-	return mLocalParticipantStream;
-}
-	
 void MS2AudioMixer::setInputDevice(AudioDevice *audioDevice) {
 	audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
 }
@@ -263,6 +259,10 @@ AudioDevice* MS2AudioMixer::getInputDevice() const {
 AudioDevice* MS2AudioMixer::getOutputDevice() const {
 	MSSndCard *card = audio_stream_get_output_ms_snd_card(mLocalParticipantStream);
 	return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioStream * MS2AudioMixer::getAudioStream(){
+	return mLocalParticipantStream;
 }
 
 LINPHONE_END_NAMESPACE
