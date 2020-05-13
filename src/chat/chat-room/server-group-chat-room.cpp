@@ -144,7 +144,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 	 * previously OR a totally new participant. */
 	if (findAuthorizedParticipant(addr) == nullptr){
 		authorizedParticipants.push_back(participant);
-		shared_ptr<ConferenceParticipantEvent> event = qConference->eventHandler->notifyParticipantAdded(addr);
+		shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantAdded(addr);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 	return participant;
@@ -274,10 +274,10 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		mInitiatorDevice = device;
 
 		/*Since the initiator of the chatroom has not yet subscribed at this stage, this won't generate NOTIFY, the events will be queued. */
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
+		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
 		q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 		if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-			shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->eventHandler->notifyParticipantSetAdmin(participant->getAddress(), true);
+			shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->notifyParticipantSetAdmin(participant->getAddress(), true);
 			q->getCore()->getPrivate()->mainDb->addEvent(adminEvent);
 		}
 	} else {
@@ -306,11 +306,14 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	}
 
 	if (!session || (session->getPrivate()->getOp() != op)) {
-		session = participant->createSession(*q, nullptr, false, this);
+		CallSessionParams params;
+		//params.addCustomContactParameter("isfocus");
+		session = participant->createSession(*q, &params, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->getTo()));
 		session->startIncomingNotification(false);
 		Address addr = qConference->conferenceAddress;
 		addr.setParam("isfocus");
+		//to force is focus to be added
 		session->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
 		device->setSession(session);
 	}
@@ -420,7 +423,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 
 	queuedMessages.erase(participant->getAddress().asString());
 
-	shared_ptr<ConferenceParticipantEvent> event = qConference->eventHandler->notifyParticipantRemoved(participant->getAddress());
+	shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantRemoved(participant->getAddress());
 	q->getCore()->getPrivate()->mainDb->addEvent(event);
 
 	if (!isAdminLeft())
@@ -444,11 +447,6 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (c
 			return participant;
 	}
 	return nullptr;
-}
-
-void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
-	L_Q_T(LocalConference, qConference);
-	qConference->eventHandler->subscribeReceived(event, !!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne));
 }
 
 void ServerGroupChatRoomPrivate::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
@@ -560,7 +558,7 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 	return LinphoneReasonNone;
 }
 
-void ServerGroupChatRoomPrivate::setConferenceAddress (const IdentityAddress &conferenceAddress) {
+void ServerGroupChatRoomPrivate::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
 
@@ -757,7 +755,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		 */
 		device = participant->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
 
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->eventHandler->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
@@ -796,9 +794,9 @@ void ServerGroupChatRoomPrivate::sendMessage (const shared_ptr<Message> &message
 void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	IdentityAddress confAddr(qConference->conferenceAddress);
+	ConferenceAddress confAddr(qConference->conferenceAddress);
 	conferenceId = ConferenceId(confAddr, confAddr);
-	qConference->eventHandler->setConferenceId(conferenceId);
+	qConference->setConferenceId(conferenceId);
 	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->eventHandler.get());
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
@@ -807,7 +805,14 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	Address addr(confAddr);
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getSession();
-	session->redirect(addr);
+	if (session->getState() == CallSession::State::Idle) {
+		lInfo() << " Scheduling redirection to [" << addr <<"] for Call session ["<<session<<"]" ;
+		q->getCore()->doLater([session,addr] {
+			session->redirect(addr);
+		});
+	} else {
+			session->redirect(addr);
+	}
 	joiningPendingAfterCreation = true;
 	chatRoomListener->onChatRoomInsertRequested(q->getSharedFromThis());
 	setState(ChatRoom::State::Created);
@@ -837,16 +842,20 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 			csp.addCustomHeader("One-To-One-Chat-Room", "true");
 		if (capabilities & ServerGroupChatRoom::Capabilities::Encrypted)
 			csp.addCustomHeader("End-To-End-Encrypted", "true");
+		//csp.addCustomContactParameter("isfocus");
+		//csp.addCustomContactParameter("text");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		session = participant->createSession(*q, &csp, false, this);
 		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->conferenceAddress, device->getAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
 		session->getPrivate()->createOp();
+		//FIXME jehan check conference server  potential impact
 		Address contactAddr(qConference->conferenceAddress);
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
 		session->getPrivate()->getOp()->setContactAddress(contactAddr.getInternalAddress());
+
 	}
 	return session;
 }
@@ -976,7 +985,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 		return;
 	}
 	// Notify to everyone the retirement of this device.
-	auto deviceEvent = qConference->eventHandler->notifyParticipantDeviceRemoved(participant->getAddress(), deviceAddress);
+	auto deviceEvent = qConference->notifyParticipantDeviceRemoved(participant->getAddress(), deviceAddress);
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
 	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
@@ -1150,14 +1159,14 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	this->subject = subject;
 	this->participants = move(participants);
 	this->conferenceAddress = peerAddress;
-	this->eventHandler->setLastNotify(lastNotifyId);
-	this->eventHandler->setConferenceId(d->conferenceId);
+	this->lastNotify = lastNotifyId;
+	this->conferenceId = d->conferenceId;
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {
 	lInfo() << this << " destroyed.";
-	if (eventHandler->getConferenceId().isValid()){
+	if (conferenceId.isValid()){
 		try {
 			if (getCore()->getPrivate()->localListEventHandler)
 				getCore()->getPrivate()->localListEventHandler->removeHandler(eventHandler.get());
@@ -1245,7 +1254,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddr
 	return LocalConference::findParticipant(participantAddress);
 }
 
-const IdentityAddress &ServerGroupChatRoom::getConferenceAddress () const {
+const ConferenceAddress &ServerGroupChatRoom::getConferenceAddress () const {
 	return LocalConference::getConferenceAddress();
 }
 
@@ -1298,7 +1307,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	if (isAdmin != participant->isAdmin()) {
 		participant->setAdmin(isAdmin);
 		if (!(d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-			shared_ptr<ConferenceParticipantEvent> event = eventHandler->notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
+			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
 			getCore()->getPrivate()->mainDb->addEvent(event);
 		}
 	}
@@ -1307,7 +1316,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 void ServerGroupChatRoom::setSubject (const string &subject) {
 	if (subject != getSubject()) {
 		LocalConference::setSubject(subject);
-		shared_ptr<ConferenceSubjectEvent> event = eventHandler->notifySubjectChanged();
+		shared_ptr<ConferenceSubjectEvent> event = notifySubjectChanged();
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }
@@ -1315,7 +1324,8 @@ void ServerGroupChatRoom::setSubject (const string &subject) {
 // -----------------------------------------------------------------------------
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
-	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().asString() << "]";
+	// TODO: Is conference ID needed to be stored in both remote conference and chat room base classes?
+	return stream << "ServerGroupChatRoom [" << chatRoom->ChatRoom::getConferenceId().getPeerAddress().asString() << "]";
 }
 
 LINPHONE_END_NAMESPACE

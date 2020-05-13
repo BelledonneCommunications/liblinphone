@@ -1156,7 +1156,4 @@ MS2Stream::~MS2Stream(){
 	
 }
 
-
-
 LINPHONE_END_NAMESPACE
-
