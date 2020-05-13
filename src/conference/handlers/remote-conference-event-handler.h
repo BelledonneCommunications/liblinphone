@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceId;
 class RemoteConference;
 
-class RemoteConferenceEventHandler : public CoreListener {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:

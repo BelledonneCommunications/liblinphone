@@ -21,7 +21,6 @@
 #define _L_IDENTITY_ADDRESS_H_
 
 #include <ostream>
-#include <string>
 
 #include "linphone/utils/general.h"
 
@@ -31,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Address;
 
-class  IdentityAddress {
+class LINPHONE_PUBLIC IdentityAddress {
 public:
 	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
