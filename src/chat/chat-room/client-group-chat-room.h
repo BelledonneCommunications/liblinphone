@@ -53,7 +53,7 @@ public:
 	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
-	const IdentityAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 
 	bool canHandleParticipants () const override;
 
@@ -125,7 +125,7 @@ private:
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
 
-	void onConferenceCreated (const IdentityAddress &addr) override;
+	void onConferenceCreated (const ConferenceAddress &addr) override;
 	void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
