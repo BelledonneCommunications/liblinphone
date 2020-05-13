@@ -315,6 +315,7 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 				break;
 			case 302:
 			case 301:
+				op->mAuthRequests = 0;
 				if (op->processRedirect() == 0)
 					return;
 				break;

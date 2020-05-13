@@ -2889,6 +2889,11 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
+
 void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
@@ -2900,11 +2905,6 @@ void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	d->setCurrentOutputAudioDevice(audioDevice);
 	if (i) i->setOutputDevice(audioDevice);
-}
-
-StreamsGroup & MediaSession::getStreamsGroup()const{
-	L_D();
-	return d->getStreamsGroup();
 }
 
 AudioDevice* MediaSession::getInputAudioDevice() const {
