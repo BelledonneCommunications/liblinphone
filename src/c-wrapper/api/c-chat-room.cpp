@@ -420,7 +420,7 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr) {
-		LinphonePrivate::IdentityAddress idAddr = addrStr ? LinphonePrivate::IdentityAddress(addrStr) : LinphonePrivate::IdentityAddress("");
+		LinphonePrivate::Address idAddr = addrStr ? LinphonePrivate::Address(addrStr) : LinphonePrivate::Address("");
 		sgcr->setConferenceAddress(idAddr);
 	}
 	if (addrStr)

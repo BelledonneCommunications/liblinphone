@@ -126,8 +126,14 @@ public:
 
 	const std::shared_ptr<AbstractChatRoom> &getProxiedChatRoom () const;
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
+		chatListeners.push_back(listener);
+	}
+
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
+
+	std::list<std::shared_ptr<ConferenceListenerInterface>> chatListeners;
 
 private:
 	L_DECLARE_PRIVATE(ProxyChatRoom);
