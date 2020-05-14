@@ -350,7 +350,7 @@ list<SearchResult> *MagicSearch::continueSearch (const string &filter, const str
 	const list <SearchResult> *cacheList = getSearchCache();
 
 	const LinphoneFriend *previousFriend = nullptr;
-	for (const auto sr : *cacheList) {
+	for (const auto &sr : *cacheList) {
 		if (sr.getAddress() || !sr.getPhoneNumber().empty()) {
 			if (sr.getFriend() && (!previousFriend || sr.getFriend() != previousFriend)) {
 				list<SearchResult> results = searchInFriend(sr.getFriend(), filter, withDomain);

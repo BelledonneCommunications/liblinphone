@@ -198,7 +198,7 @@ static void get_chat_rooms() {
 	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
 	shared_ptr<AbstractChatRoom> oneMessageRoom = nullptr;
 	shared_ptr<AbstractChatRoom> multiMessageRoom = nullptr;
-	for (const auto chatRoom : chatRooms) {
+	for (const auto &chatRoom : chatRooms) {
 		if (emptyMessageRoom == nullptr && chatRoom->getMessageHistorySize() == 0) {
 			emptyMessageRoom = chatRoom;
 		}
