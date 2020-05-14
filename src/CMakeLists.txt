@@ -494,14 +494,15 @@ bc_apply_compile_flags(LINPHONE_OBJC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTI
 
 if(CMAKE_COMPILER_IS_GNUCC)
 	set_property(SOURCE db/main-db.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-stringop-overflow")
-	if (NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1.0")
-		set_property(SOURCE
-			xml/conference-info.cpp
-			xml/resource-lists.cpp
-			xml/rlmi.cpp 
-			APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-error=deprecated-copy"
-		)
-	endif()
+endif()
+
+if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1.0") OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
+	set_property(SOURCE
+		xml/conference-info.cpp
+		xml/resource-lists.cpp
+		xml/rlmi.cpp 
+		APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-error=deprecated-copy"
+	)
 endif()
 
 if(ENABLE_STATIC)
