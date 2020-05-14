@@ -349,6 +349,11 @@ void linphone_core_notify_chat_room_ephemeral_message_deleted (LinphoneCore *lc,
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_imee_user_registration (LinphoneCore *lc, bool_t status, const char *userId, const char *info) {
+	NOTIFY_IF_EXIST(imee_user_registration, lc, status, userId, info);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_qrcode_found(LinphoneCore *lc, const char *result) {
 	NOTIFY_IF_EXIST(qrcode_found, lc, result);
 	cleanup_dead_vtable_refs(lc);

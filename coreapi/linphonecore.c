@@ -508,6 +508,14 @@ void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs 
 	cbs->vtable->chat_room_ephemeral_message_deleted = cb;
 }
 
+LinphoneCoreCbsImeeUserRegistrationCb linphone_core_cbs_get_imee_user_registration (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->imee_user_registration;
+}
+
+void linphone_core_cbs_set_imee_user_registration (LinphoneCoreCbs *cbs, LinphoneCoreCbsImeeUserRegistrationCb cb) {
+	cbs->vtable->imee_user_registration = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }

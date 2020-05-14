@@ -215,6 +215,7 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_confirmation_key(LinphoneA
  * @donotwrap Exists for tests purposes only
 **/
 LINPHONE_PUBLIC void linphone_core_delete_local_encryption_db(const LinphoneCore *lc);
+LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_is_user_active(LinphoneCore *lc, const char *userId);
 LINPHONE_PUBLIC void linphone_core_set_network_reachable_internal(LinphoneCore *lc, bool_t is_reachable);
 
 LINPHONE_PUBLIC bctbx_list_t *linphone_fetch_local_addresses(void);

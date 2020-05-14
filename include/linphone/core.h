@@ -237,6 +237,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsLastCallEndedCb last_call_ended;
 	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
 	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
+	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -796,6 +797,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cb
  * @param[in] cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb);
+
+/**
+ * Get the IMEE user registration callback
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsImeeUserRegistrationCb linphone_core_cbs_get_imee_user_registration (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the IMEE user registration callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_imee_user_registration (LinphoneCoreCbs *cbs, LinphoneCoreCbsImeeUserRegistrationCb cb);
 
 /**
  * Get the qrcode found callback.

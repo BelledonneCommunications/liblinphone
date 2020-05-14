@@ -437,6 +437,15 @@ typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *lc, Linph
 typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
 
 /**
+ * Callback prototype telling that an Instant Message Encryption Engine user registered on the server with or without success.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] status the return status of the registration action.
+ * @param[in] userId the userId published on the encryption engine server
+ * @param[in] info information about failure
+ */
+typedef void (*LinphoneCoreCbsImeeUserRegistrationCb) (LinphoneCore *lc, const bool_t status, const char *userId, const char *info);
+
+/**
  * Callback prototype telling the result of decoded qrcode
  * @param[in] lc LinphoneCore object
  * @param[in] result The result of the decoded qrcode
