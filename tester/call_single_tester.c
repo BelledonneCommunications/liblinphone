@@ -326,7 +326,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	// - dummy_test_snd_card_desc
 	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
 
-	// This devices are prepended to the list of so that they can be easily accessed later
+	// This device is prepended to the list of so that they can be easily accessed later
 	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
 	linphone_core_reload_sound_devices(marie->lc);
 
