@@ -114,7 +114,13 @@ public:
 		return currentAudioDevice;
 	}
 	void setCurrentAudioDevice(AudioDevice * audioDevice) {
+		if (currentAudioDevice) {
+			currentAudioDevice->unref();
+		}
 		currentAudioDevice = audioDevice;
+		if (currentAudioDevice) {
+			currentAudioDevice->ref();
+		}
 	}
 	std::shared_ptr<Participant> getMe () const;
 	void setDtlsFingerprint(const std::string &fingerPrint);

@@ -2142,6 +2142,8 @@ MediaSession::~MediaSession () {
 		sal_media_description_unref(d->biggestDesc);
 	if (d->resultDesc)
 		sal_media_description_unref(d->resultDesc);
+	if (d->currentAudioDevice)
+		d->currentAudioDevice->unref();
 }
 
 // -----------------------------------------------------------------------------

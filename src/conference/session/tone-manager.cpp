@@ -510,11 +510,14 @@ void ToneManager::doStopTone() {
 
 	LinphoneCore *lc = getCore()->getCCore();
 	AudioDevice * audioDevice = nullptr;
+	MSSndCard *card = nullptr;
 
 	if (lc->ringstream) {
-		MSSndCard *card = ring_stream_get_output_ms_snd_card(lc->ringstream);
+		card = ring_stream_get_output_ms_snd_card(lc->ringstream);
 
 		if (card) {
+			// Keep ref on card while stopping ringing and setting up call
+			ms_snd_card_ref(card);
 			audioDevice = getCore()->findAudioDeviceMatchingMsSoundCard(card);
 		}
 
@@ -528,6 +531,11 @@ void ToneManager::doStopTone() {
 		if (audioDevice) {
 			getCore()->getPrivate()->setOutputAudioDevice(audioDevice);
 		}
+	}
+
+	// Unref card
+	if (card) {
+		ms_snd_card_unref(card);
 	}
 }
 
@@ -629,7 +637,7 @@ void ToneManager::playTone(const std::shared_ptr<CallSession> &session, MSDtmfGe
 
 	// If card is null, use the default playcard
 	if (card == NULL) {
-		card = ms_snd_card_ref(lc->sound_conf.play_sndcard);
+		card = lc->sound_conf.play_sndcard;
 	}
 
 	MSFilter *f = getAudioResource(ToneGenerator, card, true);
