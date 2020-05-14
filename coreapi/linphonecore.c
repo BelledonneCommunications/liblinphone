@@ -4820,6 +4820,20 @@ void linphone_core_set_default_sound_devices(LinphoneCore *lc){
 		linphone_core_set_capture_device(lc, NULL);
 }
 
+static void linphone_core_reload_ringstream_card(MSSndCardManager *m, RingStream * ring_stream, MSSndCard * default_card) {
+	if (ring_stream) {
+		MSSndCard *card = ring_stream_get_output_ms_snd_card(ring_stream);
+		if (card) {
+			// Search card in the sound card manager.
+			// If the card is not found (i.e. bctbx_list_find returns NULL), set the default device in order to keep playing sound if it is playing.
+			// Setter is also expected to unref the previous device.
+			if (bctbx_list_find(m->cards, card) == NULL) {
+				ring_stream_set_output_ms_snd_card(ring_stream, default_card);
+			}
+		}
+	}
+}
+
 void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	const char *ringer;
 	const char *playback;
@@ -4840,8 +4854,11 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	if (capture != NULL) {
 		capture_copy = ms_strdup(capture);
 	}
-	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
+
+	MSSndCardManager *m = ms_factory_get_snd_card_manager(lc->factory);
+	ms_snd_card_manager_reload(m);
 	build_sound_devices_table(lc);
+
 	if (ringer_copy != NULL) {
 		linphone_core_set_ringer_device(lc, ringer_copy);
 		ms_free(ringer_copy);
@@ -4854,6 +4871,12 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 		linphone_core_set_capture_device(lc, capture_copy);
 		ms_free(capture_copy);
 	}
+
+	// Unref card used by the ringstream if it has been deleted or unregistered and use default one
+	linphone_core_reload_ringstream_card(m, lc->ringstream, lc->sound_conf.play_sndcard);
+
+	// Unref card used by the ringtone player if it has been deleted or unregistered and use default one
+	linphone_core_reload_ringstream_card(m, linphone_ringtoneplayer_get_stream(lc->ringtoneplayer), lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.ring_sndcard);
 }
 
 void linphone_core_reload_video_devices(LinphoneCore *lc){
