@@ -137,7 +137,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 
 void MS2AudioStream::configureAudioStream(){
 	// try to get playcard from the stream if it was already set
-	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
 	MSSndCard * playcard = NULL;
 
 	if (audioDevice) {
@@ -264,7 +264,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
-	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentAudioDevice();
+	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
 	MSSndCard *playcard = nullptr;
 
 	// try to get currently used playcard if it was already set

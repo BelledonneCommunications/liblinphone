@@ -2142,8 +2142,8 @@ MediaSession::~MediaSession () {
 		sal_media_description_unref(d->biggestDesc);
 	if (d->resultDesc)
 		sal_media_description_unref(d->resultDesc);
-	if (d->currentAudioDevice)
-		d->currentAudioDevice->unref();
+	if (d->currentOutputAudioDevice)
+		d->currentOutputAudioDevice->unref();
 }
 
 // -----------------------------------------------------------------------------
@@ -2881,7 +2881,7 @@ void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	d->setCurrentAudioDevice(audioDevice);
+	d->setCurrentOutputAudioDevice(audioDevice);
 	if (i) i->setOutputDevice(audioDevice);
 }
 

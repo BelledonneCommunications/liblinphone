@@ -110,16 +110,16 @@ public:
 	StreamsGroup & getStreamsGroup()const {
 		return *streamsGroup.get();
 	}
-	AudioDevice * getCurrentAudioDevice()const {
-		return currentAudioDevice;
+	AudioDevice * getCurrentOutputAudioDevice()const {
+		return currentOutputAudioDevice;
 	}
-	void setCurrentAudioDevice(AudioDevice * audioDevice) {
-		if (currentAudioDevice) {
-			currentAudioDevice->unref();
+	void setCurrentOutputAudioDevice(AudioDevice * audioDevice) {
+		if (currentOutputAudioDevice) {
+			currentOutputAudioDevice->unref();
 		}
-		currentAudioDevice = audioDevice;
-		if (currentAudioDevice) {
-			currentAudioDevice->ref();
+		currentOutputAudioDevice = audioDevice;
+		if (currentOutputAudioDevice) {
+			currentOutputAudioDevice->ref();
 		}
 	}
 	std::shared_ptr<Participant> getMe () const;
@@ -267,7 +267,7 @@ private:
 	bool incomingIceReinvitePending = false;
 	bool callAcceptanceDefered = false;
 
-	AudioDevice * currentAudioDevice = nullptr;
+	AudioDevice * currentOutputAudioDevice = nullptr;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

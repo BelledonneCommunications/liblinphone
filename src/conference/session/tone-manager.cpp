@@ -628,7 +628,7 @@ void ToneManager::playTone(const std::shared_ptr<CallSession> &session, MSDtmfGe
     LinphoneCore *lc = getCore()->getCCore();
 
 	std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
-	AudioDevice * audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentAudioDevice();
+	AudioDevice * audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentOutputAudioDevice();
 	MSSndCard * card = NULL;
 
 	if (audioDevice) {
