@@ -225,6 +225,8 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomStateDeleted;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
+	int number_of_X3dhUserCreationSuccess;
+	int number_of_X3dhUserCreationFailure;
 
 	int number_of_IframeDecoded;
 
@@ -484,6 +486,7 @@ void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *r
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);

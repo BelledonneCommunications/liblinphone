@@ -32,7 +32,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-static const int x3dhServerDelay = 3000; // TODO replace me with X3DH server callbacks
+static const int x3dhServer_creationTimeout = 5000;
 
 static void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {
@@ -52,22 +52,22 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	int dummy = 0;
 	int size;
 
 	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
 
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 
 	// Wait for lime users to be created on X3DH server
-	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 
 	// Check encryption status for both participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
@@ -234,21 +234,21 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(con
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	int dummy = 0;
 
 	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
 
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 
 	// Wait for lime users to be created on X3DH server
-	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 
 	// Check encryption status for both participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
@@ -318,21 +318,21 @@ static void mixed_ephemeral_message_test_curve(const int curveId) {
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	int dummy = 0;
 
 	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
 
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 
 	// Wait for lime users to be created on X3DH server
-	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 
 	// Check encryption status for both participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
@@ -435,21 +435,21 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	int dummy = 0;
 
 	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
-	stats initialMarieStats = marie->stat;
-	stats initialPaulineStats = pauline->stat;
 
 	// Enable IMDN
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 
 	// Wait for lime users to be created on X3DH server
-	wait_for_list(coresList, &dummy, 1, x3dhServerDelay);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 
 	// Check encryption status for both participants
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));

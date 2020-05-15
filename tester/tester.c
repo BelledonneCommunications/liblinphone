@@ -495,6 +495,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
 	linphone_core_cbs_set_audio_device_changed(mgr->cbs, audio_device_changed);
 	linphone_core_cbs_set_audio_devices_list_updated(mgr->cbs, audio_devices_list_updated);
+	linphone_core_cbs_set_imee_user_registration(mgr->cbs, liblinphone_tester_x3dh_user_created);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
@@ -1623,6 +1624,15 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneMessageSent++;
+}
+
+void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info) {
+	stats *counters = get_stats(lc);
+	if (status == TRUE) {
+		counters->number_of_X3dhUserCreationSuccess++;
+	} else {
+		counters->number_of_X3dhUserCreationFailure++;
+	}
 }
 
 void liblinphone_tester_chat_message_ephemeral_timer_started (LinphoneChatMessage *msg) {
