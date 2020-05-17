@@ -269,6 +269,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		lError() << "Call " << call << " is not part of conference " << this->toC();
 		return -1;
 	}
+
 	if (remoteParticipantsCount() >= 2){
 		/* Kick the call out of the conference by moving to the Paused state. */
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
@@ -288,7 +289,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 		 * but it should contains all participants ideally.*/
 		LinphoneCall *remaining_call = (*m_participants.begin())->getCall();
-		lInfo() << "Call [" << remaining_call << "] with " << Call::toCpp(remaining_call)->getRemoteAddress().asString() <<
+		lInfo() << "Call [" << remaining_call << "] with " << Call::toCpp(remaining_call)->getRemoteAddress()->asString() <<
 			" is our last call in our conference, we will reconnect directly to it.";
 		LinphoneCallParams *params = linphone_core_create_call_params(m_core, remaining_call);
 		linphone_call_params_set_in_conference(params, FALSE);

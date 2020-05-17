@@ -129,6 +129,7 @@ liblinphonetester_la_SOURCES = \
 				call_multi_tester.c \
 				call_multicast_tester.c \
 				call_single_tester.c \
+				call_push_incoming_tester.c \
 				call_video_tester.c \
 				call_secure_tester.c \
 				complex_sip_case_tester.c \

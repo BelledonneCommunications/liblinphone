@@ -89,7 +89,6 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_cbs_set_auth_info_request
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* obj);
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddress *b);
 
-LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_log(const LinphoneCall *call);
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_call_get_dest_proxy(const LinphoneCall *call);
