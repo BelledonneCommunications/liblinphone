@@ -253,7 +253,14 @@ static void call_received(SalCallOp *h) {
 			linphone_address_unref(fromAddressToSearchIfMe);
 	}
 
-	LinphoneCall *call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
+	LinphoneCall *call = linphone_core_get_call_by_callid(lc, h->getCallId().c_str());
+	if (call) {
+		// There is already a call created when PushIncomingReceived
+		linphone_call_configure(call, fromAddr, toAddr, h);
+	} else {
+		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
+		LinphonePrivate::Call::toCpp(call)->startBasicIncomingNotification();
+	}
 	linphone_address_unref(fromAddr);
 	linphone_address_unref(toAddr);
 	LinphonePrivate::Call::toCpp(call)->startIncomingNotification();
