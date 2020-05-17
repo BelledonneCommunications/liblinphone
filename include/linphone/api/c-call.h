@@ -868,6 +868,24 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_input_audio_device(
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call);
 
 /**
+ * Returns whether or not the call's op configured. When the call is created in the state PushIncomingReceived, the op is null.
+ * @param call LinphoneCall for which we can to know the op configured state.
+ * @return true if op is configured, false otherwise
+ */
+bool_t linphone_call_is_op_configured (const LinphoneCall *call);
+
+/**
+ * Create a new incoming call with callid, used when PushIncomingReceived.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] callid of call
+ * @returns the #LinphoneCall created with callid
+ */
+LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
+
+void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+
+void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
+/**
  * @}
  */
 

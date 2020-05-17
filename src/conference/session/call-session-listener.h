@@ -50,6 +50,7 @@ public:
 	virtual void onIncomingCallSessionNotified (const std::shared_ptr<CallSession> &session) {}
 	virtual void onIncomingCallSessionStarted (const std::shared_ptr<CallSession> &session) {}
 	virtual void onIncomingCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed, bool oneSecondElapsed) {}
+	virtual void onPushCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed) {}
 	virtual void onInfoReceived (const std::shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {}
 	virtual void onLossOfMediaDetected (const std::shared_ptr<CallSession> &session) {}
 	virtual void onTmmbrReceived (const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) {}

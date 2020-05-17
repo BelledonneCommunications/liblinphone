@@ -48,6 +48,7 @@ extern void *system_context;
 
 extern test_suite_t account_creator_test_suite;
 extern test_suite_t call_test_suite;
+extern test_suite_t push_incoming_call_test_suite;
 
 #if VIDEO_ENABLED
 	extern test_suite_t call_video_test_suite;
@@ -167,6 +168,7 @@ typedef struct _stats {
 	int number_of_auth_info_requested ;
 
 	int number_of_LinphoneCallIncomingReceived;
+	int number_of_LinphoneCallPushIncomingReceived;
 	int number_of_LinphoneCallOutgoingInit;
 	int number_of_LinphoneCallOutgoingProgress;
 	int number_of_LinphoneCallOutgoingRinging;
@@ -557,6 +559,8 @@ const char *liblinphone_tester_get_empty_rc(void);
 int liblinphone_tester_copy_file(const char *from, const char *to);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
 
+
+void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, const char *callid);
 extern MSSndCardDesc dummy_test_snd_card_desc;
 #define DUMMY_TEST_SOUNDCARD "dummy test sound card"
 

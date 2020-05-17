@@ -1580,6 +1580,9 @@ static void sip_config_read(LinphoneCore *lc) {
 	tmp=lp_config_get_int(lc->config,"sip","inc_timeout",30);
 	linphone_core_set_inc_timeout(lc,tmp);
 
+	tmp=lp_config_get_int(lc->config,"sip","push_incoming_call_timeout",15);
+	lc->sip_conf.push_incoming_call_timeout = tmp;
+
 	tmp=lp_config_get_int(lc->config,"sip","in_call_timeout",0);
 	linphone_core_set_in_call_timeout(lc,tmp);
 
@@ -4303,6 +4306,28 @@ const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
 	return lc->callsCache;
 }
 
+static int comp_call_id(const LinphoneCall *call, const char *callid) {
+	if (linphone_call_log_get_call_id(linphone_call_get_call_log(call)) == nullptr) {
+		ms_error("no callid for call [%p]", call);
+		return 1;
+	}
+	return strcmp(linphone_call_log_get_call_id(linphone_call_get_call_log(call)), callid);
+}
+
+LinphoneCall *linphone_core_get_call_by_callid(LinphoneCore *lc, const char *call_id) {
+	const bctbx_list_t *calls = linphone_core_get_calls(lc);
+	if (!calls || !call_id) {
+		return nullptr;
+	}
+	
+	bctbx_list_t *call_tmp = bctbx_list_find_custom(calls, (bctbx_compare_func)comp_call_id, call_id);
+	if (!call_tmp) {
+		return nullptr;
+	}
+	LinphoneCall *call = (LinphoneCall *)call_tmp->data;
+	return call;
+}
+
 bool_t linphone_core_in_call(const LinphoneCore *lc){
 	return linphone_core_get_current_call((LinphoneCore *)lc)!=NULL || linphone_core_is_in_conference(lc);
 }
@@ -4378,6 +4403,17 @@ void linphone_core_set_inc_timeout(LinphoneCore *lc, int seconds){
 
 int linphone_core_get_inc_timeout(LinphoneCore *lc){
 	return lc->sip_conf.inc_timeout;
+}
+
+void linphone_core_set_push_incoming_call_timeout(LinphoneCore *lc, int seconds) {
+	lc->sip_conf.push_incoming_call_timeout=seconds;
+	if (linphone_core_ready(lc)){
+		lp_config_set_int(lc->config,"sip","push_incoming_call_timeout",seconds);
+	}
+}
+
+int linphone_core_get_push_incoming_call_timeout(const LinphoneCore *lc) {
+	return lc->sip_conf.push_incoming_call_timeout;
 }
 
 void linphone_core_set_in_call_timeout(LinphoneCore *lc, int seconds){

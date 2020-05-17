@@ -79,7 +79,7 @@ bool CorePrivate::inviteReplacesABrokenCall (SalCallOp *op) {
 
 bool CorePrivate::isAlreadyInCallWithAddress (const Address &addr) const {
 	for (const auto &call : calls) {
-		if (call->getRemoteAddress().weakEqual(addr))
+		if (call->isOpConfigured() && call->getRemoteAddress()->weakEqual(addr))
 			return true;
 	}
 	return false;
@@ -168,7 +168,7 @@ bool Core::areSoundResourcesLocked () const {
 shared_ptr<Call> Core::getCallByRemoteAddress (const Address &addr) const {
 	L_D();
 	for (const auto &call : d->calls) {
-		if (call->getRemoteAddress().weakEqual(addr))
+		if (call->getRemoteAddress()->weakEqual(addr))
 			return call;
 	}
 	return nullptr;
@@ -242,8 +242,10 @@ void Core::soundcardEnableCallkit (bool enabled) {
 
 LinphoneStatus Core::terminateAllCalls () {
 	L_D();
-	while (!d->calls.empty()) {
-		d->calls.front()->terminate();
+	auto calls = d->calls;
+	while (!calls.empty()) {
+		calls.front()->terminate();
+		calls.pop_front();
 	}
 	return 0;
 }

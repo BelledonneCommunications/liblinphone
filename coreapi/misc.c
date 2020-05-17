@@ -902,8 +902,10 @@ void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log){
 		}
 		linphone_address_unref(conference_factory_addr);
 	}
-	const char *usernameFrom = linphone_address_get_username(call_log->from);
-	const char *usernameTo = linphone_address_get_username(call_log->to);
+
+	// For PushIncomingState call, from and to address are unknow.
+	const char *usernameFrom = call_log->from ? linphone_address_get_username(call_log->from) : nullptr;
+	const char *usernameTo = call_log->to ? linphone_address_get_username(call_log->to) : nullptr;
 	if ((usernameFrom && (strstr(usernameFrom, "chatroom-") == usernameFrom))
 		|| (usernameTo && (strstr(usernameTo, "chatroom-") == usernameTo))
 	)
