@@ -43,7 +43,7 @@ shared_ptr<CallSession> Call::getActiveSession () const {
 
 shared_ptr<RealTimeTextChatRoom> Call::getChatRoom () {
 	if (!mChatRoom && (getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
-		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(getRemoteAddress(), true));
+		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(*getRemoteAddress(), true));
 		if (mChatRoom) mChatRoom->getPrivate()->setCall(getSharedFromThis());
 	}
 	return mChatRoom;
@@ -156,7 +156,18 @@ void Call::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 void Call::startIncomingNotification () {
-	getActiveSession()->startIncomingNotification();
+	getActiveSession()->getPrivate()->startIncomingNotification();
+	if (getActiveSession()->isAccepting()) {
+		accept();
+	}
+}
+
+void Call::startPushIncomingNotification () {
+	getActiveSession()->startPushIncomingNotification();
+}
+
+void Call::startBasicIncomingNotification () {
+	getActiveSession()->startBasicIncomingNotification();
 }
 
 void Call::pauseForTransfer () {
@@ -217,7 +228,7 @@ void Call::startRemoteRing () {
 }
 
 void Call::terminateBecauseOfLostMedia () {
-	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress().asString()
+	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
@@ -407,6 +418,16 @@ void Call::onIncomingCallSessionTimeoutCheck (const shared_ptr<CallSession> &ses
 	}
 }
 
+void Call::onPushCallSessionTimeoutCheck (const std::shared_ptr<CallSession> &session, int elapsed) {
+	if (elapsed > getCore()->getCCore()->sip_conf.push_incoming_call_timeout) {
+		lInfo() << "Push incoming call timeout (" << getCore()->getCCore()->sip_conf.push_incoming_call_timeout << ")";
+		auto config = linphone_core_get_config(getCore()->getCCore());
+		int statusCode = linphone_config_get_int(config, "sip", "push_incoming_call_timeout_status_code", 410); //LinphoneReasonGone
+		getActiveSession()->decline(linphone_error_code_to_reason(statusCode));
+		getActiveSession()->getPrivate()->setState(LinphonePrivate::CallSession::State::Released, "Call released");
+	}
+}
+
 void Call::onInfoReceived (const shared_ptr<CallSession> &session, const LinphoneInfoMessage *im) {
 	linphone_call_notify_info_message_received(this->toC(), im);
 }
@@ -508,11 +529,26 @@ Call::Call (
 	mNextVideoFrameDecoded._user_data = nullptr;
 
 	mBgTask.setName("Liblinphone call notification");
-	
+
 	//create session
 	mParticipant = make_shared<Participant>(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
 	mParticipant->getPrivate()->createSession(getCore(), msp, TRUE, this);
 	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+}
+
+Call::Call (
+	std::shared_ptr<Core> core,
+	LinphoneCallDir direction,
+	const string &callid
+): CoreAccessor(core) {
+	mNextVideoFrameDecoded._func = nullptr;
+	mNextVideoFrameDecoded._user_data = nullptr;
+
+	mBgTask.setName("Liblinphone call notification");
+
+	mParticipant = make_shared<Participant>();
+	mParticipant->getPrivate()->createSession(getCore(), nullptr, TRUE, this);
+	mParticipant->getPrivate()->getSession()->configure(direction, callid);
 }
 
 Call::~Call () {
@@ -521,6 +557,22 @@ Call::~Call () {
 		session->getPrivate()->setCallSessionListener(nullptr);
 	
 	bctbx_list_free_with_data(mCallbacks, (bctbx_list_free_func)linphone_call_cbs_unref);
+}
+
+void Call::configure (
+	LinphoneCallDir direction,
+	const Address &from,
+	const Address &to,
+	LinphoneProxyConfig *cfg,
+	SalCallOp *op,
+	const MediaSessionParams *msp
+) {
+	mParticipant->configure(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+}
+
+bool Call::isOpConfigured () const {
+	return getActiveSession()->isOpConfigured();
 }
 
 // =============================================================================
@@ -760,7 +812,7 @@ string Call::getReferTo () {
 	return getActiveSession()->getReferTo();
 }
 
-const Address &Call::getRemoteAddress () const {
+const Address *Call::getRemoteAddress () const {
 	return getActiveSession()->getRemoteAddress();
 }
 

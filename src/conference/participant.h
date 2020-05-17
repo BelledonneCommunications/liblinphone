@@ -58,6 +58,8 @@ public:
 	L_OVERRIDE_SHARED_FROM_THIS(Participant);
 
 	explicit Participant (Conference *conference, const IdentityAddress &address);
+	Participant ();
+	void configure (Conference *conference, const IdentityAddress &address);
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
