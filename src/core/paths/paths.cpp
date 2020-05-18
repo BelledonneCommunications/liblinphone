@@ -26,7 +26,7 @@
 	#include "paths-android.h"
 #elif defined(_WIN32)
 	#include "paths-windows.h"
-#elif defined(__linux)
+#elif defined(__linux__)
 	#include "paths-linux.h"
 #else
 	#error "Unsupported system."

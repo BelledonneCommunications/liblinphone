@@ -1627,7 +1627,7 @@ static void echo_canceller_check(void){
 
 #if defined(ANDROID)
 	expected_filter = "MSWebRTCAECM";
-#elif defined(__linux) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32)
+#elif defined(__linux__) || (defined(__APPLE__) && !TARGET_OS_IPHONE) || defined(_WIN32)
 	expected_filter = "MSWebRTCAEC";
 #endif
 	if (ec_filter){
