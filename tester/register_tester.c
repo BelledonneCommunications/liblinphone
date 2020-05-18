@@ -1458,7 +1458,7 @@ static void update_contact_private_ip_address(void) {
 }
 
 static void register_with_specific_client_port(void){
-#ifdef __linux
+#ifdef __linux__
 	
 	LinphoneCoreManager *lcm1 = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
 	

@@ -41,7 +41,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
 
-#ifdef __linux
+#ifdef __linux__
 	/* Hack to tell mediastreamer2 alsa plugin to not detect direct driver interface ('sysdefault' card), because
 	 * it makes ioctls to the driver that hang the system a few seconds on some platforms (observed on Mac+Parallels).
 	 * This doesn't prevent alsa to be used during tests, it will be the case with 'default' card.
