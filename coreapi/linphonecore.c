@@ -4777,6 +4777,18 @@ LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * dev
 	return 0;
 }
 
+LinphoneStatus linphone_core_set_output_audio_device_by_id(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setOutputAudioDeviceBySndCard(card);
+	return 0;
+}
+
+LinphoneStatus linphone_core_set_input_audio_device_by_id(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setInputAudioDeviceBySndCard(card);
+	return 0;
+}
+
 const char * linphone_core_get_ringer_device(LinphoneCore *lc) {
 	if (lc->sound_conf.ring_sndcard) return ms_snd_card_get_string_id(lc->sound_conf.ring_sndcard);
 	return NULL;
@@ -4832,9 +4844,13 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	const char *ringer;
 	const char *playback;
 	const char *capture;
+	const char *output_dev_id;
+	const char *input_dev_id;
 	char *ringer_copy = NULL;
 	char *playback_copy = NULL;
 	char *capture_copy = NULL;
+	char *output_dev_id_copy = NULL;
+	char *input_dev_id_copy = NULL;
 
 	ringer = linphone_core_get_ringer_device(lc);
 	if (ringer != NULL) {
@@ -4847,6 +4863,20 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	capture = linphone_core_get_capture_device(lc);
 	if (capture != NULL) {
 		capture_copy = ms_strdup(capture);
+	}
+	const LinphoneAudioDevice * current_output_dev = linphone_core_get_output_audio_device(lc);
+	if (current_output_dev != NULL) {
+		output_dev_id = linphone_audio_device_get_id(current_output_dev);
+		if (output_dev_id != NULL) {
+			output_dev_id_copy = ms_strdup(output_dev_id);
+		}
+	}
+	const LinphoneAudioDevice * current_input_dev = linphone_core_get_input_audio_device(lc);
+	if (current_input_dev != NULL) {
+		input_dev_id = linphone_audio_device_get_id(current_input_dev);
+		if (input_dev_id != NULL) {
+			input_dev_id_copy = ms_strdup(input_dev_id);
+		}
 	}
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
@@ -4861,6 +4891,14 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	if (capture_copy != NULL) {
 		linphone_core_set_capture_device(lc, capture_copy);
 		ms_free(capture_copy);
+	}
+	if (output_dev_id_copy != NULL) {
+		linphone_core_set_output_audio_device_by_id(lc, output_dev_id_copy);
+		ms_free(output_dev_id_copy);
+	}
+	if (input_dev_id_copy != NULL) {
+		linphone_core_set_input_audio_device_by_id(lc, input_dev_id_copy);
+		ms_free(input_dev_id_copy);
 	}
 }
 

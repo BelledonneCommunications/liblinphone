@@ -740,6 +740,62 @@ void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
 	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
 }
 
+void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			d->setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
+	if (defaultAudioDevice) {
+		d->setOutputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_playback_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			d->setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
+}
+
+void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			d->setInputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
+	if (defaultAudioDevice) {
+		d->setInputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_capture_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			d->setInputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
+}
+
+
+
 AudioDevice* Core::getDefaultInputAudioDevice() const {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	return findAudioDeviceMatchingMsSoundCard(card);

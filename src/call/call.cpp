@@ -230,6 +230,8 @@ void CallPrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 		return;
 	}
 
+	static_pointer_cast<MediaSession>(getActiveSession())->setInputAudioDevice(audioDevice);
+
 }
 
 void CallPrivate::setOutputAudioDevice(AudioDevice *audioDevice) {

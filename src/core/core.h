@@ -193,6 +193,8 @@ public:
 
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDeviceBySndCard(MSSndCard *card);
+	void setInputAudioDeviceBySndCard(MSSndCard *card);
 	AudioDevice *getInputAudioDevice() const;
 	AudioDevice *getOutputAudioDevice() const;
 
