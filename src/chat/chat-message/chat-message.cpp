@@ -705,8 +705,10 @@ LinphoneReason ChatMessagePrivate::receive () {
 		setDirection(ChatMessage::Direction::Outgoing);
 
 	// Check if this is a duplicate message.
-	if (chatRoom->findChatMessage(imdnId, direction))
+	if (chatRoom->findChatMessage(imdnId, direction)){
+		lInfo() << "Duplicated SIP MESSAGE, ignored.";
 		return core->getCCore()->chat_deny_code;
+	}
 
 	if (errorCode > 0) {
 		reason = linphone_error_code_to_reason(errorCode);
