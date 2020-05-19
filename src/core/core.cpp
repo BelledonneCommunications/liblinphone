@@ -53,6 +53,11 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/lpconfig.h"
 
+#include "call/call-p.h"
+#include "conference/session/media-session.h"
+#include "conference/session/streams.h"
+#include "conference_private.h"
+
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "private.h"
@@ -360,6 +365,21 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 
 	return applied;
 }
+
+
+void CorePrivate::updateVideoDevice(){
+	if (currentCall && currentCall->getState() == CallSession::State::StreamsRunning){
+		VideoControlInterface *i = currentCall->getPrivate()->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+		if (i) i->parametersChanged();
+	}
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		VideoControlInterface *i = conf->getVideoControlInterface();
+		if (i) i->parametersChanged();
+	}
+}
+
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
