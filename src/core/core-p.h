@@ -142,6 +142,9 @@ public:
 	void stopEphemeralMessageTimer ();
 
 	void computeAudioDevicesList ();
+	
+	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
+	void updateVideoDevice();
 
 private:
 	bool isInBackground = false;
