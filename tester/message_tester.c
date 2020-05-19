@@ -250,6 +250,12 @@ static void text_message_within_call_dialog(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
 		// when using call dialogs, we will never receive delivered status
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,0,int,"%d");
+		
+		// Send a second message, so that we can check that it is not erroneously filtered out because
+		// it bears the same call-id.
+		linphone_chat_room_send_message(linphone_core_get_chat_room(pauline->lc, marie->identity),"Bouhbouhbouh");
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,2));
 
 		end_call(marie, pauline);
 	}
