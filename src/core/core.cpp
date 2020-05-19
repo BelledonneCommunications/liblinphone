@@ -741,16 +741,18 @@ void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
 }
 
 void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
 	if (card) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
-			setOutputAudioDevice(audioDevice);
+			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
 	}
 	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
 	if (defaultAudioDevice) {
-		setOutputAudioDevice(defaultAudioDevice);
+		d->setOutputAudioDevice(defaultAudioDevice);
 		return;
 	}
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
@@ -758,24 +760,26 @@ void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
 	if (defaultCard) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
-			setOutputAudioDevice(audioDevice);
+			d->setOutputAudioDevice(audioDevice);
 			return;
 		}
 	}
-	lError() << "Unable to find suitable audio device";
+	lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
 }
 
 void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
 	if (card) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
 		if (audioDevice) {
-			setInputAudioDevice(audioDevice);
+			d->setInputAudioDevice(audioDevice);
 			return;
 		}
 	}
 	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
 	if (defaultAudioDevice) {
-		setInputAudioDevice(defaultAudioDevice);
+		d->setInputAudioDevice(defaultAudioDevice);
 		return;
 	}
 	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
@@ -783,11 +787,11 @@ void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
 	if (defaultCard) {
 		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
 		if (audioDevice) {
-			setOutputAudioDevice(audioDevice);
+			d->setInputAudioDevice(audioDevice);
 			return;
 		}
 	}
-	lError() << "Unable to find suitable audio device";
+	lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
 }
 
 
