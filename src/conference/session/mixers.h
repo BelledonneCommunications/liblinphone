@@ -179,6 +179,7 @@ private:
 /**
  * A video mixer based on mediastreamer2.
  * It inherits from MS2VideoControl (which is in fact a VideoControlInterface) to let control the local participant, if any.
+ * FIXME: a Participant class shall give access to Audio/Video controls instead, it doesn't have to be directly on the mixer class.
  */
 class MS2VideoMixer : public StreamMixer, public MS2VideoControl{
 public:
@@ -192,10 +193,18 @@ protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
 	virtual VideoStream *getVideoStream()const override;
 	virtual MSWebCam *getVideoDevice()const override;
+	/*
+	 * Unfortunately, parametersChanged() and enableCamera() from MS2VideoControl must be overriden,
+	 * because mediastreamer2 is not able to perform the "change camera" feature on the fly
+	 * for a stream that is connected to a conference.
+	 */
+	virtual void parametersChanged() override;
+	virtual void enableCamera(bool enabled) override;
 private:
 	void addLocalParticipant();
 	void removeLocalParticipant();
 	RtpProfile *sMakeDummyProfile();
+	int getOutputBandwidth();
 	MSVideoConference *mConference = nullptr;
 	VideoStream *mLocalParticipantStream = nullptr;
 	MSVideoEndpoint *mLocalEndpoint = nullptr;

@@ -73,12 +73,19 @@ RtpProfile *MS2VideoMixer::sMakeDummyProfile(){
 	return prof;
 }
 
+int MS2VideoMixer::getOutputBandwidth(){
+	/* FIXME: it should take into account the remote bandwidth constraint (b=AS:) of other participants. */
+	return linphone_core_get_upload_bandwidth(mSession.getCCore());
+}
+
 void MS2VideoMixer::addLocalParticipant(){
 	if (mLocalEndpoint) return;
 	LinphoneCore *core = getSession().getCCore();
 	VideoStream *st = video_stream_new(core->factory, 65002, 65003, FALSE);
 	mLocalDummyProfile = sMakeDummyProfile();
 	MSMediaStreamIO io;
+	int outputBandwidth =  getOutputBandwidth() * 1000;
+	PayloadType *pt;
 	
 	memset(&io, 0, sizeof(io));
 	io.input.type = MSResourceCamera;
@@ -88,6 +95,19 @@ void MS2VideoMixer::addLocalParticipant(){
 	video_stream_set_device_rotation(st, mSession.getCCore()->device_rotation);
 	video_stream_set_freeze_on_error(st, !!lp_config_get_int(linphone_core_get_config(mSession.getCCore()), "video", "freeze_on_error", 1));
 	video_stream_use_video_preset(st, lp_config_get_string(linphone_core_get_config(mSession.getCCore()), "video", "preset", nullptr));
+	media_stream_set_max_network_bitrate(&st->ms, outputBandwidth);
+	pt = rtp_profile_get_payload(mLocalDummyProfile, sVP8PayloadTypeNumber);
+	pt->normal_bitrate =  outputBandwidth; /* Is it really needed ?*/
+	
+	video_stream_set_fps(st, linphone_core_get_preferred_framerate(mSession.getCCore()));
+	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(mSession.getCCore());
+	if (vdef) {
+		MSVideoSize vsize;
+		vsize.width = static_cast<int>(linphone_video_definition_get_width(vdef));
+		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
+		video_stream_set_sent_video_size(st, vsize);
+	}
+	
 	
 	if (video_stream_start_from_io(st, mLocalDummyProfile, "127.0.0.1", 65002, "127.0.0.1", 65003, sVP8PayloadTypeNumber, &io) != 0){
 		lError() << "Could not start video stream.";
@@ -112,6 +132,20 @@ void MS2VideoMixer::removeLocalParticipant(){
 		rtp_profile_destroy(mLocalDummyProfile);
 		mLocalDummyProfile = nullptr;
 	}
+}
+
+void MS2VideoMixer::parametersChanged(){
+	/* The simpler is to remove and re-enter the local participant. */
+	if (mLocalEndpoint){
+		removeLocalParticipant();
+		addLocalParticipant();
+	}
+}
+
+void MS2VideoMixer::enableCamera(bool enabled){
+	/* The simpler is to remove or re-enter the local participant. */
+	if (!enabled) removeLocalParticipant();
+	else addLocalParticipant();
 }
 
 void MS2VideoMixer::enableLocalParticipant(bool enabled){
