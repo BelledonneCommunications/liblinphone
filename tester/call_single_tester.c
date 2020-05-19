@@ -408,9 +408,6 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 
 	exp_dev = unregister_device(TRUE, mgr, exp_dev, card_desc);
 
-	//stay in pause a little while in order to generate traffic
-	wait_for_until(mgr->lc, NULL, NULL, 5, 2000);
-
 	check_io_devs(mgr, exp_dev, force_dev_check);
 
 	linphone_audio_device_unref(exp_dev);
@@ -426,12 +423,18 @@ static void call_with_unreliable_device(void) {
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
 
+	// This should be the device the core falls back when the current is unregistered
+	register_device(marie, &dummy3_test_snd_card_desc);
+
 	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
 	lcs = bctbx_list_append(lcs, pauline->lc);
+
+	// This should be the device the core falls back when the current is unregistered
+	register_device(pauline, &dummy3_test_snd_card_desc);
 
 	// Marie is calling (sound played on the ringstream) and Paulign is receiving the call (sound played on the ringtone player)
 	LinphoneCall * marie_call = linphone_core_invite_address(marie->lc,pauline->identity);

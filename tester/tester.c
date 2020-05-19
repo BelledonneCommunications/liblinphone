@@ -2407,6 +2407,37 @@ static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy2_test_snd_card());
 }
 
+static void dummy3_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy3_test_snd_card_desc = {
+	"dummyTest3",
+	dummy3_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy3_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy3_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY3_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy3_test_snd_card());
+}
+
 void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
