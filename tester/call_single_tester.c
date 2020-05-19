@@ -408,6 +408,9 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 
 	exp_dev = unregister_device(TRUE, mgr, exp_dev, card_desc);
 
+	//stay in pause a little while in order to generate traffic
+	wait_for_until(mgr->lc, NULL, NULL, 5, 2000);
+
 	check_io_devs(mgr, exp_dev, force_dev_check);
 
 	linphone_audio_device_unref(exp_dev);
