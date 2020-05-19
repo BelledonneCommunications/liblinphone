@@ -122,7 +122,10 @@ public:
 			belle_sip_refresher_stop(mRefresher);
 	}
 	int refresh ();
-	void killDialog ();
+	bool hasDialog() const{ return mDialog != nullptr; };
+	void killDialog();
+	// Returns the remote CSeq, only in case the op has a dialog.
+	int getRemoteCSeq();
 	//Release means let the op finish its life but we don't want to use it anymore, and don't want to be called in callbacks for this op
 	void release ();
 
