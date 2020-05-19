@@ -544,6 +544,154 @@ static void simple_conference_from_scratch_with_video(void){
 	_simple_conference_from_scratch(TRUE);
 }
 
+static void video_conference_by_merging_calls(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneConference *conf = NULL;
+	LinphoneCallParams *params;
+	LinphoneConferenceParams *conf_params;
+	LinphoneCall *pauline_call, *laure_call;
+	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
+	bctbx_list_t *participants = NULL;
+	bctbx_list_t *lcs = NULL;
+
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+	
+	linphone_core_set_play_file(pauline->lc, play_file_pauline);
+	bc_free(play_file_pauline);
+
+	participants = bctbx_list_append(participants, pauline->identity);
+	participants = bctbx_list_append(participants, laure->identity);
+	
+	{
+		LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+		linphone_core_set_video_activation_policy(pauline->lc, pol);
+		linphone_core_set_video_activation_policy(marie->lc, pol);
+		linphone_core_set_video_activation_policy(laure->lc, pol);
+		linphone_video_activation_policy_unref(pol);
+		
+		linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+		linphone_core_set_video_device(laure->lc, liblinphone_tester_mire_id);
+		
+		linphone_core_enable_video_capture(pauline->lc, TRUE);
+		linphone_core_enable_video_display(pauline->lc, TRUE);
+		linphone_core_enable_video_capture(marie->lc, TRUE);
+		linphone_core_enable_video_display(marie->lc, TRUE);
+		linphone_core_enable_video_capture(laure->lc, TRUE);
+		linphone_core_enable_video_display(laure->lc, TRUE);
+	}
+	
+
+	/* Marie first estabishes a call with Pauline, with video.*/
+	params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_video(params, TRUE);
+	pauline_call = linphone_core_invite_address_with_params(marie->lc, pauline->identity, params);
+	linphone_call_params_unref(params);
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,1,10000));
+	if (BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000))){
+		linphone_call_accept(linphone_core_get_current_call(pauline->lc));
+	}else goto end;
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,1,5000));
+	
+	/* Then she calls Laure, audio-only. */
+	
+	laure_call = linphone_core_invite_address(marie->lc, laure->identity);
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,2,10000));
+	if (BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000))){
+		linphone_call_accept(linphone_core_get_current_call(laure->lc));
+	}else goto end;
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,2,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,5000));
+	
+	/* This of course puts on hold Pauline. */
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausedByRemote,1,5000));
+	
+	/* Marie now creates a conference, audio-only.*/
+	conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_video(conf_params, FALSE);
+	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+	
+	/* She adds Pauline and Laure to the conference. */
+	linphone_conference_add_participant(conf, pauline_call);
+	linphone_conference_add_participant(conf, laure_call);
+	
+	/* Now check that both Pauline and Laure have video. */
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+	if (pauline_call && laure_call){
+		const bctbx_list_t *marie_calls, *it;
+		
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,2,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,2,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,4,5000));
+
+		/*make sure that the two calls from Marie's standpoint are in conference*/
+		marie_calls = linphone_core_get_calls(marie->lc);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_calls), 2, int, "%i");
+		for (it = marie_calls; it != NULL; it = it->next){
+			BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
+		}
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == FALSE);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == FALSE);
+		
+		ms_message("Adding video to the conference...");
+		/* Marie upgrades the conference with video. */
+		conf_params = linphone_core_create_conference_params(marie->lc);
+		linphone_conference_params_enable_video(conf_params, TRUE);
+		linphone_conference_update_params(conf, conf_params);
+		linphone_conference_params_unref(conf_params);
+		
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning,3,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,3,3000));
+		
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == TRUE);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == TRUE);
+		
+		/* Make sure video is received for Pauline and Laure. For Marie we can't because of missing APIs.*/
+		liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);
+		liblinphone_tester_set_next_video_frame_decoded_cb(laure_call);
+
+		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_IframeDecoded ,1, 5000));
+		BC_ASSERT_TRUE( wait_for_list(lcs ,&laure->stat.number_of_IframeDecoded, 1, 5000));
+		
+		/* Change camera, unfortunately there is no way to test its effectiveness for the moment. */
+		ms_message("Changing Marie's video device...");
+		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
+		wait_for_list(lcs ,NULL, 0, 2000);
+
+		linphone_core_terminate_conference(marie->lc);
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,1000));
+	}
+	
+	
+end:	
+	if (conf) linphone_conference_unref(conf);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+
+	bctbx_list_free(participants);
+	bctbx_list_free(lcs);
+}
+
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -1749,6 +1897,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
+	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
 	TEST_NO_TAG("Simple conference with audio device change during setup", simple_conference_with_audio_device_change_during_setup),

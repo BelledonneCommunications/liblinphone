@@ -113,8 +113,8 @@ void Conference::setState (LinphoneConferenceState state) {
 	if (m_state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, stateToString(state));
 		m_state = state;
-		if (m_currentParams->m_stateChangedCb)
-			m_currentParams->m_stateChangedCb(toC(), state, m_currentParams->m_userData);
+		if (m_stateChangedCb)
+			m_stateChangedCb(toC(), state, m_userData);
 	}
 }
 
@@ -215,15 +215,21 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
 		break;
 		case LinphoneCallPaused:
+			/*
+			 * Modifying the MediaSession's params directly is a bit hacky.
+			 * However, the resume() method doesn't accept parameters.
+			 */
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+			const_cast<LinphonePrivate::MediaSessionParams *>(
+				L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams())->enableVideo(getCurrentParams().videoEnabled());
 			linphone_call_resume(call);
 		break;
 		case LinphoneCallStreamsRunning:
 		{
 			LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
 			linphone_call_params_set_in_conference(params, TRUE);
-			linphone_call_params_enable_video(params, FALSE);
+			linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
 
 			linphone_call_update(call, params);
 			linphone_call_params_unref(params);
@@ -345,6 +351,32 @@ void LocalConference::removeLocalEndpoint () {
 int LocalConference::leave () {
 	if (isIn())
 		removeLocalEndpoint();
+	return 0;
+}
+
+int LocalConference::updateParams(const ConferenceParams &confParams){
+	/* Only adding or removing video is supported. */
+	bool previousVideoEnablement = m_currentParams->videoEnabled();
+	m_currentParams = (new ConferenceParams(confParams))->toSharedPtr();
+	if (confParams.videoEnabled() != previousVideoEnablement){
+		lInfo() << "LocalConference::updateParams(): checking participants...";
+		for (auto participant : m_participants){
+			LinphoneCall *call = participant->getCall();
+			if (call){
+				const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
+				if (linphone_call_params_video_enabled(current_params) != confParams.videoEnabled()){
+					lInfo() << "Re-INVITing participant to start/stop video.";
+					LinphoneCallParams *params = linphone_core_create_call_params(m_core, call);
+					linphone_call_params_enable_video(params, confParams.videoEnabled());
+					linphone_call_update(call, params);
+					linphone_call_params_unref(params);
+				}
+			}
+		}
+		/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
+		removeLocalEndpoint();
+		addLocalEndpoint();
+	}
 	return 0;
 }
 
@@ -499,6 +531,11 @@ int RemoteConference::terminate () {
 			break;
 	}
 	return 0;
+}
+
+int RemoteConference::updateParams(const ConferenceParams &params){
+	lWarning() << "updateParams() not implemented for RemoteConference.";
+	return -1;
 }
 
 int RemoteConference::enter () {
@@ -748,6 +785,10 @@ int linphone_conference_remove_participant_with_call (LinphoneConference *obj, L
 	return MediaConference::Conference::toCpp(obj)->removeParticipant(call);
 }
 
+int linphone_conference_update_params(LinphoneConference *obj, const LinphoneConferenceParams *params){
+	return MediaConference::Conference::toCpp(obj)->updateParams(*ConferenceParams::toCpp(params));
+}
+
 int linphone_conference_terminate (LinphoneConference *obj) {
 	return MediaConference::Conference::toCpp(obj)->terminate();
 }
@@ -832,6 +873,10 @@ AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj){
 	return MediaConference::Conference::toCpp(obj)->getAudioStream();
 }
 
+void linphone_conference_set_state_changed_callback (LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data) {
+	MediaConference::Conference::toCpp(obj)->setStateChangedCallback(cb, user_data);
+}
+
 
 LinphoneConferenceParams *linphone_conference_params_new (const LinphoneCore *core) {
 	LinphoneConferenceParams *obj = ConferenceParams::createCObject(core);
@@ -871,7 +916,4 @@ bool_t linphone_conference_params_local_participant_enabled(const LinphoneConfer
 	return ConferenceParams::toCpp(params)->localParticipantEnabled();
 }
 
-void linphone_conference_params_set_state_changed_callback (LinphoneConferenceParams *params, LinphoneConferenceStateChangedCb cb, void *user_data) {
-	ConferenceParams::toCpp(params)->setStateChangedCallback(cb, user_data);
-}
 

@@ -323,8 +323,10 @@ void CallPrivate::onCallSessionSetTerminated (const shared_ptr<CallSession> &ses
 	}
 	if (q->getCore()->getPrivate()->removeCall(q->getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
-	if (conf)
+	if (conf){
+		lInfo() << "Removing terminated call from LinphoneConference " << conf;
 		MediaConference::Conference::toCpp(conf)->removeParticipant(call);
+	}
 #if 0
 	if (lcall->chat_room)
 		linphone_chat_room_set_call(lcall->chat_room, nullptr);
