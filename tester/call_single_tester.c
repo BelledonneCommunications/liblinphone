@@ -315,9 +315,13 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 		// Check that description is in the card manager
 		BC_ASSERT_PTR_NOT_NULL(bctbx_list_find(sndcard_manager->descs, card_desc));
 
+		const int noListUpdated = mgr->stat.number_of_LinphoneCoreAudioDevicesListUpdated;
+
 		// Unregister card
 		ms_snd_card_manager_unregister_desc(sndcard_manager, card_desc);
 		linphone_core_reload_sound_devices(mgr->lc);
+
+		BC_ASSERT_EQUAL(mgr->stat.number_of_LinphoneCoreAudioDevicesListUpdated, noListUpdated+1, int, "%d");
 
 		// Get next device at the head of the list
 		// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
@@ -337,16 +341,39 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 
 }
 
+static void check_io_devs(LinphoneCoreManager* mgr, const LinphoneAudioDevice *exp_dev, bool_t force_dev_check) {
+
+	LinphoneCall * mgr_call = linphone_core_get_current_call(mgr->lc);
+
+	// If no call, then there is no input or output device. Getter should return NULL
+	if ((mgr_call != NULL) || (force_dev_check == TRUE)) {
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_output_audio_device(mgr->lc));
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_input_audio_device(mgr->lc));
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
+	} else {
+		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
+		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
+	}
+
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_output_audio_device(mgr->lc));
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_output_audio_device(mgr->lc), exp_dev);
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_default_input_audio_device(mgr->lc));
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
+}
+
+
+
 static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *card_desc, const LinphoneAudioDeviceCapabilities desiredCapability, bool_t force_dev_check) {
 
 	register_device(mgr, card_desc);
 
-	// Choose Marie's audio devices
+	// Choose manager audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
 	// In fact, linphone_core_get_audio_devices returns only 1 device per type
 	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(mgr->lc);
 
-	// As new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
+	// As it is assumed that new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
 	// device at the head of the list
 	LinphoneAudioDevice *exp_dev = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
 	BC_ASSERT_PTR_NOT_NULL(exp_dev);
@@ -374,33 +401,14 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(mgr->lc, NULL, NULL, 5, 2000);
 
-	LinphoneCall * mgr_call = linphone_core_get_current_call(mgr->lc);
-
-	// If no call, then there is no input or output device. Getter should return NULL
-	if ((mgr_call != NULL) || (force_dev_check == TRUE)) {
-		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
-		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
-	} else {
-		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
-		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
-	}
+	check_io_devs(mgr, exp_dev, force_dev_check);
 
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_output_audio_device(mgr->lc), exp_dev);
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
 
 	exp_dev = unregister_device(TRUE, mgr, exp_dev, card_desc);
 
-	// If no call, then there is no input or output device. Getter should return NULL
-	if ((mgr_call != NULL) || (force_dev_check == TRUE)) {
-		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
-		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
-	} else {
-		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
-		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
-	}
-
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_output_audio_device(mgr->lc), exp_dev);
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
+	check_io_devs(mgr, exp_dev, force_dev_check);
 
 	linphone_audio_device_unref(exp_dev);
 }
@@ -500,27 +508,12 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	// Marie is the caller
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 
-	// load audio devices and get initial number of cards
-	linphone_core_reload_sound_devices(marie->lc);
-	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int native_audio_devices_count = bctbx_list_size(audio_devices);
-	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
-
-	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
-	// Adding 1 devices to Marie' sound card manager:
-	// - dummy_test_snd_card_desc
-	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
-
-	// This devices are prepended to the list of so that they can be easily accessed later
-	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
-	linphone_core_reload_sound_devices(marie->lc);
+	register_device(marie, &dummy_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
 	// In fact, linphone_core_get_audio_devices returns only 1 device per type
-	audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int audio_devices_count = bctbx_list_size(audio_devices);
-	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 1), int, "%d");
+	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
 
 	// As new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
 	// device at the head of the list
@@ -839,29 +832,16 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	// Marie is the caller
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 
-	// load audio devices and get initial number of cards
-	linphone_core_reload_sound_devices(marie->lc);
-	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int native_audio_devices_count = bctbx_list_size(audio_devices);
-	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
-
-	MSFactory *marie_factory = linphone_core_get_ms_factory(marie->lc);
 	// Adding 2 devices to Marie' sound card manager:
 	// - dummy_test_snd_card_desc
 	// - dummy2_test_snd_card_desc
-	MSSndCardManager *marie_sndcard_manager = ms_factory_get_snd_card_manager(marie_factory);
-
-	// This devices are prepended to the list of so that they can be easily accessed later
-	ms_snd_card_manager_register_desc(marie_sndcard_manager, &dummy_test_snd_card_desc);
-	ms_snd_card_manager_register_desc(marie_sndcard_manager, &dummy2_test_snd_card_desc);
-	linphone_core_reload_sound_devices(marie->lc);
+	register_device(marie, &dummy_test_snd_card_desc);
+	register_device(marie, &dummy2_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
 	// In fact, linphone_core_get_audio_devices returns only 1 device per type
-	audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int audio_devices_count = bctbx_list_size(audio_devices);
-	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 2), int, "%d");
+	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
 
 	// As new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
 	// device at the head of the list
@@ -894,23 +874,16 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
 
-	MSFactory *pauline_factory = linphone_core_get_ms_factory(pauline->lc);
-	// Adding 2 devices to Marie' sound card manager:
+	// Adding 2 devices to Pauline sound card manager:
 	// - dummy_test_snd_card_desc
 	// - dummy2_test_snd_card_desc
-	MSSndCardManager *pauline_sndcard_manager = ms_factory_get_snd_card_manager(pauline_factory);
-
-	// This devices are prepended to the list of so that they can be easily accessed later
-	ms_snd_card_manager_register_desc(pauline_sndcard_manager, &dummy2_test_snd_card_desc);
-	ms_snd_card_manager_register_desc(pauline_sndcard_manager, &dummy_test_snd_card_desc);
-	linphone_core_reload_sound_devices(pauline->lc);
+	register_device(pauline, &dummy_test_snd_card_desc);
+	register_device(pauline, &dummy2_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
 	// In fact, linphone_core_get_audio_devices returns only 1 device per type
 	audio_devices = linphone_core_get_extended_audio_devices(pauline->lc);
-	audio_devices_count = bctbx_list_size(audio_devices);
-	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 2), int, "%d");
 
 	// As new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
 	// device at the head of the list
