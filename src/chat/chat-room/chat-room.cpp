@@ -314,7 +314,16 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	msg->setInternalContent(content);
 
 	msg->getPrivate()->setTime(message->time);
-	msg->getPrivate()->setImdnMessageId(op->getCallId());
+	ostringstream messageId;
+	if (op->hasDialog()){
+		/* If this message has been received part of a dialog (which is unlikely to happen for IM),
+		 * set an IMDN Message ID abitrary to be the SIP Call-ID followed by the CSeq number.
+		 * This avoids considering incoming SIP MESSAGE received within a dialog as being duplicates. */
+		messageId << op->getCallId() << "-" << op->getRemoteCSeq();
+	}else{
+		messageId << op->getCallId();
+	}
+	msg->getPrivate()->setImdnMessageId(messageId.str());
 	msg->getPrivate()->setCallId(op->getCallId());
 
 	const SalCustomHeader *ch = op->getRecvCustomHeaders();
