@@ -298,6 +298,9 @@ static void register_device(LinphoneCoreManager* mgr, MSSndCardDesc *card_desc) 
 	int audio_devices_count = bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 1), int, "%d");
 
+	// Unref cards
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
+
 }
 
 static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, MSSndCardDesc *card_desc) {
@@ -348,6 +351,9 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 	LinphoneAudioDevice *exp_dev = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
 	BC_ASSERT_PTR_NOT_NULL(exp_dev);
 	linphone_audio_device_ref(exp_dev);
+
+	// Unref cards
+	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
 	// Newly added device (dummy_test_snd_card_desc) is expected to have playback and record capabilities
 	if (LinphoneAudioDeviceCapabilityPlay & desiredCapability) {
