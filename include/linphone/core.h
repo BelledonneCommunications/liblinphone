@@ -3277,19 +3277,6 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid);
 
 /**
- * Sets the sound device used for output sound during calls.
- * This function has gives the following priorities:
- * - card ID provided as argument
- * - default output audio device
- * - default playback device
- * @param[in] lc #LinphoneCore object
- * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
- * @return 0
- * @ingroup media_parameters
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_core_set_output_audio_device_by_id(LinphoneCore *lc, const char * devid);
-
-/**
  * Whenever the liblinphone is playing a ring to advertise an incoming call or ringback of an outgoing call, this function stops
  * the ringing. Typical use is to stop ringing when the user requests to ignore the call.
  * @param[in] lc #LinphoneCore object
