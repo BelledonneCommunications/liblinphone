@@ -47,9 +47,6 @@ static void enable_disable_camera_after_camera_switches(void) {
 		LinphoneCall *call = linphone_core_get_current_call(marie->lc);
 		ms_message("Switching from [%s] to [%s]", currentCamId, newCamId);
 		linphone_core_set_video_device(marie->lc, newCamId);
-		if(call != NULL) {
-			linphone_call_update(call, NULL);
-		}
 		BC_ASSERT_STRING_EQUAL(newCamId,ms_web_cam_get_string_id(_linphone_call_get_video_device(call)));
 		linphone_call_enable_camera(call,FALSE);
 		linphone_core_iterate(marie->lc);
