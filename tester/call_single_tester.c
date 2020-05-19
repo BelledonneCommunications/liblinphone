@@ -337,7 +337,7 @@ static LinphoneAudioDevice * unregister_device(bool_t enable, LinphoneCoreManage
 
 }
 
-static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *card_desc, const LinphoneAudioDeviceCapabilities desiredCapability, bool_t check_input_dev) {
+static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *card_desc, const LinphoneAudioDeviceCapabilities desiredCapability, bool_t force_dev_check) {
 
 	register_device(mgr, card_desc);
 
@@ -377,45 +377,29 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 	LinphoneCall * mgr_call = linphone_core_get_current_call(mgr->lc);
 
 	// If no call, then there is no input or output device. Getter should return NULL
-	if (mgr_call) {
-		printf(" Before unreg Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
+	if ((mgr_call != NULL) || (force_dev_check == TRUE)) {
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
-		if (check_input_dev == TRUE) {
-			printf("Before unreg Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
-			BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
-		}
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
 	} else {
-		printf(" Before unreg Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
-		printf("Before unreg Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
 	}
 
-	printf("Before unreg Default Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_default_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_output_audio_device(mgr->lc), exp_dev);
-	printf("Before unreg Default Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_default_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
 
 	exp_dev = unregister_device(TRUE, mgr, exp_dev, card_desc);
 
 	// If no call, then there is no input or output device. Getter should return NULL
-	if (mgr_call) {
-		printf(" After unreg Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
+	if ((mgr_call != NULL) || (force_dev_check == TRUE)) {
 		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr->lc), exp_dev);
-		if (check_input_dev == TRUE) {
-			printf("After unreg Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
-			BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
-		}
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr->lc), exp_dev);
 	} else {
-		printf(" After unreg Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 		BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(mgr->lc));
-		printf("After unreg Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 		BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(mgr->lc));
 	}
 
-	printf("After unreg Default Output device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_default_output_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_output_audio_device(mgr->lc), exp_dev);
-	printf("After unreg Default Input device %s exp_dev %s\n", linphone_audio_device_get_device_name(linphone_core_get_default_input_audio_device(mgr->lc)), linphone_audio_device_get_device_name(exp_dev));
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_default_input_audio_device(mgr->lc), exp_dev);
 
 	linphone_audio_device_unref(exp_dev);
@@ -423,7 +407,7 @@ static void emulate_unreliable_device(LinphoneCoreManager* mgr, MSSndCardDesc *c
 
 static void call_with_unreliable_device(void) {
 	bctbx_list_t *lcs = NULL;
-	bool_t check_input_dev = FALSE;
+	bool_t force_dev_check = FALSE;
 
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -433,7 +417,7 @@ static void call_with_unreliable_device(void) {
 
 	printf("===============================================================\nMarie before call\n");
 
-	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
@@ -449,11 +433,11 @@ static void call_with_unreliable_device(void) {
 
 	printf("===============================================================\nMarie ringback\n");
 	// Ringback
-	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	printf("===============================================================\nPauling ringtone\n");
 	// Ringtone
-	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
@@ -462,38 +446,46 @@ static void call_with_unreliable_device(void) {
 	// Take call - ringing ends
 	linphone_call_accept(pauline_call);
 
-//	check_input_dev = TRUE;
+	// force device check as a call is ongoing, paused or resumed therefore it is possible to change the currently used audio device
+	force_dev_check = TRUE;
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 	printf("===============================================================\nMarie call\n");
 	// Call
-	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	printf("===============================================================\nPauline call\n");
 	// Call
-	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	linphone_call_pause(pauline_call);
 
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPausing, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
+
 	printf("===============================================================\nMarie paused call\n");
 	// Paused call
-	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(marie, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	printf("===============================================================\nPauline paused call\n");
 	// Paused call
-	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(pauline, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	linphone_call_resume(pauline_call);
 
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+
 	printf("===============================================================\nMarie resumed call\n");
 	// Resumed Call
-	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(marie, &dummy_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	printf("===============================================================\nPauline resumed call\n");
 	// Resumed Call
-	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), check_input_dev);
+	emulate_unreliable_device(pauline, &dummy2_test_snd_card_desc, (LinphoneAudioDeviceCapabilityRecord | LinphoneAudioDeviceCapabilityPlay), force_dev_check);
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);

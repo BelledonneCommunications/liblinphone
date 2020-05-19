@@ -740,6 +740,58 @@ void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
 	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
 }
 
+void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
+	if (defaultAudioDevice) {
+		setOutputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_playback_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "Unable to find suitable audio device";
+}
+
+void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			setInputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
+	if (defaultAudioDevice) {
+		setInputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_capture_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "Unable to find suitable audio device";
+}
+
+
+
 AudioDevice* Core::getDefaultInputAudioDevice() const {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	return findAudioDeviceMatchingMsSoundCard(card);
