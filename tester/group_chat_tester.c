@@ -392,7 +392,7 @@ bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 }
  
 void start_core_for_conference(bctbx_list_t *coreManagerList) {
-	return bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
+	bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
 }
 
 static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
