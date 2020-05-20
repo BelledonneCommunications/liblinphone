@@ -21,6 +21,7 @@
 #define _L_IDENTITY_ADDRESS_H_
 
 #include <ostream>
+#include <string>
 
 #include "linphone/utils/general.h"
 

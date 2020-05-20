@@ -42,7 +42,7 @@ class LocalConference;
 class Participant;
 class ParticipantDevice;
 
-class LocalConferenceEventHandler {
+class LINPHONE_PUBLIC LocalConferenceEventHandler {
 friend class LocalConferenceListEventHandler;
 #ifdef LINPHONE_TESTER
 	friend class Tester;
