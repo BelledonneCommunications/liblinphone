@@ -1623,6 +1623,8 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	stats *counters = get_stats(lc);
+	LinphoneChatMessageState state = linphone_chat_message_get_state(msg);
+	BC_ASSERT_EQUAL(state, LinphoneChatMessageStateInProgress, int, "%d");
 	counters->number_of_LinphoneMessageSent++;
 }
 

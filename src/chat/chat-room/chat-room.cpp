@@ -52,16 +52,21 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 	L_Q();
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
-
 	dChatMessage->setTime(ms_time(0));
 	if (!q->canHandleCpim()) {
 		//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
 		dChatMessage->setImdnMessageId("");
 	}
 	dChatMessage->send();
+}
 
+void ChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	LinphoneChatRoom *cr = getCChatRoom();
+	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
+
 	// TODO: server currently don't stock message, remove condition in the future.
 	if (!linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
@@ -77,8 +82,7 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 		}
 	}
 
-	if (isComposing)
-		isComposing = false;
+	if (isComposing) isComposing = false;
 	isComposingHandler->stopIdleTimer();
 	isComposingHandler->stopRefreshTimer();
 }

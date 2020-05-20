@@ -823,6 +823,72 @@ static void transfer_message_download_cancelled(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void transfer_message_auto_download_aborted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	/* Enable auto download on marie's Core */
+	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+
+	/* create a chatroom on pauline's side */
+	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatMessage* msg = create_message_from_sintel_trailer(chat_room);
+	linphone_chat_message_send(msg);
+
+	/* wait for marie to receive pauline's msg */
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
+	linphone_chat_message_unref(msg);
+
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	linphone_core_manager_restart(marie, TRUE);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+
+	LinphoneChatRoom *marie_cr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatMessage *marie_msg = linphone_chat_room_get_last_message_in_history(marie_cr);
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	if (marie_msg) {
+		const bctbx_list_t *contents = linphone_chat_message_get_contents(marie_msg);
+		BC_ASSERT_PTR_NOT_NULL(contents);
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int, "%d");
+		LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "vnd.gsma.rcs-ft-http+xml");
+
+		LinphoneChatMessageState state = linphone_chat_message_get_state(marie_msg);
+		BC_ASSERT_EQUAL(state, LinphoneChatMessageStateDelivered, int, "%d");
+
+		// Auto download isn't resumed automatically, and since the manager restarted the stats are reset
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 0, int, "%d");
+
+		char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+		char *receive_filepath = bc_tester_file("receive_file.dump");
+		/* Remove any previously downloaded file */
+		remove(receive_filepath);
+		
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(marie_msg);
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+		linphone_chat_message_download_file(marie_msg);
+
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
+		if (BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 1, 55000))) {
+			compare_files(send_filepath, receive_filepath);
+		}
+
+		linphone_chat_message_unref(marie_msg);
+		bc_free(send_filepath);
+		bc_free(receive_filepath);
+	}
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void file_transfer_2_messages_simultaneously(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -2949,6 +3015,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message with download io error", transfer_message_with_download_io_error),
 	TEST_NO_TAG("Transfer message upload cancelled", transfer_message_upload_cancelled),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
+	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
