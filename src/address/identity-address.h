@@ -39,7 +39,7 @@ public:
 	IdentityAddress ();
 	virtual ~IdentityAddress () = default;
 
-	IdentityAddress *clone () const {
+	virtual IdentityAddress *clone () const {
 		return new IdentityAddress(*this);
 	}
 

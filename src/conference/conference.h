@@ -79,7 +79,7 @@ protected:
 
 	bool isMe (const IdentityAddress &addr) const;
 
-	IdentityAddress conferenceAddress;
+	ConferenceAddress conferenceAddress;
 	std::list<std::shared_ptr<Participant>> participants;
 	std::string subject;
 
