@@ -651,34 +651,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::FileDownload;
 	}
 
-	if ((currentRecvStep & ChatMessagePrivate::Step::AutoFileDownload) == ChatMessagePrivate::Step::AutoFileDownload) {
-		lInfo() << "Auto file download step already done, skipping";
-	} else {
-		for (Content *c : contents) {
-			if (c->isFileTransfer()) {
-				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
-				if (max_size >= 0) {
-					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
-					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
-						string downloadPath = q->getCore()->getDownloadPath();
-						if (!downloadPath.empty()) {
-							string filepath = downloadPath + ftc->getFileName();
-							lInfo() << "Downloading file to " << filepath;
-							ftc->setFilePath(filepath);
-							setAutoFileTransferDownloadHappened(true);
-							q->downloadFile(ftc);
-							return LinphoneReasonNone;
-						} else {
-							lError() << "Downloading path is empty, aborting auto download !";
-						}
-					}
-				}
-			}
-		}
-		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
-		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
-	}
-
 	if (contents.empty()) {
 		// All previous modifiers only altered the internal content, let's fill the content list
 		contents.push_back(new Content(internalContent));
@@ -699,9 +671,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 
 	setState(ChatMessage::State::Delivered);
 
-	if (errorCode <= 0 && !isAutoFileTransferDownloadHappened()) {
-		// if auto download happened and message contains only file transfer,
-		// the following will state that the content type of the file is unsupported
+	if (errorCode <= 0) {
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
 			ContentType ct(c->getContentType());
@@ -719,8 +689,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 			lError() << "No content-type in the contents list is supported...";
 		}
 	}
-	// If auto download failed, reset this flag so the user can normally download the file later
-	setAutoFileTransferDownloadHappened(false);
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
 	if (
@@ -742,12 +710,49 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return reason;
 	}
 
-	if ((getContentType() == ContentType::ImIsComposing) || (getContentType() == ContentType::Imdn))
+	if ((getContentType() == ContentType::ImIsComposing) || (getContentType() == ContentType::Imdn)) {
 		toBeStored = false;
+	}
 
-	chatRoom->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
+	handleAutoDownload();
 
 	return reason;
+}
+
+void ChatMessagePrivate::handleAutoDownload() {
+	L_Q();
+
+	if ((currentRecvStep & ChatMessagePrivate::Step::AutoFileDownload) == ChatMessagePrivate::Step::AutoFileDownload) {
+		lInfo() << "Auto file download step already done, skipping";
+	} else {
+		for (Content *c : contents) {
+			if (c->isFileTransfer()) {
+				int max_size = linphone_core_get_max_size_for_auto_download_incoming_files(q->getCore()->getCCore());
+				if (max_size >= 0) {
+					FileTransferContent *ftc = static_cast<FileTransferContent *>(c);
+					if (max_size == 0 || ftc->getFileSize() <= (size_t)max_size) {
+						string downloadPath = q->getCore()->getDownloadPath();
+						if (!downloadPath.empty()) {
+							string filepath = downloadPath + ftc->getFileName();
+							lInfo() << "Downloading file to " << filepath;
+							ftc->setFilePath(filepath);
+							setAutoFileTransferDownloadHappened(true);
+							q->downloadFile(ftc);
+							return;
+						} else {
+							lError() << "Downloading path is empty, aborting auto download !";
+						}
+					}
+				}
+			}
+		}
+		currentRecvStep |= ChatMessagePrivate::Step::AutoFileDownload;
+	}
+
+	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+	setAutoFileTransferDownloadHappened(false);
+	q->getChatRoom()->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
+	return;
 }
 
 void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
