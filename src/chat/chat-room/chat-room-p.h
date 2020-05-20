@@ -53,6 +53,7 @@ public:
 	void setState (ChatRoom::State newState) override;
 
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
+	void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void sendIsComposingNotification ();
 
 	void addEvent (const std::shared_ptr<EventLog> &eventLog) override;

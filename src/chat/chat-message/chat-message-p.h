@@ -123,6 +123,8 @@ public:
 		return isAutoDownloadAttachedFilesHappened;
 	}
 
+	void handleAutoDownload();
+
 	belle_http_request_t *getHttpRequest () const;
 	void setHttpRequest (belle_http_request_t *request);
 
