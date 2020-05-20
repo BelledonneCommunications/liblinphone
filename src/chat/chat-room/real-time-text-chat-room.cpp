@@ -90,17 +90,20 @@ void RealTimeTextChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage>
 	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
 		uint32_t newLine = 0x2028;
 		chatMessage->putCharacter(newLine);
-
-		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
-		);
-		if (!event)
-			event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
-
-		LinphoneChatRoom *cr = getCChatRoom();
-		_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
 	}
+}
+
+void RealTimeTextChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+	shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
+		q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
+	);
+	if (!event)
+		event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
+	LinphoneChatRoom *cr = getCChatRoom();
+	_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
 }
 
 // =============================================================================
