@@ -74,7 +74,6 @@ public class AndroidPlatformHelper {
     private TextureView mPreviewTextureView, mVideoTextureView;
     private boolean mDozeModeEnabled;
     private BroadcastReceiver mDozeReceiver;
-    private IntentFilter mDozeIntentFilter;
     private boolean mWifiOnly;
     private boolean mUsingHttpProxy;
     private NetworkManagerInterface mNetworkManager;
@@ -82,7 +81,6 @@ public class AndroidPlatformHelper {
     private boolean mMonitoringEnabled;
     private boolean mIsInInteractiveMode;
     private InteractivityReceiver mInteractivityReceiver;
-    private IntentFilter mInteractivityIntentFilter;
     private String[] mDnsServers;
 
     private static int mTempCountWifi = 0;
@@ -604,7 +602,7 @@ public class AndroidPlatformHelper {
         }
 
         if (mDozeModeEnabled && DeviceUtils.isAppBatteryOptimizationEnabled(mContext)) {
-            Log.i("[Platform Helper] Device in idle mode: shutting down network");
+            Log.i("[Platform Helper] Device in idle (doze) mode: shutting down network");
             setNetworkReachable(mNativePtr, false);
             return;
         }
@@ -613,65 +611,64 @@ public class AndroidPlatformHelper {
         if (!connected) {
             Log.i("[Platform Helper] No connectivity: setting network unreachable");
             setNetworkReachable(mNativePtr, false);
-        } else {
-            if (mNetworkManager.hasHttpProxy(mContext)) {
-                if (useSystemHttpProxy(mNativePtr)) {
-                    String host = mNetworkManager.getProxyHost(mContext);
-                    int port = mNetworkManager.getProxyPort(mContext);
-                    setHttpProxy(mNativePtr, host, port);
-                    if (!mUsingHttpProxy) {
-                        Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
-                        setNetworkReachable(mNativePtr, false);
-                    }
-                    mUsingHttpProxy = true;
-                } else {
-                    Log.w("[Platform Helper] Proxy available but forbidden by linphone core [sip] use_system_http_proxy setting");
-                }
-            } else {
-                setHttpProxy(mNativePtr, "", 0);
-                if (mUsingHttpProxy) {
-                    Log.i("[Platform Helper] Proxy was set before, disabling network reachability first");
+            return;
+        }
+        
+        if (mNetworkManager.hasHttpProxy(mContext)) {
+            if (useSystemHttpProxy(mNativePtr)) {
+                String host = mNetworkManager.getProxyHost(mContext);
+                int port = mNetworkManager.getProxyPort(mContext);
+                setHttpProxy(mNativePtr, host, port);
+                if (!mUsingHttpProxy) {
+                    Log.i("[Platform Helper] Proxy wasn't set before, disabling network reachability first");
                     setNetworkReachable(mNativePtr, false);
                 }
-                mUsingHttpProxy = false;
+                mUsingHttpProxy = true;
+            } else {
+                Log.w("[Platform Helper] Proxy available but forbidden by linphone core [sip] use_system_http_proxy setting");
             }
-
-            NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
-            if (networkInfo == null) {
-                Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
-                setNetworkReachable(mNativePtr, false);
-                return;
-            }
-
-            Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName() + ", state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-            if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
-                Log.w("[Platform Helper] Active network is in bad state...");
-            }
-
-            // Update DNS servers lists
-            Network network = mNetworkManager.getActiveNetwork();
-            mNetworkManager.updateDnsServers();
-
-            int currentNetworkType = networkInfo.getType();
-            if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
-                Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disabling network reachability first");
+        } else {
+            setHttpProxy(mNativePtr, "", 0);
+            if (mUsingHttpProxy) {
+                Log.i("[Platform Helper] Proxy was set before, disabling network reachability first");
                 setNetworkReachable(mNativePtr, false);
             }
-
-            mLastNetworkType = currentNetworkType;
-            Log.i("[Platform Helper] Network reachability enabled");
-            setNetworkReachable(mNativePtr, true);
+            mUsingHttpProxy = false;
         }
+
+        NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
+        if (networkInfo == null) {
+            Log.e("[Platform Helper] getActiveNetworkInfo() returned null !");
+            setNetworkReachable(mNativePtr, false);
+            return;
+        }
+
+        Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName() + ", state " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
+        if (networkInfo.getState() == NetworkInfo.State.DISCONNECTED && networkInfo.getDetailedState() == NetworkInfo.DetailedState.BLOCKED) {
+            Log.w("[Platform Helper] Active network is in bad state...");
+        }
+
+        // Update DNS servers lists
+        Network network = mNetworkManager.getActiveNetwork();
+        mNetworkManager.updateDnsServers();
+
+        int currentNetworkType = networkInfo.getType();
+        if (mLastNetworkType != -1 && mLastNetworkType != currentNetworkType) {
+            Log.i("[Platform Helper] Network type has changed (last one was " + networkTypeToString(mLastNetworkType) + "), disabling network reachability first");
+            setNetworkReachable(mNativePtr, false);
+        }
+
+        mLastNetworkType = currentNetworkType;
+        Log.i("[Platform Helper] Network reachability enabled");
+        setNetworkReachable(mNativePtr, true);
     }
 
     public synchronized void setDozeModeEnabled(boolean b) {
         mDozeModeEnabled = b;
-        Log.i("[Platform Helper] Device idle mode: " + mDozeModeEnabled);
     }
 
     public synchronized void setInteractiveMode(boolean b) {
         mIsInInteractiveMode = b;
-        Log.i("[Platform Helper] Device interactive mode: " + mIsInInteractiveMode);
         enableKeepAlive(mNativePtr, mIsInInteractiveMode);
     }
 
@@ -699,18 +696,17 @@ public class AndroidPlatformHelper {
         mNetworkManager.registerNetworkCallbacks(mContext);
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            mDozeIntentFilter = new IntentFilter();
-            mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
+            IntentFilter dozeIntentFilter = new IntentFilter(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
             mDozeReceiver = new DozeReceiver(this);
             Log.i("[Platform Helper] Registering doze receiver");
-            mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
+            mContext.registerReceiver(mDozeReceiver, dozeIntentFilter);
         }
 
         mInteractivityReceiver = new InteractivityReceiver(this);
-        mInteractivityIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        mInteractivityIntentFilter.addAction(Intent.ACTION_SCREEN_OFF);
+        IntentFilter interactivityIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        interactivityIntentFilter.addAction(Intent.ACTION_SCREEN_OFF);
         Log.i("[Platform Helper] Registering interactivity receiver");
-        mContext.registerReceiver(mInteractivityReceiver, mInteractivityIntentFilter);
+        mContext.registerReceiver(mInteractivityReceiver, interactivityIntentFilter);
 
         updateNetworkReachability();
     }
