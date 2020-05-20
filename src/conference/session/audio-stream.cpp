@@ -470,10 +470,10 @@ void MS2AudioStream::stop(){
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
-	
+
 	if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 	if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
-	
+
 	mCurrentCaptureCard = nullptr;
 	mCurrentPlaybackCard = nullptr;
 }

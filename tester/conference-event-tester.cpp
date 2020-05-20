@@ -448,7 +448,7 @@ public:
 	~ConferenceEventTester ();
 
 private:
-	void onConferenceCreated (const IdentityAddress &addr) override;
+	void onConferenceCreated (const ConferenceAddress &addr) override;
 	void onConferenceKeywordsChanged (const vector<string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
@@ -476,7 +476,7 @@ ConferenceEventTester::~ConferenceEventTester () {
 	delete handler;
 }
 
-void ConferenceEventTester::onConferenceCreated (const IdentityAddress &addr) {}
+void ConferenceEventTester::onConferenceCreated (const ConferenceAddress &addr) {}
 
 void ConferenceEventTester::onConferenceKeywordsChanged (const vector<string> &keywords) {
 	for (const auto &k : keywords) {
@@ -845,7 +845,7 @@ void send_first_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -897,7 +897,7 @@ void send_added_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -956,7 +956,7 @@ void send_removed_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1012,7 +1012,7 @@ void send_admined_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1067,7 +1067,7 @@ void send_unadmined_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1123,7 +1123,7 @@ void send_subject_changed_notify () {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1185,7 +1185,7 @@ void send_device_added_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1245,7 +1245,7 @@ void send_device_removed_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -1318,7 +1318,7 @@ void one_to_one_keyword () {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<IdentityAddress &>(localConf->getConferenceAddress()) = addr;
+	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	string notify = localHandler->createNotifyFullState(-1, true);
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;

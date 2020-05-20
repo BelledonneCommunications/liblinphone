@@ -1149,6 +1149,30 @@ void MS2Stream::disconnectFromMixer(){
 	}
 }
 
+void MS2Stream::connectToMixer(StreamMixer *mixer){
+	bool wasRunning = getState() == Running;
+	if (wasRunning) stop();
+	Stream::connectToMixer(mixer);
+	if (wasRunning){
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
+void MS2Stream::disconnectFromMixer(){
+	bool wasRunning = false;
+	if (getState() == Running){
+		stop();
+		wasRunning = true;
+	}
+	Stream::disconnectFromMixer();
+	if (wasRunning){
+		// Call render to take changes into account immediately.
+		render(getGroup().getCurrentOfferAnswerContext().scopeStreamToIndex(getIndex()),
+			getGroup().getCurrentSessionState());
+	}
+}
+
 MS2Stream::~MS2Stream(){
 	finish();
 	linphone_call_stats_unref(mStats);

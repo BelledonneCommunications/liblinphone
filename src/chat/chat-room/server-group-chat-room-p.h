@@ -92,7 +92,7 @@ public:
 	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
 
-	void setConferenceAddress (const IdentityAddress &conferenceAddress);
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);

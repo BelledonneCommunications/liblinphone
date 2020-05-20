@@ -246,7 +246,7 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 AudioStream * MS2AudioMixer::getAudioStream(){
 	return mLocalParticipantStream;
 }
-	
+
 void MS2AudioMixer::setInputDevice(AudioDevice *audioDevice) {
 	audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
 }

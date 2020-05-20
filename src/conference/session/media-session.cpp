@@ -307,7 +307,6 @@ void MediaSessionPrivate::pausedByRemote () {
 	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
-
 }
 
 void MediaSessionPrivate::remoteRinging () {
@@ -1753,10 +1752,8 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	setState(CallSession::State::Pausing, "Pausing call");
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
-
 	if (listener)
 		listener->onResetCurrentSession(q->getSharedFromThis());
-
 	stopStreams();
 	pausedByApp = false;
 	return 0;
@@ -1777,7 +1774,6 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
-
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
 	if (md && !sal_media_description_empty(md))
@@ -1879,7 +1875,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			break;
 	}
 	SalMediaDescription *md = resultDesc;
-	
+
 	if (md) {
 		getCurrentParams()->enableAvpf(hasAvpf(md));
 		if (getCurrentParams()->avpfEnabled())
