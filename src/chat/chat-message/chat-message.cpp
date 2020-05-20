@@ -1180,6 +1180,14 @@ const IdentityAddress &ChatMessage::getToAddress () const {
 	return d->toAddress;
 }
 
+const IdentityAddress &ChatMessage::getLocalAdress () const {
+	L_D();
+	if (getDirection() == Direction::Outgoing)
+		return d->fromAddress;
+	else
+		return d->toAddress;
+}
+
 const std::string &ChatMessage::getForwardInfo () const {
 	L_D();
 	return d->forwardInfo;
