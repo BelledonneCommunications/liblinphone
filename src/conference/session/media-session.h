@@ -118,7 +118,7 @@ public:
 	void setOutputAudioDevice(AudioDevice *audioDevice);
 	AudioDevice* getInputAudioDevice() const;
 	AudioDevice* getOutputAudioDevice() const;
-	
+
 	StreamsGroup & getStreamsGroup()const;
 private:
 	L_DECLARE_PRIVATE(MediaSession);

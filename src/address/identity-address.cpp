@@ -172,4 +172,44 @@ string IdentityAddress::asString () const {
 	return res.str();
 }
 
+ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
+	mConfId= address.getUriParamValue("conf-id");
+};
+ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
+}
+ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
+	mConfId = other.mConfId;
+}
+ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
+}
+ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
+	if (this != &other) {
+		IdentityAddress::operator=(other);
+		mConfId = other.mConfId;
+	}
+	return *this;
+}
+
+bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
+	return IdentityAddress::operator==(other) && mConfId == other.mConfId;
+};
+bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
+	return !operator==(other);
+}
+bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
+	int diff = IdentityAddress::operator<(other);
+	if (diff == 0){
+		diff = mConfId.compare(other.mConfId);
+	}
+	return diff < 0;
+}
+
+std::string ConferenceAddress::asString () const {
+	if (mConfId.empty())
+		return IdentityAddress::asString();
+	else {
+		return IdentityAddress::asString() + ";conf-id="+mConfId;
+	}
+}
+
 LINPHONE_END_NAMESPACE

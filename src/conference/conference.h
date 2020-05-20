@@ -55,7 +55,7 @@ public:
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 	bool canHandleParticipants () const override;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
-	const IdentityAddress &getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 	std::shared_ptr<Participant> getMe () const override;
 	int getParticipantCount () const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
@@ -79,7 +79,7 @@ protected:
 
 	bool isMe (const IdentityAddress &addr) const;
 
-	IdentityAddress conferenceAddress;
+	ConferenceAddress conferenceAddress;
 	std::list<std::shared_ptr<Participant>> participants;
 	std::string subject;
 

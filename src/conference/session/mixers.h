@@ -156,7 +156,7 @@ public:
 	virtual void setOutputDevice(AudioDevice *audioDevice) override;
 	virtual AudioDevice* getInputDevice() const override;
 	virtual AudioDevice* getOutputDevice() const override;
-	
+
 	// Used for the tone manager.
 	AudioStream * getAudioStream();
 private:

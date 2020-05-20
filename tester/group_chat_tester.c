@@ -369,7 +369,7 @@ void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *rec
 }
 
 // Configure list of core manager for conference and add the listener
-bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
+bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri) {
 	LinphoneAddress *factoryAddr = linphone_address_new(sFactoryUri);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))_configure_core_for_conference, (void *) factoryAddr);
 	linphone_address_unref(factoryAddr);
@@ -387,8 +387,12 @@ bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 	return coresList;
 }
 
- void start_core_for_conference(bctbx_list_t *coreManagerList) {
-	bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
+bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
+	return init_core_for_conference_with_factory_uri(coreManagerList, sFactoryUri);
+}
+ 
+void start_core_for_conference(bctbx_list_t *coreManagerList) {
+	return bctbx_list_for_each(coreManagerList, (void (*)(void *))_start_core);
 }
 
 static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, const LinphoneAddress *confAddr, const char* subject, int participantNumber, bool_t isAdmin) {
