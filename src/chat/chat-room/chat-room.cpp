@@ -52,33 +52,34 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 	L_Q();
 
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
-
 	dChatMessage->setTime(ms_time(0));
 	if (!q->canHandleCpim()) {
 		//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
 		dChatMessage->setImdnMessageId("");
 	}
 	dChatMessage->send();
+}
 
+void ChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	LinphoneChatRoom *cr = getCChatRoom();
+
 	// TODO: server currently don't stock message, remove condition in the future.
 	if (!linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
 			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
 		);
-		if (!event)
+		if (!event) {
 			event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
-
-		if (!isResend) {
-			// Do not notify message sent callback when it's a resend
-			_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
-			linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 		}
+		
+		_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
+		linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 	}
 
-	if (isComposing)
-		isComposing = false;
+	if (isComposing) isComposing = false;
 	isComposingHandler->stopIdleTimer();
 	isComposingHandler->stopRefreshTimer();
 }
