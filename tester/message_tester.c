@@ -823,6 +823,47 @@ static void transfer_message_download_cancelled(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void transfer_message_auto_download_aborted(void) {
+	LinphoneChatRoom* chat_room;
+	LinphoneChatMessage* msg;
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	/* Enable auto download on marie's Core */
+	linphone_core_set_max_size_for_auto_download_incoming_files(marie->lc, 0);
+
+	/* create a chatroom on pauline's side */
+	chat_room = linphone_core_get_chat_room(pauline->lc,marie->identity);
+	msg = create_message_from_sintel_trailer(chat_room);
+	linphone_chat_message_send(msg);
+
+	/* wait for marie to receive pauline's msg */
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
+	linphone_chat_message_unref(msg);
+
+	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	//linphone_core_stop(marie->lc);
+	linphone_core_manager_restart(marie, TRUE);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+	BC_ASSERT_NOT_EQUAL(marie->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+
+	//linphone_core_start(marie->lc);
+	//BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneGlobalReady, 2, 5000));
+	LinphoneChatRoom *marie_cr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatMessage *marie_msg = linphone_chat_room_get_last_message_in_history(marie_cr);
+	BC_ASSERT_PTR_NOT_NULL(marie_msg);
+	if (marie_msg) {
+		linphone_chat_message_unref(marie_msg);
+	}
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void file_transfer_2_messages_simultaneously(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -2949,6 +2990,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message with download io error", transfer_message_with_download_io_error),
 	TEST_NO_TAG("Transfer message upload cancelled", transfer_message_upload_cancelled),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
+	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
