@@ -845,7 +845,7 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 
 			if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
 				releaseHttpRequest();
-				message->getPrivate()->receive();
+				message->getPrivate()->handleAutoDownload();
 			} else {
 				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
 				releaseHttpRequest();
@@ -954,7 +954,7 @@ void FileTransferChatMessageModifier::onDownloadFailed() {
 	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
 		message->getPrivate()->doNotRetryAutoDownload();
 		releaseHttpRequest();
-		message->getPrivate()->receive();
+		message->getPrivate()->handleAutoDownload();
 	} else {
 		message->getPrivate()->setState(ChatMessage::State::FileTransferError);
 		releaseHttpRequest();
