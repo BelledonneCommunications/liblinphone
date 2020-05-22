@@ -159,6 +159,14 @@ LINPHONE_PUBLIC int linphone_conference_add_participant(LinphoneConference *obj,
 
 
 /**
+ * Update parameters of the conference.
+ * This is typically used enable or disable the video stream in the conference.
+ * @param obj the conference
+ * @param params the new parameters to apply.
+ */
+LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *obj, const LinphoneConferenceParams *params);
+
+/**
  * Get current parameters of the conference.
  * @param obj the conference
  * @return a #LinphoneConferenceParams .

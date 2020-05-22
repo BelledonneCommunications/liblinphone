@@ -58,14 +58,6 @@ typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference,
 const char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 
-/**
- * Set a callback which will be called when the state of the conferenec is switching
- * @param params A #LinphoneConferenceParams object
- * @param cb The callback to call
- * @param user_data Pointer to pass to the user_data parameter of #LinphoneConferenceStateChangedCb
- */
-void linphone_conference_params_set_state_changed_callback(LinphoneConferenceParams *params, LinphoneConferenceStateChangedCb cb, void *user_data);
-
 
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
@@ -76,6 +68,14 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
  * Get the state of a conference
  */
 LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
+
+/**
+ * Set a callback which will be called when the state of the conferenec is switching
+ * @param obj A #LinphoneConference object
+ * @param cb The callback to call
+ * @param user_data Pointer to pass to the user_data parameter of #LinphoneConferenceStateChangedCb
+ */
+void linphone_conference_set_state_changed_callback(LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data);
 
 int linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
@@ -129,15 +129,9 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 				const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
 				if(policy->automatically_initiate) m_enableVideo = true;
 			}
-			m_stateChangedCb = NULL;
-			m_userData = NULL;
 		}
 		void enableVideo(bool enable) {m_enableVideo = enable;}
 		bool videoEnabled() const {return m_enableVideo;}
-		void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
-			m_stateChangedCb = cb;
-			m_userData = userData;
-		}
 		void enableLocalParticipant(bool enable){ mLocalParticipantEnabled = enable; }
 		bool localParticipantEnabled()const { return mLocalParticipantEnabled; }
 		Object *clone()const override{
@@ -145,11 +139,13 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 		}
 		
 	private:
-		LinphoneConferenceStateChangedCb m_stateChangedCb;
-		void *m_userData;
 		bool m_enableVideo;
 		bool mLocalParticipantEnabled = true;
 };
+
+/*
+ * Base class for audio/video conference.
+ */
 
 class Conference : public bellesip::HybridObject<LinphoneConference, Conference>{
 public:
@@ -192,6 +188,7 @@ public:
 	virtual int addParticipant(LinphoneCall *call) = 0;
 	virtual int removeParticipant(LinphoneCall *call) = 0;
 	virtual int removeParticipant(const LinphoneAddress *uri) = 0;
+	virtual int updateParams(const ConferenceParams &params) = 0;
 	virtual int terminate() = 0;
 
 	virtual int enter() = 0;
@@ -220,7 +217,10 @@ public:
 	const char *getID() const {
 		return m_conferenceID.c_str();
 	}
-
+	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
+		m_stateChangedCb = cb;
+		m_userData = userData;
+	}
 protected:
 	void setState(LinphoneConferenceState state);
 	Participant *findParticipant(const LinphoneCall *call) const;
@@ -232,8 +232,14 @@ protected:
 	std::list<Participant *> m_participants;
 	std::shared_ptr<ConferenceParams> m_currentParams;
 	LinphoneConferenceState m_state;
+	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
+	void *m_userData = nullptr;
 };
 
+
+/*
+ * Class for an audio/video conference running locally.
+ */
 class LocalConference: public Conference {
 public:
 	LocalConference(LinphoneCore *core, const ConferenceParams *params = NULL);
@@ -243,6 +249,7 @@ public:
 	virtual int addParticipant(LinphoneCall *call) override;
 	virtual int removeParticipant(LinphoneCall *call) override;
 	virtual int removeParticipant(const LinphoneAddress *uri) override;
+	virtual int updateParams(const ConferenceParams &params) override;
 	virtual int terminate() override;
 
 	virtual int enter() override;
@@ -264,6 +271,9 @@ private:
 	bool mIsIn = false;
 };
 
+/*
+ * Class for an audio/video conference that is running on a remote server.
+ */
 class RemoteConference: public Conference {
 public:
 	RemoteConference(LinphoneCore *core, const ConferenceParams *params = NULL);
@@ -287,6 +297,7 @@ public:
 	virtual int stopRecording() override {
 		return 0;
 	}
+	virtual int updateParams(const ConferenceParams &params) override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
