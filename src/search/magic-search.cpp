@@ -261,6 +261,9 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 						resultList.push_back(SearchResult(weight, addr, "", nullptr));
 					}
 				}
+				if (addr) {
+					linphone_participant_unref(addr);
+				}
 			}
 			bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 		} else if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesBasic) {
