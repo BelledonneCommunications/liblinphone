@@ -153,9 +153,6 @@ static void call_received(SalCallOp *h) {
 				h->decline(SalReasonNotFound);
 				h->release();
 			}
-			linphone_address_unref(toAddr);
-			linphone_address_unref(fromAddr);
-
 		} else {
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 				ConferenceId(ConferenceAddress(Address(h->getFrom())), ConferenceAddress(Address(h->getTo())))
@@ -180,6 +177,8 @@ static void call_received(SalCallOp *h) {
 				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);
 		}
+		linphone_address_unref(toAddr);
+		linphone_address_unref(fromAddr);
 		return;
 #else
 		ms_warning("Advanced IM such as group chat is disabled!");
