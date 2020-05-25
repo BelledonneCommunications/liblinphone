@@ -53,13 +53,6 @@ public:
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (const Address &addr);
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (const Address &addr);
-	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (const Address &addr, bool isAdmin);
-	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged ();
-	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
-	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
-
 	void setLastNotify (unsigned int lastNotify);
 	void setConferenceId (const ConferenceId &conferenceId);
 	const ConferenceId &getConferenceId () const;

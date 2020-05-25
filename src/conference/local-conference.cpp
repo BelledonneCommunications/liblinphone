@@ -73,4 +73,79 @@ bool LocalConference::removeParticipant (const shared_ptr<Participant> &particip
 	return false;
 }
 
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (const Address &addr) {
+	shared_ptr<Participant> participant = findParticipant(addr);
+	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantAdded(addr), participant);
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		EventLog::Type::ConferenceParticipantAdded,
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		addr
+	);
+	return event;
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (const Address &addr) {
+	shared_ptr<Participant> participant = findParticipant(addr);
+	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantRemoved(addr), participant);
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		EventLog::Type::ConferenceParticipantRemoved,
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		addr
+	);
+	return event;
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (const Address &addr, bool isAdmin) {
+	eventHandler->notifyAll(eventHandler->createNotifyParticipantAdminStatusChanged(addr, isAdmin));
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		addr
+	);
+	return event;
+}
+
+shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged () {
+	eventHandler->notifyAll(eventHandler->createNotifySubjectChanged());
+	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		getSubject()
+	);
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (const Address &addr, const Address &gruu) {
+	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceAdded(addr, gruu));
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceAdded,
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		addr,
+		gruu
+	);
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu) {
+	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceRemoved(addr, gruu));
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceRemoved,
+		time(nullptr),
+		eventHandler->getConferenceId(),
+		eventHandler->getLastNotify(),
+		addr,
+		gruu
+	);
+	return event;
+}
+
 LINPHONE_END_NAMESPACE

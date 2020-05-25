@@ -42,6 +42,13 @@ public:
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (const Address &addr, bool isAdmin);
+	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged ();
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
+
 //protected:
 #ifdef HAVE_ADVANCED_IM
 	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
