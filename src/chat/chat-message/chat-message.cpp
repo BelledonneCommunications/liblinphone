@@ -973,8 +973,8 @@ void ChatMessagePrivate::send () {
 		setState(ChatMessage::State::InProgress);
 	}
 
-	// Do not notify message sent callback when it's a resend
-	if (!isResend) {
+	// Do not notify message sent callback when it's a resend or an IMDN/Composing
+	if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
 		q->getChatRoom()->getPrivate()->onChatMessageSent(q->getSharedFromThis());
 	}
 }

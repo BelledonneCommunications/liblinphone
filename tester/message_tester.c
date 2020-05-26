@@ -1319,6 +1319,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	linphone_core_get_chat_room(marie->lc, pauline->identity); /*make marie create the chatroom with pauline, which is necessary for receiving the is-composing*/
 	linphone_chat_room_compose(pauline_chat_room);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 0));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
 	BC_ASSERT_GREATER(bctbx_list_size(composing_addresses), 0, int, "%i");
 	if (bctbx_list_size(composing_addresses) > 0) {
@@ -1355,6 +1356,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	}
 	linphone_chat_room_send_message(pauline_chat_room, "Composing a msg");
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingIdleReceived, 2));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
 	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
 
@@ -1400,6 +1402,7 @@ static void _imdn_notifications(bool_t with_lime) {
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(sent_cm);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 	marie_chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	history = linphone_chat_room_get_history(marie_chat_room, 1);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(history), 1, int, "%d");
@@ -1409,6 +1412,7 @@ static void _imdn_notifications(bool_t with_lime) {
 		if (received_cm != NULL) {
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 0));
 			LinphoneChatMessage *imdn_message = pauline->stat.last_received_chat_message;
 			if (BC_ASSERT_PTR_NOT_NULL(imdn_message)) {
 				const char *priority = linphone_chat_message_get_custom_header(imdn_message, "Priority");
@@ -1418,6 +1422,7 @@ static void _imdn_notifications(bool_t with_lime) {
 			linphone_chat_room_mark_as_read(marie_chat_room); /* This sends the display notification */
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 2));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 0));
 			imdn_message = pauline->stat.last_received_chat_message;
 			if (BC_ASSERT_PTR_NOT_NULL(imdn_message)) {
 				const char *priority = linphone_chat_message_get_custom_header(imdn_message, "Priority");
