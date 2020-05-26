@@ -801,7 +801,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q_T(LocalConference, qConference);
 	ConferenceAddress confAddr(qConference->conferenceAddress);
 	conferenceId = ConferenceId(confAddr, confAddr);
-	qConference->eventHandler->setConferenceId(conferenceId);
+	qConference->setConferenceId(conferenceId);
 	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->eventHandler.get());
 	lInfo() << q << " created";
 	// Let the SIP stack set the domain and the port
@@ -1164,13 +1164,13 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	this->participants = move(participants);
 	this->conferenceAddress = peerAddress;
 	this->eventHandler->setLastNotify(lastNotifyId);
-	this->eventHandler->setConferenceId(d->conferenceId);
+	this->conferenceId = d->conferenceId;
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {
 	lInfo() << this << " destroyed.";
-	if (eventHandler->getConferenceId().isValid()){
+	if (conferenceId.isValid()){
 		try {
 			if (getCore()->getPrivate()->localListEventHandler)
 				getCore()->getPrivate()->localListEventHandler->removeHandler(eventHandler.get());
@@ -1328,7 +1328,8 @@ void ServerGroupChatRoom::setSubject (const string &subject) {
 // -----------------------------------------------------------------------------
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
-	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().asString() << "]";
+	// TODO: Is conference ID needed to be stored in both remote conference and chat room base classes?
+	return stream << "ServerGroupChatRoom [" << chatRoom->ChatRoom::getConferenceId().getPeerAddress().asString() << "]";
 }
 
 LINPHONE_END_NAMESPACE

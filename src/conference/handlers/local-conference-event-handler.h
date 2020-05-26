@@ -54,8 +54,6 @@ public:
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 
 	void setLastNotify (unsigned int lastNotify);
-	void setConferenceId (const ConferenceId &conferenceId);
-	const ConferenceId &getConferenceId () const;
 
 	std::string getNotifyForId (int notifyId, bool oneToOne = false);
 
@@ -77,7 +75,6 @@ public:
 	static void notifyResponseCb (const LinphoneEvent *ev);
 
 private:
-	ConferenceId conferenceId;
 
 	LocalConference *conf = nullptr;
 	unsigned int lastNotify = 1;

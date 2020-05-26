@@ -54,6 +54,15 @@ public:
 	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
 #endif
 
+	const ConferenceId &getConferenceId () const;
+
+protected:
+//	void setLastNotify (unsigned int lastNotify);
+	void setConferenceId (const ConferenceId &conferenceId);
+
+//	inline unsigned int getLastNotify () const { return lastNotify; };
+	ConferenceId conferenceId;
+
 private:
 	L_DISABLE_COPY(LocalConference);
 };

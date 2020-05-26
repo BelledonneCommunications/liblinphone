@@ -79,7 +79,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		addr
 	);
@@ -92,7 +92,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		addr
 	);
@@ -104,7 +104,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmi
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		addr
 	);
@@ -115,7 +115,7 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged () {
 	eventHandler->notifyAll(eventHandler->createNotifySubjectChanged());
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		getSubject()
 	);
@@ -127,7 +127,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		addr,
 		gruu
@@ -140,12 +140,26 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		time(nullptr),
-		eventHandler->getConferenceId(),
+		conferenceId,
 		eventHandler->getLastNotify(),
 		addr,
 		gruu
 	);
 	return event;
 }
+
+/*
+void LocalConference::setLastNotify (unsigned int lastNotify) {
+	this->lastNotify = lastNotify;
+} */
+
+void LocalConference::setConferenceId (const ConferenceId &conferenceId) {
+	this->conferenceId = conferenceId;
+}
+
+const ConferenceId &LocalConference::getConferenceId () const {
+	return conferenceId;
+}
+
 
 LINPHONE_END_NAMESPACE

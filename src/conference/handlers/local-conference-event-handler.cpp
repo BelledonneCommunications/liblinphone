@@ -480,14 +480,6 @@ void LocalConferenceEventHandler::setLastNotify (unsigned int lastNotify) {
 	this->lastNotify = lastNotify;
 }
 
-void LocalConferenceEventHandler::setConferenceId (const ConferenceId &conferenceId) {
-	this->conferenceId = conferenceId;
-}
-
-const ConferenceId &LocalConferenceEventHandler::getConferenceId () const {
-	return conferenceId;
-}
-
 string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne) {
 	if (notifyId == 0)
 		return createNotifyFullState(static_cast<int>(lastNotify), oneToOne);
