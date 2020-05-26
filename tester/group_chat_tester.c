@@ -262,6 +262,33 @@ static void fill_content_buffer(LinphoneContent *content, const char *sendFilePa
 	linphone_content_set_size(content, file_size); /*total size to be transfered*/
 	fclose(file_to_send);
 }
+// TODO : put this kind of function in utils
+LinphoneChatMessage* chat_room_create_message_from_svg_image(LinphoneChatRoom *chat_room, char * filepath, char * filename) {
+	LinphoneContent* content;
+	LinphoneChatMessage* msg;
+	LinphoneChatMessageCbs *cbs;
+	char *send_filepath = (filepath?filepath:bc_tester_res("images/linphone.svg"));
+
+	content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "linphone logo");
+	linphone_content_set_type(content,"image");
+	linphone_content_set_subtype(content,"svg");
+	linphone_content_set_name(content,(filename?filename:"linphone.svg"));
+	fill_content_buffer(content, send_filepath);
+
+	msg = linphone_chat_room_create_empty_message(chat_room);
+	linphone_chat_message_add_file_content(msg, content);
+	linphone_content_unref(content);
+	
+	cbs = linphone_chat_message_get_callbacks(msg);
+	linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+
+	if( !filepath)
+		bc_free(send_filepath);
+	return msg;
+}
 
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer) {
 	LinphoneChatMessage *msg;
@@ -312,7 +339,7 @@ void _send_file(LinphoneChatRoom* cr, const char *sendFilepath, const char *send
 	_send_file_plus_text(cr, sendFilepath, sendFilepath2, NULL, use_buffer);
 }
 
-void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer) {
+bool_t _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer) {
 	if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageReceivedWithFile, receiverStats->number_of_LinphoneMessageReceivedWithFile + 1, 10000))) {
 		LinphoneChatMessageCbs *cbs;
 		LinphoneChatMessage *msg = lcm->stat.last_received_chat_message;
@@ -361,11 +388,13 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 			}
 		}
 		bc_free(downloaded_file);
-	}
+		return TRUE;
+	}else
+		return FALSE;
 }
 
-void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, bool_t use_buffer) {
-	_receive_file_plus_text(coresList, lcm, receiverStats, receive_filepath, sendFilepath, sendFilepath2, NULL, use_buffer);
+bool_t _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *receiverStats, const char *receive_filepath, const char *sendFilepath, const char *sendFilepath2, bool_t use_buffer) {
+	return _receive_file_plus_text(coresList, lcm, receiverStats, receive_filepath, sendFilepath, sendFilepath2, NULL, use_buffer);
 }
 
 // Configure list of core manager for conference and add the listener
@@ -3068,6 +3097,118 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	bctbx_list_free(coresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+// Marie send a file with special filenames. Chloe and Pauline should receive it
+static void group_chat_room_send_file_with_special_filenames(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
+	LinphoneChatMessage* msg;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	bool_t assertPassed = TRUE;	// Used to stop testing if assert didn't pass in order to save test time
+	int dummy = 0;
+	char *source_filepath = bc_tester_res("images/linphone.svg");
+	char *sendFilepath;
+	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
+	char *receiveChloeFilepath = bc_tester_file("receive_file_chloe.dump");	
+	char filename_to_send[255]={0};
+	int message_count = 0;
+#ifdef _WIN32
+	const char * illegal_characters = "\\/:*\"<>|";
+#elif defined(__APPLE__)
+	const char * illegal_characters = ":/";
+#else
+	const char * illegal_characters = "/";
+#endif
+	
+	/* Creating chat rooms */
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	coresManagerList = bctbx_list_append(coresManagerList, chloe);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(chloe->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	stats initialChloeStats = chloe->stat;
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+
+	// Check that the chat room is correctly created on Chloe's side and that the participants are added
+	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
+
+	wait_for_list(coresList, &dummy, 1, 10000);
+	
+	/* Prepare filename */
+	for(int i = 33 ; i < 128 ; ++i)// US-ASCII. Remove 32 as it is used by replacing illegal characters
+		filename_to_send[i-33]=(char)i;
+	for(int i = 0 ; illegal_characters[i] != '\0' ; ++i)
+		filename_to_send[(int)illegal_characters[i]-33] = ' ';// Remove illegal characters
+	strcpy(filename_to_send+128-33, ".svg");
+	for(int i = 31 ; i < 128 && assertPassed; ++i){// First loop test the fullname.
+		bool_t do_test = !( ('0'<=i && i<='9') || ('A'<=i && i<='Z') || ('a'<=i && i<='z') );// remove normal characters from test
+		if( do_test && i > 31){// Build new filename
+			int illegal_index = 0;
+			while(illegal_characters[illegal_index] != '\0' && illegal_characters[illegal_index] != i)
+				++illegal_index;
+			if(illegal_characters[illegal_index] != '\0')
+				do_test = FALSE;
+			else {
+				filename_to_send[0] = (char)i;
+				strcpy(filename_to_send+1, ".svg");
+			}
+		}
+		if( do_test){
+			initialMarieStats = marie->stat;
+			initialPaulineStats = pauline->stat;
+			initialChloeStats = chloe->stat;
+			++message_count;
+			sendFilepath = bc_tester_file(filename_to_send);
+			/* Remove any previously downloaded file and future source file */
+			remove(receivePaulineFilepath);
+			remove(receiveChloeFilepath);
+			
+			/* Copy source file to special file */
+			liblinphone_tester_copy_file(source_filepath,sendFilepath );
+		
+			msg = chat_room_create_message_from_svg_image(marieCr, sendFilepath, filename_to_send);
+			
+			// Sending file
+			linphone_chat_message_send(msg);
+			linphone_chat_message_unref(msg);
+			assertPassed = _receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, NULL, FALSE)
+					&& _receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, NULL, FALSE);
+			remove(receivePaulineFilepath);
+			remove(receiveChloeFilepath);
+			remove(sendFilepath);
+			bc_free(sendFilepath);
+		}
+	}
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, message_count, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferDone, message_count, int, "%d");
+	BC_ASSERT_EQUAL(chloe->stat.number_of_LinphoneMessageFileTransferDone, message_count, int, "%d");
+	
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(chloe, chloeCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	bc_free(receivePaulineFilepath);
+	bc_free(receiveChloeFilepath);
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(chloe);
 }
 
 static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bool_t two_files, bool_t use_buffer) {
@@ -5829,6 +5970,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2),
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
 	TEST_NO_TAG("Send 2 files + text", group_chat_room_send_two_files_plus_text),
+	TEST_NO_TAG("Send file with special filenames", group_chat_room_send_file_with_special_filenames),
 	TEST_NO_TAG("Unique one-to-one chatroom", group_chat_room_unique_one_to_one_chat_room),
 	TEST_NO_TAG("Unique one-to-one chatroom with dual sender device", group_chat_room_unique_one_to_one_chat_room_dual_sender_device),
 	TEST_NO_TAG("Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),

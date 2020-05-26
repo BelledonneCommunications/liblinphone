@@ -78,6 +78,7 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	bc_free(send_filepath);
 	return msg;
 }
+// TODO : put this kind of function in utils
 LinphoneChatMessage* create_message_from_svg_image(LinphoneChatRoom *chat_room, char * filepath, char * filename) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
@@ -1057,18 +1058,22 @@ static void file_transfer_using_external_body_url_2(void) {
 static void file_transfer_using_external_body_url_404(void) {
 	file_transfer_external_body_url(FALSE, TRUE);
 }
+
+// Pauline send a file to Marie with special file names
 static void file_transfer_special_filenames(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 		LinphoneChatRoom* pauline_room;
 		LinphoneChatMessage* msg;
 		LinphoneChatMessageCbs *cbs;
 		char *source_filepath = bc_tester_res("images/linphone.svg");
 		char *send_filepath;
 		char *receive_filepath = bc_tester_file("receive_file.dump");
-		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 		char filename_to_send[255]={0};
 		int message_count = 0;
+		bool_t assertPassed = TRUE;
+		stats initialMarieStats = marie->stat;
 #ifdef _WIN32
 		const char * illegal_characters = "\\/:*\"<>|";
 #elif defined(__APPLE__)
@@ -1081,7 +1086,7 @@ static void file_transfer_special_filenames(void) {
 		for(int i = 0 ; illegal_characters[i] != '\0' ; ++i)
 			filename_to_send[(int)illegal_characters[i]-33] = ' ';// Remove illegal characters
 		strcpy(filename_to_send+128-33, ".svg");
-		for(int i = 31 ; i < 128; ++i){// First loop test the fullname.
+		for(int i = 31 ; assertPassed && i < 128; ++i){// First loop test the fullname.
 			bool_t do_test = !( ('0'<=i && i<='9') || ('A'<=i && i<='Z') || ('a'<=i && i<='z') );// remove normal characters from test
 			if( do_test && i > 31){// Build new filename
 				int illegal_index = 0;
@@ -1095,6 +1100,7 @@ static void file_transfer_special_filenames(void) {
 				}
 			}
 			if( do_test){
+				initialMarieStats = marie->stat;
 				++message_count;
 				send_filepath = bc_tester_file(filename_to_send);
 				/* Remove any previously downloaded file and future source file */
@@ -1115,14 +1121,14 @@ static void file_transfer_special_filenames(void) {
 				linphone_chat_message_send(msg);
 				content = linphone_chat_message_get_file_transfer_information(msg);
 				strcpy(message_filename, linphone_content_get_name(content));
-				BC_ASSERT_TRUE(strcmp(filename_to_send, message_filename)==0);
-				if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, message_count, 10000))) {
+				assertPassed = BC_ASSERT_TRUE(strcmp(filename_to_send, message_filename)==0);
+				if (assertPassed && BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, initialMarieStats.number_of_LinphoneMessageReceivedWithFile+1, 10000))) {
 					char receive_message_filename[255] = {0};
 					LinphoneChatMessage *recvMsg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
 					LinphoneContent * recvContent;
 					recvContent = linphone_chat_message_get_file_transfer_information(msg);
 					strcpy(receive_message_filename, linphone_content_get_name(recvContent));
-					BC_ASSERT_TRUE(strcmp(filename_to_send, receive_message_filename)==0);
+					assertPassed = BC_ASSERT_TRUE(strcmp(filename_to_send, receive_message_filename)==0);
 					
 					cbs = linphone_chat_message_get_callbacks(recvMsg);
 					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -1130,21 +1136,22 @@ static void file_transfer_special_filenames(void) {
 					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
 					linphone_chat_message_download_file(recvMsg);
 	
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,message_count,10000));
-	
-					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, message_count, int, "%d");
-					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, message_count, int, "%d");
-					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, message_count, int, "%d");
-					compare_files(send_filepath, receive_filepath);
+					assertPassed = assertPassed && BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageFileTransferDone,initialMarieStats.number_of_LinphoneMessageFileTransferDone+1,20000));
+					if(assertPassed)
+						compare_files(send_filepath, receive_filepath);
 	
 					linphone_chat_message_unref(recvMsg);
-				}
+				}else
+					assertPassed = FALSE;
 				linphone_chat_message_unref(msg);
 				remove(receive_filepath);
 				remove(send_filepath);
 				bc_free(send_filepath);	
 			}
 		}
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageSent, message_count, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferDone, message_count, int, "%d");
+		
 		bc_free(receive_filepath);
 		bc_free(source_filepath);
 		linphone_core_manager_destroy(pauline);
