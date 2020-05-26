@@ -26,6 +26,9 @@
 #include "linphone/utils/general.h"
 #include "core/core-accessor.h"
 #include "core/core.h"
+#include "chat/chat-message/chat-message.h"
+#include "chat/chat-room/chat-room.h"
+#include "core/shared-core-helpers/shared-core-helpers.h"
 
 // =============================================================================
 
@@ -56,6 +59,7 @@ public:
 	virtual std::string getImageResource (const std::string &filename) const = 0;
 	virtual std::string getRingResource (const std::string &filename) const = 0;
 	virtual std::string getSoundResource (const std::string &filename) const = 0;
+	virtual void * getPathContext () = 0;
 
 	virtual std::string getWifiSSID() = 0;
 	virtual void setWifiSSID(const std::string &ssid) = 0;
@@ -77,6 +81,10 @@ public:
 
 	virtual void onLinphoneCoreStart (bool monitoringEnabled) = 0;
 	virtual void onLinphoneCoreStop () = 0;
+
+	virtual std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() = 0;
+	virtual void startAudioForEchoTestOrCalibration () = 0;
+	virtual void stopAudioForEchoTestOrCalibration () = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -106,6 +114,7 @@ public:
 	std::string getImageResource (const std::string &filename) const override;
 	std::string getRingResource (const std::string &filename) const override;
 	std::string getSoundResource (const std::string &filename) const override;
+	void * getPathContext () override;
 
 	std::string getWifiSSID() override;
 	void setWifiSSID(const std::string &ssid) override;
@@ -126,7 +135,12 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
+	std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() override;
+	void startAudioForEchoTestOrCalibration () override;
+	void stopAudioForEchoTestOrCalibration () override;
+
 protected:
+	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;
 	std::string mCurrentSSID;
 	std::string mHttpProxyHost;
 	int mHttpProxyPort;

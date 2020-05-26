@@ -22,6 +22,7 @@
 #include "platform-helpers.h"
 #include "logger/logger.h"
 #include "c-wrapper/c-wrapper.h"
+#include "core/paths/paths.h"
 
 // TODO: Remove me later.
 #include "private.h"
@@ -50,6 +51,7 @@ public:
 	string getImageResource (const string &filename) const override;
 	string getRingResource (const string &filename) const override;
 	string getSoundResource (const string &filename) const override;
+	void *getPathContext () override;
 
 	void setVideoPreviewWindow (void *windowId) override;
 	void setVideoWindow (void *windowId) override;
@@ -64,6 +66,9 @@ public:
 	void onLinphoneCoreStart (bool monitoringEnabled) override;
 	void onLinphoneCoreStop () override;
 
+	void startAudioForEchoTestOrCalibration () override;
+	void stopAudioForEchoTestOrCalibration () override;
+
 	void _setPreviewVideoWindow(jobject window);
 	void _setVideoWindow(jobject window);
 	string getDownloadPath() override;
@@ -71,9 +76,13 @@ public:
 private:
 	int callVoidMethod (jmethodID id);
 	static jmethodID getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature);
-	string getNativeLibraryDir();
+	string getNativeLibraryDir ();
+	void createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
+	void destroyCoreManager ();
 
 	jobject mJavaHelper = nullptr;
+	jobject mSystemContext = nullptr;
+	jobject mJavaCoreManager = nullptr;
 	jmethodID mWifiLockAcquireId = nullptr;
 	jmethodID mWifiLockReleaseId = nullptr;
 	jmethodID mMcastLockAcquireId = nullptr;
@@ -82,15 +91,16 @@ private:
 	jmethodID mCpuLockReleaseId = nullptr;
 	jmethodID mGetDnsServersId = nullptr;
 	jmethodID mGetPowerManagerId = nullptr;
-	jmethodID mGetDataPathId = nullptr;
-	jmethodID mGetConfigPathId = nullptr;
-	jmethodID mGetDownloadPathId = nullptr;
 	jmethodID mGetNativeLibraryDirId = nullptr;
 	jmethodID mSetNativeVideoWindowId = nullptr;
 	jmethodID mSetNativePreviewVideoWindowId = nullptr;
 	jmethodID mResizeVideoPreview = nullptr;
 	jmethodID mOnLinphoneCoreStartId = nullptr;
 	jmethodID mOnLinphoneCoreStopId = nullptr;
+	jmethodID mCoreManagerOnLinphoneCoreStartId = nullptr;
+	jmethodID mCoreManagerOnLinphoneCoreStopId = nullptr;
+	jmethodID mStartAudioForEchoTestOrCalibrationId = nullptr;
+	jmethodID mStopAudioForEchoTestOrCalibrationId = nullptr;
 	jmethodID mOnWifiOnlyEnabledId = nullptr;
 	jobject mPreviewVideoWindow = nullptr;
 	jobject mVideoWindow = nullptr;
@@ -114,7 +124,51 @@ jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const 
 	return id;
 }
 
+// -----------------------------------------------------------------------------
+
+extern "C" jobject getCore(JNIEnv *env, LinphoneCore *cptr, bool_t takeref);
+
+void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
+	JNIEnv *env = ms_get_jni_env();
+	jclass klass = env->FindClass("org/linphone/core/tools/service/CoreManager");
+	if (!klass) {
+		lError() << "Could not find java CoreManager class.";
+		return;
+	}
+
+	jmethodID ctor = env->GetMethodID(klass, "<init>", "(Ljava/lang/Object;Lorg/linphone/core/Core;)V");
+	LinphoneCore *lc = L_GET_C_BACK_PTR(core);
+	jobject javaCore = ::LinphonePrivate::getCore(env, lc, FALSE);
+	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
+	if (!mJavaCoreManager) {
+		lError() << "Could not instanciate CoreManager object.";
+		return;
+	}
+	mJavaCoreManager = (jobject)env->NewGlobalRef(mJavaCoreManager);
+
+	mCoreManagerOnLinphoneCoreStartId = getMethodId(env, klass, "onLinphoneCoreStart", "()V");
+	mCoreManagerOnLinphoneCoreStopId = getMethodId(env, klass, "onLinphoneCoreStop", "()V");
+	
+	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
+	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
+
+	lInfo() << "CoreManager is fully initialised.";
+}
+
+void AndroidPlatformHelpers::destroyCoreManager () {
+	if (mJavaCoreManager) {
+		JNIEnv *env = ms_get_jni_env();
+		env->DeleteGlobalRef(mJavaCoreManager);
+		mJavaCoreManager = nullptr;
+		lInfo() << "AndroidCoreManager has been destroyed.";
+	}
+}
+
+// -----------------------------------------------------------------------------
+
 AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
+	createCoreManager(core, systemContext);
+
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
@@ -127,6 +181,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 		return;
 	}
 	mJavaHelper = (jobject)env->NewGlobalRef(mJavaHelper);
+	mSystemContext = (jobject)systemContext;
 
 	mWifiLockAcquireId = getMethodId(env, klass, "acquireWifiLock", "()V");
 	mWifiLockReleaseId = getMethodId(env, klass, "releaseWifiLock", "()V");
@@ -136,9 +191,6 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	mCpuLockReleaseId = getMethodId(env, klass, "releaseCpuLock", "()V");
 	mGetDnsServersId = getMethodId(env, klass, "getDnsServers", "()[Ljava/lang/String;");
 	mGetPowerManagerId = getMethodId(env, klass, "getPowerManager", "()Ljava/lang/Object;");
-	mGetDataPathId = getMethodId(env, klass, "getDataPath", "()Ljava/lang/String;");
-	mGetConfigPathId = getMethodId(env, klass, "getConfigPath", "()Ljava/lang/String;");
-	mGetDownloadPathId = getMethodId(env, klass, "getDownloadPath", "()Ljava/lang/String;");
 	mGetNativeLibraryDirId = getMethodId(env, klass, "getNativeLibraryDir", "()Ljava/lang/String;");
 	mSetNativeVideoWindowId = getMethodId(env, klass, "setVideoRenderingView", "(Ljava/lang/Object;)V");
 	mSetNativePreviewVideoWindowId = getMethodId(env, klass, "setVideoPreviewView", "(Ljava/lang/Object;)V");
@@ -160,6 +212,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 }
 
 AndroidPlatformHelpers::~AndroidPlatformHelpers () {
+	destroyCoreManager();
 	if (mJavaHelper) {
 		JNIEnv *env = ms_get_jni_env();
 		belle_sip_wake_lock_uninit(env);
@@ -198,30 +251,15 @@ void AndroidPlatformHelpers::releaseCpuLock () {
 // -----------------------------------------------------------------------------
 
 string AndroidPlatformHelpers::getConfigPath () const {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jconfig_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetConfigPathId);
-	const char *config_path = GetStringUTFChars(env, jconfig_path);
-	string configPath = L_C_TO_STRING(config_path);
-	ReleaseStringUTFChars(env, jconfig_path, config_path);
-	return configPath;
+	return Paths::getPath(Paths::Config, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDownloadPath () {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdownload_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDownloadPathId);
-	const char *download_path = GetStringUTFChars(env, jdownload_path);
-	string downloadPath = L_C_TO_STRING(download_path);
-	ReleaseStringUTFChars(env, jdownload_path, download_path);
-	return downloadPath;
+	return Paths::getPath(Paths::Download, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDataPath () const {
-	JNIEnv *env = ms_get_jni_env();
-	jstring jdata_path = (jstring)env->CallObjectMethod(mJavaHelper, mGetDataPathId);
-	const char *data_path = GetStringUTFChars(env, jdata_path);
-	string dataPath = L_C_TO_STRING(data_path);
-	ReleaseStringUTFChars(env, jdata_path, data_path);
-	return dataPath;
+	return Paths::getPath(Paths::Data, mSystemContext);
 }
 
 string AndroidPlatformHelpers::getDataResource (const string &filename) const {
@@ -250,6 +288,10 @@ string AndroidPlatformHelpers::getSoundResource (const string &filename) const {
 		linphone_factory_get_sound_resources_dir(linphone_factory_get()),
 		filename
 	);
+}
+
+void *AndroidPlatformHelpers::getPathContext () {
+	return mSystemContext;
 }
 
 // -----------------------------------------------------------------------------
@@ -351,15 +393,43 @@ void AndroidPlatformHelpers::setNetworkReachable(bool reachable) {
 
 void AndroidPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStartId);
+		}
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStartId, (jboolean)monitoringEnabled);
+		}
 	}
 }
 
 void AndroidPlatformHelpers::onLinphoneCoreStop() {
 	JNIEnv *env = ms_get_jni_env();
-	if (env && mJavaHelper) {
-		env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mCoreManagerOnLinphoneCoreStopId);
+		}
+		if (mJavaHelper) {
+			env->CallVoidMethod(mJavaHelper, mOnLinphoneCoreStopId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::startAudioForEchoTestOrCalibration () {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mStartAudioForEchoTestOrCalibrationId);
+		}
+	}
+}
+
+void AndroidPlatformHelpers::stopAudioForEchoTestOrCalibration () {
+	JNIEnv *env = ms_get_jni_env();
+	if (env) {
+		if (mJavaCoreManager) {
+			env->CallVoidMethod(mJavaCoreManager, mStopAudioForEchoTestOrCalibrationId);
+		}
 	}
 }
 
@@ -471,6 +541,15 @@ extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatfo
 extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_enableKeepAlive(JNIEnv *env, jobject thiz, jlong ptr, jboolean enable) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	linphone_core_enable_keep_alive(androidPlatformHelper->getCore()->getCCore(), enable ? TRUE : FALSE);
+}
+
+extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_service_CoreManager_updatePushNotificationInformation(JNIEnv *env, jobject thiz, jlong ptr, jstring param, jstring prid) {
+	LinphoneCore *core = static_cast<LinphoneCore *>((void *)ptr);
+	const char *paramC = GetStringUTFChars(env, param);
+	const char *pridC = GetStringUTFChars(env, prid);
+	linphone_core_update_push_notification_information(core, paramC, pridC);
+	ReleaseStringUTFChars(env, prid, pridC);
+	ReleaseStringUTFChars(env, param, paramC);
 }
 
 LINPHONE_END_NAMESPACE

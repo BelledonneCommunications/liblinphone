@@ -110,6 +110,18 @@ public:
 	StreamsGroup & getStreamsGroup()const {
 		return *streamsGroup.get();
 	}
+	AudioDevice * getCurrentOutputAudioDevice()const {
+		return currentOutputAudioDevice;
+	}
+	void setCurrentOutputAudioDevice(AudioDevice * audioDevice) {
+		if (currentOutputAudioDevice) {
+			currentOutputAudioDevice->unref();
+		}
+		currentOutputAudioDevice = audioDevice;
+		if (currentOutputAudioDevice) {
+			currentOutputAudioDevice->ref();
+		}
+	}
 	std::shared_ptr<Participant> getMe () const;
 	void setDtlsFingerprint(const std::string &fingerPrint);
 	const std::string & getDtlsFingerprint()const;
@@ -254,6 +266,8 @@ private:
 	bool pausedByApp = false;
 	bool incomingIceReinvitePending = false;
 	bool callAcceptanceDefered = false;
+
+	AudioDevice * currentOutputAudioDevice = nullptr;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };

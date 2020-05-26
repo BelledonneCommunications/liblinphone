@@ -26,6 +26,7 @@
 #include "object/object.h"
 
 #include "linphone/types.h"
+#include "call/audio-device/audio-device.h"
 
 // =============================================================================
 
@@ -42,6 +43,9 @@ class ConferenceId;
 class CorePrivate;
 class IdentityAddress;
 class EncryptionEngine;
+class ChatMessage;
+class ChatRoom;
+class PushNotificationMessage;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -103,8 +107,8 @@ public:
 	std::shared_ptr<Call> getCurrentCall () const;
 	LinphoneStatus pauseAllCalls ();
 	void soundcardHintCheck ();
-	void soundcardAudioSessionActivated (bool active);
-	void soundcardCallkitEnabled (bool enabled);
+	void soundcardActivateAudioSession (bool active);
+	void soundcardEnableCallkit (bool enabled);
 	LinphoneStatus terminateAllCalls ();
 
 	// ---------------------------------------------------------------------------
@@ -180,6 +184,26 @@ public:
 	bool isFriendListSubscriptionEnabled () const;
 
 	// ---------------------------------------------------------------------------
+	// Audio devices.
+	// ---------------------------------------------------------------------------
+
+	AudioDevice *findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const;
+	const std::list<AudioDevice *> getAudioDevices() const;
+	const std::list<AudioDevice *> getExtendedAudioDevices() const;
+
+	void setInputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDevice(AudioDevice *audioDevice);
+	void setOutputAudioDeviceBySndCard(MSSndCard *card);
+	void setInputAudioDeviceBySndCard(MSSndCard *card);
+	AudioDevice *getInputAudioDevice() const;
+	AudioDevice *getOutputAudioDevice() const;
+
+	void setDefaultInputAudioDevice(AudioDevice *audioDevice);
+	void setDefaultOutputAudioDevice(AudioDevice *audioDevice);
+	AudioDevice* getDefaultInputAudioDevice() const;
+	AudioDevice* getDefaultOutputAudioDevice() const;
+
+	// ---------------------------------------------------------------------------
 	// Misc.
 	// ---------------------------------------------------------------------------
 
@@ -187,6 +211,9 @@ public:
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
+	std::shared_ptr<PushNotificationMessage> getPushNotificationMessage (const std::string &callId) const;
+	std::shared_ptr<ChatRoom> getPushNotificationChatRoom (const std::string &chatRoomAddr) const;
+	std::shared_ptr<ChatMessage> findChatMessageFromCallId (const std::string &callId) const;
 
 	Address interpretUrl (const std::string &url) const;
 	// Execute specified lambda later in main loop. This method can be used from any thread to execute something later on main thread.

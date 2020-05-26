@@ -19,6 +19,7 @@
 #include "bctoolbox/defs.h"
 
 #include "ms2-streams.h"
+#include "mixers.h"
 #include "media-session.h"
 #include "media-session-p.h"
 #include "core/core.h"
@@ -135,7 +136,18 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+	// try to get playcard from the stream if it was already set
+	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	MSSndCard * playcard = NULL;
+
+	if (audioDevice) {
+		playcard = audioDevice->getSoundCard();
+	}
+
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!playcard)
+		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
 	if (playcard) {
 		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
 		// otherwise too slow to start.
@@ -237,7 +249,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 		return;
 	}
-	
+	MS2AudioMixer *audioMixer = getAudioMixer();
 	int usedPt = -1;
 	string onHoldFile = "";
 	RtpProfile *audioProfile = makeProfile(params.resultMediaDescription, stream, &usedPt);
@@ -251,7 +263,19 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (isMain()){
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
-	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
+	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	MSSndCard *playcard = nullptr;
+
+	// try to get currently used playcard if it was already set
+	if (audioDevice) {
+		playcard = audioDevice->getSoundCard();
+	}
+
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!playcard)
+		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
@@ -285,14 +309,15 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
 		captcard = playcard = nullptr;
 	}
-	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference()) {
-		// First create the graph without soundcard resources
+	if (audioMixer) {
+		// Create the graph without soundcard resources.
 		captcard = playcard = nullptr;
 	}
 	if (listener && !listener->areSoundResourcesAvailable(getMediaSession().getSharedFromThis())) {
 		lInfo() << "Sound resources are used by another CallSession, not using soundcard";
 		captcard = playcard = nullptr;
 	}
+
 
 	if (playcard) {
 		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
@@ -305,7 +330,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (captcard && (stream->max_rate > 0))
 		ms_snd_card_set_preferred_sample_rate(captcard, stream->max_rate);
 	
-	if (!getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
+	if (!audioMixer && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
 		getMediaSessionPrivate().getCurrentParams()->setRecordFilePath(getMediaSessionPrivate().getParams()->getRecordFilePath());
 	}
@@ -352,8 +377,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (ok) {
 		VideoStream *vs = getPeerVideoStream();
 		if (vs) audio_stream_link_video(mStream, vs);
+
+		if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
+		if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
+		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
+		if (mCurrentPlaybackCard) mCurrentPlaybackCard = ms_snd_card_ref(mCurrentPlaybackCard);
 
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
@@ -369,12 +399,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis()))
 		setupRingbackPlayer();
 	
-	if (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() && listener) {
-		// Transform the graph to connect it to the conference filter
-		bool mute = (stream->dir == SalStreamRecvOnly);
-		listener->onCallSessionConferenceStreamStarting(getMediaSession().getSharedFromThis(), mute);
+	if (audioMixer){
+		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
+		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream->dir == SalStreamRecvOnly));
 	}
-	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(getMediaSessionPrivate().getParams()->getPrivate()->getInConference());
+	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
@@ -429,12 +458,21 @@ void MS2AudioStream::stop(){
 	VideoStream *vs = getPeerVideoStream();
 	if (vs) audio_stream_unlink_video(mStream, vs);
 	
+	if (mConferenceEndpoint){
+		// First disconnect from the mixer before stopping the stream.
+		getAudioMixer()->disconnectEndpoint(this,mConferenceEndpoint);
+		ms_audio_endpoint_release_from_stream(mConferenceEndpoint);
+		mConferenceEndpoint = nullptr;
+	}
 	audio_stream_stop(mStream);
+
 	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
 	
+	if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
+	if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
 	
 	mCurrentCaptureCard = nullptr;
 	mCurrentPlaybackCard = nullptr;
@@ -559,8 +597,9 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 void MS2AudioStream::postConfigureAudioStream(bool muted) {
 	postConfigureAudioStream(mStream, getCCore(), muted);
 	forceSpeakerMuted(mSpeakerMuted);
-	if (linphone_core_dtmf_received_has_listener(getCCore()))
+	if (linphone_core_dtmf_received_has_listener(getCCore())) {
 		audio_stream_play_received_dtmfs(mStream, false);
+	}
 	if (mRecordActive)
 		startRecording();
 }
@@ -700,6 +739,24 @@ bool MS2AudioStream::echoCancellationEnabled()const{
 	ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_BYPASS_MODE, &val);
 	return !val;
 }
+	
+void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_input_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
+	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
+}
+
+AudioDevice* MS2AudioStream::getInputDevice() const {
+	MSSndCard *card = audio_stream_get_input_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* MS2AudioStream::getOutputDevice() const {
+	MSSndCard *card = audio_stream_get_output_ms_snd_card(mStream);
+	return getCore().findAudioDeviceMatchingMsSoundCard(card);
+}
 
 void MS2AudioStream::finish(){
 	if (mStream){
@@ -708,6 +765,18 @@ void MS2AudioStream::finish(){
 		mStream = nullptr;
 	}
 	MS2Stream::finish();
+}
+
+MS2AudioMixer *MS2AudioStream::getAudioMixer(){
+	StreamMixer *mixer = getMixer();
+	if (mixer){
+		MS2AudioMixer * audioMixer = dynamic_cast<MS2AudioMixer*>(mixer);
+		if (!audioMixer){
+			lError() << *this << " does not have a mixer it is able to interface with.";
+		}
+		return audioMixer;
+	}
+	return nullptr;
 }
 
 MS2AudioStream::~MS2AudioStream(){

@@ -45,6 +45,10 @@ public:
 		chatRoom->getPrivate()->sendChatMessage(chatMessage);
 	}
 
+	inline void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override {
+		chatRoom->getPrivate()->onChatMessageSent(chatMessage);
+	}
+
 	inline void addEvent (const std::shared_ptr<EventLog> &eventLog) override {
 		chatRoom->getPrivate()->addEvent(eventLog);
 	}

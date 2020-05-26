@@ -437,11 +437,47 @@ typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *lc, Linph
 typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
 
 /**
+ * Callback prototype telling that an Instant Message Encryption Engine user registered on the server with or without success.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] status the return status of the registration action.
+ * @param[in] userId the userId published on the encryption engine server
+ * @param[in] info information about failure
+ */
+typedef void (*LinphoneCoreCbsImeeUserRegistrationCb) (LinphoneCore *lc, const bool_t status, const char *userId, const char *info);
+
+/**
  * Callback prototype telling the result of decoded qrcode
  * @param[in] lc LinphoneCore object
  * @param[in] result The result of the decoded qrcode
  */
 typedef void (*LinphoneCoreCbsQrcodeFoundCb)(LinphoneCore *lc, const char *result);
+
+/**
+ * Callback prototype telling a call has started (incoming or outgoing) while there was no other call.
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *lc);
+
+/**
+ * Callback prototype telling the last call has ended (#LinphoneCore.get_calls_nb() returns 0)
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *lc);
+
+/**
+ * Callback prototype telling that the audio device for at least one call has changed
+ * @param[in] lc LinphoneCore object
+ * @param[in] audioDevice the newly used LinphoneAudioDevice object
+ */
+typedef void (*LinphoneCoreCbsAudioDeviceChangedCb)(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
+
+/**
+ * Callback prototype telling the audio devices list has been updated.
+ * Either a new device is available or a previously available device isn't anymore.
+ * You can call linphone_core_get_audio_devices() to get the new list.
+ * @param[in] lc LinphoneCore object
+ */
+typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *lc);
 
 /**
  * @}

@@ -23,14 +23,26 @@
 
 #import "paths-apple.h"
 
+#define TEST_GROUP_ID "test group id"
+
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-std::string SysPaths::getDataPath (PlatformHelpers *) {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
-	NSString *writablePath = [paths objectAtIndex:0];
-	NSString *fullPath = [writablePath stringByAppendingString:@"/linphone/"];
+std::string SysPaths::getDataPath (void *context) {
+	NSString *fullPath;
+	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+
+		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Application Support/linphone/"];
+	} else {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES);
+		NSString *writablePath = [paths objectAtIndex:0];
+		fullPath = [writablePath stringByAppendingString:@"/linphone/"];
+	}
+
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Data path " << fullPath.UTF8String << " does not exist, creating it.";
@@ -45,10 +57,20 @@ std::string SysPaths::getDataPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
-std::string SysPaths::getConfigPath (PlatformHelpers *) {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
-	NSString *configPath = [paths objectAtIndex:0];
-	NSString *fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
+std::string SysPaths::getConfigPath (void *context) {
+	NSString *fullPath;
+	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+
+		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Preferences/linphone/"];
+	} else {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSLibraryDirectory, NSUserDomainMask, YES);
+		NSString *configPath = [paths objectAtIndex:0];
+		fullPath = [configPath stringByAppendingString:@"/Preferences/linphone/"];
+	}
+
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Config path " << fullPath.UTF8String << " does not exist, creating it.";
@@ -63,10 +85,20 @@ std::string SysPaths::getConfigPath (PlatformHelpers *) {
 	return fullPath.UTF8String;
 }
 
-std::string SysPaths::getDownloadPath (PlatformHelpers *) {
-	NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
-	NSString *configPath = [paths objectAtIndex:0];
-	NSString *fullPath = [configPath stringByAppendingString:@"/"];
+std::string SysPaths::getDownloadPath (void *context) {
+	NSString *fullPath;
+	if (context && strcmp(static_cast<const char *>(context), TEST_GROUP_ID) != 0) {
+		const char* appGroupId = static_cast<const char *>(context);
+		NSString *objcGroupdId = [NSString stringWithCString:appGroupId encoding:[NSString defaultCStringEncoding]];
+
+		NSURL *basePath = [[NSFileManager defaultManager] containerURLForSecurityApplicationGroupIdentifier:objcGroupdId];
+		fullPath = [[basePath path] stringByAppendingString:@"/Library/Caches/"];
+	} else {
+		NSArray *paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, YES);
+		NSString *configPath = [paths objectAtIndex:0];
+		fullPath = [configPath stringByAppendingString:@"/"];
+	}
+
 	if (![[NSFileManager defaultManager] fileExistsAtPath:fullPath]) {
 		NSError *error;
 		lInfo() << "Download path " << fullPath.UTF8String << " does not exist, creating it.";

@@ -223,7 +223,7 @@ void TunnelManager::stopClient(){
 }
 
 bool TunnelManager::isConnected() const {
-	return mTunnelClient != NULL && mTunnelClient->isReady();
+	return mState == On;
 }
 
 int TunnelManager::customSendto(struct _RtpTransport *t, mblk_t *msg , int flags, const struct sockaddr *to, socklen_t tolen){

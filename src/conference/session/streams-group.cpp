@@ -31,6 +31,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "nat/ice-service.h"
 #include "linphone/core.h"
+#include "mixers.h"
 
 #include <iomanip>
 
@@ -85,6 +86,8 @@ Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 		lInfo() << "Stream at index " << params.streamIndex << " is being replaced.";
 	}
 	mStreams[params.streamIndex].reset(ret);
+	/* Attach a mixer to this new stream, if any. */
+	attachMixers();
 	return ret;
 }
 
@@ -199,6 +202,7 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 	}
 	/* Save the state of the offer-answer, so that we are later able to monitor differences in next render() calls. */
 	mCurrentOfferAnswerState.dupFrom(params);
+	mCurrentSessionState = targetState;
 }
 
 void StreamsGroup::sessionConfirmed(const OfferAnswerContext &params){
@@ -214,6 +218,7 @@ void StreamsGroup::stop(){
 		abort();
 		return;
 	}
+
 	if (mBandwidthReportTimer){
 		getCore().destroyTimer(mBandwidthReportTimer);
 		mBandwidthReportTimer = nullptr;
@@ -500,8 +505,40 @@ void StreamsGroup::finish(){
 	lInfo() << "StreamsGroup::finish() called.";
 	stop(); //For the paranoid: normally it should be done already.
 	mIceService->finish(); // finish ICE first, as it has actions on the streams.
+	for (auto & ss : mSharedServices) ss.second->checkDestroy();
+	mSharedServices.clear();
 	forEach<Stream>(mem_fun(&Stream::finish));
 	mFinished = true;
+}
+
+void StreamsGroup::attachMixers(){
+	if (!mMixerSession) return;
+	for (auto & stream : mStreams){
+		if (stream->getMixer() == nullptr){
+			StreamMixer *mixer = mMixerSession->getMixerByType(stream->getType());
+			if (mixer) stream->connectToMixer(mixer);
+		}
+	}
+}
+
+void StreamsGroup::detachMixers(){
+	for (auto & stream : mStreams){
+		if (stream->getMixer() != nullptr){
+			stream->disconnectFromMixer();
+		}
+	}
+}
+
+void StreamsGroup::joinMixerSession(MixerSession *mixerSession){
+	if (mMixerSession) lFatal() << "StreamsGroup::joinMixerSession() already joined !";
+	mMixerSession = mixerSession;
+	attachMixers();
+}
+
+void StreamsGroup::unjoinMixerSession(){
+	if (!mMixerSession) lFatal() << "StreamsGroup::unjoinMixerSession() not joined !";
+	detachMixers();
+	mMixerSession = nullptr;
 }
 
 

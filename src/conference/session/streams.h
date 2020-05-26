@@ -22,10 +22,12 @@
 
 #include <vector>
 #include <memory>
+#include <map>
 
 #include "port-config.h"
 #include "call-session.h"
 #include "media-description-renderer.h"
+#include "call/audio-device/audio-device.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -35,6 +37,8 @@ class MediaSession;
 class MediaSessionPrivate;
 class MediaSessionParams;
 class IceService;
+class StreamMixer;
+class MixerSession;
 
 /**
  * Base class for any kind of stream that may be setup with SDP.
@@ -51,16 +55,19 @@ public:
 	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	/**
 	 * Ask the stream to prepare to run. This may include configuration steps, ICE gathering etc.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual bool prepare() override;
 	
 	/**
 	 * Request the stream to finish the prepare step (such as ICE gathering).
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void finishPrepare() override;
 	/**
 	 * Ask the stream to render according to the supplied offer-answer context and target state.
 	 * render() may be called multiple times according to changes made in the offer answer.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void render(const OfferAnswerContext & ctx, CallSession::State targetState) override;
 	/**
@@ -70,6 +77,7 @@ public:
 	
 	/**
 	 * Ask the stream to stop. A call to prepare() is necessary before doing a future render() operation, if any.
+	 * Derived classes must call their parent class implementation of this method.
 	 */
 	virtual void stop() override;
 	
@@ -79,6 +87,24 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
+	/**
+	 * Called when the stream is requested to connect to a mixer.
+	 * If running, it shall take any action immediately to connect to it.
+	 * If not, it should connect when later requested to start (by render() ).
+	 * Derived classes must call their parent class implementation of this method.
+	 */
+	virtual void connectToMixer(StreamMixer *mixer);
+	/**
+	 * Called when the stream is requested to disconnect from a mixer.
+	 * If running, it shall do it immediately.
+	 * If not, there's probably nothing to do.
+	 * Derived classes must call their parent class implementation of this method.
+	 */
+	virtual void disconnectFromMixer();
+	/**
+	 * Returns the current mixer, if any. It will still return non-null within disconnectFromMixer().
+	 */
+	StreamMixer *getMixer() const;
 	virtual LinphoneCallStats *getStats(){
 		return nullptr;
 	}
@@ -148,6 +174,7 @@ private:
 	const SalStreamType mStreamType;
 	const size_t mIndex;
 	State mState = Stopped;
+	StreamMixer *mMixer = nullptr;
 	bool mIsMain = false;
 };
 
@@ -181,6 +208,10 @@ public:
 	virtual void sendDtmf(int dtmf) = 0;
 	virtual void enableEchoCancellation(bool value) = 0;
 	virtual bool echoCancellationEnabled()const = 0;
+	virtual void setInputDevice(AudioDevice *audioDevice) = 0;
+	virtual void setOutputDevice(AudioDevice *audioDevice) = 0;
+	virtual AudioDevice* getInputDevice() const = 0;
+	virtual AudioDevice* getOutputDevice() const = 0;
 	virtual ~AudioControlInterface() = default;
 };
 
@@ -203,6 +234,7 @@ public:
 	virtual int takePreviewSnapshot (const std::string& file) = 0;
 	virtual int takeVideoSnapshot (const std::string& file) = 0;
 	virtual void zoomVideo (float zoomFactor, float cx, float cy) = 0;
+	virtual void setDeviceRotation(int rotation) = 0;
 	virtual void getRecvStats(VideoStats *s) const = 0;
 	virtual void getSendStats(VideoStats *s) const = 0;
 	virtual ~VideoControlInterface() = default;
@@ -225,7 +257,29 @@ public:
 	virtual ~RtpInterface() = default;
 };
 
-
+class SharedService{
+friend class StreamsGroup;
+public:
+	virtual ~SharedService() = default;
+	// initialize() is called when the service is requested for the first time.
+	virtual void initialize() = 0;
+	// destroy() is called when the service has been requested at least once, but is now longer needed.
+	virtual void destroy() = 0;
+private:
+	void checkInit(){
+		if (!mUsed){
+			initialize();
+			mUsed = true;
+		}
+	}
+	void checkDestroy(){
+		if (mUsed){
+			destroy();
+			mUsed = false;
+		}
+	}
+	bool mUsed = false;
+};
 
 /**
  * The StreamsGroup takes in charge the initialization and rendering of a group of streams defined
@@ -291,6 +345,8 @@ public:
 	 * Statistics (LinphoneCallStats ) must remain until destruction.
 	 */
 	virtual void finish() override;
+	void joinMixerSession(MixerSession *mixerSession);
+	void unjoinMixerSession();
 	Stream * getStream(size_t index);
 	Stream * getStream(int index){
 		return getStream((size_t) index);
@@ -349,6 +405,39 @@ public:
 	const std::string & getAuthenticationToken()const{ return mAuthToken; }
 	bool getAuthenticationTokenVerified() const{ return mAuthTokenVerified; }
 	const OfferAnswerContext & getCurrentOfferAnswerContext()const{ return mCurrentOfferAnswerState; };
+	CallSession::State getCurrentSessionState() const{ return mCurrentSessionState;};
+	
+	/*
+	 * Install a service that is shared accross all streams of a StreamsGroup.
+	 * 
+	 */
+	template <typename _sharedServiceT>
+	void installSharedService(){
+		std::string serviceKey = typeid(_sharedServiceT).name();
+		if (mSharedServices.find(serviceKey) == mSharedServices.end()){
+			mSharedServices[serviceKey].reset(new _sharedServiceT());
+		}
+	}
+	/*
+	 * Obtain a shared service given its key.
+	 */
+	template <typename _sharedServiceT>
+	_sharedServiceT *getSharedService() const{
+		std::string serviceKey = typeid(_sharedServiceT).name();
+		auto it = mSharedServices.find(serviceKey);
+		if (it != mSharedServices.end()){
+			SharedService *service = (*it).second.get();
+			_sharedServiceT *casted = dynamic_cast<_sharedServiceT*>(service);
+			if (casted == nullptr){
+				// By construction, it should never happen.
+				lError() << "Wrong type for installed service " << serviceKey;
+			}else {
+				casted->checkInit();
+				return casted;
+			}
+		}
+		return nullptr;
+	}
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
 	Core & getCore()const;
@@ -365,9 +454,12 @@ private:
 	float computeOverallQuality(_functor func);
 	Stream * createStream(const OfferAnswerContext &param);
 	MediaSession &mMediaSession;
+	void computeAndReportBandwidth();
+	void attachMixers();
+	void detachMixers();
 	std::unique_ptr<IceService> mIceService;
 	std::vector<std::unique_ptr<Stream>> mStreams;
-	void computeAndReportBandwidth();
+	
 	// Upload bandwidth used by audio.
 	int mAudioBandwidth = 0;
 	// Zrtp auth token
@@ -375,10 +467,18 @@ private:
 	belle_sip_source_t *mBandwidthReportTimer = nullptr;
 	std::list<std::function<void()>> mPostRenderHooks;
 	OfferAnswerContext mCurrentOfferAnswerState;
+	CallSession::State mCurrentSessionState;
+	MixerSession *mMixerSession = nullptr;
+	std::map<std::string, std::unique_ptr<SharedService>> mSharedServices;
 	bool mAuthTokenVerified = false;
 	bool mFinished = false;
 
 };
+
+inline std::ostream & operator<<(std::ostream & ostr, const StreamsGroup& sg){
+	ostr << "StreamsGroup [" << (void*)&sg << "]";
+	return ostr;
+}
 
 LINPHONE_END_NAMESPACE
 

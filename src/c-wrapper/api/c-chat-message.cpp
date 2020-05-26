@@ -59,6 +59,8 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 				linphone_address_unref(from);
 			if (to)
 				linphone_address_unref(to);
+			if (local)
+				linphone_address_unref(local);
 			if (contents)
 				bctbx_list_free(contents);
 		}
@@ -69,6 +71,7 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 
 		LinphoneAddress *from = nullptr;
 		LinphoneAddress *to = nullptr;
+		LinphoneAddress *local = nullptr;
 
 		bctbx_list_t *contents = nullptr;
 	} mutable cache;
@@ -448,9 +451,10 @@ const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneCha
 }
 
 const LinphoneAddress *linphone_chat_message_get_local_address (const LinphoneChatMessage *msg) {
-	if (L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getDirection() == LinphonePrivate::ChatMessage::Direction::Outgoing)
-		return linphone_chat_message_get_from_address(msg);
-	return linphone_chat_message_get_to_address(msg);
+	if (msg->cache.local)
+		linphone_address_unref(msg->cache.local);
+	msg->cache.local = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().asString().c_str());
+	return msg->cache.local;
 }
 
 LinphoneReason linphone_chat_message_get_reason (const LinphoneChatMessage *msg) {
@@ -497,4 +501,8 @@ void linphone_chat_message_start_file_download (
 	msg->message_state_changed_cb = status_cb;
 	msg->message_state_changed_user_data = ud;
 	linphone_chat_message_download_file(msg);
+}
+
+const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getCallId());
 }

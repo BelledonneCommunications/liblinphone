@@ -165,7 +165,12 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->avpf_rr_interval = lc ? !!lp_config_get_default_int(lc->config, "proxy", "avpf_rr_interval", 5) : 5;
 	cfg->publish_expires= lc ? lp_config_get_default_int(lc->config, "proxy", "publish_expires", -1) : -1;
 	cfg->publish = lc ? !!lp_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
-	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", FALSE) : FALSE;
+
+	bool_t push_allowed_default = FALSE;
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+	push_allowed_default = TRUE;
+#endif
+	cfg->push_notification_allowed = lc ? !!lp_config_get_default_int(lc->config, "proxy", "push_notification_allowed", push_allowed_default) : push_allowed_default;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
@@ -1846,6 +1851,22 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+
+	if (is_allowed) {
+		char *computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(cfg->lc);
+		if (computedPushParams) {
+			linphone_proxy_config_edit(cfg);
+			linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
+			linphone_proxy_config_done(cfg);
+			ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, cfg);
+			ms_free(computedPushParams);
+		}
+	} else {
+		linphone_proxy_config_edit(cfg);
+		linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
+		linphone_proxy_config_done(cfg);
+		ms_message("Push notification information removed from proxy config [%p]", cfg);
+	}
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {

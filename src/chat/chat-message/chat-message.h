@@ -110,6 +110,7 @@ public:
 	const IdentityAddress &getAuthenticatedFromAddress () const;
 	const IdentityAddress &getFromAddress () const;
 	const IdentityAddress &getToAddress () const;
+	const IdentityAddress &getLocalAdress () const;
 	const std::string &getForwardInfo () const;
 
 	bool isEphemeral () const;

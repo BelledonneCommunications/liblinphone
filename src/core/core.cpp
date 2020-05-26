@@ -21,6 +21,10 @@
 #include "config.h"
 #endif
 
+#ifdef __APPLE__
+#include "TargetConditionals.h"
+#endif
+
 #include <algorithm>
 #include <iterator>
 
@@ -42,11 +46,17 @@
 #endif
 #include "core/core-listener.h"
 #include "core/core-p.h"
+#include "chat/chat-room/chat-room-p.h"
 #include "logger/logger.h"
 #include "paths/paths.h"
 #include "linphone/utils/utils.h"
 #include "linphone/utils/algorithm.h"
 #include "linphone/lpconfig.h"
+
+#include "call/call-p.h"
+#include "conference/session/media-session.h"
+#include "conference/session/streams.h"
+#include "conference_private.h"
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
@@ -108,19 +118,29 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
-bool CorePrivate::asyncStopDone() {
+// Called by linphone_core_iterate() to check that aynchronous tasks are done.
+// It is used to give a chance to end asynchronous tasks during core stop
+// or to make sure that asynchronous tasks are finished during an aynchronous core stop.
+bool CorePrivate::isShutdownDone() {
 	L_Q();
 
 	if (!calls.empty()) {
-		calls.front()->terminate();
 		return false;
 	}
 
 	bctbx_list_t *elem = NULL;
 	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
 		LinphoneFriendList *list = (LinphoneFriendList *) elem->data;
-		linphone_friend_list_enable_subscriptions(list,FALSE);
 		if (list->event) {
+			return false;
+		}
+	}
+
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	shared_ptr<ChatRoom> cr;
+	for (const auto &chatRoom : chatRooms) {
+		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
+		if (cr && cr->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
 			return false;
 		}
 	}
@@ -128,45 +148,45 @@ bool CorePrivate::asyncStopDone() {
 	return true;
 }
 
+// Called by _linphone_core_stop_async_start() to stop the asynchronous tasks.
+// Put here the calls to stop some task with asynchronous process and check in CorePrivate::isShutdownDone() if they have finished.
 void CorePrivate::shutdown() {
-	if(!calls.empty()) {
-		calls.front()->terminate();
-	}
-}
-
-void CorePrivate::stop() {
 	L_Q();
 
-	chatRoomsById.clear();
-	noCreatedClientGroupChatRooms.clear();
-	listeners.clear();
-	if (q->limeX3dhEnabled()) {
-		q->enableLimeX3dh(false);
+	auto currentCalls = calls;
+	for (auto call : currentCalls) {
+		call->terminate();
 	}
 
-#ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler = nullptr;
-	localListEventHandler = nullptr;
-#endif
-
-	AddressPrivate::clearSipAddressesCache();
-	if (mainDb != nullptr) {
-		mainDb->disconnect();
+	bctbx_list_t *elem = NULL;
+	for (elem = q->getCCore()->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriendList *list = (LinphoneFriendList *) elem->data;
+		linphone_friend_list_enable_subscriptions(list,FALSE);
 	}
-}
-
-void CorePrivate::uninit () {
-	L_Q();
-	while (!calls.empty()) {
-		calls.front()->terminate();
-		linphone_core_iterate(L_GET_C_BACK_PTR(q));
-		ms_usleep(10000);
+	
+	for (auto &audioDevice : audioDevices) {
+		audioDevice->unref();
 	}
+	audioDevices.clear();
 
 	if (toneManager) toneManager->deleteTimer();
 
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
+}
+
+// Called by _linphone_core_stop_async_end() just before going to globalStateOff.
+// Put here the data that need to be freed before the stop.
+void CorePrivate::uninit() {
+	L_Q();
+
+	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
+	shared_ptr<ChatRoom> cr;
+	for (const auto &chatRoom : chatRooms) {
+		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
+		if (cr) cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
+	}
+
 	chatRoomsById.clear();
 	noCreatedClientGroupChatRooms.clear();
 	listeners.clear();
@@ -312,6 +332,54 @@ void CorePrivate::stopEphemeralMessageTimer () {
 	}
 }
 
+bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setInputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
+
+bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return false;
+	}
+
+	bool applied = false;
+	if (static_cast<unsigned int>(calls.size()) > 0) {
+		for (const auto &call : calls) {
+			call->setOutputAudioDevice(audioDevice);
+			applied = true;
+		}
+	}
+
+	return applied;
+}
+
+
+void CorePrivate::updateVideoDevice(){
+	if (currentCall && currentCall->getState() == CallSession::State::StreamsRunning){
+		VideoControlInterface *i = currentCall->getPrivate()->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+		if (i) i->parametersChanged();
+	}
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		VideoControlInterface *i = conf->getVideoControlInterface();
+		if (i) i->parametersChanged();
+	}
+}
+
 // =============================================================================
 
 Core::Core () : Object(*new CorePrivate) {
@@ -368,15 +436,15 @@ LinphoneCore *Core::getCCore () const {
 // -----------------------------------------------------------------------------
 
 string Core::getDataPath () const {
-	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Data, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 string Core::getConfigPath () const {
-	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Config, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 string Core::getDownloadPath() const {
-	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper));
+	return Paths::getPath(Paths::Download, static_cast<PlatformHelpers *>(L_GET_C_BACK_PTR(this)->platform_helper)->getPathContext());
 }
 
 void Core::setEncryptionEngine (EncryptionEngine *imee) {
@@ -552,6 +620,212 @@ bool Core::isFriendListSubscriptionEnabled () const {
 	return d->isFriendListSubscriptionEnabled;
 }
 
+// ---------------------------------------------------------------------------
+// Audio devices.
+// ---------------------------------------------------------------------------
+
+void CorePrivate::computeAudioDevicesList() {
+	for (auto &audioDevice : audioDevices) {
+		audioDevice->unref();
+	}
+	audioDevices.clear();
+
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	const bctbx_list_t *list = ms_snd_card_manager_get_list(snd_card_manager);
+
+	for (const bctbx_list_t *it = list; it != nullptr; it = bctbx_list_next(it)) {
+		MSSndCard *card = static_cast<MSSndCard *>(bctbx_list_get_data(it));
+		AudioDevice *audioDevice = new AudioDevice(card);
+		audioDevices.push_back(audioDevice);
+	}
+}
+
+AudioDevice* Core::findAudioDeviceMatchingMsSoundCard(MSSndCard *soundCard) const {
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		if (audioDevice->getSoundCard() == soundCard) {
+			return audioDevice;
+		}
+	}
+	return nullptr;
+}
+
+const list<AudioDevice *> Core::getAudioDevices() const {
+	std::list<AudioDevice *> audioDevices;
+	bool micFound = false, speakerFound = false, earpieceFound = false, bluetoothMicFound = false, bluetoothSpeakerFound = false;
+
+	for (const auto &audioDevice : getExtendedAudioDevices()) {
+		switch (audioDevice->getType()) {
+			case AudioDevice::Type::Microphone:
+				if (!micFound) {
+					micFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Earpiece:
+				if (!earpieceFound) {
+					earpieceFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Speaker:
+				if (!speakerFound) {
+					speakerFound = true;
+					audioDevices.push_back(audioDevice);
+				}
+				break;
+			case AudioDevice::Type::Bluetooth:
+				if (!bluetoothMicFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record))) {
+					audioDevices.push_back(audioDevice);
+				} else if (!bluetoothSpeakerFound && (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play))) {
+					audioDevices.push_back(audioDevice);
+				}
+
+				// Do not allow to be set to false
+				// Not setting flags inside if statement in order to handle the case of a bluetooth device that can record and play sound
+				if (!bluetoothMicFound) bluetoothMicFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record));
+				if (!bluetoothSpeakerFound) bluetoothSpeakerFound = (audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play));
+				break;
+			default:
+				break;
+		}
+		if (micFound && speakerFound && earpieceFound && bluetoothMicFound && bluetoothSpeakerFound) break;
+	}
+	return audioDevices;
+}
+
+const list<AudioDevice *> Core::getExtendedAudioDevices() const {
+	L_D();
+	return d->audioDevices; 
+}
+
+void Core::setInputAudioDevice(AudioDevice *audioDevice) {
+
+	L_D();
+	bool success = d->setInputAudioDevice(audioDevice);
+
+	if (success) {
+		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	}
+}
+
+void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
+
+	L_D();
+	bool success = d->setOutputAudioDevice(audioDevice);
+
+	if (success) {
+		linphone_core_notify_audio_device_changed(L_GET_C_BACK_PTR(getSharedFromThis()), audioDevice->toC());
+	}
+}
+
+AudioDevice* Core::getInputAudioDevice() const {
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getInputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getInputAudioDevice();
+	}
+
+	return nullptr;
+}
+
+AudioDevice* Core::getOutputAudioDevice() const {
+	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+	if (call) {
+		return call->getOutputAudioDevice();
+	}
+
+	for (const auto &call : getCalls()) {
+		return call->getOutputAudioDevice();
+	}
+
+	return nullptr;
+}
+
+void Core::setDefaultInputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		return;
+	}
+	linphone_core_set_capture_device(getCCore(), audioDevice->getId().c_str());
+}
+
+void Core::setDefaultOutputAudioDevice(AudioDevice *audioDevice) {
+	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
+		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		return;
+	}
+	linphone_core_set_playback_device(getCCore(), audioDevice->getId().c_str());
+}
+
+void Core::setOutputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			d->setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultOutputAudioDevice();
+	if (defaultAudioDevice) {
+		d->setOutputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_playback_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			d->setOutputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "[ " << __func__ << " ] Unable to find suitable output audio device";
+}
+
+void Core::setInputAudioDeviceBySndCard(MSSndCard *card){
+	L_D();
+
+	if (card) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(card);
+		if (audioDevice) {
+			d->setInputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	AudioDevice * defaultAudioDevice = getDefaultInputAudioDevice();
+	if (defaultAudioDevice) {
+		d->setInputAudioDevice(defaultAudioDevice);
+		return;
+	}
+	MSSndCardManager *snd_card_manager = ms_factory_get_snd_card_manager(getCCore()->factory);
+	MSSndCard *defaultCard = ms_snd_card_manager_get_default_capture_card(snd_card_manager);
+	if (defaultCard) {
+		AudioDevice * audioDevice = findAudioDeviceMatchingMsSoundCard(defaultCard);
+		if (audioDevice) {
+			d->setInputAudioDevice(audioDevice);
+			return;
+		}
+	}
+	lError() << "[ " << __func__ << " ] Unable to find suitable input audio device";
+}
+
+
+
+AudioDevice* Core::getDefaultInputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
+}
+
+AudioDevice* Core::getDefaultOutputAudioDevice() const {
+	MSSndCard *card = getCCore()->sound_conf.play_sndcard;
+	return findAudioDeviceMatchingMsSoundCard(card);
+}
+
 // -----------------------------------------------------------------------------
 // Misc.
 // -----------------------------------------------------------------------------
@@ -635,6 +909,34 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		}
 	}
 	return count;
+}
+
+std::shared_ptr<PushNotificationMessage> Core::getPushNotificationMessage (const std::string &callId) const {
+	std::shared_ptr<PushNotificationMessage> msg = getPlatformHelpers(getCCore())->getSharedCoreHelpers()->getPushNotificationMessage(callId);
+	if (linphone_core_get_global_state(getCCore()) == LinphoneGlobalOn && getPlatformHelpers(getCCore())->getSharedCoreHelpers()->isCoreStopRequired()) {
+		lInfo() << "[SHARED] Executor Shared Core is beeing stopped by Main Shared Core";
+		linphone_core_stop(getCCore());
+#if TARGET_OS_IPHONE
+		if (!msg && callId != "dummy_call_id") {
+			ms_message("[push] Executor Core for callId[%s] has been stopped but couldn't get the msg in time. Trying to get the msg received by the Main Core that just started", callId.c_str());
+			auto platformHelpers = LinphonePrivate::createIosPlatformHelpers(getCCore()->cppPtr, NULL);
+			msg = platformHelpers->getSharedCoreHelpers()->getPushNotificationMessage(callId);
+			delete platformHelpers;
+		}
+#endif
+	}
+	return msg;
+}
+
+std::shared_ptr<ChatRoom> Core::getPushNotificationChatRoom (const std::string &chatRoomAddr) const {
+	std::shared_ptr<ChatRoom> chatRoom = getPlatformHelpers(getCCore())->getSharedCoreHelpers()->getPushNotificationChatRoom(chatRoomAddr);
+	return chatRoom;
+}
+
+std::shared_ptr<ChatMessage> Core::findChatMessageFromCallId (const std::string &callId) const {
+	L_D();
+	std::list<std::shared_ptr<ChatMessage>> chatMessages = d->mainDb->findChatMessagesFromCallId(callId);
+	return chatMessages.empty() ? nullptr : chatMessages.front();
 }
 
 // -----------------------------------------------------------------------------

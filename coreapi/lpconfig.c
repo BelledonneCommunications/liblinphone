@@ -72,6 +72,7 @@
 #include "lpc2xml.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "core/paths/paths.h"
 
 typedef struct _LpItem{
 	char *key;
@@ -474,7 +475,7 @@ fail:
 
 LpConfig *linphone_config_new_with_factory(const char *config_filename, const char *factory_config_filename) {
 	LpConfig *lpconfig=belle_sip_object_new(LinphoneConfig);
-	if (factory_config_filename)
+	if (factory_config_filename && strcmp(factory_config_filename, "") != 0)
 		lpconfig->factory_filename = bctbx_strdup(factory_config_filename);
 	if (_linphone_config_init_from_files(lpconfig, config_filename, factory_config_filename) == 0) {
 		return lpconfig;
@@ -482,6 +483,13 @@ LpConfig *linphone_config_new_with_factory(const char *config_filename, const ch
 		ms_free(lpconfig);
 		return NULL;
 	}
+}
+
+LpConfig *linphone_config_new_for_shared_core(const char *app_group_id, const char* config_filename, const char *factory_path) {
+	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, static_cast<void *>(strdup(app_group_id)));
+	path = path + "/" + config_filename;
+	const char* full_path = ms_strdup(path.c_str());
+	return linphone_config_new_with_factory(full_path, factory_path);
 }
 
 LinphoneStatus linphone_config_read_file(LpConfig *lpconfig, const char *filename){
@@ -937,6 +945,13 @@ LinphoneStatus linphone_config_sync(LpConfig *lpconfig){
 	}
 	lpconfig->modified = FALSE;
 	return 0;
+}
+
+void linphone_config_reload(LinphoneConfig *lpconfig) {
+	bctbx_list_for_each(lpconfig->sections, (void (*)(void*)) lp_section_destroy);
+	bctbx_list_free(lpconfig->sections);
+	lpconfig->sections = NULL;
+	linphone_config_read_file(lpconfig, lpconfig->filename);
 }
 
 int linphone_config_has_section(const LpConfig *lpconfig, const char *section){

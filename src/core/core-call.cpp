@@ -24,13 +24,13 @@
 #include "call/call-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session.h"
+#include "conference/session/streams.h"
 #include "logger/logger.h"
 
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "conference_private.h"
 
-#include <mediastreamer2/msvolume.h>
 
 // =============================================================================
 
@@ -113,6 +113,19 @@ int CorePrivate::removeCall (const shared_ptr<Call> &call) {
 
 void CorePrivate::setVideoWindowId (bool preview, void *id) {
 #ifdef VIDEO_ENABLED
+	L_Q();
+	if (q->getCCore()->conf_ctx){
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(q->getCCore()->conf_ctx);
+		if (conf->isIn()){
+			lInfo() << "There is a conference, video window " << id << "is assigned to the conference.";
+			if (!preview){
+				conf->getVideoControlInterface()->setNativeWindowId(id);
+			}else{
+				conf->getVideoControlInterface()->setNativePreviewWindowId(id);
+			}
+			return;
+		}
+	}
 	for (const auto &call : calls) {
 		shared_ptr<MediaSession> ms = dynamic_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession());
 		if (ms){
@@ -213,14 +226,14 @@ void Core::soundcardHintCheck () {
 	}
 }
 
-void Core::soundcardAudioSessionActivated (bool actived) {
+void Core::soundcardActivateAudioSession (bool actived) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
 		ms_snd_card_notify_audio_session_activated(card, actived);
 	}
 }
 
-void Core::soundcardCallkitEnabled (bool enabled) {
+void Core::soundcardEnableCallkit (bool enabled) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
 		ms_snd_card_app_notifies_activation(card, enabled);

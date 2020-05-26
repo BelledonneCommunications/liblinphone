@@ -19,6 +19,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
+import java.io.Serializable;
 import org.jetbrains.annotations.Nullable;
 {{#imports}}
 import {{import}}
@@ -34,7 +35,7 @@ import java.util.List;
 
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.Version;
-import org.linphone.core.tools.OpenH264DownloadHelper;
+import org.linphone.core.tools.h264.OpenH264DownloadHelper;
 {{/isLinphoneFactory}}
 
 /**
@@ -50,7 +51,7 @@ import org.linphone.core.tools.OpenH264DownloadHelper;
 {{/lines}}
 {{/detailedDoc}}
 */
-public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}} {
+public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}}{{#isNotLinphoneFactory}} extends Serializable{{/isNotLinphoneFactory}} {
 {{#enums}}
     public enum {{{className}}} {
     {{#values}}
@@ -67,7 +68,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
         {{/lines}}
         {{/detailedDoc}}
         */
-        {{name}}({{value}}){{commarorsemicolon}}
+        {{name}}({{{value}}}){{commarorsemicolon}}
 
     {{/values}}
         protected final int mValue;
@@ -79,7 +80,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
         static public {{{className}}} fromInt(int value) throws RuntimeException {
             switch(value) {
             {{#values}}
-            case {{value}}: return {{name}};
+            case {{{value}}}: return {{name}};
             {{/values}}
             default:
                 throw new RuntimeException("Unhandled enum value " + value + " for {{{className}}}");
@@ -154,17 +155,29 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
       * @return the object store if any, null otherwise
       */
     {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public Object getUserData();
+
+    /**
+      * Gets the native pointer used by this class to make native method calls.
+      * @return the nativer pointer, as long
+      */
+    {{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public long getNativePointer();
+
+    {{#toStringNotFound}}{{#isNotLinphoneFactory}}public String toString();{{/isNotLinphoneFactory}}{{/toStringNotFound}}
 }
 
 class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}implements{{/isNotLinphoneFactory}} {{className}} {
 
     protected long nativePtr = 0;
-    protected Object userData = null;{{#hasCoreAccessor}}
+    protected transient Object userData = null;{{#hasCoreAccessor}}
     protected Core core = null;{{/hasCoreAccessor}}
 
     protected {{classImplName}}(long ptr) {
         nativePtr = ptr;{{#hasCoreAccessor}}
         core = getCore();{{/hasCoreAccessor}}
+    }
+
+    public long getNativePointer() {
+        return nativePtr;
     }
 
 {{#isLinphoneFactory}}
@@ -275,4 +288,9 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     public Object getUserData() {
         return userData;
     }
+
+    {{#toStringNotFound}}{{#isNotLinphoneFactory}}@Override
+    public String toString() {
+        return "Java object [" + super.toString() + "], native pointer [" + String.format("0x%08x", nativePtr) + "]";
+    }{{/isNotLinphoneFactory}}{{/toStringNotFound}}
 }

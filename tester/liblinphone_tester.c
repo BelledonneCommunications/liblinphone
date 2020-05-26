@@ -41,7 +41,7 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
 	int ret;
 
-#ifdef __linux
+#ifdef __linux__
 	/* Hack to tell mediastreamer2 alsa plugin to not detect direct driver interface ('sysdefault' card), because
 	 * it makes ioctls to the driver that hang the system a few seconds on some platforms (observed on Mac+Parallels).
 	 * This doesn't prevent alsa to be used during tests, it will be the case with 'default' card.
@@ -324,6 +324,7 @@ void liblinphone_tester_add_suites() {
 #ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
@@ -374,6 +375,7 @@ void liblinphone_tester_add_suites() {
 #endif
 	bc_tester_add_suite(&utils_test_suite);
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
+	bc_tester_add_suite(&shared_core_test_suite);
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {

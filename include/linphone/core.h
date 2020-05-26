@@ -233,6 +233,11 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsChatRoomReadCb chat_room_read;
 	LinphoneCoreCbsChatRoomSubjectChangedCb chat_room_subject_changed;
 	LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb chat_room_ephemeral_message_deleted;
+	LinphoneCoreCbsFirstCallStartedCb first_call_started;
+	LinphoneCoreCbsLastCallEndedCb last_call_ended;
+	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
+	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
+	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -794,6 +799,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cb
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb);
 
 /**
+ * Get the IMEE user registration callback
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsImeeUserRegistrationCb linphone_core_cbs_get_imee_user_registration (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the IMEE user registration callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_imee_user_registration (LinphoneCoreCbs *cbs, LinphoneCoreCbsImeeUserRegistrationCb cb);
+
+/**
  * Get the qrcode found callback.
  * @param[in] cbs LinphoneCoreCbs object
  * @return The current callback
@@ -806,6 +825,62 @@ LINPHONE_PUBLIC LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(
  * @param[in] cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb);
+
+/**
+ * Gets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the first call started callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb);
+
+/**
+ * Gets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the last call ended callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
+
+/**
+ * Gets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio device changed callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb);
+
+/**
+ * Gets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs);
+
+/**
+ * Sets the audio devices list updated callback.
+ * @param[in] cbs LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ **/
+LINPHONE_PUBLIC void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb);
 
 /**
  * @brief Sets a callback to call each time the echo-canceler calibration is completed.
@@ -3225,9 +3300,11 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, 
 LINPHONE_PUBLIC void linphone_core_stop_ringing(LinphoneCore *lc);
 
 /**
- * Sets the path to a wav file used for ringing. The file must be a wav 16bit linear. Local ring is disabled if null.
+ * Sets the path to a wav file used for ringing. The file must be a wav 16bit linear.
+ * If null, ringing is disable unless #linphone_core_get_use_native_ringing is enabled, in which case we use the device ringtone.
  * @param[in] lc #LinphoneCore object
- * @param[in] path The path to a wav file to be used for ringing
+ * @param[in] path The path to a wav file to be used for ringing, null to disable or use device ringing depending on #linphone_core_get_use_native_ringing.
+ * @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_ring(LinphoneCore *lc, const char *path);
@@ -3239,6 +3316,22 @@ LINPHONE_PUBLIC void linphone_core_set_ring(LinphoneCore *lc, const char *path);
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC const char *linphone_core_get_ring(const LinphoneCore *lc);
+
+/**
+ * Sets whether to use the native ringing (Android only).
+ * @param[in] core #LinphoneCore object
+ * @param[in] enable True to enable native ringing, false otherwise
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Returns whether the native ringing is enabled or not.
+ * @param[in] core #LinphoneCore object
+ * @return True if we use the native ringing, false otherwise
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core);
 
 /**
  * Specify whether the tls server certificate must be verified when connecting to a SIP/TLS server.
@@ -6207,13 +6300,154 @@ LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(Lin
 LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *lc, const char * xml_uri);
 
 /**
- * Call this method when you receive a push notification.
+ * Call this method when you receive a push notification (if you handle push notifications manually).
  * It will ensure the proxy configs are correctly registered to the proxy server,
  * so the call or the message will be correctly delivered.
  * @param[in] lc The #LinphoneCore
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *lc);
+
+/**
+ * Get the chat message with the call_id included in the push notification body
+ * This will start the core given in parameter, iterate until the message is received and return it.
+ * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] call_id The callId of the Message SIP transaction
+ * @return The #LinphoneChatMessage object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphonePushNotificationMessage * linphone_core_get_new_message_from_callid(LinphoneCore *lc, const char *call_id);
+
+/**
+ * Get the chat room we have been added into using the chat_room_addr included in the push notification body
+ * This will start the core given in parameter, iterate until the new chat room is received and return it.
+ * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
+ * @param[in] lc The #LinphoneCore
+ * @param[in] chat_room_addr The sip address of the chat room
+ * @return The #LinphoneChatRoom object.
+ * @ingroup misc
+**/
+LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *lc, const char *chat_room_addr);
+
+/**
+ * Enable or disable push notifications on Android & iOS.
+ * If enabled, it will try to get the push token add configure each proxy config with push_notification_allowed
+ * set to true with push parameters.
+ * @param[in] core The #LinphoneCore
+ * @param[in] enable TRUE to enable push notifications, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether push notifications are enabled or not (Android & iOS only).
+ * @param[in] core The #LinphoneCore
+ * @return TRUE if push notifications are enabled, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
+
+/**
+ * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
+ * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
+ * If disabled, it is the application that must do this job.
+ * @param[in] core The #LinphoneCore
+ * @param[in] enable TRUE to enable auto iterate, FALSE to disable
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable);
+
+/**
+ * Gets whether auto iterate is enabled or not (Android & iOS only).
+ * @param[in] core The #LinphoneCore
+ * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
+ * @ingroup misc
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core);
+
+/**
+ * Returns a list of audio devices, with only the first device for each type
+ * To have the list of all audio devices, use #linphone_core_get_extended_audio_devices
+ * @param[in] core The #LinphoneCore
+ * @returns \bctbx_list{LinphoneAudioDevice} A list with the first #LinphoneAudioDevice of each type
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore *core);
+
+/**
+ * Returns the list of all audio devices
+ * @param[in] core The #LinphoneCore
+ * @returns \bctbx_list{LinphoneAudioDevice} A list of all #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const LinphoneCore *core);
+
+/**
+ * Sets the given #LinphoneAudioDevice as input for all active calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as output for all active calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the input audio device for the current call
+ * @param[in] core The #LinphoneCore
+ * @returns The input audio device for the current or first call, NULL if there is no call
+ * @maybenil
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_input_audio_device(const LinphoneCore *core);
+
+/**
+ * Gets the output audio device for the current call
+ * @param[in] core The #LinphoneCore
+ * @returns The output audio device for the current or first call, NULL if there is no call
+ * @maybenil
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device(const LinphoneCore *core);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default input for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Sets the given #LinphoneAudioDevice as default output for next calls.
+ * @param[in] core The #LinphoneCore
+ * @param[in] audio_device The #LinphoneAudioDevice
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
+
+/**
+ * Gets the default input audio device
+ * @param[in] core The #LinphoneCore
+ * @returns The default input audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio_device(const LinphoneCore *core);
+
+/**
+ * Gets the default output audio device 
+ * @param[in] core The #LinphoneCore
+ * @returns The default output audio device
+ * @ingroup audio
+ */
+LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
 
 #ifdef __cplusplus

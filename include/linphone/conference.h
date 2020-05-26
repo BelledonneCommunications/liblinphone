@@ -157,6 +157,22 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
  */
 LINPHONE_PUBLIC int linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
 
+
+/**
+ * Update parameters of the conference.
+ * This is typically used enable or disable the video stream in the conference.
+ * @param obj the conference
+ * @param params the new parameters to apply.
+ */
+LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *obj, const LinphoneConferenceParams *params);
+
+/**
+ * Get current parameters of the conference.
+ * @param obj the conference
+ * @return a #LinphoneConferenceParams .
+ */
+LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj);
+
 /**
   * Get the conference id as string
   */
@@ -165,7 +181,7 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
 /**
   * Set the conference id as string
   */
-LINPHONE_PUBLIC void linphone_conference_set_ID(const LinphoneConference *obj, const char *conferenceID);
+LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID);
 
 /**
  * @}

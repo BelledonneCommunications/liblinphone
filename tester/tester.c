@@ -166,12 +166,18 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
 		lp_config_set_string(config, "sound", "local_ring" , ringpath);
 		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
-		lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
+
+		LinphoneCoreManager *mgr = (LinphoneCoreManager *)user_data;
+		if (mgr && mgr->app_group_id) {
+			lc = linphone_factory_create_shared_core_with_config(linphone_factory_get(), config, system_context, mgr->app_group_id, mgr->main_core);
+		} else {
+			lc = linphone_factory_create_core_with_config_3(linphone_factory_get(), config, system_context);
+		}
 	} else {
-		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, 	liblinphone_tester_get_empty_rc(), system_context);
+		lc = linphone_factory_create_core_3(linphone_factory_get(), NULL, liblinphone_tester_get_empty_rc(), system_context);
 		linphone_core_set_ring(lc, ringpath);
 		linphone_core_set_ringback(lc, ringbackpath);
-		linphone_core_set_root_ca(lc,rootcapath);
+		linphone_core_set_root_ca(lc, rootcapath);
 	}
 	if (cbs)
 		linphone_core_add_callbacks(lc, cbs);
@@ -351,9 +357,8 @@ void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr){
 	setup_dns(mgr->lc, bc_tester_get_resource_dir_prefix());
 }
 
-void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
-	LinphoneImNotifPolicy *im_notif_policy;
-	char *hellopath = bc_tester_res("sounds/hello8000.wav");
+LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
+	LinphoneCore *lc;
 	char *filepath = mgr->rc_path ? bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix(), mgr->rc_path) : NULL;
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
@@ -362,8 +367,20 @@ void linphone_core_manager_configure (LinphoneCoreManager *mgr) {
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
-	mgr->lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
+	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 	linphone_config_unref(config);
+	return lc;
+}
+
+void linphone_core_manager_configure(LinphoneCoreManager *mgr) {
+	LinphoneImNotifPolicy *im_notif_policy;
+	char *hellopath = bc_tester_res("sounds/hello8000.wav");
+	char *filepath = mgr->rc_path ? bctbx_strdup_printf("%s/%s", bc_tester_get_resource_dir_prefix(), mgr->rc_path) : NULL;
+	if (filepath && bctbx_file_exist(filepath) != 0) {
+		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
+	}
+
+	mgr->lc = linphone_core_manager_configure_lc(mgr);
 
 	linphone_core_manager_check_accounts(mgr);
 	im_notif_policy = linphone_core_get_im_notif_policy(mgr->lc);
@@ -450,7 +467,7 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 #else
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #endif
-void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
 	mgr->number_of_bcunit_error_at_creation =  bc_get_number_of_failures();
 	mgr->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_registration_state_changed(mgr->cbs, registration_state_changed);
@@ -474,15 +491,36 @@ void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, c
 	linphone_core_cbs_set_call_stats_updated(mgr->cbs, call_stats_updated);
 	linphone_core_cbs_set_global_state_changed(mgr->cbs, global_state_changed);
 	linphone_core_cbs_set_message_sent(mgr->cbs, liblinphone_tester_chat_room_msg_sent);
+	linphone_core_cbs_set_first_call_started(mgr->cbs, first_call_started);
+	linphone_core_cbs_set_last_call_ended(mgr->cbs, last_call_ended);
+	linphone_core_cbs_set_audio_device_changed(mgr->cbs, audio_device_changed);
+	linphone_core_cbs_set_audio_devices_list_updated(mgr->cbs, audio_devices_list_updated);
+	linphone_core_cbs_set_imee_user_registration(mgr->cbs, liblinphone_tester_x3dh_user_created);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
 	reset_counters(&mgr->stat);
-	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
-
 	manager_count++;
+}
 
+void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+	linphone_core_manager_init2(mgr, rc_file, phone_alias);
+	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
 	generate_random_database_path(mgr);
+	linphone_core_manager_configure(mgr);
+}
+
+void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
+	linphone_core_manager_init2(mgr, rc_file, phone_alias);
+
+	if (mgr_to_copy == NULL) {
+		if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
+		generate_random_database_path(mgr);
+	} else {
+		mgr->rc_path = ms_strdup(mgr_to_copy->rc_path);
+		mgr->database_path = ms_strdup(mgr_to_copy->database_path);
+		mgr->lime_database_path = ms_strdup(mgr_to_copy->lime_database_path);
+	}
 	linphone_core_manager_configure(mgr);
 }
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
@@ -493,7 +531,9 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	LinphoneProxyConfig* proxy;
 	int proxy_count;
 
-	linphone_core_start(mgr->lc);
+	if (linphone_core_start(mgr->lc) == -1) {
+		ms_error("Core [%p] failed to start", mgr->lc);
+	}
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies){ /**/
@@ -563,12 +603,25 @@ LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t chec
 	return linphone_core_manager_new3(rc_file, check_for_proxies, NULL);
 }
 
-LinphoneCoreManager* linphone_core_manager_new( const char* rc_file) {
+LinphoneCoreManager *linphone_core_manager_new(const char *rc_file) {
 	return linphone_core_manager_new2(rc_file, TRUE);
 }
 
 
-void linphone_core_manager_stop(LinphoneCoreManager *mgr){
+/**
+ * Create a LinphoneCoreManager that holds a shared Core.
+ * mgr_to_copy is used to create a second LinphoneCoreManager with the same identity.
+ * If mgr_to_copy has a value, rc_file parameter is ignored.
+ */
+LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *app_group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy) {
+	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	manager->app_group_id = ms_strdup(app_group_id);
+	manager->main_core = main_core;
+	linphone_core_manager_init_shared(manager, rc_file, NULL, mgr_to_copy);
+	return manager;
+}
+
+void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 	if (mgr->lc) {
 		const char *record_file = linphone_core_get_record_file(mgr->lc);
 		if (!liblinphone_tester_keep_record_files && record_file && ortp_file_exist(record_file)==0) {
@@ -641,6 +694,8 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 		unlink(mgr->lime_database_path);
 		bc_free(mgr->lime_database_path);
 	}
+	if (mgr->app_group_id)
+		bctbx_free(mgr->app_group_id);
 
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
@@ -662,7 +717,7 @@ void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 }
 
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
-	if (mgr->lc && !linphone_core_is_network_reachable(mgr->lc)) {
+	if (mgr->lc && linphone_core_get_global_state(mgr->lc) != LinphoneGlobalOff && !linphone_core_is_network_reachable(mgr->lc)) {
 		int previousNbRegistrationOk = mgr->stat.number_of_LinphoneRegistrationOk;
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
 		wait_for_until(mgr->lc, NULL, &mgr->stat.number_of_LinphoneRegistrationOk, previousNbRegistrationOk + 1, 2000);
@@ -1571,6 +1626,15 @@ void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *r
 	counters->number_of_LinphoneMessageSent++;
 }
 
+void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info) {
+	stats *counters = get_stats(lc);
+	if (status == TRUE) {
+		counters->number_of_X3dhUserCreationSuccess++;
+	} else {
+		counters->number_of_X3dhUserCreationFailure++;
+	}
+}
+
 void liblinphone_tester_chat_message_ephemeral_timer_started (LinphoneChatMessage *msg) {
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
@@ -1702,6 +1766,27 @@ void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const ch
 			break;
 	}
 }
+
+void first_call_started(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreFirstCallStarted++;
+}
+
+void last_call_ended(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreLastCallEnded++;
+}
+
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDeviceChanged++;
+}
+
+void audio_devices_list_updated(LinphoneCore *lc) {
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneCoreAudioDevicesListUpdated++;
+}
+
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr ){
 	if( params->sdp_removal ){
 		sal_default_set_sdp_handling(linphone_core_get_sal(mgr->lc), SalOpSDPSimulateRemove);
@@ -1767,7 +1852,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		BC_ASSERT_TRUE(linphone_core_is_incoming_invite_pending(callee_mgr->lc));
 	BC_ASSERT_EQUAL(caller_mgr->stat.number_of_LinphoneCallOutgoingProgress,initial_caller.number_of_LinphoneCallOutgoingProgress+1, int, "%d");
 
-
 	while (caller_mgr->stat.number_of_LinphoneCallOutgoingRinging!=(initial_caller.number_of_LinphoneCallOutgoingRinging + 1)
 			&& caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia!=(initial_caller.number_of_LinphoneCallOutgoingEarlyMedia +1)
 			&& retry++ < 100) {
@@ -1779,7 +1863,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 	BC_ASSERT_TRUE((caller_mgr->stat.number_of_LinphoneCallOutgoingRinging==initial_caller.number_of_LinphoneCallOutgoingRinging+1)
 							||(caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia==initial_caller.number_of_LinphoneCallOutgoingEarlyMedia+1));
-
 
 	if (linphone_core_get_calls_nb(callee_mgr->lc) == 1)
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/
@@ -2091,4 +2174,287 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
     fclose(out);
 
     return 0;
+}
+
+
+static const int flowControlIntervalMs = 5000;
+static const int flowControlThresholdMs = 40;
+
+static int dummy_set_sample_rate(MSFilter *obj, void *data) {
+	return 0;
+}
+
+static int dummy_get_sample_rate(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 44100;
+	return 0;
+}
+
+static int dummy_set_nchannels(MSFilter *obj, void *data) {
+	return 0;
+}
+
+static int dummy_get_nchannels(MSFilter *obj, void *data) {
+	int *n = (int*)data;
+	*n = 1;
+	return 0;
+}
+
+static MSFilterMethod dummy_snd_card_methods[] = {
+	{MS_FILTER_SET_SAMPLE_RATE, dummy_set_sample_rate},
+	{MS_FILTER_GET_SAMPLE_RATE, dummy_get_sample_rate},
+	{MS_FILTER_SET_NCHANNELS, dummy_set_nchannels},
+	{MS_FILTER_GET_NCHANNELS, dummy_get_nchannels},
+	{0,NULL}
+};
+
+struct _DummyOutputContext {
+	MSFlowControlledBufferizer buffer;
+	int samplerate;
+	int nchannels;
+	ms_mutex_t mutex;
+};
+
+typedef struct _DummyOutputContext DummyOutputContext;
+
+static void dummy_snd_write_init(MSFilter *obj){
+	DummyOutputContext *octx = (DummyOutputContext *)ms_new0(DummyOutputContext, 1);
+	octx->samplerate = 44100;
+	ms_flow_controlled_bufferizer_init(&octx->buffer, obj, octx->samplerate, 1);
+	ms_mutex_init(&octx->mutex,NULL);
+	
+	octx->nchannels = 1;
+
+	obj->data = octx;
+}
+
+static void dummy_snd_write_uninit(MSFilter *obj){
+	DummyOutputContext *octx = (DummyOutputContext*)obj->data;
+	ms_flow_controlled_bufferizer_uninit(&octx->buffer);
+	ms_mutex_destroy(&octx->mutex);
+	free(octx);
+}
+
+static void dummy_snd_write_process(MSFilter *obj) {
+
+	DummyOutputContext *octx = (DummyOutputContext*) obj->data;
+
+	ms_mutex_lock(&octx->mutex);
+	// Retrieve data and put them in the filter bugffer ready to be played
+	ms_flow_controlled_bufferizer_put_from_queue(&octx->buffer, obj->inputs[0]);
+	ms_mutex_unlock(&octx->mutex);
+}
+
+MSFilterDesc dummy_filter_write_desc = {
+	MS_FILTER_PLUGIN_ID,
+	"DummyPlayer",
+	"dummy player",
+	MS_FILTER_OTHER,
+	NULL,
+	1,
+	0,
+	dummy_snd_write_init,
+	NULL,
+	dummy_snd_write_process,
+	NULL,
+	dummy_snd_write_uninit,
+	dummy_snd_card_methods
+};
+
+static MSFilter *dummy_snd_card_create_writer(MSSndCard *card) {
+	MSFilter *f = ms_factory_create_filter_from_desc(ms_snd_card_get_factory(card), &dummy_filter_write_desc);
+	DummyOutputContext *octx = (DummyOutputContext*)(f->data);
+	ms_flow_controlled_bufferizer_set_samplerate(&octx->buffer, octx->samplerate);
+	ms_flow_controlled_bufferizer_set_nchannels(&octx->buffer, octx->nchannels);
+	ms_flow_controlled_bufferizer_set_max_size_ms(&octx->buffer, flowControlThresholdMs);
+	ms_flow_controlled_bufferizer_set_flow_control_interval_ms(&octx->buffer, flowControlIntervalMs);
+	return f;
+}
+
+struct _DummyInputContext {
+	queue_t q;
+	MSFlowControlledBufferizer buffer;
+	int samplerate;
+	int nchannels;
+	ms_mutex_t mutex;
+};
+
+typedef struct _DummyInputContext DummyInputContext;
+
+static void dummy_snd_read_init(MSFilter *obj){
+	DummyInputContext *ictx = (DummyInputContext *)ms_new0(DummyInputContext, 1);
+	ictx->samplerate = 44100;
+	ms_flow_controlled_bufferizer_init(&ictx->buffer, obj, ictx->samplerate, 1);
+	ms_mutex_init(&ictx->mutex,NULL);
+	qinit(&ictx->q);
+	
+	ictx->nchannels = 1;
+
+	obj->data = ictx;
+}
+
+static void dummy_snd_read_uninit(MSFilter *obj){
+	DummyInputContext *ictx = (DummyInputContext*)obj->data;
+
+	flushq(&ictx->q,0);
+	ms_flow_controlled_bufferizer_uninit(&ictx->buffer);
+	ms_mutex_destroy(&ictx->mutex);
+
+	free(ictx);
+}
+
+static void dummy_snd_read_process(MSFilter *obj) {
+
+	DummyInputContext *ictx = (DummyInputContext*) obj->data;
+
+	mblk_t *m;
+
+	ms_mutex_lock(&ictx->mutex);
+	// Retrieve data and put them in the filter output queue
+	while ((m = getq(&ictx->q)) != NULL) {
+		ms_queue_put(obj->outputs[0], m);
+	}
+	ms_mutex_unlock(&ictx->mutex);
+}
+
+MSFilterDesc dummy_filter_read_desc = {
+	MS_FILTER_PLUGIN_ID,
+	"DummyRecorder",
+	"dummy recorder",
+	MS_FILTER_OTHER,
+	NULL,
+	0,
+	1,
+	dummy_snd_read_init,
+	NULL,
+	dummy_snd_read_process,
+	NULL,
+	dummy_snd_read_uninit,
+	dummy_snd_card_methods
+};
+
+static MSFilter *dummy_snd_card_create_reader(MSSndCard *card) {
+	MSFilter *f = ms_factory_create_filter_from_desc(ms_snd_card_get_factory(card), &dummy_filter_read_desc);
+
+	DummyInputContext *ictx = (DummyInputContext*)(f->data);
+	ms_flow_controlled_bufferizer_set_samplerate(&ictx->buffer, ictx->samplerate);
+	ms_flow_controlled_bufferizer_set_nchannels(&ictx->buffer, ictx->nchannels);
+	ms_flow_controlled_bufferizer_set_max_size_ms(&ictx->buffer, flowControlThresholdMs);
+	ms_flow_controlled_bufferizer_set_flow_control_interval_ms(&ictx->buffer, flowControlIntervalMs);
+
+	return f;
+}
+
+static void dummy_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy_test_snd_card_desc = {
+	"dummyTest",
+	dummy_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy_test_snd_card());
+}
+
+static void dummy2_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy2_test_snd_card_desc = {
+	"dummyTest2",
+	dummy2_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy2_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy2_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY2_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy2_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy2_test_snd_card());
+}
+
+static void dummy3_test_snd_card_detect(MSSndCardManager *m);
+
+MSSndCardDesc dummy3_test_snd_card_desc = {
+	"dummyTest3",
+	dummy3_test_snd_card_detect,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	NULL,
+	dummy_snd_card_create_reader,
+	dummy_snd_card_create_writer,
+	NULL
+};
+
+static MSSndCard* create_dummy3_test_snd_card(void) {
+	MSSndCard* sndcard;
+	sndcard = ms_snd_card_new(&dummy3_test_snd_card_desc);
+	sndcard->data = NULL;
+	sndcard->name = ms_strdup(DUMMY3_TEST_SOUNDCARD);
+	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
+	sndcard->latency = 0;
+	sndcard->device_type = MS_SND_CARD_DEVICE_TYPE_BLUETOOTH;
+	return sndcard;
+}
+
+static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
+	ms_snd_card_manager_prepend_card(m, create_dummy3_test_snd_card());
+}
+
+void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
+	if (curveId == 448) {
+		// Change the curve setting before the server URL
+		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
+		// changing the url will restart the encryption engine allowing to also use the changed curve config
+		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_url);
+	} else {
+		// Change the curve setting before the server URL
+		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
+		// changing the url will restart the encryption engine allowing to also use the changed curve config
+		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_url);
+	}
+}
+
+void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
+	bctbx_list_t *item = managerList;
+	for (item = managerList; item; item = bctbx_list_next(item)) {
+		set_lime_curve(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)));
+	}
 }

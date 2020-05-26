@@ -307,6 +307,7 @@ void MediaSessionPrivate::pausedByRemote () {
 	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
+
 }
 
 void MediaSessionPrivate::remoteRinging () {
@@ -343,8 +344,9 @@ void MediaSessionPrivate::remoteRinging () {
 			return;
 		}
 
-		setState(CallSession::State::OutgoingRinging, "Remote ringing");
+		// Start ringback tone before moving to next state as we need to retrieve the output device of the state we are currently in
 		q->getCore()->getPrivate()->getToneManager()->startRingbackTone(q->getSharedFromThis());
+		setState(CallSession::State::OutgoingRinging, "Remote ringing");
 	}
 }
 
@@ -1228,6 +1230,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				md->streams[mainVideoStreamIndex].ttl = linphone_core_get_video_multicast_ttl(q->getCore()->getCCore());
 				md->streams[mainVideoStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
 			}
+			/* this is a feature for tests only: */
+			md->streams[mainVideoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
 			md->streams[mainVideoStreamIndex].dir = SalStreamInactive;
@@ -1750,8 +1754,10 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	setState(CallSession::State::Pausing, "Pausing call");
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
+
 	if (listener)
 		listener->onResetCurrentSession(q->getSharedFromThis());
+
 	stopStreams();
 	pausedByApp = false;
 	return 0;
@@ -1772,6 +1778,7 @@ void MediaSessionPrivate::setTerminated () {
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
+
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
 	if (md && !sal_media_description_empty(md))
@@ -1946,9 +1953,12 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	updateRemoteSessionIdAndVer();
 
+
 	if (getStreamsGroup().prepare()){
 		callAcceptanceDefered = true;
 		return; /* Deferred until completion of ICE gathering */
+	} else {
+		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 	}
 	startAccept();
 }
@@ -1971,9 +1981,10 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		setState(nextState, stateInfo);
 		return 0;
 	}
-	if (csp)
+
+	if (csp) {
 		setParams(new MediaSessionParams(*static_cast<const MediaSessionParams *>(csp)));
-	else {
+	} else {
 		if (!op->isOfferer()) {
 			/* Reset call params for multicast because this param is only relevant when offering */
 			getParams()->enableAudioMulticast(false);
@@ -1984,16 +1995,14 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
 	}
-	if (q->getCurrentParams()->getPrivate()->getInConference()) {
-		lWarning() << "Video isn't supported in conference";
-		getParams()->enableVideo(false);
-	}
 	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 
 	if (getStreamsGroup().prepare())
 		return 0; /* Deferred until completion of ICE gathering */
+	updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
 	startAcceptUpdate(nextState, stateInfo);
+
 	return 0;
 }
 
@@ -2133,6 +2142,8 @@ MediaSession::~MediaSession () {
 		sal_media_description_unref(d->biggestDesc);
 	if (d->resultDesc)
 		sal_media_description_unref(d->resultDesc);
+	if (d->currentOutputAudioDevice)
+		d->currentOutputAudioDevice->unref();
 }
 
 // -----------------------------------------------------------------------------
@@ -2480,8 +2491,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 			as->stop();
 			d->updateStreams(d->resultDesc, d->state);
 		}else{
-			VideoControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
-			if (i) i->parametersChanged();
+			// Done directly by linphone_core_set_video_device().
 		}
 	}
 	return result;
@@ -2861,6 +2871,36 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) i->setInputDevice(audioDevice);
+}
 
+void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	d->setCurrentOutputAudioDevice(audioDevice);
+	if (i) i->setOutputDevice(audioDevice);
+}
+
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
+
+AudioDevice* MediaSession::getInputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getInputDevice();
+	return nullptr;
+}
+
+AudioDevice* MediaSession::getOutputAudioDevice() const {
+	L_D();
+	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
+	if (i) return i->getOutputDevice();
+	return nullptr;
+}
 
 LINPHONE_END_NAMESPACE

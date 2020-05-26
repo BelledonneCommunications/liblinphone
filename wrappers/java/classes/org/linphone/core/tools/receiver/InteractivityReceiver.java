@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -16,37 +16,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+package org.linphone.core.tools.receiver;
 
-package org.linphone.core.tools;
-
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.os.Build;
-import android.os.PowerManager;
 
 import org.linphone.core.tools.AndroidPlatformHelper;
+import org.linphone.core.tools.Log;
 
 /*
- * Purpose of this receiver is to disable keep alives when device is on idle
- * */
-public class DozeReceiver extends android.content.BroadcastReceiver {
+ * Purpose of this receiver is to disable keep alives when screen is off
+ */
+public class InteractivityReceiver extends BroadcastReceiver {
     private AndroidPlatformHelper mHelper;
 
-    public DozeReceiver(AndroidPlatformHelper helper) {
+    public InteractivityReceiver(final AndroidPlatformHelper helper) {
         mHelper = helper;
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            boolean dozeM = pm.isDeviceIdleMode();
-            Log.i("[Platform Helper] Doze mode enabled: " + dozeM);
-            if (mHelper != null) {
-                mHelper.setDozeModeEnabled(dozeM);
-                mHelper.updateNetworkReachability();
-            }
+        String action = intent.getAction();
+        if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_ON)) {
+            Log.i("[Platform Helper] [Interactivity Receiver] Device is in interactive mode");
+            if (mHelper != null) mHelper.setInteractiveMode(true);
+        } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
+            Log.i("[Platform Helper] [Interactivity Receiver] Device is not in interactive mode");
+            if (mHelper != null) mHelper.setInteractiveMode(false);
         }
     }
-
 }

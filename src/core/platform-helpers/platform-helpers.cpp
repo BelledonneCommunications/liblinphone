@@ -29,7 +29,9 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {}
+GenericPlatformHelpers::GenericPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : PlatformHelpers(core), mMonitorTimer(nullptr) {
+	mSharedCoreHelpers = make_shared<GenericSharedCoreHelpers>(core);
+}
 
 GenericPlatformHelpers::~GenericPlatformHelpers () {
 	if (mMonitorTimer) {
@@ -89,6 +91,9 @@ string GenericPlatformHelpers::getSoundResource (const string &filename) const {
 	);
 }
 
+void *GenericPlatformHelpers::getPathContext () {
+	return nullptr;
+}
 
 void GenericPlatformHelpers::setVideoPreviewWindow (void *windowId) {}
 
@@ -139,6 +144,9 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 
 void GenericPlatformHelpers::onLinphoneCoreStop () {}
 
+void GenericPlatformHelpers::startAudioForEchoTestOrCalibration () { }
+
+void GenericPlatformHelpers::stopAudioForEchoTestOrCalibration () { }
 
 int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
 	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
@@ -186,6 +194,10 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 
 string GenericPlatformHelpers::getDownloadPath () {
 	return "";
+}
+
+std::shared_ptr<SharedCoreHelpers> GenericPlatformHelpers::getSharedCoreHelpers() {
+	return mSharedCoreHelpers;
 }
 
 LINPHONE_END_NAMESPACE

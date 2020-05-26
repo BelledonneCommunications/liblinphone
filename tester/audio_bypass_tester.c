@@ -385,6 +385,8 @@ static MSFilter* audio_bypass_snd_card_create_writer(MSSndCard *sndcard) {
 
 static void audio_bypass_snd_card_detect(MSSndCardManager *m);
 
+#define AUDIO_BYPASS_SOUNDCARD "audioBypass: audio bypass sound card"
+
 MSSndCardDesc audio_bypass_snd_card_desc = {
 	"audioBypass",
 	audio_bypass_snd_card_detect,
@@ -405,14 +407,13 @@ MSSndCardDesc audio_bypass_snd_card_desc = {
 static MSSndCard* create_audio_bypass_snd_card(void) {
 	MSSndCard* sndcard;
 	sndcard = ms_snd_card_new(&audio_bypass_snd_card_desc);
+	sndcard->id = ms_strdup(AUDIO_BYPASS_SOUNDCARD);
 	sndcard->data = NULL;
 	sndcard->name = ms_strdup("audio bypass sound card");
 	sndcard->capabilities = MS_SND_CARD_CAP_PLAYBACK | MS_SND_CARD_CAP_CAPTURE;
 	sndcard->latency = 0;
 	return sndcard;
 }
-
-#define AUDIO_BYPASS_SOUNDCARD "audioBypass: audio bypass sound card"
 
 static void audio_bypass_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_add_card(m, create_audio_bypass_snd_card());

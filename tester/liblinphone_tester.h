@@ -65,6 +65,7 @@ extern test_suite_t main_db_test_suite;
 extern test_suite_t flexisip_test_suite;
 extern test_suite_t group_chat_test_suite;
 extern test_suite_t secure_group_chat_test_suite;
+extern test_suite_t ephemeral_group_chat_test_suite;
 extern test_suite_t log_collection_test_suite;
 extern test_suite_t message_test_suite;
 extern test_suite_t session_timers_test_suite;
@@ -90,6 +91,7 @@ extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
+extern test_suite_t shared_core_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -223,6 +225,8 @@ typedef struct _stats {
 	int number_of_LinphoneChatRoomStateDeleted;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
+	int number_of_X3dhUserCreationSuccess;
+	int number_of_X3dhUserCreationFailure;
 
 	int number_of_IframeDecoded;
 
@@ -341,6 +345,10 @@ typedef struct _stats {
 	int number_of_LinphoneGlobalStartup;
 	int number_of_LinphoneGlobalConfiguring;
 
+	int number_of_LinphoneCoreFirstCallStarted;
+	int number_of_LinphoneCoreLastCallEnded;
+	int number_of_LinphoneCoreAudioDeviceChanged;
+	int number_of_LinphoneCoreAudioDevicesListUpdated;
 }stats;
 
 
@@ -356,6 +364,8 @@ typedef struct _LinphoneCoreManager {
 	char *rc_path;
 	char *database_path;
 	char *lime_database_path;
+	char *app_group_id;
+	bool_t main_core;
 } LinphoneCoreManager;
 
 typedef struct _LinphoneConferenceServer {
@@ -375,6 +385,9 @@ typedef struct _LinphoneCallTestParams {
 void liblinphone_tester_add_suites(void);
 
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias);
+void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias);
+void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy);
+LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr);
 void linphone_core_manager_configure (LinphoneCoreManager *mgr);
 void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_create2(const char* rc_file, const char* phone_alias);
@@ -383,6 +396,7 @@ LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_f
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias);
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
+LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *app_group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr);
@@ -428,7 +442,11 @@ void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool
 void dtmf_received(LinphoneCore *lc, LinphoneCall *call, int dtmf);
 void call_stats_updated(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-
+void first_call_started(LinphoneCore *lc);
+void last_call_ended(LinphoneCore *lc);
+void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device);
+void audio_devices_list_updated(LinphoneCore *lc);
+	
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
@@ -468,6 +486,7 @@ void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *r
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 
 void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreManager* callee);
 void liblinphone_tester_clock_start(MSTimeSpec *start);
@@ -487,6 +506,8 @@ void call_base_with_configfile_play_nothing(LinphoneMediaEncryption mode, bool_t
 void call_base(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel);
 bool_t call_with_caller_params(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr, const LinphoneCallParams *params);
 bool_t pause_call_1(LinphoneCoreManager* mgr_1,LinphoneCall* call_1,LinphoneCoreManager* mgr_2,LinphoneCall* call_2);
+LinphoneAudioDevice * change_device(bool_t enable, LinphoneCoreManager* mgr, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1);
+LinphoneAudioDevice* pause_call_changing_device(bool_t enable, bctbx_list_t *lcs, LinphoneCall *call, LinphoneCoreManager* mgr_pausing, LinphoneCoreManager* mgr_paused, LinphoneCoreManager* mgr_change_device, LinphoneAudioDevice *current_dev, LinphoneAudioDevice *dev0, LinphoneAudioDevice *dev1);
 void compare_files(const char *path1, const char *path2);
 void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, MSList* lcs,LinphoneMediaDirection audio_dir, LinphoneMediaDirection video_dir);
 void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie, bool_t caller_with_ice, bool_t callee_with_ice, bool_t random_ports, bool_t forced_relay);
@@ -538,6 +559,25 @@ const char *liblinphone_tester_get_empty_rc(void);
 
 int liblinphone_tester_copy_file(const char *from, const char *to);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
+
+extern MSSndCardDesc dummy_test_snd_card_desc;
+#define DUMMY_TEST_SOUNDCARD "dummy test sound card"
+
+extern MSSndCardDesc dummy2_test_snd_card_desc;
+#define DUMMY2_TEST_SOUNDCARD "dummy2 test sound card"
+
+extern MSSndCardDesc dummy3_test_snd_card_desc;
+#define DUMMY3_TEST_SOUNDCARD "dummy3 test sound card"
+
+/**
+ * Set the requested curve and matching lime server url in the given core manager
+ * WARNING: uses a dirty trick: the linphone_core_set_lime_x3dh_server_url will actually restart
+ * the encryption engine (only if the given url is different than the current one). It will thus parse
+ * again the curve setting that is changed BEFORE.
+ */
+void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
+void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
+
 
 #ifdef __cplusplus
 };

@@ -874,14 +874,19 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		ms_free(contactAddress);
 
 
-	LinphoneConfig *lpconfig = linphone_core_get_config(linphone_proxy_config_get_core(cfg));
+	LinphoneCore *lc = linphone_proxy_config_get_core(cfg);
+	LinphoneConfig *lpconfig = linphone_core_get_config(lc);
 	lastLimeUpdate = linphone_config_get_int(lpconfig, "lime", "last_update_time", -1);
 
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
-			lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
-			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+			//lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
+			//limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
+			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, [lc, localDeviceId](lime::CallbackReturn returnCode, string info) {
+						lInfo() << "[LIME] user "<< localDeviceId <<" creation successful";
+						linphone_core_notify_imee_user_registration(lc, returnCode==lime::CallbackReturn::success, localDeviceId.data(), info.data());
+					});
 			lastLimeUpdate = ms_time(NULL);
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);

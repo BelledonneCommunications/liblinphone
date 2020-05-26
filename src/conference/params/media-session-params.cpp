@@ -72,6 +72,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 			customSdpMediaAttributes[i] = sal_custom_sdp_attribute_clone(src->customSdpMediaAttributes[i]);
 	}
 	rtpBundle = src->rtpBundle;
+	videoDownloadBandwidth = src->videoDownloadBandwidth;
 }
 
 void MediaSessionParamsPrivate::clean () {

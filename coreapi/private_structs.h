@@ -320,6 +320,8 @@ struct codecs_config
 	MSList *text_codecs;
 	int dyn_pt;
 	int telephone_event_pt;
+	int dont_check_audio_codec_support;
+	int dont_check_video_codec_support;
 };
 
 struct video_config{
@@ -486,6 +488,9 @@ struct _LinphoneNatPolicy {
 	bool_t turn_enabled;
 	bool_t ice_enabled;
 	bool_t upnp_enabled;
+	bool_t turn_udp_enabled;
+	bool_t turn_tcp_enabled;
+	bool_t turn_tls_enabled;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneNatPolicy);
@@ -838,7 +843,9 @@ namespace LinphonePrivate {
 	bool_t dns_set_by_app; \
 	int auto_download_incoming_files_max_size; \
 	bool_t sender_name_hidden_in_forward_message; \
-	bool_t async_stop;
+	bool_t is_main_core; \
+	bool_t has_already_started_once; \
+	bool_t send_imdn_if_unregistered;
 
 #define LINPHONE_CORE_STRUCT_FIELDS \
 	LINPHONE_CORE_STRUCT_BASE_FIELDS \
@@ -848,6 +855,11 @@ namespace LinphonePrivate {
 	sqlite3 *friends_db; \
 	bool_t debug_storage; \
 	void *system_context; \
-	bool_t is_unreffing;
+	bool_t is_unreffing; \
+	bool_t push_notification_enabled; \
+	char * push_notification_param; \
+	char * push_notification_prid; \
+	bool_t auto_iterate_enabled; \
+	bool_t native_ringing_enabled;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

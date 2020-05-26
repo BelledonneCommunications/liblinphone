@@ -368,7 +368,7 @@ class JavaTranslator(object):
             'methods': [],
             'jniMethods': [],
         }
-
+        classDict['toStringFound'] = False
         classDict['isLinphoneFactory'] = _class.name.to_camel_case() == "Factory"
         classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
         hasCoreAccessor = _class.name.to_camel_case() in CORE_ACCESSOR_LIST
@@ -390,6 +390,8 @@ class JavaTranslator(object):
                 jniMethodDict = self.translate_jni_method(_class, method)
                 classDict['methods'].append(methodDict)
                 classDict['jniMethods'].append(jniMethodDict)
+                if (methodDict['name'] == "toString"):
+                    classDict['toStringFound'] = True
             except AbsApi.Error as e:
                 logging.error('Could not translate {0}: {1}'.format(method.name.to_snake_case(fullName=True), e.args[0]))
 
@@ -620,6 +622,7 @@ class JavaClass(object):
         self.jniMethods = self._class['jniMethods']
         self.briefDoc = self._class['briefDoc']
         self.detailedDoc = self._class['detailedDoc']
+        self.toStringNotFound = not self._class['toStringFound']
         self.enums = []
         for enum in _class.enums:
             self.enums.append(JavaEnum(package, enum, translator))
@@ -761,7 +764,23 @@ class GenWrapper(object):
             'linphone_factory_clean',
             'linphone_call_zoom_video',
             'linphone_core_get_zrtp_cache_db',
-            'linphone_config_get_range'
+            'linphone_config_get_range',
+            'linphone_factory_create_shared_core',
+            'linphone_factory_create_shared_core_with_config',
+            'linphone_config_new_for_shared_core',
+            'linphone_push_notification_message_new',
+            'linphone_push_notification_message_ref',
+            'linphone_push_notification_message_unref',
+            'linphone_push_notification_message_is_using_user_defaults',
+            'linphone_push_notification_message_get_call_id',
+            'linphone_push_notification_message_is_text',
+            'linphone_push_notification_message_get_text_content',
+            'linphone_push_notification_message_get_subject',
+            'linphone_push_notification_message_get_from_addr',
+            'linphone_push_notification_message_get_local_addr',
+            'linphone_push_notification_message_get_peer_addr',
+            'linphone_core_get_new_message_from_callid',
+            'linphone_core_get_new_chat_room_from_conf_addr'
         ]
         self.parser.parse_all()
         self.translator = JavaTranslator(package, exceptions)

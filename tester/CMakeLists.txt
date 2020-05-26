@@ -212,6 +212,7 @@ set(SOURCE_FILES_C
 	flexisip_tester.c
 	group_chat_tester.c
 	group_chat_secure_tester.c
+	group_chat_ephemeral_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -230,6 +231,7 @@ set(SOURCE_FILES_C
 	vcard_tester.c
 	video_tester.c
 	video_quality_tester.c
+	shared_core_tester.c
 )
 
 set(SOURCE_FILES_CXX

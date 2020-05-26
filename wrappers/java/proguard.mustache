@@ -4,6 +4,15 @@
 -keepparameternames 
 -keepattributes Exceptions,InnerClasses,Signature,Deprecated,SourceFile,LineNumberTable,*Annotation*,EnclosingMethod
 
+-keepclasseswithmembernames,includedescriptorclasses class * {
+    native <methods>;
+}
+
+-keepclassmembers,allowoptimization enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
 # The following interfaces and classes are referenced from JNI
 {{#classes}}
 -keep interface {{package}}.{{className}} {*;}
@@ -28,11 +37,7 @@
 -keep class org.linphone.core.Utils {*;}
 
 # Liblinphone tools
--keep class org.linphone.core.tools.* {*;}
+-keep class org.linphone.core.tools.** {*;}
 
 # Mediastreamer classes
--keep class org.linphone.mediastream.* {*;}
--keep class org.linphone.mediastream.video.* {*;}
--keep class org.linphone.mediastream.video.capture.* {*;}
--keep class org.linphone.mediastream.video.capture.hwconf.* {*;}
--keep class org.linphone.mediastream.video.display.* {*;}
+-keep class org.linphone.mediastream.** {*;}

@@ -22,7 +22,13 @@
 
 #include "streams.h"
 
+struct _MSAudioEndpoint;
+struct _MSVideoEndpoint;
+
 LINPHONE_BEGIN_NAMESPACE
+
+class MS2AudioMixer;
+class MS2VideoMixer;
 
 /**
  * Derived class for streams commonly handly through mediastreamer2 library.
@@ -51,6 +57,8 @@ public:
 	virtual float getCpuUsage()const override;
 	virtual void setIceCheckList(IceCheckList *cl) override;
 	virtual void iceStateChanged() override;
+	virtual void connectToMixer(StreamMixer *mixer) override;
+	virtual void disconnectFromMixer()override;
 	
 	/* RtpInterface */
 	virtual bool avpfEnabled() const override;
@@ -86,6 +94,7 @@ protected:
 	MSMediaStreamSessions mSessions;
 	OrtpEvQueue *mOrtpEvQueue = nullptr;
 	LinphoneCallStats *mStats = nullptr;
+	int mOutputBandwidth; // Target output bandwidth for the stream. 
 	bool mUseAuxDestinations = false;
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
@@ -112,6 +121,15 @@ private:
 	bool mOwnsBundle = false;
 	static OrtpJitterBufferAlgorithm jitterBufferNameToAlgo(const std::string &name);
 	static constexpr const int sEventPollIntervalMs = 20;
+};
+
+class BandwithControllerService : public SharedService{
+public:
+	MSBandwidthController *getBandWidthController();
+	virtual void initialize() override;
+	virtual void destroy() override;
+private:
+	struct _MSBandwidthController *mBandwidthController = nullptr;
 };
 
 class MS2AudioStream : public MS2Stream, public AudioControlInterface{
@@ -145,6 +163,10 @@ public:
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;
+	virtual void setInputDevice(AudioDevice *audioDevice) override;
+	virtual void setOutputDevice(AudioDevice *audioDevice) override;
+	virtual AudioDevice* getInputDevice() const override;
+	virtual AudioDevice* getOutputDevice() const override;
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual ~MS2AudioStream();
@@ -168,7 +190,9 @@ private:
 	void setupRingbackPlayer();
 	void telephoneEventReceived (int event);
 	void configureAudioStream();
+	MS2AudioMixer *getAudioMixer();
 	AudioStream *mStream = nullptr;
+	struct _MSAudioEndpoint *mConferenceEndpoint = nullptr;
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
 	belle_sip_source_t *mMediaLostCheckTimer = nullptr;
@@ -180,15 +204,9 @@ private:
 	static constexpr const char * ecStateStore = ".linphone.ecstate";
 };
 
-class MS2VideoStream : public MS2Stream, public VideoControlInterface{
+class MS2VideoControl : public VideoControlInterface{
 public:
-	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
-	virtual bool prepare() override;
-	virtual void finishPrepare() override;
-	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
-	virtual void stop() override;
-	virtual void finish() override;
-	
+	MS2VideoControl(Core &core);
 	/* VideoControlInterface methods */
 	virtual void sendVfu() override;
 	virtual void sendVfuRequest() override;
@@ -198,16 +216,43 @@ public:
 	virtual void * getNativeWindowId() const override;
 	virtual void setNativePreviewWindowId(void *w) override;
 	virtual void * getNativePreviewWindowId() const override;
-	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
-	virtual void parametersChanged() override;
 	virtual void requestNotifyNextVideoFrameDecoded () override;
 	virtual int takePreviewSnapshot (const std::string& file) override;
 	virtual int takeVideoSnapshot (const std::string& file) override;
 	virtual void zoomVideo (float zoomFactor, float cx, float cy) override;
+	virtual void parametersChanged() override;
+	virtual void setDeviceRotation(int rotation) override;
 	virtual void getRecvStats(VideoStats *s) const override;
 	virtual void getSendStats(VideoStats *s) const override;
 	
+	virtual void onSnapshotTaken(const std::string &filepath) = 0;
+	virtual VideoStream *getVideoStream()const = 0;
+	virtual MSWebCam *getVideoDevice()const = 0;
+protected:
+	Core & mCore;
+	bool mCameraEnabled = true;
+	void *mNativeWindowId = nullptr;
+	void *mNativePreviewWindowId = nullptr;
+private:
+	static void sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg);
+	
+};
+
+
+class MS2VideoStream : public MS2Stream, public MS2VideoControl{
+public:
+	MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &param);
+	virtual bool prepare() override;
+	virtual void finishPrepare() override;
+	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
+	virtual void stop() override;
+	virtual void finish() override;
+	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
+	
 	virtual MediaStream *getMediaStream()const override;
+	virtual VideoStream *getVideoStream()const override;
+	virtual MSWebCam *getVideoDevice()const override;
+	
 	
 	void oglRender();
 	MSWebCam * getVideoDevice(CallSession::State targetState)const;
@@ -215,7 +260,7 @@ public:
 	virtual ~MS2VideoStream();
 protected:
 	AudioStream *getPeerAudioStream();
-	
+	virtual void onSnapshotTaken(const std::string &filepath) override;
 private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	virtual void zrtpStarted(Stream *mainZrtpStream) override;
@@ -226,11 +271,9 @@ private:
 	void cameraNotWorkingCb (const char *cameraName);
 	static void sCameraNotWorkingCb (void *userData, const MSWebCam *oldWebcam);
 	void activateZrtp();
+	MS2VideoMixer *getVideoMixer();
 	VideoStream *mStream = nullptr;
-	void *mNativeWindowId = nullptr;
-	void *mNativePreviewWindowId = nullptr;
-	bool mCameraEnabled = true;
-	
+	struct _MSVideoEndpoint *mConferenceEndpoint = nullptr;
 };
 
 /*

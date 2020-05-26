@@ -92,6 +92,10 @@
 #include "TargetConditionals.h"
 #endif
 
+#ifdef __ANDROID__
+#include "android/api-level.h"
+#endif
+
 #include "c-wrapper/c-wrapper.h"
 #include "call/call-p.h"
 #include "conference/params/media-session-params-p.h"
@@ -504,12 +508,52 @@ void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs 
 	cbs->vtable->chat_room_ephemeral_message_deleted = cb;
 }
 
+LinphoneCoreCbsImeeUserRegistrationCb linphone_core_cbs_get_imee_user_registration (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->imee_user_registration;
+}
+
+void linphone_core_cbs_set_imee_user_registration (LinphoneCoreCbs *cbs, LinphoneCoreCbsImeeUserRegistrationCb cb) {
+	cbs->vtable->imee_user_registration = cb;
+}
+
 LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->qrcode_found;
 }
 
 void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb) {
 	cbs->vtable->qrcode_found = cb;
+}
+
+LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->first_call_started;
+}
+
+void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb) {
+	cbs->vtable->first_call_started = cb;
+}
+
+LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->last_call_ended;
+}
+
+void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb) {
+	cbs->vtable->last_call_ended = cb;
+}
+
+LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->audio_device_changed;
+}
+
+void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb) {
+	cbs->vtable->audio_device_changed = cb;
+}
+
+LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->audio_devices_list_updated;
+}
+
+void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb) {
+	cbs->vtable->audio_devices_list_updated = cb;
 }
 
 void linphone_core_cbs_set_ec_calibration_result(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationResultCb cb) {
@@ -639,6 +683,17 @@ static void _close_log_collection_file(void) {
 	}
 }
 
+#if (!__ANDROID__ && !__APPLE__) || (__ANDROID__ && __ANDROID_API__ < 21)
+static const char* getprogname() {
+#if defined(__GLIBC__)
+  	return program_invocation_short_name;
+#else
+	//not known yet on windows
+	return"";
+#endif
+}
+#endif
+
 static void linphone_core_log_collection_handler(const char *domain, OrtpLogLevel level, const char *fmt, va_list args) {
 	const char *lname="undef";
 	char *msg;
@@ -686,8 +741,8 @@ static void linphone_core_log_collection_handler(const char *domain, OrtpLogLeve
 	}
 	if (liblinphone_log_collection_file) {
 		ortp_mutex_lock(&liblinphone_log_collection_mutex);
-		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s] %s %s\n",
-			1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), domain, lname, msg);
+		ret = fprintf(liblinphone_log_collection_file,"%i-%.2i-%.2i %.2i:%.2i:%.2i:%.3i [%s/%s] %s %s\n",
+					  1900 + lt->tm_year, lt->tm_mon + 1, lt->tm_mday, lt->tm_hour, lt->tm_min, lt->tm_sec, (int)(tp.tv_usec / 1000), getprogname(), domain, lname, msg);
 		fflush(liblinphone_log_collection_file);
 		if (ret > 0) {
 			liblinphone_log_collection_file_size += (size_t)ret;
@@ -1160,8 +1215,13 @@ static void net_config_read(LinphoneCore *lc) {
 	nat_policy_ref = lp_config_get_string(lc->config, "net", "nat_policy_ref", NULL);
 	if (nat_policy_ref != NULL) {
 		LinphoneNatPolicy *nat_policy = linphone_core_create_nat_policy_from_config(lc, nat_policy_ref);
-		linphone_core_set_nat_policy(lc, nat_policy);
-		linphone_nat_policy_unref(nat_policy);
+		if (nat_policy) {
+			linphone_core_set_nat_policy(lc, nat_policy);
+			linphone_nat_policy_unref(nat_policy);
+		} else {
+			bctbx_warning("Failed to create nat policy from ref [%s]", nat_policy_ref);
+		}
+		
 	}
 	if (lc->nat_policy == NULL){
 		/*this will create a default nat policy according to deprecated config keys, or an empty nat policy otherwise*/
@@ -1209,6 +1269,9 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	old=lc->sound_conf.cards;
 	lc->sound_conf.cards=devices;
 	if (old!=NULL) ms_free((void *)old);
+	
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->computeAudioDevicesList();
+	linphone_core_notify_audio_devices_list_updated(lc);
 }
 
 static string get_default_local_ring(LinphoneCore * lc) {
@@ -1230,7 +1293,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	const char *tmpbuf;
 	const char *devid;
 
-#ifdef __linux
+#ifdef __linux__
 	/*alsadev let the user use custom alsa device within linphone*/
 	devid=lp_config_get_string(lc->config,"sound","alsadev",NULL);
 	if (devid){
@@ -1293,6 +1356,13 @@ static void sound_config_read(LinphoneCore *lc) {
 	} else {
 		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
 	}
+
+
+	bool_t default_native_ringing_value = FALSE;
+#ifdef __ANDROID__
+	default_native_ringing_value = TRUE;
+#endif
+	lc->native_ringing_enabled = !!lp_config_get_int(lc->config, "sound", "use_native_ringing", default_native_ringing_value);
 
 	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
 	tmpbuf = lp_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
@@ -1531,7 +1601,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 
 	tmp=lp_config_get_int(lc->config, "app", "use_callkit", 0);
-	linphone_core_callkit_enabled(lc, !!tmp);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardEnableCallkit(!!tmp);
 
 	/*In case of remote provisionning, function sip_config_read is initialy called in core_init, then in state ConfiguringSuccessfull*/
 	/*Accordingly, to avoid proxy_config to be added twice, it is mandatory to reset proxy config list from LinphoneCore*/
@@ -1715,18 +1785,20 @@ static PayloadType* find_payload_type_from_list(const char* type, int rate, int 
 }
 
 static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type, const char *mime){
-	if (type == SalVideo && lp_config_get_int(lc->config, "video", "rtp_io", FALSE)){
-		return TRUE; /*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
-	} else if (type == SalAudio && lp_config_get_int(lc->config, "sound", "rtp_io", FALSE)){
-		return TRUE; /*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
+	if (type == SalVideo && lc->codecs_conf.dont_check_video_codec_support){
+		return TRUE; 
+	} else if (type == SalAudio && lc->codecs_conf.dont_check_audio_codec_support){
+		return TRUE;
 	} else if (type == SalText) {
 		return TRUE;
 	}
-	if (lc->video_conf.capture && !lc->video_conf.display) {
-		return ms_factory_has_encoder(lc->factory, mime);
-	}
-	if (lc->video_conf.display && !lc->video_conf.capture) {
-		return ms_factory_has_decoder(lc->factory, mime);
+	if (type == SalVideo){
+		if (lc->video_conf.capture && !lc->video_conf.display) {
+			return ms_factory_has_encoder(lc->factory, mime);
+		}
+		if (lc->video_conf.display && !lc->video_conf.capture) {
+			return ms_factory_has_decoder(lc->factory, mime);
+		}
 	}
 	return ms_factory_codec_supported(lc->factory, mime);
 }
@@ -1871,6 +1943,12 @@ static void codecs_config_read(LinphoneCore *lc){
 	lc->codecs_conf.dyn_pt=96;
 	lc->codecs_conf.telephone_event_pt=lp_config_get_int(lc->config,"misc","telephone_event_pt",101);
 
+	/*in rtp io mode, we don't transcode audio, thus we can support a format for which we have no encoder nor decoder.*/
+	lc->codecs_conf.dont_check_audio_codec_support = lp_config_get_int(lc->config,"sound","rtp_io", FALSE);
+	/*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
+	lc->codecs_conf.dont_check_video_codec_support = lp_config_get_int(lc->config,"video","rtp_io", FALSE) || 
+						lp_config_get_int(lc->config, "video", "dont_check_codecs", FALSE);
+	
 	for (i=0;get_codec(lc,SalAudio,i,&pt);i++){
 		if (pt){
 			audio_codecs=codec_append_if_new(audio_codecs, pt);
@@ -2455,6 +2533,117 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
+static void update_proxy_config_push_params(LinphoneCore *core) {
+	char *computedPushParams = NULL;
+	if (core->push_notification_enabled) {
+		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
+	}
+	
+	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
+	for (; proxies != NULL; proxies = proxies->next) {
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
+		bool_t pushAllowed = linphone_proxy_config_is_push_notification_allowed(proxy);
+		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(proxy);
+
+		if (pushAllowed) {
+			// Do not alter contact uri params for proxy config without push notification allowed
+			if (computedPushParams && core->push_notification_enabled) {
+				if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
+					linphone_proxy_config_edit(proxy);
+					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
+					linphone_proxy_config_done(proxy);
+					ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, proxy);
+				}
+			} else {
+				if (contactUriParams) {
+					linphone_proxy_config_edit(proxy);
+					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
+					linphone_proxy_config_done(proxy);
+					ms_message("Push notification information removed from proxy config [%p]", proxy);
+				}
+			}
+		}
+	}
+
+	if (computedPushParams) {
+		ms_free(computedPushParams);
+	}
+}
+
+void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
+	if (core->push_notification_param) {
+		ms_free(core->push_notification_param);
+		core->push_notification_param = NULL;
+	}
+	if (core->push_notification_prid) {
+		ms_free(core->push_notification_prid);
+		core->push_notification_prid = NULL;
+	}
+
+	if (param && prid) {
+		core->push_notification_param = ms_strdup(param);
+		core->push_notification_prid = ms_strdup(prid);
+		ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
+	}
+
+	update_proxy_config_push_params(core);
+}
+
+char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
+	if (!core->push_notification_enabled) return NULL;
+	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
+	
+	bool_t use_legacy_params = !!lp_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
+	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
+	if (use_legacy_params) {
+		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
+	}
+
+	const char *provider = NULL;
+	// Can this be improved ?
+	bool_t tester_env = !!lp_config_get_int(core->config, "tester", "test_env", FALSE);
+	if (tester_env) provider = "liblinphone_tester";
+	// End of improvement zone
+
+	const char *params = core->push_notification_param;
+	const char *prid = core->push_notification_prid;
+
+#ifdef __ANDROID__
+	if (use_legacy_params)
+		provider = "firebase";
+	else
+		provider = "fcm";
+#elif TARGET_OS_IPHONE
+	provider = "apple";
+#endif
+	if (provider == NULL) return NULL;
+
+	char contactUriParams[512];
+	memset(contactUriParams, 0, sizeof(contactUriParams));
+	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
+	return ms_strdup(contactUriParams);
+}
+
+void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
+	lp_config_set_int(core->config, "net", "push_notification", enable);
+	core->push_notification_enabled = enable;
+
+	update_proxy_config_push_params(core);
+}
+
+bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
+	return core->push_notification_enabled;
+}
+
+void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
+	lp_config_set_int(core->config, "misc", "auto_iterate", enable);
+	core->auto_iterate_enabled = enable;
+}
+
+bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core) {
+	return core->auto_iterate_enabled;
+}
+
 static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig *config, void * userdata, void *system_context, bool_t automatically_start) {
 	LinphoneFactory *lfactory = linphone_factory_get();
 	LinphoneCoreCbs *internal_cbs = _linphone_core_cbs_new();
@@ -2479,6 +2668,15 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	lc->sal->setUserPointer(lc);
 	lc->sal->setCallbacks(&linphone_sal_callbacks);
+
+	bool_t push_notification_default = FALSE;
+	bool_t auto_iterate_default = FALSE;
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+	push_notification_default = TRUE;
+	auto_iterate_default = TRUE;
+#endif
+	lc->push_notification_enabled = !!lp_config_get_int(lc->config, "net", "push_notification", push_notification_default);
+	lc->auto_iterate_enabled = !!lp_config_get_int(lc->config, "misc", "auto_iterate", auto_iterate_default);
 
 #ifdef __ANDROID__
 	if (system_context) {
@@ -2606,6 +2804,11 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 			bctbx_uninit_logger();
 		}
 
+		if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
+			bctbx_warning("Core [%p] can't start", lc);
+			return -1;
+		}
+
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
 
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
@@ -2651,6 +2854,17 @@ LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpCon
 	LinphoneCore *core = L_INIT(Core);
 	Core::create(core);
 	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
+	return core;
+}
+
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core) {
+	bctbx_message("[SHARED] Creating %s Shared Core", main_core ? "Main" : "Executor");
+	linphone_config_set_string(config, "shared_core", "app_group_id", app_group_id);
+	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start);
+	core->is_main_core = main_core;
+	// allow ios app extension to mark msg as read without being registered
+	core->send_imdn_if_unregistered = !main_core;
+	getPlatformHelpers(core)->getSharedCoreHelpers()->registerSharedCoreMsgCallback();
 	return core;
 }
 
@@ -3665,8 +3879,12 @@ void linphone_core_iterate(LinphoneCore *lc){
 		ortp_logv_flush();
 	}
 
-	if (lc->state == LinphoneGlobalShutdown && lc->async_stop) {
-		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->asyncStopDone()) {
+
+	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
+	Then linphone_core_iterate() needs to be called until synchronous tasks are done
+	Then the stop is finished and the status is changed to LinphoneGlobalOff */
+	if (lc->state == LinphoneGlobalShutdown) {
+		if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->isShutdownDone()) {
 			_linphone_core_stop_async_end(lc);
 		}
 	}
@@ -4525,7 +4743,8 @@ bool_t linphone_core_sound_device_can_playback(LinphoneCore *lc, const char *dev
 
 LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	lc->sound_conf.ring_sndcard=card;
+	if (lc->sound_conf.ring_sndcard) ms_snd_card_unref(lc->sound_conf.ring_sndcard);
+	if (card) lc->sound_conf.ring_sndcard = ms_snd_card_ref(card);
 	if (card && linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","ringer_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4533,7 +4752,8 @@ LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * de
 
 LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	lc->sound_conf.play_sndcard=card;
+	if (lc->sound_conf.play_sndcard) ms_snd_card_unref(lc->sound_conf.play_sndcard);
+	if (card) lc->sound_conf.play_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","playback_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4541,7 +4761,8 @@ LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * 
 
 LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_CAPTURE, lc->factory);
-	lc->sound_conf.capt_sndcard=card;
+	if (lc->sound_conf.capt_sndcard) ms_snd_card_unref(lc->sound_conf.capt_sndcard);
+	if (card) lc->sound_conf.capt_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","capture_dev_id",ms_snd_card_get_string_id(card));
 	return 0;
@@ -4549,9 +4770,22 @@ LinphoneStatus linphone_core_set_capture_device(LinphoneCore *lc, const char * d
 
 LinphoneStatus linphone_core_set_media_device(LinphoneCore *lc, const char * devid){
 	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	lc->sound_conf.media_sndcard=card;
+	if (lc->sound_conf.media_sndcard) ms_snd_card_unref(lc->sound_conf.media_sndcard);
+	if (card) lc->sound_conf.media_sndcard = ms_snd_card_ref(card);
 	if (card &&  linphone_core_ready(lc))
 		lp_config_set_string(lc->config,"sound","media_dev_id",ms_snd_card_get_string_id(card));
+	return 0;
+}
+
+LinphoneStatus linphone_core_set_output_audio_device_by_id(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setOutputAudioDeviceBySndCard(card);
+	return 0;
+}
+
+LinphoneStatus linphone_core_set_input_audio_device_by_id(LinphoneCore *lc, const char * devid){
+	MSSndCard *card=get_card_from_string_id(devid,MS_SND_CARD_CAP_PLAYBACK, lc->factory);
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->setInputAudioDeviceBySndCard(card);
 	return 0;
 }
 
@@ -4610,9 +4844,13 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	const char *ringer;
 	const char *playback;
 	const char *capture;
+	const char *output_dev_id;
+	const char *input_dev_id;
 	char *ringer_copy = NULL;
 	char *playback_copy = NULL;
 	char *capture_copy = NULL;
+	char *output_dev_id_copy = NULL;
+	char *input_dev_id_copy = NULL;
 
 	ringer = linphone_core_get_ringer_device(lc);
 	if (ringer != NULL) {
@@ -4625,6 +4863,20 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	capture = linphone_core_get_capture_device(lc);
 	if (capture != NULL) {
 		capture_copy = ms_strdup(capture);
+	}
+	const LinphoneAudioDevice * current_output_dev = linphone_core_get_output_audio_device(lc);
+	if (current_output_dev != NULL) {
+		output_dev_id = linphone_audio_device_get_id(current_output_dev);
+		if (output_dev_id != NULL) {
+			output_dev_id_copy = ms_strdup(output_dev_id);
+		}
+	}
+	const LinphoneAudioDevice * current_input_dev = linphone_core_get_input_audio_device(lc);
+	if (current_input_dev != NULL) {
+		input_dev_id = linphone_audio_device_get_id(current_input_dev);
+		if (input_dev_id != NULL) {
+			input_dev_id_copy = ms_strdup(input_dev_id);
+		}
 	}
 	ms_snd_card_manager_reload(ms_factory_get_snd_card_manager(lc->factory));
 	build_sound_devices_table(lc);
@@ -4639,6 +4891,14 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 	if (capture_copy != NULL) {
 		linphone_core_set_capture_device(lc, capture_copy);
 		ms_free(capture_copy);
+	}
+	if (output_dev_id_copy != NULL) {
+		linphone_core_set_output_audio_device_by_id(lc, output_dev_id_copy);
+		ms_free(output_dev_id_copy);
+	}
+	if (input_dev_id_copy != NULL) {
+		linphone_core_set_input_audio_device_by_id(lc, input_dev_id_copy);
+		ms_free(input_dev_id_copy);
 	}
 }
 
@@ -4689,6 +4949,15 @@ void linphone_core_set_ring(LinphoneCore *lc,const char *path){
 
 const char *linphone_core_get_ring(const LinphoneCore *lc){
 	return lc->sound_conf.local_ring;
+}
+
+void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable) {
+	core->native_ringing_enabled = enable;
+	lp_config_set_int(core->config, "sound", "use_native_ringing", enable);
+}
+
+bool_t linphone_core_is_native_ringing_enabled(const LinphoneCore *core) {
+	return core->native_ringing_enabled;
 }
 
 void linphone_core_set_root_ca(LinphoneCore *lc, const char *path) {
@@ -5499,6 +5768,7 @@ LinphoneStatus linphone_core_set_video_device(LinphoneCore *lc, const char *id){
 		lc->video_conf.device=ms_web_cam_manager_get_default_cam(ms_factory_get_web_cam_manager(lc->factory));
 	if (olddev!=NULL && olddev!=lc->video_conf.device){
 		relaunch_video_preview(lc);
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->updateVideoDevice();
 	}
 	if ( linphone_core_ready(lc) && lc->video_conf.device){
 		vd=ms_web_cam_get_string_id(lc->video_conf.device);
@@ -6114,29 +6384,36 @@ void sip_config_uninit(LinphoneCore *lc)
 	lp_config_set_int(lc->config,"sip","register_only_when_upnp_is_ok",config->register_only_when_upnp_is_ok);
 
 	if (lc->sip_network_state.global_state) {
-		for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-			LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-			_linphone_proxy_config_unpublish(cfg);	/* to unpublish without changing the stored flag enable_publish */
+		bool_t need_to_unregister = FALSE;
+
+		for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+			_linphone_proxy_config_unpublish(cfg); /* to unpublish without changing the stored flag enable_publish */
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
-			if (!linphone_proxy_config_is_push_notification_allowed(cfg)){
+			if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
 				_linphone_proxy_config_unregister(cfg);	/* to unregister without changing the stored flag enable_register */
+				need_to_unregister = TRUE;
 			}
 		}
 
-		ms_message("Unregistration started.");
+		if (need_to_unregister) {
+			ms_message("Unregistration started.");
 
-		for (i=0;i<20&&still_registered;i++){
-			still_registered=FALSE;
-			lc->sal->iterate();
-			for(elem=config->proxies;elem!=NULL;elem=bctbx_list_next(elem)){
-				LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)(elem->data);
-				LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
-				still_registered = (state==LinphoneRegistrationOk||state==LinphoneRegistrationProgress);
+			for (i = 0; i < 20 && still_registered; i++) {
+				still_registered = FALSE;
+				lc->sal->iterate();
+				for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
+					LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
+					if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
+						LinphoneRegistrationState state = linphone_proxy_config_get_state(cfg);
+						still_registered = (state == LinphoneRegistrationOk || state == LinphoneRegistrationProgress);
+					}
+				}
+				ms_usleep(100000);
 			}
-			ms_usleep(100000);
+			if (i >= 20) ms_warning("Cannot complete unregistration, giving up");
 		}
-		if (i>=20) ms_warning("Cannot complete unregistration, giving up");
 	}
 
 	elem = config->proxies;
@@ -6231,6 +6508,10 @@ static void sound_config_uninit(LinphoneCore *lc)
 {
 	sound_config_t *config=&lc->sound_conf;
 	ms_free((void *)config->cards);
+	if (config->ring_sndcard) ms_snd_card_unref(config->ring_sndcard);
+	if (config->media_sndcard) ms_snd_card_unref(config->media_sndcard);
+	if (config->capt_sndcard) ms_snd_card_unref(config->capt_sndcard);
+	if (config->play_sndcard) ms_snd_card_unref(config->play_sndcard);
 
 	lp_config_set_string(lc->config,"sound","remote_ring",config->remote_ring);
 	lp_config_set_float(lc->config,"sound","playback_gain_db",config->soft_play_lev);
@@ -6347,9 +6628,13 @@ LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(LinphoneCore *lc, c
  * Called by linphone_core_stop_async() to begin the async stop process and change the state to "Shutdown"
  */
 static void _linphone_core_stop_async_start(LinphoneCore *lc) {
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalOff) {
+		ms_message("Core [%p] is already stopped", lc);
+		return;
+	}
+
 	linphone_task_list_free(&lc->hooks);
 	lc->video_conf.show_local = FALSE;
-	lc->async_stop = TRUE;
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->shutdown();
 
@@ -6374,7 +6659,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * and change the state to "Off"
  */
 static void _linphone_core_stop_async_end(LinphoneCore *lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->stop();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
 
@@ -6453,126 +6738,44 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	ms_factory_destroy(lc->factory);
 	lc->factory = NULL;
 
+#if TARGET_OS_IPHONE
+	bool_t is_shared_core = getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared();
+#endif
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
+
+#if TARGET_OS_IPHONE
+	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
+	We need to unlock them at the very end of the stopping process otherwise two Cores will
+	process at the same time until this one is finally stopped */
+	if (is_shared_core) LinphonePrivate::uninitSharedCore(lc);
+#endif
+
 	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 }
 
 static void _linphone_core_stop(LinphoneCore *lc) {
-	bctbx_list_t *elem = NULL;
-	int i=0;
-	bool_t wait_until_unsubscribe = FALSE;
-	linphone_task_list_free(&lc->hooks);
-	lc->video_conf.show_local = FALSE;
-	lc->async_stop = FALSE;
-
-	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
-
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
-
-	for (elem = lc->friends_lists; elem != NULL; elem = bctbx_list_next(elem)) {
-		LinphoneFriendList *list = (LinphoneFriendList *)elem->data;
-		linphone_friend_list_enable_subscriptions(list,FALSE);
-		if (list->event)
-			wait_until_unsubscribe =  TRUE;
+	if (linphone_core_get_global_state(lc) == LinphoneGlobalOff) {
+		ms_message("Core [%p] is already stopped", lc);
+		return;
 	}
-	/*give a chance to unsubscribe, might be optimized*/
-	for (i=0; wait_until_unsubscribe && i<50; i++) {
+
+	_linphone_core_stop_async_start(lc);
+
+	bool_t is_off = FALSE;
+	uint64_t start_time = ms_get_cur_time_ms();
+
+	while (!is_off && ms_get_cur_time_ms() - start_time < 1000) {
 		linphone_core_iterate(lc);
-		ms_usleep(10000);
+		ms_usleep(50000);
+		is_off = (linphone_core_get_global_state(lc) == LinphoneGlobalOff);
 	}
 
-	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
-
-	getPlatformHelpers(lc)->onLinphoneCoreStop();
-
-#ifdef VIDEO_ENABLED
-	if (lc->previewstream!=NULL){
-		video_preview_stop(lc->previewstream);
-		lc->previewstream=NULL;
+	/* linphone_core_iterate() can call _linphone_core_stop_async_end()
+	if all asynchronous tasks are done so we don't need to call it twice */
+	if (!is_off) {
+		_linphone_core_stop_async_end(lc);
 	}
-#endif
-
-	lc->msevq=NULL;
-
-	/* save all config */
-	friends_config_uninit(lc);
-	sip_config_uninit(lc);
-	net_config_uninit(lc);
-	rtp_config_uninit(lc);
-	linphone_core_stop_ringing(lc);
-	linphone_core_stop_dtmf_stream(lc);
-	sound_config_uninit(lc);
-	video_config_uninit(lc);
-	codecs_config_uninit(lc);
-
-	sip_setup_unregister_all();
-
-	if (lp_config_needs_commit(lc->config)) lp_config_sync(lc->config);
-
-	bctbx_list_for_each(lc->call_logs,(void (*)(void*))linphone_call_log_unref);
-	lc->call_logs=bctbx_list_free(lc->call_logs);
-
-	if(lc->zrtp_secrets_cache != NULL) {
-		ms_free(lc->zrtp_secrets_cache);
-		lc->zrtp_secrets_cache = NULL;
-	}
-
-	if(lc->user_certificates_path != NULL) {
-		ms_free(lc->user_certificates_path);
-		lc->user_certificates_path = NULL;
-	}
-	if(lc->play_file!=NULL){
-		ms_free(lc->play_file);
-		lc->play_file = NULL;
-	}
-	if(lc->rec_file!=NULL){
-		ms_free(lc->rec_file);
-		lc->rec_file = NULL;
-	}
-	if (lc->logs_db_file) {
-		ms_free(lc->logs_db_file);
-		lc->logs_db_file = NULL;
-	}
-	if (lc->friends_db_file) {
-		ms_free(lc->friends_db_file);
-		lc->friends_db_file = NULL;
-	}
-	if (lc->tls_key){
-		ms_free(lc->tls_key);
-		lc->tls_key = NULL;
-	}
-	if (lc->tls_cert){
-		ms_free(lc->tls_cert);
-		lc->tls_cert = NULL;
-	}
-	if (lc->ringtoneplayer) {
-		linphone_ringtoneplayer_destroy(lc->ringtoneplayer);
-		lc->ringtoneplayer = NULL;
-	}
-	if (lc->im_encryption_engine) {
-		linphone_im_encryption_engine_unref(lc->im_encryption_engine);
-		lc->im_encryption_engine = NULL;
-	}
-	if (lc->default_ac_service) {
-		linphone_account_creator_service_unref(lc->default_ac_service);
-		lc->default_ac_service = NULL;
-	}
-
-	linphone_core_free_payload_types(lc);
-	if (lc->supported_formats) ms_free((void *)lc->supported_formats);
-	lc->supported_formats = NULL;
-	linphone_core_call_log_storage_close(lc);
-	linphone_core_friends_storage_close(lc);
-	linphone_core_zrtp_cache_close(lc);
-	ms_bandwidth_controller_destroy(lc->bw_controller);
-	lc->bw_controller = NULL;
-	ms_factory_destroy(lc->factory);
-	lc->factory = NULL;
-
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
-	lc->platform_helper = NULL;
-	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");
 }
 
 void linphone_core_stop(LinphoneCore *lc) {
@@ -6743,12 +6946,17 @@ void linphone_core_soundcard_hint_check(LinphoneCore* lc) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardHintCheck();
 }
 
-void linphone_core_audio_session_activated (LinphoneCore* lc, bool_t actived) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardAudioSessionActivated(actived);
+void linphone_core_activate_audio_session (LinphoneCore* lc, bool_t actived) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardActivateAudioSession(actived);
 }
 
-void linphone_core_callkit_enabled (LinphoneCore* lc, bool_t enabled) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardCallkitEnabled(enabled);
+void linphone_core_enable_callkit (LinphoneCore *lc, bool_t enabled) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardEnableCallkit(enabled);
+	lp_config_set_int(lc->config, "app", "use_callkit", (int)enabled);
+}
+
+bool_t linphone_core_callkit_enabled (const LinphoneCore *lc) {
+	return (bool_t)lp_config_get_int(lc->config, "app", "use_callkit", 0);
 }
 
 void linphone_core_set_remote_ringback_tone(LinphoneCore *lc, const char *file){
@@ -7501,7 +7709,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
-		if (!serverMode) linphone_conference_params_set_state_changed_callback(params2, _linphone_core_conference_state_changed, lc);
+		
 		conf_method_name = lp_config_get_string(lc->config, "misc", "conference_type", "local");
 		if (strcasecmp(conf_method_name, "local") == 0) {
 			conf = linphone_local_conference_new_with_params(lc, params2);
@@ -7513,7 +7721,10 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 			return NULL;
 		}
 		linphone_conference_params_unref(params2);
-		if (!serverMode) linphone_core_set_conference(lc, conf);
+		if (!serverMode) {
+			linphone_core_set_conference(lc, conf);
+			linphone_conference_set_state_changed_callback(conf, _linphone_core_conference_state_changed, lc);
+		}
 	} else {
 		ms_error("Could not create a conference: a conference instance already exists");
 		return NULL;

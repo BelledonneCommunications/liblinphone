@@ -27,8 +27,8 @@
 EchoTester* ec_tester_new(MSFactory *factory, MSSndCard *capture_card, MSSndCard *playback_card, unsigned int rate) {
     EchoTester *ect = ms_new0(EchoTester,1);
     ect->factory = factory;
-    ect->capture_card = capture_card;
-    ect->playback_card = playback_card;
+    ect->capture_card = ms_snd_card_ref(capture_card);
+    ect->playback_card = ms_snd_card_ref(playback_card);
     ect->rate = rate;
 
     return ect;
@@ -76,6 +76,8 @@ static void ect_uninit_filters(EchoTester *ect) {
 }
 
 void ec_tester_destroy(EchoTester *ect) {
+	if (ect->capture_card) ms_snd_card_unref(ect->capture_card);
+	if (ect->playback_card) ms_snd_card_unref(ect->playback_card);
     ms_free(ect);
 }
 
@@ -84,8 +86,8 @@ LinphoneStatus linphone_core_start_echo_tester(LinphoneCore *lc, unsigned int ra
         ms_error("Echo tester is still on going !");
         return -1;
     }
-    lc->ect = ec_tester_new(lc->factory, lc->sound_conf.capt_sndcard
-        ,lc->sound_conf.play_sndcard, rate);
+    getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
+    lc->ect = ec_tester_new(lc->factory, lc->sound_conf.capt_sndcard, lc->sound_conf.play_sndcard, rate);
     ect_init_filters(lc->ect);
 
     return 1;
@@ -100,5 +102,6 @@ LinphoneStatus linphone_core_stop_echo_tester(LinphoneCore *lc) {
 
     ec_tester_destroy(lc->ect);
     lc->ect = NULL;
+    getPlatformHelpers(lc)->stopAudioForEchoTestOrCalibration();
     return 1;
 }

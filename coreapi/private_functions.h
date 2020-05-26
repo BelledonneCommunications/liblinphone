@@ -52,6 +52,7 @@ void linphone_call_notify_tmmbr_received(LinphoneCall *call, int stream_index, i
 void linphone_call_notify_snapshot_taken(LinphoneCall *call, const char *file_path);
 void linphone_call_notify_next_video_frame_decoded(LinphoneCall *call);
 void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *camera_name);
+void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
@@ -406,6 +407,7 @@ int linphone_core_get_edge_bw(LinphoneCore *lc);
 int linphone_core_get_edge_ptime(LinphoneCore *lc);
 
 LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start);
+LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core);
 
 int linphone_upnp_init(LinphoneCore *lc);
 void linphone_upnp_destroy(LinphoneCore *lc);
@@ -516,6 +518,8 @@ LinphonePayloadType *linphone_payload_type_new(LinphoneCore *lc, OrtpPayloadType
 bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const OrtpPayloadType *pt);
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
+LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
+char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
@@ -550,6 +554,10 @@ void linphone_core_notify_file_transfer_send(LinphoneCore *lc, LinphoneChatMessa
 void linphone_core_notify_file_transfer_progress_indication(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 void linphone_core_notify_is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
 void linphone_core_notify_dtmf_received(LinphoneCore* lc, LinphoneCall *call, int dtmf);
+void linphone_core_notify_first_call_started(LinphoneCore *lc);
+void linphone_core_notify_last_call_ended(LinphoneCore *lc);
+void linphone_core_notify_audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
+void linphone_core_notify_audio_devices_list_updated(LinphoneCore *lc);
 /*
  * return true if at least a registered vtable has a cb for dtmf received*/
 bool_t linphone_core_dtmf_received_has_listener(const LinphoneCore* lc);
@@ -574,6 +582,7 @@ void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc,
 void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr);
 void linphone_core_notify_chat_room_ephemeral_message_deleted (LinphoneCore *lc, LinphoneChatRoom *cr);
+void linphone_core_notify_imee_user_registration (LinphoneCore *lc, bool_t status, const char *userId, const char *info);
 void linphone_core_notify_qrcode_found(LinphoneCore *lc, const char *result);
 void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms);
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
@@ -609,7 +618,7 @@ int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
 
 void linphone_core_report_call_log(LinphoneCore *lc, LinphoneCallLog *call_log);
-void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei);
+void linphone_core_report_early_failed_call(LinphoneCore *lc, LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress *to, LinphoneErrorInfo *ei, const char *cid);
 
 LinphoneVideoDefinition * linphone_video_definition_new(unsigned int width, unsigned int height, const char *name);
 
