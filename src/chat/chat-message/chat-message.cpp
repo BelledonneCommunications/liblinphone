@@ -674,15 +674,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 		return core->getCCore()->chat_deny_code;
 	}
 
-	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
-		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
-		if (toBeStored) {
-			storeInDb();
-		}
-	} else {
-		toBeStored = false;
-	}
-
 	if (errorCode <= 0) {
 		bool foundSupportContentType = false;
 		for (Content *c : contents) {
@@ -715,6 +706,15 @@ LinphoneReason ChatMessagePrivate::receive () {
 			reason
 		);
 		return reason;
+	}
+
+	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
+		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		if (toBeStored) {
+			storeInDb();
+		}
+	} else {
+		toBeStored = false;
 	}
 
 	handleAutoDownload();
