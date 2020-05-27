@@ -205,8 +205,9 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 
 	// Marie sends a plain message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(mariePlainCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(mariePlainCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -236,8 +237,9 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 
 	// Marie sends an encrypted message
 	marieMessage = "We can say whatever we want in this chatrooom!";
-	_send_message(marieEncryptedCr, marieMessage);
+	msg = _send_message(marieEncryptedCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -262,10 +264,11 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 
 	// Marie sends a new plain message
 	marieMessage = "Hey again";
-	_send_message(mariePlainCr, marieMessage);
+	msg = _send_message(mariePlainCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+	linphone_chat_message_unref(msg);
 
 	// Check that the recreated regular chat room address is the same as before and the capabilities are correct
 	const LinphoneAddress *newPlainConfAddr = linphone_chat_room_get_conference_address(mariePlainCr);
@@ -287,10 +290,11 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 
 	// Marie sends a new encrypted message
 	marieMessage = "Hey again from the encrypted chatroom";
-	_send_message(marieEncryptedCr, marieMessage);
+	msg = _send_message(marieEncryptedCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+	linphone_chat_message_unref(msg);
 
 	// Check that the recreated encrypted chat room address is the same as before and the capabilities are correct
 	const LinphoneAddress *newEncryptedConfAddr = linphone_chat_room_get_conference_address(marieEncryptedCr);
@@ -378,9 +382,10 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 
 	// Marie sends an encrypted message
 	const char *marieEncryptedMessage1 = "Hello from our secured chat room";
-	_send_message(marieEncryptedCr, marieEncryptedMessage1);
+	LinphoneChatMessage *msg = _send_message(marieEncryptedCr, marieEncryptedMessage1);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	linphone_chat_message_unref(msg);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
 
@@ -477,9 +482,9 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
 	msg = _send_message(marieCr, marieMessage);
-	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	linphone_chat_message_unref(msg);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
 
@@ -629,11 +634,12 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	// Check that Pauline received and decrypted the message
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	linphone_chat_message_unref(msg);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
@@ -838,8 +844,9 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 
 	// Marie sends a message
 	const char *marieMessage = "I have a sensitive piece of information for you";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -850,8 +857,9 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
-	_send_message(paulineCr, paulineMessage);
+	msg = _send_message(paulineCr, paulineMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
@@ -985,10 +993,11 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 
 	// Marie sends a message
 	const char *marieMessage = "I have a sensitive piece of information for you";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	if (lp_config_get_int(linphone_core_get_config(marie->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 1) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 		LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 		if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 			goto end;
@@ -998,14 +1007,16 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 		BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	} else {
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	linphone_chat_message_unref(msg);
 	}
 
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
-	_send_message(paulineCr, paulineMessage);
+	msg = _send_message(paulineCr, paulineMessage);
 
 	// Marie does not receive Pauline's message because Pauline is unsafe for Marie
 	BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
+	linphone_chat_message_unref(msg);
 
 	// ZRTP verification call between Marie and Pauline
 	call_ok = FALSE;
@@ -1103,8 +1114,9 @@ static void group_chat_lime_x3dh_message_before_verify_sas_curve(const int curve
 
 	// Marie sends a message
 	const char *marieMessage = "I have a sensitive piece of information for you";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -1115,8 +1127,9 @@ static void group_chat_lime_x3dh_message_before_verify_sas_curve(const int curve
 
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
-	_send_message(paulineCr, paulineMessage);
+	msg = _send_message(paulineCr, paulineMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
@@ -1226,10 +1239,11 @@ static void group_chat_lime_x3dh_message_before_reject_sas_curve(const int curve
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hi Pauline, how are you ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	// Check that the message was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -1350,8 +1364,9 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 
 	// Marie sends a message
 	const char *marieMessage = "I have a sensitive piece of information for you";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -1362,8 +1377,9 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 
 	// Pauline sends a response
 	const char *paulineMessage = "Are you sure this conversation is secure ?";
-	_send_message(paulineCr, paulineMessage);
+	msg = _send_message(paulineCr, paulineMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
@@ -1458,7 +1474,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(marie_msg);
 
 	// Check that the message was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -1598,7 +1615,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_partic
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(marie_msg);
 
 	// Check that the message was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -1730,7 +1748,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(marie_msg);
 
 	// Check that the message was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -1877,7 +1896,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(marie_msg);
 
 	// Check that the message was correctly received and decrypted by Pauline1
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -1970,6 +1990,35 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(pauline2Cr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 
+	// Marie sends a message to the chatroom
+	marieMessage = "Hey guys ! What's up Pauline2!";
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
+
+	// Check that the message was correctly received and decrypted by Pauline1
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 2, 10000));
+	linphone_chat_message_unref(msg);
+	pauline1LastMsg = pauline1->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marieMessage);
+	pauline1LastMsg = NULL;
+
+	// Check that the message was correctly received and decrypted by Pauline2
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, initialPauline2Stats.number_of_LinphoneMessageReceived + 1, 10000));
+	LinphoneChatMessage *pauline2LastMsg = pauline2->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline2LastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline2LastMsg), marieMessage);
+	pauline1LastMsg = NULL;
+
+	// Check that the message was correctly received and decrypted by Laure
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 2, 10000));
+	laureLastMsg = laure->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	laureLastMsg = NULL;
+
 end:
 
 	// Clean db from chat room
@@ -2037,7 +2086,8 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
+	linphone_chat_message_unref(marie_msg);
 
 	// Check that the message was correctly received and decrypted by Pauline1
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -2087,10 +2137,11 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 
 	// Marie sends a message to the chatroom
 	marieMessage = "What are you doing tonight ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	// Check that the message was correctly received and decrypted by Pauline1
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 2, 10000));
+	linphone_chat_message_unref(msg);
 	pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
@@ -2140,20 +2191,23 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	const char *laureMessage = "I'm going to the cinema";
 	// Laure sends a messages to trigger a LIME X3DH security alerts because maxNumberOfDevicePerParticipant has been exceeded
 	if (lp_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
-		_send_message(laureCr, laureMessage);
-		wait_for_list(coresList, &dummy, 1, 500);
+		LinphoneChatMessage *msg = _send_message(laureCr, laureMessage);
+		int dummy=0;
+		wait_for_list(coresList, &dummy, 1, 500); // sleep for 500 ms
 		BC_ASSERT_FALSE((marie->stat.number_of_LinphoneMessageReceived == initialMarieStats.number_of_LinphoneMessageReceived + 1));
 		BC_ASSERT_FALSE((pauline1->stat.number_of_LinphoneMessageReceived == initialPauline1Stats.number_of_LinphoneMessageReceived + 3));
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
+		linphone_chat_message_unref(msg);
 
 		lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 1);
 	}
 	// to allow message to be sent
 	lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
-	_send_message(laureCr, laureMessage);
+	msg = _send_message(laureCr, laureMessage);
 
 	// Check that the message was correctly received and decrypted by Marie
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
@@ -2229,8 +2283,10 @@ static void group_chat_lime_x3dh_call_security_alert_curve(const int curveId) {
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
+
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -2321,10 +2377,11 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 
 	// Marie sends the message
 	const char *marieMessage1 = "Hey !";
-	_send_message(marieCr, marieMessage1);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage1);
 
 	// Check that message 1 was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -2347,10 +2404,11 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 
 	// Marie sends another message
 	const char *marieMessage2 = "What's up ?";
-	_send_message(marieCr, marieMessage2);
+	msg = _send_message(marieCr, marieMessage2);
 
 	// Check that message 2 was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
+	linphone_chat_message_unref(msg);
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -2367,10 +2425,11 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 
 	// Marie sends yet another message
 	const char *marieMessage3 = "I need to talk to you.";
-	_send_message(marieCr, marieMessage3);
+	msg = _send_message(marieCr, marieMessage3);
 
 	// Check that message 3 was correctly received and decrypted by Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 3, 10000));
+	linphone_chat_message_unref(msg);
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -2447,15 +2506,16 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_cu
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
 
-	// Check that the IsComposing is undecipherable and that an undecipherable message error IMDN is returned to Marie
+	// Check that the IsComposing is ignored on pauline's side
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 1000));
 
 	// Marie sends the message
 	const char *marieMessage = "What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
-	// Check that the message is discarded and that an undecipherable message error IMDN is returned to Marie
+	// Check that the message is discarded on pauline's side
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	linphone_chat_message_unref(msg);
 
 	// Check the chatrooms security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -2473,9 +2533,84 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_cu
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
 static void group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh(void) {
 	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(25519);
 	group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh_curve(448);
+}
+
+static void group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(const int curveId) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+
+	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+
+	// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+	// Check encryption status
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Friends";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	// Pauline discards marie LIME X3DH key
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "test", "force_lime_decryption_failure", 1);
+
+	// Marie starts composing a message
+	linphone_chat_room_compose(marieCr);
+
+	// Check that the IsComposing is undecipherable and that an undecipherable message error IMDN is returned to Marie
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 1000));
+
+	// Marie sends the message
+	const char *marieMessage = "What's up ?";
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
+
+	// Check that the message is discarded and that an undecipherable message error IMDN is returned to Marie
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	bctbx_list_t *participants = linphone_chat_message_get_participants_by_imdn_state(msg, LinphoneChatMessageStateNotDelivered);
+	BC_ASSERT_PTR_NOT_NULL(participants);
+	if (participants) {
+		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+	}
+	linphone_chat_message_unref(msg);
+
+	// Check the chatrooms security level
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh(void) {
+	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(25519);
+	group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh_curve(448);
 }
 
 static void group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(const int curveId) {
@@ -2524,10 +2659,11 @@ static void group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh_curve(c
 
 	// Marie sends a message
 	const char *marieMessage = "What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	// Check that the message is correctly discarded
 	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
+	linphone_chat_message_unref(msg);
 
 	// Clean local LIME X3DH databases
 	linphone_core_enable_lime_x3dh(marie->lc, TRUE);
@@ -2608,13 +2744,14 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 
 	// Marie sends a message
 	const char *marie1Message = "Hey ! What's up guys ?";
-	_send_message(marieCr1, marie1Message);
+	LinphoneChatMessage *msg = _send_message(marieCr1, marie1Message);
 
 	// Check that the message was received by everybody
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie2->stat.number_of_LinphoneMessageReceived, initialMarie2Stats.number_of_LinphoneMessageReceived + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_LinphoneMessageReceived, initialPauline1Stats.number_of_LinphoneMessageReceived + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline2->stat.number_of_LinphoneMessageReceived, initialPauline2Stats.number_of_LinphoneMessageReceived + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 
 	LinphoneChatMessage *marie2LastMsg = marie2->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marie2LastMsg))
@@ -2666,8 +2803,9 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr3), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
 	// Marie sends a message
 	const char *marie1Message2 = "Un nouveau ?";
-	_send_message(marieCr1, marie1Message2);
+	msg = _send_message(marieCr1, marie1Message2);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline3->stat.number_of_LinphoneMessageReceived, initialPauline3Stats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *pauline3LastMsg = pauline3->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline3LastMsg))
 		goto end;
@@ -2742,13 +2880,14 @@ static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const i
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
 	// Reconnect pauline
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
 
 	// Check if the message is received
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -2816,8 +2955,9 @@ static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
 
 	// Marie sends the message
 	const char *marieMessage = "Hey ! What's up ?";
-	_send_message(marieCr, marieMessage);
+	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	linphone_chat_message_unref(msg);
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
@@ -3579,35 +3719,36 @@ static void chat_room_ephemeral_settings(void) {
 test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
 	TEST_TWO_TAGS("LIME X3DH change server url", group_chat_lime_x3dh_change_server_url, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH basic chatrooms", group_chat_lime_x3dh_basic_chat_rooms, "LimeX3DH", "LeaksMemory"),
+	TEST_ONE_TAG("LIME X3DH encrypted chatrooms", group_chat_lime_x3dh_encrypted_chatrooms, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH basic chatrooms", group_chat_lime_x3dh_basic_chat_rooms, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message", group_chat_lime_x3dh_send_encrypted_message, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with error", group_chat_lime_x3dh_send_encrypted_message_with_error, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with composing", group_chat_lime_x3dh_send_encrypted_message_with_composing, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with response", group_chat_lime_x3dh_send_encrypted_message_with_response, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message with response and composing", group_chat_lime_x3dh_send_encrypted_message_with_response_and_composing, "LimeX3DH"),
-	TEST_TWO_TAGS("LIME X3DH message to devices with and without keys on server", group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys, "LimeX3DH", "LeaksMemory"),
+	TEST_ONE_TAG("LIME X3DH message to devices with and without keys on server", group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_keys, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file", group_chat_lime_x3dh_send_encrypted_file, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file using buffer", group_chat_lime_x3dh_send_encrypted_file_2, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send encrypted file + text", group_chat_lime_x3dh_send_encrypted_file_plus_text, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH send 2 encrypted files + text", group_chat_lime_x3dh_send_two_encrypted_files_plus_text, "LimeX3DH"),
-	TEST_TWO_TAGS("LIME X3DH verify SAS before message", group_chat_lime_x3dh_verify_sas_before_message, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH reject SAS before message", group_chat_lime_x3dh_reject_sas_before_message, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message before verify SAS", group_chat_lime_x3dh_message_before_verify_sas, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message before reject SAS", group_chat_lime_x3dh_message_before_reject_sas, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message before verify SAS from a device with ZRTP configured called side only",group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated,"LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH chatroom security level upgrade", group_chat_lime_x3dh_chatroom_security_level_upgrade, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH chatroom security level downgrade adding participant", group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH chatroom security level downgrade resetting zrtp", group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH chatroom security level self multidevices", group_chat_lime_x3dh_chatroom_security_level_self_multidevices, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH multiple successive messages", group_chat_lime_x3dh_send_multiple_successive_encrypted_messages, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH encrypted message to disabled LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH plain message to enabled LIME X3DH", group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH message to multidevice participants", group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH", "LeaksMemory"),
-	TEST_TWO_TAGS("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH", "LeaksMemory"),
+	TEST_ONE_TAG("LIME X3DH verify SAS before message", group_chat_lime_x3dh_verify_sas_before_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH reject SAS before message", group_chat_lime_x3dh_reject_sas_before_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message before verify SAS", group_chat_lime_x3dh_message_before_verify_sas, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message before reject SAS", group_chat_lime_x3dh_message_before_reject_sas, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message before verify SAS from a device with ZRTP configured called side only",group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device_with_zrtp_de_activated,"LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level upgrade", group_chat_lime_x3dh_chatroom_security_level_upgrade, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade adding participant", group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_participant, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level downgrade resetting zrtp", group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrtp, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security level self multidevices", group_chat_lime_x3dh_chatroom_security_level_self_multidevices, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH multiple successive messages", group_chat_lime_x3dh_send_multiple_successive_encrypted_messages, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH encrypted message to disabled LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH encrypted message to unable to decrypt LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH plain message to enabled LIME X3DH", group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH message to multidevice participants", group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
 	TEST_NO_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
 	TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
