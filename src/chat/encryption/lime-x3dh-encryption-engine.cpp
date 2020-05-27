@@ -21,6 +21,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
+#include "chat/modifier/cpim-chat-message-modifier.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "conference/participant.h"
@@ -255,8 +256,16 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				list<Content *> contents;
 
+				// ---------------------------------------------- CPIM
+
+				// Replaces SIPFRAG since version 4.4.0
+				CpimChatMessageModifier ccmm;
+				Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
+				contents.push_back(move(cpimContent));
+
 				// ---------------------------------------------- SIPFRAG
 
+				// For backward compatibility only since 4.4.0
 				Content *sipfrag = new Content();
 				sipfrag->setBody("From: <" + localDeviceId + ">");
 				sipfrag->setContentType(ContentType::SipFrag);
@@ -357,20 +366,38 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(*internalContent);
 
-	// ---------------------------------------------- SIPFRAG
+	// ---------------------------------------------- CPIM
 
 	string senderDeviceId;
-	for (const auto &content : contentList) {
-		if (content.getContentType() != ContentType::SipFrag)
+	bool cpimFound = false;
+	for (const auto &content : contentList) { // 4.4.x new behavior
+		if (content.getContentType() != ContentType::Cpim)
 			continue;
 
-		// Extract Contact header from sipfrag content
-		senderDeviceId = content.getBodyAsUtf8String();
-		string toErase = "From: ";
-		size_t contactPosition = senderDeviceId.find(toErase);
-		if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
-		IdentityAddress tmpIdentityAddress(senderDeviceId);
-		senderDeviceId = tmpIdentityAddress.asString();
+		CpimChatMessageModifier ccmm;
+		senderDeviceId = ccmm.parseMinimalCpimContentInLimeMessage(message, content);
+		if (senderDeviceId != "") {
+			IdentityAddress tmpIdentityAddress(senderDeviceId);
+			senderDeviceId = tmpIdentityAddress.asString();
+			cpimFound = true;
+		}
+	}
+
+	// ---------------------------------------------- SIPFRAG
+
+	if (!cpimFound) { // Legacy behavior (< 4.4.x)
+		for (const auto &content : contentList) {
+			if (content.getContentType() != ContentType::SipFrag)
+				continue;
+
+			// Extract Contact header from sipfrag content
+			senderDeviceId = content.getBodyAsUtf8String();
+			string toErase = "From: ";
+			size_t contactPosition = senderDeviceId.find(toErase);
+			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
+			IdentityAddress tmpIdentityAddress(senderDeviceId);
+			senderDeviceId = tmpIdentityAddress.asString();
+		}
 	}
 
 	// Discard incoming messages from unsafe peer devices
@@ -405,6 +432,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		}
 	}
 	
+	
+	LinphoneConfig *config = linphone_core_get_config(chatRoom->getCore()->getCCore());
+	if (linphone_config_get_int(config, "test", "force_lime_decryption_failure", 0) == 1) {
+		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message <<"]";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
+	}
+
 	if (cipherHeader.empty()) {
 		lError() << "No key found for [" << localDeviceId << "] for message [" << message <<"]";
 		errorCode = 488; // Not Acceptable

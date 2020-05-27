@@ -47,7 +47,6 @@ const string imdnForwardInfoHeader = "Forward-Info";
 const string imdnDispositionNotificationHeader = "Disposition-Notification";
 
 ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, int &errorCode) {
-
 	Cpim::Message cpimMessage;
 
 	cpimMessage.addMessageHeader(
@@ -262,6 +261,65 @@ string CpimChatMessageModifier::cpimAddressDisplayName (const Address &addr) con
 
 string CpimChatMessageModifier::cpimAddressUri (const Address &addr) const {
 	return addr.asStringUriOnly();
+}
+
+Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
+	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
+	const string &localDeviceId = chatRoom->getLocalAddress().asString();
+
+	Cpim::Message cpimMessage;
+	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));
+	cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
+	cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));
+	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", ContentType::PlainText.getMediaType()));
+
+	Content *cpimContent = new Content();
+	cpimContent->setContentType(ContentType::Cpim);
+	cpimContent->setBody(cpimMessage.asString());
+
+	return cpimContent;
+}
+
+std::string CpimChatMessageModifier::parseMinimalCpimContentInLimeMessage(const std::shared_ptr<ChatMessage> &message, const Content& content) const {
+	if (content.getContentType() != ContentType::Cpim) {
+		lError() << "[CPIM] Content is not CPIM but " << content.getContentType();
+		return "";
+	}
+
+	const string contentBody = content.getBodyAsString();
+	const shared_ptr<const Cpim::Message> cpimMessage = Cpim::Message::createFromString(contentBody);
+	if (!cpimMessage || !cpimMessage->getMessageHeader("From")) {
+		lError() << "[CPIM] Message is invalid: " << contentBody;
+		return "";
+	}
+
+	string imdnNsName = "";
+	auto messageHeaders = cpimMessage->getMessageHeaders();
+	if (messageHeaders) {
+		for (const auto &header : *messageHeaders.get()) {
+			if (header->getName() != "NS")
+				continue;
+			auto nsHeader = static_pointer_cast<const Cpim::NsHeader>(header);
+			if (nsHeader->getUri() == imdnNamespaceUrn) {
+				imdnNsName = nsHeader->getPrefixName();
+			}
+		}
+	}
+
+	auto messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader);
+	if (!imdnNsName.empty()) {
+		if (!messageIdHeader) {
+			messageIdHeader = cpimMessage->getMessageHeader(imdnMessageIdHeader, imdnNsName);
+		}
+	}
+
+	if (messageIdHeader) {
+		lInfo() << "[CPIM] Found Message ID: " << messageIdHeader->getValue();
+		message->getPrivate()->setImdnMessageId(messageIdHeader->getValue());
+	}
+
+	auto fromHeader = static_pointer_cast<const Cpim::FromHeader>(cpimMessage->getMessageHeader("From"));
+	return fromHeader->getValue();
 }
 
 LINPHONE_END_NAMESPACE
