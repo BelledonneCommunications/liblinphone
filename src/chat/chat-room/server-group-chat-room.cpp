@@ -1163,7 +1163,7 @@ LocalConference(getCore(), peerAddress, nullptr) {
 	this->subject = subject;
 	this->participants = move(participants);
 	this->conferenceAddress = peerAddress;
-	this->eventHandler->setLastNotify(lastNotifyId);
+	this->lastNotify = lastNotifyId;
 	this->conferenceId = d->conferenceId;
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }

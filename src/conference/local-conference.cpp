@@ -75,12 +75,14 @@ bool LocalConference::removeParticipant (const shared_ptr<Participant> &particip
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (const Address &addr) {
 	shared_ptr<Participant> participant = findParticipant(addr);
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantAdded(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		addr
 	);
 	return event;
@@ -88,47 +90,55 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (const Address &addr) {
 	shared_ptr<Participant> participant = findParticipant(addr);
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantRemoved(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		addr
 	);
 	return event;
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (const Address &addr, bool isAdmin) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAll(eventHandler->createNotifyParticipantAdminStatusChanged(addr, isAdmin));
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		addr
 	);
 	return event;
 }
 
 shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged () {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAll(eventHandler->createNotifySubjectChanged());
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		getSubject()
 	);
 	return event;
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (const Address &addr, const Address &gruu) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceAdded(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		addr,
 		gruu
 	);
@@ -136,22 +146,23 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
 	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceRemoved(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		time(nullptr),
 		conferenceId,
-		eventHandler->getLastNotify(),
+		lastNotify,
 		addr,
 		gruu
 	);
 	return event;
 }
 
-/*
 void LocalConference::setLastNotify (unsigned int lastNotify) {
 	this->lastNotify = lastNotify;
-} */
+}
 
 void LocalConference::setConferenceId (const ConferenceId &conferenceId) {
 	this->conferenceId = conferenceId;

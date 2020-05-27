@@ -34,6 +34,7 @@ class LocalConferenceEventHandler;
 
 class LINPHONE_PUBLIC LocalConference : public Conference {
 	friend class ServerGroupChatRoomPrivate;
+	friend class LocalConferenceEventHandler;
 public:
 	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
 	virtual ~LocalConference ();
@@ -55,13 +56,18 @@ public:
 #endif
 
 	const ConferenceId &getConferenceId () const;
+	inline unsigned int getLastNotify () const { return lastNotify; };
 
 protected:
-//	void setLastNotify (unsigned int lastNotify);
+	void setLastNotify (unsigned int lastNotify);
 	void setConferenceId (const ConferenceId &conferenceId);
 
-//	inline unsigned int getLastNotify () const { return lastNotify; };
+
 	ConferenceId conferenceId;
+
+	// lastNotify belongs to the conference and not the the event handler.
+	// The event handler can access it using the getter
+	unsigned int lastNotify = 1;
 
 private:
 	L_DISABLE_COPY(LocalConference);
