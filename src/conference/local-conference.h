@@ -57,6 +57,8 @@ public:
 	const ConferenceId &getConferenceId () const;
 	inline unsigned int getLastNotify () const { return lastNotify; };
 
+	void subscribeReceived (LinphoneEvent *event);
+
 protected:
 	void setLastNotify (unsigned int lastNotify);
 	void setConferenceId (const ConferenceId &conferenceId);

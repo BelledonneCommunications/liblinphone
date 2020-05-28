@@ -83,7 +83,6 @@ public:
 	void declineSession (const std::shared_ptr<CallSession> &session, LinphoneReason reason);
 	void dispatchQueuedMessages ();
 
-	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
 	bool initializeParticipants(const std::shared_ptr<Participant> & initiator, SalCallOp *op);

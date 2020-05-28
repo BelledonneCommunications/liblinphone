@@ -2454,7 +2454,7 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
 	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
+		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 #else

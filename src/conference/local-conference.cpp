@@ -21,12 +21,19 @@
 #include "config.h"
 #endif
 
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "linphone/event.h"
+
 #ifdef HAVE_ADVANCED_IM
 #include "handlers/local-conference-event-handler.h"
 #endif
 #include "local-conference.h"
 #include "logger/logger.h"
 #include "participant.h"
+
+// TODO: Remove me later.
+#include "private.h"
 
 // =============================================================================
 
@@ -192,6 +199,11 @@ void LocalConference::setConferenceId (const ConferenceId &conferenceId) {
 
 const ConferenceId &LocalConference::getConferenceId () const {
 	return conferenceId;
+}
+
+void LocalConference::subscribeReceived (LinphoneEvent *event) {
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findChatRoom(conferenceId);
+	eventHandler->subscribeReceived(event, !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne));
 }
 
 LINPHONE_END_NAMESPACE

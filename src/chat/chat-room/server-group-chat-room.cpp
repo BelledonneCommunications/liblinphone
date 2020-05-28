@@ -449,11 +449,6 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (c
 	return nullptr;
 }
 
-void ServerGroupChatRoomPrivate::subscribeReceived (LinphoneEvent *event) {
-	L_Q_T(LocalConference, qConference);
-	qConference->eventHandler->subscribeReceived(event, !!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne));
-}
-
 void ServerGroupChatRoomPrivate::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
 	L_Q_T(LocalConference, qConference);
 	qConference->eventHandler->subscriptionStateChanged(event, state);
