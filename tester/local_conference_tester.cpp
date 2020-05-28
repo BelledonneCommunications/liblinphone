@@ -193,106 +193,10 @@ static void group_chat_room_creation_server (void) {
 
 }
 
-static void add_participant_to_server_group_chat(void) {
-	Focus focus("chloe_rc");
-	ClientConference marie("marie_rc", focus.getIdentity());
-	ClientConference pauline("pauline_rc", focus.getIdentity());
-	ClientConference laure("laure_tcp_rc", focus.getIdentity());
-
-	focus.registerAsParticipantDevice(marie);
-	focus.registerAsParticipantDevice(pauline);
-
-	bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
-	coresList = bctbx_list_append(coresList, marie.getLc());
-	coresList = bctbx_list_append(coresList, pauline.getLc());
-	Address paulineAddr(pauline.getIdentity());
-	bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
-
-	stats initialMarieStats = marie.getStats();
-	stats initialPaulineStats = pauline.getStats();
-
-	// Marie creates a new group chat room
-	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE);
-	participantsAddresses = NULL;
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
-
-	focus.registerAsParticipantDevice(laure);
-	// Pauline adds Laure to the chat room
-	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure.getLc())));
-	linphone_chat_room_add_participants(marieCr, participantsAddresses);
-	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
-
-	stats initialLaureStats = laure.getStats();
-	coresList = bctbx_list_append(coresList, laure.getLc());
-	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure.getCMgr(), &initialLaureStats, confAddr, initialSubject, 2, FALSE);
-
-	// Expected number of participants is 2 (Pauline and Laure)
-	BC_ASSERT_FALSE(wait_for_list(coresList, &marie.getStats().number_of_participants_added, initialMarieStats.number_of_participants_added + 1, 3000));
-	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 3000));
-	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
-	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
-
-	linphone_chat_room_leave(paulineCr);
-	linphone_chat_room_leave(laureCr);
-	// Clean db from chat room
-	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
-	linphone_core_manager_delete_chat_room(laure.getCMgr(), laureCr, coresList);
-	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
-	bctbx_list_free(coresList);
-
-}
-
-static void remove_participant_from_server_group_chat(void) {
-printf("Start test %s\n", __func__);
-	Focus focus("chloe_rc");
-	ClientConference marie("marie_rc", focus.getIdentity());
-	ClientConference pauline("pauline_rc", focus.getIdentity());
-
-	focus.registerAsParticipantDevice(marie);
-	focus.registerAsParticipantDevice(pauline);
-
-	bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
-	coresList = bctbx_list_append(coresList, marie.getLc());
-	coresList = bctbx_list_append(coresList, pauline.getLc());
-	Address paulineAddr(pauline.getIdentity());
-	bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
-
-	stats initialMarieStats = marie.getStats();
-	stats initialPaulineStats = pauline.getStats();
-
-	// Marie creates a new group chat room
-	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE);
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
-
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
-
-	// Marie removes Pauline from the chat room
-	LinphoneAddress *paulineCAddr = linphone_address_new(linphone_core_get_identity(pauline.getLc()));
-	LinphoneParticipant *paulineParticipant = linphone_chat_room_find_participant(marieCr, paulineCAddr);
-	linphone_address_unref(paulineCAddr);
-	BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
-	linphone_chat_room_remove_participant(marieCr, paulineParticipant);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomStateTerminated, 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_participants_removed, 1, 5000));
-
-	// Clean db from chat room
-	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
-	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
-	bctbx_list_free(coresList);
-
-}
 }
 
 static test_t local_conference_tests[] = {
 	TEST_NO_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server),
-	TEST_NO_TAG("Add participant to server group chat", LinphoneTest::add_participant_to_server_group_chat),
-	TEST_NO_TAG("Remove participant from server group chat", LinphoneTest::remove_participant_from_server_group_chat)
 };
 
 test_suite_t local_conference_test_suite = {
