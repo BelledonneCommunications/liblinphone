@@ -44,13 +44,10 @@ public:
 	void multipartNotifyReceived (const std::string &xmlBody);
 	void unsubscribe ();
 
-	void setConferenceId (ConferenceId conferenceId);
-	const ConferenceId &getConferenceId () const;
-
-	unsigned int getLastNotify () const;
-	void setLastNotify (unsigned int lastNotify);
-	void resetLastNotify ();
 	void invalidateSubscription ();
+
+	const ConferenceId &getConferenceId() const;
+	unsigned int getLastNotify () const;
 
 protected:
 	void simpleNotifyReceived (const std::string &xmlBody);
@@ -62,14 +59,10 @@ protected:
 	void onEnteringBackground () override;
 	void onEnteringForeground () override;
 
-	ConferenceId conferenceId;
-
 	RemoteConference *conf = nullptr;
 	LinphoneEvent *lev = nullptr;
 
-	unsigned int lastNotify = 0;
 	bool subscriptionWanted = false;
-
 
 private:
 	void unsubscribePrivate ();
