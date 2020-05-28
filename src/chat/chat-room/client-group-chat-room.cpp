@@ -117,7 +117,7 @@ void ClientGroupChatRoomPrivate::addOneToOneCapability () {
 
 unsigned int ClientGroupChatRoomPrivate::getLastNotifyId () const {
 	L_Q_T(RemoteConference, qConference);
-	return qConference->eventHandler->getLastNotify();
+	return qConference->getLastNotify();
 }
 
 // -----------------------------------------------------------------------------
@@ -158,7 +158,7 @@ void ClientGroupChatRoomPrivate::onChatRoomInsertInDatabaseRequested (const shar
 	L_Q();
 	L_Q_T(RemoteConference, qConference);
 
-	unsigned int notifyId = qConference->eventHandler->getLastNotify();;
+	unsigned int notifyId = qConference->getLastNotify();
 	q->getCore()->getPrivate()->insertChatRoomWithDb(chatRoom, notifyId);
 }
 
@@ -316,16 +316,15 @@ RemoteConference(core, me->getAddress(), nullptr) {
 	this->conferenceAddress = peerAddress;
 	this->subject = subject;
 	this->participants = move(newParticipants);
+	this->conferenceId = conferenceId;
 
 	getMe()->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices())
 		getMe()->addDevice(device->getAddress(), device->getName());
 
-	eventHandler->setConferenceId(conferenceId);
-
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
-	eventHandler->setLastNotify(forceFullState ? 0 : lastNotifyId);
-	lInfo() << "Last notify set to [" << eventHandler->getLastNotify() << "] for conference [" << this << "]";
+	lastNotify = (forceFullState ? 0 : lastNotifyId);
+	lInfo() << "Last notify set to [" << lastNotify << "] for conference [" << this << "]";
 
 	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
@@ -682,7 +681,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	L_D();
 
 	eventHandler->unsubscribe();
-	eventHandler->resetLastNotify();
+	resetLastNotify();
 	//remove event handler from list event handler if used
 	if (d->listHandlerUsed && getCore()->getPrivate()->remoteListEventHandler)
 		getCore()->getPrivate()->remoteListEventHandler->removeHandler(eventHandler.get());
