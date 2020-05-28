@@ -202,8 +202,10 @@ const ConferenceId &LocalConference::getConferenceId () const {
 }
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
+#ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findChatRoom(conferenceId);
 	eventHandler->subscribeReceived(event, !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne));
+#endif
 }
 
 LINPHONE_END_NAMESPACE
