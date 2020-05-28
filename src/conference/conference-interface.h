@@ -68,7 +68,7 @@ public:
 	virtual void setSubject (const std::string &subject) = 0;
 };
 
-class ConferenceListenerInterface {
+class LINPHONE_PUBLIC ConferenceListenerInterface {
 public:
 	virtual ~ConferenceListenerInterface () = default;
 

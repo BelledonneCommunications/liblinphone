@@ -44,7 +44,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ClientGroupChatRoom;
 class Conference;
 
-class Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
+class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphoneParticipant, Participant> {
 	// TODO: Remove... It's ugly.
 	friend class Call;
 	friend class CallPrivate;
