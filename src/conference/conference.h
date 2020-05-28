@@ -70,6 +70,10 @@ public:
 	std::string getResourceLists (const std::list<IdentityAddress> &addresses) const;
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
+		confListeners.push_back(listener);
+	}
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
@@ -85,6 +89,8 @@ protected:
 
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
+
+	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 
 	CallSessionListener *listener = nullptr;
 

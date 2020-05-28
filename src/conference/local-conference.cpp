@@ -37,7 +37,8 @@ LINPHONE_BEGIN_NAMESPACE
 LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
 	: Conference(core, myAddress, listener) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler.reset(new LocalConferenceEventHandler(this));
+	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
+	addListener(eventHandler);
 #endif
 }
 
@@ -45,6 +46,7 @@ LocalConference::~LocalConference () {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif
+	confListeners.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -73,11 +75,18 @@ bool LocalConference::removeParticipant (const shared_ptr<Participant> &particip
 	return false;
 }
 
+/*
+void LocalConference::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
+	++lastNotify;
+	for (const auto &l : confListeners) {
+		l->onFullStateReceived();
+	}
+}
+*/
+
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (const Address &addr) {
-	shared_ptr<Participant> participant = findParticipant(addr);
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantAdded(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		time(nullptr),
@@ -85,6 +94,9 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 		lastNotify,
 		addr
 	);
+	for (const auto &l : confListeners) {
+		l->onParticipantAdded(event);
+	}
 	return event;
 }
 
@@ -92,7 +104,6 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved
 	shared_ptr<Participant> participant = findParticipant(addr);
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAllExcept(eventHandler->createNotifyParticipantRemoved(addr), participant);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		time(nullptr),
@@ -100,13 +111,15 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved
 		lastNotify,
 		addr
 	);
+	for (const auto &l : confListeners) {
+		l->onParticipantRemoved(event);
+	}
 	return event;
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (const Address &addr, bool isAdmin) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAll(eventHandler->createNotifyParticipantAdminStatusChanged(addr, isAdmin));
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		time(nullptr),
@@ -114,26 +127,30 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmi
 		lastNotify,
 		addr
 	);
+	for (const auto &l : confListeners) {
+		l->onParticipantSetAdmin(event);
+	}
 	return event;
 }
 
 shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged () {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAll(eventHandler->createNotifySubjectChanged());
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		time(nullptr),
 		conferenceId,
 		lastNotify,
 		getSubject()
 	);
+	for (const auto &l : confListeners) {
+		l->onSubjectChanged(event);
+	}
 	return event;
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (const Address &addr, const Address &gruu) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceAdded(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		time(nullptr),
@@ -142,13 +159,15 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 		addr,
 		gruu
 	);
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceAdded(event);
+	}
 	return event;
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	eventHandler->notifyAll(eventHandler->createNotifyParticipantDeviceRemoved(addr, gruu));
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		time(nullptr),
@@ -157,6 +176,9 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 		addr,
 		gruu
 	);
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceRemoved(event);
+	}
 	return event;
 }
 
@@ -171,6 +193,5 @@ void LocalConference::setConferenceId (const ConferenceId &conferenceId) {
 const ConferenceId &LocalConference::getConferenceId () const {
 	return conferenceId;
 }
-
 
 LINPHONE_END_NAMESPACE

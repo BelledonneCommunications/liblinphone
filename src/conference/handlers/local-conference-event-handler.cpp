@@ -480,4 +480,44 @@ string LocalConferenceEventHandler::getNotifyForId (int notifyId, bool oneToOne)
 	return Utils::getEmptyConstRefObject<string>();
 }
 
+void LocalConferenceEventHandler::onFullStateReceived () {
+}
+
+void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {
+	const IdentityAddress addr = event->getParticipantAddress();
+	shared_ptr<Participant> participant = conf->findParticipant(addr);
+	notifyAllExcept(createNotifyParticipantAdded(addr), participant);
+}
+
+void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {
+	const IdentityAddress addr = event->getParticipantAddress();
+	shared_ptr<Participant> participant = conf->findParticipant(addr);
+	notifyAllExcept(createNotifyParticipantRemoved(addr), participant);
+}
+
+void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {
+	const IdentityAddress addr = event->getParticipantAddress();
+	const bool isAdmin = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
+	notifyAll(createNotifyParticipantAdminStatusChanged(addr, isAdmin));
+}
+
+void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
+	notifyAll(createNotifySubjectChanged());
+}
+
+void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
+}
+
+void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
+	const IdentityAddress addr = event->getParticipantAddress();
+	const IdentityAddress gruu = event->getDeviceAddress();
+	notifyAll(createNotifyParticipantDeviceAdded(addr, gruu));
+}
+
+void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
+	const IdentityAddress addr = event->getParticipantAddress();
+	const IdentityAddress gruu = event->getDeviceAddress();
+	notifyAll(createNotifyParticipantDeviceRemoved(addr, gruu));
+}
+
 LINPHONE_END_NAMESPACE

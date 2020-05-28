@@ -35,6 +35,10 @@
 
 // =============================================================================
 
+namespace LinphoneTest {
+	class LocalConferenceTester;
+}
+
 LINPHONE_BEGIN_NAMESPACE
 
 class ClientGroupChatRoom;
@@ -63,6 +67,7 @@ class Participant : public bellesip::HybridObject<LinphoneParticipant, Participa
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
+	friend class LinphoneTest::LocalConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 	virtual ~Participant();

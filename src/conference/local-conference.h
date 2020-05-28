@@ -32,7 +32,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LocalConferenceEventHandler;
 
-class LINPHONE_PUBLIC LocalConference : public Conference {
+class LINPHONE_PUBLIC LocalConference : 
+	public Conference,
+	public ConferenceListenerInterface {
 	friend class ServerGroupChatRoomPrivate;
 	friend class LocalConferenceEventHandler;
 public:
@@ -50,10 +52,7 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (const Address &addr, const Address &gruu);
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu);
 
-//protected:
-#ifdef HAVE_ADVANCED_IM
-	std::unique_ptr<LocalConferenceEventHandler> eventHandler;
-#endif
+//	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
 
 	const ConferenceId &getConferenceId () const;
 	inline unsigned int getLastNotify () const { return lastNotify; };
@@ -62,15 +61,20 @@ protected:
 	void setLastNotify (unsigned int lastNotify);
 	void setConferenceId (const ConferenceId &conferenceId);
 
-
 	ConferenceId conferenceId;
 
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
 	unsigned int lastNotify = 1;
 
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
+#endif
+
 private:
+
 	L_DISABLE_COPY(LocalConference);
+
 };
 
 LINPHONE_END_NAMESPACE
