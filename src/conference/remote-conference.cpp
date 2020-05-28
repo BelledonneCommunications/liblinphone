@@ -39,8 +39,13 @@ RemoteConference::RemoteConference (
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener
 ) : Conference(core, myAddress, listener) {
+	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
+	// Local conference sets last notify to 1 in its constructor
+	lastNotify = 0;
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset(new RemoteConferenceEventHandler(this));
+//	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
+//	addListener(eventHandler);
 #endif
 }
 
