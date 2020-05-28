@@ -43,6 +43,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
 	: Conference(core, myAddress, listener) {
+	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
+	// Remote conference sets last notify to 0 in its constructor
+	lastNotify = 1;
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
 	addListener(eventHandler);
@@ -187,18 +190,6 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 		l->onParticipantDeviceRemoved(event);
 	}
 	return event;
-}
-
-void LocalConference::setLastNotify (unsigned int lastNotify) {
-	this->lastNotify = lastNotify;
-}
-
-void LocalConference::setConferenceId (const ConferenceId &conferenceId) {
-	this->conferenceId = conferenceId;
-}
-
-const ConferenceId &LocalConference::getConferenceId () const {
-	return conferenceId;
 }
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
