@@ -74,6 +74,11 @@ public:
 		confListeners.push_back(listener);
 	}
 
+	const ConferenceId &getConferenceId () const;
+	inline unsigned int getLastNotify () const { return lastNotify; };
+
+	void subscribeReceived (LinphoneEvent *event);
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
@@ -93,6 +98,15 @@ protected:
 	std::list<std::shared_ptr<ConferenceListenerInterface>> confListeners;
 
 	CallSessionListener *listener = nullptr;
+
+	void setLastNotify (unsigned int lastNotify);
+	void setConferenceId (const ConferenceId &conferenceId);
+
+	ConferenceId conferenceId;
+
+	// lastNotify belongs to the conference and not the the event handler.
+	// The event handler can access it using the getter
+	unsigned int lastNotify;
 
 private:
 	L_DISABLE_COPY(Conference);
