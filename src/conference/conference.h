@@ -100,6 +100,7 @@ protected:
 	CallSessionListener *listener = nullptr;
 
 	void setLastNotify (unsigned int lastNotify);
+	void resetLastNotify ();
 	void setConferenceId (const ConferenceId &conferenceId);
 
 	ConferenceId conferenceId;
