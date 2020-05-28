@@ -218,4 +218,17 @@ list<IdentityAddress> Conference::parseResourceLists (const Content &content) {
 #endif
 }
 
+void Conference::setLastNotify (unsigned int lastNotify) {
+	this->lastNotify = lastNotify;
+}
+
+void Conference::setConferenceId (const ConferenceId &conferenceId) {
+	this->conferenceId = conferenceId;
+}
+
+const ConferenceId &Conference::getConferenceId () const {
+	return conferenceId;
+}
+
+
 LINPHONE_END_NAMESPACE
