@@ -240,7 +240,7 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
 		} else {
 			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-			qConference->eventHandler->subscribe(q->getConferenceId());
+			qConference->eventHandler->subscribe(q->ChatRoom::getConferenceId());
 		}
 	}
 }
