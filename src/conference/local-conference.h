@@ -54,21 +54,9 @@ public:
 
 //	void notifyFullState (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device);
 
-	const ConferenceId &getConferenceId () const;
-	inline unsigned int getLastNotify () const { return lastNotify; };
-
 	void subscribeReceived (LinphoneEvent *event);
 
 protected:
-	void setLastNotify (unsigned int lastNotify);
-	void setConferenceId (const ConferenceId &conferenceId);
-
-	ConferenceId conferenceId;
-
-	// lastNotify belongs to the conference and not the the event handler.
-	// The event handler can access it using the getter
-	unsigned int lastNotify = 1;
-
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
 #endif
