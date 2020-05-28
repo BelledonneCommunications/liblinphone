@@ -253,6 +253,7 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onParticipantAdded(event);
 	}
@@ -269,6 +270,7 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (tim
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onParticipantRemoved(event);
 	}
@@ -284,6 +286,7 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (ti
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onParticipantSetAdmin(event);
 	}
@@ -298,6 +301,7 @@ shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t crea
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onSubjectChanged(event);
 	}
@@ -315,6 +319,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceAdded(event);
 	}
@@ -331,6 +336,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event);
 	}
