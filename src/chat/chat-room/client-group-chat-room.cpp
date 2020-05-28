@@ -236,11 +236,11 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	ConferenceAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->ChatRoom::getConferenceId())) {
 			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
 		} else {
 			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-			qConference->eventHandler->subscribe(q->getConferenceId());
+			qConference->eventHandler->subscribe(q->ChatRoom::getConferenceId());
 		}
 	}
 }
@@ -458,7 +458,7 @@ void ClientGroupChatRoom::deleteFromDb () {
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistory(
-		getConferenceId(),
+		ChatRoom::getConferenceId(),
 		nLast,
 		(d->capabilities & Capabilities::OneToOne) ?
 			MainDb::Filter::ConferenceChatMessageSecurityFilter :
@@ -469,7 +469,7 @@ list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int end) const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
-		getConferenceId(),
+		ChatRoom::getConferenceId(),
 		begin,
 		end,
 		(d->capabilities & Capabilities::OneToOne) ?
@@ -481,7 +481,7 @@ list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int 
 int ClientGroupChatRoom::getHistorySize () const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistorySize(
-		getConferenceId(),
+		ChatRoom::getConferenceId(),
 		(d->capabilities & Capabilities::OneToOne) ?
 			MainDb::Filter::ConferenceChatMessageSecurityFilter :
 			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
