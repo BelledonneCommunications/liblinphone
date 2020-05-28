@@ -230,5 +230,8 @@ const ConferenceId &Conference::getConferenceId () const {
 	return conferenceId;
 }
 
+void Conference::resetLastNotify () {
+	setLastNotify(0);
+}
 
 LINPHONE_END_NAMESPACE
