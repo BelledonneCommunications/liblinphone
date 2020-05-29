@@ -452,12 +452,12 @@ private:
 	void onConferenceKeywordsChanged (const vector<string> &keywords) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
-	void onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) override;
-	void onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
-	void onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
+	void onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event) override;
+	void onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
+	void onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
 
 public:
 	RemoteConferenceEventHandler *handler;
@@ -489,35 +489,30 @@ void ConferenceEventTester::onConferenceTerminated (const IdentityAddress &addr)
 
 void ConferenceEventTester::onFirstNotifyReceived (const IdentityAddress &addr) {}
 
-void ConferenceEventTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.insert({ addr.asString(), false });
 	participantDevices.insert({ addr.asString(), 0 });
 }
 
-void ConferenceEventTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	participants.erase(addr.asString());
 	participantDevices.erase(addr.asString());
 }
 
-void ConferenceEventTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participants.find(addr.asString());
 	if (it != participants.end())
 		it->second = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 }
 
-void ConferenceEventTester::onSubjectChanged(const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onSubjectChanged(const shared_ptr<ConferenceSubjectEvent> &event) {
 	confSubject = event->getSubject();
 }
 
-void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end())
@@ -525,8 +520,7 @@ void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<Conferenc
 
 }
 
-void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {
-	(void)isFullState; // unused
+void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end() && it->second > 0)
@@ -542,20 +536,20 @@ public:
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override {
 		bool status = LocalConference::addParticipant(addr, params, hasMedia);
 		if (status) {
-			notifyParticipantAdded(addr);
+			notifyParticipantAdded(time(nullptr), false, addr);
 		}
 		return status;
 	}
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
 		bool status = LocalConference::removeParticipant(participant);
 		if (status) {
-			notifyParticipantRemoved(participant->getAddress());
+			notifyParticipantRemoved(time(nullptr), false, participant->getAddress());
 		}
 		return status;
 	}
 	void setSubject (const std::string &subject) override {
 		LocalConference::setSubject(subject);
-		notifySubjectChanged();
+		notifySubjectChanged(time(nullptr), false, subject);
 	}
 };
 
@@ -631,7 +625,7 @@ void ConferenceListenerInterfaceTester::onParticipantDeviceRemoved (const shared
 static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, Address addr, bool isAdmin) {
 	shared_ptr<Participant> p = localConf->findParticipant(addr);
 	p->setAdmin(isAdmin);
-	localConf->notifyParticipantSetAdmin(addr, isAdmin);
+	localConf->notifyParticipantSetAdmin(time(nullptr), false, addr, isAdmin);
 }
 
 void first_notify_parsing() {
@@ -1008,7 +1002,7 @@ void send_added_notify() {
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
-	localConf->notifyParticipantAdded(frankAddr);
+	localConf->notifyParticipantAdded(time(nullptr), false, frankAddr);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 3, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 3, int, "%d");
@@ -1063,7 +1057,7 @@ void send_removed_notify() {
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
-	localConf->notifyParticipantRemoved(bobAddr);
+	localConf->notifyParticipantRemoved(time(nullptr), false, bobAddr);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 1, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 1, int, "%d");
@@ -1114,7 +1108,7 @@ void send_admined_notify() {
 
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
-	localConf->notifyParticipantSetAdmin(bobAddr, true);
+	localConf->notifyParticipantSetAdmin(time(nullptr), false, bobAddr, true);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1164,7 +1158,7 @@ void send_unadmined_notify() {
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
 	unsigned int lastNotifyCount = confListener->lastNotify;
 
-	localConf->notifyParticipantSetAdmin(aliceAddr, false);
+	localConf->notifyParticipantSetAdmin(time(nullptr), false, aliceAddr, false);
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1268,7 +1262,7 @@ void send_device_added_notify() {
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
 
-	localConf->notifyParticipantDeviceAdded(aliceAddr, aliceAddr);
+	localConf->notifyParticipantDeviceAdded(time(nullptr), false, aliceAddr, aliceAddr);
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
@@ -1319,7 +1313,7 @@ void send_device_removed_notify() {
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
 
-	localConf->notifyParticipantDeviceAdded(aliceAddr, aliceAddr);
+	localConf->notifyParticipantDeviceAdded(time(nullptr), false, aliceAddr, aliceAddr);
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
@@ -1327,7 +1321,7 @@ void send_device_removed_notify() {
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 1, int, "%d");
 
-	localConf->notifyParticipantDeviceRemoved(aliceAddr, aliceAddr);
+	localConf->notifyParticipantDeviceRemoved(time(nullptr), false, aliceAddr, aliceAddr);
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
@@ -1335,7 +1329,7 @@ void send_device_removed_notify() {
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.find(aliceAddr.asString())->second, 0, int, "%d");
 
-	localConf->notifyParticipantDeviceRemoved(aliceAddr, aliceAddr);
+	localConf->notifyParticipantDeviceRemoved(time(nullptr), false, aliceAddr, aliceAddr);
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
