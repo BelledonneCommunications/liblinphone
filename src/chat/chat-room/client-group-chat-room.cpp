@@ -745,7 +745,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	d->bgTask.stop();
 }
 
-void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
+void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
 
 	const IdentityAddress &addr = event->getParticipantAddress();
@@ -761,7 +761,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 	participant = Participant::create(this,addr);
 	participants.push_back(participant);
 
-	if (isFullState)
+	if (event->getFullState())
 		return;
 
 	d->addEvent(event);
@@ -770,9 +770,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 	_linphone_chat_room_notify_participant_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
-	(void)isFullState;
-
+void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
 
 	const IdentityAddress &addr = event->getParticipantAddress();
@@ -789,7 +787,7 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 	_linphone_chat_room_notify_participant_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {
+void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
 
 	const IdentityAddress &addr = event->getParticipantAddress();
@@ -808,7 +806,7 @@ void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferencePart
 		return; // No change in the local admin status, do not notify
 	participant->setAdmin(isAdmin);
 
-	if (isFullState)
+	if (event->getFullState())
 		return;
 
 	d->addEvent(event);
@@ -839,14 +837,14 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 	_linphone_chat_room_notify_security_event(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {
+void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event) {
 	L_D();
 
 	if (getSubject() == event->getSubject())
 		return; // No change in the local subject, do not notify
 	RemoteConference::setSubject(event->getSubject());
 
-	if (isFullState)
+	if (event->getFullState())
 		return;
 
 	d->addEvent(event);
@@ -856,7 +854,7 @@ void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEv
 	linphone_core_notify_chat_room_subject_changed(linphone_chat_room_get_core(cr), cr);
 }
 
-void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {
+void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	L_D();
 
 	const IdentityAddress &addr = event->getParticipantAddress();
@@ -883,7 +881,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	if (encryptionEngine)
 		securityEvent = encryptionEngine->onDeviceAdded(event->getDeviceAddress(), participant, getSharedFromThis(), currentSecurityLevel);
 
-	if (isFullState)
+	if (event->getFullState())
 		return;
 
 	d->addEvent(event);
@@ -894,10 +892,8 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {
+void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	L_D();
-
-	(void)isFullState;
 
 	const IdentityAddress &addr = event->getParticipantAddress();
 	shared_ptr<Participant> participant;

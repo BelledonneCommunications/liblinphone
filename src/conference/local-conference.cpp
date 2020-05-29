@@ -91,4 +91,47 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #endif
 }
 
+/*
+void LocalConference::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
+	++lastNotify;
+	Conference::notifyFullState(notify, device);
+}
+*/
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantAdded (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantRemoved (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, addr, isAdmin);
+}
+
+shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, addr, gruu, name);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, addr, gruu);
+}
+
 LINPHONE_END_NAMESPACE

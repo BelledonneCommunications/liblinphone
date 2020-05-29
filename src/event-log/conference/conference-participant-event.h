@@ -28,8 +28,12 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantEventPrivate;
 class IdentityAddress;
+class Conference;
 
 class LINPHONE_PUBLIC ConferenceParticipantEvent : public ConferenceNotifiedEvent {
+	friend class RemoteConferenceEventHandler;
+	friend class Conference;
+
 public:
 	ConferenceParticipantEvent (
 		Type type,
