@@ -1545,8 +1545,17 @@ static void sip_config_read(LinphoneCore *lc) {
 	linphone_core_set_delayed_timeout(lc,tmp);
 
 	tmp=lp_config_get_int(lc->config,"app","auto_download_incoming_files_max_size",-1);
-	linphone_core_set_max_size_for_auto_download_incoming_files(lc, tmp);
-
+	lc->auto_download_incoming_files_max_size = tmp;
+	#if TARGET_OS_IPHONE
+	if (getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared() && !lc->is_main_core) {
+		if (lc->auto_download_incoming_files_max_size > 0) {
+			bctbx_warning("App extention usage detected, auto download disabled for file sharing");
+			lc->auto_download_incoming_files_max_size = -1;
+		}
+		/*Disable auto download for app extention as ChatMessage for file transfer are not resilient to any issues like io error or core stop, until state LinphoneChatMessageStateFileTransferDone.*/
+	}
+	#endif
+	
 	tmp=lp_config_get_int(lc->config,"app","sender_name_hidden_in_forward_message",0);
 	linphone_core_enable_sender_name_hidden_in_forward_message(lc, !!tmp);
 

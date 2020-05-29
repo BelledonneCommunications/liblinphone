@@ -257,7 +257,7 @@ static void fill_content_buffer(LinphoneContent *content, const char *sendFilePa
 	uint8_t *buf = ms_malloc(file_size);
 	size_t read = fread(buf, sizeof(uint8_t), file_size, file_to_send);
 
-	BC_ASSERT_EQUAL(read, file_size, int, "%d");
+	BC_ASSERT_EQUAL(read, file_size, size_t, "%zu");
 	linphone_content_set_buffer(content, buf, file_size);
 	linphone_content_set_size(content, file_size); /*total size to be transfered*/
 	fclose(file_to_send);
@@ -2501,7 +2501,7 @@ static void multiple_is_composing_notification(void) {
 
 	// Laure side
 	composing_addresses = linphone_chat_room_get_composing_addresses(laureCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) == 1) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_username(addr), linphone_address_get_username(pauline->identity));
@@ -2509,7 +2509,7 @@ static void multiple_is_composing_notification(void) {
 
 	// Marie side
 	composing_addresses = linphone_chat_room_get_composing_addresses(marieCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) == 1) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_username(addr), linphone_address_get_username(pauline->identity));
@@ -2517,16 +2517,16 @@ static void multiple_is_composing_notification(void) {
 
 	// Pauline side
 	composing_addresses = linphone_chat_room_get_composing_addresses(paulineCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 
 	wait_for_list(coresList,0, 1, 1500);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived, 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneIsComposingIdleReceived, 1, 5000));
 
 	composing_addresses = linphone_chat_room_get_composing_addresses(marieCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 	composing_addresses = linphone_chat_room_get_composing_addresses(laureCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 
 	// multiple is composing
 	linphone_chat_room_compose(paulineCr);
@@ -2535,7 +2535,7 @@ static void multiple_is_composing_notification(void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneIsComposingActiveReceived, 3, 5000)); // + 2
 	// Laure side
 	composing_addresses = linphone_chat_room_get_composing_addresses(laureCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 2, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 2, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) == 2) {
 			while (composing_addresses) {
 				LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
@@ -2549,7 +2549,7 @@ static void multiple_is_composing_notification(void) {
 	// Marie side
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 2, 5000)); // + 1
 	composing_addresses = linphone_chat_room_get_composing_addresses(marieCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) == 1) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_username(addr), linphone_address_get_username(pauline->identity));
@@ -2558,7 +2558,7 @@ static void multiple_is_composing_notification(void) {
 	// Pauline side
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1, 2000));
 	composing_addresses = linphone_chat_room_get_composing_addresses(paulineCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 1, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) == 1) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
 		BC_ASSERT_STRING_EQUAL(linphone_address_get_username(addr), linphone_address_get_username(marie->identity));
@@ -2570,11 +2570,11 @@ static void multiple_is_composing_notification(void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingIdleReceived, 1, 5000));
 
 	composing_addresses = linphone_chat_room_get_composing_addresses(marieCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 	composing_addresses = linphone_chat_room_get_composing_addresses(laureCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 	composing_addresses = linphone_chat_room_get_composing_addresses(paulineCr);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -4573,7 +4573,7 @@ static void search_friend_chat_room_participants(void) {
 	magicSearch = linphone_magic_search_new(pauline->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, size_t, "%zu");
 		_check_friend_result_list(pauline->lc, resultList, 0, laureI, NULL);
 		_check_friend_result_list(pauline->lc, resultList, 1, marieI, NULL);
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -5442,7 +5442,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	paulineCr = check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	LinphoneAddress *marieAddress = linphone_address_new(linphone_core_get_identity(marie2->lc));
 	LinphoneParticipant *marieParticipant =  linphone_chat_room_find_participant(paulineCr, marieAddress);
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, size_t, "%zu");
 
 	//recheck after restart
 	coresList = bctbx_list_remove(coresList, pauline->lc);
@@ -5461,7 +5461,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	// Marie2 gets the one-to-one chat room with Pauline
 	paulineCr = check_has_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 	marieParticipant =  linphone_chat_room_find_participant(paulineCr, marieAddress);
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_participant_get_devices (marieParticipant)), 1, size_t, "%zu");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_events_size(paulineCr), initialPaulineEvent, int, "%i");
 
 	//check if we can still communicate

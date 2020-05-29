@@ -220,7 +220,7 @@ static time_t check_file(LinphoneCoreManager* mgr)  {
 		ms_free(filepath);
 
 
-		timediff = labs((long int)log_time - (long int)cur_time);
+		timediff = (uint32_t)(labs((long int)log_time - (long int)cur_time));
 #ifndef _WIN32
 		BC_ASSERT_LOWER(timediff, 1, unsigned, "%u");
 		if( !(timediff <= 1) ){

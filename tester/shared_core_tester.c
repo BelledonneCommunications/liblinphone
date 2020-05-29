@@ -120,11 +120,11 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 
 	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneMessageDelivered,
 								  initial_sender_stat.number_of_LinphoneMessageDelivered + 1, 30000));
-	const char *call_id = linphone_chat_message_get_message_id(msg);
+	char *call_id = ms_strdup(linphone_chat_message_get_message_id(msg));
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_FALSE(strcmp(call_id, "") == 0);
 
-	return ms_strdup(call_id);
+	return call_id;
 }
 
 // receiver needs to be a shared core
@@ -201,7 +201,7 @@ void *thread_shared_core_get_message_from_user_defaults(void *arguments) {
 	linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, args->receiver_mgr);
 
 	shared_core_get_message_from_user_defaults(args->sender_mgr, receiver_mgr->lc, args->call_id);
-
+	BC_ASSERT_EQUAL(linphone_core_get_max_size_for_auto_download_incoming_files(receiver_mgr->lc), -1, int, "%i");
 	linphone_core_manager_destroy(receiver_mgr);
 
 	pthread_exit(NULL);
@@ -256,6 +256,8 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 	const char *text = "Bli bli bli \n blu";
 	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_set_max_size_for_auto_download_incoming_files(main_mgr->lc, 0);
+	
 	linphone_core_manager_start(main_mgr, TRUE);
 
 	pthread_t executor;

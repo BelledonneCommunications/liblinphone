@@ -40,9 +40,9 @@ using namespace LinphonePrivate;
 static void check_contents(const bctbx_list_t *contents, bool first_file_transfer, bool second_file_transfer, bool third_content) {
 	BC_ASSERT_PTR_NOT_NULL(contents);
 	if (third_content)
-		BC_ASSERT_EQUAL(bctbx_list_size(contents), 3, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 3, size_t, "%zu");
 	else
-		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, size_t, "%zu");
 
 	int textContentCount = 0;
 	int fileTransferContentCount = 0;
@@ -58,18 +58,18 @@ static void check_contents(const bctbx_list_t *contents, bool first_file_transfe
 			if (first_file_transfer && second_file_transfer) {
 				// Order should be maintained
 				if (fileTransferContentCount == 1) {
-					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 1095946, int, "%d");
+					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 1095946, size_t, "%zu");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
 				} else {
-					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 425, int, "%d");
+					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 425, size_t, "%zu");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "vcards.vcf");
 				}
 			} else if (first_file_transfer || second_file_transfer) {
 				if (first_file_transfer) {
-					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 1095946, int, "%d");
+					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 1095946, size_t, "%zu");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
 				} else {
-					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 425, int, "%d");
+					BC_ASSERT_EQUAL(linphone_content_get_file_size(content), 425, size_t, "%zu");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "vcards.vcf");
 				}
 			}

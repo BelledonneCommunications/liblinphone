@@ -224,7 +224,7 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 		if (use_multipart_invite_body) {
 			BC_ASSERT_PTR_NOT_NULL(parts);
 			if (parts) {
-				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, int, "%i");
+				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, size_t, "%zu");
 				LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(parts);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				if (content) {
@@ -3884,7 +3884,7 @@ static void call_with_generic_cn(void) {
 		err=stat(recorded_file,&stbuf);
 		BC_ASSERT_EQUAL(err, 0, int, "%d");
 		if (err==0){
-			BC_ASSERT_GREATER(stbuf.st_size,120000,int, "%d");
+			BC_ASSERT_GREATER(stbuf.st_size,120000,off_t, "%ld");
 		}
 	}
 

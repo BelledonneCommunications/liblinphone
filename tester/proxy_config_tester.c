@@ -256,7 +256,7 @@ static void single_route(void) {
 
 	const bctbx_list_t *routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(routes);
-	BC_ASSERT_EQUAL(bctbx_list_size(routes), 1, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(routes), 1, size_t, "%zu");
 	const char *route = (const char *)bctbx_list_get_data(routes);
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "<sip:sip.example.org;transport=tcp>");
 	BC_ASSERT_STRING_EQUAL(route, "<sip:sip.example.org;transport=tcp>");
@@ -264,7 +264,7 @@ static void single_route(void) {
 	linphone_proxy_config_set_route(marie_cfg, "sip.linphone.org");
 	routes = linphone_proxy_config_get_routes(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(routes);
-	BC_ASSERT_EQUAL(bctbx_list_size(routes), 1, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(routes), 1, size_t, "%zu");
 	route = (const char *)bctbx_list_get_data(routes);
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_route(marie_cfg), "sip:sip.linphone.org");
 	BC_ASSERT_STRING_EQUAL(route, "sip:sip.linphone.org");
@@ -385,7 +385,7 @@ static void dependent_proxy_dependency_removal(void) {
 
 	proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 
-	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 1, size_t, "%zu");
 
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 
@@ -483,7 +483,7 @@ static void dependent_proxy_dependency_with_core_reloaded(void){
 	linphone_core_manager_setup_dns(marie);
 	
 	/* Check that configuration could be reloaded correctly */
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 2, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 2, size_t, "%zu");
 	
 	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 8));
 	

@@ -555,12 +555,12 @@ void first_notify_parsing() {
 	delete[] notify;
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "Agenda: This month's goals");
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr))->second);
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(linphone_address_as_string(bobAddr)) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(linphone_address_as_string(aliceAddr)) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(linphone_address_as_string(bobAddr))->second, 1, int, "%d");
@@ -591,7 +591,7 @@ void first_notify_parsing_wrong_conf() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 0, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 0, size_t, "%zu");
 	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 
@@ -623,8 +623,8 @@ void participant_added_parsing() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
@@ -635,8 +635,8 @@ void participant_added_parsing() {
 
 	delete[] notify_added;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 3, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 3, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 3, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(frankAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(frankAddr))->second);
 
@@ -669,8 +669,8 @@ void participant_not_added_parsing() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
@@ -681,7 +681,7 @@ void participant_not_added_parsing() {
 
 	delete[] notify_not_added;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(frankAddr)) != tester->participants.end());
 
 	linphone_address_unref(bobAddr);
@@ -712,8 +712,8 @@ void participant_deleted_parsing() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
@@ -724,8 +724,8 @@ void participant_deleted_parsing() {
 
 	delete[] notify_deleted;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 1, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 1, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, size_t, "%zu");
 	BC_ASSERT_FALSE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 
 	linphone_address_unref(bobAddr);
@@ -755,7 +755,7 @@ void participant_admined_parsing() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
@@ -766,7 +766,7 @@ void participant_admined_parsing() {
 
 	delete[] notify_admined;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr))->second);
 
@@ -797,7 +797,7 @@ void participant_unadmined_parsing() {
 
 	delete[] notify;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(bobAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(bobAddr))->second);
@@ -808,7 +808,7 @@ void participant_unadmined_parsing() {
 
 	delete[] notify_unadmined;
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(linphone_address_as_string(aliceAddr)) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(linphone_address_as_string(aliceAddr))->second);
 
@@ -853,7 +853,7 @@ void send_first_notify() {
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
@@ -904,8 +904,8 @@ void send_added_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
@@ -914,8 +914,8 @@ void send_added_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantAdded(frankAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 3, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 3, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 3, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(frankAddr.asString()) != tester->participants.end());
@@ -963,8 +963,8 @@ void send_removed_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
@@ -973,8 +973,8 @@ void send_removed_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantRemoved(bobAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 1, int, "%d");
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 1, size_t, "%zu");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, size_t, "%zu");
 	BC_ASSERT_FALSE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString())->second);
@@ -1019,7 +1019,7 @@ void send_admined_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
@@ -1028,7 +1028,7 @@ void send_admined_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantAdminStatusChanged(bobAddr, true);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString())->second);
@@ -1074,7 +1074,7 @@ void send_unadmined_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(bobAddr.asString())->second);
@@ -1083,7 +1083,7 @@ void send_unadmined_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantAdminStatusChanged(aliceAddr, false);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(tester->participants.find(aliceAddr.asString()) != tester->participants.end());
 	BC_ASSERT_TRUE(!tester->participants.find(aliceAddr.asString())->second);
@@ -1131,7 +1131,7 @@ void send_subject_changed_notify () {
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "A random test subject");
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(tester->handler->getLastNotify(), 1, int, "%d");
 	BC_ASSERT_EQUAL(localHandlerPrivate->getLastNotify(), 1, int, "%d");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
@@ -1144,7 +1144,7 @@ void send_subject_changed_notify () {
 	tester->handler->notifyReceived(notify);
 
 	BC_ASSERT_STRING_EQUAL(tester->confSubject.c_str(), "Another random test subject...");
-	BC_ASSERT_EQUAL(tester->participants.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participants.size(), 2, size_t, "%zu");
 	BC_ASSERT_EQUAL(tester->handler->getLastNotify(), 2, int, "%d");
 	BC_ASSERT_EQUAL(localHandlerPrivate->getLastNotify(), 2, int, "%d");
 	BC_ASSERT_TRUE(tester->participants.find(bobAddr.asString()) != tester->participants.end());
@@ -1192,7 +1192,7 @@ void send_device_added_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1203,7 +1203,7 @@ void send_device_added_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantDeviceAdded(aliceAddr, aliceAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1252,7 +1252,7 @@ void send_device_removed_notify() {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1263,7 +1263,7 @@ void send_device_removed_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantDeviceAdded(aliceAddr, aliceAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1274,7 +1274,7 @@ void send_device_removed_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantDeviceRemoved(aliceAddr, aliceAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1285,7 +1285,7 @@ void send_device_removed_notify() {
 	notify = localHandlerPrivate->createNotifyParticipantDeviceRemoved(aliceAddr, aliceAddr);
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 2, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_TRUE(tester->participantDevices.find(aliceAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
@@ -1325,7 +1325,7 @@ void one_to_one_keyword () {
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
 	tester->handler->notifyReceived(notify);
 
-	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, int, "%d");
+	BC_ASSERT_EQUAL(tester->participantDevices.size(), 1, size_t, "%zu");
 	BC_ASSERT_TRUE(tester->participantDevices.find(bobAddr.asString()) != tester->participantDevices.end());
 	BC_ASSERT_EQUAL(tester->participantDevices.find(bobAddr.asString())->second, 0, int, "%d");
 	BC_ASSERT_TRUE(tester->oneToOne);

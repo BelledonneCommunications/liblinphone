@@ -99,6 +99,7 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
 
 	lev=linphone_core_subscribe(marie->lc,pauline->identity,"dodo",expires,content);
+	
 	linphone_event_ref(lev);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));

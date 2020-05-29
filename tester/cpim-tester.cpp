@@ -120,11 +120,11 @@ static void parse_rfc_example () {
 
 	Cpim::Message::HeaderList list = message->getMessageHeaders();
 	if (!BC_ASSERT_PTR_NOT_NULL(list)) return;
-	BC_ASSERT_EQUAL(list->size(), 7, int, "%d");
+	BC_ASSERT_EQUAL(list->size(), 7, size_t, "%zu");
 
 	list = message->getMessageHeaders("MyFeatures");
 	if (!BC_ASSERT_PTR_NOT_NULL(list)) return;
-	BC_ASSERT_EQUAL(list->size(), 2, int, "%d");
+	BC_ASSERT_EQUAL(list->size(), 2, size_t, "%zu");
 }
 
 static void parse_message_with_generic_header_parameters () {

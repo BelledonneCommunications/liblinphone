@@ -279,7 +279,7 @@ void multipart_to_list () {
 	multipartContent.setContentType(ContentType("multipart", "related"));
 
 	list<Content> contents = ContentManager::multipartToContentList(multipartContent);
-	BC_ASSERT_EQUAL(contents.size(), 4, int, "%d");
+	BC_ASSERT_EQUAL(contents.size(), 4, size_t, "%zu");
 
 	// check body
 	Content content1 = contents.front();
@@ -508,7 +508,7 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("URL", contentType.getParameter("access-type").getValue().c_str());
 	BC_ASSERT_STRING_EQUAL("\"https://www.linphone.org/img/linphone-open-source-voip-projectX2.png\"", contentType.getParameter("URL").getValue().c_str());
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("boundary").getValue().c_str());
-	BC_ASSERT_EQUAL(2, contentType.getParameters().size(), int, "%d");
+	BC_ASSERT_EQUAL(2, contentType.getParameters().size(), size_t, "%zu");
 	lInfo() << "Content-Type is " << contentType;
 	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
 	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
@@ -519,7 +519,7 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("mixed", contentType.getSubType().c_str());
 	BC_ASSERT_STRING_EQUAL("-----------------------------14737809831466499882746641450", contentType.getParameter("boundary").getValue().c_str());
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("access-type").getValue().c_str());
-	BC_ASSERT_EQUAL(1, contentType.getParameters().size(), int, "%d");
+	BC_ASSERT_EQUAL(1, contentType.getParameters().size(), size_t, "%zu");
 	lInfo() << "Content-Type is " << contentType;
 	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
 	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
@@ -529,7 +529,7 @@ static void content_type_parsing(void) {
 	BC_ASSERT_STRING_EQUAL("plain", contentType.getType().c_str());
 	BC_ASSERT_STRING_EQUAL("text", contentType.getSubType().c_str());
 	BC_ASSERT_STRING_EQUAL("", contentType.getParameter("boundary").getValue().c_str());
-	BC_ASSERT_EQUAL(0, contentType.getParameters().size(), int, "%d");
+	BC_ASSERT_EQUAL(0, contentType.getParameters().size(), size_t, "%zu");
 	lInfo() << "Content-Type is " << contentType;
 	BC_ASSERT_STRING_EQUAL(contentType.getName().c_str(), "Content-Type");
 	BC_ASSERT_TRUE(type == contentType.getValueWithParams());
@@ -542,7 +542,7 @@ static void content_header_parsing(void) {
 	BC_ASSERT_TRUE(header.getParameter("param1").getValue() == "value1");
 	BC_ASSERT_TRUE(header.getParameter("param2").getValue().empty());
 	BC_ASSERT_TRUE(header.getParameter("param3").getValue() == "value3");
-	BC_ASSERT_EQUAL(3, header.getParameters().size(), int, "%d");
+	BC_ASSERT_EQUAL(3, header.getParameters().size(), size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("encoding").getValue().c_str());
 	BC_ASSERT_STRING_EQUAL(header.getName().c_str(), "Content-Id");
 	BC_ASSERT_TRUE(header.getValueWithParams() == value);
@@ -550,7 +550,7 @@ static void content_header_parsing(void) {
 	value = "b64";
 	header = Header("Content-Encoding", value);
 	BC_ASSERT_TRUE(header.getValue() == value);
-	BC_ASSERT_EQUAL(0, header.getParameters().size(), int, "%d");
+	BC_ASSERT_EQUAL(0, header.getParameters().size(), size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL("", header.getParameter("access-type").getValue().c_str());
 	BC_ASSERT_STRING_EQUAL(header.getName().c_str(), "Content-Encoding");
 	BC_ASSERT_TRUE(header.getValueWithParams() == value);

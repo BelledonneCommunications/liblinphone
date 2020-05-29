@@ -31,26 +31,26 @@ using namespace LinphonePrivate;
 static void split () {
 	string emptyString;
 	vector<string> result = Utils::split(emptyString, ",");
-	BC_ASSERT_EQUAL(result.size(), 1, int, "%d");
+	BC_ASSERT_EQUAL(result.size(), 1, size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "");
 	string contentDisposition("positive-delivery, negative-delivery, display");
 	result = Utils::split(contentDisposition, ", ");
-	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(result.size(), 3, size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), "negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), "display");
 	result = Utils::split(contentDisposition, ",");
-	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(result.size(), 3, size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), " negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), " display");
 	result = Utils::split(contentDisposition, ',');
-	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(result.size(), 3, size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), " negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), " display");
 	result = Utils::split(contentDisposition, "|");
-	BC_ASSERT_EQUAL(result.size(), 1, int, "%d");
+	BC_ASSERT_EQUAL(result.size(), 1, size_t, "%zu");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), contentDisposition.c_str());
 }
 

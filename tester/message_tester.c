@@ -402,7 +402,7 @@ void text_message_from_non_default_proxy_config(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
 	
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, size_t, "%zu");
 	LinphoneProxyConfig *proxyConfig = NULL;
 	const bctbx_list_t *prxCfgs = proxyConfigs;
 	for (; prxCfgs != NULL; prxCfgs = prxCfgs->next) {
@@ -439,7 +439,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
 	
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
-	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, size_t, "%zu");
 	LinphoneProxyConfig *proxyConfig = NULL;
 	const bctbx_list_t *prxCfgs = proxyConfigs;
 	for (; prxCfgs != NULL; prxCfgs = prxCfgs->next) {
@@ -493,7 +493,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	LinphoneChatRoom* chat_room;
 	LinphoneChatMessage* msg;
 	LinphoneChatMessageCbs *cbs;
-	int file_transfer_size;
+	size_t file_transfer_size;
 	bctbx_list_t *msg_list = NULL;
 
 	/* Remove any previously downloaded file */
@@ -518,11 +518,11 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	}
 	const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
 	BC_ASSERT_PTR_NOT_NULL(contents);
-	BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
+	BC_ASSERT_EQUAL(1, bctbx_list_size(contents), size_t, "%zu");
 	LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
 	file_transfer_size = linphone_content_get_file_size(content);
-	BC_ASSERT_NOT_EQUAL(0, file_transfer_size, int, "%d");
+	BC_ASSERT_NOT_EQUAL(0, file_transfer_size, size_t, "%zu");
 
 	if (two_files) {
 		FILE *file_to_send = NULL;
@@ -544,7 +544,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 		linphone_chat_message_add_file_content(msg, content);
 		BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
-		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, size_t, "%zu");
 
 		linphone_content_unref(content);
 	}
@@ -596,7 +596,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 		if (marie->stat.last_received_chat_message) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 			linphone_chat_room_mark_as_read(marie_room);
-			if (auto_download == -1 || (auto_download > 0 && auto_download < file_transfer_size)) {
+			if (auto_download == -1 || (auto_download > 0 && auto_download <(int)file_transfer_size)) {
 				// We shoudln't get displayed IMDN until file has been downloaded
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
@@ -615,7 +615,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 				if (two_files) {
 					const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
-					BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+					BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, size_t, "%zu");
 				}
 
 				cbs = linphone_chat_message_get_callbacks(recv_msg);
@@ -630,7 +630,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 				if (download_error) {
 					/* wait for file to be 50% downloaded */
-					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.progress_of_LinphoneFileTransfer, 50));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1));
 					/* and simulate network error */
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
@@ -659,12 +659,24 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					}
 				}
 			} else {
+				if (download_error) {
+					/* wait for file transfert to start*/
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1));
+					/* and simulate network error */
+					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), -1);
+					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
+					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
+					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+						BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					}
+				}
+				
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
 					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
 				}
 				contents = linphone_chat_message_get_contents(msg);
 				BC_ASSERT_PTR_NOT_NULL(contents);
-				BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
+				BC_ASSERT_EQUAL(1, bctbx_list_size(contents), size_t, "%zu");
 				content = (LinphoneContent *)bctbx_list_get_data(contents);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
@@ -754,6 +766,9 @@ static void transfer_message_with_download_io_error(void) {
 	transfer_message_base(FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, -1, FALSE);
 }
 
+static void transfer_message_auto_download_io_error() {
+	transfer_message_base(FALSE, TRUE, TRUE, TRUE, FALSE, TRUE, 0, FALSE);
+}
 static void transfer_message_upload_cancelled(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -1123,7 +1138,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	linphone_chat_room_compose(pauline_chat_room);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
-	BC_ASSERT_GREATER(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_GREATER(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 	if (bctbx_list_size(composing_addresses) > 0) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
 		char *address_string = linphone_address_as_string(addr);
@@ -1159,7 +1174,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	linphone_chat_room_send_message(pauline_chat_room, "Composing a msg");
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingIdleReceived, 2));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
-	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, size_t, "%zu");
 
 end:
 	linphone_core_manager_destroy(marie);
@@ -1612,7 +1627,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 		linphone_chat_message_add_file_content(msg, content);
 		BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
 		const bctbx_list_t *contents = linphone_chat_message_get_contents(msg);
-		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, size_t, "%zu");
 
 		linphone_content_unref(content);
 	}
@@ -1641,7 +1656,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 
 		if (two_files) {
 			const bctbx_list_t *contents = linphone_chat_message_get_contents(recv_msg);
-			BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+			BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, size_t, "%zu");
 		}
 
 		cbs = linphone_chat_message_get_callbacks(recv_msg);
@@ -2943,6 +2958,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message auto download", transfer_message_auto_download),
 	TEST_NO_TAG("Transfer message auto download 2", transfer_message_auto_download_2),
 	TEST_NO_TAG("Transfer message auto download enabled but file too large", transfer_message_auto_download_3),
+	TEST_NO_TAG("Transfer message auto download with download io error", transfer_message_auto_download_io_error),
 	TEST_NO_TAG("Transfer message from history", transfer_message_from_history),
 	TEST_NO_TAG("Transfer message with http proxy", file_transfer_with_http_proxy),
 	TEST_NO_TAG("Transfer message with upload io error", transfer_message_with_upload_io_error),

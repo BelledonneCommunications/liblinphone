@@ -108,8 +108,8 @@ static void get_history (void) {
 			0, -1, MainDb::Filter::ConferenceChatMessageFilter
 		).size(),
 		54,
-		int,
-		"%d"
+		size_t,
+		"%zu"
 	);
 	BC_ASSERT_EQUAL(
 		mainDb.getHistoryRange(
@@ -117,8 +117,8 @@ static void get_history (void) {
 			0, -1, MainDb::Filter::ConferenceCallFilter
 		).size(),
 		0,
-		int,
-		"%d"
+		size_t,
+		"%zu"
 	);
 	BC_ASSERT_EQUAL(
 		mainDb.getHistoryRange(
@@ -126,8 +126,8 @@ static void get_history (void) {
 			0, -1, MainDb::Filter::ConferenceChatMessageFilter
 		).size(),
 		804,
-		int,
-		"%d"
+		size_t,
+		"%zu"
 	);
 	BC_ASSERT_EQUAL(
 		mainDb.getHistory(
@@ -135,8 +135,8 @@ static void get_history (void) {
 			100, MainDb::Filter::ConferenceChatMessageFilter
 		).size(),
 		100,
-		int,
-		"%d"
+		size_t,
+		"%zu"
 	);
 }
 
@@ -147,7 +147,7 @@ static void get_conference_notified_events (void) {
 		ConferenceId(IdentityAddress("sip:test-44@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
 		1
 	);
-	BC_ASSERT_EQUAL(events.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL(events.size(), 3, size_t, "%zu");
 	if (events.size() != 3)
 		return;
 
@@ -192,7 +192,7 @@ static void get_chat_rooms() {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
 	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
+	BC_ASSERT_EQUAL(chatRooms.size(), 86, size_t, "%zu");
 
 	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
 	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
@@ -217,7 +217,7 @@ static void get_chat_rooms() {
 			BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		}
 	}
-	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, int, "%d");
+	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, size_t, "%zu");
 
 	// Check an empty chat room last_message_id is updated after adding a message into it
 	BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
