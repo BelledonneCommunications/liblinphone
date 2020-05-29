@@ -32,7 +32,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class LocalConferenceEventHandler;
 
-class LINPHONE_PUBLIC LocalConference : 
+class LINPHONE_PUBLIC LocalConference :
 	public Conference,
 	public ConferenceListenerInterface {
 	friend class ServerGroupChatRoomPrivate;
@@ -46,6 +46,13 @@ public:
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
 	void subscribeReceived (LinphoneEvent *event);
+
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin);
+	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name = "");
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu);
 
 protected:
 #ifdef HAVE_ADVANCED_IM
