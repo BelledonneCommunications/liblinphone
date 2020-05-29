@@ -30,7 +30,9 @@ LINPHONE_BEGIN_NAMESPACE
 class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
-class LINPHONE_PUBLIC ClientGroupChatRoom : public ChatRoom, public RemoteConference {
+class LINPHONE_PUBLIC ClientGroupChatRoom :
+	public ChatRoom,
+	public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class CorePrivate;
@@ -130,12 +132,12 @@ private:
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
-	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
-	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
-	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) override;
+	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
+	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
+	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
 
 	void onParticipantsCleared () override;
 
