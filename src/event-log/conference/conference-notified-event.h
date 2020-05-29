@@ -37,6 +37,7 @@ public:
 	);
 
 	unsigned int getNotifyId () const;
+	inline bool getFullState () const { return fullState; };
 
 protected:
 	ConferenceNotifiedEvent (
@@ -46,6 +47,10 @@ protected:
 		const ConferenceId &conferenceId,
 		unsigned int notifyId
 	);
+
+	inline void setFullState (const bool fullState) { this->fullState = fullState; };
+
+	bool fullState = false;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceNotifiedEvent);
