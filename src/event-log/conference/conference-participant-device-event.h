@@ -31,6 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceParticipantDeviceEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceParticipantDeviceEvent : public ConferenceParticipantEvent {
+	friend class Conference;
 public:
 	ConferenceParticipantDeviceEvent (
 		Type type,

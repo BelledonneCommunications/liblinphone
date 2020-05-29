@@ -144,7 +144,7 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 	 * previously OR a totally new participant. */
 	if (findAuthorizedParticipant(addr) == nullptr){
 		authorizedParticipants.push_back(participant);
-		shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantAdded(addr);
+		shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantAdded(time(nullptr), false, addr);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 	return participant;
@@ -274,10 +274,10 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		mInitiatorDevice = device;
 
 		/*Since the initiator of the chatroom has not yet subscribed at this stage, this won't generate NOTIFY, the events will be queued. */
-		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->notifyParticipantDeviceAdded(participant->getAddress(), gruu);
+		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = qConference->notifyParticipantDeviceAdded(time(nullptr), false, participant->getAddress(), gruu);
 		q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 		if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-			shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->notifyParticipantSetAdmin(participant->getAddress(), true);
+			shared_ptr<ConferenceParticipantEvent> adminEvent = qConference->notifyParticipantSetAdmin(time(nullptr), false, participant->getAddress(), true);
 			q->getCore()->getPrivate()->mainDb->addEvent(adminEvent);
 		}
 	} else {
@@ -423,7 +423,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<const Parti
 
 	queuedMessages.erase(participant->getAddress().asString());
 
-	shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantRemoved(participant->getAddress());
+	shared_ptr<ConferenceParticipantEvent> event = qConference->notifyParticipantRemoved(time(nullptr), false, participant->getAddress());
 	q->getCore()->getPrivate()->mainDb->addEvent(event);
 
 	if (!isAdminLeft())
@@ -755,7 +755,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		 */
 		device = participant->addDevice(deviceInfo.getAddress(), deviceInfo.getName());
 
-		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->notifyParticipantDeviceAdded(participant->getAddress(), deviceInfo.getAddress());
+		shared_ptr<ConferenceParticipantDeviceEvent> event = qConference->notifyParticipantDeviceAdded(time(nullptr), false, participant->getAddress(), deviceInfo.getAddress());
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 
 		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
@@ -985,7 +985,7 @@ void ServerGroupChatRoomPrivate::removeParticipantDevice (const shared_ptr<Parti
 		return;
 	}
 	// Notify to everyone the retirement of this device.
-	auto deviceEvent = qConference->notifyParticipantDeviceRemoved(participant->getAddress(), deviceAddress);
+	auto deviceEvent = qConference->notifyParticipantDeviceRemoved(time(nullptr), false, participant->getAddress(), deviceAddress);
 	q->getCore()->getPrivate()->mainDb->addEvent(deviceEvent);
 	// First set it as left, so that it may eventually trigger the destruction of the chatroom if no device are present for any participant.
 	setParticipantDeviceState(participantDevice, ParticipantDevice::State::Left);
@@ -1308,7 +1308,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	if (isAdmin != participant->isAdmin()) {
 		participant->setAdmin(isAdmin);
 		if (!(d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne)) {
-			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantSetAdmin(participant->getAddress(), participant->isAdmin());
+			shared_ptr<ConferenceParticipantEvent> event = notifyParticipantSetAdmin(time(nullptr), false, participant->getAddress(), participant->isAdmin());
 			getCore()->getPrivate()->mainDb->addEvent(event);
 		}
 	}
@@ -1317,7 +1317,7 @@ void ServerGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 void ServerGroupChatRoom::setSubject (const string &subject) {
 	if (subject != getSubject()) {
 		LocalConference::setSubject(subject);
-		shared_ptr<ConferenceSubjectEvent> event = notifySubjectChanged();
+		shared_ptr<ConferenceSubjectEvent> event = notifySubjectChanged(time(nullptr), false, getSubject());
 		getCore()->getPrivate()->mainDb->addEvent(event);
 	}
 }
