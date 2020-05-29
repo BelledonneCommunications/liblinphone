@@ -46,7 +46,7 @@ Conference::Conference (
 }
 
 Conference::~Conference () {
-	confListeners.clear();
+	//confListeners.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -244,103 +244,97 @@ void Conference::notifyFullState (const string &notify, const shared_ptr<Partici
 }
 */
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (const Address &addr) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
 		addr
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onParticipantAdded(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (const Address &addr) {
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
 	shared_ptr<Participant> participant = findParticipant(addr);
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
 		addr
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onParticipantRemoved(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (const Address &addr, bool isAdmin) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
 		addr
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onParticipantSetAdmin(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged () {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
+shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
-		getSubject()
+		subject
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onSubjectChanged(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (const Address &addr, const Address &gruu) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
 		addr,
-		gruu
+		gruu,
+		name
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceAdded(event);
 	}
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceRemoved (const Address &addr, const Address &gruu) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
-		time(nullptr),
+		creationTime,
 		conferenceId,
 		lastNotify,
 		addr,
 		gruu
 	);
+	event->setFullState(isFullState);
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event);
 	}
 	return event;
 }
-
 
 LINPHONE_END_NAMESPACE
