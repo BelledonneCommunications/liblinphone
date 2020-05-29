@@ -108,14 +108,10 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 	if (confDescription.present()) {
 		auto &subject = confDescription.get().getSubject();
 		if (subject.present() && !subject.get().empty())
-			confListener->onSubjectChanged(
-				make_shared<ConferenceSubjectEvent>(
-					creationTime,
-					getConferenceId(),
-					getLastNotify(),
-					subject.get()
-				),
-				isFullState
+			conf->notifySubjectChanged(
+				creationTime,
+				isFullState,
+				subject.get()
 			);
 
 		auto &keywords = confDescription.get().getKeywords();
@@ -139,46 +135,32 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		StateType state = user.getState();
 
 		if (state == StateType::deleted) {
-			confListener->onParticipantRemoved(
-				make_shared<ConferenceParticipantEvent>(
-					EventLog::Type::ConferenceParticipantRemoved,
-					creationTime,
-					getConferenceId(),
-					getLastNotify(),
-					address
-				),
-				isFullState
+			conf->notifyParticipantRemoved(
+				creationTime,
+				isFullState,
+				address
 			);
 
 			continue;
 		}
 
 		if (state == StateType::full)
-			confListener->onParticipantAdded(
-				make_shared<ConferenceParticipantEvent>(
-					EventLog::Type::ConferenceParticipantAdded,
-					creationTime,
-					getConferenceId(),
-					getLastNotify(),
-					address
-				),
-				isFullState
+			conf->notifyParticipantAdded(
+				creationTime,
+				isFullState,
+				address
 			);
 
 		auto &roles = user.getRoles();
 		if (roles) {
 			auto &entry = roles->getEntry();
-			confListener->onParticipantSetAdmin(
-				make_shared<ConferenceParticipantEvent>(
-					find(entry, "admin") != entry.end()
-						? EventLog::Type::ConferenceParticipantSetAdmin
-						: EventLog::Type::ConferenceParticipantUnsetAdmin,
-					creationTime,
-					getConferenceId(),
-					getLastNotify(),
-					address
-				),
-				isFullState
+			conf->notifyParticipantSetAdmin(
+				creationTime,
+				isFullState,
+				address,
+				(find(entry, "admin") != entry.end()
+					? true
+					: false)
 			);
 		}
 
@@ -190,30 +172,21 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			StateType state = endpoint.getState();
 
 			if (state == StateType::deleted) {
-				confListener->onParticipantDeviceRemoved(
-					make_shared<ConferenceParticipantDeviceEvent>(
-						EventLog::Type::ConferenceParticipantDeviceRemoved,
-						creationTime,
-						getConferenceId(),
-						getLastNotify(),
-						address,
-						gruu
-					),
-					isFullState
+				conf->notifyParticipantDeviceRemoved(
+					creationTime,
+					isFullState,
+					address,
+					gruu
 				);
 			} else if (state == StateType::full) {
+
 				const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
-				confListener->onParticipantDeviceAdded(
-					make_shared<ConferenceParticipantDeviceEvent>(
-						EventLog::Type::ConferenceParticipantDeviceAdded,
-						creationTime,
-						getConferenceId(),
-						getLastNotify(),
-						address,
-						gruu,
-						name
-					),
-					isFullState
+				conf->notifyParticipantDeviceAdded(
+					creationTime,
+					isFullState,
+					address,
+					gruu,
+					name
 				);
 			}
 		}
