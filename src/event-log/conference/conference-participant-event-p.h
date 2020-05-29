@@ -1,5 +1,4 @@
-/*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+/* * Copyright (c) 2010-2019 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
