@@ -181,7 +181,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
             .build();
 
-         mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+        mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
             .setAudioAttributes(audioAttrs)
             .setOnAudioFocusChangeListener(this)
             .build();
@@ -225,6 +225,14 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
                 break;
         }
+    }
+
+    public void hackVolume() {
+        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_MUTE, AudioManager.STREAM_VOICE_CALL, 0);
+        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_UNMUTE, AudioManager.STREAM_VOICE_CALL, 0);
+
+        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_LOWER, AudioManager.STREAM_VOICE_CALL, 0);
+        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, AudioManager.STREAM_VOICE_CALL, 0);
     }
 
     private void routeAudioToEarpiece() {

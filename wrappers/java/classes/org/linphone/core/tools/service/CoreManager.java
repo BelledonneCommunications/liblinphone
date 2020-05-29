@@ -29,6 +29,7 @@ import android.os.Build;
 
 import com.google.firebase.FirebaseApp;
 
+import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
@@ -158,13 +159,27 @@ public class CoreManager {
                         Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
                         mAudioHelper.requestRingingAudioFocus();
                     }
-                } else if (state == Call.State.Connected && call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
-                    Log.i("[Core Manager] Stop incoming call ringing");
-                    mAudioHelper.stopRinging();
-                } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
+                } else if (state == Call.State.Connected) {
+                    if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
+                        Log.i("[Core Manager] Stop incoming call ringing");
+                        mAudioHelper.stopRinging();
+                    } else {
+                        mAudioHelper.releaseRingingAudioFocus();
+                    }
+                } else if (state == Call.State.OutgoingInit && core.getCallsNb() == 1) {
+                    Log.i("[Core Manager] Outgoing call in progress, no other call, acquire ringing audio focus for ringback");
+                    mAudioHelper.requestRingingAudioFocus();
+                } else if (state == Call.State.StreamsRunning) {
                     Log.i("[Core Manager] Call active, ensure audio focus granted");
                     mAudioHelper.requestCallAudioFocus();
                 }
+            }
+
+            @Override
+            public void onAudioDeviceChanged(Core core, AudioDevice device) {
+                // This is required on some devices with AAudio sound card if media volume is set to 0, 
+                // otherwise they won't head any sound until they either increase or decrease the volume.
+                mAudioHelper.hackVolume();
             }
         };
         mCore.addListener(mListener);
