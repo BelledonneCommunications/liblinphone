@@ -132,6 +132,22 @@ static const LinphoneAuthInfo *find_auth_info(LinphoneCore *lc, const char *user
 	return ret;
 }
 
+const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain) {
+	bctbx_list_t *elem;
+	for (elem=lc->auth_info;elem!=NULL;elem=elem->next) {
+		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo*)elem->data;
+		// if auth info holds tls_cert and key or a path to them
+		if ((linphone_auth_info_get_tls_cert(pinfo) && linphone_auth_info_get_tls_key(pinfo)) || (linphone_auth_info_get_tls_cert_path(pinfo) && linphone_auth_info_get_tls_key_path(pinfo))) {
+			// check it matches requested username/domain
+			if (username && linphone_auth_info_get_username(pinfo) && (strcmp(username, linphone_auth_info_get_username(pinfo))==0)
+			&& domain && linphone_auth_info_get_domain(pinfo) && (strcmp(domain, linphone_auth_info_get_domain(pinfo))==0)) {
+				return pinfo;
+			}
+		}
+	}
+	return NULL;
+}
+
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc) {
 	bctbx_list_t *elem;
 	for (elem=lc->auth_info;elem!=NULL;elem=elem->next) {

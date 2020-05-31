@@ -57,8 +57,15 @@ const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
 const char *file_transfer_url="https://transfer.example.org:9444/http-file-transfer-server/hft.php";
+// These lime server authenticate user using Digest auth only
 const char *lime_server_c25519_url="https://lime.wildcard1.linphone.org:8443/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_url="https://lime.wildcard1.linphone.org:8443/lime-server-c448/lime-server.php";
+// These lime server authenticate user using TLS auth only
+const char *lime_server_c25519_tlsauth_req_url="https://lime.wildcard1.linphone.org:8543/lime-server-c25519/lime-server.php";
+const char *lime_server_c448_tlsauth_req_url="https://lime.wildcard1.linphone.org:8543/lime-server-c448/lime-server.php";
+// These lime server authenticate user using optionnal TLS auth, falling back on digest auth if client did not provide a client certificate
+const char *lime_server_c25519_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c25519/lime-server.php";
+const char *lime_server_c448_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c448/lime-server.php";
 bool_t liblinphonetester_ipv6 = TRUE;
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
@@ -2176,6 +2183,40 @@ int liblinphone_tester_copy_file(const char *from, const char *to)
     return 0;
 }
 
+/*
+ * Read a file and set its content in a buffer
+ * caller must then free the buffer
+ * return size read
+ */
+size_t liblinphone_tester_load_text_file_in_buffer(const char *filePath, char **buffer) {
+	FILE *fp = fopen(filePath, "r");
+	if ( fp == NULL )
+	{
+		ms_error("Can't open %s for reading: %s\n",filePath,strerror(errno));
+		return 0;
+	}
+
+	/* get the size to read */
+	if (fseek(fp, 0L, SEEK_END) == 0) {
+		long bufsize = ftell(fp);
+		*buffer = bctbx_malloc(sizeof(char) * (bufsize + 1)); // +1 to add a '\0'
+		/* rewind */
+		fseek(fp, 0L, SEEK_SET);
+		/* read */
+		size_t readSize = fread(*buffer, sizeof(char), bufsize, fp);
+		if ( ferror( fp ) != 0 ) {
+			bctbx_free(*buffer);
+			fclose(fp);
+			return 0;
+		} else {
+			(*buffer)[readSize++] = '\0';
+			fclose(fp);
+			return readSize;
+		}
+	}
+	fclose(fp);
+	return 0;
+}
 
 static const int flowControlIntervalMs = 5000;
 static const int flowControlThresholdMs = 40;
@@ -2438,23 +2479,47 @@ static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
 	ms_snd_card_manager_prepend_card(m, create_dummy3_test_snd_card());
 }
 
-void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
+void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
 		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
-		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_url);
+		if (tls_auth_server == TRUE) {
+			if (req==TRUE) {
+				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_tlsauth_req_url);
+			} else {
+				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_tlsauth_opt_url);
+			}
+		} else {
+			linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c448_url);
+		}
 	} else {
 		// Change the curve setting before the server URL
 		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
-		linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_url);
+		if (tls_auth_server == TRUE) {
+			if (req == TRUE) {
+				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_tlsauth_req_url);
+			} else {
+				linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_tlsauth_opt_url);
+			}
+		} else {
+			linphone_core_set_lime_x3dh_server_url(manager->lc, lime_server_c25519_url);
+		}
+	}
+}
+
+void set_lime_curve(const int curveId, LinphoneCoreManager *manager) {
+	set_lime_curve_tls(curveId, manager, FALSE, FALSE);
+}
+
+void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t req) {
+	bctbx_list_t *item = managerList;
+	for (item = managerList; item; item = bctbx_list_next(item)) {
+		set_lime_curve_tls(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)), tls_auth_server, req);
 	}
 }
 
 void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
-	bctbx_list_t *item = managerList;
-	for (item = managerList; item; item = bctbx_list_next(item)) {
-		set_lime_curve(curveId, (LinphoneCoreManager *)(bctbx_list_get_data(item)));
-	}
+	set_lime_curve_list_tls (curveId, managerList, FALSE, FALSE);
 }

@@ -75,6 +75,16 @@ set(CERTIFICATE_CLIENT_FILES
 	certificates/client/cert3.pem
 	certificates/client/key3.pem
 	certificates/client/cert2-signed-by-other-ca.pem
+	certificates/client/user1_cert.pem
+	certificates/client/user1_key.pem
+	certificates/client/user1_multiple_aliases_cert.pem
+	certificates/client/user1_multiple_aliases_key.pem
+	certificates/client/user2_cert.pem
+	certificates/client/user2_key.pem
+	certificates/client/user2_CN_cert.pem
+	certificates/client/user2_CN_key.pem
+	certificates/client/user2_revoked_cert.pem
+	certificates/client/user2_revoked_key.pem
 )
 
 set(CERTIFICATE_FILES ${CERTIFICATE_ALT_FILES} ${CERTIFICATE_CN_FILES} ${CERTIFICATE_CLIENT_FILES})
@@ -241,6 +251,7 @@ set(SOURCE_FILES_CXX
 	multipart-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
+	lime-user-authentication-tester.cpp
 )
 
 if(ENABLE_ADVANCED_IM)
