@@ -782,13 +782,14 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceParticipantEvent>(
+	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
 		IdentityAddress(row.get<string>(12))
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
@@ -796,14 +797,15 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceParticipantDeviceEvent>(
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
 		IdentityAddress(row.get<string>(12)),
 		IdentityAddress(row.get<string>(11))
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSecurityEvent (
@@ -837,12 +839,13 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
-	return make_shared<ConferenceSubjectEvent>(
+	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		getConferenceEventNotifyIdFromRow(row),
 		row.get<string>(13)
 	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 #endif
 
