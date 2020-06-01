@@ -682,7 +682,6 @@ static void search_friend_in_alphabetical_order(void) {
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
-
 }
 
 static void search_friend_without_filter(void) {
@@ -1606,6 +1605,114 @@ static void search_friend_chat_room_remote(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void search_friend_non_default_list(void) {
+	LinphoneMagicSearch *magicSearch = NULL;
+	bctbx_list_t *resultList = NULL;
+	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+	LinphoneFriendList *otherFl = linphone_core_create_friend_list(manager->lc);
+
+	// Add a friend in the default one
+	const char *name1SipUri = {"sip:toto@sip.example.org"};
+	const char *name1 = {"STEPHANIE delarue"};
+	LinphoneFriend *friend1 = linphone_core_create_friend(manager->lc);
+	LinphoneVcard *vcard1 = linphone_factory_create_vcard(linphone_factory_get());
+	linphone_vcard_set_full_name(vcard1, name1); // STEPHANIE delarue
+	linphone_vcard_set_url(vcard1, name1SipUri); //sip:toto@sip.example.org
+	linphone_vcard_add_sip_address(vcard1, name1SipUri);
+	linphone_friend_set_vcard(friend1, vcard1);
+	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(lfl, friend1), LinphoneFriendListOK, int, "%d");
+
+	// Add a friend in the new one, before it is added to the Core
+	const char *name2SipUri = {"sip:stephanie@sip.example.org"};
+	const char *name3SipUri = {"sip:alber@sip.example.org"};
+	const char *name2 = {"alias delarue"};
+	const char *name3 = {"Alber josh"};
+
+	LinphoneFriend *friend2 = linphone_core_create_friend(manager->lc);
+	LinphoneFriend *friend3 = linphone_core_create_friend(manager->lc);
+
+	LinphoneVcard *vcard2 = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *vcard3 = linphone_factory_create_vcard(linphone_factory_get());
+
+	linphone_vcard_set_full_name(vcard2, name2); // alias delarue
+	linphone_vcard_set_url(vcard2, name2SipUri); //sip:stephanie@sip.example.org
+	linphone_vcard_add_sip_address(vcard2, name2SipUri);
+	linphone_friend_set_vcard(friend2, vcard2);
+	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(otherFl, friend2), LinphoneFriendListOK, int, "%d");
+
+	linphone_vcard_set_full_name(vcard3, name3); // Alber josh
+	linphone_vcard_set_url(vcard3, name3SipUri); //sip:alber@sip.example.org
+	linphone_vcard_add_sip_address(vcard3, name3SipUri);
+	linphone_friend_set_vcard(friend3, vcard3);
+	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(otherFl, friend3), LinphoneFriendListOK, int, "%d");
+
+	// Add friend list to the Core
+	linphone_core_add_friend_list(manager->lc, otherFl);
+
+	// Add a friend in the new one once it is added to the Core
+	const char *name4SipUri = {"sip:gauthier@sip.example.org"};
+	const char *name5SipUri = {"sip:gal@sip.example.org"};
+	const char *name4 = {"gauthier wei"};
+	const char *name5 = {"gal tcho"};
+	
+	LinphoneFriend *friend4 = linphone_core_create_friend(manager->lc);
+	LinphoneFriend *friend5 = linphone_core_create_friend(manager->lc);
+
+	LinphoneVcard *vcard4 = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *vcard5 = linphone_factory_create_vcard(linphone_factory_get());
+
+	linphone_vcard_set_full_name(vcard4, name4); // gauthier wei
+	linphone_vcard_set_url(vcard4, name4SipUri); //sip:gauthier@sip.example.org
+	linphone_vcard_add_sip_address(vcard4, name4SipUri);
+	linphone_friend_set_vcard(friend4, vcard4);
+	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(otherFl, friend4), LinphoneFriendListOK, int, "%d");
+
+	linphone_vcard_set_full_name(vcard5, name5); // gal tcho
+	linphone_vcard_set_url(vcard5, name5SipUri); //sip:gal@sip.example.org
+	linphone_vcard_add_sip_address(vcard5, name5SipUri);
+	linphone_friend_set_vcard(friend5, vcard5);
+	BC_ASSERT_EQUAL(linphone_friend_list_add_local_friend(otherFl, friend5), LinphoneFriendListOK, int, "%d");
+
+	magicSearch = linphone_magic_search_new(manager->lc);
+
+	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
+
+	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
+		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		_check_friend_result_list(manager->lc, resultList, 0, name3SipUri, NULL);//"sip:stephanie@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 1, name2SipUri, NULL);//"sip:alber@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 2, name5SipUri, NULL);//"sip:gal@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 3, name4SipUri, NULL);//"sip:gauthier@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 4, name1SipUri, NULL);//"sip:toto@sip.example.org"
+		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
+	}
+
+	linphone_magic_search_reset_search_cache(magicSearch);
+
+	linphone_friend_list_remove_friend(lfl, friend1);
+	linphone_friend_list_remove_friend(otherFl, friend2);
+	linphone_friend_list_remove_friend(otherFl, friend3);
+	linphone_friend_list_remove_friend(otherFl, friend4);
+	linphone_friend_list_remove_friend(otherFl, friend5);
+
+	if (friend1) linphone_friend_unref(friend1);
+	if (friend2) linphone_friend_unref(friend2);
+	if (friend3) linphone_friend_unref(friend3);
+	if (friend4) linphone_friend_unref(friend4);
+	if (friend5) linphone_friend_unref(friend5);
+
+	if (vcard1) linphone_vcard_unref(vcard1);
+	if (vcard2) linphone_vcard_unref(vcard2);
+	if (vcard3) linphone_vcard_unref(vcard3);
+	if (vcard4) linphone_vcard_unref(vcard4);
+	if (vcard5) linphone_vcard_unref(vcard5);
+
+	linphone_magic_search_unref(magicSearch);
+	linphone_friend_list_unref(otherFl);
+	linphone_core_manager_destroy(manager);
+}
+
 /*the webrtc AEC implementation is brought to mediastreamer2 by a plugin.
  * We finally check here that if the plugin is correctly loaded and the right choice of echo canceller implementation is made*/
 static void echo_canceller_check(void){
@@ -1752,6 +1859,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Search friend in large friends database", search_friend_large_database, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result has capabilities", search_friend_get_capabilities, "MagicSearch"),
 	TEST_ONE_TAG("Search friend result chat room remote", search_friend_chat_room_remote, "MagicSearch"),
+	TEST_ONE_TAG("Search friend in non default friend list", search_friend_non_default_list, "MagicSearch"),
 	TEST_NO_TAG("Delete friend in linphone rc", delete_friend_from_rc),
 	TEST_NO_TAG("Dialplan", dial_plan)
 };
