@@ -36,7 +36,6 @@ public:
 	ConferenceSubjectEvent (
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const std::string &subject
 	);
 

@@ -30,27 +30,20 @@ LINPHONE_BEGIN_NAMESPACE
 ConferenceNotifiedEvent::ConferenceNotifiedEvent (
 	Type type,
 	time_t creationTime,
-	const ConferenceId &conferenceId,
-	unsigned int notifyId
+	const ConferenceId &conferenceId
 ) : ConferenceEvent(*new ConferenceNotifiedEventPrivate, type, creationTime, conferenceId) {
-	L_D();
-	d->notifyId = notifyId;
 }
 
 ConferenceNotifiedEvent::ConferenceNotifiedEvent (
 	ConferenceNotifiedEventPrivate &p,
 	Type type,
 	time_t creationTime,
-	const ConferenceId &conferenceId,
-	unsigned int notifyId
+	const ConferenceId &conferenceId
 ) : ConferenceEvent(p, type, creationTime, conferenceId) {
-	L_D();
-	d->notifyId = notifyId;
 }
 
 unsigned int ConferenceNotifiedEvent::getNotifyId () const {
-	L_D();
-	return d->notifyId;
+	return notifyId;
 }
 
 LINPHONE_END_NAMESPACE
