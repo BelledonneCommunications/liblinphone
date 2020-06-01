@@ -50,6 +50,7 @@ public:
 	void removeHandler (RemoteConferenceEventHandler *handler);
 	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
+
 private:
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	LinphoneEvent *lev = nullptr;
