@@ -249,10 +249,10 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_
 		EventLog::Type::ConferenceParticipantAdded,
 		creationTime,
 		conferenceId,
-		lastNotify,
 		addr
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onParticipantAdded(event);
 	}
@@ -265,10 +265,10 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (tim
 		EventLog::Type::ConferenceParticipantRemoved,
 		creationTime,
 		conferenceId,
-		lastNotify,
 		addr
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onParticipantRemoved(event);
 	}
@@ -280,10 +280,10 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (ti
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		creationTime,
 		conferenceId,
-		lastNotify,
 		addr
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onParticipantSetAdmin(event);
 	}
@@ -294,10 +294,10 @@ shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t crea
 	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
 		creationTime,
 		conferenceId,
-		lastNotify,
 		subject
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onSubjectChanged(event);
 	}
@@ -309,12 +309,12 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		creationTime,
 		conferenceId,
-		lastNotify,
 		addr,
 		gruu,
 		name
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceAdded(event);
 	}
@@ -326,11 +326,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		creationTime,
 		conferenceId,
-		lastNotify,
 		addr,
 		gruu
 	);
 	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
 	for (const auto &l : confListeners) {
 		l->onParticipantDeviceRemoved(event);
 	}
