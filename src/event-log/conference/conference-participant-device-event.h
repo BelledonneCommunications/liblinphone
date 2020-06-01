@@ -37,7 +37,6 @@ public:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress,
 		const IdentityAddress &deviceAddress,
 		const std::string &name = ""
