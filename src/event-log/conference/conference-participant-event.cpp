@@ -31,14 +31,12 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	unsigned int notifyId,
 	const IdentityAddress &participantAddress
 ) : ConferenceNotifiedEvent(
 	*new ConferenceParticipantEventPrivate,
 	type,
 	creationTime,
-	conferenceId,
-	notifyId
+	conferenceId
 ) {
 	L_D();
 	L_ASSERT(
@@ -55,14 +53,12 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	unsigned int notifyId,
 	const IdentityAddress &participantAddress
 ) : ConferenceNotifiedEvent(
 	p,
 	type,
 	creationTime,
-	conferenceId,
-	notifyId
+	conferenceId
 ) {
 	L_D();
 	d->participantAddress = participantAddress;
