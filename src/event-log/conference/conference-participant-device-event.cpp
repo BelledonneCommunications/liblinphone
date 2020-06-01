@@ -40,7 +40,6 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	unsigned int notifyId,
 	const IdentityAddress &participantAddress,
 	const IdentityAddress &deviceAddress,
 	const string &name
@@ -49,7 +48,6 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	type,
 	creationTime,
 	conferenceId,
-	notifyId,
 	participantAddress
 ) {
 	L_D();

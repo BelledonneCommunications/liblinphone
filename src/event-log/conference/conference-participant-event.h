@@ -39,7 +39,6 @@ public:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);
 
@@ -51,7 +50,6 @@ protected:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);
 
