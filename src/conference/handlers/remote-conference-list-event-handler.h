@@ -17,58 +17,53 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
-#define _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#ifndef _L_REMOTE_CONFERENCE_LIST_EVENT_HANDLER_H_
+#define _L_REMOTE_CONFERENCE_LIST_EVENT_HANDLER_H_
+
+#include <map>
+#include <unordered_map>
 
 #include "linphone/types.h"
+#include "linphone/utils/general.h"
 
 #include "conference/conference-id.h"
+#include "core/core-accessor.h"
 #include "core/core-listener.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceId;
-class RemoteConference;
+class Address;
+class Content;
+class RemoteConferenceEventHandler;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener {
-	friend class ClientGroupChatRoom;
-
+class RemoteConferenceListEventHandler : public CoreAccessor , public CoreListener {
 public:
-	RemoteConferenceEventHandler (RemoteConference *remoteConference);
-	~RemoteConferenceEventHandler ();
+	RemoteConferenceListEventHandler (const std::shared_ptr<Core> &core);
+	~RemoteConferenceListEventHandler ();
 
-	void subscribe (const ConferenceId &conferenceId);
-	void notifyReceived (const std::string &xmlBody);
-	void multipartNotifyReceived (const std::string &xmlBody);
-	void unsubscribe ();
-
-	void invalidateSubscription ();
-
-	const ConferenceId &getConferenceId() const;
-	unsigned int getLastNotify () const;
-
-protected:
-	void simpleNotifyReceived (const std::string &xmlBody);
 	void subscribe ();
+	void unsubscribe ();
+	void notifyReceived (const Content *notifyContent);
+	void addHandler (RemoteConferenceEventHandler *handler);
+	void removeHandler (RemoteConferenceEventHandler *handler);
+	void clearHandlers ();
+	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
+
+private:
+	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
+	LinphoneEvent *lev = nullptr;
+
+	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
 	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) override;
 	void onEnteringBackground () override;
 	void onEnteringForeground () override;
-
-	RemoteConference *conf = nullptr;
-	LinphoneEvent *lev = nullptr;
-
-	bool subscriptionWanted = false;
-
-private:
-	void unsubscribePrivate ();
-	L_DISABLE_COPY(RemoteConferenceEventHandler);
 };
 
 LINPHONE_END_NAMESPACE
 
-#endif // ifndef _L_REMOTE_CONFERENCE_EVENT_HANDLER_H_
+#endif // ifndef _L_REMOTE_CONFERENCE_LIST_EVENT_HANDLER_H_
