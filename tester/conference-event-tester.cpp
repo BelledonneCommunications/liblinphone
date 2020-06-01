@@ -990,7 +990,6 @@ void send_added_notify() {
 	CallSessionParams params;
 	localConf->addParticipant(bobAddr, &params, false);
 	localConf->addParticipant(aliceAddr, &params, false);
-
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
@@ -1047,6 +1046,7 @@ void send_removed_notify() {
 	localConf->addParticipant(aliceAddr, &params, false);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1166,6 +1166,7 @@ void send_unadmined_notify() {
 	BC_ASSERT_TRUE(!confListener->participants.find(aliceAddr.asString())->second);
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
+
 	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1218,6 +1219,7 @@ void send_subject_changed_notify () {
 	BC_ASSERT_TRUE(!confListener->participants.find(bobAddr.asString())->second);
 	BC_ASSERT_TRUE(confListener->participants.find(aliceAddr.asString())->second);
 	BC_ASSERT_EQUAL(localConf->getLastNotify(), (lastNotifyCount + 1), int, "%d");
+
 	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1302,6 +1304,7 @@ void send_device_removed_notify() {
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
 	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) != confListener->participantDevices.end());
