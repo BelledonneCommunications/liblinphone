@@ -213,7 +213,7 @@ public class NetworkManagerAbove21 implements NetworkManagerInterface {
 			NetworkInfo activeNetworkInfo = mConnectivityManager.getActiveNetworkInfo();
 			for (Network network : mConnectivityManager.getAllNetworks()) {
  				NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
-				if (networkInfo != null && networkInfo.isConnected()) {
+				if (networkInfo != null) {
 					LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
 					if (linkProperties != null) {
 						List<InetAddress> dnsServersList = linkProperties.getDnsServers();
