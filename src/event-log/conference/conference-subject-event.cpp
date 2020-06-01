@@ -38,14 +38,12 @@ public:
 ConferenceSubjectEvent::ConferenceSubjectEvent (
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	unsigned int notifyId,
 	const string &subject
 ) : ConferenceNotifiedEvent(
 	*new ConferenceSubjectEventPrivate,
 	Type::ConferenceSubjectChanged,
 	creationTime,
-	conferenceId,
-	notifyId
+	conferenceId
 ) {
 	L_D();
 	d->subject = subject;
