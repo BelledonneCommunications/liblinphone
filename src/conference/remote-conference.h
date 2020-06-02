@@ -58,6 +58,8 @@ protected:
 	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
 	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
 	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
+	void onFullStateReceived () override;
+
 
 private:
 	L_DISABLE_COPY(RemoteConference);
