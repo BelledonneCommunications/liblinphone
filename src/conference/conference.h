@@ -74,7 +74,7 @@ public:
 		confListeners.push_back(listener);
 	}
 
-	const ConferenceId &getConferenceId () const;
+	const ConferenceId &getConferenceId () const override;
 	inline unsigned int getLastNotify () const { return lastNotify; };
 
 	void subscribeReceived (LinphoneEvent *event);
