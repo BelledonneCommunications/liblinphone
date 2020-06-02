@@ -23,7 +23,6 @@
 #include <ctime>
 
 #include "abstract-chat-room-p.h"
-#include "conference/conference-id.h"
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
@@ -102,7 +101,6 @@ public:
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
-	ConferenceId conferenceId;
 	std::shared_ptr<ChatRoomParams> params;
 
 protected:

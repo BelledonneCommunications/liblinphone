@@ -91,6 +91,8 @@ public:
 	/* ConferenceListener */
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 
+	const ConferenceId &getConferenceId () const override { return conferenceId; };
+
 private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
