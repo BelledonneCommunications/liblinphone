@@ -261,7 +261,6 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_
 }
 
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
-	shared_ptr<Participant> participant = findParticipant(addr);
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		creationTime,
