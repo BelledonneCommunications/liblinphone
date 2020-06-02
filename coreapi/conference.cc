@@ -842,9 +842,11 @@ int linphone_conference_stop_recording (LinphoneConference *obj) {
 bool_t linphone_conference_check_class (LinphoneConference *obj, LinphoneConferenceClass _class) {
 	switch(_class) {
 		case LinphoneConferenceClassLocal:
-			return typeid(MediaConference::Conference::toCpp(obj)) == typeid(LocalConference);
+		return typeid(MediaConference::Conference::toCpp(obj)) ==
+			   typeid(LinphonePrivate::MediaConference::LocalConference);
 		case LinphoneConferenceClassRemote:
-			return typeid(MediaConference::Conference::toCpp(obj)) == typeid(RemoteConference);
+			return typeid(MediaConference::Conference::toCpp(obj)) ==
+				   typeid(LinphonePrivate::MediaConference::RemoteConference);
 		default:
 			return FALSE;
 	}
