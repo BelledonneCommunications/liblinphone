@@ -70,7 +70,6 @@ public:
 	virtual ~Participant();
 	// non clonable object
 	Participant *clone() const override { return nullptr; }
->>>>>>> Delete private classes of LocalConferenceEventHandler, RemoteConferenceEventHandler, Participant, ParticipantDevice, Conference, LocalConference, RemoteConference, RemoteConferenceEventHandler, LocalConferenceEventHandler
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
