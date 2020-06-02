@@ -91,12 +91,10 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #endif
 }
 
-/*
-void LocalConference::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
+void LocalConference::notifyFullState () {
 	++lastNotify;
-	Conference::notifyFullState(notify, device);
+	Conference::notifyFullState();
 }
-*/
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
