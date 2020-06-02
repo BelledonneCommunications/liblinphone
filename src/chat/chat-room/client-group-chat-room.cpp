@@ -754,19 +754,6 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
 
-	const IdentityAddress &addr = event->getParticipantAddress();
-	if (isMe(addr))
-		return;
-
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (participant) {
-		lWarning() << "Participant " << participant << " added but already in the list of participants!";
-		return;
-	}
-
-	participant = Participant::create(this,addr);
-	participants.push_back(participant);
-
 	if (event->getFullState())
 		return;
 
@@ -779,14 +766,6 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
 
-	const IdentityAddress &addr = event->getParticipantAddress();
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (!participant) {
-		lWarning() << "Participant " << addr.asString() << " removed but not in the list of participants!";
-		return;
-	}
-
-	participants.remove(participant);
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
@@ -795,22 +774,6 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 
 void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
 	L_D();
-
-	const IdentityAddress &addr = event->getParticipantAddress();
-	shared_ptr<Participant> participant;
-	if (isMe(addr))
-		participant = getMe();
-	else
-		participant = findParticipant(addr);
-	if (!participant) {
-		lWarning() << "Participant " << addr.asString() << " admin status has been changed but is not in the list of participants!";
-		return;
-	}
-
-	bool isAdmin = event->getType() == EventLog::Type::ConferenceParticipantSetAdmin;
-	if (participant->isAdmin() == isAdmin)
-		return; // No change in the local admin status, do not notify
-	participant->setAdmin(isAdmin);
 
 	if (event->getFullState())
 		return;
@@ -846,10 +809,6 @@ void ClientGroupChatRoom::onSecurityEvent (const shared_ptr<ConferenceSecurityEv
 void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event) {
 	L_D();
 
-	if (getSubject() == event->getSubject())
-		return; // No change in the local subject, do not notify
-	RemoteConference::setSubject(event->getSubject());
-
 	if (event->getFullState())
 		return;
 
@@ -869,13 +828,10 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 		participant = getMe();
 	else
 		participant = findParticipant(addr);
-	if (!participant) {
-		lWarning() << "Participant " << addr.asString() << " added a device but is not in the list of participants!";
-		return;
-	}
+
+	shared_ptr<ParticipantDevice> device = participant->findDevice(event->getDeviceAddress());
 
 	ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevel();
-	shared_ptr<ParticipantDevice> device = participant->addDevice(event->getDeviceAddress());
 	const string &deviceName = event->getDeviceName();
 	if (!deviceName.empty())
 		device->setName(deviceName);
@@ -901,17 +857,6 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	L_D();
 
-	const IdentityAddress &addr = event->getParticipantAddress();
-	shared_ptr<Participant> participant;
-	if (isMe(addr))
-		participant = getMe();
-	else
-		participant = findParticipant(addr);
-	if (!participant) {
-		lWarning() << "Participant " << addr.asString() << " removed a device but is not in the list of participants!";
-		return;
-	}
-	participant->removeDevice(event->getDeviceAddress());
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
