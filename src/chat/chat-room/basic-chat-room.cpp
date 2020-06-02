@@ -40,11 +40,13 @@ BasicChatRoom::BasicChatRoom (
 	const std::shared_ptr<Core> &core,
 	const ConferenceId &conferenceId,
 	const std::shared_ptr<ChatRoomParams> &params
-) : ChatRoom(p, core, conferenceId, params) {
+) : ChatRoom(p, core, params) {
 	L_D();
 
 	d->me = Participant::create(nullptr, getLocalAddress());
 	d->participants.push_back(Participant::create(nullptr, getPeerAddress()));
+
+	this->conferenceId = conferenceId;
 }
 
 void BasicChatRoom::allowCpim (bool value) {
@@ -144,5 +146,11 @@ void BasicChatRoom::join () {
 void BasicChatRoom::leave () {
 	lError() << "leave() is not allowed on a BasicChatRoom";
 }
+
+const ConferenceId &BasicChatRoom::getConferenceId () const {
+	return conferenceId;
+}
+
+
 
 LINPHONE_END_NAMESPACE
