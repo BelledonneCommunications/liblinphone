@@ -254,6 +254,9 @@ public:
 	void enableDnsSrv (bool value) { belle_sip_stack_enable_dns_srv(mStack, (unsigned char)value); }
 	bool dnsSrvEnabled () const { return !!belle_sip_stack_dns_srv_enabled(mStack); }
 
+	void enableIpv6DnsServers (bool value) { belle_sip_stack_enable_ipv6_dns_servers(mStack, (unsigned char)value); }
+	bool ipv6DnsServersEnabled () const { return !!belle_sip_stack_ipv6_dns_servers_enabled(mStack); }
+
 	void setDnsUserHostsFile (const std::string &value);
 	const std::string &getDnsUserHostsFile () const;
 

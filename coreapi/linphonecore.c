@@ -3651,6 +3651,7 @@ void linphone_core_enable_ipv6(LinphoneCore *lc, bool_t val){
 	if (lc->sip_conf.ipv6_enabled!=val){
 		lc->sip_conf.ipv6_enabled=val;
 		if (lc->sal){
+			lc->sal->enableIpv6DnsServers((unsigned char) val);
 			/* we need to update the sip stack */
 			_linphone_core_apply_transports(lc);
 		}
