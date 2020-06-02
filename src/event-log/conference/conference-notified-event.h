@@ -30,6 +30,8 @@ class ConferenceNotifiedEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
 	friend class MainDbPrivate;
+	friend class ClientGroupChatRoom;
+	friend class RemoteConference;
 public:
 	ConferenceNotifiedEvent (
 		Type type, time_t creationTime,
