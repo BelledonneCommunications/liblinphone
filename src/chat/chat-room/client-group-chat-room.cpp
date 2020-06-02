@@ -236,11 +236,11 @@ void ClientGroupChatRoomPrivate::onChatRoomCreated (const Address &remoteContact
 	ConferenceAddress addr(remoteContact);
 	q->onConferenceCreated(addr);
 	if (remoteContact.hasParam("isfocus")) {
-		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->ChatRoom::getConferenceId())) {
+		if (q->getCore()->getPrivate()->remoteListEventHandler->findHandler(q->getConferenceId())) {
 			q->getCore()->getPrivate()->remoteListEventHandler->subscribe();
 		} else {
 			bgTask.start(q->getCore(), 32); // It will be stopped when receiving the first notify
-			qConference->eventHandler->subscribe(q->ChatRoom::getConferenceId());
+			qConference->eventHandler->subscribe(q->getConferenceId());
 		}
 	}
 }
@@ -265,12 +265,14 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	CapabilitiesMask capabilities,
 	const std::shared_ptr<ChatRoomParams> &params
 ) :
-ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::Conference), core, conferenceId, params),
+ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::Conference), core, params),
 RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
 	L_D();
 	RemoteConference::setSubject(subject);
 	for (const auto &addr : Conference::parseResourceLists(content))
 		participants.push_back(Participant::create(this,addr));
+
+	this->conferenceId = conferenceId;
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
 	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
@@ -306,7 +308,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	list<shared_ptr<Participant>> &&newParticipants,
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
-) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, conferenceId, params),
+) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, params),
 RemoteConference(core, me->getAddress(), nullptr) {
 	L_D();
 
@@ -457,7 +459,7 @@ void ClientGroupChatRoom::deleteFromDb () {
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistory(
-		ChatRoom::getConferenceId(),
+		getConferenceId(),
 		nLast,
 		(d->capabilities & Capabilities::OneToOne) ?
 			MainDb::Filter::ConferenceChatMessageSecurityFilter :
@@ -468,7 +470,7 @@ list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int end) const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistoryRange(
-		ChatRoom::getConferenceId(),
+		getConferenceId(),
 		begin,
 		end,
 		(d->capabilities & Capabilities::OneToOne) ?
@@ -480,7 +482,7 @@ list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistoryRange (int begin, int 
 int ClientGroupChatRoom::getHistorySize () const {
 	L_D();
 	return getCore()->getPrivate()->mainDb->getHistorySize(
-		ChatRoom::getConferenceId(),
+		getConferenceId(),
 		(d->capabilities & Capabilities::OneToOne) ?
 			MainDb::Filter::ConferenceChatMessageSecurityFilter :
 			MainDb::FilterMask({MainDb::Filter::ConferenceChatMessageFilter, MainDb::Filter::ConferenceInfoNoDeviceFilter})
@@ -666,7 +668,7 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	focus->setAddress(addr);
 	focus->clearDevices();
 	focus->addDevice(addr);
-	d->conferenceId = ConferenceId(addr, d->conferenceId.getLocalAddress());
+	conferenceId = ConferenceId(addr, conferenceId.getLocalAddress());
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	d->setState(ChatRoom::State::Created);
 }
@@ -691,7 +693,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceTerminated,
 		time(nullptr),
-		d->conferenceId
+		conferenceId
 	);
 	d->addEvent(event);
 
@@ -738,7 +740,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	auto event = make_shared<ConferenceEvent>(
 		EventLog::Type::ConferenceCreated,
 		time(nullptr),
-		d->conferenceId
+		conferenceId
 	);
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
@@ -873,14 +875,14 @@ void ClientGroupChatRoom::enableEphemeral (bool ephem, bool updateDb) {
 	L_D();
 	d->isEphemeral = ephem;
 	const string active = ephem ? "enabled" : "disabled";
-	lDebug() << "Ephemeral message is " << active << " in chat room [" << d->conferenceId << "]";
+	lDebug() << "Ephemeral message is " << active << " in chat room [" << conferenceId << "]";
 	if (updateDb) {
-		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(d->conferenceId, ephem);
+		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralEnabled(conferenceId, ephem);
 		shared_ptr<ConferenceEphemeralMessageEvent> event;
 		if (ephem)
-			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageEnabled, time(nullptr), d->conferenceId, d->ephemeralLifetime);
+			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageEnabled, time(nullptr), conferenceId, d->ephemeralLifetime);
 		else
-			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageDisabled, time(nullptr), d->conferenceId, d->ephemeralLifetime);
+			event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageDisabled, time(nullptr), conferenceId, d->ephemeralLifetime);
 		d->addEvent(event);
 
 		LinphoneChatRoom *cr = d->getCChatRoom();
@@ -904,10 +906,10 @@ void ClientGroupChatRoom::setEphemeralLifetime (long lifetime, bool updateDb) {
 
 	if (updateDb) {
 		lInfo() << "Set new ephemeral lifetime " << lifetime << ", used to be " << d->ephemeralLifetime << ".";
-		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(d->conferenceId, lifetime);
+		getCore()->getPrivate()->mainDb->updateChatRoomEphemeralLifetime(conferenceId, lifetime);
 
 		if (d->isEphemeral) { // Do not create event if ephemeral feature is disabled
-			shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), d->conferenceId, lifetime);
+			shared_ptr<ConferenceEphemeralMessageEvent> event = make_shared<ConferenceEphemeralMessageEvent>(EventLog::Type::ConferenceEphemeralMessageLifetimeChanged, time(nullptr), conferenceId, lifetime);
 			d->addEvent(event);
 
 			LinphoneChatRoom *cr = d->getCChatRoom();
