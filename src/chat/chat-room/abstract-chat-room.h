@@ -102,8 +102,6 @@ public:
 	virtual bool canHandleCpim () const = 0;
 	virtual bool canHandleMultipart () const = 0;
 
-	virtual const ConferenceId &getConferenceId () const = 0;
-
 	virtual const IdentityAddress &getPeerAddress () const = 0;
 	virtual const IdentityAddress &getLocalAddress () const = 0;
 

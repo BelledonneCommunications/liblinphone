@@ -91,6 +91,8 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
+	const ConferenceId &getConferenceId () const override { return conferenceId; };
+
 private:
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,
