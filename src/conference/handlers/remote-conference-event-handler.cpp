@@ -22,6 +22,7 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/utils/utils.h"
 
+#include "conference/participant.h"
 #include "conference/remote-conference.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
@@ -107,12 +108,17 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 	// 3. Notify subject and keywords.
 	if (confDescription.present()) {
 		auto &subject = confDescription.get().getSubject();
-		if (subject.present() && !subject.get().empty())
-			conf->notifySubjectChanged(
-				creationTime,
-				isFullState,
-				subject.get()
-			);
+		if (subject.present() && !subject.get().empty()) {
+
+			if (conf->getSubject() != subject.get()) {
+				conf->RemoteConference::setSubject(subject.get());
+				conf->notifySubjectChanged(
+					creationTime,
+					isFullState,
+					subject.get()
+				);
+			}
+		}
 
 		auto &keywords = confDescription.get().getKeywords();
 		if (keywords.present() && !keywords.get().empty()) {
@@ -134,60 +140,101 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		Address address(conf->getCore()->interpretUrl(user.getEntity().get()));
 		StateType state = user.getState();
 
+		shared_ptr<Participant> participant = conf->findParticipant(address);
+
 		if (state == StateType::deleted) {
-			conf->notifyParticipantRemoved(
-				creationTime,
-				isFullState,
-				address
-			);
+			if (!participant) {
+				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
+			} else {
+				conf->participants.remove(participant);
+				conf->notifyParticipantRemoved(
+					creationTime,
+					isFullState,
+					address
+				);
 
-			continue;
-		}
-
-		if (state == StateType::full)
-			conf->notifyParticipantAdded(
-				creationTime,
-				isFullState,
-				address
-			);
-
-		auto &roles = user.getRoles();
-		if (roles) {
-			auto &entry = roles->getEntry();
-			conf->notifyParticipantSetAdmin(
-				creationTime,
-				isFullState,
-				address,
-				(find(entry, "admin") != entry.end()
-					? true
-					: false)
-			);
-		}
-
-		for (const auto &endpoint : user.getEndpoint()) {
-			if (!endpoint.getEntity().present())
 				continue;
+			}
+		}
 
-			Address gruu(endpoint.getEntity().get());
-			StateType state = endpoint.getState();
+		if (state == StateType::full) {
+			if (conf->isMe(address)) {
+				lWarning() << "Participant " << participant << " is the conference itself!";
+			} else if (participant) {
+				lWarning() << "Participant " << participant << " added but already in the list of participants!";
+			} else {
+				participant = Participant::create(conf,address);
+				conf->participants.push_back(participant);
 
-			if (state == StateType::deleted) {
-				conf->notifyParticipantDeviceRemoved(
+				conf->notifyParticipantAdded(
 					creationTime,
 					isFullState,
-					address,
-					gruu
+					address
 				);
-			} else if (state == StateType::full) {
+			}
+		}
 
-				const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
-				conf->notifyParticipantDeviceAdded(
-					creationTime,
-					isFullState,
-					address,
-					gruu,
-					name
-				);
+		// Try to get participant again as it may have been added or removed earlier on
+		if (conf->isMe(address))
+			participant = conf->getMe();
+		else
+			participant = conf->findParticipant(address);
+
+		if (!participant) {
+			lWarning() << "Participant " << address.asString() << " is not in the list of participants however it is trying to change the list of devices or change role!";
+		} else {
+
+			auto &roles = user.getRoles();
+			if (roles) {
+
+				auto &entry = roles->getEntry();
+				bool isAdmin = (find(entry, "admin") != entry.end()
+						? true
+						: false);
+
+				if (participant->isAdmin() != isAdmin) {
+
+					participant->setAdmin(isAdmin);
+
+					conf->notifyParticipantSetAdmin(
+						creationTime,
+						isFullState,
+						address,
+						isAdmin
+					);
+				}
+			}
+
+			for (const auto &endpoint : user.getEndpoint()) {
+				if (!endpoint.getEntity().present())
+					continue;
+
+				Address gruu(endpoint.getEntity().get());
+				StateType state = endpoint.getState();
+
+				if (state == StateType::deleted) {
+
+					participant->removeDevice(gruu);
+
+					conf->notifyParticipantDeviceRemoved(
+						creationTime,
+						isFullState,
+						address,
+						gruu
+					);
+				} else if (state == StateType::full) {
+
+					participant->addDevice(gruu);
+
+					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
+					conf->notifyParticipantDeviceAdded(
+						creationTime,
+						isFullState,
+						address,
+						gruu,
+						name
+					);
+				}
 			}
 		}
 	}
