@@ -250,7 +250,6 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
     }
 
     public void updateDnsServers() {
-        ArrayList<String> dnsServers = new ArrayList<>();
         ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
 
         if (mConnectivityManager != null) {
@@ -269,14 +268,6 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
                                 if (network.equals(activeNetwork)) {
                                     Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from active network " + networkType);
                                     activeNetworkDnsServers.add(dnsHost);
-                                } else {
-                                    if (prioritary) {
-                                        Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
-                                        dnsServers.add(0, dnsHost);
-                                    } else {
-                                        Log.i("[Platform Helper] [Network Manager 24] Found DNS host " + dnsHost + " from network " + networkType);
-                                        dnsServers.add(dnsHost);
-                                    }
                                 }
                             }
                         }
@@ -285,7 +276,6 @@ public class NetworkManagerAbove24 implements NetworkManagerInterface {
             }
         }
 
-        activeNetworkDnsServers.addAll(dnsServers);
         mHelper.updateDnsServers(activeNetworkDnsServers);
     }
 }
