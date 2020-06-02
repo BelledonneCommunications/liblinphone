@@ -41,8 +41,6 @@ public:
 
 	~ChatRoom ();
 
-	const ConferenceId &getConferenceId () const override;
-
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
 
@@ -98,7 +96,7 @@ public:
 	}
 
 protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params);
 
 	std::list<std::shared_ptr<ConferenceListenerInterface>> chatListeners;
 
