@@ -235,14 +235,11 @@ void Conference::resetLastNotify () {
 	setLastNotify(0);
 }
 
-/*
-void Conference::notifyFullState (const string &notify, const shared_ptr<ParticipantDevice> &device) {
-	++lastNotify;
+void Conference::notifyFullState () {
 	for (const auto &l : confListeners) {
 		l->onFullStateReceived();
 	}
 }
-*/
 
 shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
