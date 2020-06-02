@@ -112,11 +112,13 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 			if (conf->getSubject() != subject.get()) {
 				conf->RemoteConference::setSubject(subject.get());
-				conf->notifySubjectChanged(
-					creationTime,
-					isFullState,
-					subject.get()
-				);
+				if (!isFullState) {
+					conf->notifySubjectChanged(
+						creationTime,
+						isFullState,
+						subject.get()
+					);
+				}
 			}
 		}
 
@@ -147,11 +149,13 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
 			} else {
 				conf->participants.remove(participant);
+				if (!isFullState) {
 				conf->notifyParticipantRemoved(
 					creationTime,
 					isFullState,
 					address
 				);
+				}
 
 				continue;
 			}
@@ -166,11 +170,13 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
 
-				conf->notifyParticipantAdded(
-					creationTime,
-					isFullState,
-					address
-				);
+				if (!isFullState) {
+					conf->notifyParticipantAdded(
+						creationTime,
+						isFullState,
+						address
+					);
+				}
 			}
 		}
 
@@ -196,12 +202,14 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 					participant->setAdmin(isAdmin);
 
-					conf->notifyParticipantSetAdmin(
-						creationTime,
-						isFullState,
-						address,
-						isAdmin
-					);
+					if (!isFullState) {
+						conf->notifyParticipantSetAdmin(
+							creationTime,
+							isFullState,
+							address,
+							isAdmin
+						);
+					}
 				}
 			}
 
@@ -216,31 +224,41 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 					participant->removeDevice(gruu);
 
+					if (!isFullState) {
 					conf->notifyParticipantDeviceRemoved(
 						creationTime,
 						isFullState,
 						address,
 						gruu
 					);
+					}
 				} else if (state == StateType::full) {
 
-					participant->addDevice(gruu);
+					shared_ptr<ParticipantDevice> device = participant->addDevice(gruu);
 
 					const string &name = endpoint.getDisplayText().present() ? endpoint.getDisplayText().get() : "";
-					conf->notifyParticipantDeviceAdded(
-						creationTime,
-						isFullState,
-						address,
-						gruu,
-						name
-					);
+
+					if (!name.empty())
+						device->setName(name);
+
+					if (!isFullState) {
+						conf->notifyParticipantDeviceAdded(
+							creationTime,
+							isFullState,
+							address,
+							gruu,
+							name
+						);
+					}
 				}
 			}
 		}
 	}
 
-	if (isFullState)
+	if (isFullState) {
 		confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
+		conf->notifyFullState();
+	}
 }
 
 // -----------------------------------------------------------------------------
