@@ -103,4 +103,61 @@ void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<Conferenc
 
 void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &) {}
 
+void RemoteConference::onFullStateReceived() {
+
+	time_t creationTime = time(nullptr);
+
+	// Subject event
+	shared_ptr<ConferenceSubjectEvent> sEvent = make_shared<ConferenceSubjectEvent>(
+		creationTime,
+		conferenceId,
+		getSubject()
+	);
+	sEvent->setFullState(true);
+	sEvent->setNotifyId(lastNotify);
+	onSubjectChanged(sEvent);
+
+	// Loop through the participants
+	for (const auto &p : getParticipants()) {
+		const IdentityAddress &pAddress = p->getAddress();
+
+		shared_ptr<ConferenceParticipantEvent> pEvent = make_shared<ConferenceParticipantEvent>(
+			EventLog::Type::ConferenceParticipantAdded,
+			creationTime,
+			conferenceId,
+			pAddress
+		);
+		pEvent->setFullState(true);
+		pEvent->setNotifyId(lastNotify);
+		onParticipantAdded(pEvent);
+
+		shared_ptr<ConferenceParticipantEvent> aEvent = make_shared<ConferenceParticipantEvent>(
+			p->isAdmin() ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
+			creationTime,
+			conferenceId,
+			pAddress
+		);
+		aEvent->setFullState(true);
+		aEvent->setNotifyId(lastNotify);
+		onParticipantSetAdmin(aEvent);
+
+		// Loop through the devices
+		for (const auto &d : p->getDevices()) {
+			shared_ptr<ConferenceParticipantDeviceEvent> dEvent = make_shared<ConferenceParticipantDeviceEvent>(
+				EventLog::Type::ConferenceParticipantDeviceAdded,
+				creationTime,
+				conferenceId,
+				pAddress,
+				d->getAddress(),
+				d->getName()
+			);
+			dEvent->setFullState(true);
+			dEvent->setNotifyId(lastNotify);
+			onParticipantDeviceAdded(dEvent);
+		}
+	}
+
+}
+
+
 LINPHONE_END_NAMESPACE
