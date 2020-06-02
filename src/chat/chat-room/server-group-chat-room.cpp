@@ -1126,11 +1126,14 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ConferenceId(), ChatRoomParams::getDefaults(core)),
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core)),
 LocalConference(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr) {
 	L_D();
 
 	LocalConference::setSubject(op->getSubject());
+
+	this->conferenceId = ConferenceId();
+
 	const char *oneToOneChatRoomStr = sal_custom_header_find(op->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 	if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 		d->capabilities |= ServerGroupChatRoom::Capabilities::OneToOne;
@@ -1152,15 +1155,13 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, ConferenceId(peerAddress, peerAddress), params),
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params),
 LocalConference(getCore(), peerAddress, nullptr) {
-	L_D();
-
 	this->subject = subject;
 	this->participants = move(participants);
 	this->conferenceAddress = peerAddress;
 	this->lastNotify = lastNotifyId;
-	this->conferenceId = d->conferenceId;
+	this->conferenceId = ConferenceId(peerAddress, peerAddress);
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
@@ -1325,7 +1326,7 @@ void ServerGroupChatRoom::setSubject (const string &subject) {
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
 	// TODO: Is conference ID needed to be stored in both remote conference and chat room base classes?
-	return stream << "ServerGroupChatRoom [" << chatRoom->ChatRoom::getConferenceId().getPeerAddress().asString() << "]";
+	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().asString() << "]";
 }
 
 LINPHONE_END_NAMESPACE
