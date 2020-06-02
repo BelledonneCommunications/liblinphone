@@ -64,6 +64,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class RemoteConference;
 	friend class RemoteConferenceCall;
 	friend class RemoteConferenceCallPrivate;
+	friend class RemoteConferenceEventHandler;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
