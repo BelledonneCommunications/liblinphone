@@ -146,7 +146,7 @@ shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Directi
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
 	if (q->ephemeralEnabled() && direction == ChatMessage::Direction::Outgoing) {
-		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime() << " in chat room [" << conferenceId << "]";
+		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime() << " in chat room [" << q->getConferenceId() << "]";
 		message->getPrivate()->enableEphemeralWithTime(q->getEphemeralLifetime());
 	}
 	return message;
@@ -392,12 +392,11 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
 	d->params = params;
-	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
 }
@@ -413,19 +412,12 @@ ChatRoom::~ChatRoom () {
 
 // -----------------------------------------------------------------------------
 
-const ConferenceId &ChatRoom::getConferenceId () const {
-	L_D();
-	return d->conferenceId;
-}
-
 const IdentityAddress &ChatRoom::getPeerAddress () const {
-	L_D();
-	return d->conferenceId.getPeerAddress();
+	return getConferenceId().getPeerAddress();
 }
 
 const IdentityAddress &ChatRoom::getLocalAddress () const {
-	L_D();
-	return d->conferenceId.getLocalAddress();
+	return  getConferenceId().getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
@@ -612,7 +604,7 @@ void ChatRoom::markAsRead () {
 	L_D();
 
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId)) {
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
 		chatMessage->getPrivate()->markAsRead();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
@@ -620,7 +612,7 @@ void ChatRoom::markAsRead () {
 		}
 	}
 
-	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
+	dCore->mainDb->markChatMessagesAsRead(getConferenceId());
 	linphone_core_notify_chat_room_read(getCore()->getCCore(), d->getCChatRoom());
 }
 
