@@ -229,42 +229,26 @@ public class NetworkManagerAbove23 implements NetworkManagerInterface {
     }
 
     public void updateDnsServers() {
-        ArrayList<String> dnsServers = new ArrayList<>();
         ArrayList<String> activeNetworkDnsServers = new ArrayList<>();
 
         if (mConnectivityManager != null) {
-            Network activeNetwork = mConnectivityManager.getActiveNetwork();
-            for (Network network : mConnectivityManager.getAllNetworks()) {
+            Network network = mConnectivityManager.getActiveNetwork();
+            if (network != null) {
                 NetworkInfo networkInfo = mConnectivityManager.getNetworkInfo(network);
-                if (networkInfo != null) {
-                    LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
-                    if (linkProperties != null) {
-                        List<InetAddress> dnsServersList = linkProperties.getDnsServers();
-                        boolean prioritary = hasLinkPropertiesDefaultRoute(linkProperties);
-                        for (InetAddress dnsServer : dnsServersList) {
-                            String dnsHost = dnsServer.getHostAddress();
-                            if (!dnsServers.contains(dnsHost) && !activeNetworkDnsServers.contains(dnsHost)) {
-                                String networkType = networkInfo.getTypeName();
-                                if (network.equals(activeNetwork)) {
-                                    Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from active network " + networkType);
-                                    activeNetworkDnsServers.add(dnsHost);
-                                } else {
-                                    if (prioritary) {
-                                        Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from network " + networkType + " with default route");
-                                        dnsServers.add(0, dnsHost);
-                                    } else {
-                                        Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from network " + networkType);
-                                        dnsServers.add(dnsHost);
-                                    }
-                                }
-                            }
+                LinkProperties linkProperties = mConnectivityManager.getLinkProperties(network);
+                if (linkProperties != null && networkInfo != null) {
+                    List<InetAddress> dnsServersList = linkProperties.getDnsServers();
+                    for (InetAddress dnsServer : dnsServersList) {
+                        String dnsHost = dnsServer.getHostAddress();
+                        if (!activeNetworkDnsServers.contains(dnsHost)) {
+                            String networkType = networkInfo.getTypeName();
+                            Log.i("[Platform Helper] [Network Manager 23] Found DNS host " + dnsHost + " from active network " + networkType);
+                            activeNetworkDnsServers.add(dnsHost);
                         }
                     }
                 }
             }
         }
-
-        activeNetworkDnsServers.addAll(dnsServers);
         mHelper.updateDnsServers(activeNetworkDnsServers);
     }
 }
