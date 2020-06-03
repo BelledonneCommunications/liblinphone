@@ -1177,7 +1177,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 	bool_t skip = FALSE;
 
 	if (!fr || !name) {
-		ms_error("Friend or name is null");
+		ms_error("Can't create vCard for friend [%p] with name [%s]", fr, name);
 		return FALSE;
 	}
 	if (!linphone_core_vcard_supported()) {

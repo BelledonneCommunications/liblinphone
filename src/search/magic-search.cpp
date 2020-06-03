@@ -287,12 +287,15 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const string &withDomain) const {
 	list<SearchResult> clResults, crResults;
 	list<SearchResult> *resultList = new list<SearchResult>();
-	LinphoneFriendList *fList = linphone_core_get_default_friend_list(this->getCore()->getCCore());
+	const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
 
-	// For all friends or when we reach the search limit
-	for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-		list<SearchResult> fResults = searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain);
-		addResultsToResultsList(fResults, *resultList);
+	for (const bctbx_list_t *fl = friend_lists ; fl != nullptr ; fl = bctbx_list_next(fl)) {
+		LinphoneFriendList *fList = reinterpret_cast<LinphoneFriendList*>(fl->data);
+		// For all friends or when we reach the search limit
+		for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
+			list<SearchResult> fResults = searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain);
+			addResultsToResultsList(fResults, *resultList);
+		}
 	}
 
 	clResults = getAddressFromCallLog(filter, withDomain, *resultList);
