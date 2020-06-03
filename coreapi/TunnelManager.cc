@@ -24,7 +24,7 @@
 #include "linphone/core.h"
 #include "linphone/core_utils.h"
 #include "private.h"
-
+#include "private_functions.h"
 #ifdef __ANDROID__
 #include <android/log.h>
 #endif
@@ -223,7 +223,7 @@ void TunnelManager::stopClient(){
 }
 
 bool TunnelManager::isConnected() const {
-	return mTunnelClient != NULL && mTunnelClient->isReady();
+	return mState == On;
 }
 
 int TunnelManager::customSendto(struct _RtpTransport *t, mblk_t *msg , int flags, const struct sockaddr *to, socklen_t tolen){
@@ -252,7 +252,7 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mMode(LinphoneTunnelModeDisable),
 	mTunnelClient(NULL),
 	mHttpProxyPort(0),
-	mVTable(NULL),
+	mCoreCbs(NULL),
 	mLongRunningTaskId(0),
 	mSimulateUdpLoss(false),
 	mUseDualClient(false)
@@ -266,9 +266,11 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mTransportFactories.video_rtcp_func_data=this;
 	mTransportFactories.video_rtp_func=sCreateRtpTransport;
 	mTransportFactories.video_rtp_func_data=this;
-	mVTable = linphone_core_v_table_new();
-	mVTable->network_reachable = networkReachableCb;
-	linphone_core_add_listener(mCore, mVTable);
+	mCoreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_network_reachable(mCoreCbs, networkReachableCb);
+	linphone_core_cbs_set_global_state_changed(mCoreCbs, globalStateChangedCb);
+	linphone_core_cbs_set_user_data(mCoreCbs,this);
+	_linphone_core_add_callbacks(mCore, mCoreCbs,true);
 	linphone_core_get_local_ip_for(AF_INET, NULL, mLocalAddr);
 	mAutodetectionRunning = false;
 	mState = Off;
@@ -276,7 +278,19 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mStarted = false;
 	mTunnelizeSipPackets = true;
 }
-
+void TunnelManager::unlinkLinphoneCore() {
+	if (mCore) {
+		stopClient();
+		if (mCore->sal)
+			mCore->sal->setTunnel(NULL);
+		linphone_core_remove_callbacks(mCore, mCoreCbs);
+		linphone_core_cbs_unref(mCoreCbs);
+		mCore = nullptr;
+		mCoreCbs = nullptr;
+	} else {
+		ms_message("Core already cleaned up");
+	}
+}
 TunnelManager::~TunnelManager(){
 	if (mLongRunningTaskId > 0) {
 		sal_end_background_task(mLongRunningTaskId);
@@ -285,10 +299,8 @@ TunnelManager::~TunnelManager(){
 	for(UdpMirrorClientList::iterator udpMirror = mUdpMirrorClients.begin(); udpMirror != mUdpMirrorClients.end(); udpMirror++) {
 		udpMirror->stop();
 	}
-	stopClient();
-	mCore->sal->setTunnel(NULL);
-	linphone_core_remove_listener(mCore, mVTable);
-	linphone_core_v_table_destroy(mVTable);
+	
+	unlinkLinphoneCore();
 }
 
 void TunnelManager::doRegistration(){
@@ -496,6 +508,15 @@ void TunnelManager::networkReachableCb(LinphoneCore *lc, bool_t reachable) {
 		//turn off the tunnel connection
 		tunnel->untunnelizeLiblinphone();
 		tunnel->stopClient();
+	}
+}
+void TunnelManager::globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
+	if (gstate == LinphoneGlobalOff) {
+		ms_message("Core [%p] is Off, unlinking TunnelManager to core",lc);
+		//calling same core as for object destruction
+		TunnelManager *thiz = (TunnelManager *)linphone_core_cbs_get_user_data(linphone_core_get_current_callbacks(lc));
+		if (thiz)
+			thiz->unlinkLinphoneCore();
 	}
 }
 

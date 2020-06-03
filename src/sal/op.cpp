@@ -1087,4 +1087,9 @@ void SalOp::setServiceRoute(const SalAddress *value) {
 	mServiceRoute = value ? sal_address_clone(value) : nullptr;
 }
 
+unsigned int SalOp::getRemoteCSeq(){
+	if (mDialog) return belle_sip_dialog_get_remote_seq_number(mDialog);
+	return 0;
+}
+
 LINPHONE_END_NAMESPACE

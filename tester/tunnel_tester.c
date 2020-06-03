@@ -56,6 +56,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(pauline->lc);
 		LinphoneAddress *server_addr = linphone_address_new(linphone_proxy_config_get_server_addr(proxy));
 		LinphoneAddress *route = linphone_address_new(linphone_proxy_config_get_route(proxy));
+		LinphoneTunnel *tunnel = NULL;
 		char  tunnel_ip[64];
 		char *public_ip = NULL, *public_ip2 = NULL;
 		BC_ASSERT_FALSE(get_ip_from_hostname("tunnel.linphone.org",tunnel_ip,sizeof(tunnel_ip)));
@@ -88,7 +89,8 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		}
 
 		if (tunnel_mode != LinphoneTunnelModeDisable){
-			LinphoneTunnel *tunnel = linphone_core_get_tunnel(pauline->lc);
+			tunnel = linphone_core_get_tunnel(pauline->lc);
+			linphone_tunnel_ref(tunnel);
 			LinphoneTunnelConfig *config = linphone_tunnel_config_new();
 
 			linphone_tunnel_config_set_host(config, "tunnel.linphone.org");
@@ -182,6 +184,10 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		linphone_address_unref(server_addr);
 		linphone_address_unref(route);
 		linphone_core_manager_destroy(pauline);
+		if (tunnel) {
+			//to simulate what could be done by a wrapper using managed memory.
+			linphone_tunnel_unref(tunnel);
+		}
 		linphone_core_manager_destroy(marie);
 	}else{
 		ms_warning("Could not test %s because tunnel functionality is not available",__FUNCTION__);

@@ -358,6 +358,8 @@ private:
 
 	// Upload bandwidth used by audio.
 	int audioBandwidth = 0;
+	// Upload bandwidth used for video.
+	int videoBandwidth = 0;
 
 	bool speakerMuted = false;
 	bool microphoneMuted = false;

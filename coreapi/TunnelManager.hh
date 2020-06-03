@@ -208,6 +208,8 @@ namespace belledonnecomm {
 		static bool_t sOnIterate(TunnelManager *zis);
 		static void sUdpMirrorClientCallback(bool result, void* data);
 		static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
+		static void globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
+		
 
 	private:
 		enum State{
@@ -230,6 +232,7 @@ namespace belledonnecomm {
 		void applyState();
 		void tunnelizeLiblinphone();
 		void untunnelizeLiblinphone();
+		void unlinkLinphoneCore();
 	private:
 		
 		LinphoneCore* mCore;
@@ -239,7 +242,7 @@ namespace belledonnecomm {
 		std::string mHttpPasswd;
 		std::string mHttpProxyHost;
 		int mHttpProxyPort;
-		LinphoneCoreVTable *mVTable;
+		LinphoneCoreCbs *mCoreCbs;
 		std::list<ServerAddr> mServerAddrs;
 		std::list<DualServerAddr> mDualServerAddrs;
 		UdpMirrorClientList mUdpMirrorClients;
