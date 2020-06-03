@@ -327,7 +327,7 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 		lError() << "Could not remove the call from the list!!!";
 	if (getConference()) {
 		lInfo() << "Removing terminated call from LinphoneConference " << getConference();
-		MediaConference::Conference::toCpp(getConference())->removeParticipant(this->toC());
+		MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
 	}
 #if 0
 	if (mChatRoom)
