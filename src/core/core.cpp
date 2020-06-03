@@ -226,6 +226,7 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 }
 
 void CorePrivate::notifyEnteringBackground () {
+	L_Q();
 	if (isInBackground)
 		return;
 
@@ -236,6 +237,13 @@ void CorePrivate::notifyEnteringBackground () {
 
 	if (isFriendListSubscriptionEnabled)
 		enableFriendListsSubscription(false);
+
+#if TARGET_OS_IPHONE
+	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
+	// Stop the video preview
+	linphone_core_enable_video_preview(lc, FALSE);
+	linphone_core_stop_dtmf_stream(lc);
+#endif
 }
 
 void CorePrivate::notifyEnteringForeground () {
@@ -257,7 +265,15 @@ void CorePrivate::notifyEnteringForeground () {
 		listener->onEnteringForeground();
 
 	if (isFriendListSubscriptionEnabled)
-		enableFriendListsSubscription(true);	
+		enableFriendListsSubscription(true);
+
+#if TARGET_OS_IPHONE
+	linphone_core_start_dtmf_stream(lc);
+	/*start the video preview in case we are in the main view*/
+	if (linphone_core_video_display_enabled(lc) && linphone_config_get_bool(lc->config, "app", "preview_preference", 0)) {
+		linphone_core_enable_video_preview(lc, TRUE);
+	}
+#endif
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop(){
