@@ -253,11 +253,11 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 }
 
 bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	LinphoneCallState state = linphone_call_get_state(call->toC());
+	LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 	
 	if (linphone_call_params_get_in_conference(linphone_call_get_current_params(call->toC()))) {
 		ms_error("Already in conference");
-		return -1;
+		return false;
 	}
 	bool starting = (getSize() == 0);
 	bool localEndpointCanBeAdded = false;
@@ -277,7 +277,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			const_cast<LinphonePrivate::MediaSessionParams *>(
 				call->getParams())->enableVideo(getCurrentParams().videoEnabled());
-			linphone_call_resume(call->toC());
+			call->resume();
 		break;
 		case LinphoneCallStreamsRunning:
 		{
@@ -292,8 +292,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		break;
 		default:
 			ms_error("Call is in state %s, it cannot be added to the conference",
-			linphone_call_state_to_string(linphone_call_get_state(call->toC())));
-			return -1;
+			linphone_call_state_to_string(static_cast<LinphoneCallState>(call->getState())));
+			return false;
 		break;
 	}
 	if (Call->toC() == linphone_core_get_current_call(m_core))
@@ -309,7 +309,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		 */
 		addLocalEndpoint();
 	}
-	return 0;
+	return true;
 }
 
 int LocalConference::remoteParticipantsCount () {
@@ -328,7 +328,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		/* Kick the call out of the conference by moving to the Paused state. */
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 				L_GET_PRIVATE(call->getParams()))->setInConference(false);
-		err = _linphone_call_pause(call->toC());
+		err = call->pause();
 	}
 	
 	Conference::removeParticipant(call);
@@ -510,31 +510,31 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			ms_message("Calling the conference focus (%s)", m_focusAddr);
 			addr = linphone_address_new(m_focusAddr);
 			if (!addr)
-				return -1;
+				return false;
 			params = linphone_core_create_call_params(m_core, nullptr);
 			linphone_call_params_enable_video(params, m_currentParams->videoEnabled());
 			m_focusCall = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_core_invite_address_with_params(m_core, addr, params));
 			m_pendingCalls.push_back(call);
-			callLog = linphone_call_get_call_log(L_GET_C_BACK_PTR(m_focusCall));
+			callLog = m_focusCall->getLog();
 			callLog->was_conference = TRUE;
 			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
 			setState(LinphoneConferenceStarting);
-			return 0;
+			return true;
 		case LinphoneConferenceStarting:
 			Conference::addParticipant(call);
 			if(focusIsReady())
 				transferToFocus(call);
 			else
 				m_pendingCalls.push_back(call);
-			return 0;
+			return true;
 		case LinphoneConferenceRunning:
 			Conference::addParticipant(call);
 			transferToFocus(call);
-			return 0;
+			return true;
 		default:
 			ms_error("Could not add call %p to the conference. Bad conference state (%s)", call.get(), stateToString(m_state));
-			return -1;
+			return false;
 	}
 }
 
@@ -555,7 +555,7 @@ int RemoteConference::removeParticipant (const LinphoneAddress *uri) {
 			linphone_address_set_method_param(refer_to_addr, "BYE");
 			refer_to = linphone_address_as_string(refer_to_addr);
 			linphone_address_unref(refer_to_addr);
-			res = linphone_call_get_op(L_GET_C_BACK_PTR(m_focusCall))->refer(refer_to);
+			res = L_GET_PRIVATE(m_focusCall)->getOp()->refer(refer_to);
 			ms_free(refer_to);
 			if (res == 0)
 				return Conference::removeParticipant(uri);
@@ -576,7 +576,7 @@ int RemoteConference::terminate () {
 	switch (m_state) {
 		case LinphoneConferenceRunning:
 		case LinphoneConferenceStarting:
-			linphone_call_terminate(L_GET_C_BACK_PTR(m_focusCall));
+			m_focusCall->terminate();
 			break;
 		default:
 			break;
@@ -594,12 +594,12 @@ int RemoteConference::enter () {
 		ms_error("Could not enter in the conference: bad conference state (%s)", stateToString(m_state));
 		return -1;
 	}
-	LinphoneCallState callState = linphone_call_get_state(L_GET_C_BACK_PTR(m_focusCall));
+	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallStreamsRunning:
 			break;
 		case LinphoneCallPaused:
-			linphone_call_resume(L_GET_C_BACK_PTR(m_focusCall));
+			m_focusCall->resume();
 			break;
 		default:
 			ms_error("Could not join the conference: bad focus call state (%s)",
@@ -613,12 +613,12 @@ void RemoteConference::leave () {
 	if (m_state != LinphoneConferenceRunning) {
 		ms_error("Could not leave the conference: bad conference state (%s)", stateToString(m_state));
 	}
-	LinphoneCallState callState = linphone_call_get_state(L_GET_C_BACK_PTR(m_focusCall));
+	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
 			break;
 		case LinphoneCallStreamsRunning:
-			linphone_call_pause(L_GET_C_BACK_PTR(m_focusCall));
+			m_focusCall->pause();
 			break;
 		default:
 			ms_error("Could not leave the conference: bad focus call state (%s)",
@@ -629,7 +629,7 @@ void RemoteConference::leave () {
 bool RemoteConference::isIn () const {
 	if (m_state != LinphoneConferenceRunning)
 		return false;
-	LinphoneCallState callState = linphone_call_get_state(L_GET_C_BACK_PTR(m_focusCall));
+	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	return callState == LinphoneCallStreamsRunning;
 }
 
@@ -637,12 +637,12 @@ bool RemoteConference::focusIsReady () const {
 	LinphoneCallState focusState;
 	if (!m_focusCall)
 		return false;
-	focusState = linphone_call_get_state(L_GET_C_BACK_PTR(m_focusCall));
+	focusState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	return (focusState == LinphoneCallStreamsRunning) || (focusState == LinphoneCallPaused);
 }
 
 bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> call) {
-	if (linphone_call_transfer(call->toC(), m_focusContact) == 0) {
+	if (call->transfer(m_focusContact) == 0) {
 		m_transferingCalls.push_back(call);
 		return true;
 	} else {
@@ -671,7 +671,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 			it = m_pendingCalls.begin();
 			while (it != m_pendingCalls.end()) {
 				std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
-				LinphoneCallState pendingCallState = linphone_call_get_state(L_GET_C_BACK_PTR(pendingCall));
+				LinphoneCallState pendingCallState = static_cast<LinphoneCallState>(pendingCall->getState());
 				if ((pendingCallState == LinphoneCallStreamsRunning) || (pendingCallState == LinphoneCallPaused)) {
 					it = m_pendingCalls.erase(it);
 					transferToFocus(pendingCall);
@@ -702,7 +702,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 			if (m_state == LinphoneConferenceRunning) {
 				m_pendingCalls.remove(call);
 				m_transferingCalls.push_back(call);
-				linphone_call_transfer(call->toC(), m_focusContact);
+				call->transfer(m_focusContact);
 			}
 			break;
 		case LinphoneCallError:
