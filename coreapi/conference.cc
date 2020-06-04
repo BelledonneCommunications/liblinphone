@@ -114,7 +114,7 @@ void Conference::setState (LinphoneConferenceState state) {
 	}
 }
 
-std::shared_ptr<Conference::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
+std::shared_ptr<Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
 	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
 		if ((*it)->getCall() == call)
 			return *it;
@@ -122,7 +122,7 @@ std::shared_ptr<Conference::Participant> Conference::findParticipant (const std:
 	return nullptr;
 }
 
-std::shared_ptr<Conference::Participant> Conference::findParticipant (const LinphoneAddress *uri) const {
+std::shared_ptr<Participant> Conference::findParticipant (const LinphoneAddress *uri) const {
 	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
 		if (linphone_address_equal((*it)->getUri(), uri))
 			return *it;
@@ -142,7 +142,7 @@ void Conference::setSubject (const std::string &subject) {
 
 }
 
-void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) {
+void Conference::setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) {
 
 }
 
@@ -158,17 +158,14 @@ void Conference::join (const IdentityAddress &participantAddress) {
 	
 }
 
-/*
 std::shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &participantAddress) const {
 	return nullptr;
 }
-*/
 
 int Conference::getParticipantCount () const {
 	return -1;
 }
 
-/*
 std::shared_ptr<Participant> Conference::getMe () const {
 	return nullptr;
 }
@@ -180,7 +177,6 @@ bool Conference::removeParticipant (const std::shared_ptr<Participant> &particip
 bool Conference::removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) {
 	return false;
 }
-*/
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
 	return false;
@@ -881,7 +877,7 @@ int linphone_conference_get_size (const LinphoneConference *obj) {
 }
 
 bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *obj) {
-	const list<std::shared_ptr<MediaConference::Conference::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
+	const list<std::shared_ptr<MediaConference::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
 	bctbx_list_t *participants_list = nullptr;
 	for (auto it = participants.begin(); it != participants.end(); it++) {
 		LinphoneAddress *uri = linphone_address_clone((*it)->getUri());
