@@ -41,6 +41,10 @@ namespace LinphoneTest {
 
 LINPHONE_BEGIN_NAMESPACE
 
+namespace MediaConference {
+	class Conference;
+}
+
 class ClientGroupChatRoom;
 class Conference;
 
@@ -50,6 +54,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
+	friend class MediaConference::Conference;
 	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
 	friend class LocalConferenceEventHandler;
@@ -87,8 +92,10 @@ protected:
 	void setConference (Conference *conference) { mConference = conference; }
 
 	std::shared_ptr<CallSession> createSession (const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
-	std::shared_ptr<CallSession> createSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
 
+	// TODO: Delete
+	// Temporary method to unify audio video conference and conference coded for group chats
+	std::shared_ptr<CallSession> createSession (const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
 	inline std::shared_ptr<CallSession> getSession () const { return session; }
 	inline void removeSession () { session.reset(); }
 	inline void setAddress (const IdentityAddress &addr) { this->addr = addr; }
