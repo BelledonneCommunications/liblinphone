@@ -32,6 +32,7 @@
 #include "call/call-p.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
+#include "conference/participant.h"
 #include "conference/session/mixers.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/media-session.h"
@@ -62,29 +63,36 @@ Conference::Conference(LinphoneCore *core, const ConferenceParams *params) :
 }
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<Participant> p = std::make_shared<Participant>(call);
+	std::shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::create(nullptr,call->getRemoteAddress());
+	//std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
+	//p->createSession(*this, params, hasMedia, listener);
+	p->createSession(L_GET_CPP_PTR_FROM_C_OBJECT(m_core), nullptr, true, nullptr);
 	m_participants.push_back(p);
+	m_callTable[p] = call;
 	return 0;
 }
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<Participant> p = findParticipant(call);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	if (!p)
 		return -1;
 	m_participants.remove(p);
+	m_callTable.erase(p);
 	return 0;
 }
 
 int Conference::removeParticipant (const LinphoneAddress *uri) {
-	std::shared_ptr<Participant> p = findParticipant(uri);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(uri);
 	if (!p)
 		return -1;
 	m_participants.remove(p);
+	m_callTable.erase(p);
 	return 0;
 }
 
 int Conference::terminate () {
 	m_participants.clear();
+	m_callTable.clear();
 	return 0;
 }
 
@@ -114,17 +122,19 @@ void Conference::setState (LinphoneConferenceState state) {
 	}
 }
 
-std::shared_ptr<Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
+std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
 	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
-		if ((*it)->getCall() == call)
+		auto pCall = m_callTable.find(*it)->second;
+		if (pCall == call)
 			return *it;
 	}
 	return nullptr;
 }
 
-std::shared_ptr<Participant> Conference::findParticipant (const LinphoneAddress *uri) const {
+std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const LinphoneAddress *uri) const {
 	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
-		if (linphone_address_equal((*it)->getUri(), uri))
+		const Address &addr((*it)->getAddress());
+		if (linphone_address_equal(L_GET_C_BACK_PTR(&addr), uri))
 			return *it;
 	}
 	return nullptr;
@@ -142,7 +152,7 @@ void Conference::setSubject (const std::string &subject) {
 
 }
 
-void Conference::setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) {
+void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) {
 
 }
 
@@ -158,7 +168,7 @@ void Conference::join (const IdentityAddress &participantAddress) {
 	
 }
 
-std::shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &participantAddress) const {
+std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const IdentityAddress &participantAddress) const {
 	return nullptr;
 }
 
@@ -166,15 +176,15 @@ int Conference::getParticipantCount () const {
 	return -1;
 }
 
-std::shared_ptr<Participant> Conference::getMe () const {
+std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 	return nullptr;
 }
 
-bool Conference::removeParticipant (const std::shared_ptr<Participant> &participant) {
+bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	return false;
 }
 
-bool Conference::removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) {
+bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) {
 	return false;
 }
 
@@ -336,7 +346,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	if (remoteParticipantsCount() == 1 && isIn()){
 		/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 		 * but it should contains all participants ideally.*/
-		std::shared_ptr<LinphonePrivate::Call> remaining_call = (*m_participants.begin())->getCall();
+		std::shared_ptr<LinphonePrivate::Call> remaining_call = m_callTable[(*m_participants.begin())];
 		lInfo() << "Call [" << remaining_call << "] with " << remaining_call->getRemoteAddress().asString() << 
 			" is our last call in our conference, we will reconnect directly to it.";
 		LinphoneCallParams *params = linphone_core_create_call_params(m_core, L_GET_C_BACK_PTR(remaining_call));
@@ -354,10 +364,10 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 }
 
 int LocalConference::removeParticipant (const LinphoneAddress *uri) {
-	const std::shared_ptr<Participant> participant = findParticipant(uri);
+	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(uri);
 	if (!participant)
 		return -1;
-	std::shared_ptr<LinphonePrivate::Call> call = participant->getCall();
+	std::shared_ptr<LinphonePrivate::Call> call = m_callTable[participant];
 	if (!call)
 		return -1;
 	return removeParticipant(call);
@@ -404,7 +414,7 @@ int LocalConference::updateParams(const ConferenceParams &confParams){
 	if (confParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::updateParams(): checking participants...";
 		for (auto participant : m_participants){
-			LinphoneCall *call = L_GET_C_BACK_PTR(participant->getCall());
+			LinphoneCall *call = L_GET_C_BACK_PTR(m_callTable[participant]);
 			if (call){
 				const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
 				if ((!!linphone_call_params_video_enabled(current_params)) != confParams.videoEnabled()){
@@ -715,7 +725,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 	switch (newCallState) {
 		case LinphoneCallConnected:
 			m_transferingCalls.push_back(transfered);
-			findParticipant(transfered)->m_call = nullptr;
+//			findParticipant(transfered)->m_call = nullptr;
 			break;
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
@@ -783,24 +793,24 @@ using namespace LinphonePrivate;
 using namespace LinphonePrivate::MediaConference;
 
 const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
-	return MediaConference::Conference::stateToString(state);
+	return LinphonePrivate::MediaConference::Conference::stateToString(state);
 }
 
 
 LinphoneConference *linphone_local_conference_new (LinphoneCore *core) {
-	return (new MediaConference::LocalConference(core))->toC();
+	return (new LinphonePrivate::MediaConference::LocalConference(core))->toC();
 }
 
 LinphoneConference *linphone_local_conference_new_with_params (LinphoneCore *core, const LinphoneConferenceParams *params) {
-	return (new MediaConference::LocalConference(core, ConferenceParams::toCpp(params)))->toC();
+	return (new LinphonePrivate::MediaConference::LocalConference(core, ConferenceParams::toCpp(params)))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new (LinphoneCore *core) {
-	return (new MediaConference::RemoteConference(core))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(core))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, const LinphoneConferenceParams *params) {
-	return (new MediaConference::RemoteConference(core, ConferenceParams::toCpp(params)))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(core, ConferenceParams::toCpp(params)))->toC();
 }
 
 
@@ -877,10 +887,11 @@ int linphone_conference_get_size (const LinphoneConference *obj) {
 }
 
 bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *obj) {
-	const list<std::shared_ptr<MediaConference::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
+	const list<std::shared_ptr<LinphonePrivate::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
 	bctbx_list_t *participants_list = nullptr;
 	for (auto it = participants.begin(); it != participants.end(); it++) {
-		LinphoneAddress *uri = linphone_address_clone((*it)->getUri());
+		const Address &addr((*it)->getAddress());
+		LinphoneAddress *uri = linphone_address_clone(L_GET_C_BACK_PTR(&addr));
 		participants_list = bctbx_list_append(participants_list, uri);
 	}
 	return participants_list;
