@@ -58,6 +58,7 @@ typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference,
 const char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 
+LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
 
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
