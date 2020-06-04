@@ -20,6 +20,8 @@
 #ifndef CONFERENCE_PRIVATE_H
 #define CONFERENCE_PRIVATE_H
 
+#include <map>
+
 #include "c-wrapper/c-wrapper.h"
 #include "linphone/core.h"
 #include "call/call.h"
@@ -111,6 +113,7 @@ LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *obj, 
 LINPHONE_BEGIN_NAMESPACE
 
 class Call;
+class Participant;
 class AudioControlInterface;
 class VideoControlInterface;
 class MixerSession;
@@ -123,39 +126,6 @@ class RemoteConference;
 
 class ConferenceFactoryInterface;
 class ConferenceParamsInterface;
-
-// FIXME: Delete as Participant class declared in src/conference should be used
-// Moved here to avoid conflicts with Participant declared in src/conference
-class Participant {
-public:
-	Participant(std::shared_ptr<LinphonePrivate::Call> call) {
-		m_uri = linphone_address_clone(linphone_call_get_remote_address(L_GET_C_BACK_PTR(call)));
-		m_call = call;
-	}
-
-	~Participant() {
-		linphone_address_unref(m_uri);
-	}
-
-	const LinphoneAddress *getUri() const {
-		return m_uri;
-	}
-
-	std::shared_ptr<LinphonePrivate::Call> getCall() const {
-		return m_call;
-	}
-
-private:
-	Participant(const Participant &src);
-	Participant &operator=(const Participant &src);
-
-private:
-	LinphoneAddress *m_uri;
-	std::shared_ptr<LinphonePrivate::Call> m_call;
-
-	friend class RemoteConference;
-};
-
 
 class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>{
 	friend class Conference;
@@ -243,7 +213,7 @@ public:
 	 * @param[in] participant The Participant for which to change the admin status
 	 * @param[in] isAdmin A boolean value telling whether the participant should now be an admin or not
 	 */
-	virtual void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) = 0;
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) = 0;
 
 	/* This fonction add a participant to this conference.<br>
 	 *Dependending if focus user agent is local or remote, behavior is defferent. <br>
@@ -283,7 +253,7 @@ public:
 	* @param[in] participantAddress The address to search in the list of participants of the chat room
 	* @return The participant if found, NULL otherwise.
 	*/
-	virtual std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const = 0;
+	virtual std::shared_ptr<LinphonePrivate::Participant> findParticipant (const IdentityAddress &participantAddress) const = 0;
 
 	/*
 	* Get the number of participants in this conference (that is without ourselves).
@@ -293,9 +263,9 @@ public:
 
 	/*
 	* Get the list of participants in this conference  (that is without ourselves).
-	* @return \std::list<std::shared_ptr<Participant>>
+	* @return \std::list<std::shared_ptr<LinphonePrivate::Participant>>
 	*/
-	virtual const std::list<std::shared_ptr<Participant>> &getParticipants () const = 0;
+	virtual const std::list<std::shared_ptr<LinphonePrivate::Participant>> &getParticipants () const = 0;
 	
 	/*
 	* Get the participant representing myself in this Conference (I.E local participant).<br>
@@ -306,7 +276,7 @@ public:
 	*Local participant is the Participant of this conference used as From when operations are performed like subject change or participant management. local participant is not included in the of participant returned by function. Local participant is mandatory to create a remote conference conference.
 	* @return The participant representing myself in the conference.
 	*/
-	virtual std::shared_ptr<Participant> getMe () const = 0;
+	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const = 0;
 
 	/*
 	 *Remove a participant from this conference.
@@ -319,14 +289,14 @@ public:
 	 * @param[in] participantAddress The address to search and remove in the list of participants of this conference
 	 * @return True if everything is OK, False otherwise
 	 */
-	virtual bool removeParticipant (const std::shared_ptr<Participant> &participant) = 0;
+	virtual bool removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) = 0;
 
 	/*
 	 *Remove a list of participant from this conference.<br>
 	 * @param[in] participants The addresses to search in the list of participants of this conference.
 	 * @return True if everything is OK, False otherwise
 	 */
-	virtual bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) = 0;
+	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) = 0;
 
 	/*
 	 * Remove the local participant from this conference. <br>
@@ -435,8 +405,13 @@ public:
 	using LinphonePrivate::MediaConference::ConferenceInterface::addParticipant;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override = 0;
 	virtual bool addParticipant (const LinphonePrivate::IdentityAddress &participantAddress) override;
+	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 	virtual int removeParticipant(const LinphoneAddress *uri) = 0;
+	virtual bool removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
+	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
+
 	virtual int updateParams(const ConferenceParams &params) = 0;
 	virtual int terminate() = 0;
 
@@ -449,7 +424,7 @@ public:
 	virtual AudioStream *getAudioStream() = 0; /* Used by the tone manager, revisit.*/
 
 	virtual int getSize() const {return (int)m_participants.size() + (isIn()?1:0);}
-	virtual const std::list<std::shared_ptr<Participant>> &getParticipants() const override {return m_participants;}
+	virtual const std::list<std::shared_ptr<LinphonePrivate::Participant>> &getParticipants() const override {return m_participants;}
 
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
@@ -477,35 +452,33 @@ public:
 
 	virtual void setSubject (const std::string &subject) override;
 
-	virtual void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
-
-	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 	virtual void join (const IdentityAddress &participantAddress) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::MediaConference::ConferenceInterface::findParticipant;
-	virtual std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
+	virtual std::shared_ptr<LinphonePrivate::Participant> findParticipant (const IdentityAddress &participantAddress) const override;
 
 	virtual int getParticipantCount () const override;
 
-	virtual std::shared_ptr<Participant> getMe () const override;
-
-	virtual bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-
-	virtual bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
 	virtual bool update(const ConferenceParamsInterface &newParameters) override;
 
 protected:
 	void setState(LinphoneConferenceState state);
-	std::shared_ptr<Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
-	std::shared_ptr<Participant> findParticipant(const LinphoneAddress *uri) const;
+	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
+	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const LinphoneAddress *uri) const;
 
 protected:
 	std::string m_conferenceID;
 	LinphoneCore *m_core;
-	std::list<std::shared_ptr<Participant>> m_participants;
+	std::list<std::shared_ptr<LinphonePrivate::Participant>> m_participants;
+
+	// Temporary member to store participant,call pairs
+	// TODO: Remove once conference merge is finished
+	std::map<std::shared_ptr<LinphonePrivate::Participant>, std::shared_ptr<LinphonePrivate::Call>> m_callTable;
 	std::shared_ptr<ConferenceParams> m_currentParams;
 	LinphoneConferenceState m_state;
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
