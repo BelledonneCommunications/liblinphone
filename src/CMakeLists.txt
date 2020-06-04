@@ -30,9 +30,18 @@ set(LINK_LIBS
 if(ENABLE_ADVANCED_IM)
 	list(APPEND LIBS ${LIBXSD_LIBRARIES})
 endif()
+
+#APPLE_LIBS is mandatory for apple compilation
+if(APPLE)
+	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
+	if(IOS)
+		list(APPEND APPLE_LIBS "-framework UIKit")
+	endif()
+endif()
+
 #interface_libs is used in export cmake config file
 if(APPLE)
-	list(APPEND INTERFACE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
+	list(APPEND INTERFACE_LIBS ${APPLE_LIBS})
 endif()
 set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
@@ -451,6 +460,10 @@ if (APPLE)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-apple.h)
 	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/platform-helpers/ios-platform-helpers.mm)
 	list(APPEND LINPHONE_OBJC_SOURCE_FILES core/shared-core-helpers/ios-shared-core-helpers.mm)
+	if (IOS)
+		list(APPEND LINPHONE_OBJC_SOURCE_FILES core/app/ios-app-delegate.h)
+		list(APPEND LINPHONE_OBJC_SOURCE_FILES core/app/ios-app-delegate.mm)
+	endif()
 elseif (ANDROID)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES core/paths/paths-android.cpp core/platform-helpers/android-platform-helpers.cpp)
 	list(APPEND LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES core/paths/paths-android.h)
@@ -521,7 +534,7 @@ if(ENABLE_STATIC)
 	target_link_libraries(linphone-static PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone-static PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork -framework CoreLocation")
+		target_link_libraries(linphone-static PUBLIC ${APPLE_LIBS})
 	endif()
 	install(TARGETS linphone-static EXPORT ${EXPORT_TARGETS_NAME}Targets
 		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -591,7 +604,7 @@ if(ENABLE_SHARED)
 	target_link_libraries(linphone PRIVATE ${LINK_LIBS})
 
 	if(APPLE)
-		target_link_libraries(linphone PUBLIC "-framework Foundation" "-framework AVFoundation" "-framework SystemConfiguration -framework CFNetwork -framework CoreLocation")
+		target_link_libraries(linphone PUBLIC ${APPLE_LIBS})
 	endif()
 	if(WIN32)
 		# Export Xerces and Soci symbols.
