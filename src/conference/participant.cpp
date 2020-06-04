@@ -64,6 +64,19 @@ shared_ptr<CallSession> Participant::createSession (
 	return session;
 }
 
+shared_ptr<CallSession> Participant::createSession (
+	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
+) {
+	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
+		session = make_shared<MediaSession>(core, this, params, listener);
+	} else {
+		session = make_shared<CallSession>(core, params, listener);
+	}
+	return session;
+}
+
+
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
