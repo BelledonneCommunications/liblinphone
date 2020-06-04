@@ -39,6 +39,7 @@
 // TODO: Remove me
 #include "private.h"
 
+#include "core/app/ios-app-delegate.h"
 // =============================================================================
 
 using namespace std;
@@ -48,7 +49,9 @@ LINPHONE_BEGIN_NAMESPACE
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	~IosPlatformHelpers () = default;
+	~IosPlatformHelpers (){
+		[mAppDelegate dealloc];
+	}
 
 	void acquireWifiLock () override {}
 	void releaseWifiLock () override {}
@@ -106,6 +109,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
+	IosAppDelegate *mAppDelegate;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -119,6 +123,9 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
+
+	mAppDelegate = [[IosAppDelegate alloc] init];
+	[mAppDelegate setCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())

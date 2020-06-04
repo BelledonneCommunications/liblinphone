@@ -12,6 +12,7 @@ This changelog file was started on October 2019. Previous changes were more or l
     
 ### Added
 - RTP bundle mode feature according to https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 .
+- EnterForeground and enterBackground automatically for ios and anroid.
 
 ### Changed
 - Big internal refactoring of how streams are managed within offer/answer exchanges.
