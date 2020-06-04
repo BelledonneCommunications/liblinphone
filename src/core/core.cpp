@@ -226,7 +226,6 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 }
 
 void CorePrivate::notifyEnteringBackground () {
-	L_Q();
 	if (isInBackground)
 		return;
 
@@ -239,6 +238,7 @@ void CorePrivate::notifyEnteringBackground () {
 		enableFriendListsSubscription(false);
 
 #if TARGET_OS_IPHONE
+	L_Q();
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	// Stop the video preview
 	linphone_core_enable_video_preview(lc, FALSE);
