@@ -45,12 +45,6 @@ void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t mut
 	MS2AudioStream::postConfigureAudioStream(st, lc, !!muted);
 }
 
-/* Internal version that does not play tone indication*/
-int _linphone_call_pause (LinphoneCall *call) {
-	return Call::toCpp(call)->pause();
-}
-
-
 // =============================================================================
 // Private functions.
 // =============================================================================

@@ -387,7 +387,7 @@ int LocalConference::enter () {
 	if (linphone_core_sound_resources_locked(m_core))
 		return -1;
 	if (linphone_core_get_current_call(m_core))
-		_linphone_call_pause(linphone_core_get_current_call(m_core));
+		linphone_call_pause(linphone_core_get_current_call(m_core));
 
 	addLocalEndpoint();
 	return 0;
