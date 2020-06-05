@@ -533,6 +533,10 @@ public:
 	virtual ~LocalConferenceTester () {}
 
 	/* ConferenceInterface */
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::addParticipant;
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override {
 		bool status = LocalConference::addParticipant(addr, params, hasMedia);
 		if (status) {
