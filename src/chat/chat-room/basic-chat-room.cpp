@@ -81,9 +81,9 @@ bool BasicChatRoom::canHandleParticipants () const {
 	return false;
 }
 
-const IdentityAddress &BasicChatRoom::getConferenceAddress () const {
+const ConferenceAddress &BasicChatRoom::getConferenceAddress () const {
 	lError() << "a BasicChatRoom does not have a conference address";
-	return Utils::getEmptyConstRefObject<IdentityAddress>();
+	return Utils::getEmptyConstRefObject<ConferenceAddress>();
 }
 
 bool BasicChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {
