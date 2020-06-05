@@ -45,7 +45,14 @@ public:
 
 	bool canHandleParticipants () const override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipant;
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipants;
 	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
@@ -62,10 +69,19 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::join;
 	void join () override;
 	void leave () override;
 
 	const ConferenceId &getConferenceId () const override;
+
+	bool addParticipant (const IdentityAddress &participantAddress) override;
+	bool addParticipant (std::shared_ptr<Call> call) override;
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	void join (const IdentityAddress &participantAddress) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
 
 protected:
 	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);

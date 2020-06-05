@@ -50,20 +50,38 @@ public:
 	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
+	// TODO: Start Delete
+	virtual const ConferenceAddress &getConferenceAddress () const override;
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipant;
+	virtual bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipants;
+	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
+	virtual bool canHandleParticipants () const override;
+	virtual void join () override;
+	// TODO: End Delete
+
+
 	/* ConferenceInterface */
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
-	bool canHandleParticipants () const override;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
-	const ConferenceAddress &getConferenceAddress () const override;
 	std::shared_ptr<Participant> getMe () const override;
+	bool addParticipant (std::shared_ptr<Call> call) override;
+	bool addParticipant (const IdentityAddress &participantAddress) override;
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	int getParticipantCount () const override;
 	const std::list<std::shared_ptr<Participant>> &getParticipants () const override;
 	const std::string &getSubject () const override;
-	void join () override;
+	void join (const IdentityAddress &participantAddress) override;
 	void leave () override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
+
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
 
