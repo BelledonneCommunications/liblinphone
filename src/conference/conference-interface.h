@@ -212,8 +212,7 @@ public:
 	 * @param[in] new parameter to applie for this conference.
 	 * @return True if everything is OK, False otherwise
 	 */
-	//virtual bool update(const ConferenceParamsInterface &newParameters) = 0;
-	virtual bool update(const ConferenceParamsInterface &newParameters) { return false; };
+	virtual bool update(const ConferenceParamsInterface &newParameters) = 0;
 
 };
 

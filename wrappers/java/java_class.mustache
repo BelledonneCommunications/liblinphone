@@ -19,7 +19,6 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 package {{packageName}};
 
-import java.io.Serializable;
 import org.jetbrains.annotations.Nullable;
 {{#imports}}
 import {{import}}
@@ -51,7 +50,7 @@ import org.linphone.core.tools.h264.OpenH264DownloadHelper;
 {{/lines}}
 {{/detailedDoc}}
 */
-public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}}{{#isNotLinphoneFactory}} extends Serializable{{/isNotLinphoneFactory}} {
+public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphoneFactory}}interface{{/isNotLinphoneFactory}} {{className}} {
 {{#enums}}
     public enum {{{className}}} {
     {{#values}}

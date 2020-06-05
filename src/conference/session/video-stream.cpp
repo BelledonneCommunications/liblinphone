@@ -429,21 +429,24 @@ bool MS2VideoControl::cameraEnabled() const{
 }
 
 void MS2VideoControl::setNativeWindowId(void *w){
+	VideoStream *vs = getVideoStream();
 	mNativeWindowId = w;
-	video_stream_set_native_window_id(getVideoStream(), w);
+	if (vs) video_stream_set_native_window_id(vs, w);
 }
 
 void * MS2VideoControl::getNativeWindowId() const{
+	VideoStream *vs = getVideoStream();
 	if (mNativeWindowId){
 		return mNativeWindowId;
 	}
 	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */
-	return video_stream_get_native_window_id(getVideoStream());
+	return vs ? video_stream_get_native_window_id(vs) : nullptr;
 }
 
 void MS2VideoControl::setNativePreviewWindowId(void *w){
+	VideoStream *vs = getVideoStream();
 	mNativePreviewWindowId = w;
-	video_stream_set_native_preview_window_id(getVideoStream(), w);
+	if (vs) video_stream_set_native_preview_window_id(vs, w);
 }
 
 void * MS2VideoControl::getNativePreviewWindowId() const{

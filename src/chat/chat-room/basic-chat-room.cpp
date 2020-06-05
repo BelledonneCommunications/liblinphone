@@ -177,7 +177,7 @@ const ConferenceId &BasicChatRoom::getConferenceId () const {
 }
 
 bool BasicChatRoom::update(const ConferenceParamsInterface &newParameters) {
-	return ChatRoom::update(newParameters);
+	return false;
 }
 
 LINPHONE_END_NAMESPACE
