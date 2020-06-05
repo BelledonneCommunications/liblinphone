@@ -40,6 +40,9 @@ public:
 	virtual ~RemoteConference ();
 
 	/* ConferenceInterface */
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::addParticipant;
 	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
