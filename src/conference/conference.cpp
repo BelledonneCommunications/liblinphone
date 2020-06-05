@@ -57,7 +57,17 @@ shared_ptr<Participant> Conference::getActiveParticipant () const {
 
 // -----------------------------------------------------------------------------
 
+bool Conference::addParticipant (std::shared_ptr<Call> call) {
+	lError() << "Conference class does not handle addParticipant() generically";
+	return false;
+}
+
 bool Conference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+	lError() << "Conference class does not handle addParticipant() generically";
+	return false;
+}
+
+bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
 }
@@ -70,6 +80,17 @@ bool Conference::addParticipants (const list<IdentityAddress> &addresses, const 
 	bool soFarSoGood = true;
 	for (const auto &address : sortedAddresses)
 		soFarSoGood &= addParticipant(address, params, hasMedia);
+	return soFarSoGood;
+}
+
+bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
+	list<IdentityAddress> sortedAddresses(addresses);
+	sortedAddresses.sort();
+	sortedAddresses.unique();
+
+	bool soFarSoGood = true;
+	for (const auto &address : sortedAddresses)
+		soFarSoGood &= addParticipant(address);
 	return soFarSoGood;
 }
 
@@ -97,9 +118,15 @@ const string &Conference::getSubject () const {
 	return subject;
 }
 
+void Conference::join (const IdentityAddress &participantAddress) {}
+
 void Conference::join () {}
 
 void Conference::leave () {}
+
+bool Conference::update(const ConferenceParamsInterface &newParameters) {
+	return false;
+};
 
 bool Conference::removeParticipant (const shared_ptr<Participant> &participant) {
 	lError() << "Conference class does not handle removeParticipant() generically";
