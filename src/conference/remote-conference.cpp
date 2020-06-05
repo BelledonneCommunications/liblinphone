@@ -42,7 +42,7 @@ RemoteConference::RemoteConference (
 	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
 	// Local conference sets last notify to 1 in its constructor
 	lastNotify = 0;
-	// FIXME: Not very nice to have ab empty deleter
+	// FIXME: Not very nice to have an empty deleter
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
