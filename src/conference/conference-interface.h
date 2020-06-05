@@ -48,9 +48,7 @@ public:
 
 	// TODO: Start Delete
 
-	// Can it be got from ConferenceId? - peer address getter
-	virtual const IdentityAddress &getConferenceAddress () const = 0;
-
+	virtual const ConferenceId &getConferenceId () const = 0;
 	virtual bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) = 0;
 
 	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) = 0;
@@ -94,7 +92,8 @@ public:
 	 Get the conference ID of this conference.
 	 @return The Address of the conference.
 	 **/
-	virtual const ConferenceId &getConferenceId () const = 0;
+	//virtual const Address &getConferenceId () const = 0;
+	virtual const ConferenceAddress &getConferenceAddress () const = 0;
 
 	/*
 	* Get the subject of this conference
