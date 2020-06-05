@@ -289,6 +289,20 @@ bool ProxyChatRoom::addParticipant (
 	return d->chatRoom->addParticipant(participantAddress, params, hasMedia);
 }
 
+bool ProxyChatRoom::addParticipant (
+	std::shared_ptr<Call> call
+) {
+	L_D();
+	return d->chatRoom->addParticipant(call);
+}
+
+bool ProxyChatRoom::addParticipant (
+	const IdentityAddress &participantAddress
+) {
+	L_D();
+	return d->chatRoom->addParticipant(participantAddress);
+}
+
 bool ProxyChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses,
 	const CallSessionParams *params,
@@ -296,6 +310,13 @@ bool ProxyChatRoom::addParticipants (
 ) {
 	L_D();
 	return d->chatRoom->addParticipants(addresses, params, hasMedia);
+}
+
+bool ProxyChatRoom::addParticipants (
+	const list<IdentityAddress> &addresses
+) {
+	L_D();
+	return d->chatRoom->addParticipants(addresses);
 }
 
 bool ProxyChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
@@ -352,12 +373,22 @@ void ProxyChatRoom::join () {
 	d->chatRoom->join();
 }
 
+void ProxyChatRoom::join (const IdentityAddress &participantAddress) {
+	L_D();
+	d->chatRoom->join(participantAddress);
+}
+
 void ProxyChatRoom::leave () {
 	L_D();
 	d->chatRoom->leave();
 }
 
 // -----------------------------------------------------------------------------
+
+bool ProxyChatRoom::update(const ConferenceParamsInterface &newParameters) {
+	L_D();
+	return d->chatRoom->update(newParameters);
+}
 
 const shared_ptr<AbstractChatRoom> &ProxyChatRoom::getProxiedChatRoom () const {
 	L_D();
