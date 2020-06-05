@@ -7733,17 +7733,20 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
 		
-		conf_method_name = linphone_config_get_string(lc->config, "misc", "conference_type", "local");
+		conf_method_name = lp_config_get_string(lc->config, "misc", "conference_type", "local");
+		LinphoneAddress *identity = linphone_address_new(linphone_core_get_identity(lc));
 		if (strcasecmp(conf_method_name, "local") == 0) {
-			conf = linphone_local_conference_new_with_params(lc, params2);
+			conf = linphone_local_conference_new_with_params(lc, identity, params2);
 		} else if (!serverMode && strcasecmp(conf_method_name, "remote") == 0) {
-			conf = linphone_remote_conference_new_with_params(lc, params2);
+			conf = linphone_remote_conference_new_with_params(lc, identity, params2);
 		} else {
 			ms_error("'%s' is not a valid conference method", conf_method_name);
 			linphone_conference_params_unref(params2);
+			linphone_address_unref(identity);
 			return NULL;
 		}
 		linphone_conference_params_unref(params2);
+		linphone_address_unref(identity);
 		if (!serverMode) {
 			linphone_core_set_conference(lc, conf);
 			linphone_conference_set_state_changed_callback(conf, _linphone_core_conference_state_changed, lc);
