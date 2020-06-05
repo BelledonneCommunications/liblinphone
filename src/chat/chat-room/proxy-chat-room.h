@@ -94,11 +94,18 @@ public:
 
 	bool canHandleParticipants () const override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipant;
 	bool addParticipant (
 		const IdentityAddress &participantAddress,
 		const CallSessionParams *params,
 		bool hasMedia
 	) override;
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::addParticipants;
 	bool addParticipants (
 		const std::list<IdentityAddress> &addresses,
 		const CallSessionParams *params,
@@ -119,6 +126,9 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::join;
 	void join () override;
 	void leave () override;
 
@@ -129,6 +139,12 @@ public:
 	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
 		chatListeners.push_back(listener);
 	}
+
+	bool addParticipant (const IdentityAddress &participantAddress) override;
+	bool addParticipant (std::shared_ptr<Call> call) override;
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	void join (const IdentityAddress &participantAddress) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
 
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
