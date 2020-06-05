@@ -174,13 +174,6 @@ public class CoreManager {
                     mAudioHelper.requestCallAudioFocus();
                 }
             }
-
-            @Override
-            public void onAudioDeviceChanged(Core core, AudioDevice device) {
-                // This is required on some devices with AAudio sound card if media volume is set to 0, 
-                // otherwise they won't head any sound until they either increase or decrease the volume.
-                mAudioHelper.hackVolume();
-            }
         };
         mCore.addListener(mListener);
 

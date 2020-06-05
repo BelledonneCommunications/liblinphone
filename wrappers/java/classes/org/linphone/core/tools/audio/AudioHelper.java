@@ -227,14 +227,6 @@ public class AudioHelper implements OnAudioFocusChangeListener {
         }
     }
 
-    public void hackVolume() {
-        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_MUTE, AudioManager.STREAM_VOICE_CALL, 0);
-        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_UNMUTE, AudioManager.STREAM_VOICE_CALL, 0);
-
-        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_LOWER, AudioManager.STREAM_VOICE_CALL, 0);
-        mAudioManager.adjustSuggestedStreamVolume(AudioManager.ADJUST_RAISE, AudioManager.STREAM_VOICE_CALL, 0);
-    }
-
     private void routeAudioToEarpiece() {
         // Let's restore the default output device before the echo calibration or test
         Core core = CoreManager.instance().getCore();
