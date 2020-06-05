@@ -91,7 +91,28 @@ bool BasicChatRoom::addParticipant (const IdentityAddress &, const CallSessionPa
 	return false;
 }
 
+bool BasicChatRoom::addParticipant (
+	std::shared_ptr<Call> call
+) {
+	lError() << "addParticipant() is not allowed on a BasicChatRoom";
+	return false;
+}
+
+bool BasicChatRoom::addParticipant (
+	const IdentityAddress &participantAddress
+) {
+	lError() << "addParticipant() is not allowed on a BasicChatRoom";
+	return false;
+}
+
 bool BasicChatRoom::addParticipants (const list<IdentityAddress> &, const CallSessionParams *, bool) {
+	lError() << "addParticipants() is not allowed on a BasicChatRoom";
+	return false;
+}
+
+bool BasicChatRoom::addParticipants (
+	const list<IdentityAddress> &addresses
+) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
@@ -143,6 +164,10 @@ void BasicChatRoom::join () {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
+void BasicChatRoom::join (const IdentityAddress &participantAddress) {
+	lError() << "join() is not allowed on a BasicChatRoom";
+}
+
 void BasicChatRoom::leave () {
 	lError() << "leave() is not allowed on a BasicChatRoom";
 }
@@ -151,6 +176,8 @@ const ConferenceId &BasicChatRoom::getConferenceId () const {
 	return conferenceId;
 }
 
-
+bool BasicChatRoom::update(const ConferenceParamsInterface &newParameters) {
+	return ChatRoom::update(newParameters);
+}
 
 LINPHONE_END_NAMESPACE
