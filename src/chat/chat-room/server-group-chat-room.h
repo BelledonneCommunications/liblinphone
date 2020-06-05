@@ -64,12 +64,25 @@ public:
 
 	bool canHandleParticipants () const override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::addParticipant;
 	bool addParticipant (const IdentityAddress &address, const CallSessionParams *params, bool hasMedia) override;
+
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::addParticipants;
 	bool addParticipants (
 		const std::list<IdentityAddress> &addresses,
 		const CallSessionParams *params,
 		bool hasMedia
 	) override;
+
+	bool addParticipant (const IdentityAddress &participantAddress) override {return LocalConference::addParticipant(participantAddress); };
+	bool addParticipant (std::shared_ptr<Call> call) override {return LocalConference::addParticipant(call); };
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override {return LocalConference::addParticipants(addresses); };
+	void join (const IdentityAddress &participantAddress) override { LocalConference::join(participantAddress); };
+	bool update(const ConferenceParamsInterface &newParameters) override { return LocalConference::update(newParameters); };
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -85,6 +98,9 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::join;
 	void join () override;
 	void leave () override;
 
