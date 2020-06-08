@@ -438,10 +438,6 @@ bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
 
-bool ClientGroupChatRoom::canHandleParticipants () const {
-	return RemoteConference::canHandleParticipants();
-}
-
 const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress () const {
 	return RemoteConference::getConferenceAddress();
 }
