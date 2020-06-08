@@ -35,13 +35,14 @@ class CallSessionListener;
 class CallSessionPrivate;
 class Content;
 class ParticipantDevice;
+class LocalConferenceEventHandler;
 
 class LINPHONE_PUBLIC Conference :
 	public ConferenceInterface,
 	public ConferenceListener,
 	public CoreAccessor {
 	friend class CallSessionPrivate;
-
+	friend class LocalConferenceEventHandler;
 public:
 	~Conference();
 
