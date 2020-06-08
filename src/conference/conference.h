@@ -62,7 +62,6 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipants;
 	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
-	virtual bool canHandleParticipants () const override;
 	virtual void join () override;
 	// TODO: End Delete
 
