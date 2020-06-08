@@ -147,6 +147,7 @@ public:
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
+	const ConferenceParams &getCurrentParams() const {return *confParams;}
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
@@ -199,7 +200,7 @@ protected:
 
 	ConferenceId conferenceId;
 
-	std::shared_ptr<ConferenceParams> m_currentParams = nullptr;
+	std::shared_ptr<ConferenceParams> confParams = nullptr;
 
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
