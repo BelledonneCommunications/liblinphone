@@ -137,8 +137,6 @@ public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = nullptr);
 	virtual ~Conference() {}
 
-	const ConferenceParams &getCurrentParams() const {return *m_currentParams;}
-
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
