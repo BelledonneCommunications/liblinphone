@@ -57,8 +57,6 @@ public:
 
 	const ConferenceAddress &getConferenceAddress () const override;
 
-	bool canHandleParticipants () const override;
-
 	void deleteFromDb () override;
 
 	std::list<std::shared_ptr<EventLog>> getHistory (int nLast) const override;
