@@ -30,13 +30,9 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LocalConferenceEventHandler;
-
 class LINPHONE_PUBLIC LocalConference :
-	public Conference,
-	public ConferenceListenerInterface {
+	public Conference {
 	friend class ServerGroupChatRoomPrivate;
-	friend class LocalConferenceEventHandler;
 public:
 	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
 	virtual ~LocalConference ();
