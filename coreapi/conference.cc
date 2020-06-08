@@ -161,11 +161,27 @@ void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivat
 }
 
 bool Conference::addParticipant (const LinphonePrivate::IdentityAddress &participantAddress) {
-	return false;
+	shared_ptr<Participant> participant = findParticipant(participantAddress);
+	if (participant) {
+		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the LocalConference";
+		return false;
+	}
+	participant = Participant::create(this,participantAddress);
+	participants.push_back(participant);
+
+	// TODO: Set active participant here if it is still nullptr?
+	return true;
 }
 
 bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
-	return false;
+	list<IdentityAddress> sortedAddresses(addresses);
+	sortedAddresses.sort();
+	sortedAddresses.unique();
+
+	bool soFarSoGood = true;
+	for (const auto &address : sortedAddresses)
+		soFarSoGood &= addParticipant(address);
+	return soFarSoGood;
 }
 
 void Conference::join (const IdentityAddress &participantAddress) {
@@ -173,11 +189,18 @@ void Conference::join (const IdentityAddress &participantAddress) {
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const IdentityAddress &participantAddress) const {
+	IdentityAddress searchedAddr(participantAddress);
+	searchedAddr.setGruu("");
+	for (const auto &participant : participants) {
+		if (participant->getAddress() == searchedAddr)
+			return participant;
+	}
+
 	return nullptr;
 }
 
 int Conference::getParticipantCount () const {
-	return -1;
+	return static_cast<int>(getParticipants().size());
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
@@ -185,11 +208,21 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 }
 
 bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+	for (const auto &p : participants) {
+		if (participant->getAddress() == p->getAddress()) {
+			participants.remove(p);
+			m_callTable.erase(p);
+			return true;
+		}
+	}
 	return false;
 }
 
 bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) {
-	return false;
+	bool soFarSoGood = true;
+	for (const auto &p : participants)
+		soFarSoGood &= removeParticipant(p);
+	return soFarSoGood;
 }
 
 bool Conference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters) {
@@ -233,7 +266,6 @@ void LocalConference::addLocalEndpoint () {
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	for (const auto &address : addresses) {
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
-		// TODO: it should be a shared pointer
 		std::shared_ptr<LinphonePrivate::Call>  ccCall = nullptr;
 		if (!call) {
 			/* Start a new call by indicating that it has to be put into the conference directly */
