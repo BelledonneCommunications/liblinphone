@@ -118,39 +118,65 @@ class AudioControlInterface;
 class VideoControlInterface;
 class MixerSession;
 
+class ConferenceFactoryInterface;
+class ConferenceParamsInterface;
+
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
 class Conference;
 class LocalConference;
 class RemoteConference;
 
-class ConferenceFactoryInterface;
-class ConferenceParamsInterface;
-
-class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>{
+class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public LinphonePrivate::ConferenceParamsInterface {
 	friend class Conference;
 	friend class LocalConference;
 	friend class RemoteConference;
 	public:
 		ConferenceParams(const ConferenceParams& params) = default;
 		ConferenceParams(const LinphoneCore *core = NULL) {
-			m_enableVideo = false;
 			if(core) {
 				const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
 				if(policy->automatically_initiate) m_enableVideo = true;
 			}
 		}
-		void enableVideo(bool enable) {m_enableVideo = enable;}
-		bool videoEnabled() const {return m_enableVideo;}
-		void enableLocalParticipant(bool enable){ mLocalParticipantEnabled = enable; }
-		bool localParticipantEnabled()const { return mLocalParticipantEnabled; }
+
 		Object *clone()const override{
 			return new ConferenceParams(*this);
 		}
-		
+
+		virtual void setConferenceFactoryAddress (const Address &address) override { m_factoryAddress = address; };
+		const Address getFactoryAddress() const { return m_factoryAddress; };
+
+		virtual void enableVideo(bool enable) override {m_enableVideo = enable;}
+		bool videoEnabled() const {return m_enableVideo;}
+
+		virtual void  enableAudio(bool enable) override {m_enableAudio = enable;};
+		bool audioEnabled() const {return m_enableAudio;}
+
+		virtual void  enableChat(bool enable) override {m_enableChat = enable;};
+		bool chatEnabled() const {return m_enableChat;}
+
+		void enableLocalParticipant (bool enable) { mLocalParticipantEnabled = enable; }
+		bool localParticipantEnabled() const { return mLocalParticipantEnabled; }
+
+		virtual void setConferenceAddress (const Address conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
+		const Address getConferenceAddress() const { return m_conferenceAddress; };
+
+		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
+		const std::string getSubject() const { return m_subject; };
+
+		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
+		const IdentityAddress getMe() const { return m_me; };
+
 	private:
-		bool m_enableVideo;
+		bool m_enableVideo = false;
+		bool m_enableAudio = false;
+		bool m_enableChat = false;
 		bool mLocalParticipantEnabled = true;
+		Address m_conferenceAddress = Address();
+		Address m_factoryAddress = Address();
+		std::string m_subject = "";
+		IdentityAddress m_me = IdentityAddress();
 };
 
 /*
