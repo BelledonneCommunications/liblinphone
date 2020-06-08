@@ -94,10 +94,6 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
-bool Conference::canHandleParticipants () const {
-	return true;
-}
-
 const ConferenceAddress &Conference::getConferenceAddress () const {
 	return conferenceAddress;
 }
