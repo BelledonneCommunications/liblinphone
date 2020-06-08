@@ -40,7 +40,6 @@ class ConferenceParticipantDeviceEvent;
 class ConferenceParticipantEvent;
 class ConferenceSubjectEvent;
 class ConferenceAvailableMediaEvent;
-class LocalConference;
 class Participant;
 class ParticipantDevice;
 
@@ -50,7 +49,7 @@ friend class LocalConferenceListEventHandler;
 	friend class Tester;
 #endif
 public:
-	LocalConferenceEventHandler (LocalConference *localConference);
+	LocalConferenceEventHandler (Conference *conference);
 
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
@@ -120,7 +119,7 @@ public:
 
 private:
 
-	LocalConference *conf = nullptr;
+	Conference *conf = nullptr;
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
 	std::string createNotifySubjectChanged (const std::string &subject);
