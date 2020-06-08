@@ -60,30 +60,6 @@ LocalConference::~LocalConference () {
 
 // -----------------------------------------------------------------------------
 
-bool LocalConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (participant) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the LocalConference";
-		return false;
-	}
-	participant = Participant::create(this,addr);
-	participant->createSession(*this, params, hasMedia, listener);
-	participants.push_back(participant);
-	if (!activeParticipant)
-		activeParticipant = participant;
-	return true;
-}
-
-bool LocalConference::removeParticipant (const shared_ptr<Participant> &participant) {
-	for (const auto &p : participants) {
-		if (participant->getAddress() == p->getAddress()) {
-			participants.remove(p);
-			return true;
-		}
-	}
-	return false;
-}
-
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findChatRoom(conferenceId);
