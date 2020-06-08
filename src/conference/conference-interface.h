@@ -53,8 +53,6 @@ public:
 
 	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) = 0;
 
-	// Can it be moved to chat-room?
-	virtual bool canHandleParticipants () const = 0;
 	virtual void join () = 0;
 	// TODO: End Delete
 
