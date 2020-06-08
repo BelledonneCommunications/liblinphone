@@ -147,10 +147,7 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	if (m_currentParams) {
-		static_cast<std::shared_ptr<ConferenceParams>>(m_currentParams)->unref();
-	}
-	m_currentParams = (new ConferenceParams(static_cast<const ConferenceParams&>(newParameters)))->toSharedPtr();
+	m_currentParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
 	return true;
 };
 
