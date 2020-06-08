@@ -41,8 +41,12 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
-	: Conference(core, myAddress, listener) {
+LocalConference::LocalConference (
+	const shared_ptr<Core> &core,
+	const IdentityAddress &myAddress,
+	CallSessionListener *listener,
+	const ConferenceParams *params
+	) : Conference(core, myAddress, listener, params) {
 	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
 	lastNotify = 1;
