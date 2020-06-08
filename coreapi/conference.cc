@@ -67,8 +67,7 @@ Conference::Conference(
 }
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::create(nullptr,call->getRemoteAddress());
-	//std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
+	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
 	//p->createSession(*this, params, hasMedia, listener);
 	p->createSession(*this, nullptr, true, nullptr);
 	m_participants.push_back(p);
