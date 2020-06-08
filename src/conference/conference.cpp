@@ -39,10 +39,14 @@ LINPHONE_BEGIN_NAMESPACE
 Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
-	CallSessionListener *listener
+	CallSessionListener *listener,
+	const ConferenceParams *params
 ) : CoreAccessor(core) {
 	this->me = Participant::create(this,myAddress);
 	this->listener = listener;
+	if (params) {
+		this->update(*params);
+	}
 }
 
 Conference::~Conference () {
@@ -143,7 +147,11 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	return false;
+	if (m_currentParams) {
+		static_cast<std::shared_ptr<ConferenceParams>>(m_currentParams)->unref();
+	}
+	m_currentParams = (new ConferenceParams(static_cast<const ConferenceParams&>(newParameters)))->toSharedPtr();
+	return true;
 };
 
 bool Conference::removeParticipant (const shared_ptr<Participant> &participant) {
