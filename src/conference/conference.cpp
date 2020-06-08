@@ -147,7 +147,7 @@ void Conference::join () {}
 void Conference::leave () {}
 
 bool Conference::update(const ConferenceParamsInterface &newParameters) {
-	m_currentParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
+	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
 	return true;
 };
 
