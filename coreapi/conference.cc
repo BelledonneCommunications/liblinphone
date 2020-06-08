@@ -242,12 +242,12 @@ LocalConference::~LocalConference() {
 }
 
 void LocalConference::addLocalEndpoint () {
-	if (!m_currentParams->localParticipantEnabled()) return;
+	if (!confParams->localParticipantEnabled()) return;
 	
 	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
 	if (mixer) mixer->enableLocalParticipant(true);
 	
-	if (m_currentParams->videoEnabled()){
+	if (confParams->videoEnabled()){
 		mixer = mMixerSession->getMixerByType(SalVideo);
 		if (mixer){
 			mixer->enableLocalParticipant(true);
@@ -272,7 +272,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 				new_params = linphone_call_params_copy(params);
 			}else{
 				new_params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-				linphone_call_params_enable_video(new_params, m_currentParams->videoEnabled());
+				linphone_call_params_enable_video(new_params, confParams->videoEnabled());
 			}
 			linphone_call_params_set_in_conference(new_params, TRUE);
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
@@ -445,20 +445,20 @@ void LocalConference::leave () {
 		removeLocalEndpoint();
 }
 
-bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &params){
-	const LinphonePrivate::ConferenceParams &confParams = static_cast<const ConferenceParams&>(params);
+bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
+	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
 	/* Only adding or removing video is supported. */
-	bool previousVideoEnablement = m_currentParams->videoEnabled();
-	if (confParams.videoEnabled() != previousVideoEnablement){
+	bool previousVideoEnablement = confParams->videoEnabled();
+	if (newConfParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::update(): checking participants...";
 		for (auto participant : m_participants){
 			LinphoneCall *call = L_GET_C_BACK_PTR(m_callTable[participant]);
 			if (call){
 				const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
-				if ((!!linphone_call_params_video_enabled(current_params)) != confParams.videoEnabled()){
+				if ((!!linphone_call_params_video_enabled(current_params)) != newConfParams.videoEnabled()){
 					lInfo() << "Re-INVITing participant to start/stop video.";
 					LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call);
-					linphone_call_params_enable_video(params, confParams.videoEnabled());
+					linphone_call_params_enable_video(params, newConfParams.videoEnabled());
 					linphone_call_update(call, params);
 					linphone_call_params_unref(params);
 				}
@@ -468,7 +468,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &p
 		removeLocalEndpoint();
 		addLocalEndpoint();
 	}
-	return MediaConference::Conference::update(params);
+	return MediaConference::Conference::update(newParameters);
 }
 
 int LocalConference::startRecording (const char *path) {
@@ -556,7 +556,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			if (!addr)
 				return false;
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
-			linphone_call_params_enable_video(params, m_currentParams->videoEnabled());
+			linphone_call_params_enable_video(params, confParams->videoEnabled());
 			m_focusCall = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_core_invite_address_with_params(getCore()->getCCore(), addr, params));
 			m_pendingCalls.push_back(call);
 			callLog = m_focusCall->getLog();
