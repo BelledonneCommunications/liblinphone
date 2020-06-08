@@ -48,8 +48,8 @@ using namespace Xsd::ConferenceInfo;
 
 // =============================================================================
 
-LocalConferenceEventHandler::LocalConferenceEventHandler (LocalConference *localConference) {
-	conf = localConference;
+LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference) {
+	conf = conference;
 }
 
 // -----------------------------------------------------------------------------
