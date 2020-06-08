@@ -154,6 +154,8 @@ public:
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
 
+	virtual bool update(const ConferenceParamsInterface &newParameters) override { return false; };
+
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 
