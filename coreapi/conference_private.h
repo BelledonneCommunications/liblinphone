@@ -154,7 +154,6 @@ public:
 	virtual bool removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
-	virtual int updateParams(const ConferenceParams &params) = 0;
 	virtual int terminate() = 0;
 
 	virtual int enter() = 0;
@@ -206,8 +205,6 @@ public:
 
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
-	virtual bool update(const LinphonePrivate::ConferenceParamsInterface &newParameters) override;
-
 protected:
 	void setState(LinphoneConferenceState state);
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
@@ -244,7 +241,7 @@ public:
 	using LinphonePrivate::MediaConference::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual int removeParticipant(const LinphoneAddress *uri) override;
-	virtual int updateParams(const ConferenceParams &params) override;
+	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
 
 	virtual int enter() override;
@@ -298,7 +295,6 @@ public:
 	virtual int stopRecording() override {
 		return 0;
 	}
-	virtual int updateParams(const ConferenceParams &params) override;
 	virtual AudioControlInterface * getAudioControlInterface() const override;
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
