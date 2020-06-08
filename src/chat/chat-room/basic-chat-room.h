@@ -43,8 +43,6 @@ public:
 
 	const ConferenceAddress &getConferenceAddress () const override;
 
-	bool canHandleParticipants () const override;
-
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
