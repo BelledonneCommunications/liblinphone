@@ -291,7 +291,8 @@ public:
 	/*Set focus address of this conference. If set, the Conference is created as an Adhoc conference from a remote conferencing server
 	 * @param[in]  The Address of the conference focus.
 	 **/
-	virtual  void setConferenceId (const Address conferenceId) = 0;
+	virtual void setConferenceAddress (const Address conferenceAddress) = 0;
+
 	/*
 	* Set the subject of this conference. If not focus,  this operation is only available if the local participant  #getMe() is admin.
 	* @param[in] subject The new subject to set for the chat room
