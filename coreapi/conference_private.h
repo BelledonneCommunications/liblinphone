@@ -284,8 +284,6 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
-	virtual void addListener(std::shared_ptr<ConferenceListenerInterface> listener)  override;
-	
 private:
 	void addLocalEndpoint();
 	int remoteParticipantsCount();
@@ -297,7 +295,9 @@ private:
 /*
  * Class for an audio/video conference that is running on a remote server.
  */
-class RemoteConference: public Conference {
+class RemoteConference:
+	public Conference,
+	public ConferenceListenerInterface {
 public:
 	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = NULL);
 	virtual ~RemoteConference();
@@ -329,8 +329,6 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
-	virtual void addListener(std::shared_ptr<ConferenceListenerInterface> listener)  override;
-	
 private:
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
