@@ -63,13 +63,35 @@ bool Conference::addParticipant (std::shared_ptr<Call> call) {
 }
 
 bool Conference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	lError() << "Conference class does not handle addParticipant() generically";
-	return false;
+	shared_ptr<Participant> participant = findParticipant(addr);
+	if (participant) {
+		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the Conference";
+		return false;
+	}
+	participant = Participant::create(this,addr);
+	participant->createSession(*this, params, hasMedia, listener);
+	participants.push_back(participant);
+	if (!activeParticipant)
+		activeParticipant = participant;
+	return true;
+
 }
 
 bool Conference::addParticipant (const IdentityAddress &participantAddress) {
-	lError() << "Conference class does not handle addParticipant() generically";
-	return false;
+	shared_ptr<Participant> participant = findParticipant(participantAddress);
+	if (participant) {
+		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the Conference";
+		return false;
+	}
+	participant = Participant::create(this,participantAddress);
+	// TODO: Use conference parameters to fill args
+	//participant->createSession(*this, params, hasMedia, listener);
+	participants.push_back(participant);
+	if (!activeParticipant)
+		activeParticipant = participant;
+	return true;
+
+
 }
 
 bool Conference::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
@@ -125,7 +147,12 @@ bool Conference::update(const ConferenceParamsInterface &newParameters) {
 };
 
 bool Conference::removeParticipant (const shared_ptr<Participant> &participant) {
-	lError() << "Conference class does not handle removeParticipant() generically";
+	for (const auto &p : participants) {
+		if (participant->getAddress() == p->getAddress()) {
+			participants.remove(p);
+			return true;
+		}
+	}
 	return false;
 }
 
