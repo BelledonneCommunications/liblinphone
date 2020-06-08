@@ -36,6 +36,7 @@
 #include "conference/session/mixers.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/media-session.h"
+#include "conference/handlers/local-conference-event-handler.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -236,6 +237,8 @@ LocalConference::LocalConference (
 	Conference(core, myAddress, listener, params){
 	m_state = LinphoneConferenceRunning;
 	mMixerSession.reset(new MixerSession(*core.get()));
+
+	addListener(std::make_shared<LocalConferenceEventHandler>(this));
 }
 
 LocalConference::~LocalConference() {
@@ -513,10 +516,6 @@ AudioStream *LocalConference::getAudioStream(){
 	return mixer ? mixer->getAudioStream() : nullptr;
 }
 
-void LocalConference::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-
-}
-
 RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -533,6 +532,8 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
+
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 }
 
 RemoteConference::~RemoteConference () {
@@ -822,11 +823,6 @@ AudioStream *RemoteConference::getAudioStream(){
 	MS2AudioStream *stream = ms->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
 	return stream ? (AudioStream*)stream->getMediaStream() : nullptr;
 }
-
-void RemoteConference::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-
-}
-
 
 }//end of namespace MediaConference
 
