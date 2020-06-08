@@ -1258,10 +1258,6 @@ bool ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresse
 	return LocalConference::addParticipants(addresses, params, hasMedia);
 }
 
-bool ServerGroupChatRoom::canHandleParticipants () const {
-	return LocalConference::canHandleParticipants();
-}
-
 shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
 	return LocalConference::findParticipant(participantAddress);
 }
