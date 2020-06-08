@@ -92,8 +92,6 @@ public:
 	bool canHandleCpim () const override;
 	bool canHandleMultipart () const override;
 
-	bool canHandleParticipants () const override;
-
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;

@@ -391,7 +391,6 @@ LINPHONE_PUBLIC time_t linphone_chat_room_get_last_update_time(const LinphoneCha
 
 /**
  * Add a participant to a chat room. This may fail if this type of chat room does not handle participants.
- * Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param[in] cr A #LinphoneChatRoom object
  * @param[in] addr The address of the participant to add to the chat room
  */
@@ -399,19 +398,11 @@ LINPHONE_PUBLIC void linphone_chat_room_add_participant (LinphoneChatRoom *cr, c
 
 /**
  * Add several participants to a chat room at once. This may fail if this type of chat room does not handle participants.
- * Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param[in] cr A #LinphoneChatRoom object
  * @param[in] addresses \bctbx_list{LinphoneAddress}
  * @return True if everything is OK, False otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_list_t *addresses);
-
-/**
- * Tells whether a chat room is able to handle participants.
- * @param[in] cr A #LinphoneChatRoom object
- * @return A boolean value telling whether the chat room can handle participants or not
- */
-LINPHONE_PUBLIC bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr);
 
 /**
  * Find a participant of a chat room from its address.
