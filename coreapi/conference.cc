@@ -32,6 +32,7 @@
 #include "call/call.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
+#include "conference/conference.h"
 #include "conference/participant.h"
 #include "conference/session/mixers.h"
 #include "conference/session/ms2-streams.h"
@@ -61,9 +62,8 @@ Conference::Conference(
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const ConferenceParams *params) :
-	LinphonePrivate::Conference(core, myAddress, listener),
-	m_currentParams((new ConferenceParams(*params))->toSharedPtr()),
+	const LinphonePrivate::ConferenceParams *params) :
+	LinphonePrivate::Conference(core, myAddress, listener, params),
 	m_state(LinphoneConferenceStopped){
 }
 
@@ -233,7 +233,7 @@ LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const ConferenceParams *params) :
+	const LinphonePrivate::ConferenceParams *params) :
 	Conference(core, myAddress, listener, params){
 	m_state = LinphoneConferenceRunning;
 	mMixerSession.reset(new MixerSession(*core.get()));
@@ -450,10 +450,10 @@ void LocalConference::leave () {
 		removeLocalEndpoint();
 }
 
-int LocalConference::updateParams(const ConferenceParams &confParams){
+int LocalConference::updateParams(const LinphonePrivate::ConferenceParams &confParams){
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = m_currentParams->videoEnabled();
-	m_currentParams = (new ConferenceParams(confParams))->toSharedPtr();
+	m_currentParams = (new LinphonePrivate::ConferenceParams(confParams))->toSharedPtr();
 	if (confParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::updateParams(): checking participants...";
 		for (auto participant : m_participants){
@@ -521,7 +521,7 @@ RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const ConferenceParams *params) :
+	const LinphonePrivate::ConferenceParams *params) :
 	Conference(core, myAddress, listener, params){
 	m_focusAddr = nullptr;
 	m_focusContact = nullptr;
@@ -633,7 +633,7 @@ int RemoteConference::terminate () {
 	return 0;
 }
 
-int RemoteConference::updateParams(const ConferenceParams &params){
+int RemoteConference::updateParams(const LinphonePrivate::ConferenceParams &params){
 	lWarning() << "updateParams() not implemented for RemoteConference.";
 	return -1;
 }
