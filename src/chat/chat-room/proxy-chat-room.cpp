@@ -279,11 +279,6 @@ bool ProxyChatRoom::canHandleMultipart () const {
 	return d->chatRoom->canHandleMultipart();
 }
 
-bool ProxyChatRoom::canHandleParticipants () const {
-	L_D();
-	return d->chatRoom->canHandleParticipants();
-}
-
 bool ProxyChatRoom::addParticipant (
 	const IdentityAddress &participantAddress,
 	const CallSessionParams *params,
