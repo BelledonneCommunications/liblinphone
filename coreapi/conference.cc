@@ -225,10 +225,6 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 	return soFarSoGood;
 }
 
-bool Conference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters) {
-	return false;
-}
-
 LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -450,12 +446,12 @@ void LocalConference::leave () {
 		removeLocalEndpoint();
 }
 
-int LocalConference::updateParams(const LinphonePrivate::ConferenceParams &confParams){
+bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &params){
+	const LinphonePrivate::ConferenceParams &confParams = static_cast<const ConferenceParams&>(params);
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = m_currentParams->videoEnabled();
-	m_currentParams = (new LinphonePrivate::ConferenceParams(confParams))->toSharedPtr();
 	if (confParams.videoEnabled() != previousVideoEnablement){
-		lInfo() << "LocalConference::updateParams(): checking participants...";
+		lInfo() << "LocalConference::update(): checking participants...";
 		for (auto participant : m_participants){
 			LinphoneCall *call = L_GET_C_BACK_PTR(m_callTable[participant]);
 			if (call){
@@ -473,7 +469,7 @@ int LocalConference::updateParams(const LinphonePrivate::ConferenceParams &confP
 		removeLocalEndpoint();
 		addLocalEndpoint();
 	}
-	return 0;
+	return MediaConference::Conference::update(params);
 }
 
 int LocalConference::startRecording (const char *path) {
@@ -631,11 +627,6 @@ int RemoteConference::terminate () {
 			break;
 	}
 	return 0;
-}
-
-int RemoteConference::updateParams(const LinphonePrivate::ConferenceParams &params){
-	lWarning() << "updateParams() not implemented for RemoteConference.";
-	return -1;
 }
 
 int RemoteConference::enter () {
@@ -879,7 +870,7 @@ int linphone_conference_remove_participant_with_call (LinphoneConference *obj, L
 }
 
 int linphone_conference_update_params(LinphoneConference *obj, const LinphoneConferenceParams *params){
-	return MediaConference::Conference::toCpp(obj)->updateParams(*ConferenceParams::toCpp(params));
+	return MediaConference::Conference::toCpp(obj)->update(*ConferenceParams::toCpp(params));
 }
 
 int linphone_conference_terminate (LinphoneConference *obj) {
