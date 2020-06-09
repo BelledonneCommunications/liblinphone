@@ -106,26 +106,22 @@ ClientGroupToBasicChatRoom::ClientGroupToBasicChatRoom (const shared_ptr<ChatRoo
 	ProxyChatRoom(*new ClientGroupToBasicChatRoomPrivate, chatRoom) {}
 
 bool ClientGroupToBasicChatRoom::addParticipant (
-	const IdentityAddress &participantAddress,
-	const CallSessionParams *params,
-	bool hasMedia
+	const IdentityAddress &participantAddress
 ) {
 	L_D();
 	if (getState() == ChatRoom::State::Instantiated) {
 		d->invitedAddresses.clear();
 		d->invitedAddresses.push_back(participantAddress);
 	}
-	return ProxyChatRoom::addParticipant(participantAddress, params, hasMedia);
+	return ProxyChatRoom::addParticipant(participantAddress);
 }
 bool ClientGroupToBasicChatRoom::addParticipants (
-	const list<IdentityAddress> &addresses,
-	const CallSessionParams *params,
-	bool hasMedia
+	const list<IdentityAddress> &addresses
 ) {
 	L_D();
 	if ((getState() == ChatRoom::State::Instantiated) && (addresses.size() == 1))
 		d->invitedAddresses = addresses;
-	return ProxyChatRoom::addParticipants(addresses, params, hasMedia);
+	return ProxyChatRoom::addParticipants(addresses);
 }
 
 LINPHONE_END_NAMESPACE
