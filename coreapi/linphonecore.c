@@ -4314,26 +4314,9 @@ const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
 	return lc->callsCache;
 }
 
-static int comp_call_id(const LinphoneCall *call, const char *callid) {
-	if (linphone_call_log_get_call_id(linphone_call_get_call_log(call)) == nullptr) {
-		ms_error("no callid for call [%p]", call);
-		return 1;
-	}
-	return strcmp(linphone_call_log_get_call_id(linphone_call_get_call_log(call)), callid);
-}
-
 LinphoneCall *linphone_core_get_call_by_callid(LinphoneCore *lc, const char *call_id) {
-	const bctbx_list_t *calls = linphone_core_get_calls(lc);
-	if (!calls || !call_id) {
-		return nullptr;
-	}
-	
-	bctbx_list_t *call_tmp = bctbx_list_find_custom(calls, (bctbx_compare_func)comp_call_id, call_id);
-	if (!call_tmp) {
-		return nullptr;
-	}
-	LinphoneCall *call = (LinphoneCall *)call_tmp->data;
-	return call;
+	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByCallId(call_id);
+	return call ? call->toC() : NULL;
 }
 
 bool_t linphone_core_in_call(const LinphoneCore *lc){

@@ -174,6 +174,21 @@ shared_ptr<Call> Core::getCallByRemoteAddress (const Address &addr) const {
 	return nullptr;
 }
 
+shared_ptr<Call> Core::getCallByCallId (const string &callId) const {
+	L_D();
+	if (callId.empty()) {
+		return nullptr;
+	}
+
+	for (const auto &call : d->calls) {
+		if (call->getLog()->call_id && !strcmp(call->getLog()->call_id, callId.c_str())) {
+			return call;
+		}
+	}
+
+	return nullptr;
+}
+
 const list<shared_ptr<Call>> &Core::getCalls () const {
 	L_D();
 	return d->calls;
