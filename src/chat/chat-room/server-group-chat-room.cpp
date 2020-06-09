@@ -1173,6 +1173,7 @@ LocalConference(getCore(), peerAddress, nullptr, ConferenceParams::create()) {
 	this->conferenceId = ConferenceId(peerAddress, peerAddress);
 	confParams->setConferenceAddress(peerAddress);
 	confParams->setSubject(subject);
+	confParams->enableChat(true);
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
@@ -1218,23 +1219,23 @@ bool ServerGroupChatRoom::hasBeenLeft () const {
 	return false;
 }
 
-bool ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddress) {
 	L_D();
 
-	if (addr.hasGruu()){
-		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is a gruu address.";
+	if (participantAddress.hasGruu()){
+		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because it is a gruu address.";
 		return false;
 	}
 
-	if (d->findAuthorizedParticipant(addr)) {
-		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because it is already a participant";
+	if (d->findAuthorizedParticipant(participantAddress)) {
+		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because it is already a participant";
 		return false;
 	}
 
-	shared_ptr<Participant> participant = findParticipant(addr);
+	shared_ptr<Participant> participant = findParticipant(participantAddress);
 
 	if (participant == nullptr && (d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && getParticipantCount() == 2) {
-		lInfo() << this << ": Not adding participant '" << addr.asString() << "' because this OneToOne chat room already has 2 participants";
+		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because this OneToOne chat room already has 2 participants";
 		return false;
 	}
 
@@ -1246,16 +1247,16 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &addr, const Cal
 	if (participant){
 		d->resumeParticipant(participant);
 	}else{
-		lInfo() << this << ": Requested to add participant '" << addr.asString() << "', checking capabilities first.";
+		lInfo() << this << ": Requested to add participant '" << participantAddress.asString() << "', checking capabilities first.";
 		list<IdentityAddress> participantsList;
-		participantsList.push_back(addr);
+		participantsList.push_back(participantAddress);
 		d->subscribeRegistrationForParticipants(participantsList, true);
 	}
 	return true;
 }
 
-bool ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
-	return LocalConference::addParticipants(addresses, params, hasMedia);
+bool ServerGroupChatRoom::addParticipants (const list<IdentityAddress> &addresses) {
+	return LocalConference::addParticipants(addresses);
 }
 
 shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
