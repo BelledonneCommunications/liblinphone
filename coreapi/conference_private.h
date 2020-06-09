@@ -141,11 +141,6 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override = 0;
-	virtual bool addParticipant (const LinphonePrivate::IdentityAddress &participantAddress) override;
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::addParticipants;
-	virtual bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 	virtual int removeParticipant(const LinphoneAddress *uri) = 0;
