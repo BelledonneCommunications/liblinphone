@@ -2938,9 +2938,8 @@ LINPHONE_PUBLIC void linphone_core_set_inc_timeout(LinphoneCore *lc, int seconds
 LINPHONE_PUBLIC int linphone_core_get_inc_timeout(LinphoneCore *lc);
 
 /**
- * Set the push incoming call timeout in seconds.
- * If an push incoming call hasn't received op for this timeout period, it is
- * automatically declined.
+ * Configure the minimum interval between a push notification and the corresponding incoming INVITE.
+ * If exceeded, Linphone Call is transitioned to CallError and further incoming invite associated to this push is declined if any.
  * @param[in] lc #LinphoneCore object
  * @param[in] seconds The new timeout in seconds
  * @ingroup call_control
