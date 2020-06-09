@@ -537,8 +537,8 @@ public:
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override {
-		bool status = LocalConference::addParticipant(addr, params, hasMedia);
+	bool addParticipant (const IdentityAddress &addr) override {
+		bool status = LocalConference::addParticipant(addr);
 		if (status) {
 			notifyParticipantAdded(time(nullptr), false, addr);
 		}
@@ -938,8 +938,8 @@ void send_first_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	alice->setAdmin(true);
@@ -992,8 +992,8 @@ void send_added_notify() {
 	linphone_address_unref(cFrankAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
@@ -1046,8 +1046,8 @@ void send_removed_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 
@@ -1097,8 +1097,8 @@ void send_admined_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 
@@ -1148,8 +1148,8 @@ void send_unadmined_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
 
@@ -1197,8 +1197,8 @@ void send_subject_changed_notify () {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	localConf->setSubject("A random test subject");
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
@@ -1250,8 +1250,8 @@ void send_device_added_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
 	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
@@ -1302,8 +1302,8 @@ void send_device_removed_notify() {
 	linphone_address_unref(cAliceAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
-	localConf->addParticipant(aliceAddr, &params, false);
+	localConf->addParticipant(bobAddr);
+	localConf->addParticipant(aliceAddr);
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
@@ -1362,7 +1362,7 @@ void one_to_one_keyword () {
 	linphone_address_unref(cBobAddr);
 
 	CallSessionParams params;
-	localConf->addParticipant(bobAddr, &params, false);
+	localConf->addParticipant(bobAddr);
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
