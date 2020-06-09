@@ -65,21 +65,6 @@ bool Conference::addParticipant (std::shared_ptr<Call> call) {
 	return false;
 }
 
-bool Conference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (participant) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the Conference";
-		return false;
-	}
-	participant = Participant::create(this,addr);
-	participant->createSession(*this, params, hasMedia, listener);
-	participants.push_back(participant);
-	if (!activeParticipant)
-		activeParticipant = participant;
-	return true;
-
-}
-
 bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
@@ -88,24 +73,13 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	}
 	participant = Participant::create(this,participantAddress);
 	// TODO: Use conference parameters to fill args
-	//participant->createSession(*this, params, hasMedia, listener);
+	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
 	participants.push_back(participant);
 	if (!activeParticipant)
 		activeParticipant = participant;
 	return true;
 
 
-}
-
-bool Conference::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
-	list<IdentityAddress> sortedAddresses(addresses);
-	sortedAddresses.sort();
-	sortedAddresses.unique();
-
-	bool soFarSoGood = true;
-	for (const auto &address : sortedAddresses)
-		soFarSoGood &= addParticipant(address, params, hasMedia);
-	return soFarSoGood;
 }
 
 bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {

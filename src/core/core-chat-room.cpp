@@ -325,8 +325,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << params->getSubject() <<"]";
 			return nullptr;
 		}
-
-		if (!chatRoom->addParticipants(participants, nullptr, false)) {
+		if (!chatRoom->addParticipants(participants)) {
 			lWarning() << "Couldn't add participants to newly created chat room, aborting";
 			return nullptr;
 		}
