@@ -62,7 +62,7 @@ Conference::Conference(
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const LinphonePrivate::ConferenceParams *params) :
+	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	LinphonePrivate::Conference(core, myAddress, listener, params),
 	m_state(LinphoneConferenceStopped){
 }
@@ -229,7 +229,7 @@ LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const LinphonePrivate::ConferenceParams *params) :
+	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
 	m_state = LinphoneConferenceRunning;
 	mMixerSession.reset(new MixerSession(*core.get()));
@@ -517,7 +517,7 @@ RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const LinphonePrivate::ConferenceParams *params) :
+	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
 	m_focusAddr = nullptr;
 	m_focusContact = nullptr;
@@ -826,19 +826,19 @@ const char *linphone_conference_state_to_string (LinphoneConferenceState state) 
 
 
 LinphoneConference *linphone_local_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
-	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr))->toC();
+	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create()))->toC();
 }
 
 LinphoneConference *linphone_local_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
-	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::toCpp(params)))->toC();
+	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
-	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create()))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
-	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::toCpp(params)))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
 }
 
 LinphoneConference *linphone_conference_ref (LinphoneConference *conf) {
