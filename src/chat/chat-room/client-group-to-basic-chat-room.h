@@ -32,22 +32,16 @@ class LINPHONE_PUBLIC ClientGroupToBasicChatRoom : public ProxyChatRoom {
 public:
 	ClientGroupToBasicChatRoom (const std::shared_ptr<ChatRoom> &chatRoom);
 
-	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
 	bool addParticipant (
-		const IdentityAddress &participantAddress,
-		const CallSessionParams *params,
-		bool hasMedia
+		const IdentityAddress &participantAddress
 	) override;
 
-	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipants;
 	bool addParticipants (
-		const std::list<IdentityAddress> &addresses,
-		const CallSessionParams *params,
-		bool hasMedia
+		const std::list<IdentityAddress> &addresses
 	) override;
 
 private:

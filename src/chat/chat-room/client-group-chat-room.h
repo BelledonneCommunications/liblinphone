@@ -63,19 +63,10 @@ public:
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 	int getHistorySize () const override;
 
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::addParticipants;
-	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
-
-	bool addParticipant (const IdentityAddress &participantAddress) override {return RemoteConference::addParticipant(participantAddress); };
+	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipant (std::shared_ptr<Call> call) override {return RemoteConference::addParticipant(call); };
-	bool addParticipants (const std::list<IdentityAddress> &addresses) override {return RemoteConference::addParticipants(addresses); };
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+
 	void join (const IdentityAddress &participantAddress) override { RemoteConference::join(participantAddress); };
 	bool update(const ConferenceParamsInterface &newParameters) override { return RemoteConference::update(newParameters); };
 
