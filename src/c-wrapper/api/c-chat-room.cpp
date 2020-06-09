@@ -315,7 +315,7 @@ time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *cr) {
 
 void linphone_chat_room_add_participant (LinphoneChatRoom *cr, const LinphoneAddress *addr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipant(
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, false
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
 	);
 }
 
@@ -324,7 +324,7 @@ bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_li
 	list<LinphonePrivate::IdentityAddress> lIdentAddr;
 	for (const auto &addr : lAddr)
 		lIdentAddr.push_back(LinphonePrivate::IdentityAddress(addr));
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr, nullptr, false);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr);
 }
 
 LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
