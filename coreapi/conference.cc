@@ -69,9 +69,11 @@ Conference::Conference(
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
-	//p->createSession(*this, params, hasMedia, listener);
+	// TODO: Uncomment
+	//p->createSession(*this, nullptr, hasMedia, listener);
 	p->createSession(*this, nullptr, true, nullptr);
 	m_participants.push_back(p);
+//	Conference::addParticipant(call);
 	m_callTable[p] = call;
 	return 0;
 }
@@ -160,30 +162,6 @@ void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivat
 
 }
 
-bool Conference::addParticipant (const LinphonePrivate::IdentityAddress &participantAddress) {
-	shared_ptr<Participant> participant = findParticipant(participantAddress);
-	if (participant) {
-		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the LocalConference";
-		return false;
-	}
-	participant = Participant::create(this,participantAddress);
-	participants.push_back(participant);
-
-	// TODO: Set active participant here if it is still nullptr?
-	return true;
-}
-
-bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
-	list<IdentityAddress> sortedAddresses(addresses);
-	sortedAddresses.sort();
-	sortedAddresses.unique();
-
-	bool soFarSoGood = true;
-	for (const auto &address : sortedAddresses)
-		soFarSoGood &= addParticipant(address);
-	return soFarSoGood;
-}
-
 void Conference::join (const IdentityAddress &participantAddress) {
 	
 }
@@ -235,6 +213,9 @@ LocalConference::LocalConference (
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	addListener(std::make_shared<LocalConferenceEventHandler>(this));
+
+	confParams->enableAudio(true);
+	//confParams->enableVideo(true);
 }
 
 LocalConference::~LocalConference() {
@@ -530,6 +511,9 @@ RemoteConference::RemoteConference (
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+
+	confParams->enableAudio(true);
+	//confParams->enableVideo(true);
 }
 
 RemoteConference::~RemoteConference () {

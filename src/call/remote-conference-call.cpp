@@ -46,8 +46,9 @@ RemoteConferenceCall::RemoteConferenceCall (
 	)
 	: Call(*new RemoteConferenceCallPrivate, core),
 	RemoteConference(core, IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate(), ConferenceParams::create()) {
-	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
+	addParticipant((direction == LinphoneCallIncoming) ? from : to);
 	shared_ptr<Participant> participant = getParticipants().front();
+	participant->createSession(*this, msp, (confParams->chatEnabled() == false), listener);
 	participant->getSession()->configure(direction, cfg, op, from, to);
 }
 
