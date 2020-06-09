@@ -34,7 +34,7 @@ class LINPHONE_PUBLIC LocalConference :
 	public Conference {
 	friend class ServerGroupChatRoomPrivate;
 public:
-	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = nullptr);
+	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~LocalConference ();
 
 	void subscribeReceived (LinphoneEvent *event);

@@ -134,7 +134,7 @@ class RemoteConference;
 
 class Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
 public:
-	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = nullptr);
+	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference() {}
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
@@ -226,7 +226,7 @@ protected:
  */
 class LocalConference: public Conference {
 public:
-	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = nullptr);
+	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 
 	virtual ~LocalConference();
 
@@ -268,7 +268,7 @@ class RemoteConference:
 	public Conference,
 	public ConferenceListenerInterface {
 public:
-	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const ConferenceParams *params = nullptr);
+	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
