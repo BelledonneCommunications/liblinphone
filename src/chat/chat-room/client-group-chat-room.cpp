@@ -315,10 +315,11 @@ RemoteConference(core, me->getAddress(), nullptr, ConferenceParams::create()) {
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	this->focus = Participant::create(this,peerAddress);
 	this->focus->addDevice(peerAddress);
-	this->conferenceAddress = peerAddress;
-	this->subject = subject;
 	this->participants = move(newParticipants);
 	this->conferenceId = conferenceId;
+
+	confParams->setConferenceAddress(peerAddress);
+	confParams->setSubject(subject);
 
 	getMe()->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices())
@@ -660,7 +661,7 @@ void ClientGroupChatRoom::leave () {
 
 void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	L_D();
-	conferenceAddress = addr;
+	confParams->setConferenceAddress(addr);
 	focus->setAddress(addr);
 	focus->clearDevices();
 	focus->addDevice(addr);
