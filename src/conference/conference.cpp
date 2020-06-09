@@ -45,6 +45,7 @@ Conference::Conference (
 	this->me = Participant::create(this,myAddress);
 	this->listener = listener;
 	this->update(*params);
+	this->confParams->setMe(myAddress);
 }
 
 Conference::~Conference () {
@@ -119,7 +120,7 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 }
 
 const ConferenceAddress &Conference::getConferenceAddress () const {
-	return conferenceAddress;
+	return confParams->getConferenceAddress();
 }
 
 shared_ptr<Participant> Conference::getMe () const {
@@ -135,7 +136,7 @@ const list<shared_ptr<Participant>> &Conference::getParticipants () const {
 }
 
 const string &Conference::getSubject () const {
-	return subject;
+	return confParams->getSubject();
 }
 
 void Conference::join (const IdentityAddress &participantAddress) {}
@@ -171,7 +172,7 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 }
 
 void Conference::setSubject (const string &subject) {
-	this->subject = subject;
+	confParams->setSubject(subject);
 }
 
 // -----------------------------------------------------------------------------

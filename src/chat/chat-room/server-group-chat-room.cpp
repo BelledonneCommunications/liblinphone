@@ -311,7 +311,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		session = participant->createSession(*q, &params, false, this);
 		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->getTo()));
 		session->startIncomingNotification(false);
-		Address addr = qConference->conferenceAddress;
+		Address addr = qConference->getConferenceAddress();
 		addr.setParam("isfocus");
 		//to force is focus to be added
 		session->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
@@ -351,7 +351,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 		return;
 	}
 
-	IdentityAddress confAddr(qConference->conferenceAddress);
+	IdentityAddress confAddr(qConference->getConferenceAddress());
 
 	lInfo() << q << " is re-joined by " << participant->getAddress();
 	Address addr(confAddr);
@@ -576,7 +576,7 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const ConferenceAddress &
 		lError() << "Cannot set the conference address of the ServerGroupChatRoom in state " << q->getState();
 		return;
 	}
-	qConference->conferenceAddress = conferenceAddress;
+	qConference->confParams->setConferenceAddress(conferenceAddress);
 	lInfo() << "The ServerGroupChatRoom has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
 	finalizeCreation();
 }
@@ -794,7 +794,7 @@ void ServerGroupChatRoomPrivate::sendMessage (const shared_ptr<Message> &message
 void ServerGroupChatRoomPrivate::finalizeCreation () {
 	L_Q();
 	L_Q_T(LocalConference, qConference);
-	ConferenceAddress confAddr(qConference->conferenceAddress);
+	ConferenceAddress confAddr(qConference->getConferenceAddress());
 	const ConferenceId conferenceId = ConferenceId(confAddr, confAddr);
 	qConference->setConferenceId(conferenceId);
 	q->getCore()->getPrivate()->localListEventHandler->addHandler(qConference->eventHandler.get());
@@ -846,12 +846,12 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		//csp.addCustomContactParameter("text");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		session = participant->createSession(*q, &csp, false, this);
-		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->conferenceAddress, device->getAddress());
+		session->configure(LinphoneCallOutgoing, nullptr, nullptr, qConference->getConferenceAddress(), device->getAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
 		session->getPrivate()->createOp();
 		//FIXME jehan check conference server  potential impact
-		Address contactAddr(qConference->conferenceAddress);
+		Address contactAddr(qConference->getConferenceAddress());
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
 		session->getPrivate()->getOp()->setContactAddress(contactAddr.getInternalAddress());
@@ -1157,11 +1157,11 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params),
 LocalConference(getCore(), peerAddress, nullptr, ConferenceParams::create()) {
-	this->subject = subject;
 	this->participants = move(participants);
-	this->conferenceAddress = peerAddress;
 	this->lastNotify = lastNotifyId;
 	this->conferenceId = ConferenceId(peerAddress, peerAddress);
+	confParams->setConferenceAddress(peerAddress);
+	confParams->setSubject(subject);
 	getCore()->getPrivate()->localListEventHandler->addHandler(eventHandler.get());
 }
 
