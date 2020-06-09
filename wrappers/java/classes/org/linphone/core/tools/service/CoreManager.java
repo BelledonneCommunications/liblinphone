@@ -27,8 +27,6 @@ import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 
-import com.google.firebase.FirebaseApp;
-
 import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
 import org.linphone.core.Core;
@@ -39,6 +37,7 @@ import org.linphone.core.tools.audio.AudioHelper;
 import org.linphone.core.tools.audio.BluetoothHelper;
 import org.linphone.mediastream.Version;
 
+import java.lang.reflect.Constructor;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -90,8 +89,7 @@ public class CoreManager {
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
 
         if (mCore.isPushNotificationEnabled()) {
-            Log.i("[Core Manager] Push notifications are enabled, starting Firebase");
-            FirebaseApp.initializeApp(mContext);
+            Log.i("[Core Manager] Push notifications are enabled, starting push helper");
             PushNotificationUtils.init(mContext);
             if (!PushNotificationUtils.isAvailable(mContext)) {
                 Log.w("[Core Manager] Push notifications aren't available");
@@ -100,7 +98,11 @@ public class CoreManager {
             Log.w("[Core Manager] Push notifications aren't enabled");
         }
         
-        mAudioHelper = new AudioHelper(mContext);
+        if (isAndroidXMediaAvailable()) {
+            mAudioHelper = new AudioHelper(mContext);
+        } else {
+            Log.w("[Core Manager] Do you have a dependency on androidx.media:media package?");
+        }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
         Log.i("[Core Manager] Ready");
@@ -174,8 +176,8 @@ public class CoreManager {
                     mAudioHelper.requestCallAudioFocus();
                 }
             }
-        };
-        mCore.addListener(mListener);
+        };        
+        if (mAudioHelper != null) mCore.addListener(mListener);
 
         try {
             mServiceClass = getServiceClass();
@@ -207,10 +209,12 @@ public class CoreManager {
     }
 
     public void startAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
         mAudioHelper.startAudioForEchoTestOrCalibration();
     }
 
     public void stopAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
         mAudioHelper.stopAudioForEchoTestOrCalibration();
     }
 
@@ -269,6 +273,21 @@ public class CoreManager {
 
         Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
         return null;
+    }
+
+    private boolean isAndroidXMediaAvailable() {
+        boolean available = false;
+        try {
+            Class androixMedia = Class.forName("androidx.media.AudioAttributesCompat.Builder");
+            Class[] types = {};
+            Constructor constructor = androixMedia.getConstructor(types);
+            available = true;
+        } catch (ClassNotFoundException e) {
+            Log.w("[Core Manager] Couldn't find class androidx.media.AudioAttributesCompat.Builder");
+        } catch (Exception e) {
+            Log.w("[Core Manager] Exception: " + e);
+        }
+        return available;
     }
 
     private void dumpDeviceInformation() {
