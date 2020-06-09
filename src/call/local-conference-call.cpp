@@ -45,7 +45,7 @@ LocalConferenceCall::LocalConferenceCall (
 		const MediaSessionParams *msp
 	)
 	: Call(*new LocalConferenceCallPrivate(), core),
-	LocalConference(getCore(), IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate()) {
+	LocalConference(getCore(), IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate(), ConferenceParams::create()) {
 	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
 	shared_ptr<Participant> participant = getParticipants().front();
 	participant->getSession()->configure(direction, cfg, op, from, to);
