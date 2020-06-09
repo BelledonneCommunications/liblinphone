@@ -43,16 +43,6 @@ public:
 
 	const ConferenceAddress &getConferenceAddress () const override;
 
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::addParticipant;
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::addParticipants;
-	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
-
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
