@@ -83,21 +83,24 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 		void enableLocalParticipant (bool enable) { mLocalParticipantEnabled = enable; }
 		bool localParticipantEnabled() const { return mLocalParticipantEnabled; }
 
-		virtual void setConferenceAddress (const Address conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const Address getConferenceAddress() const { return m_conferenceAddress; };
+		//virtual void setConferenceAddress (const Address conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
+		//const Address &getConferenceAddress() const { return m_conferenceAddress; };
+		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
+		const ConferenceAddress &getConferenceAddress() const { return m_conferenceAddress; };
 
 		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
-		const std::string getSubject() const { return m_subject; };
+		const std::string &getSubject() const { return m_subject; };
 
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
-		const IdentityAddress getMe() const { return m_me; };
+		const IdentityAddress &getMe() const { return m_me; };
 
 	private:
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;
 		bool m_enableChat = false;
 		bool mLocalParticipantEnabled = true;
-		Address m_conferenceAddress = Address();
+		ConferenceAddress m_conferenceAddress = ConferenceAddress();
+		//Address m_conferenceAddress = Address();
 		Address m_factoryAddress = Address();
 		std::string m_subject = "";
 		IdentityAddress m_me = IdentityAddress();
@@ -183,9 +186,7 @@ protected:
 
 	bool isMe (const IdentityAddress &addr) const;
 
-	ConferenceAddress conferenceAddress;
 	std::list<std::shared_ptr<Participant>> participants;
-	std::string subject;
 
 	std::shared_ptr<Participant> activeParticipant;
 	std::shared_ptr<Participant> me;
