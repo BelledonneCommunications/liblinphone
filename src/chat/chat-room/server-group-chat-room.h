@@ -62,23 +62,10 @@ public:
 
 	const ConferenceAddress &getConferenceAddress () const override;
 
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant (const IdentityAddress &address, const CallSessionParams *params, bool hasMedia) override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::addParticipants;
-	bool addParticipants (
-		const std::list<IdentityAddress> &addresses,
-		const CallSessionParams *params,
-		bool hasMedia
-	) override;
-
-	bool addParticipant (const IdentityAddress &participantAddress) override {return LocalConference::addParticipant(participantAddress); };
+	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipant (std::shared_ptr<Call> call) override {return LocalConference::addParticipant(call); };
-	bool addParticipants (const std::list<IdentityAddress> &addresses) override {return LocalConference::addParticipants(addresses); };
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+
 	void join (const IdentityAddress &participantAddress) override { LocalConference::join(participantAddress); };
 	bool update(const ConferenceParamsInterface &newParameters) override { return LocalConference::update(newParameters); };
 

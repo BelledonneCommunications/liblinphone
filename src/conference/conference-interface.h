@@ -48,15 +48,11 @@ public:
 
 	// TODO: Start Delete
 
-	virtual const ConferenceId &getConferenceId () const = 0;
-	virtual bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) = 0;
-
-	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) = 0;
-
 	virtual void join () = 0;
 	// TODO: End Delete
 
 
+	virtual const ConferenceId &getConferenceId () const = 0;
 
 	/**
 	 *Conference live cycle, specilly creation and termination requires interractions between user application and focus user agent.
