@@ -279,6 +279,9 @@ RemoteConference(core, conferenceId.getLocalAddress(), nullptr, ConferenceParams
 		d->capabilities |= ClientGroupChatRoom::Capabilities::Encrypted;
 	this->focus = Participant::create(this,focus);
 	this->focus->addDevice(focus);
+
+	confParams->enableChat(true);
+
 }
 
 ClientGroupChatRoom::ClientGroupChatRoom (
@@ -320,6 +323,7 @@ RemoteConference(core, me->getAddress(), nullptr, ConferenceParams::create()) {
 
 	confParams->setConferenceAddress(peerAddress);
 	confParams->setSubject(subject);
+	confParams->enableChat(true);
 
 	getMe()->setAdmin(me->isAdmin());
 	for (const auto &device : me->getDevices())
@@ -480,16 +484,14 @@ int ClientGroupChatRoom::getHistorySize () const {
 	);
 }
 
-bool ClientGroupChatRoom::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	list<IdentityAddress> addressesList({addr});
+bool ClientGroupChatRoom::addParticipant (const IdentityAddress &participantAddress) {
+	list<IdentityAddress> addressesList({participantAddress});
 
-	return addParticipants(addressesList, params, hasMedia);
+	return addParticipants(addressesList);
 }
 
 bool ClientGroupChatRoom::addParticipants (
-	const list<IdentityAddress> &addresses,
-	const CallSessionParams *params,
-	bool hasMedia
+	const list<IdentityAddress> &addresses
 ) {
 	L_D();
 
