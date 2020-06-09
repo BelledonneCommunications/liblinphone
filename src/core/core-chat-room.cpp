@@ -513,6 +513,14 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceId, bool logIfNotFound) const {
 	L_D();
 
+	printf("Searched ConferenceId(peer=%s, local=%s)\n", conferenceId.getPeerAddress().asString().c_str(), conferenceId.getLocalAddress().asString().c_str());
+	for (auto it = d->chatRoomsById.begin(); it != d->chatRoomsById.end(); it++) {
+		ConferenceId confId(it->first);
+		printf("DB ConferenceId(peer=%s, local=%s) - same as searched %0d\n", confId.getPeerAddress().asString().c_str(), confId.getLocalAddress().asString().c_str(), (conferenceId == confId));
+	}
+
+
+
 	auto it = d->chatRoomsById.find(conferenceId);
 	if (it != d->chatRoomsById.cend())
 		return it->second;
