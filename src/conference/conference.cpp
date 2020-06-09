@@ -40,13 +40,11 @@ Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const ConferenceParams *params
+	const std::shared_ptr<ConferenceParams> params
 ) : CoreAccessor(core) {
 	this->me = Participant::create(this,myAddress);
 	this->listener = listener;
-	if (params) {
-		this->update(*params);
-	}
+	this->update(*params);
 }
 
 Conference::~Conference () {

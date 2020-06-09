@@ -178,7 +178,7 @@ protected:
 		const std::shared_ptr<Core> &core,
 		const IdentityAddress &myAddress,
 		CallSessionListener *listener,
-		const ConferenceParams *params = nullptr
+		const std::shared_ptr<ConferenceParams> params
 	);
 
 	bool isMe (const IdentityAddress &addr) const;
