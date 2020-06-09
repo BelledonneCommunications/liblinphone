@@ -266,7 +266,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const std::shared_ptr<ChatRoomParams> &params
 ) :
 ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::Conference), core, params),
-RemoteConference(core, conferenceId.getLocalAddress(), nullptr) {
+RemoteConference(core, conferenceId.getLocalAddress(), nullptr, ConferenceParams::create()) {
 	L_D();
 	RemoteConference::setSubject(subject);
 	for (const auto &addr : Conference::parseResourceLists(content))
@@ -309,7 +309,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	unsigned int lastNotifyId,
 	bool hasBeenLeft
 ) : ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ClientGroupChatRoom::Capabilities::Conference), core, params),
-RemoteConference(core, me->getAddress(), nullptr) {
+RemoteConference(core, me->getAddress(), nullptr, ConferenceParams::create()) {
 	L_D();
 
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
