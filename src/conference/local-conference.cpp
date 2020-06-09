@@ -45,7 +45,7 @@ LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
-	const ConferenceParams *params
+	const std::shared_ptr<ConferenceParams> params
 	) : Conference(core, myAddress, listener, params) {
 	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
