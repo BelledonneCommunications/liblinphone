@@ -276,15 +276,6 @@ bool ProxyChatRoom::canHandleMultipart () const {
 }
 
 bool ProxyChatRoom::addParticipant (
-	const IdentityAddress &participantAddress,
-	const CallSessionParams *params,
-	bool hasMedia
-) {
-	L_D();
-	return d->chatRoom->addParticipant(participantAddress, params, hasMedia);
-}
-
-bool ProxyChatRoom::addParticipant (
 	std::shared_ptr<Call> call
 ) {
 	L_D();
@@ -296,15 +287,6 @@ bool ProxyChatRoom::addParticipant (
 ) {
 	L_D();
 	return d->chatRoom->addParticipant(participantAddress);
-}
-
-bool ProxyChatRoom::addParticipants (
-	const list<IdentityAddress> &addresses,
-	const CallSessionParams *params,
-	bool hasMedia
-) {
-	L_D();
-	return d->chatRoom->addParticipants(addresses, params, hasMedia);
 }
 
 bool ProxyChatRoom::addParticipants (
