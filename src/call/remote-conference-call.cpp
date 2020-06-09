@@ -45,7 +45,7 @@ RemoteConferenceCall::RemoteConferenceCall (
 		const MediaSessionParams *msp
 	)
 	: Call(*new RemoteConferenceCallPrivate, core),
-	RemoteConference(core, IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate()) {
+	RemoteConference(core, IdentityAddress((direction == LinphoneCallIncoming) ? to : from), getPrivate(), ConferenceParams::create()) {
 	addParticipant((direction == LinphoneCallIncoming) ? from : to, msp, true);
 	shared_ptr<Participant> participant = getParticipants().front();
 	participant->getSession()->configure(direction, cfg, op, from, to);
