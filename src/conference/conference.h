@@ -121,17 +121,6 @@ public:
 	std::shared_ptr<ParticipantDevice> findParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	// TODO: Start Delete
-	virtual const ConferenceAddress &getConferenceAddress () const override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::addParticipant;
-	virtual bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::addParticipants;
-	virtual bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
 	virtual void join () override;
 	// TODO: End Delete
 
@@ -151,6 +140,7 @@ public:
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 	const ConferenceParams &getCurrentParams() const {return *confParams;}
+	virtual const ConferenceAddress &getConferenceAddress () const override;
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;

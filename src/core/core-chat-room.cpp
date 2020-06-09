@@ -274,7 +274,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			return nullptr;
 		}
 			
-		if (!chatRoom->addParticipants(participants, nullptr, false)) {
+		if (!chatRoom->addParticipants(participants)) {
 			lWarning() << "Couldn't add participants to newly created chat room, aborting";
 			return nullptr;
 		}
