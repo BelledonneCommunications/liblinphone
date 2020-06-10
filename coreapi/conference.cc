@@ -29,6 +29,7 @@
 #include "conference_private.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "call/call-p.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
