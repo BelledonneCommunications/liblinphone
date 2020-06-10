@@ -437,7 +437,7 @@ bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
 
-const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress () const {
+const ConferenceAddress ClientGroupChatRoom::getConferenceAddress () const {
 	return RemoteConference::getConferenceAddress();
 }
 
