@@ -216,8 +216,8 @@ LocalConference::LocalConference (
 
 	addListener(std::make_shared<LocalConferenceEventHandler>(this));
 
+	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
-	//confParams->enableVideo(true);
 }
 
 LocalConference::~LocalConference() {
@@ -515,8 +515,8 @@ RemoteConference::RemoteConference (
 
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 
+	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
-	//confParams->enableVideo(true);
 }
 
 RemoteConference::~RemoteConference () {
