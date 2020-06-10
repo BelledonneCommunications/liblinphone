@@ -41,7 +41,7 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress getConferenceAddress () const override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
