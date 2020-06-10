@@ -56,4 +56,36 @@
 	pcore->enterForeground();
 }
 
+- (void)iterate {
+	linphone_core_iterate(pcore->getCCore());
+}
+
+- (void)onLinphoneCoreStart {
+	if (linphone_core_is_auto_iterate_enabled(pcore->getCCore())) {
+		if (mIterateTimer.valid) {
+			ms_message("[Ios App] core.iterate() is already scheduled");
+			return;
+		}
+		mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:self selector:@selector(iterate) userInfo:nil repeats:YES];
+		// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
+		[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+		ms_message("[Ios App] Call to core.iterate() scheduled every 20ms");
+	} else {
+		ms_warning("[Ios App] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+	}
+}
+
+- (void)onLinphoneCoreStop {
+	if (linphone_core_is_auto_iterate_enabled(pcore->getCCore())) {
+		if (mIterateTimer) {
+			[mIterateTimer invalidate];
+			mIterateTimer = nil;
+		}
+		ms_message("[Ios App] Auto core.iterate() stopped");
+	}
+}
+
 @end
+
+
+
