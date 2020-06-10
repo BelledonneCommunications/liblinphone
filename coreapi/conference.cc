@@ -31,6 +31,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
 #include "conference/conference.h"
