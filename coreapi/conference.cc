@@ -148,7 +148,7 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const
 	return nullptr;
 }
 
-const ConferenceAddress &Conference::getConferenceAddress () const {
+const ConferenceAddress Conference::getConferenceAddress () const {
 	return *(new ConferenceAddress());
 }
 
