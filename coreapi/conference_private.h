@@ -177,7 +177,7 @@ public:
 		m_userData = userData;
 	}
 
-	virtual const ConferenceAddress &getConferenceAddress () const override;
+	virtual const ConferenceAddress getConferenceAddress () const override;
 
 	virtual const std::string &getSubject () const override;
 
