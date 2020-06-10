@@ -85,7 +85,7 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress getConferenceAddress () const override;
 
 	void allowCpim (bool value) override;
 	void allowMultipart (bool value) override;

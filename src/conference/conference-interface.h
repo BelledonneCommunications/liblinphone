@@ -86,8 +86,7 @@ public:
 	 Get the conference ID of this conference.
 	 @return The Address of the conference.
 	 **/
-	//virtual const Address &getConferenceAddress () const = 0;
-	virtual const ConferenceAddress &getConferenceAddress () const = 0;
+	virtual const ConferenceAddress getConferenceAddress () const = 0;
 
 	/*
 	* Get the subject of this conference
