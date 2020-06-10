@@ -53,7 +53,9 @@ static void shared_main_core_prevent_executor_core_start(void) {
 	LinphoneCoreManager *main_mgr;
 	LinphoneCoreManager *executor_mgr;
 	main_mgr = linphone_core_manager_create_shared("marie_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_set_auto_iterate_enabled(main_mgr->lc, FALSE);
 	executor_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, FALSE, main_mgr);
+	linphone_core_set_auto_iterate_enabled(executor_mgr->lc, FALSE);
 
 	linphone_core_manager_start(main_mgr, TRUE);
 	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, NULL, &main_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
@@ -68,6 +70,7 @@ void *thread_shared_main_core_stops_executor_core(void *arguments) {
 #if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr = (LinphoneCoreManager *)arguments;
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("", TEST_GROUP_ID, TRUE, executor_mgr);
+	linphone_core_set_auto_iterate_enabled(main_mgr->lc, FALSE);
 	ms_sleep(5); // for synchro with main thread
 	linphone_core_manager_start(main_mgr, TRUE);
 	BC_ASSERT_TRUE(wait_for_until(main_mgr->lc, NULL, &main_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
@@ -82,6 +85,7 @@ static void shared_main_core_stops_executor_core(void) {
 #if TARGET_OS_IPHONE
 	LinphoneCoreManager *executor_mgr;
 	executor_mgr = linphone_core_manager_create_shared("marie_rc", TEST_GROUP_ID, FALSE, NULL);
+	linphone_core_set_auto_iterate_enabled(executor_mgr->lc, FALSE);
 
 	linphone_core_manager_start(executor_mgr, TRUE);
 	BC_ASSERT_TRUE(wait_for_until(executor_mgr->lc, NULL, &executor_mgr->stat.number_of_LinphoneGlobalOn, 1, 2000));
@@ -209,11 +213,21 @@ void *thread_shared_core_get_message_from_user_defaults(void *arguments) {
 	return NULL;
 }
 
+// This test suite does not work yet, so do not test "automatic iterator".
+// In addition, "automatic iterator" must be disabled for extensions.
+LinphoneCoreManager *linphone_core_manager_new_without_auto_iterate(const char *rc_file) {
+	LinphoneCoreManager *manager = linphone_core_manager_create2(rc_file, NULL);
+	linphone_core_set_auto_iterate_enabled(manager->lc, FALSE);
+	linphone_core_manager_start(manager, TRUE);
+	return manager;
+}
+
 static void shared_executor_core_get_message_by_starting_a_core(void) {
 #if TARGET_OS_IPHONE
 	const char *text = "Bli bli bli \n blu";
-	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new_without_auto_iterate("marie_rc");
 	LinphoneCoreManager *receiver_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+	linphone_core_set_auto_iterate_enabled(receiver_mgr->lc, FALSE);
 	linphone_core_manager_start(receiver_mgr, TRUE);
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, text);
@@ -231,8 +245,9 @@ static void shared_executor_core_get_message_with_user_defaults_mono_thread(void
 #if TARGET_OS_IPHONE
 	/* mono thread means that the msg in already in the user defaults when the executor core start */
 	const char *text = "Bli bli bli \n blu";
-	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new_without_auto_iterate("marie_rc");
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_set_auto_iterate_enabled(main_mgr->lc, FALSE);
 	linphone_core_manager_start(main_mgr, TRUE);
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, main_mgr, text);
@@ -254,8 +269,9 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 #if TARGET_OS_IPHONE
 	/* multi thread means that the executor core waits for the msg to be written by the main core into the user defaults */
 	const char *text = "Bli bli bli \n blu";
-	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new_without_auto_iterate("marie_rc");
 	LinphoneCoreManager *main_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, TRUE, NULL);
+	linphone_core_set_auto_iterate_enabled(main_mgr->lc, FALSE);
 	linphone_core_manager_start(main_mgr, TRUE);
 
 	pthread_t executor;
@@ -286,8 +302,9 @@ static void shared_executor_core_get_message_with_user_defaults_multi_thread(voi
 
 static void two_shared_executor_cores_get_messages(void) {
 #if TARGET_OS_IPHONE
-	LinphoneCoreManager *sender_mgr = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *sender_mgr = linphone_core_manager_new_without_auto_iterate("marie_rc");
 	LinphoneCoreManager *receiver_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
+	linphone_core_set_auto_iterate_enabled(receiver_mgr->lc, FALSE);
 
 	linphone_core_manager_start(receiver_mgr, TRUE);
 	const char *call_id1 = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, "message1");

@@ -22,8 +22,11 @@
 
 @interface IosAppDelegate : NSObject {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
+	NSTimer* mIterateTimer;
 }
 
 - (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (void)onLinphoneCoreStart;
+- (void)onLinphoneCoreStop;
 
 @end
