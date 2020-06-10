@@ -22,11 +22,9 @@
 
 #include <map>
 
-#include "c-wrapper/c-wrapper.h"
 #include "linphone/core.h"
 #include "call/call.h"
 #include "linphone/conference.h"
-#include "c-wrapper/internal/c-tools.h"
 
 #include "belle-sip/object++.hh"
 
