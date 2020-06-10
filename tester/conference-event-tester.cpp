@@ -468,7 +468,7 @@ public:
 };
 
 ConferenceEventTester::ConferenceEventTester (const shared_ptr<Core> &core, const Address &confAddr)
-	: RemoteConference(core, confAddr, nullptr, ConferenceParams::create()) {
+	: RemoteConference(core, confAddr, nullptr, ConferenceParams::create(core->getCCore())) {
 	handler = new RemoteConferenceEventHandler(this);
 }
 
@@ -529,7 +529,7 @@ void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<Confere
 
 class LocalConferenceTester : public LocalConference {
 public:
-	LocalConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : LocalConference(core, myAddress, listener, ConferenceParams::create()) {}
+	LocalConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
 	virtual ~LocalConferenceTester () {}
 
 	/* ConferenceInterface */
@@ -923,7 +923,7 @@ void send_first_notify() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
-	shared_ptr<LocalConference> localConf = make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create());
+	shared_ptr<LocalConference> localConf = make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
@@ -1352,7 +1352,7 @@ void one_to_one_keyword () {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<ConferenceEventTester> tester = make_shared<ConferenceEventTester>(marie->lc->cppPtr, addr);
-	shared_ptr<LocalConference> localConf = make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create());
+	shared_ptr<LocalConference> localConf = make_shared<LocalConference>(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc));
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 	LinphoneAddress *cBobAddr = linphone_core_interpret_url(marie->lc, bobUri);
