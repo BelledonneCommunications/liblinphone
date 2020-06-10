@@ -93,9 +93,15 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
-const ConferenceAddress &Conference::getConferenceAddress () const {
+const ConferenceAddress Conference::getConferenceAddress () const {
 	return confParams->getConferenceAddress();
 }
+
+void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
+	return confParams->setConferenceAddress(conferenceAddress);
+}
+
+
 
 shared_ptr<Participant> Conference::getMe () const {
 	return me;

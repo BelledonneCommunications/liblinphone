@@ -83,10 +83,8 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 		void enableLocalParticipant (bool enable) { mLocalParticipantEnabled = enable; }
 		bool localParticipantEnabled() const { return mLocalParticipantEnabled; }
 
-		//virtual void setConferenceAddress (const Address conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		//const Address &getConferenceAddress() const { return m_conferenceAddress; };
 		virtual void setConferenceAddress (const ConferenceAddress conferenceAddress) override { m_conferenceAddress = conferenceAddress; };
-		const ConferenceAddress &getConferenceAddress() const { return m_conferenceAddress; };
+		const ConferenceAddress getConferenceAddress() const { return m_conferenceAddress; };
 
 		virtual void setSubject (const std::string &subject) override { m_subject = subject; };
 		const std::string &getSubject() const { return m_subject; };
@@ -140,7 +138,9 @@ public:
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 	const ConferenceParams &getCurrentParams() const {return *confParams;}
-	virtual const ConferenceAddress &getConferenceAddress () const override;
+
+	virtual const ConferenceAddress getConferenceAddress () const override;
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
 	void setParticipantAdminStatus (const std::shared_ptr<Participant> &participant, bool isAdmin) override;
 	void setSubject (const std::string &subject) override;
