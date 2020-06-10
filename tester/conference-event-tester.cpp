@@ -946,7 +946,7 @@ void send_first_notify() {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 	string notify = localHandler->createNotifyFullState();
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;
@@ -995,7 +995,7 @@ void send_added_notify() {
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1049,7 +1049,7 @@ void send_removed_notify() {
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
@@ -1100,7 +1100,7 @@ void send_admined_notify() {
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1151,7 +1151,7 @@ void send_unadmined_notify() {
 	localConf->addParticipant(bobAddr);
 	localConf->addParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(bobAddr.asString()) != confListener->participants.end());
@@ -1201,7 +1201,7 @@ void send_subject_changed_notify () {
 	localConf->addParticipant(aliceAddr);
 	localConf->setSubject("A random test subject");
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 
 	BC_ASSERT_STRING_EQUAL(confListener->confSubject.c_str(), "A random test subject");
 	BC_ASSERT_EQUAL(confListener->participants.size(), 2, int, "%d");
@@ -1254,7 +1254,7 @@ void send_device_added_notify() {
 	localConf->addParticipant(aliceAddr);
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
 	BC_ASSERT_TRUE(confListener->participantDevices.find(aliceAddr.asString()) != confListener->participantDevices.end());
@@ -1307,7 +1307,7 @@ void send_device_removed_notify() {
 	localConf->setSubject("A random test subject");
 	shared_ptr<Participant> alice = localConf->findParticipant(aliceAddr);
 	setParticipantAsAdmin(localConf, aliceAddr, true);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), 2, int, "%d");
 	BC_ASSERT_TRUE(confListener->participantDevices.find(bobAddr.asString()) != confListener->participantDevices.end());
@@ -1366,7 +1366,7 @@ void one_to_one_keyword () {
 	LocalConferenceEventHandler *localHandler = L_GET_PTR(
 		L_ATTR_GET(localConf.get(), eventHandler)
 	);
-	const_cast<ConferenceAddress &>(localConf->getConferenceAddress()) = ConferenceAddress(addr);
+	localConf->setConferenceAddress(ConferenceAddress(addr));
 	string notify = localHandler->createNotifyFullState(true);
 
 	const_cast<IdentityAddress &>(tester->handler->getConferenceId().getPeerAddress()) = addr;

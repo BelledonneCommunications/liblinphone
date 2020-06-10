@@ -254,7 +254,7 @@ bool ProxyChatRoom::ephemeralSupportedByAllParticipants () const {
 
 // -----------------------------------------------------------------------------
 
-const ConferenceAddress &ProxyChatRoom::getConferenceAddress () const {
+const ConferenceAddress ProxyChatRoom::getConferenceAddress () const {
 	L_D();
 	return d->chatRoom->getConferenceAddress();
 }
