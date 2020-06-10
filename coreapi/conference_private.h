@@ -188,18 +188,15 @@ public:
 	using LinphonePrivate::ConferenceInterface::join;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::findParticipant;
-	virtual std::shared_ptr<LinphonePrivate::Participant> findParticipant (const IdentityAddress &participantAddress) const override;
-
 	virtual int getParticipantCount () const override;
 
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
 protected:
 	void setState(LinphoneConferenceState state);
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::findParticipant;
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
-	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const LinphoneAddress *uri) const;
 
 protected:
 	std::string m_conferenceID;
