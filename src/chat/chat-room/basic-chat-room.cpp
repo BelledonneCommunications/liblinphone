@@ -77,7 +77,7 @@ bool BasicChatRoom::hasBeenLeft () const {
 	return false;
 }
 
-const ConferenceAddress &BasicChatRoom::getConferenceAddress () const {
+const ConferenceAddress BasicChatRoom::getConferenceAddress () const {
 	lError() << "a BasicChatRoom does not have a conference address";
 	return Utils::getEmptyConstRefObject<ConferenceAddress>();
 }
