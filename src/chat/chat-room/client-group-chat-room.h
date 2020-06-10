@@ -55,7 +55,7 @@ public:
 	ChatRoom::SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress getConferenceAddress () const override;
 
 	void deleteFromDb () override;
 
