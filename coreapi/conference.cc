@@ -89,7 +89,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 }
 
 int Conference::removeParticipant (const LinphoneAddress *uri) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(uri);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 	if (!p)
 		return -1;
 	m_participants.remove(p);
@@ -138,15 +138,6 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const
 	return nullptr;
 }
 
-std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const LinphoneAddress *uri) const {
-	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
-		const Address &addr((*it)->getAddress());
-		if (linphone_address_equal(L_GET_C_BACK_PTR(&addr), uri))
-			return *it;
-	}
-	return nullptr;
-}
-
 const ConferenceAddress Conference::getConferenceAddress () const {
 	return *(new ConferenceAddress());
 }
@@ -165,17 +156,6 @@ void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivat
 
 void Conference::join (const IdentityAddress &participantAddress) {
 	
-}
-
-std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const IdentityAddress &participantAddress) const {
-	IdentityAddress searchedAddr(participantAddress);
-	searchedAddr.setGruu("");
-	for (const auto &participant : participants) {
-		if (participant->getAddress() == searchedAddr)
-			return participant;
-	}
-
-	return nullptr;
 }
 
 int Conference::getParticipantCount () const {
@@ -385,7 +365,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 }
 
 int LocalConference::removeParticipant (const LinphoneAddress *uri) {
-	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(uri);
+	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 	if (!participant)
 		return -1;
 	std::shared_ptr<LinphonePrivate::Call> call = m_callTable[participant];
@@ -575,7 +555,7 @@ int RemoteConference::removeParticipant (const LinphoneAddress *uri) {
 
 	switch (m_state) {
 		case LinphoneConferenceRunning:
-			if(!findParticipant(uri)) {
+			if(!findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))) {
 				char *tmp = linphone_address_as_string(uri);
 				ms_error("Conference: could not remove participant '%s': not in the participants list", tmp);
 				ms_free(tmp);
