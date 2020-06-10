@@ -60,7 +60,7 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
-	const ConferenceAddress &getConferenceAddress () const override;
+	const ConferenceAddress getConferenceAddress () const override;
 
 	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipant (std::shared_ptr<Call> call) override {return LocalConference::addParticipant(call); };

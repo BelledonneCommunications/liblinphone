@@ -1263,7 +1263,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddr
 	return LocalConference::findParticipant(participantAddress);
 }
 
-const ConferenceAddress &ServerGroupChatRoom::getConferenceAddress () const {
+const ConferenceAddress ServerGroupChatRoom::getConferenceAddress () const {
 	return LocalConference::getConferenceAddress();
 }
 
