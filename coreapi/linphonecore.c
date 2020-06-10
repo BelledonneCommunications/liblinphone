@@ -2570,6 +2570,10 @@ static void update_proxy_config_push_params(LinphoneCore *core) {
 	}
 }
 
+bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
+	return core->push_notification_param != NULL && core->push_notification_prid != NULL;
+}
+
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	if (core->push_notification_param) {
 		ms_free(core->push_notification_param);

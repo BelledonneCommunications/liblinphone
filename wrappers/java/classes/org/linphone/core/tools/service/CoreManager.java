@@ -88,14 +88,9 @@ public class CoreManager {
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
 
-        if (mCore.isPushNotificationEnabled()) {
-            Log.i("[Core Manager] Push notifications are enabled, starting push helper");
-            PushNotificationUtils.init(mContext);
-            if (!PushNotificationUtils.isAvailable(mContext)) {
-                Log.w("[Core Manager] Push notifications aren't available");
-            }
-        } else {
-            Log.w("[Core Manager] Push notifications aren't enabled");
+        PushNotificationUtils.init(mContext);
+        if (!PushNotificationUtils.isAvailable(mContext)) {
+            Log.w("[Core Manager] Push notifications aren't available");
         }
         
         if (isAndroidXMediaAvailable()) {
@@ -248,6 +243,11 @@ public class CoreManager {
     }
 
     public void setPushToken(String token) {
+        if (!mCore.isPushNotificationEnabled()) {
+            Log.w("[Core Manager] Push notifications aren't enabled");
+            return;
+        }
+
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
