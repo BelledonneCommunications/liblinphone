@@ -1288,6 +1288,7 @@ void ServerGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 
 bool ServerGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
 	L_D();
+	if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 	d->removeParticipant(participant);
 	return true;
 }
