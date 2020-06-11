@@ -88,8 +88,8 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	return 0;
 }
 
-int Conference::removeParticipant (const LinphoneAddress *uri) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+int Conference::removeParticipant (const IdentityAddress &addr) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	if (!p)
 		return -1;
 	m_participants.remove(p);
@@ -364,8 +364,8 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	return err;
 }
 
-int LocalConference::removeParticipant (const LinphoneAddress *uri) {
-	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+int LocalConference::removeParticipant (const IdentityAddress &addr) {
+	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(addr);
 	if (!participant)
 		return -1;
 	std::shared_ptr<LinphonePrivate::Call> call = m_callTable[participant];
@@ -548,36 +548,28 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	}
 }
 
-int RemoteConference::removeParticipant (const LinphoneAddress *uri) {
-	char *refer_to;
-	LinphoneAddress *refer_to_addr;
+int RemoteConference::removeParticipant (const IdentityAddress &addr) {
+	Address refer_to_addr;
 	int res;
 
 	switch (m_state) {
 		case LinphoneConferenceRunning:
-			if(!findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))) {
-				char *tmp = linphone_address_as_string(uri);
-				ms_error("Conference: could not remove participant '%s': not in the participants list", tmp);
-				ms_free(tmp);
+			if(!findParticipant(addr)) {
+				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
 				return -1;
 			}
-			refer_to_addr = linphone_address_clone(uri);
-			linphone_address_set_method_param(refer_to_addr, "BYE");
-			refer_to = linphone_address_as_string(refer_to_addr);
-			linphone_address_unref(refer_to_addr);
-			res = L_GET_PRIVATE(m_focusCall)->getOp()->refer(refer_to);
-			ms_free(refer_to);
+			refer_to_addr = Address(addr);
+			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
+			res = L_GET_PRIVATE(m_focusCall)->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)
-				return Conference::removeParticipant(uri);
+				return Conference::removeParticipant(addr);
 			else {
-				char *tmp = linphone_address_as_string(uri);
-				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", tmp);
-				ms_free(tmp);
+				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
 				return -1;
 			}
 		default:
 			ms_error("Cannot remove %s from conference: Bad conference state (%s)",
-				linphone_address_as_string(uri), stateToString(m_state));
+				addr.asString().c_str(), stateToString(m_state));
 			return -1;
 	}
 }
@@ -827,7 +819,7 @@ int linphone_conference_add_participant (LinphoneConference *obj, LinphoneCall *
 }
 
 LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(obj)->removeParticipant(uri);
+	return MediaConference::Conference::toCpp(obj)->removeParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }
 
 int linphone_conference_remove_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
