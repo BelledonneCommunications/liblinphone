@@ -120,6 +120,8 @@ class ConferenceFactoryInterface;
 class ConferenceParamsInterface;
 class ConferenceParams;
 
+class RemoteConferenceEventHandler;
+
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
 class Conference;
@@ -305,6 +307,8 @@ private:
 	LinphoneCoreCbs *m_coreCbs;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
+
+	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 };
 
 }// end of namespace MediaConference
