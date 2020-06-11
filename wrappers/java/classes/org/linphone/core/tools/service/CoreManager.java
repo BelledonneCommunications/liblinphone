@@ -243,11 +243,6 @@ public class CoreManager {
     }
 
     public void setPushToken(String token) {
-        if (!mCore.isPushNotificationEnabled()) {
-            Log.w("[Core Manager] Push notifications aren't enabled");
-            return;
-        }
-
         int resId = mContext.getResources().getIdentifier("gcm_defaultSenderId", "string", mContext.getPackageName());
         String appId = mContext.getString(resId);
         Log.i("[Core Manager] Push notification app id is [", appId, "] and token is [", token, "]");
