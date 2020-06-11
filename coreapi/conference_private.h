@@ -289,6 +289,7 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
+	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 private:
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
@@ -308,7 +309,6 @@ private:
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_pendingCalls;
 	std::list<std::shared_ptr<LinphonePrivate::Call>> m_transferingCalls;
 
-	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
 };
 
 }// end of namespace MediaConference
