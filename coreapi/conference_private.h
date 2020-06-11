@@ -141,7 +141,7 @@ public:
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override = 0;
 
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
-	virtual int removeParticipant(const LinphoneAddress *uri) = 0;
+	virtual int removeParticipant(const IdentityAddress &addr) = 0;
 	virtual bool removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
@@ -228,7 +228,7 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::MediaConference::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
-	virtual int removeParticipant(const LinphoneAddress *uri) override;
+	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
 
@@ -270,7 +270,7 @@ public:
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override {
 		return -1;
 	}
-	virtual int removeParticipant(const LinphoneAddress *uri) override;
+	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual int terminate() override;
 
 	virtual int enter() override;
