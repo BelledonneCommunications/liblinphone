@@ -45,7 +45,7 @@ using namespace Xsd::ConferenceInfo;
 
 // -----------------------------------------------------------------------------
 
-RemoteConferenceEventHandler::RemoteConferenceEventHandler (RemoteConference *remoteConference) {
+RemoteConferenceEventHandler::RemoteConferenceEventHandler (Conference *remoteConference) {
 	conf = remoteConference;
 	conf->getCore()->getPrivate()->registerListener(this);
 }
@@ -111,7 +111,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		if (subject.present() && !subject.get().empty()) {
 
 			if (conf->getSubject() != subject.get()) {
-				conf->RemoteConference::setSubject(subject.get());
+				conf->Conference::setSubject(subject.get());
 				if (!isFullState) {
 					conf->notifySubjectChanged(
 						creationTime,
@@ -307,6 +307,7 @@ void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable,
 }
 
 void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
+printf("Entering %s\n", __func__);
 	if (state == LinphoneRegistrationOk)
 		subscribe();
 }
@@ -316,6 +317,7 @@ void RemoteConferenceEventHandler::onEnteringBackground () {
 }
 
 void RemoteConferenceEventHandler::onEnteringForeground () {
+printf("Entering %s\n", __func__);
 	subscribe();
 }
 
