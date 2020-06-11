@@ -40,6 +40,8 @@
 #include "conference/session/ms2-streams.h"
 #include "conference/session/media-session.h"
 #include "conference/handlers/local-conference-event-handler.h"
+#include "conference/handlers/remote-conference-event-handler.h"
+#include "conference/handlers/remote-conference-list-event-handler.h"
 
 
 // TODO: From coreapi. Remove me later.
@@ -494,10 +496,13 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
-	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
-
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
+
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
+	getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
+
 }
 
 RemoteConference::~RemoteConference () {
@@ -785,7 +790,7 @@ const char *linphone_conference_state_to_string (LinphoneConferenceState state) 
 
 
 LinphoneConference *linphone_local_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
-	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create()))->toC();
+	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create(core)))->toC();
 }
 
 LinphoneConference *linphone_local_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
@@ -793,7 +798,7 @@ LinphoneConference *linphone_local_conference_new_with_params (LinphoneCore *cor
 }
 
 LinphoneConference *linphone_remote_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
-	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create()))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create(core)))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
