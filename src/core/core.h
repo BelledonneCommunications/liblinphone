@@ -51,6 +51,10 @@ class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
 
+namespace MediaConference {
+	class RemoteConference;
+}
+
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
 	friend class BasicToClientGroupChatRoomPrivate;
@@ -76,6 +80,8 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ServerGroupChatRoomPrivate;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
+
+	friend class MediaConference::RemoteConference;
 
 	friend class LinphoneTest::LocalConferenceTester;
 public:
