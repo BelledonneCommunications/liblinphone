@@ -559,47 +559,6 @@ public:
 	}
 };
 
-class LocalAudioVideoConferenceTester : public MediaConference::LocalConference {
-public:
-	LocalAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
-	virtual ~LocalAudioVideoConferenceTester () {}
-
-	/* ConferenceInterface */
-
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::addParticipant;
-	bool addParticipant (const IdentityAddress &addr) override {
-		bool status = LinphonePrivate::Conference::addParticipant(addr);
-		if (status) {
-			notifyParticipantAdded(time(nullptr), false, addr);
-		}
-		return status;
-	}
-	bool addParticipant (std::shared_ptr<Call> call) override {
-		bool status = MediaConference::LocalConference::addParticipant(call);
-		if (status) {
-			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
-		}
-		return status;
-	}
-
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::MediaConference::Conference::removeParticipant;
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
-		bool status = MediaConference::LocalConference::removeParticipant(participant);
-		if (status) {
-			notifyParticipantRemoved(time(nullptr), false, participant->getAddress());
-		}
-		return status;
-	}
-	void setSubject (const std::string &subject) override {
-		LocalConference::setSubject(subject);
-		notifySubjectChanged(time(nullptr), false, subject);
-	}
-};
-
-
-
 class ConferenceListenerInterfaceTester : public ConferenceListenerInterface {
 public:
 	ConferenceListenerInterfaceTester () = default;
@@ -674,6 +633,60 @@ static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, A
 	p->setAdmin(isAdmin);
 	localConf->notifyParticipantSetAdmin(time(nullptr), false, addr, isAdmin);
 }
+
+/*
+class RemoteAudioVideoConferenceTester : public MediaConference::RemoteConference {
+	RemoteAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::RemoteConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
+}
+*/
+
+class LocalAudioVideoConferenceTester : public MediaConference::LocalConference {
+public:
+	LocalAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
+	virtual ~LocalAudioVideoConferenceTester () {}
+
+	/* ConferenceInterface */
+
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::addParticipant;
+	bool addParticipant (const IdentityAddress &addr) override {
+		bool status = LinphonePrivate::Conference::addParticipant(addr);
+		if (status) {
+			notifyParticipantAdded(time(nullptr), false, addr);
+		}
+		return status;
+	}
+	bool addParticipant (std::shared_ptr<Call> call) override {
+		bool status = MediaConference::LocalConference::addParticipant(call);
+		if (status) {
+			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
+			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), call->getLocalAddress(), nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+			remoteConf->eventHandler->subscribe(ConferenceId(call->getRemoteAddress(), call->getLocalAddress()));
+			std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
+			remoteConf->addListener(confListener);
+			participantRemoteConfTable.insert({ call->getRemoteAddress().asString(), remoteConf });
+		}
+		return status;
+	}
+
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::MediaConference::Conference::removeParticipant;
+	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
+		bool status = MediaConference::LocalConference::removeParticipant(participant);
+		if (status) {
+			notifyParticipantRemoved(time(nullptr), false, participant->getAddress());
+		}
+		return status;
+	}
+	void setSubject (const std::string &subject) override {
+		LocalConference::setSubject(subject);
+		notifySubjectChanged(time(nullptr), false, subject);
+	}
+
+	map<string, shared_ptr<MediaConference::RemoteConference>> participantRemoteConfTable;
+};
+
+
 
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -1065,6 +1078,75 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
+static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
+
+	stats initial_conf_stats = conf_mgr->stat;
+	stats initial_participant_stats = participant_mgr->stat;
+
+	LinphoneCall * participantCall = linphone_core_invite_address(conf_mgr->lc, participant_mgr->identity);
+	BC_ASSERT_PTR_NOT_NULL(participantCall);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallOutgoingProgress,(initial_conf_stats.number_of_LinphoneCallOutgoingProgress + 1),10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallIncomingReceived,(initial_participant_stats.number_of_LinphoneCallIncomingReceived + 1),10000));
+	linphone_call_accept(linphone_core_get_current_call(participant_mgr->lc));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
+
+	const LinphoneAddress *cMarieAddr = linphone_call_get_remote_address(participantCall);
+	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cMarieAddr)->asStringUriOnly();
+
+	int participantSize = confListener->participants.size();
+	int participantDeviceSize = confListener->participantDevices.size();
+
+	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
+
+	// Stream due to call and stream due to the addition to the conference
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
+
+	BC_ASSERT_EQUAL(confListener->participants.size(), (participantSize + 1), int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.size(), (participantDeviceSize + 1), int, "%d");
+	BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
+
+	// Admin check
+	BC_ASSERT_TRUE(!confListener->participants.find(participantUri)->second);
+
+	return participantCall;
+
+}
+
+void send_added_notify_through_call() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
+
+	bctbx_list_t *lcs = NULL;
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+
+	char *identityStr = linphone_address_as_string(pauline->identity);
+	Address addr(identityStr);
+	bctbx_free(identityStr);
+	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
+	localConf->addListener(confListener);
+
+	// Add participants
+	// Marie
+	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, marie);
+
+	// Laure
+	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure);
+
+	localConf->terminate();
+	localConf = nullptr;
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
+
 void send_removed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -1412,76 +1494,6 @@ void one_to_one_keyword () {
 	tester = nullptr;
 	localConf = nullptr;
 	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-
-static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
-
-	stats initial_conf_stats = conf_mgr->stat;
-	stats initial_participant_stats = participant_mgr->stat;
-
-	LinphoneCall * participantCall = linphone_core_invite_address(conf_mgr->lc, participant_mgr->identity);
-	BC_ASSERT_PTR_NOT_NULL(participantCall);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallOutgoingProgress,(initial_conf_stats.number_of_LinphoneCallOutgoingProgress + 1),10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallIncomingReceived,(initial_participant_stats.number_of_LinphoneCallIncomingReceived + 1),10000));
-	linphone_call_accept(linphone_core_get_current_call(participant_mgr->lc));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
-
-	const LinphoneAddress *cMarieAddr = linphone_call_get_remote_address(participantCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cMarieAddr)->asStringUriOnly();
-
-	int participantSize = confListener->participants.size();
-	int participantDeviceSize = confListener->participantDevices.size();
-
-	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
-
-	// Stream due to call and stream due to the addition to the conference
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
-
-	BC_ASSERT_EQUAL(confListener->participants.size(), (participantSize + 1), int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.size(), (participantDeviceSize + 1), int, "%d");
-	BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
-
-	// Admin check
-	BC_ASSERT_TRUE(!confListener->participants.find(participantUri)->second);
-
-	return participantCall;
-
-}
-
-void send_added_notify_through_call() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
-
-	bctbx_list_t *lcs = NULL;
-	lcs = bctbx_list_append(lcs, marie->lc);
-	lcs = bctbx_list_append(lcs, pauline->lc);
-	lcs = bctbx_list_append(lcs, laure->lc);
-
-	char *identityStr = linphone_address_as_string(pauline->identity);
-	Address addr(identityStr);
-	bctbx_free(identityStr);
-	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
-	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
-	localConf->addListener(confListener);
-
-	// Add participants
-	// Marie
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, marie);
-
-	// Laure
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure);
-
-	localConf->terminate();
-	localConf = nullptr;
-
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
 
