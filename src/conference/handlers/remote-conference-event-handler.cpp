@@ -307,7 +307,6 @@ void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable,
 }
 
 void RemoteConferenceEventHandler::onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {
-printf("Entering %s\n", __func__);
 	if (state == LinphoneRegistrationOk)
 		subscribe();
 }
@@ -317,7 +316,6 @@ void RemoteConferenceEventHandler::onEnteringBackground () {
 }
 
 void RemoteConferenceEventHandler::onEnteringForeground () {
-printf("Entering %s\n", __func__);
 	subscribe();
 }
 
