@@ -33,7 +33,6 @@ class LINPHONE_PUBLIC RemoteConference :
 	public Conference,
 	public ConferenceListenerInterface {
 	friend class ClientGroupChatRoomPrivate;
-	friend class RemoteConferenceEventHandler;
 
 public:
 	RemoteConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
