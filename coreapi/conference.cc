@@ -499,8 +499,10 @@ RemoteConference::RemoteConference (
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
 
+
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
+
 	getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 
 }
