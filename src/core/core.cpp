@@ -188,6 +188,10 @@ void CorePrivate::uninit() {
 
 	chatRoomsById.clear();
 
+	for (const auto &audioVideoConference : q->audioVideoConferenceById) {
+		// Terminate audio video conferences just before core is stopped
+		audioVideoConference.second->terminate();
+	}
 	q->audioVideoConferenceById.clear();
 
 	noCreatedClientGroupChatRooms.clear();
@@ -1038,6 +1042,7 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 	if (it != audioVideoConferenceById.cend()) {
 		audioVideoConferenceById.erase(it);
 	}
+
 }
 
 LINPHONE_END_NAMESPACE
