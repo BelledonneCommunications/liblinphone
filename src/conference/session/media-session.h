@@ -82,7 +82,7 @@ public:
 	void enableEchoLimiter (bool value);
 	bool getAllMuted () const;
 	LinphoneCallStats * getAudioStats () const;
-	std::string getAuthenticationToken () const;
+	const std::string &getAuthenticationToken () const;
 	bool getAuthenticationTokenVerified () const;
 	float getAverageQuality () const;
 	MediaSessionParams *getCurrentParams () const;

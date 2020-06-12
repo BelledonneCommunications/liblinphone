@@ -2588,7 +2588,7 @@ LinphoneCallStats * MediaSession::getAudioStats () const {
 	return getStats(LinphoneStreamTypeAudio);
 }
 
-string MediaSession::getAuthenticationToken () const {
+const string &MediaSession::getAuthenticationToken () const {
 	L_D();
 	return d->getStreamsGroup().getAuthenticationToken();
 }

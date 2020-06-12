@@ -177,8 +177,8 @@ const LinphoneAddress *linphone_call_get_to_address (const LinphoneCall *call) {
 	return L_GET_C_BACK_PTR(&Call::toCpp(call)->getToAddress());
 }
 
-char *linphone_call_get_to_header (LinphoneCall *call, const char *name) {
-	return ms_strdup(Call::toCpp(call)->getToHeader(name).c_str());
+const char *linphone_call_get_to_header (LinphoneCall *call, const char *name) {
+	return Call::toCpp(call)->getToHeader(name);
 }
 
 char *linphone_call_get_remote_address_as_string (const LinphoneCall *call) {
@@ -198,8 +198,8 @@ LinphoneCallLog *linphone_call_get_call_log (const LinphoneCall *call) {
 	return Call::toCpp(call)->getLog();
 }
 
-char *linphone_call_get_refer_to (LinphoneCall *call) {
-	return ms_strdup(Call::toCpp(call)->getReferTo().c_str());
+const char *linphone_call_get_refer_to (LinphoneCall *call) {
+	return L_STRING_TO_C(Call::toCpp(call)->getReferTo());
 }
 
 bool_t linphone_call_has_transfer_pending (const LinphoneCall *call) {
@@ -264,16 +264,16 @@ const LinphoneErrorInfo *linphone_call_get_error_info (const LinphoneCall *call)
 	return Call::toCpp(call)->getErrorInfo();
 }
 
-char *linphone_call_get_remote_user_agent (LinphoneCall *call) {
-	return ms_strdup(Call::toCpp(call)->getRemoteUserAgent().c_str());
+const char *linphone_call_get_remote_user_agent (LinphoneCall *call) {
+	return L_STRING_TO_C(Call::toCpp(call)->getRemoteUserAgent());
 }
 
-char *linphone_call_get_remote_contact (LinphoneCall *call) {
-	return ms_strdup(Call::toCpp(call)->getRemoteContact().c_str());
+const char *linphone_call_get_remote_contact (LinphoneCall *call) {
+	return L_STRING_TO_C(Call::toCpp(call)->getRemoteContact());
 }
 
-char *linphone_call_get_authentication_token (LinphoneCall *call) {
-	return ms_strdup(Call::toCpp(call)->getAuthenticationToken().c_str());
+const char *linphone_call_get_authentication_token (LinphoneCall *call) {
+	return L_STRING_TO_C(Call::toCpp(call)->getAuthenticationToken());
 }
 
 bool_t linphone_call_get_authentication_token_verified (const LinphoneCall *call) {

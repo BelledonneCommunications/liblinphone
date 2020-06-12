@@ -614,7 +614,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 	list<LinphoneCall *>::iterator it;
 	switch (state) {
 		case LinphoneCallConnected:
-			m_focusContact = linphone_call_get_remote_contact(m_focusCall);
+			m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall));
 			it = m_pendingCalls.begin();
 			while (it != m_pendingCalls.end()) {
 				LinphoneCall *pendingCall = *it;

@@ -38,6 +38,7 @@ public:
 	virtual void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) {}
 	virtual void onBackgroundTaskToBeStarted (const std::shared_ptr<CallSession> &session) {}
 	virtual void onBackgroundTaskToBeStopped (const std::shared_ptr<CallSession> &session) {}
+	virtual void onCallSessionAccepting (const std::shared_ptr<CallSession> &session) {}
 	virtual bool onCallSessionAccepted (const std::shared_ptr<CallSession> &session) { return false; }
 	virtual void onCallSessionEarlyFailed (const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {}
 	virtual void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) {}

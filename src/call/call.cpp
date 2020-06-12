@@ -156,10 +156,7 @@ void Call::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 }
 
 void Call::startIncomingNotification () {
-	getActiveSession()->getPrivate()->startIncomingNotification();
-	if (getActiveSession()->isAccepting()) {
-		accept();
-	}
+	getActiveSession()->startIncomingNotification();
 }
 
 void Call::startPushIncomingNotification () {
@@ -288,6 +285,10 @@ void Call::onBackgroundTaskToBeStarted (const shared_ptr<CallSession> &session) 
 
 void Call::onBackgroundTaskToBeStopped (const shared_ptr<CallSession> &session) {
 	mBgTask.stop();
+}
+
+void Call::onCallSessionAccepting (const std::shared_ptr<CallSession> &session) {
+	accept();
 }
 
 bool Call::onCallSessionAccepted (const shared_ptr<CallSession> &session) {
@@ -719,7 +720,7 @@ LinphoneCallStats *Call::getAudioStats () const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAudioStats();
 }
 
-string Call::getAuthenticationToken ()  {
+const string &Call::getAuthenticationToken ()  {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getAuthenticationToken();
 }
 
@@ -812,7 +813,7 @@ shared_ptr<Call> Call::getReferer () const {
 	return nullptr;
 }
 
-string Call::getReferTo () {
+const string &Call::getReferTo () {
 	return getActiveSession()->getReferTo();
 }
 
@@ -820,7 +821,7 @@ const Address *Call::getRemoteAddress () const {
 	return getActiveSession()->getRemoteAddress();
 }
 
-string Call::getRemoteContact () {
+const string &Call::getRemoteContact () {
 	return getActiveSession()->getRemoteContact();
 }
 
@@ -828,7 +829,7 @@ const MediaSessionParams *Call::getRemoteParams () const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getRemoteParams();
 }
 
-string Call::getRemoteUserAgent () {
+const string &Call::getRemoteUserAgent () {
 	return getActiveSession()->getRemoteUserAgent();
 }
 
@@ -871,7 +872,7 @@ const Address &Call::getToAddress () const {
 	return getActiveSession()->getToAddress();
 }
 
-string Call::getToHeader (const string &name) {
+const char *Call::getToHeader (const string &name) {
 	return getActiveSession()->getToHeader(name);
 }
 

@@ -113,7 +113,7 @@ public:
 	void enableEchoLimiter (bool value);
 	bool getAllMuted () const;
 	LinphoneCallStats *getAudioStats () const;
-	std::string getAuthenticationToken () ;
+	const std::string &getAuthenticationToken () ;
 	bool getAuthenticationTokenVerified () const;
 	float getAverageQuality () const;
 	const MediaSessionParams *getCurrentParams () const;
@@ -134,11 +134,11 @@ public:
 	LinphoneReason getReason () const;
 	float getRecordVolume () const;
 	std::shared_ptr<Call> getReferer () const;
-	std::string getReferTo ();
+	const std::string &getReferTo ();
 	const Address *getRemoteAddress () const;
-	std::string getRemoteContact ();
+	const std::string &getRemoteContact ();
 	const MediaSessionParams *getRemoteParams () const;
-	std::string getRemoteUserAgent ();
+	const std::string &getRemoteUserAgent ();
 	std::shared_ptr<Call> getReplacedCall () const;
 	float getSpeakerVolumeGain () const;
 	CallSession::State getState () const;
@@ -148,7 +148,7 @@ public:
 	MSFormatType getStreamType (int streamIndex) const;
 	LinphoneCallStats *getTextStats () const;
 	const Address &getToAddress () const;
-	std::string getToHeader (const std::string &name);
+	const char *getToHeader (const std::string &name);
 	CallSession::State getTransferState () const;
 	std::shared_ptr<Call> getTransferTarget () const;
 	LinphoneCallStats *getVideoStats () const;
@@ -210,6 +210,7 @@ public:
 	void onAckReceived (const std::shared_ptr<CallSession> &session, LinphoneHeaders *headers) override;
 	void onBackgroundTaskToBeStarted (const std::shared_ptr<CallSession> &session) override;
 	void onBackgroundTaskToBeStopped (const std::shared_ptr<CallSession> &session) override;
+	void onCallSessionAccepting (const std::shared_ptr<CallSession> &session) override;
 	bool onCallSessionAccepted (const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionEarlyFailed (const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) override;
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;

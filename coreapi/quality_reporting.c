@@ -520,7 +520,7 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 	STR_REASSIGN(report->info.call_id, ms_strdup(log->call_id));
 
 	STR_REASSIGN(report->local_metrics.user_agent, ms_strdup(linphone_core_get_user_agent(linphone_call_get_core(call))));
-	STR_REASSIGN(report->remote_metrics.user_agent, linphone_call_get_remote_user_agent(call));
+	STR_REASSIGN(report->remote_metrics.user_agent, ms_strdup(linphone_call_get_remote_user_agent(call)));
 
 	// RFC states: "LocalGroupID provides the identification for the purposes
 	// of aggregation for the local endpoint.".

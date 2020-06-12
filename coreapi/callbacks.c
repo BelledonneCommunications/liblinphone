@@ -259,7 +259,6 @@ static void call_received(SalCallOp *h) {
 		linphone_call_configure(call, fromAddr, toAddr, h);
 	} else {
 		call = linphone_call_new_incoming(lc, fromAddr, toAddr, h);
-		LinphonePrivate::Call::toCpp(call)->startBasicIncomingNotification();
 	}
 	linphone_address_unref(fromAddr);
 	linphone_address_unref(toAddr);

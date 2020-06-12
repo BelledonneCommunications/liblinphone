@@ -116,22 +116,21 @@ public:
 	virtual const CallSessionParams *getParams () const;
 	LinphoneReason getReason () const;
 	std::shared_ptr<CallSession> getReferer () const;
-	std::string getReferTo () const;
+	const std::string &getReferTo () const;
 	const Address *getRemoteAddress () const;
-	std::string getRemoteContact () const;
+	const std::string &getRemoteContact () const;
 	const Address *getRemoteContactAddress () const;
 	const CallSessionParams *getRemoteParams ();
-	std::string getRemoteUserAgent () const;
+	const std::string &getRemoteUserAgent () const;
 	std::shared_ptr<CallSession> getReplacedCallSession () const;
 	CallSession::State getState () const;
 	const Address &getToAddress () const;
 	CallSession::State getTransferState () const;
 	std::shared_ptr<CallSession> getTransferTarget () const;
-	std::string getToHeader (const std::string &name) const;
+	const char *getToHeader (const std::string &name) const;
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();
-	bool isAccepting () const;
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);

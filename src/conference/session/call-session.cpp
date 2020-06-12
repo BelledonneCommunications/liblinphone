@@ -156,7 +156,7 @@ void CallSessionPrivate::setTransferState (CallSession::State newState) {
 
 void CallSessionPrivate::startIncomingNotification () {
 	L_Q();
-	if (listener)
+	if (listener && state != CallSession::State::PushIncomingReceived)
 		listener->onIncomingCallSessionStarted(q->getSharedFromThis());
 
 	setState(CallSession::State::IncomingReceived, "Incoming CallSession");
@@ -172,6 +172,8 @@ void CallSessionPrivate::startIncomingNotification () {
 
 	if (q->mIsDeclining) {
 		q->decline(q->mErrorCache);
+	} else if (q->mIsAccepting && listener) {
+		listener->onCallSessionAccepting(q->getSharedFromThis());
 	}
 }
 
@@ -964,10 +966,6 @@ void CallSession::accepting () {
 	mIsAccepting = true;
 }
 
-bool CallSession::isAccepting () const {
-	return mIsAccepting;
-}
-
 LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	L_D();
 	if (d->state != CallSession::State::UpdatedByRemote) {
@@ -1160,8 +1158,9 @@ LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 
 void CallSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
-	startBasicIncomingNotification(notifyRinging);
-
+	if (d->state != CallSession::State::PushIncomingReceived) {
+		startBasicIncomingNotification(notifyRinging);
+	}
 	d->startIncomingNotification();
 }
 
@@ -1186,12 +1185,6 @@ void CallSession::startPushIncomingNotification () {
 		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
 
 	d->setState(CallSession::State::PushIncomingReceived, "PushIncoming CallSession");
-
-	// From now on, the application is aware of the call and supposed to take background task or already submitted
-	// notification to the user. We can then drop our background task.
-	if (d->listener)
-		d->listener->onBackgroundTaskToBeStopped(getSharedFromThis());
-
 }
 
 
@@ -1363,7 +1356,7 @@ shared_ptr<CallSession> CallSession::getReferer () const {
 	return d->referer;
 }
 
-string CallSession::getReferTo () const {
+const string &CallSession::getReferTo () const {
 	L_D();
 	return d->referTo;
 }
@@ -1375,13 +1368,13 @@ const Address *CallSession::getRemoteAddress () const {
 	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
-string CallSession::getRemoteContact () const {
+const string &CallSession::getRemoteContact () const {
 	L_D();
 	if (d->op) {
 		/* sal_op_get_remote_contact preserves header params */
 		return d->op->getRemoteContact();
 	}
-	return string();
+	return d->emptyString;
 }
 
 const Address *CallSession::getRemoteContactAddress () const {
@@ -1440,18 +1433,18 @@ shared_ptr<CallSession> CallSession::getTransferTarget () const {
 	return d->transferTarget;
 }
 
-string CallSession::getToHeader (const string &name) const {
+const char *CallSession::getToHeader (const string &name) const {
 	L_D();
-	return L_C_TO_STRING(sal_custom_header_find(d->op->getRecvCustomHeaders(), name.c_str()));
+	return sal_custom_header_find(d->op->getRecvCustomHeaders(), name.c_str());
 }
 
 // -----------------------------------------------------------------------------
 
-string CallSession::getRemoteUserAgent () const {
+const string &CallSession::getRemoteUserAgent () const {
 	L_D();
 	if (d->op)
 		return d->op->getRemoteUserAgent();
-	return string();
+	return d->emptyString;
 }
 
 shared_ptr<CallSession> CallSession::getReplacedCallSession () const {

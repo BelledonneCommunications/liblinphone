@@ -272,6 +272,11 @@ LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(Sal
 
 LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
 
+LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
+LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
+
 #endif
 
 #ifdef __cplusplus

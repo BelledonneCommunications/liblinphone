@@ -121,8 +121,13 @@ void linphone_call_params_set_used_video_codec(LinphoneCallParams *params, OrtpP
 void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
 bool_t linphone_call_params_get_no_user_consent(const LinphoneCallParams *params);
 
+
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
+LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
+LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
