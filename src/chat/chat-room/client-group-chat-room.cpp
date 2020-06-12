@@ -662,8 +662,6 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	focus->clearDevices();
 	focus->addDevice(addr);
 
-printf("Entered %s - conf address %s\n", __func__, addr.asString().c_str());
-printf("Entered %s - local address %s\n", __func__, conferenceId.getLocalAddress().asString().c_str());
 	conferenceId = ConferenceId(addr, conferenceId.getLocalAddress());
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	d->setState(ChatRoom::State::Created);

@@ -242,6 +242,7 @@ public:
 	virtual AudioStream *getAudioStream() override;
 
 	void subscribeReceived (LinphoneEvent *event);
+	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
 private:
 	void addLocalEndpoint();
