@@ -177,8 +177,6 @@ public:
 		m_userData = userData;
 	}
 
-	virtual const ConferenceAddress getConferenceAddress () const override;
-
 	virtual const std::string &getSubject () const override;
 
 	virtual void setSubject (const std::string &subject) override;
@@ -245,12 +243,16 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
+	void subscribeReceived (LinphoneEvent *event);
+
 private:
 	void addLocalEndpoint();
 	int remoteParticipantsCount();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
+
+	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
 };
 
 /*
@@ -260,7 +262,7 @@ class RemoteConference:
 	public Conference,
 	public ConferenceListenerInterface {
 public:
-	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
