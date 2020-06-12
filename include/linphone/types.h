@@ -258,11 +258,6 @@ typedef enum _LinphoneAVPFMode {
 typedef struct _LinphoneBuffer LinphoneBuffer;
 
 /**
- * Structure representing a call.
- * @ingroup call
-**/
-typedef struct _LinphoneCall LinphoneCall;
-/**
  * Enum representing the direction of a call.
  * @ingroup call_logs
 **/
