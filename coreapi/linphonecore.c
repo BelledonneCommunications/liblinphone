@@ -2446,6 +2446,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 }
 
 static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const LinphoneContent *body) {
+printf("Entered %s\n", __func__);
 #ifdef HAVE_ADVANCED_IM
 	if (body && linphone_event_get_custom_header(lev, "Content-Disposition") && strcasecmp(linphone_event_get_custom_header(lev, "Content-Disposition"), "recipient-list") == 0) {
 		// List subscription
@@ -2454,12 +2455,34 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
+	const LinphoneAddress *from = linphone_event_get_from(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
+	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+	));
+	shared_ptr<MediaConference::Conference> audioVideoConference2 = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+	));
+	shared_ptr<MediaConference::Conference> audioVideoConference3 = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+	));
+
+printf("Entered %s - resource address %s\n", __func__, ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)).asString().c_str());
+printf("Entered %s - from address %s\n", __func__, ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from)).asString().c_str());
+
+printf("Entered %s chatroom %p conf %p\n", __func__, chatRoom.get(), audioVideoConference.get());
+printf("Entered %s chatroom %p conf2 %p\n", __func__, chatRoom.get(), audioVideoConference2.get());
+printf("Entered %s chatroom %p conf3 %p\n", __func__, chatRoom.get(), audioVideoConference3.get());
 	if (chatRoom)
 		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
+	else if (audioVideoConference)
+		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 #else
@@ -2468,6 +2491,7 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 }
 
 static void linphone_core_internal_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body) {
+printf("Entered %s - event name %s\n", __func__, linphone_event_get_name(lev));
 	if (strcmp(linphone_event_get_name(lev), "conference") == 0) {
 		_linphone_core_conference_subscribe_received(lc, lev, body);
 	}
