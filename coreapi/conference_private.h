@@ -157,8 +157,7 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const = 0;
 	virtual AudioStream *getAudioStream() = 0; /* Used by the tone manager, revisit.*/
 
-	virtual int getSize() const {return (int)m_participants.size() + (isIn()?1:0);}
-	virtual const std::list<std::shared_ptr<LinphonePrivate::Participant>> &getParticipants() const override {return m_participants;}
+	virtual int getSize() const {return getParticipantCount() + (isIn()?1:0);}
 
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
@@ -200,7 +199,6 @@ protected:
 
 protected:
 	std::string m_conferenceID;
-	std::list<std::shared_ptr<LinphonePrivate::Participant>> m_participants;
 
 	// Temporary member to store participant,call pairs
 	// TODO: Remove once conference merge is finished
