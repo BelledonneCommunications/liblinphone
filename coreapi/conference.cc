@@ -75,8 +75,6 @@ Conference::Conference(
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
 
-printf("Entered %s - remote call address %s\n", __func__, call->getRemoteAddress().asString().c_str());
-	// TODO: Uncomment
 	p->createSession(*this, nullptr, true, nullptr);
 	participants.push_back(p);
 //	Conference::addParticipant(call);
@@ -103,6 +101,7 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 }
 
 int Conference::terminate () {
+	getCore()->deleteAudioVideoConference(getSharedFromThis());
 	participants.clear();
 	m_callTable.clear();
 	return 0;
@@ -195,8 +194,6 @@ LocalConference::LocalConference (
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	setConferenceAddress(myAddress);
-
-printf("Entered %s - conf address %s\n", __func__, getConferenceAddress().asString().c_str());
 
 	setConferenceId(ConferenceId(myAddress, myAddress));
 
@@ -391,6 +388,10 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	return removeParticipant(call);
 }
 
+void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
+	eventHandler->subscriptionStateChanged(event, state);
+}
+
 int LocalConference::terminate () {
 	leave();
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
@@ -512,8 +513,6 @@ RemoteConference::RemoteConference (
 
 	setConferenceAddress(myAddress);
 	setConferenceId(conferenceId);
-
-printf("Entered %s - address %s\n", __func__, getConferenceAddress().asString().c_str());
 
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
