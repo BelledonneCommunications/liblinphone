@@ -140,10 +140,6 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const
 	return nullptr;
 }
 
-const ConferenceAddress Conference::getConferenceAddress () const {
-	return *(new ConferenceAddress());
-}
-
 const std::string &Conference::getSubject () const {
 	return *(new std::string(""));
 }
@@ -195,13 +191,29 @@ LocalConference::LocalConference (
 	m_state = LinphoneConferenceRunning;
 	mMixerSession.reset(new MixerSession(*core.get()));
 
-	addListener(std::make_shared<LocalConferenceEventHandler>(this));
+	setConferenceAddress(myAddress);
+
+printf("Entered %s - conf address %s\n", __func__, getConferenceAddress().asString().c_str());
+
+	setConferenceId(ConferenceId(myAddress, myAddress));
+
+	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
+	addListener(eventHandler);
 
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
+
+	getCore()->insertAudioVideoConference(getSharedFromThis());
 }
 
 LocalConference::~LocalConference() {
+	terminate();
+	eventHandler.reset();
+}
+
+void LocalConference::subscribeReceived (LinphoneEvent *event) {
+	shared_ptr<Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findAudioVideoConference(conferenceId);
+	eventHandler->subscribeReceived(event, false);
 }
 
 void LocalConference::addLocalEndpoint () {
@@ -480,6 +492,7 @@ AudioStream *LocalConference::getAudioStream(){
 RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
+	const ConferenceId &conferenceId,
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
@@ -494,6 +507,11 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
+	setConferenceAddress(myAddress);
+	setConferenceId(conferenceId);
+
+printf("Entered %s - address %s\n", __func__, getConferenceAddress().asString().c_str());
+
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
 
@@ -503,10 +521,13 @@ RemoteConference::RemoteConference (
 
 	getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 
+	getCore()->insertAudioVideoConference(getSharedFromThis());
+
 }
 
 RemoteConference::~RemoteConference () {
 	terminate();
+	eventHandler.reset();
 	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
 	linphone_core_cbs_unref(m_coreCbs);
 }
@@ -798,11 +819,11 @@ LinphoneConference *linphone_local_conference_new_with_params (LinphoneCore *cor
 }
 
 LinphoneConference *linphone_remote_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
-	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create(core)))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::create(core)))->toC();
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
-	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
+	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
 }
 
 LinphoneConference *linphone_conference_ref (LinphoneConference *conf) {
