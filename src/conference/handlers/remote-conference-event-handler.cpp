@@ -264,11 +264,8 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceEventHandler::subscribe () {
-printf("Entering %s\n", __func__);
 	if (lev || !subscriptionWanted)
 		return; // Already subscribed or application did not request subscription
-
-printf("Entering %s already subscribed\n", __func__);
 
 	const string &peerAddress = getConferenceId().getPeerAddress().asString();
 	const string &localAddress = getConferenceId().getLocalAddress().asString();
@@ -282,10 +279,6 @@ printf("Entering %s already subscribed\n", __func__);
 		linphone_address_unref(peerAddr);
 		return;
 	}
-
-printf("Entering %s not cfg or not reg Ok\n", __func__);
-
-printf("Entering %s - local address (from) %s peer address %s\n", __func__, localAddress.c_str(), peerAddress.c_str());
 
 	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
 	lev->op->setFrom(localAddress);
