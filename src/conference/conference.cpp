@@ -159,13 +159,10 @@ void Conference::setSubject (const string &subject) {
 
 shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr) const {
 
-printf("Entered %s - address %s\n", __func__, addr.asString().c_str());
-
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
 	for (const auto &participant : participants) {
 		if (participant->getAddress() == searchedAddr) {
-printf("Entered %s - participant address %s searched address %s\n", __func__, participant->getAddress().asString().c_str(), searchedAddr.asString().c_str());
 			return participant;
 		}
 	}
