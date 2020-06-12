@@ -407,6 +407,7 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 // -----------------------------------------------------------------------------
 
 void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool oneToOne) {
+printf("Entering %s\n", __func__);
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
 	unsigned int lastNotify = conf->getLastNotify();
