@@ -168,6 +168,8 @@ public:
 
 	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = false) const;
 
+	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
+
 	// ---------------------------------------------------------------------------
 	// Paths.
 	// ---------------------------------------------------------------------------
