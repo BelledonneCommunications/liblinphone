@@ -3132,7 +3132,7 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 				hasFileTransferContent = true;
 				content = new FileTransferContent();
 			} else {
-				// 1.1 - Fetch contents' file informations if they exists
+				// 1.1 - Fetch contents' file informations if they exist
 				string name;
 				int size;
 				string path;
