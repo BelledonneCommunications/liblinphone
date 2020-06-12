@@ -656,18 +656,15 @@ public:
 		}
 		return status;
 	}
-	bool addParticipant (std::shared_ptr<Call> call) override {
+	//bool addParticipant (std::shared_ptr<Call> call) override {
+	bool addParticipant (std::shared_ptr<Call> call, const shared_ptr<Core> &p_core) {
 		bool status = MediaConference::LocalConference::addParticipant(call);
 		if (status) {
 			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
-			//ConferenceId remoteConferenceId = ConferenceId(getConferenceAddress(), call->getRemoteAddress());
-			ConferenceId remoteConferenceId = ConferenceId(call->getRemoteAddress(), getConferenceAddress());
-			//const shared_ptr<Core> &remoteConferenceCore = findParticipant(call->getRemoteAddress())->getCore();
-			const shared_ptr<Core> &remoteConferenceCore = getCore();
+			ConferenceId remoteConferenceId = ConferenceId(getConferenceAddress(), call->getRemoteAddress());
+			const shared_ptr<Core> &remoteConferenceCore = p_core;
 			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(remoteConferenceCore, getConferenceAddress(), remoteConferenceId, nullptr, ConferenceParams::create(remoteConferenceCore->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 
-printf("Entered %s - remote address %s\n", __func__, call->getRemoteAddress().asString().c_str());
-printf("Entered %s - local address %s\n", __func__, call->getLocalAddress().asString().c_str());
 			remoteConf->eventHandler->subscribe(remoteConferenceId);
 			std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 			remoteConf->addListener(confListener);
@@ -1105,7 +1102,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
 
-	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
+	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall), participant_mgr->lc->cppPtr);
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
@@ -1149,9 +1146,9 @@ void send_added_notify_through_call() {
 	localConf->terminate();
 	localConf = nullptr;
 
+	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(pauline);
 }
 
 void send_removed_notify() {
