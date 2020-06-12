@@ -3131,24 +3131,25 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			if (contentType == ContentType::FileTransfer) {
 				hasFileTransferContent = true;
 				content = new FileTransferContent();
-			} else if (contentType.isFile()) {
-				// 1.1 - Fetch contents' file informations.
+			} else {
+				// 1.1 - Fetch contents' file informations if they exists
 				string name;
 				int size;
 				string path;
+				soci::indicator haveData;
 
 				*session << "SELECT name, size, path FROM chat_message_file_content"
 					" WHERE chat_message_content_id = :contentId",
-					soci::into(name), soci::into(size), soci::into(path), soci::use(contentId);
-
-				FileContent *fileContent = new FileContent();
-				fileContent->setFileName(name);
-				fileContent->setFileSize(size_t(size));
-				fileContent->setFilePath(path);
-
-				content = fileContent;
-			} else
-				content = new Content();
+					soci::into(name, haveData), soci::into(size), soci::into(path), soci::use(contentId);
+				if( haveData == soci::i_ok) {
+					FileContent *fileContent = new FileContent();
+					fileContent->setFileName(name);
+					fileContent->setFileSize(size_t(size));
+					fileContent->setFilePath(path);
+					content = fileContent;
+				}else
+					content = new Content();
+			}
 
 			content->setContentType(contentType);
 			content->setBody(row.get<string>(3));
