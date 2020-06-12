@@ -35,6 +35,8 @@
 
 // =============================================================================
 
+class LocalAudioVideoConferenceTester;
+
 namespace LinphoneTest {
 	class LocalConferenceTester;
 }
@@ -68,6 +70,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ServerGroupChatRoomPrivate;
 
 	friend class LinphoneTest::LocalConferenceTester;
+	friend class ::LocalAudioVideoConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address);
 	Participant ();
