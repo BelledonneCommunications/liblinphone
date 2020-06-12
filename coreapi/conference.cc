@@ -367,7 +367,9 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		err = linphone_call_update(L_GET_C_BACK_PTR(remaining_call), params);
 		linphone_call_params_unref(params);
 		/* invoke removeParticipant() recursively to remove this last participant. */
-		return removeParticipant(remaining_call);
+		bool success = removeParticipant(remaining_call);
+		Conference::terminate();
+		return success;
 	}
 	
 	if (getSize() == 0) setState(LinphoneConferenceStopped);
@@ -605,6 +607,7 @@ int RemoteConference::terminate () {
 		case LinphoneConferenceRunning:
 		case LinphoneConferenceStarting:
 			m_focusCall->terminate();
+			getCore()->deleteAudioVideoConference(getSharedFromThis());
 			break;
 		default:
 			break;
