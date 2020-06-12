@@ -25,6 +25,7 @@
 
 #include "object/object.h"
 
+#include "conference_private.h"
 #include "linphone/types.h"
 #include "call/audio-device/audio-device.h"
 
@@ -53,6 +54,7 @@ class PushNotificationMessage;
 
 namespace MediaConference {
 	class RemoteConference;
+	class Conference;
 }
 
 class LINPHONE_PUBLIC Core : public Object {
@@ -158,6 +160,14 @@ public:
 	static void deleteChatRoom (const std::shared_ptr<const AbstractChatRoom> &chatRoom);
 
 	// ---------------------------------------------------------------------------
+	// Audio Video Conference.
+	// ---------------------------------------------------------------------------
+
+	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
+
+	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = false) const;
+
+	// ---------------------------------------------------------------------------
 	// Paths.
 	// ---------------------------------------------------------------------------
 
@@ -242,6 +252,8 @@ public:
 	void destroyTimer(belle_sip_source_t *timer);
 private:
 	Core ();
+
+	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);
