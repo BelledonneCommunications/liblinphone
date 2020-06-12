@@ -660,8 +660,13 @@ public:
 		bool status = MediaConference::LocalConference::addParticipant(call);
 		if (status) {
 			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
-			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), call->getLocalAddress(), nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
-			remoteConf->eventHandler->subscribe(ConferenceId(call->getRemoteAddress(), call->getLocalAddress()));
+			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getConferenceAddress(), ConferenceId(getConferenceAddress(), call->getRemoteAddress()), nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+
+printf("Entered %s - remote address %s\n", __func__, call->getRemoteAddress().asString().c_str());
+printf("Entered %s - local address %s\n", __func__, call->getLocalAddress().asString().c_str());
+			//remoteConf->eventHandler->subscribe(ConferenceId(call->getLocalAddress(), call->getRemoteAddress()));
+			remoteConf->eventHandler->subscribe(ConferenceId(call->getRemoteAddress(), remoteConf->getConferenceAddress()));
+			//remoteConf->eventHandler->subscribe(ConferenceId(getConferenceAddress(), call->getRemoteAddress()));
 			std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 			remoteConf->addListener(confListener);
 			participantRemoteConfTable.insert({ call->getRemoteAddress().asString(), remoteConf });
