@@ -660,13 +660,15 @@ public:
 		bool status = MediaConference::LocalConference::addParticipant(call);
 		if (status) {
 			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
-			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getConferenceAddress(), ConferenceId(getConferenceAddress(), call->getRemoteAddress()), nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+			//ConferenceId remoteConferenceId = ConferenceId(getConferenceAddress(), call->getRemoteAddress());
+			ConferenceId remoteConferenceId = ConferenceId(call->getRemoteAddress(), getConferenceAddress());
+			//const shared_ptr<Core> &remoteConferenceCore = findParticipant(call->getRemoteAddress())->getCore();
+			const shared_ptr<Core> &remoteConferenceCore = getCore();
+			shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(remoteConferenceCore, getConferenceAddress(), remoteConferenceId, nullptr, ConferenceParams::create(remoteConferenceCore->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 
 printf("Entered %s - remote address %s\n", __func__, call->getRemoteAddress().asString().c_str());
 printf("Entered %s - local address %s\n", __func__, call->getLocalAddress().asString().c_str());
-			//remoteConf->eventHandler->subscribe(ConferenceId(call->getLocalAddress(), call->getRemoteAddress()));
-			remoteConf->eventHandler->subscribe(ConferenceId(call->getRemoteAddress(), remoteConf->getConferenceAddress()));
-			//remoteConf->eventHandler->subscribe(ConferenceId(getConferenceAddress(), call->getRemoteAddress()));
+			remoteConf->eventHandler->subscribe(remoteConferenceId);
 			std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 			remoteConf->addListener(confListener);
 			participantRemoteConfTable.insert({ call->getRemoteAddress().asString(), remoteConf });
