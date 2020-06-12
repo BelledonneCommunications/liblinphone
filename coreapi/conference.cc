@@ -72,10 +72,11 @@ Conference::Conference(
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
+
+printf("Entered %s - remote call address %s\n", __func__, call->getRemoteAddress().asString().c_str());
 	// TODO: Uncomment
-	//p->createSession(*this, nullptr, hasMedia, listener);
 	p->createSession(*this, nullptr, true, nullptr);
-	m_participants.push_back(p);
+	participants.push_back(p);
 //	Conference::addParticipant(call);
 	m_callTable[p] = call;
 	return 0;
@@ -85,7 +86,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	if (!p)
 		return -1;
-	m_participants.remove(p);
+	participants.remove(p);
 	m_callTable.erase(p);
 	return 0;
 }
@@ -94,13 +95,13 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	if (!p)
 		return -1;
-	m_participants.remove(p);
+	participants.remove(p);
 	m_callTable.erase(p);
 	return 0;
 }
 
 int Conference::terminate () {
-	m_participants.clear();
+	participants.clear();
 	m_callTable.clear();
 	return 0;
 }
@@ -132,7 +133,7 @@ void Conference::setState (LinphoneConferenceState state) {
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
-	for (auto it = m_participants.begin(); it != m_participants.end(); it++) {
+	for (auto it = participants.begin(); it != participants.end(); it++) {
 		auto pCall = m_callTable.find(*it)->second;
 		if (pCall == call)
 			return *it;
@@ -331,7 +332,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 }
 
 int LocalConference::remoteParticipantsCount () {
-	return (int)m_participants.size();
+	return (int)participants.size();
 }
 
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -359,7 +360,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	if (remoteParticipantsCount() == 1 && isIn()){
 		/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 		 * but it should contains all participants ideally.*/
-		std::shared_ptr<LinphonePrivate::Call> remaining_call = m_callTable[(*m_participants.begin())];
+		std::shared_ptr<LinphonePrivate::Call> remaining_call = m_callTable[(*participants.begin())];
 		lInfo() << "Call [" << remaining_call << "] with " << remaining_call->getRemoteAddress().asString() << 
 			" is our last call in our conference, we will reconnect directly to it.";
 		LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), L_GET_C_BACK_PTR(remaining_call));
@@ -426,7 +427,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 	bool previousVideoEnablement = confParams->videoEnabled();
 	if (newConfParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::update(): checking participants...";
-		for (auto participant : m_participants){
+		for (auto participant : participants){
 			LinphoneCall *call = L_GET_C_BACK_PTR(m_callTable[participant]);
 			if (call){
 				const LinphoneCallParams *current_params = linphone_call_get_current_params(call);
@@ -732,7 +733,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallEnd:
 			m_pendingCalls.remove(call);
 			Conference::removeParticipant(call);
-			if ((m_participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
@@ -749,7 +750,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
 			Conference::removeParticipant(transfered);
-			if ((m_participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
