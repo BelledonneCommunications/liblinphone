@@ -987,21 +987,6 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 }
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
-
-
-printf("Entered %s - searched conf local address %s\n", __func__, conferenceId.getLocalAddress().asString().c_str());
-	if (conferenceId.getPeerAddress() != IdentityAddress()) 
-		printf("Entered %s - searched conf peer address %s\n", __func__, conferenceId.getPeerAddress().asString().c_str());
-
-	for (auto it : audioVideoConferenceById) {
-		auto confID = it.first;
-if (confID.getPeerAddress() != IdentityAddress()) 
-	printf("Entered %s - in DB conf local address %s\n", __func__, confID.getLocalAddress().asString().c_str());
-if (confID.getPeerAddress() != IdentityAddress()) 
-	printf("Entered %s - in DB conf peer address %s\n", __func__, confID.getPeerAddress().asString().c_str());
-	}
-
-
 	auto it = audioVideoConferenceById.find(conferenceId);
 	if (it != audioVideoConferenceById.cend())
 		return it->second;
@@ -1017,13 +1002,19 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
 	auto conf = findAudioVideoConference (conferenceId);
 
-printf("Entered %s - conf local address %s\n", __func__, conferenceId.getLocalAddress().asString().c_str());
-printf("Entered %s - conf peer address %s\n", __func__, conferenceId.getPeerAddress().asString().c_str());
-
 	// Conference does not exist or yes but with the same pointer!
 	L_ASSERT(conf == nullptr || conf == audioVideoConference);
 	if (conf == nullptr) {
 		audioVideoConferenceById[conferenceId] = audioVideoConference;
+	}
+}
+
+void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
+	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+
+	auto it = audioVideoConferenceById.find(conferenceId);
+	if (it != audioVideoConferenceById.cend()) {
+		audioVideoConferenceById.erase(it);
 	}
 }
 
