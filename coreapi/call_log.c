@@ -550,12 +550,12 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (lc && lc->logs_db){
 		char *buf;
 
-		LinphonePrivate::IdentityAddress fromIdentity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->from));
-		LinphonePrivate::IdentityAddress toIdentity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->to));
+		LinphonePrivate::IdentityAddress from_identity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->from));
+		LinphonePrivate::IdentityAddress to_identity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->to));
 
 		buf = sqlite3_mprintf("INSERT INTO call_history VALUES(NULL,%Q,%Q,%i,%i,%lld,%lld,%i,%i,%f,%Q,%Q);",
-						fromIdentity.asString().c_str(),
-						toIdentity.asString().c_str(),
+						from_identity.asString().c_str(),
+						to_identity.asString().c_str(),
 						log->dir,
 						log->duration,
 						(int64_t)log->start_date_time,
