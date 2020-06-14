@@ -35,7 +35,7 @@
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
-
+#include "../src/address/identity-address.h"
 typedef struct _CallLogStorageResult {
 	LinphoneCore *core;
 	bctbx_list_t *result;
@@ -548,14 +548,14 @@ static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
 
 void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (lc && lc->logs_db){
-		char *from, *to;
 		char *buf;
 
-		from = linphone_address_as_string(log->from);
-		to = linphone_address_as_string(log->to);
+		LinphonePrivate::IdentityAddress fromIdentity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->from));
+		LinphonePrivate::IdentityAddress toIdentity(*L_GET_CPP_PTR_FROM_C_OBJECT(log->to));
+
 		buf = sqlite3_mprintf("INSERT INTO call_history VALUES(NULL,%Q,%Q,%i,%i,%lld,%lld,%i,%i,%f,%Q,%Q);",
-						from,
-						to,
+						fromIdentity.asString().c_str(),
+						toIdentity.asString().c_str(),
 						log->dir,
 						log->duration,
 						(int64_t)log->start_date_time,
@@ -568,8 +568,6 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 					);
 		linphone_sql_request_generic(lc->logs_db, buf);
 		sqlite3_free(buf);
-		ms_free(from);
-		ms_free(to);
 
 		log->storage_id = (unsigned int)sqlite3_last_insert_rowid(lc->logs_db);
 	}
