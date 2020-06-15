@@ -251,7 +251,9 @@ private:
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
 
+#ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
+#endif // HAVE_ADVANCED_IM
 };
 
 /*
@@ -290,7 +292,9 @@ public:
 	virtual VideoControlInterface * getVideoControlInterface() const override;
 	virtual AudioStream *getAudioStream() override;
 
+#ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
+#endif // HAVE_ADVANCED_IM
 private:
 	bool focusIsReady() const;
 	bool transferToFocus(std::shared_ptr<LinphonePrivate::Call> call);
