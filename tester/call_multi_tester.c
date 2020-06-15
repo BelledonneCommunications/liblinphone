@@ -484,7 +484,84 @@ static void simple_conference_from_scratch(void){
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_from_scratch_no_answer(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneConference *conf;
+	LinphoneConferenceParams *conf_params;
+	LinphoneCall *pauline_call, *laure_call;
+	bctbx_list_t *participants = NULL;
+	bctbx_list_t *lcs = NULL;
 
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+
+	/*marie creates the conference*/
+	conf_params = linphone_core_create_conference_params(marie->lc);
+	linphone_conference_params_enable_video(conf_params, FALSE);
+	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
+
+	participants = bctbx_list_append(participants, pauline->identity);
+	participants = bctbx_list_append(participants, laure->identity);
+
+	linphone_conference_invite_participants(conf, participants, NULL);
+	linphone_conference_unref(conf);
+	
+	lcs = bctbx_list_remove(lcs, laure->lc);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,1,2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if (pauline_call){
+		pauline_call = linphone_core_get_current_call(pauline->lc);
+		/* Pauline immediately declines the call.*/
+		linphone_call_decline(pauline_call, LinphoneReasonDeclined);
+	}
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
+	
+	wait_for_list(lcs,NULL,0,1000);
+
+	lcs = bctbx_list_append(lcs, laure->lc);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	laure_call = linphone_core_get_current_call(laure->lc);
+	BC_ASSERT_PTR_NOT_NULL(laure_call);
+
+	if ( laure_call){
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingRinging,2,2000));
+		
+		
+		wait_for_list(lcs,NULL,0,1000);
+		
+		/* Laure accepts. */
+		linphone_call_accept(laure_call);
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
+		
+		wait_for_list(lcs,NULL,0,1000);
+		
+		/* the conference no longer exists, as there was finally only one participant.
+		 * Terminate the call, simply.*/
+		linphone_call_terminate(laure_call);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,2,5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,2,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,1000));
+	}
+	
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+
+	bctbx_list_free(participants);
+	bctbx_list_free(lcs);
+}
 
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
@@ -986,7 +1063,6 @@ static void eject_from_4_participants_conference(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
 	LinphoneCoreManager* michelle = linphone_core_manager_new( "michelle_rc_udp");
-	int timeout_ms = 5000;
 	stats initial_laure_stat;
 	stats initial_michelle_stat;
 
@@ -1024,10 +1100,12 @@ static void eject_from_4_participants_conference(void) {
 	linphone_core_add_to_conference(marie->lc,marie_call_michelle);
 	linphone_core_add_to_conference(marie->lc,marie_call_pauline);
 
-	while (linphone_core_get_conference_size(marie->lc)!=4&&timeout_ms) {
-		wait_for_list(lcs, NULL, 0, 100);
-		timeout_ms -= 100;
-	}
+	/* Wait that the three participants are joined to the local conference, by checking the StreamsRunning states*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
+	
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
 
@@ -1265,6 +1343,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
+	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
 	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference),
