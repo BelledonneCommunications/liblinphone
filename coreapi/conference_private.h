@@ -81,7 +81,7 @@ LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *
  */
 void linphone_conference_set_state_changed_callback(LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data);
 
-int linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
+int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_terminate(LinphoneConference *obj);
 int linphone_conference_get_size(const LinphoneConference *obj);
@@ -132,7 +132,7 @@ class RemoteConference;
  * Base class for audio/video conference.
  */
 
-class Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference() {}
@@ -212,7 +212,7 @@ protected:
 /*
  * Class for an audio/video conference running locally.
  */
-class LocalConference: public Conference {
+class LINPHONE_PUBLIC LocalConference: public Conference {
 public:
 	LocalConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 
@@ -257,7 +257,7 @@ private:
 /*
  * Class for an audio/video conference that is running on a remote server.
  */
-class RemoteConference:
+class LINPHONE_PUBLIC RemoteConference:
 	public Conference,
 	public ConferenceListenerInterface {
 public:
