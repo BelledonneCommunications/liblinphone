@@ -148,7 +148,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
  * @param obj The conference.
  * @param call a #LinphoneCall that has to be added to the conference.
  */
-LINPHONE_PUBLIC int linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
 
 
 /**
