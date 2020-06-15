@@ -1086,6 +1086,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
+	int init_subscription_count = *((int *)(conf_mgr->user_info));
 
 	LinphoneCall * participantCall = linphone_core_invite_address(conf_mgr->lc, participant_mgr->identity);
 	BC_ASSERT_PTR_NOT_NULL(participantCall);
@@ -1108,6 +1109,16 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
 
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_participant_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(initial_conf_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),1000));
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(initial_conf_stats.number_of_LinphoneSubscriptionActive + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionActive,(initial_participant_stats.number_of_LinphoneSubscriptionActive + 1),5000));
+
+	int* subscription_count = ((int *)(conf_mgr->user_info));
+	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,(init_subscription_count + 1),5000));
+
 	BC_ASSERT_EQUAL(confListener->participants.size(), (participantSize + 1), int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), (participantDeviceSize + 1), int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
@@ -1119,10 +1130,43 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 
 }
 
+void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+	int *subscription_received = (int*)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
+	*subscription_received += 1;
+}
+
+LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	linphone_core_cbs_set_new_subscription_requested(cbs, new_subscription_requested);
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
+	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
+	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received);
+	_linphone_core_add_callbacks(mgr->lc, cbs, TRUE);
+
+	belle_sip_object_unref(cbs);
+
+	int* subscription_received = (int *)ms_new0(int, 1);
+	*subscription_received = 0;
+	mgr->user_info = subscription_received;
+
+	return mgr;
+}
+
+void custom_mgr_destroy(LinphoneCoreManager *mgr) {
+	if (mgr->user_info) {
+		delete static_cast<int*>(mgr->user_info);
+	}
+
+	linphone_core_manager_destroy(mgr);
+}
+
 void send_added_notify_through_call() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager *marie = create_mgr_and_detect_subscribe("marie_rc");
+	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
 
 	bctbx_list_t *lcs = NULL;
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -1146,9 +1190,9 @@ void send_added_notify_through_call() {
 	localConf->terminate();
 	localConf = nullptr;
 
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(laure);
+	custom_mgr_destroy(pauline);
+	custom_mgr_destroy(marie);
+	custom_mgr_destroy(laure);
 }
 
 void send_removed_notify() {
