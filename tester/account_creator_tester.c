@@ -252,7 +252,7 @@ static void local_email_ok(void) {
 
 ////// PHONE NUMBER //////
 
-static void local_phone_number_too_short(void) {
+/*static void local_phone_number_too_short(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
@@ -264,7 +264,7 @@ static void local_phone_number_too_short(void) {
 
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
-}
+}*/
 
 static void local_phone_number_too_long(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
@@ -2404,10 +2404,10 @@ test_t account_creator_tests[] = {
 		"Local - Email Ok",
 		local_email_ok,
 		"Local"),
-	TEST_ONE_TAG(
+	/*TEST_ONE_TAG(
 		"Local - Phone number too short",
 		local_phone_number_too_short,
-		"Local"),
+		"Local"),*/
 	TEST_ONE_TAG(
 		"Local - Phone number too long",
 		local_phone_number_too_long,
