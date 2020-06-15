@@ -211,7 +211,7 @@ private:
 	void removeLocalEndpoint();
 	int removeFromConference(LinphoneCall *call, bool_t active);
 	int convertConferenceToCall();
-	void participantLeaving(LinphoneCall *call);
+	void participantUnplugged(LinphoneCall *call);
 	static RtpProfile *sMakeDummyProfile(int samplerate);
 
 	MSAudioConference *m_conf;
@@ -500,6 +500,8 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 			return -1;
 		break;
 	}
+	setState(LinphoneConferenceRunning);
+	Conference::addParticipant(call);
 	if (call == linphone_core_get_current_call(m_core))
 		L_GET_PRIVATE_FROM_C_OBJECT(m_core)->setCurrentCall(nullptr);
 	const_cast<LinphonePrivate::MediaSessionParams *>(
@@ -509,6 +511,16 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 }
 
 int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
+	/* Special handling for already terminated calls.*/
+	switch(linphone_call_get_state(call)){
+		case LinphoneCallEnd:
+		case LinphoneCallError:
+			Conference::removeParticipant(call);
+			return 0;
+		break;
+		default:
+		break;
+	}
 	if (!linphone_call_params_get_in_conference(linphone_call_get_current_params(call))) {
 		if (linphone_call_params_get_in_conference(linphone_call_get_params(call))) {
 			ms_warning("Not (yet) in conference, be patient");
@@ -518,6 +530,7 @@ int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
 			return -1;
 		}
 	}
+	Conference::removeParticipant(call);
 	const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 		L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(false);
 
@@ -557,7 +570,7 @@ int LocalConference::convertConferenceToCall () {
 		ms_error("No unique call remaining in conference");
 		return -1;
 	}
-
+	lInfo() << "in LocalConference::convertConferenceToCall ()";
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(m_core)->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
 		shared_ptr<LinphonePrivate::Call> call(*it);
@@ -579,7 +592,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		return err;
 	}
 
-	if (remoteParticipantsCount() == 1 && m_currentParams->localParticipantEnabled()) {
+	if (remoteParticipantsCount() == 1 && m_currentParams->localParticipantEnabled() && !m_terminating) {
 		ms_message("Conference size is 1: need to be converted to plain call");
 		err = convertConferenceToCall();
 	} else
@@ -640,9 +653,7 @@ int LocalConference::leave () {
 }
 
 int LocalConference::getSize () const {
-	if (!m_conf)
-		return 0;
-	return ms_audio_conference_get_size(m_conf) - (m_recordEndpoint ? 1 : 0);
+	return Conference::getSize();
 }
 
 int LocalConference::startRecording (const char *path) {
@@ -683,21 +694,19 @@ void LocalConference::onCallStreamStarting (LinphoneCall *call, bool isPausedByR
 	ms_audio_conference_add_member(m_conf, ep);
 	ms_audio_conference_mute_member(m_conf, ep, isPausedByRemote);
 	_linphone_call_set_endpoint(call, ep);
-	setState(LinphoneConferenceRunning);
-	Conference::addParticipant(call);
 }
 
 void LocalConference::onCallStreamStopping (LinphoneCall *call) {
 	ms_audio_conference_remove_member(m_conf, _linphone_call_get_endpoint(call));
 	ms_audio_endpoint_release_from_stream(_linphone_call_get_endpoint(call));
 	_linphone_call_set_endpoint(call, nullptr);
-	Conference::removeParticipant(call);
 	if (!linphone_call_params_get_in_conference(linphone_call_get_params(call))){
-		participantLeaving(call);
+		participantUnplugged(call);
+		
 	}
 }
 
-void LocalConference::participantLeaving(LinphoneCall *call){
+void LocalConference::participantUnplugged(LinphoneCall *call){
 	int remote_count = remoteParticipantsCount();
 	ms_message("conference_check_uninit(): size=%i", getSize());
 	_linphone_call_set_conf_ref(call, nullptr);
@@ -720,7 +729,8 @@ void LocalConference::participantLeaving(LinphoneCall *call){
 }
 
 void LocalConference::onCallTerminating (LinphoneCall *call) {
-	participantLeaving(call);
+	removeParticipant(call);
+	participantUnplugged(call);
 }
 
 
