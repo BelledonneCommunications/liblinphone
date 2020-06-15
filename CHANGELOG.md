@@ -17,6 +17,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Big internal refactoring of how streams are managed within offer/answer exchanges.
 - ICE now uses all IP addresses detected on the host.
 - Better handling of parameter changes in streams during the session, which avoids unecessary restarts.
+- Do not notify phone number being too short in account manager anymore, our dial plan isn't precise enough to garanty phone number is invalid in this case
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.
