@@ -40,7 +40,9 @@ public:
 
 protected:
 	std::shared_ptr<Participant> focus;
+#ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
+#endif // HAVE_ADVANCED_IM
 
 
 	/* ConferenceListener */

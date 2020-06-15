@@ -52,7 +52,9 @@ RemoteConference::RemoteConference (
 }
 
 RemoteConference::~RemoteConference () {
+#ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
 }
 
 // -----------------------------------------------------------------------------
