@@ -7782,7 +7782,7 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 		linphone_conference_params_unref(params);
 		linphone_conference_unref(conference); /*actually linphone_core_create_conference_with_params() takes a ref for lc->conf_ctx */
 	}
-	if(conference) return linphone_conference_add_participant(lc->conf_ctx, call);
+	if(conference) return linphone_conference_add_participant_with_call(lc->conf_ctx, call);
 	else return -1;
 }
 
