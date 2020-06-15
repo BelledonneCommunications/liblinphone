@@ -38,9 +38,11 @@
 #include "conference/session/mixers.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/media-session.h"
+#ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-conference-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
+#endif // HAVE_ADVANCED_IM
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -195,8 +197,10 @@ LocalConference::LocalConference (
 
 	setConferenceId(ConferenceId(myAddress, myAddress));
 
+#ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
 	addListener(eventHandler);
+#endif // HAVE_ADVANCED_IM
 
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
@@ -206,12 +210,16 @@ LocalConference::LocalConference (
 
 LocalConference::~LocalConference() {
 	terminate();
+#ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
 }
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 	shared_ptr<Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findAudioVideoConference(conferenceId);
+#ifdef HAVE_ADVANCED_IM
 	eventHandler->subscribeReceived(event, false);
+#endif // HAVE_ADVANCED_IM
 }
 
 void LocalConference::addLocalEndpoint () {
@@ -389,7 +397,9 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
+#ifdef HAVE_ADVANCED_IM
 	eventHandler->subscriptionStateChanged(event, state);
+#endif // HAVE_ADVANCED_IM
 }
 
 int LocalConference::terminate () {
@@ -519,9 +529,11 @@ RemoteConference::RemoteConference (
 
 
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
+#ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
 
 	getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
+#endif // HAVE_ADVANCED_IM
 
 	getCore()->insertAudioVideoConference(getSharedFromThis());
 
@@ -529,7 +541,10 @@ RemoteConference::RemoteConference (
 
 RemoteConference::~RemoteConference () {
 	terminate();
+#ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
+
 	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
 	linphone_core_cbs_unref(m_coreCbs);
 }
