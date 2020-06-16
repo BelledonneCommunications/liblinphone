@@ -1104,8 +1104,11 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_participant_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(initial_conf_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),1000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(initial_conf_stats.number_of_LinphoneSubscriptionActive + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionActive,(initial_participant_stats.number_of_LinphoneSubscriptionActive + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(initial_conf_stats.number_of_LinphoneSubscriptionTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionTerminated,(initial_participant_stats.number_of_LinphoneSubscriptionTerminated + 1),5000));
+
+	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,0, int, "%0d");
+	BC_ASSERT_EQUAL(participant_mgr->stat.number_of_LinphoneSubscriptionError,0, int, "%0d");
 
 	int* subscription_count = ((int *)(conf_mgr->user_info));
 	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,(init_subscription_count + 1),5000));
