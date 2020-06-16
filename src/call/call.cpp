@@ -346,17 +346,6 @@ void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &sess
 	L_Q();
 	q->getCore()->getPrivate()->getToneManager()->update(session);
 
-printf("session %p - state %s\n", session.get(), Utils::toString(state).c_str());
-
-if (session->getPrivate()->getOp()) {
-if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
-	printf("session %p - state %s - remote contact address %s\n", session.get(), Utils::toString(state).c_str(), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
-}
-if (session->getPrivate()->getOp()->getContactAddress()) {
-	printf("session %p - state %s - contact address %s\n", session.get(), Utils::toString(state).c_str(), sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()));
-}
-}
-
 	LinphoneCore *lc = q->getCore()->getCCore();
 	switch(state) {
 		case CallSession::State::OutgoingInit:
@@ -379,19 +368,12 @@ if (session->getPrivate()->getOp()->getContactAddress()) {
 				linphone_core_notify_last_call_ended(lc);
 			}
 			break;
-		// Call added to conference without pausing it
-		//case CallSession::State::UpdatedByRemote:
-		// Call added to conference pausing it before executing the action
 		case CallSession::State::StreamsRunning:
 		{
 			Address remoteContactAddress(sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
-printf("session %p - state %s - remote contact address %s\n", session.get(), Utils::toString(state).c_str(), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
-printf("session %p - state %s - contact address %s\n", session.get(), Utils::toString(state).c_str(), sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()));
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
-printf("Inside is focus session %p - state %s\n", session.get(), Utils::toString(state).c_str());
-
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, q->getLocalAddress());
 				// It is expected that the core of the remote conference is the participant one
 				shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
