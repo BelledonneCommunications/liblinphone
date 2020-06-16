@@ -25,6 +25,7 @@
 #include "conference/session/media-session-p.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
+#include "conference/handlers/remote-conference-event-handler.h"
 
 #include "conference_private.h"
 
@@ -366,6 +367,25 @@ void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &sess
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
+			break;
+		case CallSession::State::Connected:
+		case CallSession::State::StreamsRunning:
+		{
+			printf("Addresses to %s local %s remote %s\n", q->getToAddress().asString().c_str(), q->getLocalAddress().asString().c_str(), q->getRemoteAddress().asString().c_str());
+			Address contactAddress(sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()));
+
+			printf("Addresses contact %s (Address %s has focus %0d) remote %s\n", sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()), contactAddress.asString().c_str(), contactAddress.hasParam("isfocus"), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
+
+			if (contactAddress.hasParam("isfocus")) {
+
+				ConferenceId remoteConferenceId = ConferenceId(contactAddress, q->getRemoteAddress());
+				printf("remote conference address %s \n", contactAddress.asString().c_str());
+				shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), contactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+
+				remoteConf->eventHandler->subscribe(remoteConferenceId);
+			}
+			break;
+		}
 		default:
 			break;
 	}
