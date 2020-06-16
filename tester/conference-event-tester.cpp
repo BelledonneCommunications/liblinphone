@@ -1109,7 +1109,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
 
-
+	// Check subscriptions
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_participant_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(initial_conf_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),1000));
 
