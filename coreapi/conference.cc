@@ -308,8 +308,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		return false;
 	}
 
-printf("%s - state %s\n", __func__, Utils::toString(call->getState()).c_str());
-
 	bool starting = (getSize() == 0);
 	bool localEndpointCanBeAdded = false;
 	switch(state){
