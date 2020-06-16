@@ -32,6 +32,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class IdentityAddress;
+class ConferenceAddress;
 
 class LINPHONE_PUBLIC Address : public ClonableObject {
 	// TODO: Remove me later.
@@ -45,6 +46,7 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 public:
 	explicit Address (const std::string &address = "");
 	Address (const IdentityAddress &identityAddress);
+	Address (const ConferenceAddress &conferenceAddress);
 	Address (const Address &other);
 	~Address ();
 
