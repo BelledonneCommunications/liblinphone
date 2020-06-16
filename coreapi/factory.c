@@ -23,6 +23,8 @@
 
 #include "address/address-p.h"
 #include "core/paths/paths.h"
+#include "bctoolbox/vfs_encrypted.hh"
+#include "bctoolbox/sqlite3_vfs.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -573,4 +575,29 @@ const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *contex
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
 	return path.c_str();
+}
+
+void linphone_factory_set_vfs_encryption_master_key(LinphoneFactory *factory, const uint8_t *secret, const size_t secretSize) {
+
+	/* save the key */
+	std::vector<uint8_t> evfsSecret{secret, secret+secretSize};
+
+	if (secretSize>0) { /* TODO: perform more checking keySize vs selected encryption module */
+		// Set the default bctbx vfs to the encrypted one
+		bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
+
+		// Associate the VfsEncryption class callback
+		bctoolbox::VfsEncryption::openCallback_set([evfsSecret](bctoolbox::VfsEncryption &settings) { // encryption key is saved in the closure, captured by value
+			// Check if file is plain
+			if (settings.encryptionSuite_get() == bctoolbox::EncryptionSuite::plain) {
+				bctbx_message("Encrypted VFS: File %s exists and is plain, ignore vfs encryption", settings.filename_get().data());
+				return;
+			}
+			settings.encryptionSuite_set(bctoolbox::EncryptionSuite::dummy); // TODO: select a suite according to args
+			settings.secretMaterial_set(evfsSecret);
+		});
+
+		/* register the encrypt sqlite vfs so it can be accessed if needed */
+		sqlite3_bctbx_vfs_register(0); // sqlite3_bctbx_vfs use the default bctbx_vfs for sqlite operation (if used at file opening)
+	}
 }

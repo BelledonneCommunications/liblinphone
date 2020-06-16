@@ -694,6 +694,15 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
 );
 
 /**
+ * Set the secret material to encrypt the files
+ * @param[in]	factory		the #LinphoneFactory
+ * @param[in]	secret		the secret material used to encrypt the files
+ * @param[in]	secretSize	size of the secret
+ *
+ * TODO: Add an argument to select the encryption module??
+ */
+LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption_master_key(LinphoneFactory *factory, const uint8_t *secret, const size_t secretSize);
+/**
  * @}
  */
 

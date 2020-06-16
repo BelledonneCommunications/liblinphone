@@ -507,6 +507,11 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
 	reset_counters(&mgr->stat);
+
+	// VFS encryption: TODO : make it optional, get the key from an arg
+	uint8_t evfs_key[16] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44};
+	linphone_factory_set_vfs_encryption_master_key(linphone_factory_get(), evfs_key, 16);
+
 	manager_count++;
 }
 
