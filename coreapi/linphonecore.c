@@ -7349,7 +7349,7 @@ LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *lc) {
 }
 
 bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc) {
-	return (bool_t)lp_config_get_int(lc->config, "sip", "media_encryption_mandatory", 0);
+	return (bool_t)!!lp_config_get_int(lc->config, "sip", "media_encryption_mandatory", 0);
 }
 
 void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
