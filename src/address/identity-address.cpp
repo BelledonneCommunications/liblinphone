@@ -212,4 +212,18 @@ std::string ConferenceAddress::asString () const {
 	}
 }
 
+const string &ConferenceAddress::getConfId () const {
+	return mConfId;
+}
+
+void ConferenceAddress::setConfId (const string &confId) {
+	this->mConfId = confId;
+}
+
+bool ConferenceAddress::hasConfId () const {
+	return !mConfId.empty();
+}
+
+
+
 LINPHONE_END_NAMESPACE
