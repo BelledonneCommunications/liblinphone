@@ -104,7 +104,11 @@ public:
 	bool operator< (const ConferenceAddress &other) const;
 
 	virtual std::string asString () const override;
-	
+
+	bool hasConfId () const;
+	const std::string &getConfId () const;
+	void setConfId (const std::string &confId);
+
 private:
 	std::string mConfId;
 };
