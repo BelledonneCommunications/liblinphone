@@ -666,10 +666,8 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	}
 	if (destProxy && destProxy->op) {
 		/* Give a chance to update the contact address if connectivity has changed */
-		// TODO: Focus with confID + isFocus
 		Address contactAddress(sal_address_as_string(destProxy->op->getContactAddress()));
 		contactAddress.setParam("isfocus");
-printf("Contact address %s - casting t address %s\n", sal_address_as_string(destProxy->op->getContactAddress()), contactAddress.asString().c_str());
 		op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	} else
 		op->setContactAddress(nullptr);
@@ -965,6 +963,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	L_D();
 	d->direction = direction;
 	d->destProxy = cfg;
+
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
 	if (!d->destProxy) {
