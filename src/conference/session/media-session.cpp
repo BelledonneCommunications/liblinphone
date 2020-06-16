@@ -2329,15 +2329,17 @@ LinphoneStatus MediaSession::resume () {
 	d->makeLocalMediaDescription(true);
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
 
-	// Add isFocus if resuming
-	Address contactAddress(sal_address_as_string(d->op->getContactAddress()));
-	contactAddress.setParam("isfocus");
-	d->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 		d->op->setLocalMediaDescription(nullptr);
 	string subject = "Call resuming";
-	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference())
+	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
+		// Add isFocus if call is in a conference
+		Address contactAddress(sal_address_as_string(d->op->getContactAddress()));
+		contactAddress.setParam("isfocus");
+		d->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
+	}
+
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;
 
