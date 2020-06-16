@@ -535,7 +535,13 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 			ms_free(key);
 		} else {
 			lError() << "Unable to retrieve or generate DTLS certificate and key - DTLS disabled";
-			/* TODO : check if encryption forced, if yes, stop call */
+			/* Check if encryption forced, if yes, stop call */
+			if (linphone_core_is_media_encryption_mandatory(getCCore())) {
+				LinphoneErrorInfo *ei = linphone_error_info_new();
+				linphone_error_info_set_reason(ei, LinphoneReasonNotAcceptable);
+				getMediaSession().terminate(ei);
+				linphone_error_info_unref(ei);
+			}
 		}
 	}
 }
