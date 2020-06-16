@@ -369,16 +369,14 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::Connected:
 		case CallSession::State::StreamsRunning:
 		{
-			printf("Addresses to %s local %s remote %s\n", q->getToAddress().asString().c_str(), q->getLocalAddress().asString().c_str(), q->getRemoteAddress().asString().c_str());
-			Address contactAddress(sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()));
+			Address remoteContactAddress(sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
 
-			printf("Addresses contact %s (Address %s has focus %0d) remote %s\n", sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()), contactAddress.asString().c_str(), contactAddress.hasParam("isfocus"), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
+			// Check if the request was sent by the focus
+			if (remoteContactAddress.hasParam("isfocus")) {
 
-			if (contactAddress.hasParam("isfocus")) {
-
-				ConferenceId remoteConferenceId = ConferenceId(contactAddress, q->getRemoteAddress());
-				printf("remote conference address %s \n", contactAddress.asString().c_str());
-				shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), contactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, q->getLocalAddress());
+				// It is expected that the core of the remote conference is the participant one
+				shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 
 				remoteConf->eventHandler->subscribe(remoteConferenceId);
 			}
