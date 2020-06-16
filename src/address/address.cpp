@@ -95,6 +95,10 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 	internalAddress = getSalAddressFromCache(uri);
 }
 
+Address::Address (const ConferenceAddress &conferenceAddress) : Address(IdentityAddress(conferenceAddress)) {
+	setUriParam ("conf-id", conferenceAddress.getConfId());
+}
+
 Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
 	SalAddress *salAddress = other.internalAddress;
 	if (salAddress)
