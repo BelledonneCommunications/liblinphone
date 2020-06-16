@@ -1073,7 +1073,7 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
+static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1088,17 +1088,33 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
 
+	if (pause_call) {
+//		linphone_call_pause(linphone_core_get_current_call(participant_mgr->lc));
+
+//		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_conft_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
+//		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPaused,(initial_participant_stats.number_of_LinphoneCallPaused + 1),5000));
+
+		linphone_call_pause(linphone_core_get_current_call(conf_mgr->lc));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(initial_conf_stats.number_of_LinphoneCallPaused + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
+		// Wait a little bit
+		wait_for_list(lcs,NULL,0,5000);
+	}
+
 	const LinphoneAddress *cMarieAddr = linphone_call_get_remote_address(participantCall);
 	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cMarieAddr)->asStringUriOnly();
 
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
 
+printf("STATRT add participant\n");
 	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
+printf("END add participant\n");
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 1 + (pause_call) ? 1 : 0),5000));
 
 	// Check subscriptions
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_participant_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
@@ -1175,11 +1191,11 @@ void send_added_notify_through_call() {
 	localConf->addListener(confListener);
 
 	// Add participants
-	// Marie
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, marie);
+	// Marie - call not paused
+	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, marie, FALSE);
 
-	// Laure
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure);
+	// Laure - call paused
+	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
 	localConf = nullptr;
