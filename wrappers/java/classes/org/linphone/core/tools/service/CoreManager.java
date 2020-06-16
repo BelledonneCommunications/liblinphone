@@ -273,12 +273,10 @@ public class CoreManager {
     private boolean isAndroidXMediaAvailable() {
         boolean available = false;
         try {
-            Class androixMedia = Class.forName("androidx.media.AudioAttributesCompat.Builder");
-            Class[] types = {};
-            Constructor constructor = androixMedia.getConstructor(types);
+            Class androixMedia = Class.forName("androidx.media.AudioAttributesCompat");
             available = true;
         } catch (ClassNotFoundException e) {
-            Log.w("[Core Manager] Couldn't find class androidx.media.AudioAttributesCompat.Builder");
+            Log.w("[Core Manager] Couldn't find class androidx.media.AudioAttributesCompat");
         } catch (Exception e) {
             Log.w("[Core Manager] Exception: " + e);
         }
