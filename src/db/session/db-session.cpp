@@ -19,6 +19,7 @@
 
 #include "linphone/utils/utils.h"
 
+#include "bctoolbox/sqlite3_vfs.h"
 #include "db-session.h"
 #include "logger/logger.h"
 
@@ -44,7 +45,17 @@ DbSession::DbSession () : mPrivate(new DbSessionPrivate) {}
 DbSession::DbSession (const string &uri) : DbSession() {
 	try {
 		L_D();
-		d->backendSession = makeUnique<soci::session>(uri);
+		if (uri.find("sqlite3://") != std::string::npos) { // opening a sqlite3 db, force SOCI to use the bctbx_sqlite3_vfs
+			// uri might be just the filepath, add a db= in front of it in that case
+			std::string uriArgs{uri};
+			if ((uri.find("db=")==std::string::npos) && (uri.find("dbname=")==std::string::npos)) { // db name parameter can be db= or dbname=
+				uriArgs.insert(10, "db="); // insert just after "sqlite3://" position 10
+			}
+			uriArgs.append(" vfs=").append(BCTBX_SQLITE3_VFS);
+			d->backendSession = makeUnique<soci::session>(uriArgs);
+		} else {
+			d->backendSession = makeUnique<soci::session>(uri);
+		}
 		d->backend = !uri.find("mysql") ? DbSessionPrivate::Backend::Mysql : DbSessionPrivate::Backend::Sqlite3;
 	} catch (const exception &e) {
 		lWarning() << "Unable to build db session with uri: " << e.what();
