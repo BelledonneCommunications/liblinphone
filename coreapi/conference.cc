@@ -113,7 +113,7 @@ int Conference::terminate () {
 	ms_free(contactAddressStr);
 	if (contactAddress.hasParam ("conf-id")) {
 		contactAddress.removeUriParam("conf-id");
-		proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
+		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
 	}
 
 	getCore()->deleteAudioVideoConference(getSharedFromThis());
@@ -217,7 +217,7 @@ LocalConference::LocalConference (
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
 	contactAddress.setUriParam("conf-id",confId);
-	proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
+	proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
 	linphone_address_unref(cAddress);
 
 	setConferenceId(ConferenceId(contactAddress, contactAddress));
