@@ -370,7 +370,8 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
-	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), NULL, filepath);
+	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
+	bctbx_free(filepath);
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
@@ -508,10 +509,6 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 
 	reset_counters(&mgr->stat);
 
-	// VFS encryption: TODO : make it optional, get the key from an arg
-	uint8_t evfs_key[16] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44};
-	linphone_factory_set_vfs_encryption_master_key(linphone_factory_get(), evfs_key, 16);
-
 	manager_count++;
 }
 
@@ -629,6 +626,15 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 	}
 }
 
+/* same as new but insert the rc_local in the core manager before the init */
+LinphoneCoreManager* linphone_core_manager_new_localrc(const char* rc_factory, const char* rc_local) {
+	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	manager->rc_local = bctbx_strdup(rc_local);
+	linphone_core_manager_init(manager, rc_factory, NULL);
+	linphone_core_manager_start(manager, TRUE);
+
+	return manager;
+}
 
 /**
  * Create a LinphoneCoreManager that holds a shared Core.
@@ -721,6 +727,11 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
+
+	if (mgr->rc_local) {
+		bctbx_free(mgr->rc_local);
+		mgr->rc_local = NULL;
+	}
 
 	reset_counters(&mgr->stat);
 
