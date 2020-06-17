@@ -423,6 +423,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 	IdentityAddress contactAddr(contactAddrStr);
 	bctbx_free(contactAddrStr);
 	shared_ptr<ParticipantDevice> device = participant->findDevice(contactAddr);
+printf("%s - device %p - remote contactAddress %s from %s\n", __func__, device.get(), linphone_address_as_string(lContactAddr), linphone_address_as_string(linphone_event_get_from(lev)));
 	if (!device || (device->getState() != ParticipantDevice::State::Present && device->getState() != ParticipantDevice::State::Joining)) {
 		lError() << "Received SUBSCRIBE for conference [" << conf->getConferenceAddress()
 			<< "], device sending subscribe [" << contactAddr << "] is not known, no NOTIFY sent";
