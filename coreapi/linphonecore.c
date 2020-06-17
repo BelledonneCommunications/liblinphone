@@ -2413,27 +2413,46 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
 		));
-		if (!chatRoom)
-			return;
+		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+		));
 
-		shared_ptr<ClientGroupChatRoom> cgcr;
-		if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
-			cgcr = static_pointer_cast<ClientGroupChatRoom>(
-				static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
-		else
-			cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+		if (chatRoom) {
+			shared_ptr<ClientGroupChatRoom> cgcr;
+			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
+				cgcr = static_pointer_cast<ClientGroupChatRoom>(
+					static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
+			else
+				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
-		if (linphone_content_is_multipart(body)) {
-			// TODO : migrate to c++ 'Content'.
-			int i = 0;
-			LinphoneContent *part = nullptr;
-			while ((part = linphone_content_get_part(body, i))) {
-				i++;
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
-				linphone_content_unref(part);
+			if (linphone_content_is_multipart(body)) {
+				// TODO : migrate to c++ 'Content'.
+				int i = 0;
+				LinphoneContent *part = nullptr;
+				while ((part = linphone_content_get_part(body, i))) {
+					i++;
+					L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
+					linphone_content_unref(part);
+				}
+			} else {
+				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
 			}
-		} else
-			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
+		} else if (audioVideoConference) {
+			shared_ptr<MediaConference::RemoteConference> conference = static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
+			if (linphone_content_is_multipart(body)) {
+				// TODO : migrate to c++ 'Content'.
+				int i = 0;
+				LinphoneContent *part = nullptr;
+				while ((part = linphone_content_get_part(body, i))) {
+					i++;
+					conference->notifyReceived(linphone_content_get_string_buffer(part));
+					linphone_content_unref(part);
+				}
+			} else {
+				conference->notifyReceived(linphone_content_get_string_buffer(body));
+			}
+		}
 #else
 		ms_message("Advanced IM such as group chat is disabled!");
 #endif

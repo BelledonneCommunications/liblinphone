@@ -841,6 +841,14 @@ AudioStream *RemoteConference::getAudioStream(){
 	return stream ? (AudioStream*)stream->getMediaStream() : nullptr;
 }
 
+void RemoteConference::notifyReceived (const string &body) {
+#ifdef HAVE_ADVANCED_IM
+	eventHandler->notifyReceived(body);
+#else
+	ms_message("Advanced IM such as group chat is disabled!");
+#endif // HAVE_ADVANCED_IM
+}
+
 }//end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE
