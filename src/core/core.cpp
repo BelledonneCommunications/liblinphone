@@ -1008,8 +1008,6 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
 	auto conf = findAudioVideoConference (conferenceId);
 
-printf("insert conference with ID peer addrress %s local address %s\n", conferenceId.getPeerAddress().asString().c_str(), conferenceId.getLocalAddress().asString().c_str());
-
 	// Conference does not exist or yes but with the same pointer!
 	L_ASSERT(conf == nullptr || conf == audioVideoConference);
 	if (conf == nullptr) {
