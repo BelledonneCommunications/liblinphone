@@ -109,13 +109,14 @@ int Conference::terminate () {
 	// Delete conference ID from proxy as the conference was terminated
 	LinphoneAddress * cConferenceAddress = linphone_address_new(getConferenceAddress().asString().c_str());
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), cConferenceAddress);
-	Address contactAddress(sal_address_as_string(proxyCfg->op->getContactAddress()));
+	linphone_address_unref(cConferenceAddress);
+	char * contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
 	if (contactAddress.hasParam ("conf-id")) {
 		contactAddress.removeUriParam("conf-id");
 		proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	}
-
-	linphone_address_unref(cConferenceAddress);
 
 	getCore()->deleteAudioVideoConference(getSharedFromThis());
 	participants.clear();
@@ -214,7 +215,9 @@ LocalConference::LocalConference (
 	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
-	Address contactAddress(sal_address_as_string(proxyCfg->op->getContactAddress()));
+	char * contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
 	contactAddress.setUriParam("conf-id",confId);
 	proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	linphone_address_unref(cAddress);
