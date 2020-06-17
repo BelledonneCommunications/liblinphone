@@ -221,7 +221,7 @@ LocalConference::LocalConference (
 	proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	linphone_address_unref(cAddress);
 
-	setConferenceId(ConferenceId(myAddress, myAddress));
+	setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
