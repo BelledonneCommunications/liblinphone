@@ -240,6 +240,7 @@ set(SOURCE_FILES_CXX
 	multipart-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
+	vfs_encryption-tester.cpp
 )
 
 if(ENABLE_ADVANCED_IM)

@@ -375,6 +375,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&utils_test_suite);
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
 	bc_tester_add_suite(&shared_core_test_suite);
+	bc_tester_add_suite(&vfs_encryption_test_suite);
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {
