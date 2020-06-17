@@ -73,9 +73,11 @@ Conference::Conference(
 }
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,call->getRemoteAddress());
+	const Address * remoteContact = static_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession())->getRemoteContactAddress();
+	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact);
 
 	p->createSession(*this, nullptr, true, nullptr);
+	p->addDevice(*remoteContact);
 	participants.push_back(p);
 //	Conference::addParticipant(call);
 	m_callTable[p] = call;
