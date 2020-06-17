@@ -270,7 +270,6 @@ void RemoteConferenceEventHandler::subscribe () {
 
 	const string &peerAddress = getConferenceId().getPeerAddress().asString();
 	const string &localAddress = getConferenceId().getLocalAddress().asString();
-printf("%s - conf ID peer addrress %s local address %s\n", __func__, peerAddress.c_str(), localAddress.c_str());
 
 	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
 	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());
