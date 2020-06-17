@@ -2357,7 +2357,7 @@ LinphoneStatus MediaSession::resume () {
 		ms_free(contactAddressStr);
 		// Add isFocus if call is in a conference
 		contactAddress.setParam("isfocus");
-		d->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
+		d->op->setContactAddress(contactAddress.getInternalAddress());
 	}
 
 	if (d->op->update(subject.c_str(), false) != 0)
