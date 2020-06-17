@@ -46,7 +46,19 @@ class MediaSessionPrivate;
 class RealTimeTextChatRoom;
 class ConferencePrivate;
 
-class Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
+namespace MediaConference {
+	class Conference;
+}
+
+class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
+	friend class CallSessionPrivate;
+	friend class ChatMessage;
+	friend class ChatMessagePrivate;
+	friend class CorePrivate;
+	friend class MediaSessionPrivate;
+	friend class Stream;
+
+	friend class MediaConference::Conference;
 public:
 	Call (
 		std::shared_ptr<Core> core,
