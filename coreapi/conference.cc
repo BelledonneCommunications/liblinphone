@@ -206,12 +206,8 @@ LocalConference::LocalConference (
 	char confId[6];
 	belle_sip_random_token(confId,sizeof(confId));
 
-	Address conferenceAddress(myAddress);
-	conferenceAddress.setUriParam("conf-id",confId);
-	setConferenceAddress(conferenceAddress);
-
 	// Update proxy contact address to add conference ID
-	// Do not use conferenceAddress directly as it may lack some parameter like gruu
+	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
 	Address contactAddress(sal_address_as_string(proxyCfg->op->getContactAddress()));
@@ -219,7 +215,8 @@ LocalConference::LocalConference (
 	proxyCfg->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
 	linphone_address_unref(cAddress);
 
-	setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
+	setConferenceId(ConferenceId(contactAddress, contactAddress));
+	setConferenceAddress(contactAddress);
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this);
