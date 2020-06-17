@@ -1014,8 +1014,10 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
 	auto it = audioVideoConferenceById.find(conferenceId);
-	if (it != audioVideoConferenceById.cend())
+	if (it != audioVideoConferenceById.cend()) {
+		lInfo() << "Found audio video conference in RAM for conference ID " << conferenceId << ".";
 		return it->second;
+	}
 
 	if (logIfNotFound)
 		lInfo() << "Unable to find audio video conference in RAM: " << conferenceId << ".";
