@@ -1186,6 +1186,7 @@ void send_added_notify_through_call() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	localConf->ref();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 
@@ -1197,11 +1198,13 @@ void send_added_notify_through_call() {
 	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
-	localConf = nullptr;
 
 	custom_mgr_destroy(pauline);
-	custom_mgr_destroy(marie);
 	custom_mgr_destroy(laure);
+	custom_mgr_destroy(marie);
+
+	bctbx_list_free(lcs);
+
 }
 
 void send_removed_notify() {
