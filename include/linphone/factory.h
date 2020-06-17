@@ -693,15 +693,16 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
 	void *system_context
 );
 
+#define LINPHONE_VFS_ENCRYPTION_PLAIN 0xFFFF
+#define LINPHONE_VFS_ENCRYPTION_DUMMY 0x0001
 /**
- * Set the secret material to encrypt the files
- * @param[in]	factory		the #LinphoneFactory
- * @param[in]	secret		the secret material used to encrypt the files
- * @param[in]	secretSize	size of the secret
- *
- * TODO: Add an argument to select the encryption module??
+ * Select encryption module and set secret material to encrypt the files
+ * @param[in]	factory			the #LinphoneFactory
+ * @param[in]	encryptionModule	One of the available encryption module for VFS, pick in the LINPHONE_VFS_ENCRYPTION_* list
+ * @param[in]	secret			the secret material used to encrypt the files
+ * @param[in]	secretSize		size of the secret
  */
-LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption_master_key(LinphoneFactory *factory, const uint8_t *secret, const size_t secretSize);
+LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
 /**
  * @}
  */
