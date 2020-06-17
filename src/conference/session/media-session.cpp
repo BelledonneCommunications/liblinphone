@@ -2351,10 +2351,14 @@ LinphoneStatus MediaSession::resume () {
 	string subject = "Call resuming";
 	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
-		Address contactAddress(sal_address_as_string(d->op->getContactAddress()));
+		char * contactAddressStr = nullptr;
 		if (d->destProxy && d->destProxy->op) {
-			contactAddress = Address(sal_address_as_string(d->destProxy->op->getContactAddress()));
+			contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+		} else {
+			contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 		}
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
 		// Add isFocus if call is in a conference
 		contactAddress.setParam("isfocus");
 		d->op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
