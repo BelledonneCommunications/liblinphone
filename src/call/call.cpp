@@ -368,7 +368,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			break;
 		case CallSession::State::StreamsRunning:
 		{
-			Address remoteContactAddress(sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()));
+			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+			Address remoteContactAddress(remoteContactAddressStr);
+			ms_free(remoteContactAddressStr);
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
