@@ -83,6 +83,9 @@ static void linphone_factory_uninit(LinphoneFactory *obj){
 	STRING_RESET(obj->cached_ring_resources_dir);
 	STRING_RESET(obj->cached_image_resources_dir);
 	STRING_RESET(obj->cached_msplugins_dir);
+
+	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
+	sqlite3_bctbx_vfs_unregister();
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
@@ -137,6 +140,9 @@ static LinphoneFactory *linphone_factory_new(void){
 	LinphoneFactory *factory = belle_sip_object_new(LinphoneFactory);
 	factory->top_resources_dir = bctbx_strdup(PACKAGE_DATA_DIR);
 	initialize_supported_video_definitions(factory);
+	/* register the bctbx sqlite vfs. It is not used by default */
+	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
+	sqlite3_bctbx_vfs_register(0);
 	return factory;
 }
 
@@ -577,27 +583,40 @@ const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *co
 	return ms_strdup(path.c_str());
 }
 
-void linphone_factory_set_vfs_encryption_master_key(LinphoneFactory *factory, const uint8_t *secret, const size_t secretSize) {
+void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
 
-	/* save the key */
+	/* Check encryptionMpdule is valid */
+	auto module = bctoolbox::EncryptionSuite::unset;
+	switch (encryptionModule) {
+		case LINPHONE_VFS_ENCRYPTION_PLAIN:
+			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to plain text");
+			module = bctoolbox::EncryptionSuite::plain;
+			break;
+		case LINPHONE_VFS_ENCRYPTION_DUMMY:
+			module = bctoolbox::EncryptionSuite::dummy;
+			break;
+		default:
+			bctbx_error("linphone_factory_set_vfs_encryption : encryptionModule %04x unknown", encryptionModule);
+			return;
+	}
+
+	/* save the key. TODO: store it in the factory object so we can properly delete it */
 	std::vector<uint8_t> evfsSecret{secret, secret+secretSize};
 
-	if (secretSize>0) { /* TODO: perform more checking keySize vs selected encryption module */
-		// Set the default bctbx vfs to the encrypted one
-		bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
+	// Set the default bctbx vfs to the encrypted one
+	bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
 
-		// Associate the VfsEncryption class callback
-		bctoolbox::VfsEncryption::openCallback_set([evfsSecret](bctoolbox::VfsEncryption &settings) { // encryption key is saved in the closure, captured by value
-			// Check if file is plain
-			if (settings.encryptionSuite_get() == bctoolbox::EncryptionSuite::plain) {
-				bctbx_message("Encrypted VFS: File %s exists and is plain, ignore vfs encryption", settings.filename_get().data());
-				return;
-			}
-			settings.encryptionSuite_set(bctoolbox::EncryptionSuite::dummy); // TODO: select a suite according to args
+	// Associate the VfsEncryption class callback
+	bctoolbox::VfsEncryption::openCallback_set([module, evfsSecret](bctoolbox::VfsEncryption &settings) { // encryption key is saved in the closure, captured by value
+		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %d", settings.filename_get().data(), static_cast<uint16_t>(module));
+		// Check if file is plain
+		if (settings.encryptionSuite_get() == bctoolbox::EncryptionSuite::plain) {
+			bctbx_message("Encrypted VFS: File %s exists and is plain, ignore vfs encryption", settings.filename_get().data());
+			return;
+		}
+		settings.encryptionSuite_set(module);
+		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
 			settings.secretMaterial_set(evfsSecret);
-		});
-
-		/* register the encrypt sqlite vfs so it can be accessed if needed */
-		sqlite3_bctbx_vfs_register(0); // sqlite3_bctbx_vfs use the default bctbx_vfs for sqlite operation (if used at file opening)
-	}
+		}
+	});
 }
