@@ -666,7 +666,9 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	}
 	if (destProxy && destProxy->op) {
 		/* Give a chance to update the contact address if connectivity has changed */
-		Address contactAddress(sal_address_as_string(destProxy->op->getContactAddress()));
+		char * contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
 		if (q->getParams()->getPrivate()->getInConference()) {
 			contactAddress.setParam("isfocus");
 		}
