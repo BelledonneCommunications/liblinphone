@@ -253,6 +253,7 @@ set(SOURCE_FILES_CXX
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
+	vfs_encryption-tester.cpp
 )
 
 if(ENABLE_ADVANCED_IM)
