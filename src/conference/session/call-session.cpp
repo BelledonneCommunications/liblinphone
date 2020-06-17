@@ -682,7 +682,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 		if (q->getParams()->getPrivate()->getInConference()) {
 			contactAddress.setParam("isfocus");
 		}
-		op->setContactAddress(sal_address_new(contactAddress.asString().c_str()));
+		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
 	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());
