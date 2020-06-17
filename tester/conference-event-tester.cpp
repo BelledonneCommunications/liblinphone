@@ -1113,6 +1113,8 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(initial_conf_stats.number_of_LinphoneSubscriptionTerminated + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionTerminated,(initial_participant_stats.number_of_LinphoneSubscriptionTerminated + 1),5000));
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_NotifyReceived,(initial_participant_stats.number_of_NotifyReceived + 1),5000));
+
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,0, int, "%0d");
 	BC_ASSERT_EQUAL(participant_mgr->stat.number_of_LinphoneSubscriptionError,0, int, "%0d");
 
@@ -1135,6 +1137,11 @@ void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, 
 	*subscription_received += 1;
 }
 
+void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+	LinphoneCoreManager *mgr = get_manager(lc);
+	mgr->stat.number_of_NotifyReceived++;
+}
+
 LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
 
@@ -1143,7 +1150,7 @@ LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 	linphone_core_cbs_set_new_subscription_requested(cbs, new_subscription_requested);
 	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
-	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received);
+	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
 	_linphone_core_add_callbacks(mgr->lc, cbs, TRUE);
 
 	belle_sip_object_unref(cbs);
