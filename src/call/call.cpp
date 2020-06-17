@@ -374,8 +374,6 @@ void CallPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &sess
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
-
-printf("%s - call remote addrress %s local address %s\n", __func__, remoteContactAddress.asString().c_str(), q->getLocalAddress().asString().c_str());
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, q->getLocalAddress());
 				// It is expected that the core of the remote conference is the participant one
 				shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});

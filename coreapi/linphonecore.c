@@ -2477,8 +2477,6 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
 
-printf("searching chatroom or conf with resource %s - chatroon %p conf %p\n", linphone_address_as_string(resource), chatRoom.get(), audioVideoConference.get());
-
 	if (chatRoom)
 		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
 	else if (audioVideoConference)
