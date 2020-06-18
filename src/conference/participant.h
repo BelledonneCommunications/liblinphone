@@ -45,6 +45,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 namespace MediaConference {
 	class Conference;
+	class LocalConference;
 }
 
 class ClientGroupChatRoom;
@@ -58,6 +59,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class MediaConference::Conference;
+	friend class MediaConference::LocalConference;
 	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
 	friend class LocalConferenceCall;
@@ -79,6 +81,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ::LocalAudioVideoConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address);
+	explicit Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession);
 	virtual ~Participant();
 	// non clonable object
 	Participant *clone() const override { return nullptr; }
