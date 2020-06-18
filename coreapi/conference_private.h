@@ -187,8 +187,6 @@ public:
 	using LinphonePrivate::ConferenceInterface::join;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
-	virtual int getParticipantCount () const override;
-
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
 protected:
@@ -246,7 +244,6 @@ public:
 
 private:
 	void addLocalEndpoint();
-	int remoteParticipantsCount();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
 	bool mIsIn = false;
