@@ -33,6 +33,10 @@ Participant::Participant (Conference *conference, const IdentityAddress &address
 	configure(conference, address);
 }
 
+Participant::Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession) : Participant(conference, address) {
+	session = callSession;
+}
+
 Participant::Participant () {
 }
 
@@ -40,6 +44,7 @@ void Participant::configure (Conference *conference, const IdentityAddress &addr
 	mConference = conference;
 	addr = address.getAddressWithoutGruu();
 }
+
 Participant::~Participant() {
 }
 
