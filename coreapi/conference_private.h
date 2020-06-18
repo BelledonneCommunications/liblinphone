@@ -206,6 +206,12 @@ protected:
 	LinphoneConferenceState m_state;
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
 	void *m_userData = nullptr;
+
+	// TODO: Delete when merging with chat room
+	// TODO: Move to LinphonePrivate::Conference
+	void notifyStateChanged (LinphoneConferenceState state);
+	// TODO: Move to ConferenceListenerInterface and LocalConferenceHandler
+	void onStateChanged (LinphoneConferenceState state);
 };
 
 
