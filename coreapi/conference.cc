@@ -177,8 +177,12 @@ printf("%s - Executing task for conference [%p]\n", __func__, this);
 			break;
 		case LinphoneConferenceStarting:
 		case LinphoneConferenceRunning:
+			break;
 		case LinphoneConferenceTerminationPending:
+			setState(LinphoneConferenceTerminated);
+			break;
 		case LinphoneConferenceTerminated:
+			finalizeTermination();
 			break;
 		default:
 			break;
@@ -474,7 +478,6 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
-	leave();
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(getCore()->getCCore())->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
@@ -483,6 +486,12 @@ int LocalConference::terminate () {
 		if (linphone_call_get_conference(cCall) == this->toC())
 			call->terminate();
 	}
+	setState(LinphoneConferenceTerminationPending);
+	return 0;
+}
+
+int LocalConference::finalizeTermination () {
+	leave();
 	Conference::terminate();
 	return 0;
 }
@@ -700,6 +709,13 @@ int RemoteConference::terminate () {
 		default:
 			break;
 	}
+	return 0;
+}
+
+int RemoteConference::finalizeTermination () {
+	leave();
+	Conference::terminate();
+	setState(LinphoneConferenceStopped);
 	return 0;
 }
 
