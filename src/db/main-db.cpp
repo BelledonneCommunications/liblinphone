@@ -1760,17 +1760,17 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				insertContent(eventId, *content);
 			insertChatRoomParticipant(chatRoomId, remoteSipAddressId, false);
 			insertChatMessageParticipant(eventId, remoteSipAddressId, state, std::time(nullptr));
-			// Set last_message_id to the last timed message for this chat room
-			*session << "UPDATE chat_room SET last_message_id = "
-					"(SELECT conference_event.event_id "//Select the event that match max time and chat room
-					"FROM conference_event, conference_chat_message_event,"
-						"(SELECT max(time) as t "// Get Max Time for the chat room
-						"FROM conference_event, conference_chat_message_event "
-						"WHERE conference_event.event_id=conference_chat_message_event.event_id AND conference_event.chat_room_id=:1)"
-					"WHERE conference_chat_message_event.time=t AND conference_chat_message_event.event_id=conference_event.event_id AND conference_event.chat_room_id=:1 "
-					"ORDER BY conference_event.event_id DESC LIMIT 1) "// Ensure to have only one event and the last id for the matching time
-					"WHERE id = :1 ", soci::use(chatRoomId);// Used to not get Empty chatroom
 		}
+		// Set last_message_id to the last timed message for all chat room
+		*dbSession.getBackendSession() << "UPDATE chat_room SET last_message_id = "
+			"(SELECT COALESCE( (SELECT max(conference_event.event_id) as m "// max(conference_event.event_id) ensure to have only one event and the last id for the matching time
+				"FROM conference_event, conference_chat_message_event,"
+				"(SELECT max(time) as t, conference_event.chat_room_id as c "// Get Max Time for the chat room
+					"FROM conference_event, conference_chat_message_event "
+					"WHERE conference_event.event_id=conference_chat_message_event.event_id GROUP BY conference_event.chat_room_id)"
+				"WHERE conference_chat_message_event.time=t AND conference_chat_message_event.event_id=conference_event.event_id AND conference_event.chat_room_id=c "
+				"AND conference_event.chat_room_id=chat_room.id "
+				"GROUP BY conference_event.chat_room_id),0))";// if there are no messages, the first is NULL. So put a 0 to the ID
 		tr.commit();
 		lInfo() << "Successful import of legacy messages.";
 	};
