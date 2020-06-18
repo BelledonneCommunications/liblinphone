@@ -143,12 +143,58 @@ const char *Conference::stateToString (LinphoneConferenceState state) {
 	}
 }
 
+// TODO: move this method to LinphonePrivate::Conference
+void Conference::notifyStateChanged (LinphoneConferenceState state) {
+/*	for (const auto &l : confListeners) {
+		l->onStateChanged(state);
+	}
+*/
+	onStateChanged(state);
+}
+
+/*
+// Could it be a labda function?
+static int _linphone_core_delayed_conference_destruction_cb(void *user_data, unsigned int event) {
+	LinphoneConference *conf = (LinphoneConference *)user_data;
+printf("%s - destroy conference [%p]\n", __func__, conf);
+	linphone_conference_unref(conf);
+printf("%s - End destroy conference [%p]\n", __func__, conf);
+	return 0;
+}
+*/
+
+// TODO:  onStateChanged must be moved to the conference listener (i.e. local conference handler).
+// Initially coding it here as the local event handler is shared with the chat room and state change is not handled the same way.
+// Also types of states in audio video conference and chat room are different
+void Conference::onStateChanged (LinphoneConferenceState state) {
+printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, stateToString(state));
+	switch(state) {
+		case LinphoneConferenceStopped:
+		case LinphoneConferenceStartingFailed:
+printf("%s - Executing task for conference [%p]\n", __func__, this);
+//			linphone_core_queue_task(getCore()->getCCore(), _linphone_core_delayed_conference_destruction_cb, toC(), "Conference destruction task");
+//			getCore()->getCCore()->conf_ctx = NULL;
+			break;
+		case LinphoneConferenceStarting:
+		case LinphoneConferenceRunning:
+		case LinphoneConferenceTerminationPending:
+		case LinphoneConferenceTerminated:
+			break;
+		default:
+			break;
+	}
+}
+
 void Conference::setState (LinphoneConferenceState state) {
+printf("%s - Switching conference [%p] into state '%s' from state %s\n", __func__, this, stateToString(state), stateToString(m_state));
 	if (m_state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, stateToString(state));
 		m_state = state;
-		if (m_stateChangedCb)
+		notifyStateChanged(state);
+		// TODO Delete
+		if (m_stateChangedCb) {
 			m_stateChangedCb(toC(), state, m_userData);
+		}
 	}
 }
 
@@ -205,7 +251,8 @@ LocalConference::LocalConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
-	m_state = LinphoneConferenceRunning;
+printf("%s - Creating conference [%p]\n", __func__, this);
+	setState(LinphoneConferenceRunning);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	char confId[6];
