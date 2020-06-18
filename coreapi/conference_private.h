@@ -191,9 +191,6 @@ protected:
 protected:
 	std::string m_conferenceID;
 
-	// Temporary member to store participant,call pairs
-	// TODO: Remove once conference merge is finished
-	std::map<std::shared_ptr<LinphonePrivate::Participant>, std::shared_ptr<LinphonePrivate::Call>> m_callTable;
 	LinphonePrivate::LinphoneConferenceState m_state;
 
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
