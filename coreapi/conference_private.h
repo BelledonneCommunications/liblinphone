@@ -150,6 +150,7 @@ public:
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
 	virtual int terminate() = 0;
+	virtual int finalizeTermination() = 0;
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
@@ -235,6 +236,7 @@ public:
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
+	virtual int finalizeTermination() override;
 
 	virtual int enter() override;
 	virtual void leave() override;
@@ -282,6 +284,7 @@ public:
 	}
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual int terminate() override;
+	virtual int finalizeTermination() override;
 
 	virtual int enter() override;
 	virtual void leave() override;
