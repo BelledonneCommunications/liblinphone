@@ -7734,13 +7734,9 @@ LinphoneRingtonePlayer *linphone_core_get_ringtoneplayer(LinphoneCore *lc) {
 	return lc->ringtoneplayer;
 }
 
-// TODO Move to methd onStateChanged defined in conference.cc
-
 static int _linphone_core_delayed_conference_destruction_cb(void *user_data, unsigned int event) {
 	LinphoneConference *conf = (LinphoneConference *)user_data;
-printf("%s - C API destroy conference [%p]\n", __func__, conf);
 	linphone_conference_unref(conf);
-printf("%s - C API End destroy conference [%p]\n", __func__, conf);
 	return 0;
 }
 
