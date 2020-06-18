@@ -74,9 +74,8 @@ Conference::Conference(
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address * remoteContact = static_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession())->getRemoteContactAddress();
-	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact);
+	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact, call->getPrivate()->getActiveSession());
 
-	p->createSession(*this, nullptr, true, nullptr);
 	p->addDevice(*remoteContact);
 	participants.push_back(p);
 //	Conference::addParticipant(call);
@@ -187,11 +186,18 @@ printf("%s - Switching conference [%p] into state '%s' from state %s - cb %p\n",
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
+/*
 	for (auto it = participants.begin(); it != participants.end(); it++) {
 		auto pCall = m_callTable.find(*it)->second;
 		if (pCall == call)
 			return *it;
 	}
+*/
+	for (const auto &participant : getParticipants()) {
+		if (participant->getSession() == call->getPrivate()->getActiveSession())
+			return participant;
+	}
+
 	return nullptr;
 }
 
@@ -449,10 +455,10 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(addr);
 	if (!participant)
 		return -1;
-	std::shared_ptr<LinphonePrivate::Call> call = m_callTable[participant];
-	if (!call)
+	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
+	if (!callSession)
 		return -1;
-	return removeParticipant(call);
+	return removeParticipant(m_callTable[participant]);
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {

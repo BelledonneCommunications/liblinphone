@@ -50,6 +50,17 @@ class RemoteConference;
 
 }
 
+/**
+ * List of states used by #LinphoneConference
+ */
+typedef enum {
+	LinphoneConferenceStopped, /*< Initial state */
+	LinphoneConferenceStarting, /*< A participant has been added but the conference is not running yet */
+	LinphoneConferenceStartingFailed, /*< A participant has been added but the initialization of the conference has failed */
+	LinphoneConferenceRunning, /*< The conference is running */
+	LinphoneConferenceTerminationPending, /*< Termination sequence has been kicked off */
+	LinphoneConferenceTerminated /*< The conference is terminated */
+} LinphoneConferenceState;
 
 class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
 	friend class MediaConference::Conference;
@@ -121,6 +132,8 @@ public:
 
 	// TODO: Start Delete
 	virtual void join () override;
+	// Temporary method until chat room and conference states are merged
+	virtual void setState(LinphonePrivate::LinphoneConferenceState state) {};
 	// TODO: End Delete
 
 
