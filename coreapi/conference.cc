@@ -173,10 +173,6 @@ void Conference::join (const IdentityAddress &participantAddress) {
 	
 }
 
-int Conference::getParticipantCount () const {
-	return static_cast<int>(getParticipants().size());
-}
-
 std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 	return nullptr;
 }
@@ -366,10 +362,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	return true;
 }
 
-int LocalConference::remoteParticipantsCount () {
-	return (int)participants.size();
-}
-
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	int err = 0;
 	
@@ -377,8 +369,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		lError() << "Call " << call->toC() << " is not part of conference " << this->toC();
 		return -1;
 	}
-
-	if (remoteParticipantsCount() >= 2){
+	if (getParticipantCount() >= 2){
 		/* Kick the call out of the conference by moving to the Paused state. */
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 				L_GET_PRIVATE(call->getParams()))->setInConference(false);
@@ -393,7 +384,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
 	 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 	 */
-	if (remoteParticipantsCount() == 1 && isIn()){
+	if (getParticipantCount() == 1 && isIn()){
 		/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 		 * but it should contains all participants ideally.*/
 		std::shared_ptr<LinphonePrivate::Call> remaining_call = m_callTable[(*participants.begin())];
@@ -781,7 +772,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallEnd:
 			m_pendingCalls.remove(call);
 			Conference::removeParticipant(call);
-			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((getParticipantCount() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
@@ -798,7 +789,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
 			Conference::removeParticipant(transfered);
-			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((getParticipantCount() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
