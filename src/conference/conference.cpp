@@ -49,7 +49,7 @@ Conference::Conference (
 }
 
 Conference::~Conference () {
-	//confListeners.clear();
+	confListeners.clear();
 }
 
 // -----------------------------------------------------------------------------
