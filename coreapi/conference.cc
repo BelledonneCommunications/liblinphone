@@ -134,6 +134,10 @@ const char *Conference::stateToString (LinphoneConferenceState state) {
 			return "Ready";
 		case LinphoneConferenceStartingFailed:
 			return "Starting failed";
+		case LinphoneConferenceTerminationPending:
+			return "Ready";
+		case LinphoneConferenceTerminated:
+			return "Starting failed";
 		default:
 			return "Invalid state";
 	}
