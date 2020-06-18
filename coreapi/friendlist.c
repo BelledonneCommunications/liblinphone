@@ -1073,7 +1073,8 @@ void linphone_friend_list_update_subscriptions(LinphoneFriendList *list) {
 		if (address)
 			cfg = linphone_core_lookup_known_proxy(list->lc, address);
 		only_when_registered = linphone_core_should_subscribe_friends_only_when_registered(list->lc);
-		should_send_list_subscribe = (!only_when_registered || !cfg || cfg->state == LinphoneRegistrationOk);
+		//in case of only_when_registered, proxy config is mandatory to send subscribes. Otherwise, unexpected subscribtion can be issued using default contact address even if no account is configured yet.
+		should_send_list_subscribe = (!only_when_registered || (cfg && cfg->state == LinphoneRegistrationOk));
 	}
 
 	if (address != NULL) {
