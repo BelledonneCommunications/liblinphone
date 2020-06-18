@@ -252,6 +252,14 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 	MSSndCard *playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
+
+	if (stream->dir == SalStreamSendOnly)
+		media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
+	else if (stream->dir == SalStreamRecvOnly)
+		media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
+	else if (stream->dir == SalStreamSendRecv)
+		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
+		
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
 	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;

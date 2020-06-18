@@ -331,7 +331,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	MSWebCam *cam = getVideoDevice(targetState);
 	
 	getMediaSession().getLog()->video_enabled = true;
-	video_stream_set_direction(mStream, dir);
+	media_stream_set_direction(&mStream->ms, dir);
 	lInfo() << "Device rotation =" << getCCore()->device_rotation;
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);
 	video_stream_set_freeze_on_error(mStream, !!lp_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
