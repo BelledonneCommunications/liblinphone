@@ -116,9 +116,9 @@ int Conference::terminate () {
 		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
 	}
 
-	getCore()->deleteAudioVideoConference(getSharedFromThis());
 	participants.clear();
 	m_callTable.clear();
+	getCore()->deleteAudioVideoConference(getSharedFromThis());
 	return 0;
 }
 
@@ -150,17 +150,6 @@ void Conference::notifyStateChanged (LinphoneConferenceState state) {
 	onStateChanged(state);
 }
 
-/*
-// Could it be a labda function?
-static int _linphone_core_delayed_conference_destruction_cb(void *user_data, unsigned int event) {
-	LinphoneConference *conf = (LinphoneConference *)user_data;
-printf("%s - destroy conference [%p]\n", __func__, conf);
-	linphone_conference_unref(conf);
-printf("%s - End destroy conference [%p]\n", __func__, conf);
-	return 0;
-}
-*/
-
 // TODO:  onStateChanged must be moved to the conference listener (i.e. local conference handler).
 // Initially coding it here as the local event handler is shared with the chat room and state change is not handled the same way.
 // Also types of states in audio video conference and chat room are different
@@ -169,9 +158,6 @@ printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, state
 	switch(state) {
 		case LinphoneConferenceStopped:
 		case LinphoneConferenceStartingFailed:
-printf("%s - Executing task for conference [%p]\n", __func__, this);
-//			linphone_core_queue_task(getCore()->getCCore(), _linphone_core_delayed_conference_destruction_cb, toC(), "Conference destruction task");
-//			getCore()->getCCore()->conf_ctx = NULL;
 			break;
 		case LinphoneConferenceStarting:
 		case LinphoneConferenceRunning:
@@ -188,7 +174,7 @@ printf("%s - Executing task for conference [%p]\n", __func__, this);
 }
 
 void Conference::setState (LinphoneConferenceState state) {
-printf("%s - Switching conference [%p] into state '%s' from state %s\n", __func__, this, stateToString(state), stateToString(m_state));
+printf("%s - Switching conference [%p] into state '%s' from state %s - cb %p\n", __func__, this, stateToString(state), stateToString(m_state), m_stateChangedCb);
 	if (m_state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, stateToString(state));
 		m_state = state;
