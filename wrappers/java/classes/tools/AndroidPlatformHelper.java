@@ -85,7 +85,6 @@ public class AndroidPlatformHelper {
 	private NetworkManagerInterface mNetworkManager;
 	private Handler mMainHandler;
 	private boolean mMonitoringEnabled;
-	private boolean mIsInInteractiveMode;
 	private InteractivityReceiver mInteractivityReceiver;
 	private IntentFilter mInteractivityIntentFilter;
 	private String[] mDnsServers;
@@ -110,7 +109,6 @@ public class AndroidPlatformHelper {
 		mResources = mContext.getResources();
 		mMainHandler = new Handler(mContext.getMainLooper());
 
-		mIsInInteractiveMode = true;
 		mDozeModeEnabled = false;
 
 		MediastreamerAndroidContext.setContext(mContext);
@@ -665,12 +663,6 @@ public class AndroidPlatformHelper {
 	public synchronized void setDozeModeEnabled(boolean b) {
 		mDozeModeEnabled = b;
 		Log.i("[Platform Helper] Device idle mode: " + mDozeModeEnabled);
-	}
-
-	public synchronized void setInteractiveMode(boolean b) {
-		mIsInInteractiveMode = b;
-		Log.i("[Platform Helper] Device interactive mode: " + mIsInInteractiveMode);
-		enableKeepAlive(mNativePtr, mIsInInteractiveMode);
 	}
 
 	private NetworkManagerInterface createNetworkManager() {

@@ -57,11 +57,9 @@ public class InteractivityReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
         if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_ON)) {
-            Log.i("[Platform Helper] Device is in interactive mode");
-            mHelper.setInteractiveMode(true);
+            Log.i("[Platform Helper] Device is in interactive mode (screen is ON)");
         } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
-            Log.i("[Platform Helper] Device is not in interactive mode");
-            mHelper.setInteractiveMode(false);
+            Log.i("[Platform Helper] Device is not in interactive mode (screen is OFF)");
         }
     }
 }
