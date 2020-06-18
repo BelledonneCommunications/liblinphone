@@ -21,6 +21,7 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-chat-room.h"
+#include "chat/modifier/cpim-chat-message-modifier.h"
 #include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "conference/participant-p.h"
@@ -70,14 +71,87 @@ void LimeManager::processResponse (void *data, const belle_http_response_event_t
 void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *event) noexcept {
 	X3dhServerPostContext *userData = static_cast<X3dhServerPostContext *>(data);
 	shared_ptr<Core> core = userData->core;
+	/* Notes: when registering on the Lime server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core (except if registering methods are differents on flexisip and lime server - very unlikely)
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
 
-	const char *realm = belle_sip_auth_event_get_realm(event);
-	const char *username = belle_sip_auth_event_get_username(event);
-	const char *domain = belle_sip_auth_event_get_domain(event);
-	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
+	switch (belle_sip_auth_event_get_mode(event)) {
+		case BELLE_SIP_AUTH_MODE_HTTP_DIGEST:{
+			const char *realm = belle_sip_auth_event_get_realm(event);
+			const char *username = belle_sip_auth_event_get_username(event);
+			const char *domain = belle_sip_auth_event_get_domain(event);
+			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(core->getCCore(), realm, username, domain, algorithm, TRUE);
-	linphone_auth_info_fill_belle_sip_event(auth_info, event);
+			const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(core->getCCore(), realm, username, domain, algorithm, TRUE);
+			linphone_auth_info_fill_belle_sip_event(auth_info, event);
+		}
+		break;
+		case BELLE_SIP_AUTH_MODE_TLS: {
+			/* extract username and domain from the GRUU stored in userData->username */
+			auto address = IdentityAddress(userData->username);
+			const char *cert_chain_path = nullptr;
+			const char *key_path = nullptr;
+			const char *cert_chain = nullptr;
+			const char *key = nullptr;
+			const LinphoneAuthInfo *auth_info = _linphone_core_find_indexed_tls_auth_info(core->getCCore(), address.getUsername().data(), address.getDomain().data());
+			if (auth_info) { /* tls_auth_info found something */
+				if (linphone_auth_info_get_tls_cert(auth_info) && linphone_auth_info_get_tls_key(auth_info)) {
+					cert_chain = linphone_auth_info_get_tls_cert(auth_info);
+					key = linphone_auth_info_get_tls_key(auth_info);
+				} else if (linphone_auth_info_get_tls_cert_path(auth_info) && linphone_auth_info_get_tls_key_path(auth_info)) {
+					cert_chain_path = linphone_auth_info_get_tls_cert_path(auth_info);
+					key_path = linphone_auth_info_get_tls_key_path(auth_info);
+				}
+			} else { /* get directly from linphonecore
+				    or given in the sip/client_cert_chain in the config file, no username/domain associated with it, last resort try
+				   it shall work if we have only one user */
+				cert_chain = linphone_core_get_tls_cert(core->getCCore());
+				key = linphone_core_get_tls_key(core->getCCore());
+				if (!cert_chain || !key) {
+					cert_chain_path = linphone_core_get_tls_cert_path(core->getCCore());
+					key_path = linphone_core_get_tls_key_path(core->getCCore());
+				}
+			}
+
+			if (cert_chain != nullptr && key != nullptr) {
+				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse(cert_chain, strlen(cert_chain), BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
+				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse(key, strlen(key), nullptr);
+				if (bs_cert_chain && bs_key) {
+					belle_sip_object_ref((belle_sip_object_t *)bs_cert_chain);
+					belle_sip_object_ref((belle_sip_object_t *)bs_key);
+					belle_sip_auth_event_set_signing_key(event,  bs_key);
+					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
+					belle_sip_object_unref((belle_sip_object_t *)bs_cert_chain);
+					belle_sip_object_unref((belle_sip_object_t *)bs_key);
+				}
+			} else if (cert_chain_path != nullptr && key_path != nullptr) {
+				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse_file(cert_chain_path, BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
+				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse_file(key_path, nullptr);
+				if (bs_cert_chain && bs_key) {
+					belle_sip_object_ref((belle_sip_object_t *)bs_cert_chain);
+					belle_sip_object_ref((belle_sip_object_t *)bs_key);
+					belle_sip_auth_event_set_signing_key(event,  bs_key);
+					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
+					belle_sip_object_unref((belle_sip_object_t *)bs_cert_chain);
+					belle_sip_object_unref((belle_sip_object_t *)bs_key);
+				}
+			} else {
+				lInfo() << "Lime encryption engine could not retrieve any client certificate upon server's request";
+				// To enable callback:
+				//  - create an AuthInfo object with username and domain
+				//  - call linphone_core_notify_authentication_requested on it to give the app a chance to fill the auth_info.
+				//  - call again _linphone_core_find_indexed_tls_auth_info to retrieve the auth_info set by the callback.
+				//  Not done as we assume that authentication on flexisip server was performed before
+				//  so the application layer already got a chance to set the correct auth_info in the core
+				return;
+			}
+		}
+		break;
+		default:
+			lError() << "Lime X3DH server connection gets an auth event of unexpected type";
+		break;
+	}
 }
 
 LimeManager::LimeManager (
@@ -255,8 +329,16 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				list<Content *> contents;
 
+				// ---------------------------------------------- CPIM
+
+				// Replaces SIPFRAG since version 4.4.0
+				CpimChatMessageModifier ccmm;
+				Content *cpimContent = ccmm.createMinimalCpimContentForLimeMessage(message);
+				contents.push_back(move(cpimContent));
+
 				// ---------------------------------------------- SIPFRAG
 
+				// For backward compatibility only since 4.4.0
 				Content *sipfrag = new Content();
 				sipfrag->setBody("From: <" + localDeviceId + ">");
 				sipfrag->setContentType(ContentType::SipFrag);
@@ -357,20 +439,38 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	}
 	list<Content> contentList = ContentManager::multipartToContentList(*internalContent);
 
-	// ---------------------------------------------- SIPFRAG
+	// ---------------------------------------------- CPIM
 
 	string senderDeviceId;
-	for (const auto &content : contentList) {
-		if (content.getContentType() != ContentType::SipFrag)
+	bool cpimFound = false;
+	for (const auto &content : contentList) { // 4.4.x new behavior
+		if (content.getContentType() != ContentType::Cpim)
 			continue;
 
-		// Extract Contact header from sipfrag content
-		senderDeviceId = content.getBodyAsUtf8String();
-		string toErase = "From: ";
-		size_t contactPosition = senderDeviceId.find(toErase);
-		if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
-		IdentityAddress tmpIdentityAddress(senderDeviceId);
-		senderDeviceId = tmpIdentityAddress.asString();
+		CpimChatMessageModifier ccmm;
+		senderDeviceId = ccmm.parseMinimalCpimContentInLimeMessage(message, content);
+		if (senderDeviceId != "") {
+			IdentityAddress tmpIdentityAddress(senderDeviceId);
+			senderDeviceId = tmpIdentityAddress.asString();
+			cpimFound = true;
+		}
+	}
+
+	// ---------------------------------------------- SIPFRAG
+
+	if (!cpimFound) { // Legacy behavior (< 4.4.x)
+		for (const auto &content : contentList) {
+			if (content.getContentType() != ContentType::SipFrag)
+				continue;
+
+			// Extract Contact header from sipfrag content
+			senderDeviceId = content.getBodyAsUtf8String();
+			string toErase = "From: ";
+			size_t contactPosition = senderDeviceId.find(toErase);
+			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
+			IdentityAddress tmpIdentityAddress(senderDeviceId);
+			senderDeviceId = tmpIdentityAddress.asString();
+		}
 	}
 
 	// Discard incoming messages from unsafe peer devices
@@ -405,6 +505,14 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		}
 	}
 	
+	
+	LinphoneConfig *config = linphone_core_get_config(chatRoom->getCore()->getCCore());
+	if (linphone_config_get_int(config, "test", "force_lime_decryption_failure", 0) == 1) {
+		lError() << "No key found (on purpose for tests) for [" << localDeviceId << "] for message [" << message <<"]";
+		errorCode = 488; // Not Acceptable
+		return ChatMessageModifier::Result::Done;
+	}
+
 	if (cipherHeader.empty()) {
 		lError() << "No key found for [" << localDeviceId << "] for message [" << message <<"]";
 		errorCode = 488; // Not Acceptable
@@ -881,10 +989,12 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 	try {
 		if (!limeManager->is_user(localDeviceId)) {
 			// create user if not exist
-			//lime::limeCallback callback = setLimeCallback("creating user " + localDeviceId);
-			//limeManager->create_user(localDeviceId, x3dhServerUrl, curve, callback);
 			limeManager->create_user(localDeviceId, x3dhServerUrl, curve, [lc, localDeviceId](lime::CallbackReturn returnCode, string info) {
-						lInfo() << "[LIME] user "<< localDeviceId <<" creation successful";
+						if (returnCode==lime::CallbackReturn::success) {
+							lInfo() << "[LIME] user "<< localDeviceId <<" creation successful";
+						} else {
+							lWarning() << "[LIME] user "<< localDeviceId <<" creation failed";
+						}
 						linphone_core_notify_imee_user_registration(lc, returnCode==lime::CallbackReturn::success, localDeviceId.data(), info.data());
 					});
 			lastLimeUpdate = ms_time(NULL);

@@ -620,24 +620,24 @@ LinphoneReason ChatMessagePrivate::receive () {
 		currentRecvStep |= ChatMessagePrivate::Step::Cpim;
 	}
 
-	// Check if incoming message was flagged as unencrypted in an encrypted context
-	if (getUnencryptedContentWarning()) {
-		lWarning() << "Unencrypted content warning raised by encryption engine";
-
-		// Allow error IMDN exclusively
-		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {
-			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
-			errorCode = 415;
-			return linphone_error_code_to_reason(errorCode);
-		}
-	}
-
+	// Go through multipart otherwise Imdn::isError won't work in case of aggregated IMDN
 	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 		lInfo() << "Multipart step already done, skipping";
 	} else {
 		MultipartChatMessageModifier mcmm;
 		mcmm.decode(q->getSharedFromThis(), errorCode);
 		currentRecvStep |= ChatMessagePrivate::Step::Multipart;
+	}
+
+	// Check if incoming message was flagged as unencrypted in an encrypted context
+	if (getUnencryptedContentWarning()) {
+		lWarning() << "Unencrypted content warning raised by encryption engine";
+		// Allow error IMDN exclusively
+		if (q->getSharedFromThis()->getInternalContent().getContentType() != ContentType::Imdn && !Imdn::isError(q->getSharedFromThis())) {
+			lWarning() << "Discarding message of type " << q->getSharedFromThis()->getInternalContent().getContentType();
+			errorCode = 415;
+			return linphone_error_code_to_reason(errorCode);
+		}
 	}
 
 	if ((currentRecvStep & ChatMessagePrivate::Step::FileDownload) == ChatMessagePrivate::Step::FileDownload) {
@@ -653,8 +653,9 @@ LinphoneReason ChatMessagePrivate::receive () {
 		contents.push_back(new Content(internalContent));
 	}
 
-	for (auto &content : contents)
+	for (auto &content : contents) {
 		forceUtf8Content(*content);
+	}
 
 	// ---------------------------------------
 	// End of message modification
@@ -672,15 +673,6 @@ LinphoneReason ChatMessagePrivate::receive () {
 	if (chatRoom->findChatMessage(imdnId, direction)) {
 		lInfo() << "Duplicated SIP MESSAGE, ignored.";
 		return core->getCCore()->chat_deny_code;
-	}
-
-	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
-		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
-		if (toBeStored) {
-			storeInDb();
-		}
-	} else {
-		toBeStored = false;
 	}
 
 	if (errorCode <= 0) {
@@ -715,6 +707,15 @@ LinphoneReason ChatMessagePrivate::receive () {
 			reason
 		);
 		return reason;
+	}
+
+	if (getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
+		_linphone_chat_room_notify_chat_message_should_be_stored(static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom(), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+		if (toBeStored) {
+			storeInDb();
+		}
+	} else {
+		toBeStored = false;
 	}
 
 	handleAutoDownload();

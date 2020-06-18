@@ -21,9 +21,11 @@ package org.linphone.core.tools;
 
 import android.content.Context;
 
-import org.linphone.core.tools.Log;
+import com.google.firebase.FirebaseApp;
 
 import java.lang.reflect.Constructor;
+
+import org.linphone.core.tools.Log;
 
 /**
  * This class wraps the FirebasePushHelper class.
@@ -33,6 +35,9 @@ public class PushNotificationUtils {
 
     public static void init(Context context) {
         mHelper = null;
+
+        if (!isFirebaseAvailable()) return;
+        FirebaseApp.initializeApp(context);
 
         String className = "org.linphone.core.tools.firebase.FirebasePushHelper";
         try {
@@ -54,6 +59,19 @@ public class PushNotificationUtils {
     public static boolean isAvailable(Context context) {
         if (mHelper == null) return false;
         return mHelper.isAvailable(context);
+    }
+
+    private static boolean isFirebaseAvailable() {
+        boolean available = false;
+        try {
+            Class firebaseApp = Class.forName("com.google.firebase.FirebaseApp");
+            available = true;
+        } catch (ClassNotFoundException e) {
+            Log.w("[Push Utils] Couldn't find class com.google.firebase.FirebaseApp");
+        } catch (Exception e) {
+            Log.w("[Push Utils] Exception: " + e);
+        }
+        return available;
     }
 
     public interface PushHelperInterface {

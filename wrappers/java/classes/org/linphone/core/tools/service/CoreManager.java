@@ -27,8 +27,7 @@ import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
 import android.os.Build;
 
-import com.google.firebase.FirebaseApp;
-
+import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
@@ -38,6 +37,7 @@ import org.linphone.core.tools.audio.AudioHelper;
 import org.linphone.core.tools.audio.BluetoothHelper;
 import org.linphone.mediastream.Version;
 
+import java.lang.reflect.Constructor;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -88,18 +88,16 @@ public class CoreManager {
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
 
-        if (mCore.isPushNotificationEnabled()) {
-            Log.i("[Core Manager] Push notifications are enabled, starting Firebase");
-            FirebaseApp.initializeApp(mContext);
-            PushNotificationUtils.init(mContext);
-            if (!PushNotificationUtils.isAvailable(mContext)) {
-                Log.w("[Core Manager] Push notifications aren't available");
-            }
-        } else {
-            Log.w("[Core Manager] Push notifications aren't enabled");
+        PushNotificationUtils.init(mContext);
+        if (!PushNotificationUtils.isAvailable(mContext)) {
+            Log.w("[Core Manager] Push notifications aren't available");
         }
         
-        mAudioHelper = new AudioHelper(mContext);
+        if (isAndroidXMediaAvailable()) {
+            mAudioHelper = new AudioHelper(mContext);
+        } else {
+            Log.w("[Core Manager] Do you have a dependency on androidx.media:media package?");
+        }
         mBluetoothHelper = new BluetoothHelper(mContext);
 
         Log.i("[Core Manager] Ready");
@@ -158,16 +156,23 @@ public class CoreManager {
                         Log.i("[Core Manager] Incoming call received, no other call, acquire ringing audio focus");
                         mAudioHelper.requestRingingAudioFocus();
                     }
-                } else if (state == Call.State.Connected && call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
-                    Log.i("[Core Manager] Stop incoming call ringing");
-                    mAudioHelper.stopRinging();
-                } else if (state == Call.State.OutgoingInit || state == Call.State.StreamsRunning) {
+                } else if (state == Call.State.Connected) {
+                    if (call.getDir() == Call.Dir.Incoming && core.isNativeRingingEnabled()) {
+                        Log.i("[Core Manager] Stop incoming call ringing");
+                        mAudioHelper.stopRinging();
+                    } else {
+                        mAudioHelper.releaseRingingAudioFocus();
+                    }
+                } else if (state == Call.State.OutgoingInit && core.getCallsNb() == 1) {
+                    Log.i("[Core Manager] Outgoing call in progress, no other call, acquire ringing audio focus for ringback");
+                    mAudioHelper.requestRingingAudioFocus();
+                } else if (state == Call.State.StreamsRunning) {
                     Log.i("[Core Manager] Call active, ensure audio focus granted");
                     mAudioHelper.requestCallAudioFocus();
                 }
             }
-        };
-        mCore.addListener(mListener);
+        };        
+        if (mAudioHelper != null) mCore.addListener(mListener);
 
         try {
             mServiceClass = getServiceClass();
@@ -199,10 +204,12 @@ public class CoreManager {
     }
 
     public void startAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
         mAudioHelper.startAudioForEchoTestOrCalibration();
     }
 
     public void stopAudioForEchoTestOrCalibration() {
+        if (mAudioHelper == null) return;
         mAudioHelper.stopAudioForEchoTestOrCalibration();
     }
 
@@ -261,6 +268,19 @@ public class CoreManager {
 
         Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
         return null;
+    }
+
+    private boolean isAndroidXMediaAvailable() {
+        boolean available = false;
+        try {
+            Class androixMedia = Class.forName("androidx.media.AudioAttributesCompat");
+            available = true;
+        } catch (ClassNotFoundException e) {
+            Log.w("[Core Manager] Couldn't find class androidx.media.AudioAttributesCompat");
+        } catch (Exception e) {
+            Log.w("[Core Manager] Exception: " + e);
+        }
+        return available;
     }
 
     private void dumpDeviceInformation() {

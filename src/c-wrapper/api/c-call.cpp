@@ -184,6 +184,7 @@ void linphone_call_notify_camera_not_working(LinphoneCall *call, const char *cam
 }
 
 void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudioDevice *audioDevice) {
+	linphone_core_notify_audio_device_changed(linphone_call_get_core(call), audioDevice);
 	NOTIFY_IF_EXIST(AudioDeviceChanged, audio_device_changed, call, audioDevice);
 }
 

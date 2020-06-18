@@ -2830,7 +2830,7 @@ void chat_message_custom_headers(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-void _text_message_with_custom_content_type(bool_t with_lime) {
+void _text_message_with_custom_content_type(bool_t with_lime, bool_t is_supported) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
@@ -2842,8 +2842,10 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	size_t file_size;
 	char *buf;
 
-	linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
 	linphone_core_add_content_type_support(pauline->lc, "image/svg+xml");
+	if (is_supported) {
+		linphone_core_add_content_type_support(marie->lc, "image/svg+xml");
+	}
 
 	if (with_lime) {
 		if (enable_lime_for_message_test(marie, pauline) < 0) goto end;
@@ -2864,15 +2866,29 @@ void _text_message_with_custom_content_type(bool_t with_lime) {
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
 
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
-	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
+	if (is_supported) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1));
+	} else {
+		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
+		BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1, 5000));
+	}
 
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(msg), "image/svg+xml");
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), buf);
 
-	if (marie->stat.last_received_chat_message) {
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(marie->stat.last_received_chat_message), "image/svg+xml");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), buf);
+	if (is_supported) {
+		if (marie->stat.last_received_chat_message) {
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(marie->stat.last_received_chat_message), "image/svg+xml");
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), buf);
+		}
+	} else {
+		BC_ASSERT_PTR_NULL(marie->stat.last_received_chat_message);
+		LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+		BC_ASSERT_PTR_NOT_NULL(marie_room);
+		if (marie_room) {
+			BC_ASSERT_PTR_NULL(linphone_chat_room_get_last_message_in_history(marie_room));
+		}
 	}
 
 	bctbx_free(buf);
@@ -2886,13 +2902,20 @@ end:
 }
 
 void text_message_with_custom_content_type(void) {
-	_text_message_with_custom_content_type(FALSE);
+	_text_message_with_custom_content_type(FALSE, TRUE);
 }
 
 void text_message_with_custom_content_type_and_lime(void) {
-	_text_message_with_custom_content_type(TRUE);
+	_text_message_with_custom_content_type(TRUE, TRUE);
 }
 
+void text_message_with_unsupported_content_type(void) {
+	_text_message_with_custom_content_type(FALSE, FALSE);
+}
+
+void text_message_with_unsupported_content_type_and_lime(void) {
+	_text_message_with_custom_content_type(TRUE, FALSE);
+}
 
 static int im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	ms_debug("IM encryption process incoming message with content type %s", linphone_chat_message_get_content_type(msg));
@@ -3208,7 +3231,9 @@ test_t message_tests[] = {
 	TEST_ONE_TAG("Real Time Text and early media", real_time_text_and_early_media, "RTT"),
 	TEST_NO_TAG("IM Encryption Engine custom headers", chat_message_custom_headers),
 	TEST_NO_TAG("Text message with custom content-type", text_message_with_custom_content_type),
+	TEST_NO_TAG("Text message with unsupported content-type", text_message_with_unsupported_content_type),
 	TEST_ONE_TAG("Text message with custom content-type and lime", text_message_with_custom_content_type_and_lime, "LIME"),
+	TEST_ONE_TAG("Text message with unsupported content-type and lime", text_message_with_unsupported_content_type_and_lime, "LIME"),
 	TEST_NO_TAG("IM Encryption Engine b64", im_encryption_engine_b64),
 	TEST_NO_TAG("IM Encryption Engine b64 async", im_encryption_engine_b64_async),
 	TEST_NO_TAG("Text message within call dialog", text_message_within_call_dialog),

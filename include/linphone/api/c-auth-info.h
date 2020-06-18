@@ -40,7 +40,7 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new(
 	const char *userid,
 	const char *passwd,
 	const char *ha1,
-	const char *rfealm,
+	const char *realm,
 	const char *domain);
 
 LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(

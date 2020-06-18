@@ -1760,6 +1760,16 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				insertContent(eventId, *content);
 			insertChatRoomParticipant(chatRoomId, remoteSipAddressId, false);
 			insertChatMessageParticipant(eventId, remoteSipAddressId, state, std::time(nullptr));
+			// Set last_message_id to the last timed message for this chat room
+			*session << "UPDATE chat_room SET last_message_id = "
+					"(SELECT conference_event.event_id "//Select the event that match max time and chat room
+					"FROM conference_event, conference_chat_message_event,"
+						"(SELECT max(time) as t "// Get Max Time for the chat room
+						"FROM conference_event, conference_chat_message_event "
+						"WHERE conference_event.event_id=conference_chat_message_event.event_id AND conference_event.chat_room_id=:1)"
+					"WHERE conference_chat_message_event.time=t AND conference_chat_message_event.event_id=conference_event.event_id AND conference_event.chat_room_id=:1 "
+					"ORDER BY conference_event.event_id DESC LIMIT 1) "// Ensure to have only one event and the last id for the matching time
+					"WHERE id = :1 ", soci::use(chatRoomId);// Used to not get Empty chatroom
 		}
 		tr.commit();
 		lInfo() << "Successful import of legacy messages.";
@@ -3121,24 +3131,25 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			if (contentType == ContentType::FileTransfer) {
 				hasFileTransferContent = true;
 				content = new FileTransferContent();
-			} else if (contentType.isFile()) {
-				// 1.1 - Fetch contents' file informations.
+			} else {
+				// 1.1 - Fetch contents' file informations if they exist
 				string name;
 				int size;
 				string path;
+				soci::indicator haveData;
 
 				*session << "SELECT name, size, path FROM chat_message_file_content"
 					" WHERE chat_message_content_id = :contentId",
-					soci::into(name), soci::into(size), soci::into(path), soci::use(contentId);
-
-				FileContent *fileContent = new FileContent();
-				fileContent->setFileName(name);
-				fileContent->setFileSize(size_t(size));
-				fileContent->setFilePath(path);
-
-				content = fileContent;
-			} else
-				content = new Content();
+					soci::into(name, haveData), soci::into(size), soci::into(path), soci::use(contentId);
+				if( haveData == soci::i_ok) {
+					FileContent *fileContent = new FileContent();
+					fileContent->setFileName(name);
+					fileContent->setFileSize(size_t(size));
+					fileContent->setFilePath(path);
+					content = fileContent;
+				}else
+					content = new Content();
+			}
 
 			content->setContentType(contentType);
 			content->setBody(row.get<string>(3));

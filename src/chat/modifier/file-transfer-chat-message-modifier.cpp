@@ -599,37 +599,41 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 							// There is a key in the msg: file has been encrypted.
 							// Convert the key from base 64.
 							xmlChar *keyb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t keyb64Length = strlen(reinterpret_cast<char *>(keyb64));
+							if (keyb64) {
+								size_t keyb64Length = strlen(reinterpret_cast<char *>(keyb64));
 
-							size_t keyLength;
-							bctbx_base64_decode(nullptr, &keyLength, keyb64, keyb64Length);
+								size_t keyLength;
+								bctbx_base64_decode(nullptr, &keyLength, keyb64, keyb64Length);
 
-							uint8_t *keyBuffer = static_cast<uint8_t *>(malloc(keyLength + 1));
+								uint8_t *keyBuffer = static_cast<uint8_t *>(malloc(keyLength + 1));
 
-							// Decode the key into local key buffer.
-							bctbx_base64_decode(keyBuffer, &keyLength, keyb64, keyb64Length);
-							keyBuffer[keyLength] = '\0';
-							fileTransferContent->setFileKey(reinterpret_cast<char *>(keyBuffer), keyLength);
-							xmlFree(keyb64);
-							free(keyBuffer);
+								// Decode the key into local key buffer.
+								bctbx_base64_decode(keyBuffer, &keyLength, keyb64, keyb64Length);
+								keyBuffer[keyLength] = '\0';
+								fileTransferContent->setFileKey(reinterpret_cast<char *>(keyBuffer), keyLength);
+								xmlFree(keyb64);
+								free(keyBuffer);
+							}
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-authTag")) {
 							// There is authentication tag in the msg: file has been encrypted.
 							// Convert the tag from base 64.
 							xmlChar *authTagb64 = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							size_t authTagb64Length = strlen(reinterpret_cast<char *>(authTagb64));
+							if (authTagb64) {
+								size_t authTagb64Length = strlen(reinterpret_cast<char *>(authTagb64));
 
-							size_t authTagLength;
-							bctbx_base64_decode(nullptr, &authTagLength, authTagb64, authTagb64Length);
+								size_t authTagLength;
+								bctbx_base64_decode(nullptr, &authTagLength, authTagb64, authTagb64Length);
 
-							uint8_t *authTagBuffer = static_cast<uint8_t *>(malloc(authTagLength + 1));
+								uint8_t *authTagBuffer = static_cast<uint8_t *>(malloc(authTagLength + 1));
 
-							// Decode the authTag into local authTag buffer.
-							bctbx_base64_decode(authTagBuffer, &authTagLength, authTagb64, authTagb64Length);
-							authTagBuffer[authTagLength] = '\0';
-							fileTransferContent->setFileAuthTag(reinterpret_cast<char *>(authTagBuffer), authTagLength);
-							xmlFree(authTagb64);
-							free(authTagBuffer);
+								// Decode the authTag into local authTag buffer.
+								bctbx_base64_decode(authTagBuffer, &authTagLength, authTagb64, authTagb64Length);
+								authTagBuffer[authTagLength] = '\0';
+								fileTransferContent->setFileAuthTag(reinterpret_cast<char *>(authTagBuffer), authTagLength);
+								xmlFree(authTagb64);
+								free(authTagBuffer);
+							}
 						}
 
 						cur = cur->next;

@@ -48,13 +48,6 @@ extern "C" {
  */
 
 /**
- * Create a #LinphoneConferenceParams with default parameters set.
- * @param core #LinphoneCore to use to find out the default parameters. Can be NULL.
- * @return A freshly allocated #LinphoneConferenceParams
- */
-LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
-
-/**
  * Take a reference on a #LinphoneConferencParams.
  * @param[in] params The #LinphoneConferenceParams to ref.
  * @return The freshly refed #LinphoneConferenceParams.

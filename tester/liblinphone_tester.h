@@ -92,6 +92,7 @@ extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
 extern test_suite_t shared_core_test_suite;
+extern test_suite_t lime_server_auth_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
@@ -558,6 +559,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 const char *liblinphone_tester_get_empty_rc(void);
 
 int liblinphone_tester_copy_file(const char *from, const char *to);
+size_t liblinphone_tester_load_text_file_in_buffer(const char *filePath, char **buffer);
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan);
 
 extern MSSndCardDesc dummy_test_snd_card_desc;
@@ -577,6 +579,7 @@ extern MSSndCardDesc dummy3_test_snd_card_desc;
  */
 void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
 void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
+void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t required);
 
 
 #ifdef __cplusplus

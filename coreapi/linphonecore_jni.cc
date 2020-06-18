@@ -8142,7 +8142,7 @@ extern "C" jlong Java_org_linphone_core_LinphoneConferenceParamsImpl_createInsta
 	jfieldID native_ptr_attr = env->GetFieldID(core_class, "nativePtr", "J");
 	LinphoneCore *core = NULL;
 	if(jcore) core = (LinphoneCore *)env->GetLongField(jcore, native_ptr_attr);
-	return (jlong)linphone_conference_params_new(core);
+	return (jlong)linphone_core_create_conference_params(core);
 }
 
 extern "C" jlong Java_org_linphone_core_LinphoneConferenceParamsImpl_copyInstance(JNIEnv *env, jobject thiz, jlong paramsPtr) {

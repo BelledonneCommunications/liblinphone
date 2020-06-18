@@ -1,20 +1,20 @@
 /*
-  linphone
-  Copyright (C) 2017 Belledonne Communications SARL
-
-  This program is free software; you can redistribute it and/or
-  modify it under the terms of the GNU General Public License
-  as published by the Free Software Foundation; either version 2
-  of the License, or (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+* Copyright (c) 2010-2019 Belledonne Communications SARL.
+*
+* This file is part of Liblinphone.
+*
+* This program is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* This program is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with this program. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifdef __APPLE__
@@ -39,6 +39,7 @@
 // TODO: Remove me
 #include "private.h"
 
+#include "core/app/ios-app-delegate.h"
 // =============================================================================
 
 using namespace std;
@@ -48,7 +49,9 @@ LINPHONE_BEGIN_NAMESPACE
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	~IosPlatformHelpers () = default;
+	~IosPlatformHelpers (){
+		[mAppDelegate dealloc];
+	}
 
 	void acquireWifiLock () override {}
 	void releaseWifiLock () override {}
@@ -106,6 +109,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
+	IosAppDelegate *mAppDelegate;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -119,6 +123,9 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
+
+	mAppDelegate = [[IosAppDelegate alloc] init];
+	[mAppDelegate setCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -255,12 +262,14 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	mNetworkMonitoringEnabled = monitoringEnabled;
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
+		[mAppDelegate onLinphoneCoreStart];
 	}
 }
 
 void IosPlatformHelpers::onLinphoneCoreStop() {
 	if (mNetworkMonitoringEnabled) {
 		stopNetworkMonitoring();
+		[mAppDelegate onLinphoneCoreStop];
 	}
 
 	getSharedCoreHelpers()->onLinphoneCoreStop();

@@ -181,7 +181,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
             .setContentType(AudioAttributesCompat.CONTENT_TYPE_SPEECH)
             .build();
 
-         mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
+        mCallRequest = new AudioFocusRequestCompat.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
             .setAudioAttributes(audioAttrs)
             .setOnAudioFocusChangeListener(this)
             .build();
