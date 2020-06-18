@@ -43,8 +43,10 @@ typedef enum {
 typedef enum {
 	LinphoneConferenceStopped, /*< Initial state */
 	LinphoneConferenceStarting, /*< A participant has been added but the conference is not running yet */
+	LinphoneConferenceStartingFailed, /*< A participant has been added but the initialization of the conference has failed */
 	LinphoneConferenceRunning, /*< The conference is running */
-	LinphoneConferenceStartingFailed /*< A participant has been added but the initialization of the conference has failed */
+	LinphoneConferenceTerminationPending, /*< Termination sequence has been kicked off */
+	LinphoneConferenceTerminated /*< The conference is terminated */
 } LinphoneConferenceState;
 /**
  * Type of the funtion to pass as callback to linphone_conference_params_set_state_changed_callback()
