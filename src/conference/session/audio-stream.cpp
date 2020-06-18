@@ -264,6 +264,13 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
+	if (stream->dir == SalStreamSendOnly)
+		media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
+	else if (stream->dir == SalStreamRecvOnly)
+		media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
+	else if (stream->dir == SalStreamSendRecv)
+		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
+
 	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
 	MSSndCard *playcard = nullptr;
 
