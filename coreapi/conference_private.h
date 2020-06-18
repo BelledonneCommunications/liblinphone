@@ -25,6 +25,7 @@
 #include "linphone/core.h"
 #include "call/call.h"
 #include "linphone/conference.h"
+#include "conference/conference.h"
 
 #include "belle-sip/object++.hh"
 
@@ -38,29 +39,18 @@ typedef enum {
 } LinphoneConferenceClass;
 
 /**
- * List of states used by #LinphoneConference
- */
-typedef enum {
-	LinphoneConferenceStopped, /*< Initial state */
-	LinphoneConferenceStarting, /*< A participant has been added but the conference is not running yet */
-	LinphoneConferenceStartingFailed, /*< A participant has been added but the initialization of the conference has failed */
-	LinphoneConferenceRunning, /*< The conference is running */
-	LinphoneConferenceTerminationPending, /*< Termination sequence has been kicked off */
-	LinphoneConferenceTerminated /*< The conference is terminated */
-} LinphoneConferenceState;
-/**
  * Type of the funtion to pass as callback to linphone_conference_params_set_state_changed_callback()
  * @param conference The conference instance which the state has changed
  * @param new_state The new state of the conferenece
  * @param user_data Pointer pass to user_data while linphone_conference_params_set_state_changed_callback() was being called
  */
-typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
+typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphonePrivate::LinphoneConferenceState new_state, void *user_data);
 
 
 /**
  * A function to converte a #LinphoneConferenceState into a string
  */
-const char *linphone_conference_state_to_string(LinphoneConferenceState state);
+const char *linphone_conference_state_to_string(LinphonePrivate::LinphoneConferenceState state);
 
 
 LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
@@ -73,7 +63,7 @@ LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *cor
 /**
  * Get the state of a conference
  */
-LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
+LinphonePrivate::LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
 
 /**
  * Set a callback which will be called when the state of the conferenec is switching
@@ -165,8 +155,8 @@ public:
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
 
-	LinphoneConferenceState getState() const {return m_state;}
-	static const char *stateToString(LinphoneConferenceState state);
+	LinphonePrivate::LinphoneConferenceState getState() const {return m_state;}
+	static const char *stateToString(LinphonePrivate::LinphoneConferenceState state);
 
 	void setID(const char *conferenceID) {
 		m_conferenceID = conferenceID;
@@ -193,7 +183,7 @@ public:
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
 protected:
-	void setState(LinphoneConferenceState state);
+	void setState(LinphonePrivate::LinphoneConferenceState state) override;
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::findParticipant;
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
@@ -204,15 +194,16 @@ protected:
 	// Temporary member to store participant,call pairs
 	// TODO: Remove once conference merge is finished
 	std::map<std::shared_ptr<LinphonePrivate::Participant>, std::shared_ptr<LinphonePrivate::Call>> m_callTable;
-	LinphoneConferenceState m_state;
+	LinphonePrivate::LinphoneConferenceState m_state;
+
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
 	void *m_userData = nullptr;
 
 	// TODO: Delete when merging with chat room
 	// TODO: Move to LinphonePrivate::Conference
-	void notifyStateChanged (LinphoneConferenceState state);
+	void notifyStateChanged (LinphonePrivate::LinphoneConferenceState state);
 	// TODO: Move to ConferenceListenerInterface and LocalConferenceHandler
-	void onStateChanged (LinphoneConferenceState state);
+	void onStateChanged (LinphonePrivate::LinphoneConferenceState state);
 };
 
 
