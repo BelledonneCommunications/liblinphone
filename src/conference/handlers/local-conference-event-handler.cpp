@@ -334,14 +334,33 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 		return;
 
 	if (handler->conf) {
+		bool allCallReleased = true;
 		for (const auto &p : handler->conf->getParticipants()) {
+printf("%s - participant %p state %s\n", __func__, p.get(), Utils::toString(p->getSession()->getState()).c_str());
 			for (const auto &d : p->getDevices()) {
+if (d->getSession()) {
+printf("%s - device %p state %s\n", __func__, d.get(), Utils::toString(d->getSession()->getState()).c_str());
+} else { printf("%s - no session for device %p\n", __func__, d.get()); }
 				if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
 					handler->conf->onFirstNotifyReceived(d->getAddress());
 					return;
 				}
 			}
+			// Search as long as one device whose session is not in released state is found
+			if (allCallReleased == true) {
+				// Find the 1st device whose call session is not in Released state
+				// If find_if returns the end of the list, it means that no device has been found
+				allCallReleased = (std::find_if(p->getDevices().cbegin(), p->getDevices().cend(), [](const std::shared_ptr<ParticipantDevice> d) { 
+					if (d->getSession()) {
+						return (d->getSession()->getState() != CallSession::State::Released);
+					} else {
+						return true;
+					}
+				 }) == p->getDevices().cend());
+			}
+printf("%s - all call released %0d\n", __func__, allCallReleased);
 		}
+printf("%s - END all call released %0d\n", __func__, allCallReleased);
 	} else {
 		lInfo() << "Unable to process event " << ev << " because conference was likely already terminated.";
 	}
