@@ -512,11 +512,20 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	manager_count++;
 }
 
-void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, const char* linphone_db, const char *lime_db) {
 	linphone_core_manager_init2(mgr, rc_file, phone_alias);
 	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
-	generate_random_database_path(mgr);
+	if (linphone_db == NULL && lime_db == NULL) {
+		generate_random_database_path(mgr);
+	} else {
+		mgr->database_path = bctbx_strdup(linphone_db);
+		mgr->lime_database_path = bctbx_strdup(lime_db);
+	}
 	linphone_core_manager_configure(mgr);
+}
+
+void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+	linphone_core_manager_init_with_db(mgr, rc_file, phone_alias, NULL, NULL);
 }
 
 void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
@@ -626,11 +635,11 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 	}
 }
 
-/* same as new but insert the rc_local in the core manager before the init */
-LinphoneCoreManager* linphone_core_manager_new_localrc(const char* rc_factory, const char* rc_local) {
+/* same as new but insert the rc_local in the core manager before the init and provide path to db files */
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
 	manager->rc_local = bctbx_strdup(rc_local);
-	linphone_core_manager_init(manager, rc_factory, NULL);
+	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db);
 	linphone_core_manager_start(manager, TRUE);
 
 	return manager;
@@ -703,7 +712,7 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 	linphone_core_manager_start(mgr, check_for_proxies);
 }
 
-void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
+void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 	int old_log_level = linphone_core_get_log_level_mask();
 	linphone_core_set_log_level(ORTP_ERROR);
 	if (mgr->phone_alias) {
@@ -715,11 +724,15 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->rc_path)
 		bctbx_free(mgr->rc_path);
 	if (mgr->database_path) {
-		unlink(mgr->database_path);
+		if (unlinkDb == TRUE) {
+			unlink(mgr->database_path);
+		}
 		bc_free(mgr->database_path);
 	}
 	if (mgr->lime_database_path) {
-		unlink(mgr->lime_database_path);
+		if (unlinkDb == TRUE) {
+			unlink(mgr->lime_database_path);
+		}
 		bc_free(mgr->lime_database_path);
 	}
 	if (mgr->app_group_id)
@@ -738,6 +751,10 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	manager_count--;
 	linphone_core_set_log_level_mask(old_log_level);
 }
+void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
+	linphone_core_manager_uninit2(mgr, TRUE);
+}
+
 
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
