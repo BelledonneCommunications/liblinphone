@@ -183,7 +183,7 @@ public:
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
 protected:
-	void setState(LinphonePrivate::LinphoneConferenceState state) override;
+	virtual void setState(LinphonePrivate::LinphoneConferenceState state) override;
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::findParticipant;
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
