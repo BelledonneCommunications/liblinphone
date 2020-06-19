@@ -333,10 +333,11 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
 		return;
 
+printf("%s - receive notify\n", __func__);
+
 	if (handler->conf) {
 		bool allCallEnded = true;
 		for (const auto &p : handler->conf->getParticipants()) {
-printf("%s - participant %p of conference %p session %p state %s\n", __func__, p.get(), handler->conf, p->getSession().get(), Utils::toString(p->getSession()->getState()).c_str());
 			// Search as long as one device whose session is not in released state is found
 			if (allCallEnded == true) {
 				// Find the 1st device whose call session is not in Released state
@@ -350,9 +351,7 @@ printf("%s - participant %p of conference %p session %p state %s\n", __func__, p
 					}
 				 }) == p->getDevices().cend());
 			}
-printf("%s - all call released %0d\n", __func__, allCallEnded);
 		}
-printf("%s - END all call released %0d\n", __func__, allCallEnded);
 
 		if (allCallEnded) {
 			handler->conf->setState(LinphoneConferenceTerminated);
@@ -361,9 +360,6 @@ printf("%s - END all call released %0d\n", __func__, allCallEnded);
 
 		for (const auto &p : handler->conf->getParticipants()) {
 			for (const auto &d : p->getDevices()) {
-if (d->getSession()) {
-printf("%s - device %p session %p state %s\n", __func__, d.get(), d->getSession().get(), Utils::toString(d->getSession()->getState()).c_str());
-} else { printf("%s - no session for device %p\n", __func__, d.get()); }
 				if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
 					handler->conf->onFirstNotifyReceived(d->getAddress());
 					return;

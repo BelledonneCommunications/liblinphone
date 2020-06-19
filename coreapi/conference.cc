@@ -89,7 +89,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	if (!p)
 		return -1;
-//	participants.remove(p);
+	participants.remove(p);
 	return 0;
 }
 
@@ -97,7 +97,7 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	if (!p)
 		return -1;
-//	participants.remove(p);
+	participants.remove(p);
 	return 0;
 }
 
@@ -215,7 +215,7 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	for (const auto &p : participants) {
 		if (participant->getAddress() == p->getAddress()) {
-//			participants.remove(p);
+			participants.remove(p);
 			return true;
 		}
 	}
@@ -442,7 +442,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	}
 	
-	if (getSize() == 0) setState(LinphoneConferenceTerminationPending);
+	if (getSize() == 0) setState(LinphoneConferenceTerminated);
 	return err;
 }
 
@@ -454,8 +454,8 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	if (!mediaSession)
 		return -1;
 
-	mediaSession->terminate();
-	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
+//	mediaSession->terminate();
+//	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
 	return Conference::removeParticipant(addr);
 }
 
@@ -473,8 +473,11 @@ int LocalConference::terminate () {
 		LinphoneCall *cCall = call->toC();
 		if (linphone_call_get_conference(cCall) == this->toC())
 			call->terminate();
+		}
 	}
-	setState(LinphoneConferenceTerminationPending);
+	if (m_state != LinphoneConferenceStopped) {
+		setState(LinphoneConferenceTerminationPending);
+	}
 	return 0;
 }
 
