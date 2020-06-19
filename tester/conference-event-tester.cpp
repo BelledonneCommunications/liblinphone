@@ -1073,11 +1073,27 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
 	int init_subscription_count = *((int *)(conf_mgr->user_info));
+
+	stats* other_participants_initial_stats = NULL;
+	bctbx_list_t *other_participants = NULL;
+	int counter = 1;
+	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		if ((m != participant_mgr) && (m != conf_mgr)) {
+			// Allocate memory
+			other_participants_initial_stats = (stats*)realloc(other_participants_initial_stats, counter * sizeof(stats));
+			// Append element
+			other_participants_initial_stats[counter - 1] = m->stat;
+			// Increment counter
+			counter++;
+			other_participants = bctbx_list_append(other_participants, m);
+		}
+	}
 
 	LinphoneCall * participantCall = linphone_core_invite_address(conf_mgr->lc, participant_mgr->identity);
 	BC_ASSERT_PTR_NOT_NULL(participantCall);
@@ -1101,6 +1117,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	int participantDeviceSize = confListener->participantDevices.size();
 
 	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
+	mgrs = bctbx_list_append(mgrs, participant_mgr);
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
@@ -1114,6 +1131,15 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *l
 	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,(init_subscription_count + 1),5000));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_NotifyReceived,(initial_participant_stats.number_of_NotifyReceived + 1),5000));
+
+	if (other_participants != NULL) {
+		int idx = 0;
+		for (bctbx_list_t *itm = other_participants; itm; itm = bctbx_list_next(itm)) {
+			LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(itm));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(other_participants_initial_stats[idx].number_of_NotifyReceived + 1),5000));
+			idx++;
+		}
+	}
 
 	// Number of subscription errors should not change as they the participant should received a notification
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,initial_conf_stats.number_of_LinphoneSubscriptionError, int, "%0d");
@@ -1182,25 +1208,24 @@ void send_added_notify_through_call() {
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
+	bctbx_list_t *mgrs = NULL;
+	mgrs = bctbx_list_append(mgrs, pauline);
+
 	char *identityStr = linphone_address_as_string(pauline->identity);
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
-//	localConf->ref();
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 
 	// Add participants
 	// Marie - call not paused
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, marie, FALSE);
+	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
 
 	// Laure - call paused
-	add_participant_to_conference_through_call(lcs, confListener, localConf, pauline, laure, TRUE);
+	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
-
-	// TODO - delete
-	wait_for_list(lcs,NULL,0,10000);
 
 	custom_mgr_destroy(pauline);
 	custom_mgr_destroy(laure);
