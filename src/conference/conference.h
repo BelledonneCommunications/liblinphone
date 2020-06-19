@@ -133,7 +133,7 @@ public:
 	// TODO: Start Delete
 	virtual void join () override;
 	// Temporary method until chat room and conference states are merged
-	virtual void setState(LinphonePrivate::LinphoneConferenceState state) { printf("%s - conf %p\n", __func__, this); };
+	virtual void setState(LinphonePrivate::LinphoneConferenceState state) { };
 	// TODO: End Delete
 
 
