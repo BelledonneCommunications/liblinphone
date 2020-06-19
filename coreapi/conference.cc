@@ -834,7 +834,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallEnd:
 			m_pendingCalls.remove(call);
 			Conference::removeParticipant(call);
-			if ((getParticipantCount() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
@@ -851,7 +851,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
 			Conference::removeParticipant(transfered);
-			if ((getParticipantCount() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
+			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
 		default:
