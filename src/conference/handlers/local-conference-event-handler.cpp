@@ -50,7 +50,6 @@ using namespace Xsd::ConferenceInfo;
 
 LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference) {
 	conf = conference;
-printf("%s - constructor getting coneference %p (original %p) \n", __func__, conf, conference);
 }
 
 // -----------------------------------------------------------------------------
@@ -356,7 +355,6 @@ printf("%s - all call released %0d\n", __func__, allCallEnded);
 printf("%s - END all call released %0d\n", __func__, allCallEnded);
 
 		if (allCallEnded) {
-printf("%s - moving coneference %p to terminated state \n", __func__, handler->conf);
 			handler->conf->setState(LinphoneConferenceTerminated);
 			return;
 		}
