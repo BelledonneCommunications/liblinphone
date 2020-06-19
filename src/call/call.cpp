@@ -375,7 +375,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (remoteContactAddress.hasParam("isfocus")) {
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, q->getLocalAddress());
 				// It is expected that the core of the remote conference is the participant one
-				remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){printf("%p - destroying remote conference\n", c); c->unref();});
+				remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 
 				#ifdef HAVE_ADVANCED_IM
 				remoteConf->eventHandler->subscribe(remoteConferenceId);
