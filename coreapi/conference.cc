@@ -455,7 +455,8 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	if (!mediaSession)
 		return -1;
 
-	//mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
+	mediaSession->terminate();
+	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
 	return Conference::removeParticipant(addr);
 }
 
