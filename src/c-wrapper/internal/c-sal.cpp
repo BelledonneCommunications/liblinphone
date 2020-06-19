@@ -181,6 +181,7 @@ SalMediaDescription * sal_media_description_ref(SalMediaDescription *md){
 }
 
 void sal_media_description_unref(SalMediaDescription *md){
+printf("%s - ptr %p ref count %0d\n", __func__, md, md->refcount);
 	md->refcount--;
 	if (md->refcount==0){
 		sal_media_description_destroy (md);
