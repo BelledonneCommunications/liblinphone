@@ -3136,19 +3136,19 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 				string name;
 				int size;
 				string path;
-				soci::indicator haveData;
 
 				*session << "SELECT name, size, path FROM chat_message_file_content"
 					" WHERE chat_message_content_id = :contentId",
-					soci::into(name, haveData), soci::into(size), soci::into(path), soci::use(contentId);
-				if( haveData == soci::i_ok) {
+					soci::into(name), soci::into(size), soci::into(path), soci::use(contentId);
+				if (session->got_data()) {
 					FileContent *fileContent = new FileContent();
 					fileContent->setFileName(name);
 					fileContent->setFileSize(size_t(size));
 					fileContent->setFilePath(path);
 					content = fileContent;
-				}else
+				} else {
 					content = new Content();
+				}
 			}
 
 			content->setContentType(contentType);
