@@ -1199,6 +1199,7 @@ void send_added_notify_through_call() {
 
 	localConf->terminate();
 
+	// TODO - delete
 	wait_for_list(lcs,NULL,0,10000);
 
 	custom_mgr_destroy(pauline);
