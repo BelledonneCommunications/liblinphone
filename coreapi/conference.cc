@@ -174,7 +174,6 @@ printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, state
 }
 
 void Conference::setState (LinphoneConferenceState state) {
-printf("%s - Switching conference [%p] into state '%s' from state %s - cb %p\n", __func__, this, stateToString(state), stateToString(m_state), m_stateChangedCb);
 	if (m_state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, stateToString(state));
 		m_state = state;
@@ -469,7 +468,6 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
-printf("%s - terminating local conference\n", __func__);
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(getCore()->getCCore())->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
@@ -483,7 +481,6 @@ printf("%s - terminating local conference\n", __func__);
 }
 
 int LocalConference::finalizeTermination () {
-printf("%s - finalize local conference\n", __func__);
 	leave();
 	Conference::terminate();
 	setState(LinphoneConferenceStopped);
