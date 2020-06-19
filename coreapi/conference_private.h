@@ -33,11 +33,6 @@
 extern "C" {
 #endif
 
-typedef enum {
-	LinphoneConferenceClassLocal,
-	LinphoneConferenceClassRemote
-} LinphoneConferenceClass;
-
 /**
  * Type of the funtion to pass as callback to linphone_conference_params_set_state_changed_callback()
  * @param conference The conference instance which the state has changed
@@ -46,19 +41,10 @@ typedef enum {
  */
 typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphonePrivate::LinphoneConferenceState new_state, void *user_data);
 
-
 /**
  * A function to converte a #LinphoneConferenceState into a string
  */
 const char *linphone_conference_state_to_string(LinphonePrivate::LinphoneConferenceState state);
-
-
-LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
-
-LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
-LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
-LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
-LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
 /**
  * Get the state of a conference
@@ -72,29 +58,6 @@ LinphonePrivate::LinphoneConferenceState linphone_conference_get_state(const Lin
  * @param user_data Pointer to pass to the user_data parameter of #LinphoneConferenceStateChangedCb
  */
 void linphone_conference_set_state_changed_callback(LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data);
-
-int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
-int linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
-int linphone_conference_terminate(LinphoneConference *obj);
-int linphone_conference_get_size(const LinphoneConference *obj);
-
-int linphone_conference_enter(LinphoneConference *obj);
-int linphone_conference_leave(LinphoneConference *obj);
-bool_t linphone_conference_is_in(const LinphoneConference *obj);
-
-/* This is actually only used by the ToneManager. TODO: encapsulate this better. */
-AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj);
-
-int linphone_conference_mute_microphone(LinphoneConference *obj, bool_t val);
-bool_t linphone_conference_microphone_is_muted(const LinphoneConference *obj);
-float linphone_conference_get_input_volume(const LinphoneConference *obj);
-
-int linphone_conference_start_recording(LinphoneConference *obj, const char *path);
-int linphone_conference_stop_recording(LinphoneConference *obj);
-
-void linphone_conference_on_call_terminating(LinphoneConference *obj, LinphoneCall *call);
-
-LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *obj, LinphoneConferenceClass _class);
 
 #ifdef __cplusplus
 }
