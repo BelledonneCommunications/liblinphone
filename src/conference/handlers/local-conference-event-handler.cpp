@@ -353,7 +353,9 @@ printf("%s - receive notify\n", __func__);
 			}
 		}
 
-		if (allCallEnded) {
+		// TODO: Implement getState in conference
+		//if (allCallEnded && (handler->conf->getState() != LinphoneConferenceStopped)) {
+		if (allCallEnded && false) {
 			handler->conf->setState(LinphoneConferenceTerminated);
 			return;
 		}
