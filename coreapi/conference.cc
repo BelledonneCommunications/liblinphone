@@ -78,7 +78,10 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address * remoteContact = static_pointer_cast<MediaSession>(call->getPrivate()->getActiveSession())->getRemoteContactAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact, call->getPrivate()->getActiveSession());
 
-	p->addDevice(*remoteContact);
+	printf("Adding participant %p - session %p\n", p.get(), call->getPrivate()->getActiveSession().get());
+
+	shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
+	device->setSession(call->getPrivate()->getActiveSession());
 	participants.push_back(p);
 //	Conference::addParticipant(call);
 	return 0;
@@ -88,7 +91,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	if (!p)
 		return -1;
-	participants.remove(p);
+//	participants.remove(p);
 	return 0;
 }
 
@@ -96,7 +99,7 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	if (!p)
 		return -1;
-	participants.remove(p);
+//	participants.remove(p);
 	return 0;
 }
 
@@ -130,9 +133,9 @@ const char *Conference::stateToString (LinphoneConferenceState state) {
 		case LinphoneConferenceStartingFailed:
 			return "Starting failed";
 		case LinphoneConferenceTerminationPending:
-			return "Ready";
+			return "Termination Pending";
 		case LinphoneConferenceTerminated:
-			return "Starting failed";
+			return "Terminated";
 		default:
 			return "Invalid state";
 	}
@@ -160,7 +163,7 @@ printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, state
 		case LinphoneConferenceRunning:
 			break;
 		case LinphoneConferenceTerminationPending:
-			setState(LinphoneConferenceTerminated);
+			//setState(LinphoneConferenceTerminated);
 			break;
 		case LinphoneConferenceTerminated:
 			finalizeTermination();
@@ -215,7 +218,7 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	for (const auto &p : participants) {
 		if (participant->getAddress() == p->getAddress()) {
-			participants.remove(p);
+//			participants.remove(p);
 			return true;
 		}
 	}
@@ -268,7 +271,9 @@ printf("%s - Creating conference [%p]\n", __func__, this);
 }
 
 LocalConference::~LocalConference() {
-	terminate();
+	if (m_state != LinphoneConferenceStopped) {
+		terminate();
+	}
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
@@ -440,7 +445,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	}
 	
-	if (getSize() == 0) setState(LinphoneConferenceStopped);
+	if (getSize() == 0) setState(LinphoneConferenceTerminationPending);
 	return err;
 }
 
@@ -463,6 +468,7 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
+printf("%s - terminating local conference\n", __func__);
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(getCore()->getCCore())->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
@@ -476,8 +482,10 @@ int LocalConference::terminate () {
 }
 
 int LocalConference::finalizeTermination () {
+printf("%s - finalize local conference\n", __func__);
 	leave();
 	Conference::terminate();
+	setState(LinphoneConferenceStopped);
 	return 0;
 }
 
