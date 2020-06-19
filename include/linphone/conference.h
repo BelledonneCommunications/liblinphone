@@ -42,6 +42,11 @@
 extern "C" {
 #endif
 
+typedef enum {
+	LinphoneConferenceClassLocal,
+	LinphoneConferenceClassRemote
+} LinphoneConferenceClass;
+
 /**
  * @addtogroup call_control
  * @{
@@ -175,6 +180,38 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
   * Set the conference id as string
   */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID);
+
+int linphone_conference_terminate(LinphoneConference *obj);
+int linphone_conference_enter(LinphoneConference *obj);
+int linphone_conference_leave(LinphoneConference *obj);
+bool_t linphone_conference_is_in(const LinphoneConference *obj);
+
+LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
+
+LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
+LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
+LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
+LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
+
+int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
+int linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
+int linphone_conference_get_size(const LinphoneConference *obj);
+
+/* This is actually only used by the ToneManager. TODO: encapsulate this better. */
+AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj);
+
+int linphone_conference_mute_microphone(LinphoneConference *obj, bool_t val);
+bool_t linphone_conference_microphone_is_muted(const LinphoneConference *obj);
+float linphone_conference_get_input_volume(const LinphoneConference *obj);
+
+int linphone_conference_start_recording(LinphoneConference *obj, const char *path);
+int linphone_conference_stop_recording(LinphoneConference *obj);
+
+void linphone_conference_on_call_terminating(LinphoneConference *obj, LinphoneCall *call);
+
+LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *obj, LinphoneConferenceClass _class);
+
+
 
 /**
  * @}
