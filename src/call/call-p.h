@@ -26,6 +26,8 @@
 #include "object/object-p.h"
 #include "utils/background-task.h"
 
+#include "conference_private.h"
+
 // TODO: Remove me later.
 #include "private.h"
 
@@ -73,6 +75,8 @@ public:
 
 	void setInputAudioDevice(AudioDevice *audioDevice);
 	void setOutputAudioDevice(AudioDevice *audioDevice);
+
+	std::shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
 
 private:
 	void requestNotifyNextVideoFrameDecoded ();
