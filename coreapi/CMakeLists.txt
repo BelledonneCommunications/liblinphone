@@ -67,6 +67,7 @@ set(LINPHONE_SOURCE_FILES_C
 	im_encryption_engine.c
 	linphonecall.c
 	linphonecore.c
+	linphoneconference.c
 	linphone_tunnel_config.c
 	localplayer.c
 	logging.c
