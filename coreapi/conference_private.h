@@ -92,14 +92,19 @@ public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference() {}
 
+
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::findParticipant;
+
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override = 0;
 
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 	virtual int removeParticipant(const IdentityAddress &addr) = 0;
-	virtual bool removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
 	virtual int terminate() = 0;
@@ -137,8 +142,6 @@ public:
 
 protected:
 	virtual void setState(LinphonePrivate::LinphoneConferenceState state) override;
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::ConferenceInterface::findParticipant;
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
 
 protected:
@@ -170,7 +173,7 @@ public:
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::MediaConference::Conference::removeParticipant;
+	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
@@ -216,8 +219,9 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
+
 	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::MediaConference::Conference::removeParticipant;
+	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override {
 		return -1;
 	}
