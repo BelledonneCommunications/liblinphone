@@ -178,10 +178,6 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
  */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 
-/************ */
-/* DEPRECATED */
-/* ********** */
-
 /**
  * Free a #LinphoneConferenceParams
  * @param params #LinphoneConferenceParams to free @notnil
@@ -189,6 +185,20 @@ LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const 
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
+
+/**
+  * Get the conference id as string
+  */
+LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *obj);
+
+/**
+  * Set the conference id as string
+  */
+LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *obj, const char *subject);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
 
 int linphone_conference_terminate(LinphoneConference *obj);
 int linphone_conference_enter(LinphoneConference *obj);
