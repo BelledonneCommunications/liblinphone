@@ -797,6 +797,19 @@ void ChatMessagePrivate::send () {
 		storeInDb();
 	}
 
+	// TODO: server currently don't stock message, remove condition in the future.
+	if (!linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
+			q->getCore()->getPrivate()->mainDb->getEventFromKey(dbKey)
+		);
+		if (!event) {
+			event = make_shared<ConferenceChatMessageEvent>(::time(nullptr), q->getSharedFromThis());
+		}
+		
+		_linphone_chat_room_notify_chat_message_sent(L_GET_C_BACK_PTR(q->getChatRoom()), L_GET_C_BACK_PTR(event));
+		linphone_core_notify_message_sent(q->getCore()->getCCore(), L_GET_C_BACK_PTR(q->getChatRoom()), L_GET_C_BACK_PTR(q->getSharedFromThis()));
+	}
+
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
 	} else {
