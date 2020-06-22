@@ -166,6 +166,13 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
 
 /**
+ * Join a participant to the conference.
+ * @param obj The #LinphoneConference object. @notnil
+ * @param uri a #LinphoneAddress that has to be added to the conference. @notnil
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_with_address (LinphoneConference *obj, const LinphoneAddress *uri);
+
+/**
  * Update parameters of the conference.
  * This is typically used enable or disable the video stream in the conference.
  * @param conf The #LinphoneConference object. @notnil
@@ -203,14 +210,29 @@ LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const 
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
 
 /**
-  * Get the conference id as string
-  */
+ * Get the conference subject
+ * @param obj the conference
+ */
 LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *obj);
 
 /**
-  * Set the conference id as string
-  */
+ * Set the conference subject
+ * @param obj the conference
+ * @param subject conference subject
+ */
 LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *obj, const char *subject);
+
+/**
+ * Get number of participants
+ * @param obj the conference
+ */
+LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *obj);
+
+/**
+ * Get the conference id
+ * @param obj the conference
+ */
+//LINPHONE_PUBLIC ConferenceId linphone_conference_get_conference_id(const LinphoneConference *obj);
 
 /************ */
 /* DEPRECATED */
