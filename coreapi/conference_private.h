@@ -155,6 +155,7 @@ protected:
 	void notifyStateChanged (LinphonePrivate::LinphoneConferenceState state);
 	// TODO: Move to ConferenceListenerInterface and LocalConferenceHandler
 	void onStateChanged (LinphonePrivate::LinphoneConferenceState state);
+
 };
 
 
@@ -193,6 +194,15 @@ public:
 
 	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
+
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr);
+	std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin);
+	std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name = "");
+	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu);
+
+	void notifyFullState ();
 
 private:
 	void addLocalEndpoint();
