@@ -1232,7 +1232,9 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	} else {
 		LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 		const LinphoneAddress *uri = linphone_call_get_remote_address(marie_call_pauline);
-		linphone_conference_remove_participant(conference, uri);
+		LinphoneParticipant * pauline_participant = linphone_conference_find_participant(conference, uri);
+		BC_ASSERT_PTR_NOT_NULL(pauline_participant);
+		linphone_conference_remove_participant(conference, pauline_participant);
 	}
 
 	if(!is_remote_conf) {
