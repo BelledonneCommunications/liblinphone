@@ -185,14 +185,6 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const
 	return nullptr;
 }
 
-const std::string &Conference::getSubject () const {
-	return *(new std::string(""));
-}
-
-void Conference::setSubject (const std::string &subject) {
-
-}
-
 void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) {
 
 }
