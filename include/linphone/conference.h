@@ -161,7 +161,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
  * @param obj The conference.
  * @param call a #LinphoneCall that has to be added to the conference.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *obj, LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 
 /**
  * Join a participant to the conference.
@@ -223,7 +223,6 @@ LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneA
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
 int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
-int linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_get_size(const LinphoneConference *obj);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
