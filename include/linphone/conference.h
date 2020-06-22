@@ -117,6 +117,23 @@ LINPHONE_PUBLIC LinphoneConference *linphone_conference_ref(LinphoneConference *
 LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
 
 /**
+ * Get URIs of all participants of one conference
+ * The returned bctbx_list_t contains URIs of all participant. That list must be
+ * freed after use and each URI must be unref with linphone_address_unref()
+ * @param conf A #LinphoneConference @notnil
+ * @return \bctbx_list{LinphoneAddress} @maybenil
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conf);
+
+/**
+ * @param obj A #LinphoneConference @notnil
+ * @param participant participant to remove
+ * @warning The passed participant must be one of those returned by linphone_conference_get_participants()
+ * @return 0 if succeeded, -1 if failed
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *obj, LinphoneParticipant *participant);
+
+/**
  * Remove a participant from a conference
  * @param conf A #LinphoneConference @notnil
  * @param uri the #LinphoneAddress of the participant to remove @notnil
@@ -126,13 +143,12 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conf, const LinphoneAddress *uri);
 
 /**
- * Get URIs of all participants of one conference
- * The returned bctbx_list_t contains URIs of all participant. That list must be
- * freed after use and each URI must be unref with linphone_address_unref()
- * @param conf A #LinphoneConference @notnil
- * @return \bctbx_list{LinphoneAddress} @maybenil
+ * Find a participant from a conference
+ * @param obj A #LinphoneConference
+ * @param uri SIP URI of the participant to search
+ * @return a pointer to the participant found or nullptr
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conf);
+LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(LinphoneConference *obj, const LinphoneAddress *uri);
 
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
