@@ -136,7 +136,6 @@ public:
 	virtual void setState(LinphonePrivate::LinphoneConferenceState state) { };
 	// TODO: End Delete
 
-
 	/* ConferenceInterface */
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 	std::shared_ptr<Participant> getMe () const override;
