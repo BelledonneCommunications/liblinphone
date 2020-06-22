@@ -333,7 +333,7 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
 		return;
 
-printf("%s - receive notify\n", __func__);
+printf("%s - receive notify - name %s from %s to %s\n", __func__, ev->name, linphone_address_as_string(linphone_event_get_from(ev)), linphone_address_as_string(linphone_event_get_resource(ev)));
 
 	if (handler->conf) {
 		bool allCallEnded = true;
@@ -354,11 +354,11 @@ printf("%s - receive notify\n", __func__);
 		}
 
 		// TODO: Implement getState in conference
-		//if (allCallEnded && (handler->conf->getState() != LinphoneConferenceStopped)) {
-		if (allCallEnded && false) {
+/*		if (allCallEnded && (handler->conf->getState() != LinphoneConferenceStopped)) {
 			handler->conf->setState(LinphoneConferenceTerminated);
 			return;
 		}
+*/
 
 		for (const auto &p : handler->conf->getParticipants()) {
 			for (const auto &d : p->getDevices()) {
