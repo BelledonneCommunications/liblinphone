@@ -399,7 +399,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	if(conference) {
 		bctbx_list_t *participants = linphone_conference_get_participants(conference);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
-		bctbx_list_free_with_data(participants, (void(*)(void *))linphone_address_unref);
+		bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 	}
 
 	if (pause_and_hangup) {
