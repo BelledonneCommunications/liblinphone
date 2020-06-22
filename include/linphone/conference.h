@@ -125,18 +125,26 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
 /**
  * Remove a participant from a conference
  * @param obj A #LinphoneConference
- * @param uri SIP URI of the participant to remove
- * @warning The passed SIP URI must be one of the URIs returned by linphone_conference_get_participants()
+ * @param participant participant to remove
+ * @warning The passed participant must be one of those returned by linphone_conference_get_participants()
  * @return 0 if succeeded, -1 if failed
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *obj, const LinphoneAddress *uri);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *obj, LinphoneParticipant *participant);
+
+/**
+ * Find a participant from a conference
+ * @param obj A #LinphoneConference
+ * @param uri SIP URI of the participant to search
+ * @return a pointer to the participant found or nullptr
+ */
+LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(LinphoneConference *obj, const LinphoneAddress *uri);
 
 /**
  * Get URIs of all participants of one conference
- * The returned bctbx_list_t contains URIs of all participant. That list must be
- * freed after use and each URI must be unref with linphone_address_unref()
+ * The returned bctbx_list_t contains all participants. That list must be
+ * freed after use and each participant must be unref with linphone_participant_unref()
  * @param obj A #LinphoneConference
- * @return \bctbx_list{LinphoneAddress}
+ * @return \bctbx_list{LinphoneParticipant}
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *obj);
 
