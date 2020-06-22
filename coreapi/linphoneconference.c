@@ -147,9 +147,10 @@ bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *ob
 	const list<std::shared_ptr<LinphonePrivate::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
 	bctbx_list_t *participants_list = nullptr;
 	for (auto it = participants.begin(); it != participants.end(); it++) {
-		const Address &addr((*it)->getAddress());
-		LinphoneAddress *uri = linphone_address_clone(L_GET_C_BACK_PTR(&addr));
-		participants_list = bctbx_list_append(participants_list, uri);
+		const std::shared_ptr<LinphonePrivate::Participant> participant((*it));
+		participant->ref();
+		LinphoneParticipant *c_participant(participant->toC());
+		participants_list = bctbx_list_append(participants_list, c_participant);
 	}
 	return participants_list;
 }
