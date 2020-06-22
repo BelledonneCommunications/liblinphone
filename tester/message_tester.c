@@ -856,7 +856,6 @@ static void transfer_message_auto_download_aborted(void) {
 
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
-	linphone_chat_message_unref(msg);
 
 	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
 	linphone_core_manager_restart(marie, TRUE);
@@ -901,6 +900,7 @@ static void transfer_message_auto_download_aborted(void) {
 		bc_free(send_filepath);
 		bc_free(receive_filepath);
 	}
+	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
