@@ -91,8 +91,12 @@ int linphone_conference_add_participant_with_call (LinphoneConference *obj, Linp
 	return MediaConference::Conference::toCpp(obj)->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(call));
 }
 
-LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(obj)->removeParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, LinphoneParticipant *participant) {
+	return MediaConference::Conference::toCpp(obj)->removeParticipant(Participant::toCpp(participant)->getSharedFromThis());
+}
+
+LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *obj, const LinphoneAddress *uri) {
+	return MediaConference::Conference::toCpp(obj)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
 }
 
 int linphone_conference_remove_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {

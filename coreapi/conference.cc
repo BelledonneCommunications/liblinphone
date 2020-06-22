@@ -197,16 +197,6 @@ std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
 	return nullptr;
 }
 
-bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
-	for (const auto &p : participants) {
-		if (participant->getAddress() == p->getAddress()) {
-			participants.remove(p);
-			return true;
-		}
-	}
-	return false;
-}
-
 bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) {
 	bool soFarSoGood = true;
 	for (const auto &p : participants)
