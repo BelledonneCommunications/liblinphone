@@ -208,7 +208,7 @@ protected:
 
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
-	unsigned int lastNotify;
+	unsigned int lastNotify = 0;
 
 private:
 	L_DISABLE_COPY(Conference);
