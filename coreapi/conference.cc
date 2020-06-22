@@ -426,9 +426,10 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	if (!mediaSession)
 		return -1;
 
-//	mediaSession->terminate();
-//	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
-	return Conference::removeParticipant(addr);
+	bool ret = Conference::removeParticipant(addr);
+	//mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
+	mediaSession->terminate();
+	return ret;
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
@@ -443,7 +444,7 @@ int LocalConference::terminate () {
 	for (auto it = calls.begin(); it != calls.end(); it++) {
 		shared_ptr<LinphonePrivate::Call> call(*it);
 		LinphoneCall *cCall = L_GET_C_BACK_PTR(call);
-printf("%s - trying to terminate call %p\n", __func__, call.get());
+printf("%s - trying to terminate call %p contact %s to %s\n", __func__, call.get(), linphone_call_get_remote_contact(cCall), linphone_address_as_string(linphone_call_get_to_address(cCall)));
 		if (linphone_call_get_conference(cCall) == this->toC()) {
 printf("%s - terminating call %p\n", __func__, call.get());
 			call->terminate();
@@ -452,6 +453,9 @@ printf("%s - terminating call %p\n", __func__, call.get());
 	if (m_state != LinphoneConferenceStopped) {
 		setState(LinphoneConferenceTerminationPending);
 	}
+
+	lInfo() << "func " << __func__ << " CONFERENCE TERMINATED!!!";
+
 	return 0;
 }
 
@@ -549,6 +553,47 @@ VideoControlInterface * LocalConference::getVideoControlInterface() const{
 AudioStream *LocalConference::getAudioStream(){
 	MS2AudioMixer *mixer = dynamic_cast<MS2AudioMixer*>(mMixerSession->getMixerByType(SalAudio));
 	return mixer ? mixer->getAudioStream() : nullptr;
+}
+
+void LocalConference::notifyFullState () {
+	++lastNotify;
+	Conference::notifyFullState();
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantAdded (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantRemoved (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, addr, isAdmin);
+}
+
+shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, addr, gruu, name);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, addr, gruu);
 }
 
 RemoteConference::RemoteConference (
