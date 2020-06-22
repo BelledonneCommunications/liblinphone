@@ -34,6 +34,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Do not notify phone number being too short in account manager anymore, our dial plan isn't precise enough to garanty phone number is invalid in this case
 - Swift wrapper is no longer compiled due to its limited binary compatibility. It is instead exported as source code to be compiled with
   the application making use of it.
+- Fixed issue where chat_message_sent callback was notified before file upload (and thus actual message send process). Use message's state_changed callback if you want to monitor sending process.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.
