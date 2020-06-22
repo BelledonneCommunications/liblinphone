@@ -121,20 +121,10 @@ public:
 	LinphonePrivate::LinphoneConferenceState getState() const {return m_state;}
 	static const char *stateToString(LinphonePrivate::LinphoneConferenceState state);
 
-	void setID(const char *conferenceID) {
-		m_conferenceID = conferenceID;
-	}
-	const char *getID() const {
-		return m_conferenceID.c_str();
-	}
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
 		m_stateChangedCb = cb;
 		m_userData = userData;
 	}
-
-	virtual const std::string &getSubject () const override;
-
-	virtual void setSubject (const std::string &subject) override;
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
@@ -152,8 +142,6 @@ protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
 
 protected:
-	std::string m_conferenceID;
-
 	LinphonePrivate::LinphoneConferenceState m_state;
 
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
