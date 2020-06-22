@@ -101,8 +101,6 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 	return confParams->setConferenceAddress(conferenceAddress);
 }
 
-
-
 shared_ptr<Participant> Conference::getMe () const {
 	return me;
 }
