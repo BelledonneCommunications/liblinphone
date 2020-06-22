@@ -174,12 +174,12 @@ LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current
 /**
   * Get the conference id as string
   */
-LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *obj);
+LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *obj);
 
 /**
   * Set the conference id as string
   */
-LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID);
+LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *obj, const char *subject);
 
 int linphone_conference_terminate(LinphoneConference *obj);
 int linphone_conference_enter(LinphoneConference *obj);
