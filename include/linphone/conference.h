@@ -191,10 +191,6 @@ LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *
 LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
 
 
-/************ */
-/* DEPRECATED */
-/* ********** */
-
 /**
  * Free a #LinphoneConferenceParams
  * @param params #LinphoneConferenceParams to free @notnil
@@ -202,6 +198,20 @@ LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
+
+/**
+  * Get the conference id as string
+  */
+LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *obj);
+
+/**
+  * Set the conference id as string
+  */
+LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *obj, const char *subject);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
 
 int linphone_conference_terminate(LinphoneConference *obj);
 int linphone_conference_enter(LinphoneConference *obj);
