@@ -83,12 +83,17 @@ const LinphoneConferenceParams * linphone_conference_get_current_params(const Li
 	return MediaConference::Conference::toCpp(obj)->getCurrentParams().toC();
 }
 
+// TODO Delete
 LinphoneStatus linphone_conference_add_participant (LinphoneConference *obj, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(obj)->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(call));
 }
 
-int linphone_conference_add_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
+LinphoneStatus linphone_conference_add_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(obj)->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(call));
+}
+
+LinphoneStatus linphone_conference_add_participant_with_address (LinphoneConference *obj, const LinphoneAddress *uri) {
+	return MediaConference::Conference::toCpp(obj)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }
 
 LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, LinphoneParticipant *participant) {
@@ -99,6 +104,7 @@ LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *
 	return MediaConference::Conference::toCpp(obj)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
 }
 
+// TODO: delete
 int linphone_conference_remove_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(obj)->removeParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(call));
 }
@@ -141,6 +147,15 @@ float linphone_conference_get_input_volume (const LinphoneConference *obj) {
 	AudioControlInterface *aci = MediaConference::Conference::toCpp(obj)->getAudioControlInterface();
 	if (!aci) return 0.0;
 	return aci->getRecordVolume();
+}
+
+/*ConferenceId linphone_conference_get_conference_id(const LinphoneConference *obj) {
+	return MediaConference::Conference::toCpp(obj)->getConferenceId();
+}
+*/
+
+int linphone_conference_get_participant_count (const LinphoneConference *obj) {
+	return MediaConference::Conference::toCpp(obj)->getParticipantCount();
 }
 
 int linphone_conference_get_size (const LinphoneConference *obj) {
