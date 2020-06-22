@@ -427,9 +427,10 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	if (!mediaSession)
 		return -1;
 
-//	mediaSession->terminate();
-//	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
-	return Conference::removeParticipant(addr);
+	bool ret = Conference::removeParticipant(addr);
+	//mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
+	mediaSession->terminate();
+	return ret;
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
@@ -451,6 +452,9 @@ int LocalConference::terminate () {
 	if (m_state != LinphoneConferenceStopped) {
 		setState(LinphoneConferenceTerminationPending);
 	}
+
+	lInfo() << "func " << __func__ << " CONFERENCE TERMINATED!!!";
+
 	return 0;
 }
 
@@ -548,6 +552,47 @@ VideoControlInterface * LocalConference::getVideoControlInterface() const{
 AudioStream *LocalConference::getAudioStream(){
 	MS2AudioMixer *mixer = dynamic_cast<MS2AudioMixer*>(mMixerSession->getMixerByType(SalAudio));
 	return mixer ? mixer->getAudioStream() : nullptr;
+}
+
+void LocalConference::notifyFullState () {
+	++lastNotify;
+	Conference::notifyFullState();
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantAdded (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantRemoved (creationTime,  isFullState, addr);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, addr, isAdmin);
+}
+
+shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, addr, gruu, name);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, addr, gruu);
 }
 
 RemoteConference::RemoteConference (
