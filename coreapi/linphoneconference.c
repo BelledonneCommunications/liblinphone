@@ -179,12 +179,12 @@ LinphoneStatus linphone_conference_invite_participants (LinphoneConference *obj,
 	return MediaConference::Conference::toCpp(obj)->inviteAddresses(toStd<const LinphoneAddress*>(addresses), params);
 }
 
-const char *linphone_conference_get_ID (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getID();
+const char *linphone_conference_get_subject (const LinphoneConference *obj) {
+	return MediaConference::Conference::toCpp(obj)->getSubject().c_str();
 }
 
-void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID) {
-	MediaConference::Conference::toCpp(obj)->setID(conferenceID);
+void linphone_conference_set_subject(LinphoneConference *obj, const char *subject) {
+	MediaConference::Conference::toCpp(obj)->setSubject(subject);
 }
 
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj){
