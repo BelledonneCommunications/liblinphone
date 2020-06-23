@@ -592,7 +592,7 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 			bctbx_vfs_set_default(bctbx_vfs_get_standard());
 			bctoolbox::VfsEncryption::openCallback_set(nullptr);
 			return;
-		case LINPHONE_VFS_ENCRYPTION_PLAIN:
+		case LINPHONE_VFS_ENCRYPTION_PLAIN: // use the encrypted VFS but write plain files
 			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to plain text");
 			module = bctoolbox::EncryptionSuite::plain;
 			break;
@@ -615,13 +615,9 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 
 	// Associate the VfsEncryption class callback
 	bctoolbox::VfsEncryption::openCallback_set([module, evfsSecret](bctoolbox::VfsEncryption &settings) { // encryption key is saved in the closure, captured by value
-		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %d", settings.filename_get().data(), static_cast<uint16_t>(module));
-		// Check if file is plain
-		if (settings.encryptionSuite_get() == bctoolbox::EncryptionSuite::plain) {
-			bctbx_message("Encrypted VFS: File %s exists and is plain, ignore vfs encryption", settings.filename_get().data());
-			return;
-		}
-		settings.encryptionSuite_set(module);
+		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s", settings.filename_get().data(), encryptionSuiteString(module).data());
+
+		settings.encryptionSuite_set(module); // This call will migrate plain files to encrypted ones is needed
 		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
 			settings.secretMaterial_set(evfsSecret);
 		}
