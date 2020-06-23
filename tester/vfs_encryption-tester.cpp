@@ -23,6 +23,7 @@
 #include "tester_utils.h"
 #include "linphone/wrapper_utils.h"
 #include "liblinphone_tester.h"
+#include "bctoolbox/vfs_encrypted.hh" // included for testing purpose, we could use encryption without it from a C file
 #include <iostream>
 #include <fstream>
 
@@ -47,7 +48,7 @@ static bool is_encrypted(const char *filepath) {
 }
 
 static void enable_encryption(const uint16_t encryptionModule) {
-	// enable encryption
+	// enable encryption. The call to linphone_factory_set_vfs_encryption will set the VfsEncryption class callback
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
 		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_PLAIN, NULL, 0);
 	} else if (encryptionModule == LINPHONE_VFS_ENCRYPTION_DUMMY) {
@@ -58,6 +59,19 @@ static void enable_encryption(const uint16_t encryptionModule) {
 					0x5a, 0xa5, 0x5F, 0xaF, 0x52, 0xa4, 0xa6, 0x58, 0xaa, 0x5c, 0xae, 0x50, 0xa1, 0x52, 0xa3, 0x54};
 		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32);
 	}
+
+
+	// For testing purpose, we must prevent the encryption of factory files, chain the VfsEncryption class callback with some filter
+	auto currentVfsCb = bctoolbox::VfsEncryption::openCallback_get();
+	bctoolbox::VfsEncryption::openCallback_set([currentVfsCb](bctoolbox::VfsEncryption &settings){
+				  // prevent the encryption of any file with filename ending with _rc
+				  auto filename = settings.filename_get();
+				  if (filename.compare (filename.size()-3, 3, std::string{"_rc"}) == 0) { // This is a factory file, do not encrypt it
+					settings.encryptionSuite_set(bctoolbox::EncryptionSuite::plain);
+				  } else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)
+					currentVfsCb(settings);
+				  }
+				  });
 }
 
 // when call with create users set to false, unlink all config files at the end of the test
@@ -149,21 +163,21 @@ static void register_user_test(void) {
 	bctbx_free(id);
 }
 
-static void zrtp_call(const uint16_t encryptionModule, const char *random_id, const bool createUsers) {
+static void zrtp_call(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_zrtp_call_") {
 	enable_encryption(encryptionModule);
 
 	// create a user Marie
 	LinphoneCoreManager* marie;
-	auto local_filename = bctbx_strdup_printf("evfs_zrtp_call_marie_rc_%s", random_id);
+	auto local_filename = bctbx_strdup_printf("%s_marie_rc_%s", basename.data(), random_id);
 	auto marie_rc = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_marie_ZIDcache_%s", random_id);
+	local_filename = bctbx_strdup_printf("%s_marie_ZIDcache_%s", basename.data(), random_id);
 	auto marie_zidCache = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_marie_linphone_%s.db", random_id);
+	local_filename = bctbx_strdup_printf("%s_marie_linphone_%s.db", basename.data(), random_id);
 	auto marie_linphone_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_marie_lime_%s.db", random_id);
+	local_filename = bctbx_strdup_printf("%s_marie_lime_%s.db", basename.data(), random_id);
 	auto marie_lime_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
 	if (createUsers == true) { // creating users, make sure we do not reuse local files
@@ -180,16 +194,16 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 
 	// create user Pauline
 	LinphoneCoreManager* pauline;
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_pauline_rc_%s", random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline_rc_%s", basename.data(), random_id);
 	auto pauline_rc = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_pauline_ZIDcache_%s", random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline_ZIDcache_%s", basename.data(), random_id);
 	auto pauline_zidCache = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_pauline_linphone_%s.db", random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline_linphone_%s.db", basename.data(), random_id);
 	auto pauline_linphone_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("evfs_zrtp_call_pauline_lime_%s.db", random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline_lime_%s.db", basename.data(), random_id);
 	auto pauline_lime_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
 	if (createUsers == true) { // creating users, make sure we do not reuse local files
@@ -299,9 +313,29 @@ static void zrtp_call_test(void) {
 	bctbx_free(id);
 }
 
+
+// run a ZRTP call, first using plain files
+// then run again but using VFS encrypted: files should automatically migrate
+static void migration_test(void) {
+	char random_id[8];
+	char *id;
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_PLAIN, id, true, "evfs_migration");
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_DUMMY, id, false, "evfs_migration");
+	bctbx_free(id);
+
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_PLAIN, id, true, "evfs_migration");
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false, "evfs_migration");
+	bctbx_free(id);
+}
+
 test_t vfs_encryption_tests[] = {
 	TEST_NO_TAG("Register user", register_user_test),
-	TEST_NO_TAG("ZRTP call", zrtp_call_test)
+	TEST_NO_TAG("ZRTP call", zrtp_call_test),
+	TEST_NO_TAG("Migration", migration_test)
 };
 
 test_suite_t vfs_encryption_test_suite = {
