@@ -241,7 +241,7 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 void linphone_core_real_time_text_received(LinphoneCore *lc, LinphoneChatRoom *cr, uint32_t character, LinphoneCall *call) {
 	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
 		return;
-	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->realtimeTextReceived(character, L_GET_CPP_PTR_FROM_C_OBJECT(call));
+	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->realtimeTextReceived(character, LinphonePrivate::Call::toCpp(call)->getSharedFromThis());
 }
 
 unsigned int linphone_chat_message_store(LinphoneChatMessage *msg) {

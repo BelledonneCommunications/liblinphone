@@ -201,6 +201,7 @@ class CoreManagerStats:
         self.number_of_auth_info_requested = 0
 
         self.number_of_LinphoneCallIncomingReceived = 0
+        self.number_of_LinphoneCallPushIncomingReceived = 0
         self.number_of_LinphoneCallOutgoingInit = 0
         self.number_of_LinphoneCallOutgoingProgress = 0
         self.number_of_LinphoneCallOutgoingRinging = 0

@@ -29,7 +29,7 @@
 #include "conference_private.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
 #include "conference/session/mixers.h"
@@ -212,7 +212,7 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 		case LinphoneCallOutgoingProgress:
 		case LinphoneCallIncomingReceived:
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+				L_GET_PRIVATE(Call::toCpp(call)->getParams()))->setInConference(true);
 		break;
 		case LinphoneCallPaused:
 			/*
@@ -220,9 +220,9 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 			 * However, the resume() method doesn't accept parameters.
 			 */
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(true);
+				L_GET_PRIVATE(Call::toCpp(call)->getParams()))->setInConference(true);
 			const_cast<LinphonePrivate::MediaSessionParams *>(
-				L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams())->enableVideo(getCurrentParams().videoEnabled());
+			Call::toCpp(call)->getParams())->enableVideo(getCurrentParams().videoEnabled());
 			linphone_call_resume(call);
 		break;
 		case LinphoneCallStreamsRunning:
@@ -245,7 +245,7 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 	if (call == linphone_core_get_current_call(m_core))
 		L_GET_PRIVATE_FROM_C_OBJECT(m_core)->setCurrentCall(nullptr);
 	_linphone_call_set_conf_ref(call, toC());
-	mMixerSession->joinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
+	mMixerSession->joinStreamsGroup(Call::toCpp(call)->getMediaSession()->getStreamsGroup());
 	Conference::addParticipant(call);
 	if (starting) setState(LinphoneConferenceRunning);
 	if (localEndpointCanBeAdded){
@@ -269,15 +269,16 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		lError() << "Call " << call << " is not part of conference " << this->toC();
 		return -1;
 	}
+
 	if (remoteParticipantsCount() >= 2){
 		/* Kick the call out of the conference by moving to the Paused state. */
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(false);
+				L_GET_PRIVATE(Call::toCpp(call)->getParams()))->setInConference(false);
 		err = _linphone_call_pause(call);
 	}
 	
 	Conference::removeParticipant(call);
-	mMixerSession->unjoinStreamsGroup(L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call))->getMediaSession()->getStreamsGroup());
+	mMixerSession->unjoinStreamsGroup(Call::toCpp(call)->getMediaSession()->getStreamsGroup());
 	_linphone_call_set_conf_ref(call, nullptr);
 	/* 
 	 * Handle the case where only the local participant and a unique remote participant are remaining.
@@ -288,7 +289,7 @@ int LocalConference::removeParticipant (LinphoneCall *call) {
 		/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 		 * but it should contains all participants ideally.*/
 		LinphoneCall *remaining_call = (*m_participants.begin())->getCall();
-		lInfo() << "Call [" << remaining_call << "] with " << L_GET_CPP_PTR_FROM_C_OBJECT(remaining_call)->getRemoteAddress().asString() << 
+		lInfo() << "Call [" << remaining_call << "] with " << Call::toCpp(remaining_call)->getRemoteAddress()->asString() <<
 			" is our last call in our conference, we will reconnect directly to it.";
 		LinphoneCallParams *params = linphone_core_create_call_params(m_core, remaining_call);
 		linphone_call_params_set_in_conference(params, FALSE);
@@ -320,7 +321,7 @@ int LocalConference::terminate () {
 	list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(m_core)->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
 		shared_ptr<LinphonePrivate::Call> call(*it);
-		LinphoneCall *cCall = L_GET_C_BACK_PTR(call);
+		LinphoneCall *cCall = call->toC();
 		if (linphone_call_get_conference(cCall) == this->toC())
 			call->terminate();
 	}
@@ -702,23 +703,20 @@ void RemoteConference::transferStateChanged (LinphoneCore *lc, LinphoneCall *tra
 
 AudioControlInterface * RemoteConference::getAudioControlInterface() const{
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	return ms->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 }
 
 VideoControlInterface * RemoteConference::getVideoControlInterface() const{
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	return ms->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 }
 
 
 AudioStream *RemoteConference::getAudioStream(){
 	if (!m_focusCall) return nullptr;
-	CallPrivate *callPriv = L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(m_focusCall));
-	shared_ptr<MediaSession> ms = callPriv->getMediaSession();
+	shared_ptr<MediaSession> ms = Call::toCpp(m_focusCall)->getMediaSession();
 	MS2AudioStream *stream = ms->getStreamsGroup().lookupMainStreamInterface<MS2AudioStream>(SalAudio);
 	return stream ? (AudioStream*)stream->getMediaStream() : nullptr;
 }

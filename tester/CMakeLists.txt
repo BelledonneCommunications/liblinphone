@@ -211,6 +211,7 @@ set(SOURCE_FILES_C
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_single_tester.c
+	call_push_incoming_tester.c
 	call_video_tester.c
 	call_recovery_tester.c
 	call_ice_tester.c

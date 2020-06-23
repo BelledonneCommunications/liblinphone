@@ -2938,6 +2938,24 @@ LINPHONE_PUBLIC void linphone_core_set_inc_timeout(LinphoneCore *lc, int seconds
 LINPHONE_PUBLIC int linphone_core_get_inc_timeout(LinphoneCore *lc);
 
 /**
+ * Configure the minimum interval between a push notification and the corresponding incoming INVITE.
+ * If exceeded, Linphone Call is transitioned to CallError and further incoming invite associated to this push is declined if any.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] seconds The new timeout in seconds
+ * @ingroup call_control
+**/
+LINPHONE_PUBLIC void linphone_core_set_push_incoming_call_timeout(LinphoneCore *lc, int seconds);
+
+/**
+ * Returns the push incoming call timeout
+ * See linphone_core_set_push_incoming_call_timeout() for details.
+ * @param[in] lc #LinphoneCore object
+ * @return The current push incoming call timeout in seconds
+ * @ingroup call_control
+**/
+LINPHONE_PUBLIC int linphone_core_get_push_incoming_call_timeout(const LinphoneCore *lc);
+
+/**
  * Set the in call timeout in seconds.
  * After this timeout period, the call is automatically hangup.
  * @param[in] lc #LinphoneCore object
@@ -4580,6 +4598,15 @@ LINPHONE_PUBLIC int linphone_core_get_calls_nb(const LinphoneCore *lc);
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc);
+
+/**
+ * Get the call by callid.
+ * @param[in] lc The #LinphoneCore object
+ * @param[in] callid of call
+ * @return call #LinphoneCall , return null if there is no call find
+ * @ingroup call_control
+**/
+LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_callid(const LinphoneCore *lc, const char *call_id);
 
 LINPHONE_PUBLIC LinphoneGlobalState linphone_core_get_global_state(const LinphoneCore *lc);
 

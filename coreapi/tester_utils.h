@@ -89,7 +89,6 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_cbs_set_auth_info_request
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* obj);
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddress *b);
 
-LINPHONE_PUBLIC LinphoneCallLog *linphone_call_get_log(const LinphoneCall *call);
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_call_get_dest_proxy(const LinphoneCall *call);
@@ -272,6 +271,11 @@ LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal);
 LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referto));
 
 LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
+
+LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
+LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
 #endif
 
