@@ -21,7 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
-project(linphone VERSION 4.4.0 LANGUAGES C CXX)
+project(linphone VERSION 4.5.0 LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
