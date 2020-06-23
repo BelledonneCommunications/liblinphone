@@ -50,7 +50,7 @@ class PushNotificationMessage;
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
 	friend class BasicToClientGroupChatRoomPrivate;
-	friend class CallPrivate;
+	friend class Call;
 	friend class CallSession;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
@@ -102,6 +102,7 @@ public:
 
 	bool areSoundResourcesLocked () const;
 	std::shared_ptr<Call> getCallByRemoteAddress (const Address &addr) const;
+	std::shared_ptr<Call> getCallByCallId (const std::string &callId) const;
 	const std::list<std::shared_ptr<Call>> &getCalls () const;
 	unsigned int getCallCount () const;
 	std::shared_ptr<Call> getCurrentCall () const;

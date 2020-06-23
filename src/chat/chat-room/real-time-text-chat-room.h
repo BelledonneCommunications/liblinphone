@@ -26,11 +26,10 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Call;
 class RealTimeTextChatRoomPrivate;
 
 class LINPHONE_PUBLIC RealTimeTextChatRoom : public BasicChatRoom {
-	friend class CallPrivate;
+	friend class Call;
 	friend class CorePrivate;
 
 public:

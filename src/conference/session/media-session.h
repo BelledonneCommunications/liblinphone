@@ -28,7 +28,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallPrivate;
 class Core;
 class IceAgent;
 class MediaSessionPrivate;
@@ -37,7 +36,6 @@ class StreamsGroup;
 
 class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class Call;
-	friend class CallPrivate;
 	friend class IceAgent;
 	friend class ToneManager;
 	friend class Stream;
@@ -84,7 +82,7 @@ public:
 	void enableEchoLimiter (bool value);
 	bool getAllMuted () const;
 	LinphoneCallStats * getAudioStats () const;
-	std::string getAuthenticationToken () const;
+	const std::string &getAuthenticationToken () const;
 	bool getAuthenticationTokenVerified () const;
 	float getAverageQuality () const;
 	MediaSessionParams *getCurrentParams () const;

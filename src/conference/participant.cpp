@@ -35,11 +35,18 @@ LINPHONE_BEGIN_NAMESPACE
 shared_ptr<CallSession> ParticipantPrivate::createSession (
 	const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
 ) {
+	session = createSession(conference.getCore(), params, hasMedia, listener);
+	return session;
+}
+
+shared_ptr<CallSession> ParticipantPrivate::createSession (
+	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
+) {
 	L_Q();
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(conference.getCore(), q->getSharedFromThis(), params, listener);
+		session = make_shared<MediaSession>(core, q->getSharedFromThis(), params, listener);
 	} else {
-		session = make_shared<CallSession>(conference.getCore(), params, listener);
+		session = make_shared<CallSession>(core, params, listener);
 	}
 	return session;
 }
@@ -92,6 +99,13 @@ void ParticipantPrivate::removeDevice (const IdentityAddress &gruu) {
 // =============================================================================
 
 Participant::Participant (Conference *conference, const IdentityAddress &address) : Object(*new ParticipantPrivate) {
+	configure(conference, address);
+}
+
+Participant::Participant () : Object(*new ParticipantPrivate) {
+}
+
+void Participant::configure (Conference *conference, const IdentityAddress &address) {
 	L_D();
 	d->mConference = conference;
 	d->addr = address.getAddressWithoutGruu();
