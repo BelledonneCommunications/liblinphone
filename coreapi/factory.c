@@ -588,12 +588,19 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 	/* Check encryptionMpdule is valid */
 	auto module = bctoolbox::EncryptionSuite::unset;
 	switch (encryptionModule) {
+		case LINPHONE_VFS_ENCRYPTION_UNSET: // do not use the encrypted VFS
+			bctbx_vfs_set_default(bctbx_vfs_get_standard());
+			bctoolbox::VfsEncryption::openCallback_set(nullptr);
+			return;
 		case LINPHONE_VFS_ENCRYPTION_PLAIN:
 			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to plain text");
 			module = bctoolbox::EncryptionSuite::plain;
 			break;
 		case LINPHONE_VFS_ENCRYPTION_DUMMY:
 			module = bctoolbox::EncryptionSuite::dummy;
+			break;
+		case LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256:
+			module = bctoolbox::EncryptionSuite::aes256gcm128_sha256;
 			break;
 		default:
 			bctbx_error("linphone_factory_set_vfs_encryption : encryptionModule %04x unknown", encryptionModule);
