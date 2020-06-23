@@ -24,6 +24,7 @@
 #include "address/address-p.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
+#include "bctoolbox/crypto.h"
 #include "bctoolbox/sqlite3_vfs.h"
 
 // TODO: From coreapi. Remove me later.
@@ -65,6 +66,8 @@ struct _LinphoneFactory {
 	char *cached_msplugins_dir;
 	LinphoneErrorInfo* ei;
 
+	/* the EVFS encryption key */
+	std::shared_ptr<std::vector<uint8_t>> evfs_master_key; // use a shared_ptr as _LinphoneFactory is not really an object and vector destructor end up never being called otherwise
 	void *user_data;
 };
 
@@ -86,6 +89,12 @@ static void linphone_factory_uninit(LinphoneFactory *obj){
 
 	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
 	sqlite3_bctbx_vfs_unregister();
+
+	// proper cleaning of EVFS master key if any is set
+	if (obj->evfs_master_key != nullptr) {
+		bctbx_clean(obj->evfs_master_key->data(), obj->evfs_master_key->size());
+		obj->evfs_master_key = nullptr;
+	}
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
@@ -143,6 +152,7 @@ static LinphoneFactory *linphone_factory_new(void){
 	/* register the bctbx sqlite vfs. It is not used by default */
 	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
 	sqlite3_bctbx_vfs_register(0);
+	factory->evfs_master_key = nullptr;
 	return factory;
 }
 
@@ -607,19 +617,22 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 			return;
 	}
 
-	/* save the key. TODO: store it in the factory object so we can properly delete it */
-	std::vector<uint8_t> evfsSecret{secret, secret+secretSize};
+	/* save the key */
+	if (factory->evfs_master_key != nullptr) {
+		bctbx_clean(factory->evfs_master_key->data(), factory->evfs_master_key->size());
+	}
+	factory->evfs_master_key = std::make_shared<std::vector<uint8_t>>(secret, secret+secretSize);
 
 	// Set the default bctbx vfs to the encrypted one
 	bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
 
 	// Associate the VfsEncryption class callback
-	bctoolbox::VfsEncryption::openCallback_set([module, evfsSecret](bctoolbox::VfsEncryption &settings) { // encryption key is saved in the closure, captured by value
+	bctoolbox::VfsEncryption::openCallback_set([module](bctoolbox::VfsEncryption &settings) {
 		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s", settings.filename_get().data(), encryptionSuiteString(module).data());
 
 		settings.encryptionSuite_set(module); // This call will migrate plain files to encrypted ones is needed
 		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
-			settings.secretMaterial_set(evfsSecret);
+			settings.secretMaterial_set(*(linphone_factory_get()->evfs_master_key));
 		}
 	});
 }
