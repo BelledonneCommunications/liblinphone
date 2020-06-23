@@ -429,8 +429,10 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	if (!chatRoom) return NULL;
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats->number_of_LinphoneChatRoomStateInstantiated + 1, 100));
-	if (encrypted)
+	if (encrypted) {
+		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(chatRoom), LinphoneChatRoomSecurityLevelEncrypted, LinphoneChatRoomSecurityLevel, "%i");
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
+	}
 
 	// Check that the chat room is correctly created on Marie's side and that the participants are added
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats->number_of_LinphoneChatRoomStateCreationPending + 1, 5000));

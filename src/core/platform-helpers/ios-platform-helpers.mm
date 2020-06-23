@@ -397,7 +397,7 @@ void IosPlatformHelpers::stopNetworkMonitoring(void) {
 		CFRelease(reachabilityRef);
 		reachabilityRef = NULL;
 	}
-	CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(), (void *) this, CFSTR("com.apple.system.config.network_change"), NULL);
+	CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(), (void *) this, CFSTR(kNotifySCNetworkChange), NULL);
 }
 
 //This callback keeps tracks of wifi SSID changes
@@ -406,8 +406,8 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 		return;
 	}
 	IosPlatformHelpers *iosHelper = (IosPlatformHelpers *) observer;
-	//Important: actual actions on core and possibly on UI are to be taken from main thread
-	dispatch_async(dispatch_get_main_queue(), ^{
+
+	iosHelper->getCore()->doLater([iosHelper] () {
 		iosHelper->networkChangeCallback();
 	});
 }

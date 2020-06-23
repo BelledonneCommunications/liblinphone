@@ -36,6 +36,7 @@ int SalRegisterOp::sendRegister (const string &proxy, const string &from, int ex
 	setTo(from);
 	setRoute(proxy);
 	auto request = buildRequest("REGISTER");
+	if (request == nullptr) return -1;
 	auto requestUri = belle_sip_request_get_uri(request);
 	belle_sip_uri_set_user(requestUri, nullptr); // Remove userinfo if there is any
 	if (mRoot->mUseDates) {

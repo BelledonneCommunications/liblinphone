@@ -505,10 +505,13 @@ LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_n
 			if (plan->isGeneric()) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
 			}
-			if (size < plan->getNationalNumberLength() - 1) {
+			// DO NOT NOTIFY ABOUT PHONE NUMBER BEING TOO SHORT,
+			// OUR DIAL PLAN IMPLEMENTATION ISNT PRECISE ENOUGH TO GARANTY
+			// THE PHONE NUMBER IS INVALID
+			/*if (size < plan->getNationalNumberLength() - 1) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusTooShort;
 				goto end;
-			} else if (size > plan->getNationalNumberLength() + 1) {
+			} else*/ if (size > plan->getNationalNumberLength() + 1) {
 				return_status = LinphoneAccountCreatorPhoneNumberStatusTooLong;
 				goto end;
 			} else if (return_status & LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode) {

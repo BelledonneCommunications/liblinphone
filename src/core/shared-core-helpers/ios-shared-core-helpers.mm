@@ -212,7 +212,7 @@ static void on_push_notification_message_received(LinphoneCore *lc, LinphoneChat
 
 void IosSharedCoreHelpers::registerSharedCoreMsgCallback() {
 	if (isCoreShared()) {
-		lInfo() << "[push] register main core msg callback";
+		lInfo() << "[push] register shared core msg callback";
 		LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 		linphone_core_cbs_set_message_received(cbs, on_push_notification_message_received);
 		linphone_core_add_callbacks(getCore()->getCCore(), cbs);
@@ -221,6 +221,10 @@ void IosSharedCoreHelpers::registerSharedCoreMsgCallback() {
 }
 
 void IosSharedCoreHelpers::onLinphoneCoreStop() {
+	lInfo() << "[SHARED] " << __FUNCTION__;
+   	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
+	CFNotificationCenterRemoveObserver(notification, (__bridge const void *)(this), CFSTR(ACTIVE_SHARED_CORE), NULL);
+
 	if (isCoreShared()) {
 		CFRunLoopTimerInvalidate(mUnlockTimer);
 		lInfo() << "[SHARED] stop timer";
@@ -698,8 +702,13 @@ void IosSharedCoreHelpers::setSharedCoreState(SharedCoreState sharedCoreState) {
 }
 
 void IosSharedCoreHelpers::setSharedCoreState(SharedCoreState sharedCoreState, const string &appGroupId) {
-	userDefaultMutex.lock();
 	lInfo() << "[SHARED] setSharedCoreState state: " << sharedStateToString(sharedCoreState);
+	if (appGroupId.empty()) {
+		lInfo() << "[SHARED] unable to setSharedCoreState state: appGroupId empty";
+		return;
+	}
+
+	userDefaultMutex.lock();
     NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(appGroupId.c_str())];
     [defaults setInteger:sharedCoreState forKey:@ACTIVE_SHARED_CORE];
 	[defaults release];
@@ -789,7 +798,9 @@ void on_core_must_stop(CFNotificationCenterRef center, void *observer, CFStringR
 
 void IosSharedCoreHelpers::onCoreMustStop() {
 	lInfo() << "[SHARED] " << __FUNCTION__;
-	setSharedCoreState(SharedCoreState::executorCoreStopping);
+	if (getSharedCoreState() != SharedCoreState::executorCoreStopping) {
+		setSharedCoreState(SharedCoreState::executorCoreStopping);
+	}
 }
 
 // -----------------------------------------------------------------------------
