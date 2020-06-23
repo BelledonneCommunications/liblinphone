@@ -379,6 +379,12 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
 		return AbstractChatRoom::SecurityLevel::ClearText;
 	}
+	
+	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
+	if (getParticipants().size() == 0 && getMe()->getPrivate()->getDevices().size() == 0) {
+		lInfo() << "Chatroom SecurityLevel = Encrypted";
+		return AbstractChatRoom::SecurityLevel::Encrypted;
+	}
 
 	bool isSafe = true;
 	// check other participants

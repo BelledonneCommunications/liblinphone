@@ -355,6 +355,12 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 		return true;
 	}
 	if (getState() == Stream::Running){
+		if (getMediaSessionPrivate().getCurrentParams()->getPrivate()->getInConference() != getMediaSessionPrivate().getParams()->getPrivate()->getInConference()){
+			lInfo() << "Stream needs to be restarted because of a change in its conference membership attribute.";
+			lInfo() << "Will become joined to a conference: " << (getMediaSessionPrivate().getParams()->getPrivate()->getInConference() ? "yes" : "no");
+			stop();
+			return false;
+		}
 		int changesToHandle = params.resultStreamDescriptionChanges;
 		if (params.resultStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED){
 			updateDestinations(params);

@@ -252,7 +252,7 @@ static void local_email_ok(void) {
 
 ////// PHONE NUMBER //////
 
-static void local_phone_number_too_short(void) {
+/*static void local_phone_number_too_short(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
@@ -264,7 +264,7 @@ static void local_phone_number_too_short(void) {
 
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
-}
+}*/
 
 static void local_phone_number_too_long(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
@@ -979,7 +979,6 @@ static void server_create_account_with_phone_number_arg_username_missing(void) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
-	linphone_account_creator_set_phone_number(creator, "0123456", "33");
 	linphone_account_creator_set_password(creator, "password");
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
@@ -1302,7 +1301,6 @@ static void server_activate_account_with_phone_number_activated_arg_username_mis
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
 	linphone_account_creator_set_activation_code(creator, "123456789");
-	linphone_account_creator_set_phone_number(creator, "0123456", "33");
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -2037,7 +2035,6 @@ static void server_update_account_password_arg_username_missing(void) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
 
-	linphone_account_creator_set_phone_number(creator, "0123456", "33");
 	linphone_account_creator_set_password(creator, "password");
 	linphone_account_creator_set_user_data(creator, "newpassword");
 
@@ -2404,10 +2401,10 @@ test_t account_creator_tests[] = {
 		"Local - Email Ok",
 		local_email_ok,
 		"Local"),
-	TEST_ONE_TAG(
+	/*TEST_ONE_TAG(
 		"Local - Phone number too short",
 		local_phone_number_too_short,
-		"Local"),
+		"Local"),*/
 	TEST_ONE_TAG(
 		"Local - Phone number too long",
 		local_phone_number_too_long,
