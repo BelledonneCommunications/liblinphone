@@ -97,7 +97,7 @@
 #endif
 
 #include "c-wrapper/c-wrapper.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "conference/params/media-session-params-p.h"
 
 #include "sal/sal.h"
@@ -1587,6 +1587,9 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	tmp=lp_config_get_int(lc->config,"sip","inc_timeout",30);
 	linphone_core_set_inc_timeout(lc,tmp);
+
+	tmp=lp_config_get_int(lc->config,"sip","push_incoming_call_timeout",15);
+	lc->sip_conf.push_incoming_call_timeout = tmp;
 
 	tmp=lp_config_get_int(lc->config,"sip","in_call_timeout",0);
 	linphone_core_set_in_call_timeout(lc,tmp);
@@ -3317,8 +3320,8 @@ bool_t linphone_core_get_rtp_no_xmit_on_audio_mute(const LinphoneCore *lc){
 static void apply_jitter_value(LinphoneCore *lc, int value, MSFormatType stype){
 	for (const auto &call : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls()) {
 		MediaStream *ms = (stype == MSAudio)
-			? L_GET_PRIVATE(call)->getMediaStream(LinphoneStreamTypeAudio)
-			: L_GET_PRIVATE(call)->getMediaStream(LinphoneStreamTypeVideo);
+			? call->getMediaStream(LinphoneStreamTypeAudio)
+			: call->getMediaStream(LinphoneStreamTypeVideo);
 		if (ms) {
 			RtpSession *s=ms->sessions.rtp_session;
 			if (s){
@@ -3927,9 +3930,9 @@ const char * linphone_core_get_route(LinphoneCore *lc){
 }
 
 LinphoneCall * linphone_core_start_refered_call(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
-	shared_ptr<LinphonePrivate::Call> referredCall = L_GET_PRIVATE_FROM_C_OBJECT(call)->startReferredCall(params
+	shared_ptr<LinphonePrivate::Call> referredCall = Call::toCpp(call)->startReferredCall(params
 		? L_GET_CPP_PTR_FROM_C_OBJECT(params) : nullptr);
-	return L_GET_C_BACK_PTR(referredCall);
+	return referredCall->toC();
 }
 
 /*
@@ -4188,7 +4191,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 	call=linphone_call_new_outgoing(lc,parsed_url2,addr,cp,proxy);
 	linphone_address_unref(parsed_url2);
 
-	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(L_GET_CPP_PTR_FROM_C_OBJECT(call)) != 0) {
+	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::toCpp(call)->getSharedFromThis()) != 0) {
 		ms_warning("we had a problem in adding the call into the invite ... weird");
 		linphone_call_unref(call);
 		linphone_call_params_unref(cp);
@@ -4197,10 +4200,10 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 
 	/* Unless this call is for a conference, it becomes now the current one*/
 	if (linphone_call_params_get_local_conference_mode(params) ==  FALSE)
-		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(L_GET_CPP_PTR_FROM_C_OBJECT(call));
-	bool defer = L_GET_PRIVATE_FROM_C_OBJECT(call)->initiateOutgoing();
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
+	bool defer = Call::toCpp(call)->initiateOutgoing();
 	if (!defer) {
-		if (L_GET_PRIVATE_FROM_C_OBJECT(call)->startInvite(nullptr) != 0) {
+		if (Call::toCpp(call)->startInvite(nullptr) != 0) {
 			/* The call has already gone to error and released state, so do not return it */
 			call = nullptr;
 		}
@@ -4311,8 +4314,13 @@ const bctbx_list_t *linphone_core_get_calls(LinphoneCore *lc) {
 		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 		lc->callsCache = NULL;
 	}
-	lc->callsCache = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls());
+	lc->callsCache = Call::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls());
 	return lc->callsCache;
+}
+
+LinphoneCall *linphone_core_get_call_by_callid(const LinphoneCore *lc, const char *call_id) {
+	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByCallId(call_id);
+	return call ? call->toC() : NULL;
 }
 
 bool_t linphone_core_in_call(const LinphoneCore *lc){
@@ -4321,7 +4329,7 @@ bool_t linphone_core_in_call(const LinphoneCore *lc){
 
 LinphoneCall *linphone_core_get_current_call(const LinphoneCore *lc) {
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCurrentCall();
-	return call ? L_GET_C_BACK_PTR(call) : NULL;
+	return call ? call->toC() : NULL;
 }
 
 LinphoneStatus linphone_core_pause_call(LinphoneCore *lc, LinphoneCall *call) {
@@ -4344,7 +4352,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 	current_call=linphone_core_get_current_call(lc);
 	if(current_call != NULL){
 		ms_message("Pausing automatically the current call.");
-		err = L_GET_CPP_PTR_FROM_C_OBJECT(current_call)->pause();
+		err = Call::toCpp(current_call)->pause();
 	}
 	return err;
 }
@@ -4369,7 +4377,7 @@ LinphoneCall *linphone_core_find_call_from_uri(const LinphoneCore *lc, const cha
 
 LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *lc, const LinphoneAddress *raddr) {
 	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCallByRemoteAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(raddr));
-	return call ? L_GET_C_BACK_PTR(call) : NULL;
+	return call ? call->toC() : NULL;
 }
 
 int linphone_core_send_publish(LinphoneCore *lc, LinphonePresenceModel *presence) {
@@ -4390,6 +4398,17 @@ void linphone_core_set_inc_timeout(LinphoneCore *lc, int seconds){
 
 int linphone_core_get_inc_timeout(LinphoneCore *lc){
 	return lc->sip_conf.inc_timeout;
+}
+
+void linphone_core_set_push_incoming_call_timeout(LinphoneCore *lc, int seconds) {
+	lc->sip_conf.push_incoming_call_timeout=seconds;
+	if (linphone_core_ready(lc)){
+		lp_config_set_int(lc->config,"sip","push_incoming_call_timeout",seconds);
+	}
+}
+
+int linphone_core_get_push_incoming_call_timeout(const LinphoneCore *lc) {
+	return lc->sip_conf.push_incoming_call_timeout;
 }
 
 void linphone_core_set_in_call_timeout(LinphoneCore *lc, int seconds){
@@ -5890,7 +5909,7 @@ void * linphone_core_get_native_video_window_id(const LinphoneCore *lc){
 		LinphoneCall *call=linphone_core_get_current_call (lc);
 
 		if (call) {
-			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
+			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
 			if (ms) return ms->getNativeVideoWindowId();
 		}
 #endif
@@ -5922,7 +5941,7 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 		LinphoneCall *call=linphone_core_get_current_call(lc);
 
 		if (call) {
-			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
+			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
 			if (ms) return ms->getNativePreviewVideoWindowId();
 		}
 		if (lc->previewstream)
@@ -7754,8 +7773,8 @@ LinphoneStatus linphone_core_add_to_conference(LinphoneCore *lc, LinphoneCall *c
 
 LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *lc) {
 	for (const auto &call : L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls()) {
-		if (!linphone_call_get_conference(L_GET_C_BACK_PTR(call))) // Prevent the call to the conference server from being added to the conference
-			linphone_core_add_to_conference(lc, L_GET_C_BACK_PTR(call));
+		if (!linphone_call_get_conference(call->toC())) // Prevent the call to the conference server from being added to the conference
+			linphone_core_add_to_conference(lc, call->toC());
 	}
 	if(lc->conf_ctx && linphone_conference_check_class(lc->conf_ctx, LinphoneConferenceClassLocal)) {
 		linphone_core_enter_conference(lc);

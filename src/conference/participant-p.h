@@ -39,6 +39,9 @@ public:
 	void setConference (Conference *conference) { mConference = conference; }
 
 	std::shared_ptr<CallSession> createSession (const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener);
+	std::shared_ptr<CallSession> createSession (
+		const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
+												);
 	inline std::shared_ptr<CallSession> getSession () const { return session; }
 	inline void removeSession () { session.reset(); }
 	inline void setAddress (const IdentityAddress &newAddr) { addr = newAddr; }

@@ -21,7 +21,7 @@
 //#include <math.h>
 
 #include "address/address-p.h"
-#include "call/call-p.h"
+#include "call/call.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/participant-p.h"
@@ -186,6 +186,7 @@ void MediaSessionPrivate::accepted () {
 			case CallSession::State::OutgoingRinging:
 			case CallSession::State::OutgoingEarlyMedia:
 			case CallSession::State::IncomingReceived:
+			case CallSession::State::PushIncomingReceived:
 			case CallSession::State::IncomingEarlyMedia:
 				lError() << "Incompatible SDP answer received, need to abort the call";
 				abort("Incompatible, check codecs or security settings...");
@@ -1493,6 +1494,7 @@ void MediaSessionPrivate::onGatheringFinished(IceService &service){
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	switch (state) {
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 		case CallSession::State::IncomingEarlyMedia:
 			if (callAcceptanceDefered) startAccept();
 			break;
@@ -1951,6 +1953,9 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	}
 	if (msp || localDesc == nullptr) makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 
+	// already accepting
+	if (state == CallSession::State::IncomingReceived && params && localDesc == nullptr) makeLocalMediaDescription(false);
+
 	updateRemoteSessionIdAndVer();
 
 
@@ -2154,6 +2159,14 @@ void MediaSession::acceptDefault(){
 
 LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 	L_D();
+	if (!isOpConfigured()) {
+		lInfo() << "CallSession accepting";
+		if (msp)
+			d->setParams(new MediaSessionParams(*msp));
+		CallSession::accepting();
+		return 0;
+	}
+	
 	LinphoneStatus result = d->checkForAcceptation();
 	if (result < 0) return result;
 
@@ -2575,7 +2588,7 @@ LinphoneCallStats * MediaSession::getAudioStats () const {
 	return getStats(LinphoneStreamTypeAudio);
 }
 
-string MediaSession::getAuthenticationToken () const {
+const string &MediaSession::getAuthenticationToken () const {
 	L_D();
 	return d->getStreamsGroup().getAuthenticationToken();
 }
@@ -2860,6 +2873,7 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	switch(d->state){
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
+		case CallSession::State::PushIncomingReceived:
 			d->setParams(msp ? new MediaSessionParams(*msp) : nullptr);
 			// Update the local media description.
 			d->makeLocalMediaDescription(d->state == CallSession::State::OutgoingInit ?
