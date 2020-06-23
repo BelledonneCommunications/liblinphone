@@ -46,15 +46,23 @@ static bool is_encrypted(const char *filepath) {
 	return ret;
 }
 
-// when call with create users set to false, unlink all config files at the end of the test
-static void register_user(const uint16_t encryptionModule, const char* random_id, const bool createUsers) {
+static void enable_encryption(const uint16_t encryptionModule) {
 	// enable encryption
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
 		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_PLAIN, NULL, 0);
 	} else if (encryptionModule == LINPHONE_VFS_ENCRYPTION_DUMMY) {
 		uint8_t evfs_key[16] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44};
 		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_DUMMY, evfs_key, 16);
+	} else if (encryptionModule == LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256) {
+		uint8_t evfs_key[32] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44,
+					0x5a, 0xa5, 0x5F, 0xaF, 0x52, 0xa4, 0xa6, 0x58, 0xaa, 0x5c, 0xae, 0x50, 0xa1, 0x52, 0xa3, 0x54};
+		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32);
 	}
+}
+
+// when call with create users set to false, unlink all config files at the end of the test
+static void register_user(const uint16_t encryptionModule, const char* random_id, const bool createUsers) {
+	enable_encryption(encryptionModule);
 
 	// create a user
 	LinphoneCoreManager* marie;
@@ -114,6 +122,9 @@ static void register_user(const uint16_t encryptionModule, const char* random_id
 	bctbx_free(localRc);
 	bctbx_free(linphone_db);
 	bctbx_free(lime_db);
+
+	// reset VFS encryption
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
 }
 
 static void register_user_test(void) {
@@ -130,16 +141,16 @@ static void register_user_test(void) {
 	register_user(LINPHONE_VFS_ENCRYPTION_DUMMY, id, true);
 	register_user(LINPHONE_VFS_ENCRYPTION_DUMMY, id, false);
 	bctbx_free(id);
+	// generate a new random id to be sure to use fresh local files
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	register_user(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, true);
+	register_user(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false);
+	bctbx_free(id);
 }
 
 static void zrtp_call(const uint16_t encryptionModule, const char *random_id, const bool createUsers) {
-	// enable encryption
-	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_PLAIN, NULL, 0);
-	} else if (encryptionModule == LINPHONE_VFS_ENCRYPTION_DUMMY) {
-		uint8_t evfs_key[16] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44};
-		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_DUMMY, evfs_key, 16);
-	}
+	enable_encryption(encryptionModule);
 
 	// create a user Marie
 	LinphoneCoreManager* marie;
@@ -261,12 +272,16 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 	bctbx_free(pauline_zidCache);
 	bctbx_free(pauline_linphone_db);
 	bctbx_free(pauline_lime_db);
+
+	// reset VFS encryption
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
 }
 
 static void zrtp_call_test(void) {
 	char random_id[8];
+	char *id;
 	belle_sip_random_token(random_id, sizeof random_id);
-	char *id = bctbx_strdup(random_id);
+	id = bctbx_strdup(random_id);
 	zrtp_call(LINPHONE_VFS_ENCRYPTION_PLAIN, id, true);
 	zrtp_call(LINPHONE_VFS_ENCRYPTION_PLAIN, id, false);
 	bctbx_free(id);
@@ -275,6 +290,12 @@ static void zrtp_call_test(void) {
 	id = bctbx_strdup(random_id);
 	zrtp_call(LINPHONE_VFS_ENCRYPTION_DUMMY, id, true);
 	zrtp_call(LINPHONE_VFS_ENCRYPTION_DUMMY, id, false);
+	bctbx_free(id);
+
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, true);
+	zrtp_call(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false);
 	bctbx_free(id);
 }
 
