@@ -122,9 +122,8 @@ int linphone_tunnel_config_get_delay(const LinphoneTunnelConfig *tunnel) {
 }
 
 static void _linphone_tunnel_config_destroy(LinphoneTunnelConfig *tunnel) {
-	if(tunnel->host != NULL) {
-		ms_free(tunnel->host);
-	}
+	if (tunnel->host) ms_free(tunnel->host);
+	if (tunnel->host2) ms_free(tunnel->host2);
 }
 
 LinphoneTunnelConfig * linphone_tunnel_config_ref(LinphoneTunnelConfig *cfg){

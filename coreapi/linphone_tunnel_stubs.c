@@ -127,3 +127,9 @@ bool_t linphone_tunnel_enabled(const LinphoneTunnel *tunnel) { return FALSE; }
 void linphone_tunnel_auto_detect(LinphoneTunnel *tunnel) {}
 bool_t linphone_tunnel_auto_detect_enabled(LinphoneTunnel *tunnel) { return FALSE; }
 void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled) {}
+
+
+void linphone_tunnel_set_username(LinphoneTunnel *tunnel, const char *username) {}
+const char *linphone_tunnel_get_username(LinphoneTunnel *tunnel) { return NULL; }
+void linphone_tunnel_set_domain(LinphoneTunnel *tunnel, const char *domain) {}
+const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel) { return NULL; }
