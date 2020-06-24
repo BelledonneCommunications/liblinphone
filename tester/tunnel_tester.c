@@ -61,6 +61,16 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		char *public_ip = NULL, *public_ip2 = NULL;
 		BC_ASSERT_FALSE(get_ip_from_hostname("tunnel.linphone.org",tunnel_ip,sizeof(tunnel_ip)));
 
+#if 0
+		// This code is here in case we want to test the client certificate verification by the tunnel server
+		LinphoneAuthInfo *info = linphone_auth_info_clone(linphone_core_find_auth_info(pauline->lc, NULL, linphone_address_get_username(pauline->identity), NULL));
+		linphone_auth_info_set_tls_cert_path(info, PATH_TO_CERT);
+		linphone_auth_info_set_tls_key_path(info, PATH_TO_KEY);
+		linphone_core_clear_all_auth_info(pauline->lc);
+		linphone_core_add_auth_info(pauline->lc, info);
+		linphone_auth_info_unref(info);
+#endif
+
 		if (!gruu) {
 			linphone_core_remove_supported_tag(pauline->lc,"gruu"); /*with gruu, we have no access to the "public IP from contact*/
 			linphone_core_remove_supported_tag(marie->lc,"gruu");
@@ -107,6 +117,13 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 				linphone_tunnel_config_set_remote_udp_mirror_port(config, -1);
 				linphone_tunnel_enable_dual_mode(tunnel, TRUE);
 			}
+
+#if 0
+			// This code is here in case we want to test the client certificate verification by the tunnel server
+			linphone_tunnel_set_username(tunnel, linphone_address_get_username(pauline->identity));
+			linphone_tunnel_set_domain(tunnel, linphone_address_get_domain(pauline->identity));
+#endif
+
 			linphone_tunnel_add_server(tunnel, config);
 			linphone_tunnel_set_mode(tunnel, tunnel_mode);
 			linphone_tunnel_enable_sip(tunnel, with_sip);
