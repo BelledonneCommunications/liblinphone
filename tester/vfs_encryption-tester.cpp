@@ -24,6 +24,7 @@
 #include "linphone/wrapper_utils.h"
 #include "liblinphone_tester.h"
 #include "bctoolbox/vfs_encrypted.hh" // included for testing purpose, we could use encryption without it from a C file
+#include "bctoolbox/logging.h"
 #include <iostream>
 #include <fstream>
 
@@ -47,7 +48,7 @@ static bool is_encrypted(const char *filepath) {
 	return ret;
 }
 
-static void enable_encryption(const uint16_t encryptionModule) {
+static void enable_encryption(const uint16_t encryptionModule, const bool encryptDbJournal=true) {
 	// enable encryption. The call to linphone_factory_set_vfs_encryption will set the VfsEncryption class callback
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
 		linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_PLAIN, NULL, 0);
@@ -61,22 +62,24 @@ static void enable_encryption(const uint16_t encryptionModule) {
 	}
 
 
-	// For testing purpose, we must prevent the encryption of factory files, chain the VfsEncryption class callback with some filter
+	// For testing purpose and usage demo: directly access the evfs open callback to filter some files
+	// The previous call to linphone_factory_set_vfs_encryption set a callback but we can still modify it
 	auto currentVfsCb = bctoolbox::VfsEncryption::openCallback_get();
-	bctoolbox::VfsEncryption::openCallback_set([currentVfsCb](bctoolbox::VfsEncryption &settings){
-				  // prevent the encryption of any file with filename ending with _rc
-				  auto filename = settings.filename_get();
-				  if (filename.compare (filename.size()-3, 3, std::string{"_rc"}) == 0) { // This is a factory file, do not encrypt it
-					settings.encryptionSuite_set(bctoolbox::EncryptionSuite::plain);
-				  } else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)
-					currentVfsCb(settings);
-				  }
-				  });
+	bctoolbox::VfsEncryption::openCallback_set([currentVfsCb, encryptDbJournal](bctoolbox::VfsEncryption &settings){
+			// prevent the encryption of any file with filename ending with -journal
+			auto filename = settings.filename_get();
+			if (encryptDbJournal == false && (filename.size() > 8) && ( filename.compare (filename.size()-8, 8, std::string{"-journal"}) == 0)) { // This is a plain transfered file
+				BCTBX_SLOGD<<"Encryption test: skip encryption for -journal file";
+				settings.encryptionSuite_set(bctoolbox::EncryptionSuite::plain);
+			} else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)
+				currentVfsCb(settings);
+			}
+			});
 }
 
 // when call with create users set to false, unlink all config files at the end of the test
 static void register_user(const uint16_t encryptionModule, const char* random_id, const bool createUsers) {
-	enable_encryption(encryptionModule);
+	enable_encryption(encryptionModule, false);
 
 	// create a user
 	LinphoneCoreManager* marie;
@@ -332,10 +335,176 @@ static void migration_test(void) {
 	bctbx_free(id);
 }
 
+static void file_transfer_test(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_file_transfer_") {
+	enable_encryption(encryptionModule);
+
+	// create a user Marie
+	LinphoneCoreManager* marie;
+	auto local_filename = bctbx_strdup_printf("%s_marie_rc_%s", basename.data(), random_id);
+	auto marie_rc = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	local_filename = bctbx_strdup_printf("%s_marie_linphone_%s.db", basename.data(), random_id);
+	auto marie_linphone_db = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	local_filename = bctbx_strdup_printf("%s_marie_lime_%s.db", basename.data(), random_id);
+	auto marie_lime_db = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	if (createUsers == true) { // creating users, make sure we do not reuse local files
+		unlink(marie_rc);
+		unlink(marie_linphone_db);
+		unlink(marie_lime_db);
+	}
+	// use a local rc file built from marie_rc to check it is encrypted
+	marie = linphone_core_manager_create_local(createUsers?"marie_lime_x3dh_rc":NULL, marie_rc, marie_linphone_db, marie_lime_db);
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionZRTP);
+	// set file transfer
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_url);
+
+	// create user Pauline
+	LinphoneCoreManager* pauline;
+	local_filename = bctbx_strdup_printf("%s_pauline_rc_%s", basename.data(), random_id);
+	auto pauline_rc = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	local_filename = bctbx_strdup_printf("%s_pauline_linphone_%s.db", basename.data(), random_id);
+	auto pauline_linphone_db = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	local_filename = bctbx_strdup_printf("%s_pauline_lime_%s.db", basename.data(), random_id);
+	auto pauline_lime_db = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	local_filename = bctbx_strdup_printf("%s_pauline_receive_file_%s.dump", basename.data(), random_id);
+	auto receivePaulineFilepath = bc_tester_file(local_filename);
+	bctbx_free(local_filename);
+	if (createUsers == true) { // creating users, make sure we do not reuse local files
+		unlink(pauline_rc); // make sure we're not reusing a rc file
+		unlink(pauline_linphone_db);
+		unlink(pauline_lime_db);
+	}
+	// use a local rc file built from pauline_rc to check it is encrypted
+	pauline = linphone_core_manager_create_local(createUsers?"pauline_lime_x3dh_rc":NULL, pauline_rc, pauline_linphone_db, pauline_lime_db);
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionZRTP);
+	// set file transfer
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+
+	// set lime serveur - fixed to curve25519 we're not testing lime here
+	set_lime_curve_list(25519,coresManagerList);
+	
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	// start cores
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server
+	if (createUsers == true) {
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	}
+
+	// check the linphone dbs and local_rc are encrypted or not
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(is_encrypted(marie->database_path));
+		BC_ASSERT_FALSE(is_encrypted(marie->lime_database_path));
+		BC_ASSERT_FALSE(is_encrypted(marie_rc));
+		BC_ASSERT_FALSE(is_encrypted(pauline->database_path));
+		BC_ASSERT_FALSE(is_encrypted(pauline->lime_database_path));
+		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
+	} else {
+		BC_ASSERT_TRUE(is_encrypted(marie->database_path));
+		BC_ASSERT_TRUE(is_encrypted(marie->lime_database_path));
+		BC_ASSERT_TRUE(is_encrypted(marie_rc));
+		BC_ASSERT_TRUE(is_encrypted(pauline->database_path));
+		BC_ASSERT_TRUE(is_encrypted(pauline->lime_database_path));
+		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
+	}
+
+	// Marie creates a new group chat room
+	bctbx_list_t *participantsAddresses = NULL;
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	// send file
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	_send_file(marieCr, sendFilepath, nullptr, false);
+
+	// check pauline got it
+	remove(receivePaulineFilepath);
+	_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, nullptr, false);
+
+	// It shall be encrypted
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(is_encrypted(receivePaulineFilepath));
+	} else {
+		BC_ASSERT_TRUE(is_encrypted(receivePaulineFilepath));
+	}
+	// but not the original file sent
+	BC_ASSERT_FALSE(is_encrypted(sendFilepath));
+
+	// cleaning
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	remove(receivePaulineFilepath);
+	bc_free(sendFilepath);
+	bc_free(receivePaulineFilepath);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+
+	linphone_core_manager_stop(marie);
+	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
+	ms_free(marie);
+	linphone_core_manager_stop(pauline);
+	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
+	ms_free(pauline);
+	if (createUsers == false) { // we reused users, now clean the local files
+		unlink(marie_rc);
+		unlink(marie_linphone_db);
+		unlink(marie_lime_db);
+		unlink(pauline_rc);
+		unlink(pauline_linphone_db);
+		unlink(pauline_lime_db);
+	}
+	bctbx_free(marie_rc);
+	bctbx_free(marie_linphone_db);
+	bctbx_free(marie_lime_db);
+	bctbx_free(pauline_rc);
+	bctbx_free(pauline_linphone_db);
+	bctbx_free(pauline_lime_db);
+
+	// reset VFS encryption
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
+}
+
+static void file_transfer_test() {
+	char random_id[8];
+	char *id;
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	file_transfer_test(LINPHONE_VFS_ENCRYPTION_DUMMY, id, true, "evfs_file_transfer");
+	file_transfer_test(LINPHONE_VFS_ENCRYPTION_DUMMY, id, false, "evfs_file_transfer");
+	bctbx_free(id);
+
+	belle_sip_random_token(random_id, sizeof random_id);
+	id = bctbx_strdup(random_id);
+	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, true, "evfs_file_transfer");
+	file_transfer_test(LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, id, false, "evfs_file_transfer");
+	bctbx_free(id);
+
+}
 test_t vfs_encryption_tests[] = {
 	TEST_NO_TAG("Register user", register_user_test),
 	TEST_NO_TAG("ZRTP call", zrtp_call_test),
-	TEST_NO_TAG("Migration", migration_test)
+	TEST_NO_TAG("Migration", migration_test),
+	TEST_NO_TAG("File transfer", file_transfer_test)
 };
 
 test_suite_t vfs_encryption_test_suite = {
