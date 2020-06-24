@@ -964,7 +964,6 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		FILE *file_to_send = NULL;
 		size_t file_size;
 		char *send_filepath = bc_tester_res("images/nowebcamCIF.jpg");
-		char *receive_filepath = bc_tester_file("receive_file.dump");
 		LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
 		LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_rc", FALSE);
 		// This is done to prevent register to be sent before the custom header is set
@@ -1026,14 +1025,14 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 1, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, int, "%d");
-		compare_files(send_filepath, receive_filepath);
+		//file_transfer_received function store file name into file_transfer_filepath
+		compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(marie->stat.last_received_chat_message));
 
 		linphone_chat_message_unref(message);
 		linphone_content_unref(content);
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline);
 		ms_free(send_filepath);
-		bc_free(receive_filepath);
 	}
 }
 
