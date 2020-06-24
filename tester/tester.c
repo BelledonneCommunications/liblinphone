@@ -24,6 +24,7 @@
 #include "logging-private.h"
 #include "liblinphone_tester.h"
 #include <bctoolbox/tester.h>
+#include <bctoolbox/vfs.h>
 #include "tester_utils.h"
 
 #define SKIP_PULSEAUDIO 1
@@ -636,10 +637,15 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 }
 
 /* same as new but insert the rc_local in the core manager before the init and provide path to db files */
-LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
+LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
 	manager->rc_local = bctbx_strdup(rc_local);
 	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db);
+	return manager;
+}
+
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
+	LinphoneCoreManager *manager = linphone_core_manager_create_local(rc_factory, rc_local, linphone_db, lime_db);
 	linphone_core_manager_start(manager, TRUE);
 
 	return manager;
@@ -1120,19 +1126,33 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 }
 
 void compare_files(const char *path1, const char *path2) {
-	size_t size1;
-	size_t size2;
 	uint8_t *buf1;
 	uint8_t *buf2;
 
-	buf1 = (uint8_t*)ms_load_path_content(path1, &size1);
-	buf2 = (uint8_t*)ms_load_path_content(path2, &size2);
-	BC_ASSERT_PTR_NOT_NULL(buf1);
-	BC_ASSERT_PTR_NOT_NULL(buf2);
+	bctbx_vfs_file_t* f1 = bctbx_file_open(bctbx_vfs_get_default(), path1, "r");
+	bctbx_vfs_file_t* f2 = bctbx_file_open(bctbx_vfs_get_default(), path2, "r");
+	BC_ASSERT_PTR_NOT_NULL(f1);
+	BC_ASSERT_PTR_NOT_NULL(f2);
+	if (f1 == NULL || f2 == NULL) return;
+
+	int64_t s1 = bctbx_file_size(f1);
+	int64_t s2 = bctbx_file_size(f2);
+
+	BC_ASSERT_EQUAL(s1,s1, int64_t, "%ld");
+	if (s1 != s2) return;
+
+	buf1 = bctbx_malloc(s1);
+	buf2 = bctbx_malloc(s2);
+
+	BC_ASSERT_EQUAL(bctbx_file_read(f1, buf1, s1, 0), s1, int64_t, "%ld");
+	BC_ASSERT_EQUAL(bctbx_file_read(f2, buf2, s2, 0), s2, int64_t, "%ld");
+
+	bctbx_file_close(f1);
+	bctbx_file_close(f2);
+
 	if (buf1 && buf2){
-		BC_ASSERT_EQUAL(memcmp(buf1, buf2, size1), 0, int, "%d");
+		BC_ASSERT_EQUAL(memcmp(buf1, buf2, s1), 0, int, "%d");
 	}
-	BC_ASSERT_EQUAL((uint8_t)size2, (uint8_t)size1, uint8_t, "%u");
 
 	if (buf1) ms_free(buf1);
 	if (buf2) ms_free(buf2);
