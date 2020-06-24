@@ -386,7 +386,6 @@ LocalConference::LocalConference (LinphoneCore *core, LinphoneConference *conf, 
 }
 
 LocalConference::~LocalConference() {
-	terminate();
 	ms_audio_conference_destroy(m_conf);
 }
 
@@ -438,6 +437,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 			LinphoneCallParams *new_params = params
 				? linphone_call_params_copy(params)
 				: linphone_core_create_call_params(m_core, nullptr);
+			linphone_call_params_set_in_conference(new_params, TRUE);
 			linphone_call_params_enable_video(new_params, FALSE); // Video not supported for conferences.
 			call = linphone_core_invite_address_with_params(m_core, address, new_params);
 			if (!call){
