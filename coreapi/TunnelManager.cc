@@ -157,6 +157,94 @@ RtpTransport *TunnelManager::createRtpTransport(int port){
 	return t;
 }
 
+void TunnelManager::setUsername(const char* username) {
+	mUsername = std::string(username == NULL ? "" : username);
+}
+
+const std::string& TunnelManager::getUsername() const {
+	return mUsername;
+}
+
+void TunnelManager::setDomain(const char *domain) {
+	mDomain = std::string(domain == NULL ? "" : domain);
+}
+
+const std::string& TunnelManager::getDomain() const {
+	return mDomain;
+}
+
+bctbx_x509_certificate_t *TunnelManager::getCertificate() const {
+	return mCertificate;
+}
+
+void TunnelManager::setCertificate(bctbx_x509_certificate_t *certificate) {
+	mCertificate = certificate;
+}
+
+bctbx_signing_key_t *TunnelManager::getKey() const {
+	return mKey;
+}
+
+void TunnelManager::setKey(bctbx_signing_key_t *key) {
+	mKey = key;
+}
+
+int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, unsigned char *dn, size_t dn_length) {
+	TunnelManager *zis = static_cast<TunnelManager*>(data);
+
+	if (!zis->getCertificate() || !zis->getKey()) {
+		const LinphoneAuthInfo *authInfo = _linphone_core_find_indexed_tls_auth_info(zis->getLinphoneCore(), zis->getUsername().c_str(), zis->getDomain().c_str());
+		if (authInfo == NULL) {
+			ms_error("TunnelManager: Cannot find auth info for user '%s'", zis->getUsername().c_str());
+			return -1;
+		}
+
+		if (!zis->getCertificate()) {
+			bctbx_x509_certificate_t *cert = bctbx_x509_certificate_new();
+			if (linphone_auth_info_get_tls_cert(authInfo)) {
+				const char *cert_buffer = linphone_auth_info_get_tls_cert(authInfo);
+				bctbx_x509_certificate_parse(cert, cert_buffer, strlen(cert_buffer));
+			} else if (linphone_auth_info_get_tls_cert_path(authInfo)) {
+				bctbx_x509_certificate_parse_file(cert, linphone_auth_info_get_tls_cert_path(authInfo));
+			} else {
+				ms_error("TunnelManager: Cannot find TLS cert in auth info for user '%s'", zis->getUsername().c_str());
+				bctbx_x509_certificate_free(cert);
+				return -1;
+			}
+
+			zis->setCertificate(cert);
+		}
+
+		if (!zis->getKey()) {
+			bctbx_signing_key_t *key = bctbx_signing_key_new();
+			if (linphone_auth_info_get_tls_key(authInfo)) {
+				const char *key_buffer = linphone_auth_info_get_tls_key(authInfo);
+				const char *passwd = linphone_auth_info_get_password(authInfo);
+				bctbx_signing_key_parse(key, key_buffer, strlen(key_buffer), (const unsigned char *)passwd, passwd ? strlen(passwd) : 0);
+			} else if (linphone_auth_info_get_tls_key_path(authInfo)) {
+				bctbx_signing_key_parse_file(key, linphone_auth_info_get_tls_key_path(authInfo), linphone_auth_info_get_password(authInfo));
+			} else {
+				ms_error("TunnelManager: Cannot find TLS key in auth info for user '%s'", zis->getUsername().c_str());
+				bctbx_signing_key_free(key);
+				return -1;
+			}
+
+			zis->setKey(key);
+		}
+	}
+
+	int err;
+	char tmp[512] = {0};
+
+	if ((err = bctbx_ssl_set_hs_own_cert(ctx, zis->getCertificate(), zis->getKey()))) {
+		bctbx_strerror(err, tmp, sizeof(tmp) -1 );
+		ms_error("TunnelManager: Cannot set retrieved TLS certificate [%s]", tmp);
+		return -1;
+	}
+
+	return 0;
+}
+
 void TunnelManager::startClient() {
 	ms_message("TunnelManager: Starting tunnel client");
 	if (!mTunnelClient) {
@@ -168,9 +256,11 @@ void TunnelManager::startClient() {
 
 		mCore->sal->setTunnel(mTunnelClient);
 		if (!mUseDualClient) {
-			static_cast<TunnelClient*>(mTunnelClient)->setCallback(tunnelCallback,this);
+			static_cast<TunnelClient*>(mTunnelClient)->setStateCallback(tunnelCallback,this);
+			if (!mUsername.empty()) static_cast<TunnelClient*>(mTunnelClient)->setClientCertificateCallback(tlsCallbackClientCertificate, this);
 		} else {
-			static_cast<DualTunnelClient*>(mTunnelClient)->setCallback(tunnelCallback2,this);
+			static_cast<DualTunnelClient*>(mTunnelClient)->setStateCallback(tunnelCallback2,this);
+			if (!mUsername.empty()) static_cast<DualTunnelClient*>(mTunnelClient)->setClientCertificateCallback(tlsCallbackClientCertificate, this);
 		}
 	}
 
@@ -277,6 +367,8 @@ TunnelManager::TunnelManager(LinphoneCore* lc) :
 	mTargetState = Off;
 	mStarted = false;
 	mTunnelizeSipPackets = true;
+	mCertificate = NULL;
+	mKey = NULL;
 }
 void TunnelManager::unlinkLinphoneCore() {
 	if (mCore) {
@@ -299,6 +391,8 @@ TunnelManager::~TunnelManager(){
 	for(UdpMirrorClientList::iterator udpMirror = mUdpMirrorClients.begin(); udpMirror != mUdpMirrorClients.end(); udpMirror++) {
 		udpMirror->stop();
 	}
+	if (mCertificate) bctbx_x509_certificate_free(mCertificate);
+	if (mKey) bctbx_signing_key_free(mKey);
 	
 	unlinkLinphoneCore();
 }

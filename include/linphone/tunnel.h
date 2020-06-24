@@ -404,6 +404,35 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_tunnel_auto_detect(LinphoneTun
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_tunnel_auto_detect_enabled(LinphoneTunnel *tunnel);
 
+/**
+ * Set the username.
+ * @param tunnel #LinphoneTunnel object
+ * @param username The username
+ */
+LINPHONE_PUBLIC void linphone_tunnel_set_username(LinphoneTunnel *tunnel, const char *username);
+
+/**
+ * Get the username.
+ * @param tunnel #LinphoneTunnel object
+ * @return The username
+ */
+LINPHONE_PUBLIC const char *linphone_tunnel_get_username(LinphoneTunnel *tunnel);
+
+/**
+ * Set the domain.
+ * @param tunnel #LinphoneTunnel object
+ * @param domain The domain
+ */
+LINPHONE_PUBLIC void linphone_tunnel_set_domain(LinphoneTunnel *tunnel, const char *domain);
+
+/**
+ * Get the domain.
+ * @param tunnel #LinphoneTunnel object
+ * @return The domain
+ */
+LINPHONE_PUBLIC const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel);
+
+
 LINPHONE_PUBLIC void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled);
 
 /**

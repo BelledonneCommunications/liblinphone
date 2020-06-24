@@ -16,6 +16,7 @@
 #include <tunnel/udp_mirror.hh>
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
+#include "bctoolbox/crypto.h"
 
 #ifndef USE_BELLESIP
 extern "C" {
@@ -188,6 +189,11 @@ namespace belledonnecomm {
 
 		void simulateUdpLoss(bool enabled);
 
+		void setUsername(const char* username);
+		const std::string& getUsername() const;
+		void setDomain(const char *domain);
+		const std::string& getDomain() const;
+
 	private:
 		enum EventType{
 			UdpMirrorClientEvent,
@@ -209,6 +215,7 @@ namespace belledonnecomm {
 		static void sUdpMirrorClientCallback(bool result, void* data);
 		static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
 		static void globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
+		static int tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, unsigned char *dn, size_t dn_length);
 		
 
 	private:
@@ -233,6 +240,10 @@ namespace belledonnecomm {
 		void tunnelizeLiblinphone();
 		void untunnelizeLiblinphone();
 		void unlinkLinphoneCore();
+		bctbx_x509_certificate_t *getCertificate() const;
+		void setCertificate(bctbx_x509_certificate_t *certificate);
+		bctbx_signing_key_t *getKey() const;
+		void setKey(bctbx_signing_key_t *key);
 	private:
 		
 		LinphoneCore* mCore;
@@ -260,6 +271,10 @@ namespace belledonnecomm {
 		bool mTunnelizeSipPackets;
 		bool mSimulateUdpLoss;
 		bool mUseDualClient;
+		std::string mUsername;
+		std::string mDomain;
+		bctbx_x509_certificate_t *mCertificate;
+		bctbx_signing_key_t *mKey;
 	};
 
 /**
