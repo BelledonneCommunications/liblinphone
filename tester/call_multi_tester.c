@@ -571,8 +571,7 @@ static void video_conference_by_merging_calls(void){
 	linphone_core_set_play_file(pauline->lc, play_file_pauline);
 	bc_free(play_file_pauline);
 
-	bctbx_list_free(participants);
-	bctbx_list_free(lcs);participants = bctbx_list_append(participants, pauline->identity);
+	participants = bctbx_list_append(participants, pauline->identity);
 	participants = bctbx_list_append(participants, laure->identity);
 	
 	{
