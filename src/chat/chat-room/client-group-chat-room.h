@@ -31,8 +31,9 @@ class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom :
-	public ChatRoom,
-	public RemoteConference {
+	public ConferenceListener,
+	public ConferenceListenerInterface,
+	public ChatRoom {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class CorePrivate;
@@ -64,11 +65,11 @@ public:
 	int getHistorySize () const override;
 
 	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override {return RemoteConference::addParticipant(call); };
+	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
-	void join (const IdentityAddress &participantAddress) override { RemoteConference::join(participantAddress); };
-	bool update(const ConferenceParamsInterface &newParameters) override { return RemoteConference::update(newParameters); };
+	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
+	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -84,9 +85,6 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::join;
 	void join () override;
 	void leave () override;
 	
@@ -96,7 +94,7 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
-	const ConferenceId &getConferenceId () const override { return conferenceId; };
+	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 
 private:
 	ClientGroupChatRoom (

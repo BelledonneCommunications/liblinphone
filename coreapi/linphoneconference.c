@@ -46,8 +46,8 @@ inline list<_type> toStd(const bctbx_list_t *l){
 using namespace LinphonePrivate;
 using namespace LinphonePrivate::MediaConference;
 
-const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
-	return LinphonePrivate::MediaConference::Conference::stateToString(state);
+const char *linphone_conference_state_to_string (LinphoneChatRoomState state) {
+	return LinphonePrivate::MediaConference::Conference::stateToString((LinphonePrivate::ConferenceInterface::State)state);
 }
 
 
@@ -75,8 +75,8 @@ void linphone_conference_unref (LinphoneConference *conf) {
 	belle_sip_object_unref(conf);
 }
 
-LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getState();
+LinphoneChatRoomState linphone_conference_get_state (const LinphoneConference *obj) {
+	return (LinphoneChatRoomState)MediaConference::Conference::toCpp(obj)->getState();
 }
 
 const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj){

@@ -52,7 +52,7 @@ public:
 	void onChatRoomDeleteRequested (const shared_ptr<AbstractChatRoom> &chatRoom) override {
 		L_Q();
 		q->getCore()->deleteChatRoom(q->getSharedFromThis());
-		setState(AbstractChatRoom::State::Deleted);
+		q->setState(ConferenceInterface::State::Deleted);
 	}
 
 	void sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) override {
@@ -101,7 +101,7 @@ public:
 	) override {
 		if (!clientGroupChatRoom)
 			return;
-		if ((newState == CallSession::State::Error) && (clientGroupChatRoom->getState() == ChatRoom::State::CreationPending)) {
+		if ((newState == CallSession::State::Error) && (clientGroupChatRoom->getState() == ConferenceInterface::State::CreationPending)) {
 			Core::deleteChatRoom(clientGroupChatRoom);
 			if (session->getReason() == LinphoneReasonNotAcceptable) {
 				clientGroupChatRoom = nullptr;
