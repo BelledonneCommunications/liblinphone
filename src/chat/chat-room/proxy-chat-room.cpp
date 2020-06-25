@@ -88,7 +88,7 @@ ProxyChatRoom::SecurityLevel ProxyChatRoom::getSecurityLevel () const {
 	return d->chatRoom->getSecurityLevel();
 }
 
-ProxyChatRoom::State ProxyChatRoom::getState () const {
+ConferenceInterface::State ProxyChatRoom::getState () const {
 	L_D();
 	return d->chatRoom->getState();
 }
@@ -376,6 +376,11 @@ const std::shared_ptr<ChatRoomParams> &ProxyChatRoom::getCurrentParams() const {
 	L_D();
 
 	return d->chatRoom->getCurrentParams();
+}
+
+void ProxyChatRoom::setState (ConferenceInterface::State state) {
+	L_D();
+	d->chatRoom->setState(state);
 }
 
 LINPHONE_END_NAMESPACE

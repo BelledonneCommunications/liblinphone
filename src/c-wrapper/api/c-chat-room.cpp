@@ -613,7 +613,7 @@ LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, Linp
 		L_GET_CPP_PTR_FROM_C_OBJECT(core),
 		op
 	));
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ChatRoom::State::Instantiated);
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ConferenceInterface::State::Instantiated);
 	L_GET_PRIVATE_FROM_C_OBJECT(cr, ServerGroupChatRoom)->confirmCreation();
 	return cr;
 #else
