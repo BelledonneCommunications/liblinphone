@@ -48,6 +48,8 @@ public:
 	time_t getLastUpdateTime () const override;
 
 	State getState () const override;
+	void setState (ConferenceInterface::State newState) override;
+
 	SecurityLevel getSecurityLevel () const override;
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;
@@ -91,14 +93,16 @@ public:
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
-	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
-		chatListeners.push_back(listener);
-	}
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
+
+	virtual std::shared_ptr<Conference> getConference () const {return conference;};
+
+	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 
 protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params);
+	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const std::shared_ptr<Conference> &conf = nullptr);
 
-	std::list<std::shared_ptr<ConferenceListenerInterface>> chatListeners;
+	std::shared_ptr<Conference> conference = nullptr;
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);
