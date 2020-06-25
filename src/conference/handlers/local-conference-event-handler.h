@@ -117,6 +117,11 @@ public:
 	*/
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
 
+	/*
+	 * This fonction is called each time the conference transitions to a new state
+	 * @param[in] state new state of the conference
+	 */
+	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 private:
 
 	Conference *conf = nullptr;

@@ -52,7 +52,7 @@ public:
 		// Keep a ref, otherwise the object might be destroyed before we can set the Deleted state
 		shared_ptr<AbstractChatRoom> ref = q->getSharedFromThis();
 		q->getCore()->deleteChatRoom(ref);
-		setState(AbstractChatRoom::State::Deleted);
+		q->setState(ConferenceInterface::State::Deleted);
 	}
 
 	void onCallSessionSetReleased (const shared_ptr<CallSession> &session) override {
@@ -73,7 +73,7 @@ public:
 		shared_ptr<ClientGroupChatRoom> cgcr = dynamic_pointer_cast<ClientGroupChatRoom>(chatRoom);
 		if (!cgcr)
 			return;
-		if ((newState == CallSession::State::Error) && (cgcr->getState() == ChatRoom::State::CreationPending)
+		if ((newState == CallSession::State::Error) && (cgcr->getState() == ConferenceInterface::State::CreationPending)
 			&& (session->getReason() == LinphoneReasonNotAcceptable) && (invitedAddresses.size() == 1)) {
 			teardownProxy();
 			cgcr->getPrivate()->onCallSessionStateChanged(session, newState, message);
@@ -87,8 +87,8 @@ public:
 			/* getOrCreateBasicChatRoom will automatically set the state to Instantiated and Created
 			 * but because CPP ptr hasn't been set yet in this case the application's ChatRoom won't be notified
 			 * that's why we set both states again here... */
-			bcr->getPrivate()->setState(ChatRoom::State::Instantiated);
-			bcr->getPrivate()->setState(ChatRoom::State::Created);
+			bcr->setState(ConferenceInterface::State::Instantiated);
+			bcr->setState(ConferenceInterface::State::Created);
 			return;
 		}
 		cgcr->getPrivate()->onCallSessionStateChanged(session, newState, message);
@@ -109,7 +109,7 @@ bool ClientGroupToBasicChatRoom::addParticipant (
 	const IdentityAddress &participantAddress
 ) {
 	L_D();
-	if (getState() == ChatRoom::State::Instantiated) {
+	if (getState() == ConferenceInterface::State::Instantiated) {
 		d->invitedAddresses.clear();
 		d->invitedAddresses.push_back(participantAddress);
 	}
@@ -119,7 +119,7 @@ bool ClientGroupToBasicChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses
 ) {
 	L_D();
-	if ((getState() == ChatRoom::State::Instantiated) && (addresses.size() == 1))
+	if ((getState() == ConferenceInterface::State::Instantiated) && (addresses.size() == 1))
 		d->invitedAddresses = addresses;
 	return ProxyChatRoom::addParticipants(addresses);
 }

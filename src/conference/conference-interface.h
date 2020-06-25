@@ -23,6 +23,7 @@
 #include <list>
 #include "event-log/events.h"
 #include "linphone/utils/general.h"
+#include "linphone/enums/conference-enums.h"
 
 // =============================================================================
 
@@ -58,17 +59,21 @@ public:
 	 *Conference live cycle, specilly creation and termination requires interractions between user application and focus user agent.
 	 * State is used to indicate the current state of a Conference.
 	 */
-//	enum class State{
-//		None, /**< Initial state */
-//		Instantiated, /**< Conference is now instantiated participants can be added, but no focus address is ready yet */
-//		CreationPending, /**< If not focus,  creation request was sent to the server, else conference id allocation is ongoing */
-//		Created, /**<  Conference was created with a conference id. Communication can start*/
-//		CreationFailed, /**< Creation failed */
-//		TerminationPending, /**< Wait for Conference termination */
-//		Terminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
-//		TerminationFailed, /**< Conference termination failed */
-//		Deleted /**< Conference is deleted on the server //fixme jehan creuser ce point  */
-//	};
+	enum class State{
+		None = LinphoneChatRoomStateNone, /**< Initial state */
+		Instantiated = LinphoneChatRoomStateInstantiated, /**< Conference is now instantiated participants can be added, but no focus address is ready yet */
+		CreationPending = LinphoneChatRoomStateCreationPending, /**< If not focus,  creation request was sent to the server, else conference id allocation is ongoing */
+		Created = LinphoneChatRoomStateCreated, /**<  Conference was created with a conference id. Communication can start*/
+		CreationFailed = LinphoneChatRoomStateCreationFailed, /**< Creation failed */
+		TerminationPending = LinphoneChatRoomStateTerminationPending, /**< Wait for Conference termination */
+		Terminated = LinphoneChatRoomStateTerminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
+		TerminationFailed = LinphoneChatRoomStateTerminationFailed, /**< Conference termination failed */
+		Deleted /**< Conference is deleted on the server //fixme jehan creuser ce point  */
+	};
+
+	//casting to int to get rid of the enum compare warning.
+	//Here we are comparing two enums serving the same purpose
+	static_assert((int)ConferenceInterface::State::Deleted == (int)LinphoneChatRoomStateDeleted, "LinphoneConferenceState and ConferenceInterface::State are not synchronized, fix this !");
 
 	virtual ~ConferenceInterface () = default;
 
@@ -80,7 +85,13 @@ public:
 	/*
 	 Get the current State of this conference
 	 */
-//	virtual State getState () const = 0;
+	virtual State getState () const = 0;
+
+	/*
+	* Set the state of this conference or chat room.
+	* @param[in] state The new state to set for the chat room or conference
+	*/
+	virtual void setState (ConferenceInterface::State state) = 0;
 
 	/*
 	 Get the conference ID of this conference.
@@ -216,13 +227,13 @@ public:
 	/*
 	 @return ConferenceInterface the listerner is attached.
 	 */
-	std::shared_ptr<ConferenceInterface> getConference() {return nullptr;}
+//	std::shared_ptr<ConferenceInterface> getConference() {return nullptr;}
 
 	/*
 	 * Notify Conference state changes.
 	 ** @param[in] newState the new state of this conference.
 	 */
-//	virtual void onStateChanged (ConferenceInterface::State newState) {}
+	virtual void onStateChanged (ConferenceInterface::State newState) {}
 	
 	/*
 	 * This fonction is called each time a full state notification is receied from the focus.
@@ -347,6 +358,8 @@ class ConferenceAvailableMediaEvent :  public EventLog {
 	 */
 	const std::list<std::string> &getAvailableMediaType () const;
 };
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e);
 
 LINPHONE_END_NAMESPACE
 

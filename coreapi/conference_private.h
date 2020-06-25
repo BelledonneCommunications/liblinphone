@@ -39,17 +39,17 @@ extern "C" {
  * @param new_state The new state of the conferenece
  * @param user_data Pointer pass to user_data while linphone_conference_params_set_state_changed_callback() was being called
  */
-typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphonePrivate::LinphoneConferenceState new_state, void *user_data);
+typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneChatRoomState new_state, void *user_data);
 
 /**
  * A function to converte a #LinphoneConferenceState into a string
  */
-const char *linphone_conference_state_to_string(LinphonePrivate::LinphoneConferenceState state);
+const char *linphone_conference_state_to_string(LinphoneChatRoomState state);
 
 /**
  * Get the state of a conference
  */
-LinphonePrivate::LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
+LinphoneChatRoomState linphone_conference_get_state(const LinphoneConference *obj);
 
 /**
  * Set a callback which will be called when the state of the conferenec is switching
@@ -123,9 +123,9 @@ public:
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
 
-	LinphonePrivate::LinphoneConferenceState getState() const {return m_state;}
-	static const char *stateToString(LinphonePrivate::LinphoneConferenceState state);
+	static const char *stateToString(LinphonePrivate::ConferenceInterface::State state);
 
+	void setState (LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
 		m_stateChangedCb = cb;
 		m_userData = userData;
@@ -140,22 +140,14 @@ public:
 
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
+
 protected:
-	virtual void setState(LinphonePrivate::LinphoneConferenceState state) override;
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
 
 protected:
-	LinphonePrivate::LinphoneConferenceState m_state;
 
 	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
 	void *m_userData = nullptr;
-
-	// TODO: Delete when merging with chat room
-	// TODO: Move to LinphonePrivate::Conference
-	void notifyStateChanged (LinphonePrivate::LinphoneConferenceState state);
-	// TODO: Move to ConferenceListenerInterface and LocalConferenceHandler
-	void onStateChanged (LinphonePrivate::LinphoneConferenceState state);
-
 };
 
 
@@ -264,7 +256,7 @@ private:
 	void reset();
 
 	void onFocusCallSateChanged(LinphoneCallState state);
-	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState state);
+	void onPendingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState);
 	void onTransferingCallStateChanged(std::shared_ptr<LinphonePrivate::Call> transfered, LinphoneCallState newCallState);
 
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
