@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom, public LocalConference {
+class ServerGroupChatRoom : public ChatRoom {
 public:
 	// TODO: Make me private!
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
@@ -63,11 +63,11 @@ public:
 	const ConferenceAddress getConferenceAddress () const override;
 
 	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override {return LocalConference::addParticipant(call); };
+	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
-	void join (const IdentityAddress &participantAddress) override { LocalConference::join(participantAddress); };
-	bool update(const ConferenceParamsInterface &newParameters) override { return LocalConference::update(newParameters); };
+	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
+	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -83,16 +83,16 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
-	// TODO: Delete
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::Conference::join;
 	void join () override;
 	void leave () override;
 
 	/* ConferenceListener */
-	void onFirstNotifyReceived (const IdentityAddress &addr) override;
+	void onFirstNotifyReceived (const IdentityAddress &addr);
 
-	const ConferenceId &getConferenceId () const override { return conferenceId; };
+	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
+
+	void setState (ConferenceInterface::State state) override;
+	void subscribeReceived (LinphoneEvent *event);
 
 private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
