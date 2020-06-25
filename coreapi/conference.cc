@@ -573,7 +573,7 @@ RemoteConference::RemoteConference (
 
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 #ifdef HAVE_ADVANCED_IM
-	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
+	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 
 	getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 #endif // HAVE_ADVANCED_IM
