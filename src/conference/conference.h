@@ -50,18 +50,6 @@ class RemoteConference;
 
 }
 
-/**
- * List of states used by #LinphoneConference
- */
-typedef enum {
-	LinphoneConferenceStopped, /*< Initial state */
-	LinphoneConferenceStarting, /*< A participant has been added but the conference is not running yet */
-	LinphoneConferenceStartingFailed, /*< A participant has been added but the initialization of the conference has failed */
-	LinphoneConferenceRunning, /*< The conference is running */
-	LinphoneConferenceTerminationPending, /*< Termination sequence has been kicked off */
-	LinphoneConferenceTerminated /*< The conference is terminated */
-} LinphoneConferenceState;
-
 class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
@@ -122,6 +110,10 @@ class LINPHONE_PUBLIC Conference :
 	friend class CallSessionPrivate;
 	friend class LocalConferenceEventHandler;
 	friend class RemoteConferenceEventHandler;
+	friend class ClientGroupChatRoomPrivate;
+	friend class ClientGroupChatRoom;
+	friend class ServerGroupChatRoomPrivate;
+	friend class ServerGroupChatRoom;
 public:
 	~Conference();
 
@@ -132,8 +124,6 @@ public:
 
 	// TODO: Start Delete
 	virtual void join () override;
-	// Temporary method until chat room and conference states are merged
-	virtual void setState(LinphonePrivate::LinphoneConferenceState state) { };
 	// TODO: End Delete
 
 	/* ConferenceInterface */
@@ -178,6 +168,12 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const Address &addr, const Address &gruu);
 
 	void notifyFullState ();
+	void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
+
+	LinphonePrivate::ConferenceInterface::State getState() const override {return state;}
+	virtual void setState(LinphonePrivate::ConferenceInterface::State state) override;
+
+	void clearParticipants();
 
 protected:
 	explicit Conference (
@@ -209,6 +205,8 @@ protected:
 	// lastNotify belongs to the conference and not the the event handler.
 	// The event handler can access it using the getter
 	unsigned int lastNotify = 0;
+
+	ConferenceInterface::State state = ConferenceInterface::State::None;
 
 private:
 	L_DISABLE_COPY(Conference);

@@ -166,4 +166,16 @@ bool BasicChatRoom::update(const ConferenceParamsInterface &newParameters) {
 	return ChatRoom::update(newParameters);
 }
 
+void BasicChatRoom::setState (ConferenceInterface::State newState) {
+	L_D();
+
+	if (getState() != newState) {
+		state = newState;
+		d->notifyStateChanged();
+	}
+}
+
+ConferenceInterface::State BasicChatRoom::getState () const {
+	return state;
+}
 LINPHONE_END_NAMESPACE
