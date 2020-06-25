@@ -551,4 +551,13 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 	notifyAll(createNotifyParticipantDeviceRemoved(addr, gruu));
 }
 
+void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, Utils::toString(state).c_str());
+	switch(state) {
+		default:
+			break;
+	}
+}
+
+
 LINPHONE_END_NAMESPACE
