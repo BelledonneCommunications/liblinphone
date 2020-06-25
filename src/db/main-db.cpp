@@ -3324,12 +3324,11 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						hasBeenLeft
 					));
 					chatRoom = clientGroupChatRoom;
-					conference = clientGroupChatRoom.get();
-					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-					dChatRoom->setState(ChatRoom::State::Instantiated);
-					dChatRoom->setState(hasBeenLeft
-						? ChatRoom::State::Terminated
-						: ChatRoom::State::Created
+					conference = clientGroupChatRoom->getConference().get();
+					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->setState(hasBeenLeft
+						? ConferenceInterface::State::Terminated
+						: ConferenceInterface::State::Created
 					);
 				} else {
 					auto serverGroupChatRoom = std::make_shared<ServerGroupChatRoom>(
@@ -3342,10 +3341,9 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						lastNotifyId
 					);
 					chatRoom = serverGroupChatRoom;
-					conference = serverGroupChatRoom.get();
-					AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-					dChatRoom->setState(ChatRoom::State::Instantiated);
-					dChatRoom->setState(ChatRoom::State::Created);
+					conference = serverGroupChatRoom->getConference().get();
+					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->setState(ConferenceInterface::State::Created);
 				}
 				for (auto participant : chatRoom->getParticipants())
 					participant->setConference(conference);

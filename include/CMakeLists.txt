@@ -103,6 +103,7 @@ set(ENUMS_HEADER_FILES
 	call-enums.h
 	chat-message-enums.h
 	chat-room-enums.h
+	conference-enums.h
 	encryption-engine-enums.h
 	event-log-enums.h
 	security-event-enums.h
