@@ -32,21 +32,6 @@ AbstractChatRoom::AbstractChatRoom (
 	const shared_ptr<Core> &core
 ) : Object(p), CoreAccessor(core) {}
 
-std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::State e) {
-	switch(e) {
-		case AbstractChatRoom::State::None: lhs << "None"; break;
-		case AbstractChatRoom::State::Instantiated: lhs << "Instantiated"; break;
-		case AbstractChatRoom::State::CreationPending: lhs << "CreationPending"; break;
-		case AbstractChatRoom::State::Created: lhs << "Created"; break;
-		case AbstractChatRoom::State::CreationFailed: lhs << "CreationFailed"; break;
-		case AbstractChatRoom::State::TerminationPending: lhs << "TerminationPending"; break;
-		case AbstractChatRoom::State::Terminated: lhs << "Terminated"; break;
-		case AbstractChatRoom::State::TerminationFailed: lhs << "TerminationFailed"; break;
-		case AbstractChatRoom::State::Deleted: lhs << "Deleted"; break;
-	}
-	return lhs;
-}
-
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 	switch(e) {
 		case AbstractChatRoom::Capabilities::None: lhs << "None"; break;
