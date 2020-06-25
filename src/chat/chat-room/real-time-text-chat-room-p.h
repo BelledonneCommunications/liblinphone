@@ -37,9 +37,9 @@ public:
 	void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call);
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override;
-	void setCall (const std::shared_ptr<Call> &value) { call = value; }
+	void setCallId (const std::string &value) { callId = value;}
 
-	std::weak_ptr<Call> call;
+	std::string callId;
 	std::list<Character> receivedRttCharacters;
 	std::shared_ptr<ChatMessage> pendingMessage = nullptr;
 

@@ -130,7 +130,7 @@ uint32_t RealTimeTextChatRoom::getChar () const {
 
 shared_ptr<Call> RealTimeTextChatRoom::getCall () const {
 	L_D();
-	return d->call.lock();
+	return getCore()->getCallByCallId(d->callId);
 }
 
 LINPHONE_END_NAMESPACE
