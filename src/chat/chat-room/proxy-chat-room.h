@@ -127,6 +127,8 @@ public:
 	void join (const IdentityAddress &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
+	void setState (ConferenceInterface::State state) override;
+
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
 
