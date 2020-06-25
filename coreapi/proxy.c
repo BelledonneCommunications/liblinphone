@@ -641,10 +641,10 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 		ms_free(from);
 	} else {
 		/* unregister if registered*/
+		_linphone_proxy_config_unregister(cfg);
 		if (cfg->state == LinphoneRegistrationProgress) {
 			linphone_proxy_config_set_state(cfg,LinphoneRegistrationCleared,"Registration cleared");
 		}
-		_linphone_proxy_config_unregister(cfg);
 	}
 }
 

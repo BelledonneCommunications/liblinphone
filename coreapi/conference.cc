@@ -144,7 +144,6 @@ LocalConference::LocalConference (LinphoneCore *core, const ConferenceParams *pa
 }
 
 LocalConference::~LocalConference() {
-	terminate();
 }
 
 void LocalConference::addLocalEndpoint () {

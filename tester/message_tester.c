@@ -282,6 +282,12 @@ static void text_message_within_call_dialog(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
 		// when using call dialogs, we will never receive delivered status
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered,0,int,"%d");
+		
+		// Send a second message, so that we can check that it is not erroneously filtered out because
+		// it bears the same call-id.
+		linphone_chat_room_send_message(linphone_core_get_chat_room(pauline->lc, marie->identity),"Bouhbouhbouh");
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,2));
 
 		end_call(marie, pauline);
 	}
@@ -786,7 +792,7 @@ static void transfer_message_with_download_io_error(void) {
 	transfer_message_base(FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, -1, FALSE);
 }
 
-static void transfer_message_upload_cancelled(void) {
+static void transfer_message_upload_error(bool_t cancel) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 		LinphoneChatRoom* chat_room;
@@ -804,17 +810,27 @@ static void transfer_message_upload_cancelled(void) {
 
 		/*wait for file to be 25% uploaded and cancel the transfer */
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 60000));
-		linphone_chat_message_cancel_file_transfer(msg);
+		if (cancel) {
+			linphone_chat_message_cancel_file_transfer(msg);
 
-		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered, 1));
 
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
+		}
 
 		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 	}
+}
+
+static void transfer_message_upload_cancelled(void) {
+	transfer_message_upload_error(TRUE);
+}
+
+static void transfer_message_upload_aborted(void) {
+	transfer_message_upload_error(FALSE);
 }
 
 static void transfer_message_download_cancelled(void) {
@@ -872,7 +888,6 @@ static void transfer_message_auto_download_aborted(void) {
 
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
-	linphone_chat_message_unref(msg);
 
 	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
 	linphone_core_manager_restart(marie, TRUE);
@@ -917,6 +932,7 @@ static void transfer_message_auto_download_aborted(void) {
 		bc_free(send_filepath);
 		bc_free(receive_filepath);
 	}
+	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -3173,6 +3189,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message with upload io error", transfer_message_with_upload_io_error),
 	TEST_NO_TAG("Transfer message with download io error", transfer_message_with_download_io_error),
 	TEST_NO_TAG("Transfer message upload cancelled", transfer_message_upload_cancelled),
+	TEST_NO_TAG("Transfer message upload aborted", transfer_message_upload_aborted),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
 	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),

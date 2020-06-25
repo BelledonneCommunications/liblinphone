@@ -1322,6 +1322,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	LinphoneCall *call;
 	pol.automatically_accept=1;
 	pol.automatically_initiate=1;
+	int dummy=0;
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
@@ -1364,12 +1365,24 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote,1,DEFAULT_WAIT_FOR));
 
 		check_media_direction(marie,call,lcs,LinphoneMediaDirectionSendOnly,LinphoneMediaDirectionSendOnly);
+
+		float quality = linphone_call_get_current_quality(call);
+		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
+		quality = linphone_call_get_current_quality(call);
+		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 	}
 
 
 	call=linphone_core_get_current_call(pauline->lc);
 	if  (call) {
 		check_media_direction(pauline,call,lcs,LinphoneMediaDirectionRecvOnly,LinphoneMediaDirectionRecvOnly);
+
+		float quality = linphone_call_get_current_quality(call);
+		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
+		quality = linphone_call_get_current_quality(call);
+		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 	}
 
 }

@@ -222,7 +222,7 @@ public class AudioHelper implements OnAudioFocusChangeListener {
                 break;
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
                 Log.w("[Audio Helper] Focus lost (transient, can duck)");
-                if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
+                //if (CoreManager.isReady()) CoreManager.instance().onAudioFocusLost();
                 break;
         }
     }
