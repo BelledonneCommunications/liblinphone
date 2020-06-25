@@ -383,11 +383,4 @@ void ProxyChatRoom::setState (ConferenceInterface::State state) {
 	d->chatRoom->setState(state);
 }
 
-void ProxyChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-	L_D();
-	d->chatRoom->addListener(listener);
-}
-
-
-
 LINPHONE_END_NAMESPACE

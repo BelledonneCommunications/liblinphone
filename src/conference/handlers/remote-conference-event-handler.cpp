@@ -45,8 +45,9 @@ using namespace Xsd::ConferenceInfo;
 
 // -----------------------------------------------------------------------------
 
-RemoteConferenceEventHandler::RemoteConferenceEventHandler (Conference *remoteConference) {
+RemoteConferenceEventHandler::RemoteConferenceEventHandler (Conference *remoteConference, ConferenceListener * listener) {
 	conf = remoteConference;
+	confListener = listener;
 	conf->getCore()->getPrivate()->registerListener(this);
 }
 
@@ -103,7 +104,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 	}
 
 	bool isFullState = confInfo->getState() == StateType::full;
-	ConferenceListener *confListener = static_cast<ConferenceListener *>(conf);
+//	ConferenceListener *confListener = static_cast<ConferenceListener *>(conf);
 
 	// 3. Notify subject and keywords.
 	if (confDescription.present()) {
