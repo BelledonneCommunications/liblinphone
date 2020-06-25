@@ -472,7 +472,7 @@ public:
 
 ConferenceEventTester::ConferenceEventTester (const shared_ptr<Core> &core, const Address &confAddr)
 	: RemoteConference(core, confAddr, nullptr, ConferenceParams::create(core->getCCore())) {
-	handler = new RemoteConferenceEventHandler(this);
+	handler = new RemoteConferenceEventHandler(this, this);
 }
 
 ConferenceEventTester::~ConferenceEventTester () {
