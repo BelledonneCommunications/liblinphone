@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom {
+class ServerGroupChatRoom : public ChatRoom, public LocalConference {
 public:
 	// TODO: Make me private!
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
@@ -61,13 +61,14 @@ public:
 	bool hasBeenLeft () const override;
 
 	const ConferenceAddress getConferenceAddress () const override;
+	const ConferenceId &getConferenceId () const override;
 
 	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
+	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
-	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
-	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
+	void join (const IdentityAddress &participantAddress) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -87,12 +88,13 @@ public:
 	void leave () override;
 
 	/* ConferenceListener */
-	void onFirstNotifyReceived (const IdentityAddress &addr);
+	void onFirstNotifyReceived (const IdentityAddress &addr) override;
 
-	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 
+	State getState () const override;
 	void setState (ConferenceInterface::State state) override;
-	void subscribeReceived (LinphoneEvent *event);
+
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
 private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
