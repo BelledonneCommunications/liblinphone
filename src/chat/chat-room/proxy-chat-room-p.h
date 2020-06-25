@@ -37,10 +37,6 @@ public:
 		chatRoom->getPrivate()->setLastUpdateTime(lastUpdateTime);
 	}
 
-	inline void setState (AbstractChatRoom::State state) override {
-		chatRoom->getPrivate()->setState(state);
-	}
-
 	inline void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override {
 		chatRoom->getPrivate()->sendChatMessage(chatMessage);
 	}

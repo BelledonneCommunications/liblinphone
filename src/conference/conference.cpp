@@ -30,6 +30,8 @@
 #include "xml/resource-lists.h"
 #endif
 
+#include "linphone/utils/utils.h"
+
 // =============================================================================
 
 using namespace std;
@@ -56,6 +58,10 @@ Conference::~Conference () {
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
 	return activeParticipant;
+}
+
+void Conference::clearParticipants () {
+	participants.clear();
 }
 
 // -----------------------------------------------------------------------------
@@ -371,5 +377,21 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	}
 	return event;
 }
+
+void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+	if (this->state != state) {
+		ms_message("Switching conference [%p] into state '%s'", this, Utils::toString(state).c_str());
+		this->state = state;
+		notifyStateChanged(state);
+	}
+}
+
+void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+	for (const auto &l : confListeners) {
+		l->onStateChanged(state);
+	}
+}
+
+
 
 LINPHONE_END_NAMESPACE
