@@ -44,7 +44,7 @@ shared_ptr<CallSession> Call::getActiveSession () const {
 shared_ptr<RealTimeTextChatRoom> Call::getChatRoom () {
 	if (!mChatRoom && (getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
 		mChatRoom = static_pointer_cast<RealTimeTextChatRoom>(getCore()->getOrCreateBasicChatRoom(*getRemoteAddress(), true));
-		if (mChatRoom) mChatRoom->getPrivate()->setCall(getSharedFromThis());
+		if (mChatRoom) mChatRoom->getPrivate()->setCallId(linphone_call_log_get_call_id(getLog()));
 	}
 	return mChatRoom;
 }

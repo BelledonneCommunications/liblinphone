@@ -210,7 +210,7 @@ LinphoneCall *linphone_chat_room_get_call (const LinphoneChatRoom *cr) {
 void linphone_chat_room_set_call (LinphoneChatRoom *cr, LinphoneCall *call) {
 	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
 		return;
-	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->call = LinphonePrivate::Call::toCpp(call)->getSharedFromThis();
+	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->callId = linphone_call_log_get_call_id(linphone_call_get_call_log(call));
 }
 
 void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {
