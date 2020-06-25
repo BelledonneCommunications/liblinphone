@@ -47,7 +47,7 @@ RemoteConference::RemoteConference (
 	// FIXME: Not very nice to have an empty deleter
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 #ifdef HAVE_ADVANCED_IM
-	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this);
+	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 #endif
 }
 
@@ -93,7 +93,9 @@ void RemoteConference::onFullStateReceived() {
 	);
 	sEvent->setFullState(true);
 	sEvent->setNotifyId(lastNotify);
-	onSubjectChanged(sEvent);
+	for (const auto &l : confListeners) {
+		l->onSubjectChanged(sEvent);
+	}
 
 	// Loop through the participants
 	for (const auto &p : getParticipants()) {
@@ -107,7 +109,9 @@ void RemoteConference::onFullStateReceived() {
 		);
 		pEvent->setFullState(true);
 		pEvent->setNotifyId(lastNotify);
-		onParticipantAdded(pEvent);
+		for (const auto &l : confListeners) {
+			l->onParticipantAdded(pEvent);
+		}
 
 		shared_ptr<ConferenceParticipantEvent> aEvent = make_shared<ConferenceParticipantEvent>(
 			p->isAdmin() ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
@@ -117,7 +121,9 @@ void RemoteConference::onFullStateReceived() {
 		);
 		aEvent->setFullState(true);
 		aEvent->setNotifyId(lastNotify);
-		onParticipantSetAdmin(aEvent);
+		for (const auto &l : confListeners) {
+			l->onParticipantSetAdmin(aEvent);
+		}
 
 		// Loop through the devices
 		for (const auto &d : p->getDevices()) {
@@ -131,7 +137,11 @@ void RemoteConference::onFullStateReceived() {
 			);
 			dEvent->setFullState(true);
 			dEvent->setNotifyId(lastNotify);
-			onParticipantDeviceAdded(dEvent);
+			for (const auto &l : confListeners) {
+				l->onParticipantSetAdmin(dEvent);
+			}
+
+
 		}
 	}
 

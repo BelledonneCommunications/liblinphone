@@ -263,15 +263,14 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 void ChatRoomPrivate::notifyStateChanged () {
 	L_Q();
 	LinphoneChatRoom *cr = getCChatRoom();
-	ConferenceInterface::State state = q->getState();
 	// Do not output this log while Core is starting up, a lot of them may happen
 	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
-		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
 	} else {
-		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << state;
+		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << q->getState();
 	}
-	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
-	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
+	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)q->getState());
+	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)q->getState());
 }
 
 void ChatRoomPrivate::notifyUndecryptableChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) {
@@ -378,13 +377,15 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const shared_ptr<Conference> &conf) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
 	d->params = params;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
+
+	this->conference = conf;
 }
 
 ChatRoom::~ChatRoom () {
@@ -419,6 +420,14 @@ time_t ChatRoom::getLastUpdateTime () const {
 }
 
 // -----------------------------------------------------------------------------
+
+ConferenceInterface::State ChatRoom::getState () const {
+	if (conference) {
+		return conference->getState();
+	} else {
+		return ConferenceInterface::State::None;
+	}
+}
 
 ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
 	return ChatRoom::SecurityLevel::ClearText;
@@ -622,15 +631,43 @@ bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
 	return false;
 }
 
-// -----------------------------------------------------------------------------
-
 void ChatRoom::setState (ConferenceInterface::State newState) {
-	// Notify a state change only if we are transitioning
-	if (getState() != newState) {
-		L_D();
-		d->notifyStateChanged();
+	L_D();
+
+	if (conference) {
+		if (getState() != newState) {
+			conference->setState(newState);
+			d->notifyStateChanged();
+		}
 	}
 }
 
+void ChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
+	if (conference) {
+		conference->addListener(listener);
+	}
+}
+
+list<IdentityAddress> ChatRoom::parseResourceLists (const Content &content) {
+	return Conference::parseResourceLists(content); 
+}
+
+bool ChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+	bool soFarSoGood = true;
+	for (const auto &p : participants)
+		soFarSoGood &= removeParticipant(p);
+	return soFarSoGood;
+}
+
+bool ChatRoom::addParticipants (const std::list<IdentityAddress> &addresses) {
+	list<IdentityAddress> sortedAddresses(addresses);
+	sortedAddresses.sort();
+	sortedAddresses.unique();
+
+	bool soFarSoGood = true;
+	for (const auto &address : sortedAddresses)
+		soFarSoGood &= addParticipant(address);
+	return soFarSoGood;
+}
 
 LINPHONE_END_NAMESPACE
