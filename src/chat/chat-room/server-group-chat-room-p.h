@@ -65,8 +65,6 @@ public:
 	ServerGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
 
 	
-	void setState (ChatRoom::State state) override;
-
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
 	void removeParticipant (const std::shared_ptr<const Participant> &participant);
 

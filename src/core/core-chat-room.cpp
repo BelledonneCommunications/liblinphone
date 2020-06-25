@@ -144,7 +144,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 	} else {
 		chatRoom = clientGroupChatRoom;
 	}
-	chatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
+	chatRoom->setState(ConferenceInterface::State::Instantiated);
 	noCreatedClientGroupChatRooms[chatRoom.get()] = chatRoom;
 	return chatRoom;
 #else
@@ -173,7 +173,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createClientGroupChatRoom (
 										    params
 										    ));
 
-	clientGroupChatRoom->getPrivate()->setState(ChatRoom::State::Instantiated);
+	clientGroupChatRoom->setState(ConferenceInterface::State::Instantiated);
 	noCreatedClientGroupChatRooms[clientGroupChatRoom.get()] = clientGroupChatRoom;
 	return clientGroupChatRoom;
 #else
@@ -223,9 +223,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 		}
 #endif
 	}
-	AbstractChatRoomPrivate *dChatRoom = chatRoom->getPrivate();
-	dChatRoom->setState(ChatRoom::State::Instantiated);
-	dChatRoom->setState(ChatRoom::State::Created);
+	chatRoom->setState(ConferenceInterface::State::Instantiated);
+	chatRoom->setState(ConferenceInterface::State::Created);
 
 	return chatRoom;
 }
@@ -393,7 +392,7 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 }
 
 void CorePrivate::insertChatRoomWithDb (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
-	L_ASSERT(chatRoom->getState() == ChatRoom::State::Created);
+	L_ASSERT(chatRoom->getState() == ConferenceInterface::State::Created);
 	if (mainDb->isInitialized()) mainDb->insertChatRoom(chatRoom, notifyId);
 }
 

@@ -335,6 +335,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
+	conference/conference-interface.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
