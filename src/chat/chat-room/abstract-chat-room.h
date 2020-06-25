@@ -51,19 +51,6 @@ public:
 	/*enum class is used to create namespaces for Enums
 	  doing this prevents the compiler to confuse members from different Enums with same name.
 		i.e. "None" for the "State" Enum and "None" from the Capabilities Enum */
-
-	enum class State{
-		None = LinphoneChatRoomStateNone,
-		Instantiated = LinphoneChatRoomStateInstantiated,
-		CreationPending = LinphoneChatRoomStateCreationPending,
-		Created = LinphoneChatRoomStateCreated,
-		CreationFailed = LinphoneChatRoomStateCreationFailed,
-		TerminationPending = LinphoneChatRoomStateTerminationPending,
-		Terminated = LinphoneChatRoomStateTerminated,
-		TerminationFailed = LinphoneChatRoomStateTerminationFailed,
-		Deleted
-	};
-
 	enum class Capabilities{
 		None = LinphoneChatRoomCapabilitiesNone,
 		Basic = LinphoneChatRoomCapabilitiesBasic,
@@ -81,10 +68,6 @@ public:
 		Encrypted = LinphoneChatRoomSecurityLevelEncrypted,
 		Safe
 	};
-
-	//casting to int to get rid of the enum compare warning.
-	//Here we are comparing two enums serving the same purpose
-	static_assert((int)AbstractChatRoom::State::Deleted == (int)LinphoneChatRoomStateDeleted, "LinphoneChatRoomState and AbstractChatRoom::State are not synchronized, fix this !");
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
@@ -109,7 +92,6 @@ public:
 	virtual time_t getLastUpdateTime () const = 0;
 
 	virtual CapabilitiesMask getCapabilities () const = 0;
-	virtual State getState () const = 0;
 	virtual SecurityLevel getSecurityLevel () const = 0;
 	virtual bool hasBeenLeft () const = 0;
 
@@ -163,8 +145,6 @@ private:
 	L_DECLARE_PRIVATE(AbstractChatRoom);
 	L_DISABLE_COPY(AbstractChatRoom);
 };
-
-std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::State e);
 
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e);
 

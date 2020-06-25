@@ -59,8 +59,10 @@ Conference::Conference(
 	const IdentityAddress &myAddress,
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
-	LinphonePrivate::Conference(core, myAddress, listener, params),
-	m_state(LinphoneConferenceStopped){
+	LinphonePrivate::Conference(core, myAddress, listener, params)
+	{
+
+	setState(ConferenceInterface::State::None);
 }
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -111,66 +113,15 @@ int Conference::terminate () {
 	return 0;
 }
 
-const char *Conference::stateToString (LinphoneConferenceState state) {
-	switch(state) {
-		case LinphoneConferenceStopped:
-			return "Stopped";
-		case LinphoneConferenceStarting:
-			return "Starting";
-		case LinphoneConferenceRunning:
-			return "Ready";
-		case LinphoneConferenceStartingFailed:
-			return "Starting failed";
-		case LinphoneConferenceTerminationPending:
-			return "Termination Pending";
-		case LinphoneConferenceTerminated:
-			return "Terminated";
-		default:
-			return "Invalid state";
-	}
+const char *Conference::stateToString (LinphonePrivate::ConferenceInterface::State state) {
+	return Utils::toString(state).c_str();
 }
 
-// TODO: move this method to LinphonePrivate::Conference
-void Conference::notifyStateChanged (LinphoneConferenceState state) {
-/*	for (const auto &l : confListeners) {
-		l->onStateChanged(state);
-	}
-*/
-	onStateChanged(state);
-}
-
-// TODO:  onStateChanged must be moved to the conference listener (i.e. local conference handler).
-// Initially coding it here as the local event handler is shared with the chat room and state change is not handled the same way.
-// Also types of states in audio video conference and chat room are different
-void Conference::onStateChanged (LinphoneConferenceState state) {
-printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, stateToString(state));
-	switch(state) {
-		case LinphoneConferenceStopped:
-		case LinphoneConferenceStartingFailed:
-			break;
-		case LinphoneConferenceStarting:
-		case LinphoneConferenceRunning:
-			break;
-		case LinphoneConferenceTerminationPending:
-			//setState(LinphoneConferenceTerminated);
-			break;
-		case LinphoneConferenceTerminated:
-			finalizeTermination();
-			break;
-		default:
-			break;
-	}
-}
-
-void Conference::setState (LinphoneConferenceState state) {
-	if (m_state != state) {
-		ms_message("Switching conference [%p] into state '%s'", this, stateToString(state));
-		m_state = state;
-		notifyStateChanged(state);
-		// TODO Delete
-		if (m_stateChangedCb) {
-			m_stateChangedCb(toC(), state, m_userData);
-		}
+void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+	LinphonePrivate::Conference::setState(state);
+	// TODO Delete
+	if (m_stateChangedCb) {
+		m_stateChangedCb(toC(), (LinphoneChatRoomState)state, m_userData);
 	}
 }
 
@@ -209,7 +160,7 @@ LocalConference::LocalConference (
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
 printf("%s - Creating conference [%p]\n", __func__, this);
-	setState(LinphoneConferenceRunning);
+	setState(ConferenceInterface::State::Created);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
 	char confId[6];
@@ -241,7 +192,7 @@ printf("%s - Creating conference [%p]\n", __func__, this);
 }
 
 LocalConference::~LocalConference() {
-	if (m_state != LinphoneConferenceStopped) {
+	if (state != ConferenceInterface::State::Terminated) {
 		terminate();
 	}
 #ifdef HAVE_ADVANCED_IM
@@ -360,7 +311,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	_linphone_call_set_conf_ref(L_GET_C_BACK_PTR(call), toC());
 	mMixerSession->joinStreamsGroup(L_GET_PRIVATE(call)->getMediaSession()->getStreamsGroup());
 	Conference::addParticipant(call);
-	if (starting) setState(LinphoneConferenceRunning);
+	if (starting) setState(ConferenceInterface::State::Created);
 	if (localEndpointCanBeAdded){
 		/*
 		 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
@@ -414,7 +365,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	}
 	
-	if (getSize() == 0) setState(LinphoneConferenceTerminated);
+	if (getSize() == 0) setState(ConferenceInterface::State::Terminated);
 	return err;
 }
 
@@ -450,8 +401,8 @@ printf("%s - terminating call %p\n", __func__, call.get());
 			call->terminate();
 		}
 	}
-	if (m_state != LinphoneConferenceStopped) {
-		setState(LinphoneConferenceTerminationPending);
+	if (state != ConferenceInterface::State::Terminated) {
+		setState(ConferenceInterface::State::TerminationPending);
 	}
 
 	lInfo() << "func " << __func__ << " CONFERENCE TERMINATED!!!";
@@ -462,7 +413,7 @@ printf("%s - terminating call %p\n", __func__, call.get());
 int LocalConference::finalizeTermination () {
 	leave();
 	Conference::terminate();
-	setState(LinphoneConferenceStopped);
+	setState(ConferenceInterface::State::Terminated);
 	return 0;
 }
 
@@ -651,9 +602,9 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	LinphoneAddress *addr;
 	LinphoneCallParams *params;
 	LinphoneCallLog *callLog;
-	switch (m_state) {
-		case LinphoneConferenceStopped:
-		case LinphoneConferenceStartingFailed:
+	switch (state) {
+		case ConferenceInterface::State::None:
+		case ConferenceInterface::State::CreationFailed:
 			Conference::addParticipant(call);
 			ms_message("Calling the conference focus (%s)", m_focusAddr);
 			addr = linphone_address_new(m_focusAddr);
@@ -667,21 +618,21 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			callLog->was_conference = TRUE;
 			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
-			setState(LinphoneConferenceStarting);
+			setState(ConferenceInterface::State::CreationPending);
 			return true;
-		case LinphoneConferenceStarting:
+		case ConferenceInterface::State::CreationPending:
 			Conference::addParticipant(call);
 			if(focusIsReady())
 				transferToFocus(call);
 			else
 				m_pendingCalls.push_back(call);
 			return true;
-		case LinphoneConferenceRunning:
+		case ConferenceInterface::State::Created:
 			Conference::addParticipant(call);
 			transferToFocus(call);
 			return true;
 		default:
-			ms_error("Could not add call %p to the conference. Bad conference state (%s)", call.get(), stateToString(m_state));
+			ms_error("Could not add call %p to the conference. Bad conference state (%s)", call.get(), stateToString(state));
 			return false;
 	}
 }
@@ -690,8 +641,8 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 	Address refer_to_addr;
 	int res;
 
-	switch (m_state) {
-		case LinphoneConferenceRunning:
+	switch (state) {
+		case ConferenceInterface::State::Created:
 			if(!findParticipant(addr)) {
 				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
 				return -1;
@@ -707,15 +658,15 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 			}
 		default:
 			ms_error("Cannot remove %s from conference: Bad conference state (%s)",
-				addr.asString().c_str(), stateToString(m_state));
+				addr.asString().c_str(), stateToString(state));
 			return -1;
 	}
 }
 
 int RemoteConference::terminate () {
-	switch (m_state) {
-		case LinphoneConferenceRunning:
-		case LinphoneConferenceStarting:
+	switch (state) {
+		case ConferenceInterface::State::Created:
+		case ConferenceInterface::State::CreationPending:
 			m_focusCall->terminate();
 			getCore()->deleteAudioVideoConference(getSharedFromThis());
 			break;
@@ -728,13 +679,13 @@ int RemoteConference::terminate () {
 int RemoteConference::finalizeTermination () {
 	leave();
 	Conference::terminate();
-	setState(LinphoneConferenceStopped);
+	setState(ConferenceInterface::State::Terminated);
 	return 0;
 }
 
 int RemoteConference::enter () {
-	if (m_state != LinphoneConferenceRunning) {
-		ms_error("Could not enter in the conference: bad conference state (%s)", stateToString(m_state));
+	if (state != ConferenceInterface::State::Created) {
+		ms_error("Could not enter in the conference: bad conference state (%s)", stateToString(state));
 		return -1;
 	}
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
@@ -753,8 +704,8 @@ int RemoteConference::enter () {
 }
 
 void RemoteConference::leave () {
-	if (m_state != LinphoneConferenceRunning) {
-		ms_error("Could not leave the conference: bad conference state (%s)", stateToString(m_state));
+	if (state != ConferenceInterface::State::Created) {
+		ms_error("Could not leave the conference: bad conference state (%s)", stateToString(state));
 	}
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
@@ -770,7 +721,7 @@ void RemoteConference::leave () {
 }
 
 bool RemoteConference::isIn () const {
-	if (m_state != LinphoneConferenceRunning)
+	if (state != ConferenceInterface::State::Created)
 		return false;
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	return callState == LinphoneCallStreamsRunning;
@@ -821,28 +772,28 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 				} else
 					it++;
 			}
-			setState(LinphoneConferenceRunning);
+			setState(ConferenceInterface::State::Created);
 			break;
 		case LinphoneCallError:
 			reset();
 			Conference::terminate();
-			setState(LinphoneConferenceStartingFailed);
+			setState(ConferenceInterface::State::CreationFailed);
 			break;
 		case LinphoneCallEnd:
 			reset();
 			Conference::terminate();
-			setState(LinphoneConferenceStopped);
+			setState(ConferenceInterface::State::Terminated);
 			break;
 		default:
 			break;
 	}
 }
 
-void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState state) {
-	switch (state) {
+void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivate::Call> call, LinphoneCallState callState) {
+	switch (callState) {
 		case LinphoneCallStreamsRunning:
 		case LinphoneCallPaused:
-			if (m_state == LinphoneConferenceRunning) {
+			if (state == ConferenceInterface::State::Created) {
 				m_pendingCalls.remove(call);
 				m_transferingCalls.push_back(call);
 				call->transfer(m_focusContact);
