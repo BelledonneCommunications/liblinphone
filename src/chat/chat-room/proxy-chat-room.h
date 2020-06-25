@@ -42,6 +42,7 @@ public:
 	time_t getLastUpdateTime () const override;
 
 	CapabilitiesMask getCapabilities () const override;
+	State getState () const override;
 	SecurityLevel getSecurityLevel () const override;
 	bool hasBeenLeft () const override;
 
@@ -115,16 +116,17 @@ public:
 
 	const std::shared_ptr<AbstractChatRoom> &getProxiedChatRoom () const;
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override {
+		chatListeners.push_back(listener);
+	}
+
 	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	void join (const IdentityAddress &participantAddress) override;
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
-	State getState () const override;
 	void setState (ConferenceInterface::State state) override;
-
-	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
