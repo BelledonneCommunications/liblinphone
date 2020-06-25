@@ -49,8 +49,6 @@ public:
 		this->lastUpdateTime = lastUpdateTime;
 	}
 
-	void setState (ChatRoom::State newState) override;
-
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void sendIsComposingNotification ();
@@ -108,7 +106,6 @@ protected:
 	AbstractChatRoom::CapabilitiesMask capabilities;
 
 private:
-	ChatRoom::State state = ChatRoom::State::None;
 
 	time_t creationTime = std::time(nullptr);
 	time_t lastUpdateTime = std::time(nullptr);
