@@ -99,22 +99,22 @@ bool BasicChatRoom::addParticipant (
 bool BasicChatRoom::addParticipants (
 	const list<IdentityAddress> &addresses
 ) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::removeParticipant (const shared_ptr<Participant> &) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "removeParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 bool BasicChatRoom::removeParticipants (const list<shared_ptr<Participant>> &) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "removeParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
 
 shared_ptr<Participant> BasicChatRoom::findParticipant (const IdentityAddress &) const {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "findParticipant() is not allowed on a BasicChatRoom";
 	return nullptr;
 }
 
@@ -133,7 +133,7 @@ const list<shared_ptr<Participant>> &BasicChatRoom::getParticipants () const {
 }
 
 void BasicChatRoom::setParticipantAdminStatus (const shared_ptr<Participant> &, bool) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "setParticipantAdminStatus() is not allowed on a BasicChatRoom";
 }
 
 const string &BasicChatRoom::getSubject () const {
@@ -147,15 +147,15 @@ void BasicChatRoom::setSubject (const string &subject) {
 }
 
 void BasicChatRoom::join () {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
 void BasicChatRoom::join (const IdentityAddress &participantAddress) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
 void BasicChatRoom::leave () {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
+	lError() << "leave() is not allowed on a BasicChatRoom";
 }
 
 const ConferenceId &BasicChatRoom::getConferenceId () const {
@@ -177,9 +177,5 @@ void BasicChatRoom::setState (ConferenceInterface::State newState) {
 
 ConferenceInterface::State BasicChatRoom::getState () const {
 	return state;
-}
-
-void BasicChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
-	lError() << __func__ << " is not allowed on a BasicChatRoom";
 }
 LINPHONE_END_NAMESPACE
