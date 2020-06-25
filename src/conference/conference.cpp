@@ -392,6 +392,4 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	}
 }
 
-
-
 LINPHONE_END_NAMESPACE

@@ -31,12 +31,13 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceId;
 class Conference;
+class ConferenceListener;
 
 class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:
-	RemoteConferenceEventHandler (Conference *remoteConference);
+	RemoteConferenceEventHandler (Conference *remoteConference, ConferenceListener * listener);
 	~RemoteConferenceEventHandler ();
 
 	void subscribe (const ConferenceId &conferenceId);
@@ -60,6 +61,7 @@ protected:
 	void onEnteringForeground () override;
 
 	Conference *conf = nullptr;
+	ConferenceListener *confListener = nullptr;
 	LinphoneEvent *lev = nullptr;
 
 	bool subscriptionWanted = false;
