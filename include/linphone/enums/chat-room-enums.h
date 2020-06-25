@@ -22,22 +22,6 @@
 
 // =============================================================================
 /**
- * #LinphoneChatRoomState is used to indicate the current state of a chat room.
- * @ingroup chatroom
- */
-typedef enum _LinphoneChatRoomState{
-	LinphoneChatRoomStateNone, /**< Initial state */
-	LinphoneChatRoomStateInstantiated, /**< Chat room is now instantiated on local */
-	LinphoneChatRoomStateCreationPending, /**< One creation request was sent to the server */
-	LinphoneChatRoomStateCreated, /**< Chat room was created on the server */
-	LinphoneChatRoomStateCreationFailed, /**< Chat room creation failed */
-	LinphoneChatRoomStateTerminationPending, /**< Wait for chat room termination */
-	LinphoneChatRoomStateTerminated, /**< Chat room exists on server but not in local */
-	LinphoneChatRoomStateTerminationFailed, /**< The chat room termination failed */
-	LinphoneChatRoomStateDeleted /**< Chat room was deleted on the server */
-} LinphoneChatRoomState;
-
-/**
  * #LinphoneChatRoomCapabilities is used to indicate the capabilities of a chat room.
  * @ingroup chatroom
  */
