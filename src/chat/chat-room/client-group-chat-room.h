@@ -31,8 +31,9 @@ class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom :
-	public ChatRoom,
-	public RemoteConference {
+	public ConferenceListener,
+	public ConferenceListenerInterface,
+	public ChatRoom {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class CorePrivate;
@@ -63,17 +64,14 @@ public:
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 	int getHistorySize () const override;
 
-	const ConferenceId &getConferenceId () const override;
-
 	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override;
+	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
-	void join (const IdentityAddress &participantAddress) override;
-	bool update(const ConferenceParamsInterface &newParameters) override;
+	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
+	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 
@@ -95,10 +93,7 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
-	State getState () const override;
-	void setState (ConferenceInterface::State state) override;
-
-	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
+	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 
 private:
 	ClientGroupChatRoom (
