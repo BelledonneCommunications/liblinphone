@@ -31,9 +31,8 @@ class ClientGroupChatRoomPrivate;
 enum class SecurityLevel;
 
 class LINPHONE_PUBLIC ClientGroupChatRoom :
-	public ConferenceListener,
-	public ConferenceListenerInterface,
-	public ChatRoom {
+	public ChatRoom,
+	public RemoteConference {
 	friend class BasicToClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class CorePrivate;
@@ -64,12 +63,14 @@ public:
 	std::list<std::shared_ptr<EventLog>> getHistoryRange (int begin, int end) const override;
 	int getHistorySize () const override;
 
+	const ConferenceId &getConferenceId () const override;
+
 	bool addParticipant (const IdentityAddress &participantAddress) override;
-	bool addParticipant (std::shared_ptr<Call> call) override {return getConference()->addParticipant(call); };
+	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 
-	void join (const IdentityAddress &participantAddress) override { getConference()->join(participantAddress); };
-	bool update(const ConferenceParamsInterface &newParameters) override { return getConference()->update(newParameters); };
+	void join (const IdentityAddress &participantAddress) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -94,7 +95,10 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
-	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
+	State getState () const override;
+	void setState (ConferenceInterface::State state) override;
+
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
 private:
 	ClientGroupChatRoom (
