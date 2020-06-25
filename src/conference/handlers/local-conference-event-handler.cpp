@@ -333,8 +333,6 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 	if (linphone_event_get_reason(ev) != LinphoneReasonNone)
 		return;
 
-printf("%s - receive notify - name %s from %s to %s\n", __func__, ev->name, linphone_address_as_string(linphone_event_get_from(ev)), linphone_address_as_string(linphone_event_get_resource(ev)));
-
 	if (handler->conf) {
 		bool allCallEnded = true;
 		for (const auto &p : handler->conf->getParticipants()) {
@@ -552,7 +550,6 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 }
 
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
-printf("%s - Switching conference [%p] into state '%s'\n", __func__, this, Utils::toString(state).c_str());
 	switch(state) {
 		default:
 			break;
