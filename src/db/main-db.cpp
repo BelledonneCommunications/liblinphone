@@ -3324,7 +3324,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						hasBeenLeft
 					));
 					chatRoom = clientGroupChatRoom;
-					conference = clientGroupChatRoom.get();
+					conference = clientGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
 					chatRoom->setState(hasBeenLeft
 						? ConferenceInterface::State::Terminated
@@ -3341,7 +3341,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						lastNotifyId
 					);
 					chatRoom = serverGroupChatRoom;
-					conference = serverGroupChatRoom.get();
+					conference = serverGroupChatRoom->getConference().get();
 					chatRoom->setState(ConferenceInterface::State::Instantiated);
 					chatRoom->setState(ConferenceInterface::State::Created);
 				}
