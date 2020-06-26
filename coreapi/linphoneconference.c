@@ -48,10 +48,30 @@ inline list<_type> toStd(const bctbx_list_t *l){
 using namespace LinphonePrivate;
 using namespace LinphonePrivate::MediaConference;
 
+// =============================================================================
+// Reference and user data handling functions.
+// =============================================================================
+
+LinphoneConference *linphone_conference_ref (LinphoneConference *conference) {
+	MediaConference::Conference::toCpp(conference)->ref();
+	return conference;
+}
+
+void linphone_conference_unref (LinphoneConference *conference) {
+	MediaConference::Conference::toCpp(conference)->unref();
+}
+
+void *linphone_conference_get_user_data (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getUserData();
+}
+
+void linphone_conference_set_user_data (LinphoneConference *conference, void *ud) {
+	MediaConference::Conference::toCpp(conference)->setUserData(ud);
+}
+
 const char *linphone_conference_state_to_string (LinphoneChatRoomState state) {
 	return LinphonePrivate::MediaConference::Conference::stateToString((LinphonePrivate::ConferenceInterface::State)state);
 }
-
 
 LinphoneConference *linphone_local_conference_new (LinphoneCore *core, LinphoneAddress * addr) {
 	return (new LinphonePrivate::MediaConference::LocalConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, ConferenceParams::create(core)))->toC();
@@ -67,14 +87,6 @@ LinphoneConference *linphone_remote_conference_new (LinphoneCore *core, Linphone
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
 	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
-}
-
-LinphoneConference *linphone_conference_ref (LinphoneConference *conf) {
-	return (LinphoneConference *)belle_sip_object_ref(conf);
-}
-
-void linphone_conference_unref (LinphoneConference *conf) {
-	belle_sip_object_unref(conf);
 }
 
 LinphoneChatRoomState linphone_conference_get_state (const LinphoneConference *obj) {
