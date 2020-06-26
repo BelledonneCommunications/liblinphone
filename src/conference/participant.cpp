@@ -60,27 +60,14 @@ shared_ptr<CallSession> Participant::createSession (
 shared_ptr<CallSession> Participant::createSession (
 	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
 ) {
-	L_Q();
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(core, q->getSharedFromThis(), params, listener);
-	} else {
-		session = make_shared<CallSession>(core, params, listener);
-	}
-	return session;
-}
-
-shared_ptr<CallSession> Participant::createSession (
-	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
-) {
-	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
+		//session = make_shared<MediaSession>(core, getSharedFromThis(), params, listener);
 		session = make_shared<MediaSession>(core, this, params, listener);
 	} else {
 		session = make_shared<CallSession>(core, params, listener);
 	}
 	return session;
 }
-
-
 
 // -----------------------------------------------------------------------------
 

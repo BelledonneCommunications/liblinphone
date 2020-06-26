@@ -22,10 +22,11 @@
 
 #include <list>
 #include <functional>
+#include <unordered_map>
 
 #include "object/object.h"
 
-#include "conference_private.h"
+#include "conference/conference-id.h"
 #include "linphone/types.h"
 #include "call/audio-device/audio-device.h"
 
