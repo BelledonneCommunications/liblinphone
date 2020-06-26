@@ -225,7 +225,6 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	}
 	chatRoom->setState(ConferenceInterface::State::Instantiated);
 	chatRoom->setState(ConferenceInterface::State::Created);
-	printf("%s - state %s\n", __func__, Utils::toString(chatRoom->getState()).c_str());
 
 	return chatRoom;
 }
