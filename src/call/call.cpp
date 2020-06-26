@@ -23,6 +23,7 @@
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/call-session-p.h"
 #include "conference/session/media-session-p.h"
+#include "conference/participant.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
 #include "conference/handlers/remote-conference-event-handler.h"
@@ -37,7 +38,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 shared_ptr<CallSession> Call::getActiveSession () const {
-	return mParticipant->getPrivate()->getSession();
+	return mParticipant->getSession();
 }
 
 shared_ptr<RealTimeTextChatRoom> Call::getChatRoom () {
@@ -373,9 +374,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, q->getLocalAddress());
+				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 				// It is expected that the core of the remote conference is the participant one
-				remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(q->getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(q->getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+				remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 
 				#ifdef HAVE_ADVANCED_IM
 				remoteConf->eventHandler->subscribe(remoteConferenceId);
@@ -554,9 +555,9 @@ Call::Call (
 	mBgTask.setName("Liblinphone call notification");
 
 	//create session
-	mParticipant = make_shared<Participant>(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
-	mParticipant->getPrivate()->createSession(getCore(), msp, TRUE, this);
-	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+	mParticipant = Participant::create(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
+	mParticipant->createSession(getCore(), msp, TRUE, this);
+	mParticipant->getSession()->configure(direction, cfg, op, from, to);
 }
 
 Call::Call (
@@ -569,9 +570,9 @@ Call::Call (
 
 	mBgTask.setName("Liblinphone call notification");
 
-	mParticipant = make_shared<Participant>();
-	mParticipant->getPrivate()->createSession(getCore(), nullptr, TRUE, this);
-	mParticipant->getPrivate()->getSession()->configure(direction, callid);
+	mParticipant = Participant::create();
+	mParticipant->createSession(getCore(), nullptr, TRUE, this);
+	mParticipant->getSession()->configure(direction, callid);
 }
 
 Call::~Call () {
@@ -591,7 +592,7 @@ void Call::configure (
 	const MediaSessionParams *msp
 ) {
 	mParticipant->configure(nullptr, IdentityAddress((direction == LinphoneCallIncoming) ? to : from));
-	mParticipant->getPrivate()->getSession()->configure(direction, cfg, op, from, to);
+	mParticipant->getSession()->configure(direction, cfg, op, from, to);
 }
 
 bool Call::isOpConfigured () const {
