@@ -251,6 +251,14 @@ LINPHONE_PUBLIC void linphone_content_set_key (LinphoneContent *content, const c
 LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneContent *content);
 
 /**
+ * If the content is an encrypted file, generate a temporary plain copy of the file and returns its paths
+ * The caller is responsible to then delete this temporary copy and the returned string
+ * @param[in] content #LinphoneContent object.
+ * @return The file path set for this content if it has been set, NULL otherwise.
+ */
+LINPHONE_PUBLIC char *linphone_content_get_plain_file_path (const LinphoneContent *content);
+
+/**
  * Set the file transfer filepath for this content (replace linphone_chat_message_set_file_transfer_filepath).
  * @param content #LinphoneContent object. @notnil
  * @param file_path the file transfer filepath. @maybenil
@@ -277,6 +285,12 @@ LINPHONE_PUBLIC bool_t linphone_content_is_file (const LinphoneContent *content)
  * @return TRUE if this content is a file transfer, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer (const LinphoneContent *content);
+
+/**
+ * Tells whether or not this content contains an encrypted file
+ * @return True is this content contains a file and this file is encrypted, false otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted (const LinphoneContent *content);
 
 /**
  * @}
