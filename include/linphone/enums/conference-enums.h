@@ -23,7 +23,7 @@
 // =============================================================================
 /**
  * #LinphoneConferenceState is used to indicate the current state of a conference.
- * @ingroup chatroom
+ * @ingroup conferencing
  */
 typedef enum _LinphoneChatRoomState{
 	LinphoneChatRoomStateNone, /**< Initial state */
