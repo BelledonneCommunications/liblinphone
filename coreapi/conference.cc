@@ -510,7 +510,8 @@ int LocalConference::addParticipant (LinphoneCall *call) {
 	return 0;
 }
 
-int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
+int LocalConference::removeFromConference (LinphoneCall *call, bool_t active_after_removed) {
+	bool noMediaRestartRequired = false;
 	/* Special handling for already terminated calls.*/
 	switch(linphone_call_get_state(call)){
 		case LinphoneCallEnd:
@@ -523,8 +524,11 @@ int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
 	}
 	if (!linphone_call_params_get_in_conference(linphone_call_get_current_params(call))) {
 		if (linphone_call_params_get_in_conference(linphone_call_get_params(call))) {
-			ms_warning("Not (yet) in conference, be patient");
-			return -1;
+			/* Another special case for calls that have not yet started their streams,
+			 * they are not physically connected to the conference.
+			 * */
+			ms_message("Call was not yet attached to the conference, it can be removed immediately.");
+			noMediaRestartRequired = true;
 		} else {
 			ms_error("Not in a conference");
 			return -1;
@@ -534,11 +538,15 @@ int LocalConference::removeFromConference (LinphoneCall *call, bool_t active) {
 	const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 		L_GET_PRIVATE(L_GET_CPP_PTR_FROM_C_OBJECT(call)->getParams()))->setInConference(false);
 
+	if (noMediaRestartRequired){
+		_linphone_call_set_conf_ref(call, nullptr);
+		return 0;
+	}
 	char *str = linphone_call_get_remote_address_as_string(call);
 	ms_message("%s will be removed from conference", str);
 	ms_free(str);
 	int err = 0;
-	if (active) {
+	if (active_after_removed) {
 		LinphoneCallParams *params = linphone_call_params_copy(linphone_call_get_current_params(call));
 		linphone_call_params_set_in_conference(params, FALSE);
 		// Reconnect local audio with this call
@@ -707,14 +715,14 @@ void LocalConference::onCallStreamStopping (LinphoneCall *call) {
 }
 
 void LocalConference::participantUnplugged(LinphoneCall *call){
-	int remote_count = remoteParticipantsCount();
-	ms_message("conference_check_uninit(): size=%i", getSize());
+	int mixer_connected_remote_participants_count = ms_audio_conference_get_size(m_conf);
+	if (m_recordEndpoint) mixer_connected_remote_participants_count--;
+	if (m_localParticipantStream) mixer_connected_remote_participants_count--;
+	
+	ms_message("participantUnplugged(): remote participant count still connected = %i", mixer_connected_remote_participants_count);
 	_linphone_call_set_conf_ref(call, nullptr);
-	if ((remote_count == 1) && !m_terminating){
-		if (m_currentParams->localParticipantEnabled()) convertConferenceToCall();
-	}
 
-	if (remote_count == 0) {
+	if (mixer_connected_remote_participants_count == 0) {
 		if (m_localParticipantStream){
 			removeLocalEndpoint();
 			linphone_core_soundcard_hint_check(m_core);
