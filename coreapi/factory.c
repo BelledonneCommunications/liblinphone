@@ -628,9 +628,9 @@ void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_
 
 	// Associate the VfsEncryption class callback
 	bctoolbox::VfsEncryption::openCallback_set([module](bctoolbox::VfsEncryption &settings) {
-		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s", settings.filename_get().data(), encryptionSuiteString(module).data());
+		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s file. Current file's encryption module is %s", settings.filename_get().data(), encryptionSuiteString(module).data(), encryptionSuiteString(settings.encryptionSuite_get()).data());
 
-		settings.encryptionSuite_set(module); // This call will migrate plain files to encrypted ones is needed
+		settings.encryptionSuite_set(module); // This call will migrate plain files to encrypted ones if needed
 		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
 			settings.secretMaterial_set(*(linphone_factory_get()->evfs_master_key));
 		}

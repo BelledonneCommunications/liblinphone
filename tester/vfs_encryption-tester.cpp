@@ -29,22 +29,13 @@
 #include <fstream>
 
 static const int x3dhServer_creationTimeout = 5000;
-/* encrypted files starts with text : bcEncryptedFs
- * read the first 13 char of the file and check them */
 static bool is_encrypted(const char *filepath) {
 	bool ret = false;
-	uint8_t evfs_magicNumber[13] = {0x62, 0x63, 0x45, 0x6e, 0x63, 0x72, 0x79, 0x70, 0x74, 0x65, 0x64, 0x46, 0x73};
-	std::ifstream file (filepath, std::ios::in | std::ios::binary);
-	if (file.is_open()) {
-		char readBuf[13];
-		file.seekg(0, std::ios::beg);
-		auto sizeRead = file.read(readBuf, 13).gcount();
-
-		if (sizeRead == 13) {
-			ret = std::equal(evfs_magicNumber, evfs_magicNumber+13, readBuf);
-		}
+	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
+	if (fp != NULL) {
+		ret = (bctbx_file_isEncrypted(fp)==TRUE);
+		bctbx_file_close(fp);
 	}
-	file.close();
 	return ret;
 }
 
@@ -109,17 +100,6 @@ static void register_user(const uint16_t encryptionModule, const char* random_id
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_X3dhUserCreationSuccess, 1, x3dhServer_creationTimeout));
 	}
 
-	// check the linphone dbs and local_rc are encrypted or not
-	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie->database_path));
-		BC_ASSERT_FALSE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_FALSE(is_encrypted(localRc));
-	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie->database_path));
-		BC_ASSERT_TRUE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_TRUE(is_encrypted(localRc));
-	}
-
 	// cleaning
 	if (marie->lc && linphone_core_get_global_state(marie->lc) != LinphoneGlobalOff && !linphone_core_is_network_reachable(marie->lc)) {
 		int previousNbRegistrationOk = marie->stat.number_of_LinphoneRegistrationOk;
@@ -130,6 +110,17 @@ static void register_user(const uint16_t encryptionModule, const char* random_id
 	linphone_core_manager_stop(marie);
 	linphone_core_manager_uninit2(marie, FALSE); // uinit but do not unlink the db files
 	ms_free(marie);
+
+	// check the linphone dbs and local_rc are encrypted or not
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(is_encrypted(linphone_db));
+		BC_ASSERT_FALSE(is_encrypted(lime_db));
+		BC_ASSERT_FALSE(is_encrypted(localRc));
+	} else {
+		BC_ASSERT_TRUE(is_encrypted(linphone_db));
+		BC_ASSERT_TRUE(is_encrypted(lime_db));
+		BC_ASSERT_TRUE(is_encrypted(localRc));
+	}
 
 	if (createUsers == false) {
 		unlink(localRc);
@@ -229,23 +220,6 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_X3dhUserCreationSuccess, 1, x3dhServer_creationTimeout));
 	}
 
-	// check the linphone dbs and local_rc are encrypted or not
-	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie->database_path));
-		BC_ASSERT_FALSE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_FALSE(is_encrypted(marie_rc));
-		BC_ASSERT_FALSE(is_encrypted(pauline->database_path));
-		BC_ASSERT_FALSE(is_encrypted(pauline->lime_database_path));
-		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
-	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie->database_path));
-		BC_ASSERT_TRUE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_TRUE(is_encrypted(marie_rc));
-		BC_ASSERT_TRUE(is_encrypted(pauline->database_path));
-		BC_ASSERT_TRUE(is_encrypted(pauline->lime_database_path));
-		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
-	}
-
 	// make the ZRTP call, confirm SAS
 	BC_ASSERT_TRUE(call(pauline,marie));
 	if (createUsers == true) { // on the first run, set the SAS to verified, it shall still be set this way on the second run
@@ -271,6 +245,24 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 	linphone_core_manager_stop(pauline);
 	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
 	ms_free(pauline);
+
+	// check the linphone dbs and local_rc are encrypted or not
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(is_encrypted(marie_linphone_db));
+		BC_ASSERT_FALSE(is_encrypted(marie_lime_db));
+		BC_ASSERT_FALSE(is_encrypted(marie_rc));
+		BC_ASSERT_FALSE(is_encrypted(pauline_linphone_db));
+		BC_ASSERT_FALSE(is_encrypted(pauline_lime_db));
+		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
+	} else {
+		BC_ASSERT_TRUE(is_encrypted(marie_linphone_db));
+		BC_ASSERT_TRUE(is_encrypted(marie_lime_db));
+		BC_ASSERT_TRUE(is_encrypted(marie_rc));
+		BC_ASSERT_TRUE(is_encrypted(pauline_linphone_db));
+		BC_ASSERT_TRUE(is_encrypted(pauline_lime_db));
+		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
+	}
+
 	if (createUsers == false) { // we reused users, now clean the local files
 		unlink(marie_rc);
 		unlink(marie_zidCache);
@@ -405,23 +397,6 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
 	}
 
-	// check the linphone dbs and local_rc are encrypted or not
-	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
-		BC_ASSERT_FALSE(is_encrypted(marie->database_path));
-		BC_ASSERT_FALSE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_FALSE(is_encrypted(marie_rc));
-		BC_ASSERT_FALSE(is_encrypted(pauline->database_path));
-		BC_ASSERT_FALSE(is_encrypted(pauline->lime_database_path));
-		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
-	} else {
-		BC_ASSERT_TRUE(is_encrypted(marie->database_path));
-		BC_ASSERT_TRUE(is_encrypted(marie->lime_database_path));
-		BC_ASSERT_TRUE(is_encrypted(marie_rc));
-		BC_ASSERT_TRUE(is_encrypted(pauline->database_path));
-		BC_ASSERT_TRUE(is_encrypted(pauline->lime_database_path));
-		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
-	}
-
 	// Marie creates a new group chat room
 	bctbx_list_t *participantsAddresses = NULL;
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
@@ -433,7 +408,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 
 	// send file
-	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
 	_send_file(marieCr, sendFilepath, nullptr, false);
 
 	// check pauline got it
@@ -448,6 +423,27 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	}
 	// but not the original file sent
 	BC_ASSERT_FALSE(is_encrypted(sendFilepath));
+
+	// Get the file using the linphone content API
+	LinphoneChatMessage *msg = pauline->stat.last_received_chat_message;
+	auto contents = linphone_chat_message_get_contents(msg);
+	BC_ASSERT_PTR_NOT_NULL(contents);
+	BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
+	auto content = (LinphoneContent *)bctbx_list_get_data(contents);
+	BC_ASSERT_PTR_NOT_NULL(content);
+	BC_ASSERT_NSTRING_EQUAL(linphone_content_get_file_path(content), receivePaulineFilepath, strlen(receivePaulineFilepath)); // just to check we're on the correct path
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(linphone_content_is_file_encrypted(content));
+	} else {
+		BC_ASSERT_TRUE(linphone_content_is_file_encrypted(content));
+		// get a plain version of the file
+		auto plainFilePath = linphone_content_get_plain_file_path(content);
+		// check it is plain and match the sent one
+		BC_ASSERT_FALSE(is_encrypted(plainFilePath));
+		compare_files(plainFilePath, sendFilepath);
+		std::remove(plainFilePath);
+		bctbx_free(plainFilePath);
+	}
 
 	// cleaning
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -465,6 +461,24 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	linphone_core_manager_stop(pauline);
 	linphone_core_manager_uninit2(pauline, FALSE); // uinit but do not unlink the db files
 	ms_free(pauline);
+
+	// check the linphone dbs and local_rc are encrypted or not
+	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
+		BC_ASSERT_FALSE(is_encrypted(marie_linphone_db));
+		BC_ASSERT_FALSE(is_encrypted(marie_lime_db));
+		BC_ASSERT_FALSE(is_encrypted(marie_rc));
+		BC_ASSERT_FALSE(is_encrypted(pauline_linphone_db));
+		BC_ASSERT_FALSE(is_encrypted(pauline_lime_db));
+		BC_ASSERT_FALSE(is_encrypted(pauline_rc));
+	} else {
+		BC_ASSERT_TRUE(is_encrypted(marie_linphone_db));
+		BC_ASSERT_TRUE(is_encrypted(marie_lime_db));
+		BC_ASSERT_TRUE(is_encrypted(marie_rc));
+		BC_ASSERT_TRUE(is_encrypted(pauline_linphone_db));
+		BC_ASSERT_TRUE(is_encrypted(pauline_lime_db));
+		BC_ASSERT_TRUE(is_encrypted(pauline_rc));
+	}
+
 	if (createUsers == false) { // we reused users, now clean the local files
 		unlink(marie_rc);
 		unlink(marie_linphone_db);
