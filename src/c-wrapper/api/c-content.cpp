@@ -335,6 +335,14 @@ const char *linphone_content_get_file_path (const LinphoneContent *content) {
 	return content->cache.file_path.c_str();
 }
 
+char *linphone_content_get_plain_file_path (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile()) {
+		return bctbx_strdup(static_cast<const LinphonePrivate::FileContent *>(c)->getPlainFilePath().c_str());
+	}
+	return NULL;
+}
+
 void linphone_content_set_file_path (LinphoneContent *content, const char *file_path) {
 	LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	if (c->isFile())
@@ -357,6 +365,14 @@ bool_t linphone_content_is_file (const LinphoneContent *content) {
 bool_t linphone_content_is_file_transfer (const LinphoneContent *content) {
 	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
 	return c->isFileTransfer(); // TODO FIXME this doesn't work when Content is from linphone_chat_message_get_contents() list
+}
+
+bool_t linphone_content_is_file_encrypted (const LinphoneContent *content) {
+	const LinphonePrivate::Content *c = L_GET_CPP_PTR_FROM_C_OBJECT(content);
+	if (c->isFile()) {
+		return static_cast<const LinphonePrivate::FileContent *>(c)->isEncrypted();
+	}
+	return FALSE;
 }
 
 // =============================================================================
