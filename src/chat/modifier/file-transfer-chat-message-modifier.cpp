@@ -333,7 +333,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 									// need to parse the children node to update the file-name one
 									xmlNodePtr fileInfoNodeChildren = cur->xmlChildrenNode;
 									// convert key to base64
-									size_t b64Size;
+									size_t b64Size=0;
 									bctbx_base64_encode(nullptr, &b64Size, contentKey, contentKeySize);
 									unsigned char *keyb64 = (unsigned char *)ms_malloc0(b64Size + 1);
 
