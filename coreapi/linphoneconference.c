@@ -20,6 +20,7 @@
 #include <memory>
 #include <type_traits>
 #include <string>
+#include <unordered_map>
 
 #include <belle-sip/object++.hh>
 #include "bctoolbox/list.h"
@@ -31,6 +32,7 @@
 
 #include "conference/participant.h"
 #include "conference/session/streams.h"
+#include "conference_private.h"
 
 using namespace std;
 
@@ -84,7 +86,7 @@ const LinphoneConferenceParams * linphone_conference_get_current_params(const Li
 }
 
 LinphoneStatus linphone_conference_add_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
-	return MediaConference::Conference::toCpp(obj)->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(call));
+	return MediaConference::Conference::toCpp(obj)->addParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
 LinphoneStatus linphone_conference_add_participant_with_address (LinphoneConference *obj, const LinphoneAddress *uri) {
