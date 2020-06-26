@@ -120,8 +120,8 @@ const char *Conference::stateToString (LinphonePrivate::ConferenceInterface::Sta
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
-	if (m_stateChangedCb) {
-		m_stateChangedCb(toC(), (LinphoneChatRoomState)state, m_userData);
+	if (mStateChangedCb) {
+		mStateChangedCb(toC(), (LinphoneChatRoomState)state, mUserData);
 	}
 }
 
@@ -151,6 +151,35 @@ bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePri
 	for (const auto &p : participants)
 		soFarSoGood &= removeParticipant(p);
 	return soFarSoGood;
+}
+
+bctbx_list_t *Conference::getCallbacksList () const {
+	return mCallbacks;
+}
+
+LinphoneConferenceCbs *Conference::getCurrentCbs () const{
+	return mCurrentCbs;
+}
+
+void Conference::setCurrentCbs (LinphoneConferenceCbs *cbs) {
+	mCurrentCbs = cbs;
+}
+
+void Conference::addCallbacks (LinphoneConferenceCbs *cbs) {
+	mCallbacks = bctbx_list_append(mCallbacks, belle_sip_object_ref(cbs));
+}
+
+void Conference::removeCallbacks (LinphoneConferenceCbs *cbs) {
+	mCallbacks = bctbx_list_remove(mCallbacks, cbs);
+	belle_sip_object_unref(cbs);
+}
+
+void *Conference::getUserData () const{
+	return mUserData;
+}
+
+void Conference::setUserData (void *ud) {
+	mUserData = ud;
 }
 
 LocalConference::LocalConference (

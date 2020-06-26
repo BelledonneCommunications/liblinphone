@@ -127,8 +127,8 @@ public:
 
 	void setState (LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
-		m_stateChangedCb = cb;
-		m_userData = userData;
+		mStateChangedCb = cb;
+		mUserData = userData;
 	}
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
@@ -140,14 +140,24 @@ public:
 
 	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
 
+	bctbx_list_t *getCallbacksList () const;
+	LinphoneConferenceCbs *getCurrentCbs () const;
+	void setCurrentCbs (LinphoneConferenceCbs *cbs);
+	void addCallbacks (LinphoneConferenceCbs *cbs);
+	void removeCallbacks (LinphoneConferenceCbs *cbs);
+
+	void *getUserData () const;
+	void setUserData (void *ud);
 
 protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
 
 protected:
 
-	LinphoneConferenceStateChangedCb m_stateChangedCb = nullptr;
-	void *m_userData = nullptr;
+	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
+	void *mUserData = nullptr;
+	bctbx_list_t *mCallbacks = nullptr;
+	LinphoneConferenceCbs *mCurrentCbs = nullptr;
 };
 
 
