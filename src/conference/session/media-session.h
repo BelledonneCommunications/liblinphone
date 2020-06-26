@@ -42,7 +42,8 @@ class LINPHONE_PUBLIC MediaSession : public CallSession {
 	friend class StreamsGroup;
 
 public:
-	MediaSession (const std::shared_ptr<Core> &core, Participant* me, const CallSessionParams *params, CallSessionListener *listener);
+	//MediaSession (const std::shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener);
+	MediaSession (const std::shared_ptr<Core> &core, Participant * me, const CallSessionParams *params, CallSessionListener *listener);
 	~MediaSession ();
 
 	virtual void acceptDefault() override;
