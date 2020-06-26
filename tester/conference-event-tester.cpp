@@ -659,7 +659,7 @@ public:
 	bool addParticipant (std::shared_ptr<Call> call) override {
 		bool status = MediaConference::LocalConference::addParticipant(call);
 		if (status) {
-			notifyParticipantAdded(time(nullptr), false, call->getRemoteAddress());
+			notifyParticipantAdded(time(nullptr), false, *call->getRemoteAddress());
 		}
 		return status;
 	}
@@ -1113,7 +1113,7 @@ printf("ADDING mgr %p\n", m);
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
 
-	conf->addParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participantCall));
+	conf->addParticipant(Call::toCpp(participantCall)->getSharedFromThis());
 	mgrs = bctbx_list_append(mgrs, participant_mgr);
 
 	// Stream due to call and stream due to the addition to the conference
