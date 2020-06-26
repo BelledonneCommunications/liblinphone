@@ -103,6 +103,16 @@ typedef struct _LinphoneCallCbs LinphoneCallCbs;
 // -----------------------------------------------------------------------------
 
 /**
+ * An object to handle the callbacks for the handling a #LinphoneConference objects.
+ * @ingroup conferencing
+ */
+typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
+
+// -----------------------------------------------------------------------------
+// ChatRoom.
+// -----------------------------------------------------------------------------
+
+/**
  * An chat message is the object that is sent and received through LinphoneChatRooms.
  * @ingroup chatroom
  */
