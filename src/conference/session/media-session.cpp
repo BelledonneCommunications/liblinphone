@@ -1805,6 +1805,10 @@ LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 
 void MediaSessionPrivate::terminate () {
 	L_Q();
+	if (q->isRecording()) {
+		lInfo() << "Media session is being terminated, stop recording";
+		q->stopRecording();
+	}
 	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 	stopStreams();
 	CallSessionPrivate::terminate();
