@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2020 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -56,7 +56,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 #ifdef HAVE_DB_STORAGE
 namespace {
-	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 13);
+	constexpr unsigned int ModuleVersionEvents = makeVersion(1, 0, 14);
 	constexpr unsigned int ModuleVersionFriends = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyFriendsImport = makeVersion(1, 0, 0);
 	constexpr unsigned int ModuleVersionLegacyHistoryImport = makeVersion(1, 0, 0);
@@ -291,9 +291,9 @@ void MainDbPrivate::insertContent (long long chatMessageId, const Content &conte
 	soci::session *session = dbSession.getBackendSession();
 
 	const long long &contentTypeId = insertContentType(content.getContentType().getMediaType());
-	const string &body = content.getBodyAsString();
-	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body) VALUES"
-		" (:chatMessageId, :contentTypeId, :body)", soci::use(chatMessageId), soci::use(contentTypeId),
+	const string &body = content.getBodyAsUtf8String();
+	*session << "INSERT INTO chat_message_content (event_id, content_type_id, body, body_encoding_type) VALUES"
+		" (:chatMessageId, :contentTypeId, :body, 1)", soci::use(chatMessageId), soci::use(contentTypeId),
 		soci::use(body);
 
 	const long long &chatMessageContentId = dbSession.getLastInsertId();
@@ -1503,6 +1503,10 @@ void MainDbPrivate::updateSchema () {
 		"  LEFT JOIN conference_security_event ON conference_security_event.event_id = event.id"
 		"  LEFT JOIN chat_message_ephemeral_event ON chat_message_ephemeral_event.event_id = event.id"
 		"  LEFT JOIN conference_ephemeral_message_event ON conference_ephemeral_message_event.event_id = event.id";
+	}
+
+	if (version < makeVersion(1, 0, 14)) {
+		*session << "ALTER TABLE chat_message_content ADD COLUMN body_encoding_type TINYINT NOT NULL DEFAULT 0";// Older table contains Local encoding.
 	}
 #endif
 }
@@ -3119,7 +3123,7 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dChatMessage->dbKey).getPrivate();
 		const long long &eventId = dEventKey->storageId;
 
-		static const string query = "SELECT chat_message_content.id, content_type.id, content_type.value, body"
+		static const string query = "SELECT chat_message_content.id, content_type.id, content_type.value, body, body_encoding_type"
 			" FROM chat_message_content, content_type"
 			" WHERE event_id = :eventId AND content_type_id = content_type.id";
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(eventId));
@@ -3127,6 +3131,7 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			ContentType contentType(row.get<string>(2));
 			const long long &contentId = d->dbSession.resolveId(row, 0);
 			Content *content;
+			int bodyEncodingType = row.get<int>(4);
 
 			if (contentType == ContentType::FileTransfer) {
 				hasFileTransferContent = true;
@@ -3152,7 +3157,10 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			}
 
 			content->setContentType(contentType);
-			content->setBody(row.get<string>(3));
+			if(bodyEncodingType == 1)
+				content->setBodyFromUtf8(row.get<string>(3));
+			else
+				content->setBody(row.get<string>(3));
 
 			// 1.2 - Fetch contents' app data.
 			// TODO: Do not test backend, encapsulate!!!
