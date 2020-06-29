@@ -483,6 +483,14 @@ void linphone_core_cbs_set_version_update_check_result_received(LinphoneCoreCbs 
 	cbs->vtable->version_update_check_result_received = cb;
 }
 
+LinphoneCoreCbsConferenceStateChangedCb linphone_core_cbs_get_conference_state_changed (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_state_changed;
+}
+
+void linphone_core_cbs_set_conference_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceStateChangedCb cb) {
+	cbs->vtable->conference_state_changed = cb;
+}
+
 LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat_room_state_changed (LinphoneCoreCbs *cbs) {
 	return cbs->vtable->chat_room_state_changed;
 }
