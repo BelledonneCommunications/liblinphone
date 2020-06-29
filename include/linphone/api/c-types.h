@@ -104,6 +104,10 @@ typedef struct _LinphoneCallCbs LinphoneCallCbs;
 
 /**
  * An object to handle the callbacks for the handling a #LinphoneConference objects.
+ *
+ * Use linphone_factory_create_conference_cbs() to create an instance. Then, call the
+ * callback setters on the events you need to monitor and pass the object to
+ * a #LinphoneConferece instance through linphone_conference_add_callbacks().
  * @ingroup conferencing
  */
 typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
