@@ -138,10 +138,8 @@ void RemoteConference::onFullStateReceived() {
 			dEvent->setFullState(true);
 			dEvent->setNotifyId(lastNotify);
 			for (const auto &l : confListeners) {
-				l->onParticipantSetAdmin(dEvent);
+				l->onParticipantDeviceAdded(dEvent);
 			}
-
-
 		}
 	}
 
