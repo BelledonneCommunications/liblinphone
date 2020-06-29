@@ -19,6 +19,7 @@
 
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference.h"
+#include "c-wrapper/c-wrapper.h"
 #include "conference_private.h"
 
 using namespace LinphonePrivate;
@@ -71,4 +72,18 @@ void _linphone_conference_notify_state_changed(LinphoneConference *conference, L
 	NOTIFY_IF_EXIST(StateChanged, state_changed, conference, newState)
 }
 
+LinphoneCore *linphone_conference_get_core (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getCore()->getCCore();
+}
 
+const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference) {
+	const LinphonePrivate::Address address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
+
+	printf("%s - address %s\n", __func__, address.asString().c_str());
+	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
+
+}
+
+char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference) {
+	return ms_strdup(MediaConference::Conference::toCpp(conference)->getConferenceAddress().asString().c_str());
+}
