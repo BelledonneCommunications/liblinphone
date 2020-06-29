@@ -334,6 +334,13 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_factory_create_auth_info_2(const Linp
 LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factory);
 
 /**
+ * Create a #LinphoneConferenceCbs object that holds callbacks for events happening on a conference.
+ * @param[in] factory #LinphoneFactory singletion object
+ * @return A new #LinphoneConferenceCbs object
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory);
+
+/**
  * Create a LinphoneChatRoomCbs object that holds callbacks for events happening on a chat room.
  * @param[in] factory LinphoneFactory singletion object
  * @return A new LinphoneChatRoomCbs object
