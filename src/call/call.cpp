@@ -954,6 +954,8 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	RingStream *ringStream = nullptr;
 	switch (getState()) {
 		case CallSession::State::OutgoingRinging:
+		case CallSession::State::Pausing:
+		case CallSession::State::Paused:
 			ringStream = getCore()->getCCore()->ringstream;
 			if (ringStream) {
 				MSSndCard *card = ring_stream_get_output_ms_snd_card(ringStream);
