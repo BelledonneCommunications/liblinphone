@@ -234,11 +234,17 @@ LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConf
  */
 //LINPHONE_PUBLIC ConferenceId linphone_conference_get_conference_id(const LinphoneConference *obj);
 
+/**
+ * Terlnate conferenceGet the conference id
+ * @param obj the conference
+ * @return 0 if the termination is successful, -1 otherwise.
+ */
+LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *obj);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
 
-int linphone_conference_terminate(LinphoneConference *obj);
 int linphone_conference_enter(LinphoneConference *obj);
 int linphone_conference_leave(LinphoneConference *obj);
 bool_t linphone_conference_is_in(const LinphoneConference *obj);
@@ -250,7 +256,7 @@ LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
-int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
+LINPHONE_PUBLIC int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_get_size(const LinphoneConference *obj);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
