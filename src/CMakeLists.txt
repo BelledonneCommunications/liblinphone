@@ -580,12 +580,13 @@ if(ENABLE_SHARED)
 		set_source_files_properties(${LINPHONE_C_API_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/api")
 		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/enums")
 		set_source_files_properties(${LINPHONE_UTILS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/utils")
-
+		list(GET LINPHONE_ROOT_HEADER_FILES 0 one_header_file)
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
 			RESOURCE "${LINPHONE_RESOURCES}"
+			PUBLIC_HEADER "${one_header_file}"
 		)
 	endif()
 	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)
