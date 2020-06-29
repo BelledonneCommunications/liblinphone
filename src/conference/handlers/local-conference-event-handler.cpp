@@ -550,10 +550,7 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 }
 
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
-	switch(state) {
-		default:
-			break;
-	}
+	lInfo() << "Calling " << __func__ << " when in state " << state;
 }
 
 
