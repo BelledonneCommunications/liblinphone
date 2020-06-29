@@ -300,6 +300,10 @@ LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factor
 	return _linphone_call_cbs_new();
 }
 
+LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
+	return _linphone_conference_cbs_new();
+}
+
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
 	return _linphone_chat_room_cbs_new();
 }

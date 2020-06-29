@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 LinphoneCallCbs *_linphone_call_cbs_new(void);
+LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
@@ -588,6 +589,7 @@ void linphone_core_notify_log_collection_upload_progress_indication(LinphoneCore
 void linphone_core_notify_friend_list_created(LinphoneCore *lc, LinphoneFriendList *list);
 void linphone_core_notify_friend_list_removed(LinphoneCore *lc, LinphoneFriendList *list);
 void linphone_core_notify_call_created(LinphoneCore *lc, LinphoneCall *call);
+void linphone_core_notify_conference_state_changed (LinphoneCore *lc, LinphoneConference *conference, LinphoneChatRoomState state);
 void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr);
