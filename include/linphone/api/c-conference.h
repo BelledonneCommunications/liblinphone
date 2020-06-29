@@ -57,6 +57,20 @@ LINPHONE_PUBLIC void linphone_conference_remove_callbacks(LinphoneConference *co
 LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_get_current_callbacks(const LinphoneConference *conference);
 
 /**
+ * Returns back pointer to #LinphoneCore object.
+**/
+LINPHONE_PUBLIC LinphoneCore* linphone_conference_get_core(const LinphoneConference *conference);
+
+/**
+ * Get the conference address of the conference.
+ * @param[in] conference A #LinphoneConference object
+ * @return The conference address of the conference or NULL if it is unknown
+ */
+LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference);
+LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference);
+
+
+/**
  * @}
  */
 
