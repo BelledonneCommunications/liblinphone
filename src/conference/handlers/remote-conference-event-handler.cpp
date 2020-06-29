@@ -104,7 +104,6 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 	}
 
 	bool isFullState = confInfo->getState() == StateType::full;
-//	ConferenceListener *confListener = static_cast<ConferenceListener *>(conf);
 
 	// 3. Notify subject and keywords.
 	if (confDescription.present()) {
@@ -151,11 +150,11 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			} else {
 				conf->participants.remove(participant);
 				if (!isFullState) {
-				conf->notifyParticipantRemoved(
-					creationTime,
-					isFullState,
-					address
-				);
+					conf->notifyParticipantRemoved(
+						creationTime,
+						isFullState,
+						address
+					);
 				}
 
 				continue;
