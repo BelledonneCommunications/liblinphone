@@ -339,6 +339,11 @@ void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneCha
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_conference_state_changed(LinphoneCore *lc, LinphoneConference *conference, LinphoneChatRoomState cstate){
+	NOTIFY_IF_EXIST(conference_state_changed, lc,conference,cstate);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr) {
 	NOTIFY_IF_EXIST(chat_room_subject_changed, lc, cr);
 	cleanup_dead_vtable_refs(lc);
