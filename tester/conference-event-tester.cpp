@@ -37,6 +37,9 @@
 #include "tester_utils.h"
 #include "tools/private-access.h"
 
+#include "linphone/api/c-conference-cbs.h"
+#include "linphone/api/c-conference.h"
+
 using namespace LinphonePrivate;
 using namespace std;
 
@@ -681,7 +684,66 @@ public:
 	map<string, shared_ptr<MediaConference::RemoteConference>> participantRemoteConfTable;
 };
 
+static void conference_state_changed (LinphoneConference *conference, LinphoneChatRoomState newState) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
 
+printf("manager %p rc file %s - state %s\n", manager, manager->rc_path, linphone_conference_state_to_string(newState));
+
+	if (addr_str) {
+		ms_message("Conference [%s] state changed: %d", addr_str, newState);
+	}
+	switch (newState) {
+		case LinphoneChatRoomStateNone:
+			break;
+		case LinphoneChatRoomStateInstantiated:
+			manager->stat.number_of_LinphoneChatRoomStateInstantiated++;
+			break;
+		case LinphoneChatRoomStateCreationPending:
+			manager->stat.number_of_LinphoneChatRoomStateCreationPending++;
+			break;
+		case LinphoneChatRoomStateCreated:
+			manager->stat.number_of_LinphoneChatRoomStateCreated++;
+			break;
+		case LinphoneChatRoomStateCreationFailed:
+			manager->stat.number_of_LinphoneChatRoomStateCreationFailed++;
+			break;
+		case LinphoneChatRoomStateTerminationPending:
+			manager->stat.number_of_LinphoneChatRoomStateTerminationPending++;
+			break;
+		case LinphoneChatRoomStateTerminated:
+			manager->stat.number_of_LinphoneChatRoomStateTerminated++;
+			break;
+		case LinphoneChatRoomStateTerminationFailed:
+			manager->stat.number_of_LinphoneChatRoomStateTerminationFailed++;
+			break;
+		case LinphoneChatRoomStateDeleted:
+			manager->stat.number_of_LinphoneChatRoomStateDeleted++;
+			break;
+		default:
+			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", addr_str);
+			break;
+	}
+
+	bctbx_free(addr_str);
+}
+
+void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
+	linphone_core_add_callbacks(lcm->lc, cbs);
+	linphone_core_set_user_data(lcm->lc, lcm);
+}
+
+void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneChatRoomState state) {
+printf("%s - state %s\n", __func__, linphone_conference_state_to_string(state));
+	if (state == LinphoneChatRoomStateInstantiated) {
+		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
+		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
+
+		linphone_conference_add_callbacks(conference, cbs);
+		linphone_conference_cbs_unref(cbs);
+	}
+}
 
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -1186,6 +1248,8 @@ LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 
 	belle_sip_object_unref(cbs);
 
+	linphone_core_set_user_data(mgr->lc, mgr);
+
 	int* subscription_received = (int *)ms_new0(int, 1);
 	*subscription_received = 0;
 	mgr->user_info = subscription_received;
@@ -1220,6 +1284,12 @@ void send_added_notify_through_call() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_conference_state_changed(cbs, core_conference_state_changed);
+	configure_core_for_conference_callbacks(pauline, cbs);
+	linphone_core_cbs_unref(cbs);
+
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
 

@@ -118,11 +118,15 @@ const char *Conference::stateToString (LinphonePrivate::ConferenceInterface::Sta
 }
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+printf("%s - from state %s to state %s\n", __func__, linphone_conference_state_to_string((LinphoneChatRoomState)getState()), linphone_conference_state_to_string((LinphoneChatRoomState)state));
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
 	if (mStateChangedCb) {
 		mStateChangedCb(toC(), (LinphoneChatRoomState)state, mUserData);
 	}
+
+	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneChatRoomState)getState());
+	_linphone_conference_notify_state_changed(toC(), (LinphoneChatRoomState)getState());
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
