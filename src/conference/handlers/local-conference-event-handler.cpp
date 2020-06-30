@@ -23,7 +23,7 @@
 #include "linphone/utils/utils.h"
 
 #include "c-wrapper/c-wrapper.h"
-#include "conference/local-conference.h"
+#include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
 #include "content/content-manager.h"
@@ -550,8 +550,6 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 }
 
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
-	lInfo() << "Calling " << __func__ << " when in state " << state;
 }
-
 
 LINPHONE_END_NAMESPACE

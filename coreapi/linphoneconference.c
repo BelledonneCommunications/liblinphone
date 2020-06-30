@@ -70,7 +70,7 @@ void linphone_conference_set_user_data (LinphoneConference *conference, void *ud
 }
 
 const char *linphone_conference_state_to_string (LinphoneChatRoomState state) {
-	return LinphonePrivate::MediaConference::Conference::stateToString((LinphonePrivate::ConferenceInterface::State)state);
+	return ms_strdup(Utils::toString((LinphonePrivate::ConferenceInterface::State)state).c_str());
 }
 
 LinphoneConference *linphone_local_conference_new (LinphoneCore *core, LinphoneAddress * addr) {

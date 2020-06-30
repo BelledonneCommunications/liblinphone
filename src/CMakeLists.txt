@@ -258,6 +258,7 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
+		conference/handlers/local-audio-video-conference-event-handler.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
 		conference/handlers/remote-conference-event-handler.h
@@ -433,6 +434,7 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.cpp
 		chat/chat-room/server-group-chat-room.cpp
 		conference/handlers/local-conference-event-handler.cpp
+		conference/handlers/local-audio-video-conference-event-handler.cpp
 		conference/handlers/local-conference-list-event-handler.cpp
 		conference/handlers/remote-conference-event-handler.cpp
 		conference/handlers/remote-conference-list-event-handler.cpp
