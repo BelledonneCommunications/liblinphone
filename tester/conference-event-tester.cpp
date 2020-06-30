@@ -689,8 +689,6 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCh
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
 
-printf("manager %p rc file %s - state %s\n", manager, manager->rc_path, linphone_conference_state_to_string(newState));
-
 	if (addr_str) {
 		ms_message("Conference [%s] state changed: %d", addr_str, newState);
 	}
@@ -735,7 +733,6 @@ void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneC
 }
 
 void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneChatRoomState state) {
-printf("%s - state %s\n", __func__, linphone_conference_state_to_string(state));
 	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
 		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
@@ -1146,9 +1143,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 	int counter = 1;
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
-printf("trying to add mgr %p\n", m);
 		if ((m != participant_mgr) && (m != conf_mgr)) {
-printf("ADDING mgr %p\n", m);
 			// Allocate memory
 			other_participants_initial_stats = (stats*)realloc(other_participants_initial_stats, counter * sizeof(stats));
 			// Append element
@@ -1162,9 +1157,11 @@ printf("ADDING mgr %p\n", m);
 	BC_ASSERT_TRUE(call(conf_mgr, participant_mgr));
 
 	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
+	LinphoneCall * confCall = linphone_core_get_current_call(conf_mgr->lc);
 
 	if (pause_call) {
-		linphone_call_pause(linphone_core_get_current_call(conf_mgr->lc));
+		// Conference pauses the call
+		linphone_call_pause(confCall);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(initial_conf_stats.number_of_LinphoneCallPaused + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	}
@@ -1175,8 +1172,11 @@ printf("ADDING mgr %p\n", m);
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
 
-	conf->addParticipant(Call::toCpp(participantCall)->getSharedFromThis());
+	conf->addParticipant(Call::toCpp(confCall)->getSharedFromThis());
 	mgrs = bctbx_list_append(mgrs, participant_mgr);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initial_participant_stats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreated, initial_participant_stats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
@@ -1199,7 +1199,6 @@ printf("ADDING mgr %p\n", m);
 		int idx = 0;
 		for (bctbx_list_t *itm = other_participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(itm));
-printf("wait notify for mgr %p\n", m);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(other_participants_initial_stats[idx].number_of_NotifyReceived + 1),5000));
 			idx++;
 		}
@@ -1231,7 +1230,6 @@ void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, 
 
 void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
 	LinphoneCoreManager *mgr = get_manager(lc);
-printf("Notify received for mgr %p - rc file %s - receive notify - name %s from %s to %s\n", mgr, mgr->rc_path, lev->name, linphone_address_as_string(linphone_event_get_from(lev)), linphone_address_as_string(linphone_event_get_resource(lev)));
 	mgr->stat.number_of_NotifyReceived++;
 }
 
@@ -1244,17 +1242,17 @@ LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
 	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
+	linphone_core_cbs_set_conference_state_changed(cbs, core_conference_state_changed);
+	configure_core_for_conference_callbacks(mgr, cbs);
 	_linphone_core_add_callbacks(mgr->lc, cbs, TRUE);
 
-	belle_sip_object_unref(cbs);
+	linphone_core_cbs_unref(cbs);
 
 	linphone_core_set_user_data(mgr->lc, mgr);
 
 	int* subscription_received = (int *)ms_new0(int, 1);
 	*subscription_received = 0;
 	mgr->user_info = subscription_received;
-
-printf("Create mgr %p - rc file %s\n", mgr, rc_file);
 
 	return mgr;
 }
@@ -1283,12 +1281,11 @@ void send_added_notify_through_call() {
 	char *identityStr = linphone_address_as_string(pauline->identity);
 	Address addr(identityStr);
 	bctbx_free(identityStr);
+	stats initialPaulineStats = pauline->stat;
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
 
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-	linphone_core_cbs_set_conference_state_changed(cbs, core_conference_state_changed);
-	configure_core_for_conference_callbacks(pauline, cbs);
-	linphone_core_cbs_unref(cbs);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
 
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1304,10 +1301,13 @@ void send_added_notify_through_call() {
 
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
-printf("manager %p rc file %s call end %0d call released %0d streams running %0d\n", m, m->rc_path, m->stat.number_of_LinphoneCallEnd, m->stat.number_of_LinphoneCallReleased, m->stat.number_of_LinphoneCallStreamsRunning);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, 1, 5000));
-printf("after manager %p rc file %s call end %0d call released %0d\n", m, m->rc_path, m->stat.number_of_LinphoneCallEnd, m->stat.number_of_LinphoneCallReleased);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, 1, 5000));
+
 	}
 
 	custom_mgr_destroy(pauline);
