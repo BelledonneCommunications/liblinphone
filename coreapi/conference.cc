@@ -98,8 +98,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact, call->getActiveSession());
 
-	printf("Adding participant %p - session %p\n", p.get(), call->getActiveSession().get());
-
 	shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 	device->setSession(call->getActiveSession());
 	participants.push_back(p);
@@ -143,7 +141,6 @@ int Conference::terminate () {
 }
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
-printf("%s - from state %s to state %s\n", __func__, linphone_conference_state_to_string((LinphoneChatRoomState)getState()), linphone_conference_state_to_string((LinphoneChatRoomState)state));
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
 	if (mStateChangedCb) {
@@ -173,7 +170,10 @@ void Conference::onConferenceTerminated (const IdentityAddress &addr) {
 	);
 	d->addEvent(event);
 */
-	getCore()->deleteAudioVideoConference(getSharedFromThis());
+
+	// Keep a reference to the conference to be able to set the state to Deleted
+	shared_ptr<Conference> ref = getSharedFromThis();
+	getCore()->deleteAudioVideoConference(ref);
 	setState(ConferenceInterface::State::Deleted);
 }
 
@@ -231,7 +231,6 @@ LocalConference::LocalConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
-printf("%s - Creating conference [%p]\n", __func__, this);
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
@@ -958,7 +957,6 @@ void RemoteConference::notifyReceived (const string &body) {
 }
 
 void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
-printf("%s - found remote cnference %p state %s\n", __func__, this, linphone_conference_state_to_string((LinphoneChatRoomState)state));
 	switch(state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
