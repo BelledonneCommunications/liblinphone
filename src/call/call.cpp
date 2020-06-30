@@ -343,9 +343,6 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
-
-	printf("Call is in state %s\n",
-	linphone_call_state_to_string(static_cast<LinphoneCallState>(getState())));
 	LinphoneCore *lc = getCore()->getCCore();
 	switch(state) {
 		case CallSession::State::OutgoingInit:
@@ -371,13 +368,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
-printf("%s - terminating call %p\n", __func__, this);
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
 				// Terminate conference is found
 				if (conference != nullptr) {
-printf("%s - found call %p trminating id %s\n", __func__, this, Utils::toString(remoteConferenceId).c_str());
 					conference->setState(ConferenceInterface::State::TerminationPending);
 				}
 
@@ -399,7 +394,6 @@ printf("%s - found call %p trminating id %s\n", __func__, this, Utils::toString(
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 				// It is expected that the core of the remote conference is the participant one
 				std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
-printf("%s - found call %p update by remote id %s\n", __func__, this, Utils::toString(remoteConferenceId).c_str());
 			}
 			break;
 		}
@@ -417,11 +411,9 @@ printf("%s - found call %p update by remote id %s\n", __func__, this, Utils::toS
 
 				// Create remote conference if no conference with the expected ID is found in the database
 				if (conference == nullptr) {
-printf("%s - found call %p creating id %s\n", __func__, this, Utils::toString(remoteConferenceId).c_str());
 					// It is expected that the core of the remote conference is the participant one
 					remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 				} else {
-printf("%s - found call %p getting id %s\n", __func__, this, Utils::toString(remoteConferenceId).c_str());
 					remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 				}
 
