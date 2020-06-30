@@ -414,8 +414,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	int err = 0;
 
-	printf("%s - Removing participant belonging to call %p\n", __func__, call.get());
-	
 	if (linphone_call_get_conference(call->toC()) != this->toC()){
 		lError() << "Call " << call->toC() << " is not part of conference " << this->toC();
 		return -1;
@@ -493,9 +491,7 @@ int LocalConference::terminate () {
 			for (auto it = calls.begin(); it != calls.end(); it++) {
 				shared_ptr<LinphonePrivate::Call> call(*it);
 				LinphoneCall *cCall = call->toC();
-//printf("Trying to terminating call %p - conference %p this %p\n", call.get(), linphone_call_get_conference(cCall), this->toC());
 				if (linphone_call_get_conference(cCall) == this->toC()) {
-//printf("Terminating call %p\n", call.get());
 					call->terminate();
 				}
 			}
