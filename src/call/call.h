@@ -279,8 +279,6 @@ private:
 
 	BackgroundTask mBgTask;
 
-	std::shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
-	
 	bctbx_list_t *mCallbacks = nullptr;
 	LinphoneCallCbs *mCurrentCbs = nullptr;
 	LinphoneConference *mConfRef = nullptr;
