@@ -136,7 +136,6 @@ int Conference::terminate () {
 	}
 
 	participants.clear();
-	getCore()->deleteAudioVideoConference(getSharedFromThis());
 	return 0;
 }
 
@@ -147,8 +146,15 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 		mStateChangedCb(toC(), (LinphoneChatRoomState)state, mUserData);
 	}
 
+}
+
+void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+	// Call callbacks before calling listeners because listeners may change state
 	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneChatRoomState)getState());
 	_linphone_conference_notify_state_changed(toC(), (LinphoneChatRoomState)getState());
+
+	// Call listeners
+	LinphonePrivate::Conference::notifyStateChanged(state);
 }
 
 std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
@@ -405,6 +411,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	int err = 0;
+
+	printf("%s - Removing participant belonging to call %p\n", __func__, call.get());
 	
 	if (linphone_call_get_conference(call->toC()) != this->toC()){
 		lError() << "Call " << call->toC() << " is not part of conference " << this->toC();
@@ -446,7 +454,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	}
 	
-	if (getSize() == 0) setState(ConferenceInterface::State::TerminationPending);
+	if (getSize() == 0) setState(ConferenceInterface::State::Terminated);
 	return err;
 }
 
@@ -461,6 +469,7 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	bool ret = Conference::removeParticipant(addr);
 	//mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
 	mediaSession->terminate();
+	if (getSize() == 0) setState(ConferenceInterface::State::Terminated);
 	return ret;
 }
 
@@ -478,16 +487,19 @@ int LocalConference::terminate () {
 		case ConferenceInterface::State::TerminationPending:
 		{
 			/*FIXME: very inefficient server side because it iterates on the global call list. */
-			list<shared_ptr<LinphonePrivate::Call>> calls = L_GET_CPP_PTR_FROM_C_OBJECT(getCore()->getCCore())->getCalls();
+			list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
 			for (auto it = calls.begin(); it != calls.end(); it++) {
 				shared_ptr<LinphonePrivate::Call> call(*it);
 				LinphoneCall *cCall = call->toC();
+//printf("Trying to terminating call %p - conference %p this %p\n", call.get(), linphone_call_get_conference(cCall), this->toC());
 				if (linphone_call_get_conference(cCall) == this->toC()) {
+//printf("Terminating call %p\n", call.get());
 					call->terminate();
 				}
 			}
 
-			setState(ConferenceInterface::State::Terminated);
+			if (getParticipantCount() == 0) setState(ConferenceInterface::State::Terminated);
+
 			break;
 		}
 		default:
@@ -687,6 +699,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	LinphoneCallLog *callLog;
 	switch (state) {
 		case ConferenceInterface::State::None:
+		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
 			Conference::addParticipant(call);
 			ms_message("Calling the conference focus (%s)", m_focusAddr);
