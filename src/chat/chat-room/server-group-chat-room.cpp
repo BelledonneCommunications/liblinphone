@@ -506,6 +506,8 @@ LinphoneReason ServerGroupChatRoomPrivate::onSipMessageReceived (SalOp *op, cons
 	return LinphoneReasonNone;
 }
 
+// TODO: Move to conference.cpp?
+// If conference address is not valid, then the conference fails to create
 void ServerGroupChatRoomPrivate::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
 	L_Q();
 
