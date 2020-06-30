@@ -1244,9 +1244,6 @@ LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
 	linphone_core_cbs_set_conference_state_changed(cbs, core_conference_state_changed);
 	configure_core_for_conference_callbacks(mgr, cbs);
-
-printf("%s - Manager %p - rc %s\n", __func__, mgr, rc_file);
-
 	linphone_core_cbs_unref(cbs);
 
 	linphone_core_set_user_data(mgr->lc, mgr);
@@ -1284,6 +1281,7 @@ void send_added_notify_through_call() {
 	bctbx_free(identityStr);
 	stats initialPaulineStats = pauline->stat;
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	localConf->ref();
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
@@ -1299,12 +1297,12 @@ void send_added_notify_through_call() {
 //	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
+	localConf->unref();
 
 	wait_for_list(lcs,NULL,0,1000);
 
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
-printf("%s - Manager %p (rc path %s) - calls ended %0d calls released %0d\n", __func__, m, m->rc_path, m->stat.number_of_LinphoneCallEnd, m->stat.number_of_LinphoneCallReleased);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, 1, 5000));
 
