@@ -122,9 +122,12 @@ public:
 	 * @param[in] state new state of the conference
 	 */
 	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
-private:
+
+protected:
 
 	Conference *conf = nullptr;
+
+private:
 
 	std::string createNotify (Xsd::ConferenceInfo::ConferenceType confInfo, bool isFullState = false);
 	std::string createNotifySubjectChanged (const std::string &subject);

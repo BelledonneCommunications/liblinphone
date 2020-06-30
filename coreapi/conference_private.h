@@ -26,6 +26,7 @@
 #include "call/call.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
+#include "conference/handlers/local-audio-video-conference-event-handler.h"
 
 #include "belle-sip/object++.hh"
 
@@ -88,10 +89,10 @@ class RemoteConference;
  */
 
 class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+	friend class LocalAudioVideoConferenceEventHandler;
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference() {}
-
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::findParticipant;
@@ -108,7 +109,7 @@ public:
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
 	virtual int terminate() = 0;
-	virtual int finalizeTermination() = 0;
+	virtual void finalizeCreation() = 0;
 
 	virtual int enter() = 0;
 	virtual void leave() override = 0;
@@ -123,8 +124,6 @@ public:
 	virtual int startRecording(const char *path) = 0;
 	virtual int stopRecording() = 0;
 
-	static const char *stateToString(LinphonePrivate::ConferenceInterface::State state);
-
 	void setState (LinphonePrivate::ConferenceInterface::State state) override;
 	void setStateChangedCallback(LinphoneConferenceStateChangedCb cb, void *userData) {
 		mStateChangedCb = cb;
@@ -132,6 +131,8 @@ public:
 	}
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
+
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
 	// TODO: Delete
 	// Addressing compilation error -Werror=overloaded-virtual
@@ -148,6 +149,8 @@ public:
 
 	void *getUserData () const;
 	void setUserData (void *ud);
+
+	void onConferenceTerminated (const IdentityAddress &addr) override;
 
 protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
@@ -181,7 +184,7 @@ public:
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
-	virtual int finalizeTermination() override;
+	virtual void finalizeCreation() override;
 
 	virtual int enter() override;
 	virtual void leave() override;
@@ -213,7 +216,7 @@ private:
 	bool mIsIn = false;
 
 #ifdef HAVE_ADVANCED_IM
-	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
+	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
 #endif // HAVE_ADVANCED_IM
 };
 
@@ -239,7 +242,7 @@ public:
 	}
 	virtual int removeParticipant(const IdentityAddress &addr) override;
 	virtual int terminate() override;
-	virtual int finalizeTermination() override;
+	virtual void finalizeCreation() override;
 
 	virtual int enter() override;
 	virtual void leave() override;
@@ -256,6 +259,8 @@ public:
 	virtual AudioStream *getAudioStream() override;
 
 	void notifyReceived (const std::string &body);
+
+	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
