@@ -169,7 +169,7 @@ public:
 	std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const Address &addr, const Address &gruu);
 
 	void notifyFullState ();
-	void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
 
 	LinphonePrivate::ConferenceInterface::State getState() const override {return state;}
 	virtual void setState(LinphonePrivate::ConferenceInterface::State state) override;

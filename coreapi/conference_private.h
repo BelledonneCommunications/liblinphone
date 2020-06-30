@@ -152,6 +152,8 @@ public:
 
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
+
 protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
 
