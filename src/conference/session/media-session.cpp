@@ -2448,19 +2448,20 @@ void MediaSession::startRecording () {
 		return;
 	}
 	AudioControlInterface * i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	i->startRecording();
+	if (i != nullptr) i->startRecording();
 }
 
 void MediaSession::stopRecording () {
 	L_D();
 	AudioControlInterface * i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	i->stopRecording();
+	if (i != nullptr) i->stopRecording();
 }
 
 bool MediaSession::isRecording () {
 	L_D();
 	AudioControlInterface * i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	return i->isRecording();
+	if (i != nullptr) return i->isRecording();
+	return false;
 }
 
 void MediaSession::terminateBecauseOfLostMedia () {
