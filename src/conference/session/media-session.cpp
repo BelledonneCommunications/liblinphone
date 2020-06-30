@@ -608,6 +608,8 @@ Participant* MediaSessionPrivate::getMe () const {
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
+	printf("%s - Already existing call [%p] in state [%s]\n", __func__, this, Utils::toString(newState).c_str());
+
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning))
