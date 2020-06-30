@@ -109,6 +109,7 @@ class LINPHONE_PUBLIC Conference :
 	public CoreAccessor {
 	friend class CallSessionPrivate;
 	friend class LocalConferenceEventHandler;
+	friend class LocalAudioVideoConferenceEventHandler;
 	friend class RemoteConferenceEventHandler;
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupChatRoom;
