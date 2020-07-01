@@ -173,6 +173,13 @@ LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthI
 
 
 /**
+ * Remove all algorithms from the available algorithms list.
+ * @param[in] info The #LinphoneAuthInfo object
+**/
+LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info);
+
+
+/**
  * Gets the username.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @return The username. @maybenil
@@ -188,10 +195,10 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthI
 
 /**
  * Gets all available algorithms.
- * @param[in] info The #LinphoneAuthInfo object
- * @return \bctbx_list{const char *} A list of available algorithms.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return A list of available algorithms. @maybenil
  */
-LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the password.
@@ -261,6 +268,14 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAu
  * @param info1 The first #LinphoneAuthInfo object. @notnil
  * @param info2 The second #LinphoneAuthInfo object. @maybenil
  * @return True if all fields (Username, UserId, Realm, Domain) are the same.
+ */
+LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2);
+
+/**
+ * Check if Authinfos are the same without taking account algorithms
+ * @param[in] info1 The first #LinphoneAuthInfo object
+ * @param[in] info2 The second #LinphoneAuthInfo object
+ * @return True if all fields (Username, UserId, Realm, Domain) are the same
  */
 LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2);
 

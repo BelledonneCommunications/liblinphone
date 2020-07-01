@@ -234,7 +234,7 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
     char *myHa1;
     bool_t store_ha1_passwd = !!linphone_config_get_int(config, "sip", "store_ha1_passwd", 1);
     bctbx_list_t * algos = NULL;
-	
+
     sprintf(key, "auth_info_%i", pos);
     linphone_config_clean_section(config, key);
 
