@@ -683,7 +683,6 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 		if (q->getParams()->getPrivate()->getInConference()) {
 			contactAddress.setParam("isfocus");
 		}
-printf("%s - %p state %s - contact address %s remite contact %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), contactAddress.asString().c_str(), destProxy->op->getRemoteContactAddress() ? sal_address_as_string(destProxy->op->getRemoteContactAddress()) : "Undefined");
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
