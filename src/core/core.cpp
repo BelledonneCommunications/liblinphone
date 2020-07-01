@@ -192,6 +192,7 @@ void CorePrivate::uninit() {
 		// Terminate audio video conferences just before core is stopped
 		audioVideoConference.second->terminate();
 	}
+
 	q->audioVideoConferenceById.clear();
 
 	noCreatedClientGroupChatRooms.clear();
@@ -1008,12 +1009,10 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
 	auto conf = findAudioVideoConference (conferenceId);
 
-printf("%s - INSERT IF NOT FOUND try to insert conference %p conference ID %s\n", __func__, audioVideoConference.get(), Utils::toString(conferenceId).c_str());
 
 	// Conference does not exist or yes but with the same pointer!
 	L_ASSERT(conf == nullptr || conf == audioVideoConference);
 	if (conf == nullptr) {
-printf("%s - INSERT insert conference %p conference ID %s\n", __func__, audioVideoConference.get(), Utils::toString(conferenceId).c_str());
 		audioVideoConferenceById[conferenceId] = audioVideoConference;
 	}
 }
@@ -1022,9 +1021,7 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
 
 	auto it = audioVideoConferenceById.find(conferenceId);
-printf("%s - SEARCH try to delete conference ID %s\n", __func__, Utils::toString(conferenceId).c_str());
 	if (it != audioVideoConferenceById.cend()) {
-printf("%s - DELETE delete conference %p conference ID %s\n", __func__, it->second.get(), Utils::toString(conferenceId).c_str());
 		audioVideoConferenceById.erase(it);
 	}
 
