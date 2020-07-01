@@ -146,6 +146,7 @@ int Conference::terminate () {
 }
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+	shared_ptr<Conference> ref = getSharedFromThis();
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
 	if (mStateChangedCb) {
@@ -366,16 +367,25 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			break;
 			case LinphoneCallPaused:
+			{
 				/*
 				 * Modifying the MediaSession's params directly is a bit hacky.
 				 * However, the resume() method doesn't accept parameters.
 				 */
-				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setInConference(true);
-				const_cast<LinphonePrivate::MediaSessionParams *>(
-					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
+//				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+//					L_GET_PRIVATE(call->getParams()))->setInConference(true);
+//				const_cast<LinphonePrivate::MediaSessionParams *>(
+//					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
 				// Conference resumes call that previously paused in order to add the participant
 				call->resume();
+
+				LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
+				linphone_call_params_set_in_conference(params, TRUE);
+				linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
+
+				linphone_call_update(call->toC(), params);
+				linphone_call_params_unref(params);
+			}
 			break;
 			case LinphoneCallStreamsRunning:
 			{
