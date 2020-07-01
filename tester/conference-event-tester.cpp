@@ -1183,8 +1183,12 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 1 + (pause_call) ? 1 : 0),5000));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,(initial_conf_stats.number_of_LinphoneCallUpdating + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallUpdatedByRemote,(initial_participant_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
+	if (pause_call) {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,(initial_conf_stats.number_of_LinphoneCallResuming + 1),5000));
+	} else {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,(initial_conf_stats.number_of_LinphoneCallUpdating + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallUpdatedByRemote,(initial_participant_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
+	}
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 2),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_participant_stats.number_of_LinphoneCallStreamsRunning + 2 + (pause_call) ? 1 : 0),5000));
@@ -1298,11 +1302,10 @@ void send_added_notify_through_call() {
 
 	// Add participants
 	// Marie - call not paused
-	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
+	//add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
 
 	// Laure - call paused
-	//add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
-	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
 	localConf->unref();
