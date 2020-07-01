@@ -22,6 +22,8 @@
 #include "linphone/lpconfig.h"
 #include "bellesip_sal/sal_impl.h"
 
+#include <algorithm>
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -33,7 +35,9 @@ AuthInfo::AuthInfo(const string &username, const string &userid, const string &p
 AuthInfo::AuthInfo(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm){
     AuthInfo::init(username, userid, passwd, ha1, realm, domain, algorithm);
 }
-
+AuthInfo::AuthInfo(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm, const list<string> &availableAlgorithms){
+    AuthInfo::init(username, userid, passwd, ha1, realm, domain, algorithm, availableAlgorithms);
+}
 void AuthInfo::init(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm){
     mUsername = username;
     mUserid = userid;
@@ -41,16 +45,20 @@ void AuthInfo::init(const string &username, const string &userid, const string &
     mHa1 = ha1;
     mRealm = realm;
     mDomain = domain;
-    mAlgorithm = algorithm;
     if (!ha1.empty() && algorithm.empty()) {
         /* When ha1 is specified, algorithm must be specified too. For backward compatibility when this is not the case, we assume it is md5.*/
-        mAlgorithm = "MD5";
-    }
+        setAlgorithm("MD5");
+    }else
+        setAlgorithm(algorithm);
     mNeedToRenewHa1 = false;
 }
-
+void AuthInfo::init(const string &username, const string &userid, const string &passwd, const string &ha1, const string &realm, const string &domain, const string &algorithm, const list<string> &availableAlgorithms){
+    init(username, userid, passwd, ha1, realm, domain, algorithm);
+    setAvailableAlgorithms(availableAlgorithms);
+}
 AuthInfo::AuthInfo(LpConfig *config, string key){
     const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *algo;
+    bctbx_list_t * algos;
 
     username = lp_config_get_string(config, key.c_str(), "username", "");
     userid = lp_config_get_string(config, key.c_str(), "userid", "");
@@ -61,15 +69,23 @@ AuthInfo::AuthInfo(LpConfig *config, string key){
     tls_cert_path = lp_config_get_string(config, key.c_str(), "client_cert_chain", "");
     tls_key_path = lp_config_get_string(config, key.c_str(), "client_cert_key", "");
     algo = lp_config_get_string(config, key.c_str(), "algorithm", "");
+    algos = lp_config_get_string_list(config, key.c_str(), "available_algorithms", nullptr);
 
     setTlsCertPath(tls_cert_path);
     setTlsKeyPath(tls_key_path);
 
     init(username, userid, passwd, ha1, realm, domain, algo);
+
+    if(algos){
+        bctbx_list_t *elem;
+        for (elem = algos; elem != NULL; elem = elem->next)
+            addAvailableAlgorithm((const char *)elem->data);
+        bctbx_list_free_with_data(algos, (bctbx_list_free_func)bctbx_free);
+    }
 }
 
 AuthInfo* AuthInfo::clone() const {
-    AuthInfo *ai = new AuthInfo(getUsername(), getUserid(), getPassword(), getHa1(), getRealm(), getDomain(), getAlgorithm());
+    AuthInfo *ai = new AuthInfo(getUsername(), getUserid(), getPassword(), getHa1(), getRealm(), getDomain(), getAlgorithm(), getAvailableAlgorithms());
     ai->setNeedToRenewHa1(getNeedToRenewHa1());
     ai->setTlsCert(getTlsCert());
     ai->setTlsCertPath(getTlsCertPath());
@@ -85,7 +101,9 @@ const string& AuthInfo::getUsername() const{
 const string& AuthInfo::getAlgorithm() const{
     return mAlgorithm;
 }
-
+const list<string>& AuthInfo::getAvailableAlgorithms() const{
+    return mAvailableAlgorithms;
+}
 const string& AuthInfo::getPassword() const{
     return mPasswd;
 }
@@ -140,7 +158,7 @@ void AuthInfo::setUsername(const string &username){
     mUsername = username;
 }
 
-void AuthInfo::setAlgorithm(const string &algorithm){
+void AuthInfo::setAlgorithm(const string &algorithm){// Select algorithm
     if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
         lError() << "Given algorithm is not correct. Set algorithm failed";
     }
@@ -148,6 +166,24 @@ void AuthInfo::setAlgorithm(const string &algorithm){
         setNeedToRenewHa1(true);
     }
     mAlgorithm = algorithm;
+    if(!algorithm.empty())
+        addAvailableAlgorithm(algorithm);
+}
+
+void AuthInfo::setAvailableAlgorithms(const list<string> &algorithms){
+    mAvailableAlgorithms = algorithms;
+}
+
+void AuthInfo::addAvailableAlgorithm(const string &algorithm){
+    if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
+        lError() << "Given algorithm is not correct. Add algorithm failed";
+    }
+    if(find(mAvailableAlgorithms.begin(), mAvailableAlgorithms.end(),algorithm) == mAvailableAlgorithms.end())
+        mAvailableAlgorithms.push_back(algorithm);
+}
+
+void AuthInfo::clearAvailableAlgorithms(){
+    mAvailableAlgorithms.clear();
 }
 
 void AuthInfo::setUserid(const string &userid){
@@ -198,6 +234,7 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
     char key[50];
     char *myHa1;
     bool_t store_ha1_passwd = !!lp_config_get_int(config, "sip", "store_ha1_passwd", 1);
+    bctbx_list_t * algos = NULL;
 
     sprintf(key, "auth_info_%i", pos);
     lp_config_clean_section(config, key);
@@ -235,6 +272,13 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
     lp_config_set_string(config, key, "client_cert_chain", getTlsCertPath().c_str());
     lp_config_set_string(config, key, "client_cert_key", getTlsKeyPath().c_str());
     lp_config_set_string(config, key, "algorithm",getAlgorithm().c_str());
+    
+    if(mAvailableAlgorithms.size()>0){
+        for(auto i = mAvailableAlgorithms.begin() ; i!= mAvailableAlgorithms.end() ; ++i)
+             algos = bctbx_list_append(algos, (void *)i->c_str());
+        lp_config_set_string_list(config, key, "available_algorithms",algos);
+        bctbx_list_free(algos);
+    }
 }
 
 std::string AuthInfo::toString() const{
@@ -245,8 +289,22 @@ std::string AuthInfo::toString() const{
     ss << "Realm[" << mRealm << "];";
     ss << "Domain[" << mDomain << "];";
     ss << "Algorithm[" << mAlgorithm << "];";
-
+    ss << "AvailableAlgorithms[";
+    if(mAvailableAlgorithms.size() > 0){
+        auto index = mAvailableAlgorithms.begin();
+        ss << *(index++);
+        while(index != mAvailableAlgorithms.end())
+            ss << ","<<*(index++);
+    }
+    ss << "];";
     return ss.str();
 }
 
+// Check if Authinfos are the same without taking account algorithms
+bool_t AuthInfo::isEqualButAlgorithms(const AuthInfo* authInfo)const{
+    return authInfo && getUsername()==authInfo->getUsername() 
+        && getUserid()==authInfo->getUserid() 
+        && getRealm()==authInfo->getRealm() 
+        && getDomain()==authInfo->getDomain();
+}
 LINPHONE_END_NAMESPACE

@@ -632,6 +632,7 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
+		linphone_auth_info_set_algorithm(ai, sai->algorithm);
 
 		if (method == LinphoneAuthHttpDigest){
 			/* Request app for new authentication information, but later. */

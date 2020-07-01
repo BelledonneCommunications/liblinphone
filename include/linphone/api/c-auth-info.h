@@ -91,11 +91,25 @@ LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *info, con
 LINPHONE_PUBLIC void linphone_auth_info_set_username(LinphoneAuthInfo *info, const char *username);
 
 /**
- * Sets the algorithm.
+ * Sets the algorithm to use.
  * @param[in] info The #LinphoneAuthInfo object
  * @param[in] algorithm The algorithm.
 **/
 LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *info, const char *algorithm);
+
+/**
+ * Set the available algorithms list without testing unicity
+ * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] algorithms \bctbx_list{const char *} The available algorithms list.
+**/
+LINPHONE_PUBLIC void linphone_auth_info_set_available_algorithms(LinphoneAuthInfo *info, const bctbx_list_t *algorithms);
+
+/**
+ * Add an unique algorithm in the the available algorithms list : Algorithms that already exist will not be added.
+ * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] algorithm The algorithm to add.
+**/
+LINPHONE_PUBLIC void linphone_auth_info_add_available_algorithm(LinphoneAuthInfo *info, const char *algorithm);
 
 /**
  * Sets the userid.
@@ -156,6 +170,13 @@ LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert_path(LinphoneAuthInfo *info
 LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info, const char *tls_key_path);
 
 /**
+ * Remove all algorithms from the available algorithms list.
+ * @param[in] info The #LinphoneAuthInfo object
+**/
+LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info);
+
+
+/**
  * Gets the username.
  * @param[in] info The #LinphoneAuthInfo object
  * @return The username.
@@ -168,6 +189,13 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_username(const LinphoneAuthIn
  * @return The algorithm.
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *info);
+
+/**
+ * Gets all available algorithms.
+ * @param[in] info The #LinphoneAuthInfo object
+ * @return \bctbx_list{const char *} A list of available algorithms.
+ */
+LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *info);
 
 /**
  * Gets the password.
@@ -240,6 +268,14 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneA
  * @return The TLS key path.
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *info);
+
+/**
+ * Check if Authinfos are the same without taking account algorithms
+ * @param[in] info1 The first #LinphoneAuthInfo object
+ * @param[in] info2 The second #LinphoneAuthInfo object
+ * @return True if all fields (Username, UserId, Realm, Domain) are the same
+ */
+LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2);
 
 /* you don't need those function*/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);

@@ -22,6 +22,8 @@
 #include "linphone/lpconfig.h"
 #include "c-wrapper/c-wrapper.h"
 
+#include <list>
+
 using namespace LinphonePrivate;
 
 
@@ -92,6 +94,17 @@ void linphone_auth_info_set_algorithm(LinphoneAuthInfo *info, const char *algori
     AuthInfo::toCpp(info)->setAlgorithm(L_C_TO_STRING(algorithm));
 }
 
+void linphone_auth_info_set_available_algorithms(LinphoneAuthInfo *info, const bctbx_list_t * algorithms){
+    std::list<std::string> algoList;
+    for (const bctbx_list_t *elem = algorithms ; elem != NULL; elem = elem->next)
+            algoList.push_back((const char *)elem->data);
+    AuthInfo::toCpp(info)->setAvailableAlgorithms(algoList);
+}
+
+void linphone_auth_info_add_available_algorithm(LinphoneAuthInfo *info, const char* algorithm){
+    AuthInfo::toCpp(info)->addAvailableAlgorithm(L_C_TO_STRING(algorithm));
+}
+
 void linphone_auth_info_set_userid(LinphoneAuthInfo *info, const char *userid){
     AuthInfo::toCpp(info)->setUserid(L_C_TO_STRING(userid));
 }
@@ -124,6 +137,10 @@ void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info, const char *tls
     AuthInfo::toCpp(info)->setTlsKeyPath(L_C_TO_STRING(tls_key_path));
 }
 
+void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info){
+    AuthInfo::toCpp(info)->clearAvailableAlgorithms();
+}
+
 const char *linphone_auth_info_get_username(const LinphoneAuthInfo *info){
     const char *username = AuthInfo::toCpp(info)->getUsername().c_str();
     return strlen(username) != 0 ? username : NULL;
@@ -132,6 +149,14 @@ const char *linphone_auth_info_get_username(const LinphoneAuthInfo *info){
 const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *info){
     const char *algo = AuthInfo::toCpp(info)->getAlgorithm().c_str();
     return strlen(algo) != 0 ? algo : NULL;
+}
+
+bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *info){
+    std::list<std::string> algoList = AuthInfo::toCpp(info)->getAvailableAlgorithms();
+    bctbx_list_t * result = NULL;
+    for(auto i = algoList.begin() ; i!= algoList.end() ; ++i)
+             result = bctbx_list_append(result,ms_strdup(i->c_str()));
+    return result;
 }
 
 const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *info){
@@ -182,3 +207,8 @@ const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *info){
     const char *tlsKeyPath = AuthInfo::toCpp(info)->getTlsKeyPath().c_str();
     return strlen(tlsKeyPath) != 0 ? tlsKeyPath : NULL;
 }
+
+bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2){
+    return AuthInfo::toCpp(info1)->isEqualButAlgorithms(AuthInfo::toCpp(info2));
+}
+
