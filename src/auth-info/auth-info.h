@@ -29,15 +29,18 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     public:
     AuthInfo(const std::string &username = "", const std::string &userid = "", const std::string &passwd = "", const std::string &ha1 = "", const std::string &realm = "", const std::string &domain = "");
     AuthInfo(const std::string &username, const std::string &userid, const std::string &passwd, const std::string &ha1, const std::string &realm, const std::string &domain, const std::string &algorithm);
+    AuthInfo(const std::string &username, const std::string &userid, const std::string &passwd, const std::string &ha1, const std::string &realm, const std::string &domain, const std::string &algorithm, const std::list<std::string> &availableAlgorithms);
 
     AuthInfo(LpConfig * config, std::string key);
     AuthInfo* clone() const override;
-
     void init(const std::string &username, const std::string &userid, const std::string &passwd, const std::string &ha1, const std::string &realm, const std::string &domain, const std::string &algorithm);
+    void init(const std::string &username, const std::string &userid, const std::string &passwd, const std::string &ha1, const std::string &realm, const std::string &domain, const std::string &algorithm, const std::list<std::string> &availableAlgorithms);
 
     void setPassword(const std::string &passwd);
     void setUsername(const std::string &username);
-    void setAlgorithm(const std::string &algorithm);
+    void setAlgorithm(const std::string &algorithm);// Specify the algorithm to choose.
+    void setAvailableAlgorithms(const std::list<std::string> &algorithms);// Set without testing unicity
+    void addAvailableAlgorithm(const std::string &algorithm);// Add a unique algorithm : Algorithms that already exist will not be added.
     void setUserid(const std::string &userid);
     void setRealm(const std::string &realm);
     void setDomain(const std::string &domain);
@@ -48,9 +51,11 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     void setTlsKeyPath(const std::string &tlsKeyPath);
 
     void writeConfig(LpConfig *config, int pos);
+    void clearAvailableAlgorithms();// Remove all algorithms
 
     const std::string& getUsername() const;
-    const std::string& getAlgorithm() const;
+    const std::string& getAlgorithm() const;// Get the selected algorithm
+    const std::list<std::string>& getAvailableAlgorithms() const;
     const std::string& getPassword() const;
     const std::string& getUserid() const;
     const std::string& getRealm() const;
@@ -62,6 +67,8 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     const std::string& getTlsKeyPath() const;
     
     std::string toString() const override;
+    
+    bool_t isEqualButAlgorithms(const AuthInfo* authInfo)const;// Check if Authinfos are the same without taking account algorithms
 
     private:
     std::string mUsername;
@@ -70,7 +77,8 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     std::string mHa1;
     std::string mRealm;
     std::string mDomain;
-    std::string mAlgorithm;
+    std::string mAlgorithm;// Selected algorithm
+    std::list<std::string> mAvailableAlgorithms;// Pool of available algorithms for this AuthInfo
     std::string mTlsCert;
     std::string mTlsKey;
     std::string mTlsCertPath;
