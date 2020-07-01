@@ -608,6 +608,8 @@ Participant* MediaSessionPrivate::getMe () const {
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
+printf("%s - giong from state %s to state %s\n", __func__, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), linphone_call_state_to_string(static_cast<LinphoneCallState>(newState)));
+
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning))
@@ -2329,7 +2331,7 @@ LinphoneStatus MediaSession::pause () {
 LinphoneStatus MediaSession::resume () {
 	L_D();
 	if (d->state != CallSession::State::Paused) {
-		lWarning() << "we cannot resume a call that has not been established and paused before";
+		lWarning() << "we cannot resume a call that has not been established and paused before. Current state: " << Utils::toString(d->state);
 		return -1;
 	}
 	if (!d->getParams()->getPrivate()->getInConference()) {
