@@ -1132,7 +1132,7 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1141,7 +1141,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 	stats* other_participants_initial_stats = NULL;
 	bctbx_list_t *other_participants = NULL;
 	int counter = 1;
-	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
+	for (bctbx_list_t *it = *mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
 		if ((m != participant_mgr) && (m != conf_mgr)) {
 			// Allocate memory
@@ -1173,8 +1173,8 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 	int participantDeviceSize = confListener->participantDevices.size();
 
 	conf->addParticipant(Call::toCpp(confCall)->getSharedFromThis());
-	// Prepend partiicoant managers to ensure that conference focus is last
-	mgrs = bctbx_list_prepend(mgrs, participant_mgr);
+	// Prepend participant managers to ensure that conference focus is last
+	*mgrs = bctbx_list_prepend(*mgrs, participant_mgr);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initial_participant_stats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreated, initial_participant_stats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
@@ -1302,24 +1302,24 @@ void send_added_notify_through_call() {
 
 	// Add participants
 	// Marie - call not paused
-	//add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
+	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
 
 	// Laure - call paused
-	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
+	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
 	localConf->unref();
 
-	wait_for_list(lcs,NULL,0,1000);
-
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		// Wait for all calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, 1, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, 1, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, 1, 5000));
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
 
 	}
 
@@ -1328,6 +1328,7 @@ void send_added_notify_through_call() {
 	custom_mgr_destroy(pauline);
 
 	bctbx_list_free(lcs);
+	bctbx_list_free(mgrs);
 
 }
 
