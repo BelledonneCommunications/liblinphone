@@ -92,7 +92,7 @@ class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConfere
 	friend class LocalAudioVideoConferenceEventHandler;
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
-	virtual ~Conference() {}
+	virtual ~Conference();
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::findParticipant;
