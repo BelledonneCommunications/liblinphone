@@ -1157,7 +1157,9 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 	BC_ASSERT_TRUE(call(conf_mgr, participant_mgr));
 
 	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
-	LinphoneCall * confCall = linphone_core_get_current_call(conf_mgr->lc);
+	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
+	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+	LinphoneCall * confCall = linphone_core_get_call_by_remote_address(conf_mgr->lc, participantUri.c_str());
 
 	if (pause_call) {
 		// Conference pauses the call
@@ -1166,8 +1168,6 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t *m
 		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	}
 
-	const LinphoneAddress *cMarieAddr = linphone_call_get_remote_address(confCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cMarieAddr)->asStringUriOnly();
 
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
@@ -1266,12 +1266,12 @@ void custom_mgr_destroy(LinphoneCoreManager *mgr) {
 void send_added_notify_through_call() {
 	LinphoneCoreManager *marie = create_mgr_and_detect_subscribe("marie_rc");
 	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-//	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
 
 	bctbx_list_t *lcs = NULL;
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
-//	lcs = bctbx_list_append(lcs, laure->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
 
 	bctbx_list_t *mgrs = NULL;
 	mgrs = bctbx_list_append(mgrs, pauline);
@@ -1294,7 +1294,7 @@ void send_added_notify_through_call() {
 	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
 
 	// Laure - call paused
-//	add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
+	//add_participant_to_conference_through_call(mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
 
 	localConf->terminate();
 	localConf->unref();
@@ -1313,7 +1313,7 @@ void send_added_notify_through_call() {
 	}
 
 	custom_mgr_destroy(marie);
-//	custom_mgr_destroy(laure);
+	custom_mgr_destroy(laure);
 	custom_mgr_destroy(pauline);
 
 	bctbx_list_free(lcs);
