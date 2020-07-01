@@ -72,6 +72,10 @@ Conference::Conference(
 
 }
 
+Conference::~Conference() {
+	bctbx_list_free_with_data(mCallbacks, (void(*)(void *))belle_sip_object_unref);
+}
+
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
 	if (!conferenceAddress.isValid()) {
 		shared_ptr<CallSession> session = getMe()->getSession();
