@@ -677,11 +677,13 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	if (destProxy && destProxy->op) {
 		/* Give a chance to update the contact address if connectivity has changed */
 		char * contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 		if (q->getParams()->getPrivate()->getInConference()) {
 			contactAddress.setParam("isfocus");
 		}
+printf("%s - %p state %s - contact address %s remite contact %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), contactAddress.asString().c_str(), destProxy->op->getRemoteContactAddress() ? sal_address_as_string(destProxy->op->getRemoteContactAddress()) : "Undefined");
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
