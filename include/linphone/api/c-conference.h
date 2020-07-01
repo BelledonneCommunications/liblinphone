@@ -37,7 +37,7 @@
  * Add a listener in order to be notified of #LinphoneConference events. Once an event is received, registred #LinphoneConferenceCbs are
  * invoked sequencially.
  * @param[in] call #LinphoneConference object to monitor.
- * @param[in] cbs A #LinphoneConferenceCbs object holding the callbacks you need. A reference is taken by the #LinphoneConference until you invoke linphone_call_remove_callbacks().
+ * @param[in] cbs A #LinphoneConferenceCbs object holding the callbacks you need. A reference is taken by the #LinphoneConference until you invoke linphone_conference_remove_callbacks().
  */
 LINPHONE_PUBLIC void linphone_conference_add_callbacks(LinphoneConference *conference, LinphoneConferenceCbs *cbs);
 
