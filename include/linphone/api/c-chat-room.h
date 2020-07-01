@@ -349,7 +349,7 @@ LINPHONE_PUBLIC LinphoneCall *linphone_chat_room_get_call(const LinphoneChatRoom
  * Add a listener in order to be notified of #LinphoneChatRoom events. Once an event is received, registred #LinphoneChatRoomCbs are
  * invoked sequencially.
  * @param[in] call #LinphoneChatRoom object to monitor.
- * @param[in] cbs A #LinphoneChatRoomCbs object holding the callbacks you need. A reference is taken by the #LinphoneChatRoom until you invoke linphone_call_remove_callbacks().
+ * @param[in] cbs A #LinphoneChatRoomCbs object holding the callbacks you need. A reference is taken by the #LinphoneChatRoom until you invoke linphone_chat_room_remove_callbacks().
  */
 LINPHONE_PUBLIC void linphone_chat_room_add_callbacks(LinphoneChatRoom *cr, LinphoneChatRoomCbs *cbs);
 
