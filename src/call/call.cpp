@@ -342,9 +342,9 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 }
 
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
-printf("%s - %p state %s remote address %s local address %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), getRemoteAddress()->asString().c_str(), getLocalAddress().asString().c_str());
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
+
 	switch(state) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
@@ -366,7 +366,6 @@ printf("%s - %p state %s remote address %s local address %s\n", __func__, this, 
 			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
-printf("%s - %p state %s remote contact address %s cotact address %s local address %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()), sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()), getLocalAddress().asString().c_str());
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
@@ -383,11 +382,10 @@ printf("%s - %p state %s remote contact address %s cotact address %s local addre
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
-			break;
 		}
+		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-printf("%s - %p state %s remote contact address %s cotact address %s local address %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()), sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()), getLocalAddress().asString().c_str());
 			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
@@ -395,19 +393,16 @@ printf("%s - %p state %s remote contact address %s cotact address %s local addre
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
 				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-printf("%s - CREATE CONFERENCE conference ID %s\n", __func__, Utils::toString(remoteConferenceId).c_str());
 				// It is expected that the core of the remote conference is the participant one
 				std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 			}
-			break;
 		}
+		break;
 		case CallSession::State::StreamsRunning:
 		{
 			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
-
-printf("%s - %p state %s remote contact address %s cotact address %s local address %s\n", __func__, this, linphone_call_state_to_string(static_cast<LinphoneCallState>(state)), sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()), sal_address_as_string(session->getPrivate()->getOp()->getContactAddress()), getLocalAddress().asString().c_str());
 
 			// Check if the request was sent by the focus
 			if (remoteContactAddress.hasParam("isfocus")) {
@@ -422,12 +417,29 @@ printf("%s - %p state %s remote contact address %s cotact address %s local addre
 				} else {
 					remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 				}
-printf("%s - FINALIZE CONFERENCE CREATION\n", __func__);
 				// Here, the conference subscribes to the handler
 				remoteConf->finalizeCreation();
 			}
-			break;
 		}
+		break;
+		case CallSession::State::Resuming:
+		{
+			// Create remote conference if the call is in a conference and it doesn't exists already
+			if (isInConference()) {
+				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
+				remoteContactAddress.setParam("isfocus");
+				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+
+				auto conf = getCore()->findAudioVideoConference (remoteConferenceId);
+				if (conf == nullptr) {
+					// It is expected that the core of the remote conference is the participant one
+					std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+				}
+			}
+		}
+		break;
 		default:
 			break;
 	}
