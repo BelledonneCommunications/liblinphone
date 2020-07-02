@@ -375,6 +375,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				// Terminate conference is found
 				if (conference != nullptr) {
 					conference->setState(ConferenceInterface::State::TerminationPending);
+					setConference (nullptr);
 				}
 			}
 		}
@@ -393,6 +394,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			// Terminate conference is found
 			if (conference != nullptr) {
 				conference->setState(ConferenceInterface::State::TerminationPending);
+				setConference (nullptr);
 			}
 
 			if (linphone_core_get_calls_nb(lc) == 0) {
