@@ -39,6 +39,8 @@
 **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_chat_room_params_new(void);
 
+LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomParams *params);
+
 /**
  * Acquire a reference to the chat room parameters.
  * @param[in] params The chat room parameters.
@@ -128,6 +130,19 @@ LINPHONE_PUBLIC void linphone_chat_room_params_enable_encryption(LinphoneChatRoo
 **/
 LINPHONE_PUBLIC void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t rtt);
 
+/**
+ * Get the subject of the chat room.
+ * @param[in] params The chat room params.
+ * @return The subject.
+**/
+LINPHONE_PUBLIC const char * linphone_chat_room_params_get_subject(LinphoneChatRoomParams *params);
+
+/**
+ * Set the subject of the chat room.
+ * @param[in] params The chat room params.
+ * @param[in] subject The subject to set.
+**/
+LINPHONE_PUBLIC void linphone_chat_room_params_set_subject(LinphoneChatRoomParams *params, const char *subject);
 
 /**
  * @}

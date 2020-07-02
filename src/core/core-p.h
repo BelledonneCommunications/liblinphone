@@ -116,12 +116,22 @@ public:
 							 const std::string &subject,
 							 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+							 const IdentityAddress &localAddr,
+							 const std::list<IdentityAddress> &participants);
+	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params,
 							 const std::string &subject,
 							 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::string &subject,
 							 const std::list<IdentityAddress> &participants);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const std::shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddr, const IdentityAddress &participant);
 	std::shared_ptr<AbstractChatRoom> createChatRoom(const IdentityAddress &participant);
+
+
+	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ChatRoomParams> &params,
+							const IdentityAddress &localAddr,
+							const std::list<IdentityAddress> &participants) const;
+
+	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;
 	
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
@@ -136,7 +146,7 @@ public:
 		return authStack;
 	}
 	Sal * getSal();
-	LinphoneCore *getCCore();
+	LinphoneCore *getCCore() const;
 
 	void startEphemeralMessageTimer (time_t expireTime);
 	void stopEphemeralMessageTimer ();

@@ -85,12 +85,11 @@ public:
 		char *tmp = linphone_address_as_string(linphone_proxy_config_get_contact(proxy)); //get the gruu address
 		IdentityAddress localAddress(tmp);
 		bctbx_free(tmp);
-		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-		       //make sure to have a one2one chatroom
-		       chatRoom->getCore()->getPrivate()->createChatRoom(
-			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), localAddress, chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
-		       )
-		);
+		string subject = chatRoom->getSubject();
+		if (subject.empty()) subject = "basic to client group migrated";
+		auto params = ChatRoomParams::create(subject, chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat);
+		//make sure to have a one2one chatroom
+		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(chatRoom->getCore()->getPrivate()->createChatRoom(params, localAddress, subject, {Address(chatRoom->getPeerAddress())}));
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
 	}
