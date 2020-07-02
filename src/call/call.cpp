@@ -360,6 +360,25 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			getPlatformHelpers(lc)->releaseMcastLock();
 			getPlatformHelpers(lc)->releaseCpuLock();
 			break;
+		case CallSession::State::PausedByRemote:
+		{
+			// If it is not in a conference, the remote conference must be terminated if it exists
+			if (!isInConference()) {
+				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
+
+				// Check if the request was sent by the focus
+				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+
+				// Terminate conference is found
+				if (conference != nullptr) {
+					conference->setState(ConferenceInterface::State::TerminationPending);
+				}
+			}
+		}
+		break;
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		{
