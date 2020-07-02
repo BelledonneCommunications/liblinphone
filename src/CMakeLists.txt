@@ -35,7 +35,7 @@ endif()
 if(APPLE)
 	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
 	if(IOS)
-		list(APPEND APPLE_LIBS "-framework UIKit")
+		list(APPEND APPLE_LIBS "-framework UIKit -framework PushKit")
 	endif()
 endif()
 

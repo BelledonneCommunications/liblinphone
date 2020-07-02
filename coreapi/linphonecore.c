@@ -2621,7 +2621,12 @@ char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *
 	else
 		provider = "fcm";
 #elif TARGET_OS_IPHONE
-	provider = "apple";
+	bool_t debug_mode = !!lp_config_get_int(core->config, "net", "debug_mode", FALSE);
+	if (debug_mode) {
+		provider = "apns.dev";
+	} else {
+		provider = "apns";
+	}
 #endif
 	if (provider == NULL) return NULL;
 
@@ -2872,6 +2877,10 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 	// allow ios app extension to mark msg as read without being registered
 	core->send_imdn_if_unregistered = !main_core;
 	getPlatformHelpers(core)->getSharedCoreHelpers()->registerSharedCoreMsgCallback();
+	if (main_core) {
+		// allow ios push notifications, auto ietrate and enterBackground.
+		getPlatformHelpers(core)->createAppDelegate();
+	}
 	return core;
 }
 
@@ -6956,6 +6965,7 @@ ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *lc){
 }
 
 void linphone_core_destroy(LinphoneCore *lc){
+	getPlatformHelpers(lc)->destroyAppDelegate();
 	linphone_core_unref(lc);
 }
 

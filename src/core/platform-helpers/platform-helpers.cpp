@@ -200,4 +200,13 @@ std::shared_ptr<SharedCoreHelpers> GenericPlatformHelpers::getSharedCoreHelpers(
 	return mSharedCoreHelpers;
 }
 
+void GenericPlatformHelpers::createAppDelegate() {
+}
+
+void GenericPlatformHelpers::destroyAppDelegate() {
+}
+
+void GenericPlatformHelpers::dummyConfigAudioSession() {
+}
+
 LINPHONE_END_NAMESPACE

@@ -85,6 +85,10 @@ public:
 	virtual std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() = 0;
 	virtual void startAudioForEchoTestOrCalibration () = 0;
 	virtual void stopAudioForEchoTestOrCalibration () = 0;
+	
+	virtual void createAppDelegate () = 0;
+	virtual void destroyAppDelegate () = 0;
+	virtual void dummyConfigAudioSession () = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -138,6 +142,10 @@ public:
 	std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() override;
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
+	
+	void createAppDelegate () override;
+	void destroyAppDelegate () override;
+	void dummyConfigAudioSession () override;
 
 protected:
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;

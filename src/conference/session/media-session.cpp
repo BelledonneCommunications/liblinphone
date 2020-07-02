@@ -2165,6 +2165,8 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 	L_D();
 	if (!isOpConfigured()) {
 		lInfo() << "CallSession accepting";
+		// configure audio session
+		getPlatformHelpers(getCore()->getCCore())->dummyConfigAudioSession();
 		if (msp)
 			d->setParams(new MediaSessionParams(*msp));
 		CallSession::accepting();
