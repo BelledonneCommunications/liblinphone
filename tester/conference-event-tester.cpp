@@ -676,6 +676,23 @@ public:
 		}
 		return status;
 	}
+
+	int removeParticipant (const std::shared_ptr<Call> call) override  {
+		int status = MediaConference::LocalConference::removeParticipant(call);
+		if (status == 0) {
+			notifyParticipantRemoved(time(nullptr), false, *call->getRemoteAddress());
+		}
+		return status;
+	}
+
+	int removeParticipant (const IdentityAddress &addr) override  {
+		int status = MediaConference::LocalConference::removeParticipant(addr);
+		if (status == 0) {
+			notifyParticipantRemoved(time(nullptr), false, addr);
+		}
+		return status;
+	}
+
 	void setSubject (const std::string &subject) override {
 		LocalConference::setSubject(subject);
 		notifySubjectChanged(time(nullptr), false, subject);
@@ -1132,6 +1149,62 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void remove_participant_from_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+
+	stats initial_conf_stats = conf_mgr->stat;
+	stats initial_participant_stats = participant_mgr->stat;
+
+	stats* other_participants_initial_stats = NULL;
+	bctbx_list_t *other_participants = NULL;
+	int counter = 1;
+	for (bctbx_list_t *it = *mgrs; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		if ((m != participant_mgr) && (m != conf_mgr)) {
+			// Allocate memory
+			other_participants_initial_stats = (stats*)realloc(other_participants_initial_stats, counter * sizeof(stats));
+			// Append element
+			other_participants_initial_stats[counter - 1] = m->stat;
+			// Increment counter
+			counter++;
+			other_participants = bctbx_list_append(other_participants, m);
+		}
+	}
+
+	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
+	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
+	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+	LinphoneCall * confCall = linphone_core_get_call_by_remote_address(conf_mgr->lc, participantUri.c_str());
+
+	int participantSize = confListener->participants.size();
+
+	conf->removeParticipant(Call::toCpp(confCall)->getSharedFromThis());
+	// Remove participant from list of managers
+	*mgrs = bctbx_list_remove(*mgrs, participant_mgr);
+
+	// Wait for calls to be terminated
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallEnd,(initial_conf_stats.number_of_LinphoneCallEnd + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallReleased,(initial_conf_stats.number_of_LinphoneCallReleased + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
+
+	// Wait for conferences to be terminated
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminationPending,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminated,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateDeleted,(initial_participant_stats.number_of_LinphoneChatRoomStateDeleted + 1),5000));
+
+	int expectedParticipants = 0;
+	if (participantSize == 2) {
+		expectedParticipants = 0;
+	} else {
+		expectedParticipants = (participantSize - 1);
+	}
+
+	BC_ASSERT_EQUAL(confListener->participants.size(), expectedParticipants, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.size(), expectedParticipants, int, "%d");
+	BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
+
+}
+
+
 static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
@@ -1327,6 +1400,65 @@ void send_added_notify_through_call() {
 	bctbx_list_free(mgrs);
 
 }
+
+void send_removed_notify_through_call() {
+	LinphoneCoreManager *marie = create_mgr_and_detect_subscribe("marie_rc");
+	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
+
+	bctbx_list_t *lcs = NULL;
+	lcs = bctbx_list_append(lcs, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+
+	bctbx_list_t *mgrs = NULL;
+	mgrs = bctbx_list_append(mgrs, pauline);
+
+	char *identityStr = linphone_address_as_string(pauline->identity);
+	Address addr(identityStr);
+	bctbx_free(identityStr);
+	stats initialPaulineStats = pauline->stat;
+	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	localConf->ref();
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
+
+	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
+	localConf->addListener(confListener);
+
+	// Add participants
+	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
+	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+
+	remove_participant_from_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+
+	localConf->terminate();
+	localConf->unref();
+
+	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		// Wait for all calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
+
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+
+	}
+
+	custom_mgr_destroy(marie);
+	custom_mgr_destroy(laure);
+	custom_mgr_destroy(pauline);
+
+	bctbx_list_free(lcs);
+	bctbx_list_free(mgrs);
+
+}
+
+
 
 void send_removed_notify() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
@@ -1689,6 +1821,7 @@ test_t conference_event_tests[] = {
 	TEST_NO_TAG("Send first notify", send_first_notify),
 	TEST_NO_TAG("Send participant added notify through address", send_added_notify_through_address),
 	TEST_NO_TAG("Send participant added notify through call", send_added_notify_through_call),
+	TEST_NO_TAG("Send participant removed notify through call", send_removed_notify_through_call),
 	TEST_NO_TAG("Send participant removed notify", send_removed_notify),
 	TEST_NO_TAG("Send participant admined notify", send_admined_notify),
 	TEST_NO_TAG("Send participant unadmined notify", send_unadmined_notify),
