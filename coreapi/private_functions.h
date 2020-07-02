@@ -423,7 +423,6 @@ LinphoneChatMessageStateChangedCb linphone_chat_message_get_message_state_change
 void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage* msg, LinphoneChatMessageStateChangedCb cb);
 void linphone_chat_message_set_message_state_changed_cb_user_data(LinphoneChatMessage* msg, void *user_data);
 void * linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChatMessage* msg);
-LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call);
 
 bool_t linphone_core_tone_indications_enabled(LinphoneCore*lc);
 const char *linphone_core_create_uuid(LinphoneCore *lc);
