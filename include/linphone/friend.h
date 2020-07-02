@@ -120,6 +120,14 @@ LINPHONE_PUBLIC void linphone_friend_add_phone_number(LinphoneFriend *lf, const 
 LINPHONE_PUBLIC bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf);
 
 /**
+ * Returns whether a friend contains the given phone number
+ * @param lf #LinphoneFriend object
+ * @param phoneNumber the phone number to search for
+ * @return TRUE if found, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber);
+
+/**
  * Removes a phone number in this friend
  * @param lf #LinphoneFriend object
  * @param phone number to remove

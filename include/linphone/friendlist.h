@@ -140,8 +140,18 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_friend_list_get_friends(const Linp
  * @param[in] list #LinphoneFriendList object.
  * @param[in] address #LinphoneAddress object of the friend we want to search for.
  * @return A #LinphoneFriend if found, NULL otherwise.
+ * @maybenil
 **/
 LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFriendList *list, const LinphoneAddress *address);
+
+/**
+ * Find a friend in the friend list using a phone number.
+ * @param[in] list #LinphoneFriendList object.
+ * @param[in] phoneNumber a string of the phone number for which we want to find a friend.
+ * @return A #LinphoneFriend if found, NULL otherwise.
+ * @maybenil
+**/
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list, const char *phoneNumber);
 
 /**
  * Find all friends in the friend list using a LinphoneAddress.
