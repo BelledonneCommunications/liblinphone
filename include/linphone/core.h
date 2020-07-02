@@ -6059,9 +6059,19 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend *linphone_core_get_friend_by_
  * Search a #LinphoneFriend by its address.
  * @param[in] lc #LinphoneCore object.
  * @param[in] addr The address to use to search the friend.
- * @return The #LinphoneFriend object corresponding to the given address.
+ * @return The #LinphoneFriend object corresponding to the given address or NULL if not found.
+ * @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const LinphoneAddress *addr);
+
+/**
+ * Search a #LinphoneFriend by its phone number.
+ * @param[in] lc #LinphoneCore object.
+ * @param[in] phoneNumber The phone number to use to search the friend.
+ * @return The #LinphoneFriend object corresponding to the given phone number or NULL if not found.
+ * @maybenil
+ */
+LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend_by_phone_number(const LinphoneCore *lc, const char* phoneNumber);
 
 /**
  * Search all #LinphoneFriend matching an address.
