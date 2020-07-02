@@ -452,6 +452,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_proxy_config_normalize_numbe
 LINPHONE_PUBLIC char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy, const char *username);
 
 /**
+ * Removes everything except for digits and '+' 
+ */
+char *linphone_proxy_config_flatten_phone_number(LinphoneProxyConfig *proxy, const char *number);
+
+/**
  * Normalize a human readable sip uri into a fully qualified LinphoneAddress.
  * A sip address should look like DisplayName \<sip:username\@domain:port\> .
  * Basically this function performs the following tasks

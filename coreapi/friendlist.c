@@ -877,6 +877,69 @@ LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFrien
 	return lf;
 }
 
+LinphoneFriend * linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list, const char *phoneNumber) {
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(list->lc);
+	if (phoneNumber == NULL || !linphone_proxy_config_is_phone_number(cfg, phoneNumber)) {
+		ms_warning("Phone number [%s] isn't valid", phoneNumber);
+		return NULL;
+	}
+
+	const char *prefix = NULL;
+	if (cfg != NULL) {
+		prefix = linphone_proxy_config_get_dial_prefix(cfg);
+	}
+
+	char *flattenPhoneNumber = linphone_proxy_config_flatten_phone_number(cfg, phoneNumber);
+	char *otherPhoneNumber = NULL;
+	if (flattenPhoneNumber[0] == '+') {
+		if (prefix != NULL) {
+			// Check both prefixed & unprefixed phone numbers
+			size_t flatten_size = strlen(flattenPhoneNumber);
+			size_t prefix_size = strlen(prefix) + 1;
+			char unprefixed[flatten_size] = {0};
+			memcpy(unprefixed, &flattenPhoneNumber[prefix_size], flatten_size - prefix_size);
+			unprefixed[flatten_size - prefix_size] = '\0';
+			otherPhoneNumber = ms_strdup_printf("0%s", unprefixed);
+		} else {
+			// Only check prefixed phone numbers, we can't guess the prefix of the phone number in parameter
+		}
+	} else {
+		if (prefix != NULL) {
+			// Check both prefixed & not prefixed phone numbers
+			otherPhoneNumber = linphone_proxy_config_normalize_phone_number(cfg, phoneNumber);
+		} else {
+			// Only check unprefixed phone numbers, can't guess the prefix
+		}
+	}
+
+	LinphoneFriend *result = NULL;
+	const bctbx_list_t *elem;
+	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+		if (linphone_friend_has_phone_number(lf, phoneNumber)) {
+			result = lf;
+			break;
+		}
+		if (flattenPhoneNumber != NULL && linphone_friend_has_phone_number(lf, flattenPhoneNumber)) {
+			result = lf;
+			break;
+		}
+		if (otherPhoneNumber != NULL && linphone_friend_has_phone_number(lf, otherPhoneNumber)) {
+			result = lf;
+			break;
+		}
+	}
+
+	if (flattenPhoneNumber != NULL) {
+		ms_free(flattenPhoneNumber);
+	}
+	if (otherPhoneNumber != NULL) {
+		ms_free(otherPhoneNumber);
+	}
+
+	return result;
+}
+
 bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *list, const LinphoneAddress *address) {
 	LinphoneAddress *clean_addr = linphone_address_clone(address);
 	bctbx_list_t *result = NULL;
