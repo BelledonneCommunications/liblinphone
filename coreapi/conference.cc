@@ -107,6 +107,9 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 	device->setSession(call->getActiveSession());
 	participants.push_back(p);
+
+	time_t creationTime = time(nullptr);
+	notifyParticipantAdded(creationTime, false, *call->getRemoteAddress());
 //	Conference::addParticipant(call);
 	return 0;
 }
@@ -116,6 +119,8 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	if (!p)
 		return -1;
 	participants.remove(p);
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
 	return 0;
 }
 
@@ -124,6 +129,8 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	if (!p)
 		return -1;
 	participants.remove(p);
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, addr);
 	return 0;
 }
 
@@ -457,7 +464,8 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		ms_message("Updating call to notify of conference removal.");
 		err = session->update(currentParams);
 		/* invoke removeParticipant() recursively to remove this last participant. */
-		bool success = removeParticipant(remaining_participant->getAddress());
+		bool success = Conference::removeParticipant(remaining_participant->getAddress());
+//		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 		setState(ConferenceInterface::State::TerminationPending);
 		return success;
 	}
@@ -477,7 +485,7 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	bool ret = Conference::removeParticipant(addr);
 	//mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
 	mediaSession->terminate();
-	if (getSize() == 0) setState(ConferenceInterface::State::Terminated);
+	if (getSize() == 0) setState(ConferenceInterface::State::TerminationPending);
 	return ret;
 }
 
@@ -488,29 +496,17 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
-	switch(state) {
-		case ConferenceInterface::State::Created:
-			setState(ConferenceInterface::State::TerminationPending);
-			break;
-		case ConferenceInterface::State::TerminationPending:
-		{
-			/*FIXME: very inefficient server side because it iterates on the global call list. */
-			list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
-			for (auto it = calls.begin(); it != calls.end(); it++) {
-				shared_ptr<LinphonePrivate::Call> call(*it);
-				LinphoneCall *cCall = call->toC();
-				if (linphone_call_get_conference(cCall) == this->toC()) {
-					call->terminate();
-				}
-			}
-
-			if (getParticipantCount() == 0) setState(ConferenceInterface::State::Terminated);
-
-			break;
+	/*FIXME: very inefficient server side because it iterates on the global call list. */
+	list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
+	for (auto it = calls.begin(); it != calls.end(); it++) {
+		shared_ptr<LinphonePrivate::Call> call(*it);
+		LinphoneCall *cCall = call->toC();
+		if (linphone_call_get_conference(cCall) == this->toC()) {
+			call->terminate();
 		}
-		default:
-			break;
 	}
+
+	if (getParticipantCount() == 0) setState(ConferenceInterface::State::TerminationPending);
 
 	return 0;
 }
