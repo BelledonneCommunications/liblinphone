@@ -860,6 +860,7 @@ namespace LinphonePrivate {
 	bool_t push_notification_enabled; \
 	char * push_notification_param; \
 	char * push_notification_prid; \
+	char * push_notification_provider; \
 	bool_t auto_iterate_enabled; \
 	bool_t native_ringing_enabled;
 

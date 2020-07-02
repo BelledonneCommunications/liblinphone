@@ -6384,6 +6384,14 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore *core);
 
 /**
+* Set the push notifications provider (Android & iOS only).
+* @param[in] core The #LinphoneCore
+* @param[in] provider The push notification provider
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_set_push_notification_provider(LinphoneCore *core, const char *provider);
+
+/**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
  * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
  * If disabled, it is the application that must do this job.

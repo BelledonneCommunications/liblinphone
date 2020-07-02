@@ -2577,6 +2577,17 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 	return core->push_notification_param != NULL && core->push_notification_prid != NULL;
 }
 
+void linphone_core_set_push_notification_provider(LinphoneCore *core, const char *provider) {
+	if (core->push_notification_provider) {
+		ms_free(core->push_notification_provider);
+		core->push_notification_provider = NULL;
+	}
+
+	if (provider) {
+		core->push_notification_provider = ms_strdup(provider);
+	}
+}
+
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	if (core->push_notification_param) {
 		ms_free(core->push_notification_param);
@@ -2606,28 +2617,26 @@ char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *
 		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
 	}
 
-	const char *provider = NULL;
-	// Can this be improved ?
-	bool_t tester_env = !!lp_config_get_int(core->config, "tester", "test_env", FALSE);
-	if (tester_env) provider = "liblinphone_tester";
-	// End of improvement zone
-
 	const char *params = core->push_notification_param;
 	const char *prid = core->push_notification_prid;
 
+	const char *provider = core->push_notification_provider;
+	if (provider == NULL) {
+		// Can this be improved ?
+		bool_t tester_env = !!lp_config_get_int(core->config, "tester", "test_env", FALSE);
+		if (tester_env) provider = "liblinphone_tester";
+		// End of improvement zone
+
 #ifdef __ANDROID__
-	if (use_legacy_params)
-		provider = "firebase";
-	else
-		provider = "fcm";
+		if (use_legacy_params)
+			provider = "firebase";
+		else
+			provider = "fcm";
 #elif TARGET_OS_IPHONE
-	bool_t debug_mode = !!lp_config_get_int(core->config, "net", "debug_mode", FALSE);
-	if (debug_mode) {
-		provider = "apns.dev";
-	} else {
 		provider = "apns";
-	}
 #endif
+	}
+
 	if (provider == NULL) return NULL;
 
 	char contactUriParams[512];
