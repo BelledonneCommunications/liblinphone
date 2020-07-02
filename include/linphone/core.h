@@ -5646,6 +5646,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
  * @param[in] subject The subject of the group chat room
  * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
  * @return The newly created client-side group chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom * linphone_core_create_client_group_chat_room(LinphoneCore *lc, const char *subject, bool_t fallback);
 
@@ -5660,6 +5662,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom * linphone_core_create_clie
  * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
  * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
  * @return The newly created client-side group chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_client_group_chat_room_2(LinphoneCore *lc, const char *subject, bool_t fallback, bool_t encrypted);
 
@@ -5672,6 +5676,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_clien
  * @param[in] subject The subject of the group chat room
  * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const char *subject, const bctbx_list_t *participants);
 
@@ -5682,6 +5688,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *l
  * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
  * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore *lc, const LinphoneChatRoomParams *params, const char *subject, const bctbx_list_t *participants);
 
@@ -5691,6 +5699,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore 
  * @param[in] subject The subject of the group chat room
  * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore *lc, const char *subject, const bctbx_list_t *participants);
 
@@ -5701,6 +5711,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore 
  * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
  * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
  * @return The newly created chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *participant);
 
@@ -5709,8 +5721,35 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore 
  * @param[in] lc A #LinphoneCore object
  * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
  * @return The newly created chat room.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *lc, const LinphoneAddress *participant);
+
+/**
+ * Create a chat room.
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
+ * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
+ * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @return The newly created chat room or NULL.
+ * @maybenil
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
+
+
+/**
+ * Find a chat room.
+ *
+ * @param[in] lc A #LinphoneCore object
+ * @param[in] params The chat room parameters to match #LinphoneChatRoomParams or NULL @maybenil
+ * @param[in] localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
+ * @param[in] participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find
+ * @return A matching chat room or NULL if none matches.
+ * @maybenil
+ */
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
 
 /**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
@@ -5718,6 +5757,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore 
  * @param lc the linphone core
  * @param addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_search_chat_room() instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *lc, const LinphoneAddress *addr);
 
@@ -5728,6 +5769,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *lc, 
  * @param peer_addr a linphone address.
  * @param local_addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_search_chat_room() instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_2(
 	LinphoneCore *lc,
@@ -5741,6 +5784,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_2(
  * @param lc A #LinphoneCore object
  * @param to The destination address for messages.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_search_chat_room() instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_from_uri(LinphoneCore *lc, const char *to);
 
@@ -5751,6 +5796,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_get_chat_room_from_uri(LinphoneC
  * @param peer_addr a linphone address.
  * @param local_addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_search_chat_room() instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_chat_room (
 	const LinphoneCore *lc,
@@ -5765,7 +5812,7 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_chat_room (
  * @param local_addr a linphone address.
  * @param participant_addr a linphone address.
  * @return #LinphoneChatRoom where messaging can take place.
- * @deprecated Use linphone_core_find_one_to_one_chat_room_2 instead
+ * @deprecated on 12/12/2018, use linphone_core_find_one_to_one_chat_room_2 instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 	const LinphoneCore *lc,
@@ -5781,6 +5828,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
  * @param participant_addr a linphone address.
  * @param encrypted whether to look for an encrypted chat room or not
  * @return #LinphoneChatRoom where messaging can take place.
+ * @maybenil
+ * @deprecated on 02/07/2020, use linphone_core_search_chat_room() instead
 **/
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
 	const LinphoneCore *lc,

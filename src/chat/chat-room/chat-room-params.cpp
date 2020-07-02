@@ -30,10 +30,14 @@ ChatRoomParams::ChatRoomParams() {
 	mEncrypted = false;
 	mGroup = false;
 	mRtt = false;
+	mSubject = "";
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group) {
+	: ChatRoomParams("", encrypted, group, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
@@ -45,6 +49,7 @@ ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other
 	mEncrypted = other.mEncrypted;
 	mGroup = other.mGroup;
 	mRtt = other.mRtt;
+	mSubject = other.mSubject;
 }
 
 ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
@@ -57,6 +62,7 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
+const string& ChatRoomParams::getSubject() const { return mSubject; }
 
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
@@ -78,6 +84,8 @@ void ChatRoomParams::setGroup(bool group) {
 }
 
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
+
+void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
@@ -148,12 +156,16 @@ bool ChatRoomParams::isValid() const {
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
 		return false;
 	}
+	if (mSubject.empty() && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
+		return false;
+	}
 	return true;
 }
 
 std::string ChatRoomParams::toString() const {
 	std::ostringstream ss;
 
+	ss << "Subject[" << mSubject << "];";
 	ss << "Encrypted[" << mEncrypted << "];";
 	ss << "Group[" << mGroup << "];";
 	ss << "Rtt[" << mRtt << "];";
