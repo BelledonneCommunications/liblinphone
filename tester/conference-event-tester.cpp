@@ -661,9 +661,6 @@ public:
 	}
 	bool addParticipant (std::shared_ptr<Call> call) override {
 		bool status = MediaConference::LocalConference::addParticipant(call);
-		if (status) {
-			notifyParticipantAdded(time(nullptr), false, *call->getRemoteAddress());
-		}
 		return status;
 	}
 
@@ -671,25 +668,16 @@ public:
 	using LinphonePrivate::MediaConference::Conference::removeParticipant;
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
 		bool status = MediaConference::LocalConference::removeParticipant(participant);
-		if (status) {
-			notifyParticipantRemoved(time(nullptr), false, participant->getAddress());
-		}
 		return status;
 	}
 
 	int removeParticipant (const std::shared_ptr<Call> call) override  {
 		int status = MediaConference::LocalConference::removeParticipant(call);
-		if (status == 0) {
-			notifyParticipantRemoved(time(nullptr), false, *call->getRemoteAddress());
-		}
 		return status;
 	}
 
 	int removeParticipant (const IdentityAddress &addr) override  {
 		int status = MediaConference::LocalConference::removeParticipant(addr);
-		if (status == 0) {
-			notifyParticipantRemoved(time(nullptr), false, addr);
-		}
 		return status;
 	}
 
@@ -1149,7 +1137,7 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void remove_participant_from_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+static void remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1157,7 +1145,7 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **mgrs,
 	stats* other_participants_initial_stats = NULL;
 	bctbx_list_t *other_participants = NULL;
 	int counter = 1;
-	for (bctbx_list_t *it = *mgrs; it; it = bctbx_list_next(it)) {
+	for (bctbx_list_t *it = *participants_mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
 		if ((m != participant_mgr) && (m != conf_mgr)) {
 			// Allocate memory
@@ -1179,11 +1167,12 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **mgrs,
 
 	conf->removeParticipant(Call::toCpp(confCall)->getSharedFromThis());
 	// Remove participant from list of managers
-	*mgrs = bctbx_list_remove(*mgrs, participant_mgr);
+	*participants_mgrs = bctbx_list_remove(*participants_mgrs, participant_mgr);
+	*removed_mgrs = bctbx_list_append(*removed_mgrs, participant_mgr);
 
-	// Wait for calls to be terminated
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallEnd,(initial_conf_stats.number_of_LinphoneCallEnd + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallReleased,(initial_conf_stats.number_of_LinphoneCallReleased + 1),5000));
+	// Calls are paused when removing a participant 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausing,(initial_conf_stats.number_of_LinphoneCallPausing + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(initial_conf_stats.number_of_LinphoneCallPaused + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 
 	// Wait for conferences to be terminated
@@ -1201,6 +1190,33 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **mgrs,
 	BC_ASSERT_EQUAL(confListener->participants.size(), expectedParticipants, int, "%d");
 	BC_ASSERT_EQUAL(confListener->participantDevices.size(), expectedParticipants, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
+
+	// Other participants call should not have their state modified
+	if (other_participants != NULL) {
+		int idx = 0;
+		for (bctbx_list_t *itm = other_participants; itm; itm = bctbx_list_next(itm)) {
+			LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(itm));
+			// If removing last participant, then its call is kicked out of conference
+			// - Remote conference is deleted
+			// - parameters are updated
+			if (participantSize == 2) {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(other_participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(other_participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
+
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminationPending,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminationPending + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminated,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminated + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateDeleted,(initial_participant_stats.number_of_LinphoneChatRoomStateDeleted + 1),5000));
+
+				*participants_mgrs = bctbx_list_remove(*participants_mgrs, m);
+				*removed_mgrs = bctbx_list_append(*removed_mgrs, m);
+			} else {
+				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallStreamsRunning,other_participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning, int, "%0d");
+			}
+			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallEnd,other_participants_initial_stats[idx].number_of_LinphoneCallEnd, int, "%0d");
+			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallReleased,other_participants_initial_stats[idx].number_of_LinphoneCallReleased, int, "%0d");
+			idx++;
+		}
+	}
 
 }
 
@@ -1411,8 +1427,10 @@ void send_removed_notify_through_call() {
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
-	bctbx_list_t *mgrs = NULL;
-	mgrs = bctbx_list_append(mgrs, pauline);
+	bctbx_list_t *participants_mgrs = NULL;
+	participants_mgrs = bctbx_list_append(participants_mgrs, pauline);
+
+	bctbx_list_t *removed_mgrs = NULL;
 
 	char *identityStr = linphone_address_as_string(pauline->identity);
 	Address addr(identityStr);
@@ -1428,15 +1446,22 @@ void send_removed_notify_through_call() {
 	localConf->addListener(confListener);
 
 	// Add participants
-	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
-	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+	add_participant_to_conference_through_call(&participants_mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
+	add_participant_to_conference_through_call(&participants_mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
 
-	remove_participant_from_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+	remove_participant_from_conference_through_call(&removed_mgrs, &participants_mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
 
 	localConf->terminate();
 	localConf->unref();
 
-	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
+	for (bctbx_list_t *it = removed_mgrs; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		linphone_call_terminate(linphone_core_get_current_call(m->lc));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
+	}
+
+	for (bctbx_list_t *it = participants_mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
 		// Wait for all calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
@@ -1454,7 +1479,8 @@ void send_removed_notify_through_call() {
 	custom_mgr_destroy(pauline);
 
 	bctbx_list_free(lcs);
-	bctbx_list_free(mgrs);
+	bctbx_list_free(participants_mgrs);
+	bctbx_list_free(removed_mgrs);
 
 }
 
