@@ -2351,18 +2351,22 @@ LinphoneStatus MediaSession::resume () {
 	string subject = "Call resuming";
 	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
-		char * contactAddressStr = nullptr;
-		if (d->destProxy && d->destProxy->op) {
-			contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
-		} else {
-			contactAddressStr = sal_address_as_string(d->op->getContactAddress());
-		}
-		Address contactAddress(contactAddressStr);
-		ms_free(contactAddressStr);
+	}
+
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	// If in conference and contact address doesn't have isfocus
+	if ((d->getParams()->getPrivate()->getInConference()) && (!contactAddress.hasParam("isfocus"))) {
 		// Add isFocus if call is in a conference
 		contactAddress.setParam("isfocus");
-		d->op->setContactAddress(contactAddress.getInternalAddress());
 	}
+	d->op->setContactAddress(contactAddress.getInternalAddress());
 
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;

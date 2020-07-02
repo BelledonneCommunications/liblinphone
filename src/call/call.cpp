@@ -368,15 +368,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			ms_free(remoteContactAddressStr);
 
 			// Check if the request was sent by the focus
-			if (remoteContactAddress.hasParam("isfocus")) {
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+			ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+			shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
-				// Terminate conference is found
-				if (conference != nullptr) {
-					conference->setState(ConferenceInterface::State::TerminationPending);
-				}
-
+			// Terminate conference is found
+			if (conference != nullptr) {
+				conference->setState(ConferenceInterface::State::TerminationPending);
 			}
 
 			if (linphone_core_get_calls_nb(lc) == 0) {
@@ -419,24 +416,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				}
 				// Here, the conference subscribes to the handler
 				remoteConf->finalizeCreation();
-			}
-		}
-		break;
-		case CallSession::State::Resuming:
-		{
-			// Create remote conference if the call is in a conference and it doesn't exists already
-			if (isInConference()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
-				remoteContactAddress.setParam("isfocus");
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-
-				auto conf = getCore()->findAudioVideoConference (remoteConferenceId);
-				if (conf == nullptr) {
-					// It is expected that the core of the remote conference is the participant one
-					std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
-				}
 			}
 		}
 		break;
