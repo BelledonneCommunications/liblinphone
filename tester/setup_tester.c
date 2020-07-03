@@ -414,7 +414,9 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 
 	LinphoneAddress *addr = linphone_address_new("sip:toto@titi");
 	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_proxy_config_edit(proxy_config);
+	addr = linphone_address_new("sips:toto@titi");
 	linphone_proxy_config_set_identity_address(proxy_config,addr);
 	if (addr) linphone_address_unref(addr);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
