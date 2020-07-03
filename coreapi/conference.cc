@@ -155,15 +155,15 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
 	if (mStateChangedCb) {
-		mStateChangedCb(toC(), (LinphoneChatRoomState)state, mUserData);
+		mStateChangedCb(toC(), (LinphoneConferenceState)state, mUserData);
 	}
 
 }
 
 void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 	// Call callbacks before calling listeners because listeners may change state
-	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneChatRoomState)getState());
-	_linphone_conference_notify_state_changed(toC(), (LinphoneChatRoomState)getState());
+	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
+	_linphone_conference_notify_state_changed(toC(), (LinphoneConferenceState)getState());
 
 	// Call listeners
 	LinphonePrivate::Conference::notifyStateChanged(state);
@@ -420,7 +420,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	}
 
 	ms_error("Unable to add participant to conference %p because it is in state %s",
-	this, linphone_conference_state_to_string((LinphoneChatRoomState)getState()));
+	this, linphone_conference_state_to_string((LinphoneConferenceState)getState()));
 	return false;
 }
 

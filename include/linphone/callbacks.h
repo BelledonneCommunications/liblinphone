@@ -420,14 +420,14 @@ typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore 
  * @param[in] lc #LinphoneCore object
  * @param[in] cr The #LinphoneConference object for which the state has changed
  */
-typedef void (*LinphoneCoreCbsConferenceStateChangedCb) (LinphoneCore *lc, LinphoneConference *cr, LinphoneChatRoomState state);
+typedef void (*LinphoneCoreCbsConferenceStateChangedCb) (LinphoneCore *lc, LinphoneConference *cr, LinphoneConferenceState state);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom state has changed.
  * @param[in] lc #LinphoneCore object
  * @param[in] cr The #LinphoneChatRoom object for which the state has changed
  */
-typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneConferenceState state);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom subject has changed.

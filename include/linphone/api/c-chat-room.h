@@ -373,7 +373,7 @@ LINPHONE_PUBLIC LinphoneChatRoomCbs *linphone_chat_room_get_current_callbacks(co
  * @param[in] cr #LinphoneChatRoom object
  * @return The state of the chat room
  */
-LINPHONE_PUBLIC LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr);
+LINPHONE_PUBLIC LinphoneConferenceState linphone_chat_room_get_state (const LinphoneChatRoom *cr);
 
 /**
  * Return whether or not the chat room has been left.

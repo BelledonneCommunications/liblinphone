@@ -598,8 +598,8 @@ void IosSharedCoreHelpers::reinitTimer() {
 	mTimer = ms_get_cur_time_ms();
 }
 
-static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
-	if (state == LinphoneChatRoomStateCreated) {
+static void on_push_notification_chat_room_invite_received(LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneConferenceState state) {
+	if (state == LinphoneConferenceStateCreated) {
 		PlatformHelpers *platform_helper = static_cast<LinphonePrivate::PlatformHelpers*>(lc->platform_helper);
 		IosSharedCoreHelpers *shared_core_helper = static_cast<LinphonePrivate::IosSharedCoreHelpers*>(platform_helper->getSharedCoreHelpers().get());
 		shared_core_helper->reinitTimer();
