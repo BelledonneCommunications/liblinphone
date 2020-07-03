@@ -659,34 +659,12 @@ public:
 		}
 		return status;
 	}
-	bool addParticipant (std::shared_ptr<Call> call) override {
-		bool status = MediaConference::LocalConference::addParticipant(call);
-		return status;
-	}
-
-	// Addressing compilation error -Werror=overloaded-virtual
-	using LinphonePrivate::MediaConference::Conference::removeParticipant;
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
-		bool status = MediaConference::LocalConference::removeParticipant(participant);
-		return status;
-	}
-
-	int removeParticipant (const std::shared_ptr<Call> call) override  {
-		int status = MediaConference::LocalConference::removeParticipant(call);
-		return status;
-	}
-
-	int removeParticipant (const IdentityAddress &addr) override  {
-		int status = MediaConference::LocalConference::removeParticipant(addr);
-		return status;
-	}
 
 	void setSubject (const std::string &subject) override {
 		LocalConference::setSubject(subject);
 		notifySubjectChanged(time(nullptr), false, subject);
 	}
 
-	map<string, shared_ptr<MediaConference::RemoteConference>> participantRemoteConfTable;
 };
 
 static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
