@@ -689,7 +689,7 @@ public:
 	map<string, shared_ptr<MediaConference::RemoteConference>> participantRemoteConfTable;
 };
 
-static void conference_state_changed (LinphoneConference *conference, LinphoneChatRoomState newState) {
+static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
@@ -698,31 +698,31 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCh
 		ms_message("Conference [%s] state changed: %d", addr_str, newState);
 	}
 	switch (newState) {
-		case LinphoneChatRoomStateNone:
+		case LinphoneConferenceStateNone:
 			break;
-		case LinphoneChatRoomStateInstantiated:
-			manager->stat.number_of_LinphoneChatRoomStateInstantiated++;
+		case LinphoneConferenceStateInstantiated:
+			manager->stat.number_of_LinphoneConferenceStateInstantiated++;
 			break;
-		case LinphoneChatRoomStateCreationPending:
-			manager->stat.number_of_LinphoneChatRoomStateCreationPending++;
+		case LinphoneConferenceStateCreationPending:
+			manager->stat.number_of_LinphoneConferenceStateCreationPending++;
 			break;
-		case LinphoneChatRoomStateCreated:
-			manager->stat.number_of_LinphoneChatRoomStateCreated++;
+		case LinphoneConferenceStateCreated:
+			manager->stat.number_of_LinphoneConferenceStateCreated++;
 			break;
-		case LinphoneChatRoomStateCreationFailed:
-			manager->stat.number_of_LinphoneChatRoomStateCreationFailed++;
+		case LinphoneConferenceStateCreationFailed:
+			manager->stat.number_of_LinphoneConferenceStateCreationFailed++;
 			break;
-		case LinphoneChatRoomStateTerminationPending:
-			manager->stat.number_of_LinphoneChatRoomStateTerminationPending++;
+		case LinphoneConferenceStateTerminationPending:
+			manager->stat.number_of_LinphoneConferenceStateTerminationPending++;
 			break;
-		case LinphoneChatRoomStateTerminated:
-			manager->stat.number_of_LinphoneChatRoomStateTerminated++;
+		case LinphoneConferenceStateTerminated:
+			manager->stat.number_of_LinphoneConferenceStateTerminated++;
 			break;
-		case LinphoneChatRoomStateTerminationFailed:
-			manager->stat.number_of_LinphoneChatRoomStateTerminationFailed++;
+		case LinphoneConferenceStateTerminationFailed:
+			manager->stat.number_of_LinphoneConferenceStateTerminationFailed++;
 			break;
-		case LinphoneChatRoomStateDeleted:
-			manager->stat.number_of_LinphoneChatRoomStateDeleted++;
+		case LinphoneConferenceStateDeleted:
+			manager->stat.number_of_LinphoneConferenceStateDeleted++;
 			break;
 		default:
 			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", addr_str);
@@ -737,8 +737,8 @@ void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneC
 	linphone_core_set_user_data(lcm->lc, lcm);
 }
 
-void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneChatRoomState state) {
-	if (state == LinphoneChatRoomStateInstantiated) {
+void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
+	if (state == LinphoneConferenceStateInstantiated) {
 		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
 		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
 
@@ -1176,9 +1176,9 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 
 	// Wait for conferences to be terminated
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminationPending,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminationPending + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminated,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminated + 1),5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateDeleted,(initial_participant_stats.number_of_LinphoneChatRoomStateDeleted + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_participant_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateTerminated,(initial_participant_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateDeleted,(initial_participant_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
 	int expectedParticipants = 0;
 	if (participantSize == 2) {
@@ -1203,9 +1203,9 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(other_participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(other_participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
 
-				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminationPending,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminationPending + 1),5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateTerminated,(initial_participant_stats.number_of_LinphoneChatRoomStateTerminated + 1),5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneChatRoomStateDeleted,(initial_participant_stats.number_of_LinphoneChatRoomStateDeleted + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_participant_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateTerminated,(initial_participant_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateDeleted,(initial_participant_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
 				*participants_mgrs = bctbx_list_remove(*participants_mgrs, m);
 				*removed_mgrs = bctbx_list_append(*removed_mgrs, m);
@@ -1265,8 +1265,8 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	// Prepend participant managers to ensure that conference focus is last
 	*mgrs = bctbx_list_prepend(*mgrs, participant_mgr);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initial_participant_stats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneChatRoomStateCreated, initial_participant_stats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneConferenceStateCreationPending, initial_participant_stats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneConferenceStateCreated, initial_participant_stats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
@@ -1379,8 +1379,8 @@ void send_added_notify_through_call() {
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
 	localConf->ref();
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1402,9 +1402,9 @@ void send_added_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 
 		// Wait for all conferences to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
 	}
 
@@ -1439,8 +1439,8 @@ void send_removed_notify_through_call() {
 	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
 	localConf->ref();
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreationPending, initialPaulineStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneChatRoomStateCreated, initialPaulineStats.number_of_LinphoneChatRoomStateCreated + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1468,9 +1468,9 @@ void send_removed_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 
 		// Wait for all conferences to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminationPending, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateTerminated, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneChatRoomStateDeleted, m->stat.number_of_LinphoneChatRoomStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
 	}
 
