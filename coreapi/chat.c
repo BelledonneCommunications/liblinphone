@@ -147,14 +147,15 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const Linph
 	return L_GET_C_BACK_PTR(room);
 }
 
-LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants) {
+LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
 	shared_ptr<LinphonePrivate::ChatRoomParams> chatRoomParams = params ? LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
 	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
 		return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
 	});
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat : false;
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
-	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(chatRoomParams, identityAddress, participantsList);
+	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
+	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(chatRoomParams, identityAddress, remoteAddress, participantsList);
 	return L_GET_C_BACK_PTR(room);
 }
 
@@ -192,13 +193,13 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 	linphone_chat_room_params_enable_group(params, FALSE);
-	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, paricipants);
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, peer_addr, NULL);
 	if (result == NULL) {
+		bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
 		result = linphone_core_create_chat_room_6(lc, params, local_addr, paricipants);
+		bctbx_list_free(paricipants);
 	}
 	linphone_chat_room_params_unref(params);
-	bctbx_list_free(paricipants);
 	return result;
 }
 
@@ -216,9 +217,7 @@ LinphoneChatRoom *linphone_core_find_chat_room(
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, paricipants);
-	bctbx_list_free(paricipants);
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
 	return result;
 }
 
@@ -231,7 +230,7 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room (
 	bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)participant_addr);
 	LinphoneChatRoomParams *params = _linphone_core_create_default_chat_room_params();
 	linphone_chat_room_params_enable_group(params, FALSE);
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, paricipants);
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, NULL, paricipants);
 	linphone_chat_room_params_unref(params);
 	bctbx_list_free(paricipants);
 	return result;
@@ -248,7 +247,7 @@ LinphoneChatRoom *linphone_core_find_one_to_one_chat_room_2 (
 	LinphoneChatRoomParams *params = _linphone_core_create_default_chat_room_params();
 	linphone_chat_room_params_enable_group(params, FALSE);
 	linphone_chat_room_params_enable_encryption(params, encrypted);
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, paricipants);
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, NULL, paricipants);
 	linphone_chat_room_params_unref(params);
 	bctbx_list_free(paricipants);
 	return result;

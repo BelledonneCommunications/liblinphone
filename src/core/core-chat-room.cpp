@@ -230,10 +230,11 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddress, const std::list<IdentityAddress> &participants) const {
+shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatRoomParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
+		const IdentityAddress &curRemoteAddress = chatRoom->getPeerAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
 
 		if (params) {
@@ -253,10 +254,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::searchChatRoom (const shared_ptr<ChatR
 		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu())
 			continue;
 
-		if (participants.size() == 1) {
-			auto remote = participants.front();
-			if (chatRoom->getPeerAddress() == remote) return chatRoom;
-		}
+		if (remoteAddress.isValid() && remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
+			continue;
 
 		bool allFound = true;
 		for (const auto &participant : participants) {
