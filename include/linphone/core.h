@@ -5745,11 +5745,12 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore 
  * @param[in] lc A #LinphoneCore object
  * @param[in] params The chat room parameters to match #LinphoneChatRoomParams or NULL @maybenil
  * @param[in] localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
+ * @param[in] remoteAddr #LinphoneAddress to search for or NULL @maybenil
  * @param[in] participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find
  * @return A matching chat room or NULL if none matches.
  * @maybenil
  */
-LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
+LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
 
 /**
  * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.

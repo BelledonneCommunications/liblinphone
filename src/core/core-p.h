@@ -129,6 +129,7 @@ public:
 
 	std::shared_ptr<AbstractChatRoom> searchChatRoom(const std::shared_ptr<ChatRoomParams> &params,
 							const IdentityAddress &localAddr,
+							const IdentityAddress &remoteAddr,
 							const std::list<IdentityAddress> &participants) const;
 
 	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;

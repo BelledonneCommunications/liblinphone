@@ -19,6 +19,7 @@
 
 #include "chat-room-params.h"
 #include "chat-room.h"
+#include "logger/logger.h"
 
 using namespace std;
 
@@ -145,18 +146,23 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 //Returns false	if there are any inconsistencies between parameters
 bool ChatRoomParams::isValid() const {
 	if (mEncrypted && mChatRoomEncryptionBackend != ChatRoomEncryptionBackend::Lime) {
+		lError() << "Currently only Lime encryption backend is supported";
 		return false;
 	}
 	if (mEncrypted && mChatRoomBackend == ChatRoomBackend::Basic) {
+		lError() << "Encryption isn't supported with Basic backend";
 		return false;
 	}
 	if (mGroup && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
+		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
+		lError() << "Real time text chat room isn't compatible with FlexisipChat backend";
 		return false;
 	}
 	if (mSubject.empty() && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
+		lError() << "You must set a non empty subject when using the FlexisipChat backend";
 		return false;
 	}
 	return true;
