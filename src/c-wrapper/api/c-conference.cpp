@@ -69,7 +69,7 @@ void _linphone_conference_notify_subject_changed(LinphoneConference *conference,
 	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, conference, event_log)
 }
 
-void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneChatRoomState newState) {
+void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState) {
 	NOTIFY_IF_EXIST(StateChanged, state_changed, conference, newState)
 }
 

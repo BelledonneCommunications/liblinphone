@@ -40,17 +40,17 @@ extern "C" {
  * @param new_state The new state of the conferenece
  * @param user_data Pointer pass to user_data while linphone_conference_params_set_state_changed_callback() was being called
  */
-typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneChatRoomState new_state, void *user_data);
+typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
 
 /**
  * A function to converte a #LinphoneConferenceState into a string
  */
-const char *linphone_conference_state_to_string(LinphoneChatRoomState state);
+const char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
 /**
  * Get the state of a conference
  */
-LinphoneChatRoomState linphone_conference_get_state(const LinphoneConference *obj);
+LinphoneConferenceState linphone_conference_get_state(const LinphoneConference *obj);
 
 /**
  * Set a callback which will be called when the state of the conferenec is switching
