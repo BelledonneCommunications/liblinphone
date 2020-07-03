@@ -75,7 +75,7 @@ Once created, messages are sent using :cpp:func:`linphone_chat_room_send_message
 
 	linphone_chat_room_send_message(chatRoom, "Hello world");
 
-Incoming message are received through callbacks which can be set after the chat room is instantiated (**LinphoneChatRoomStateInstantiated**).
+Incoming message are received through callbacks which can be set after the chat room is instantiated (**LinphoneConferenceStateInstantiated**).
 
 .. code-block:: c
 
