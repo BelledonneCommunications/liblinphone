@@ -1115,7 +1115,7 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+static void remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1198,6 +1198,17 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 
 }
 
+static void remove_head_participant_list_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr) {
+	LinphoneCoreManager * del_mgr = nullptr;
+
+	for (bctbx_list_t *it = *participants_mgrs; it; it = bctbx_list_next(it)) {
+		del_mgr = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+		if (del_mgr != conf_mgr) {
+			remove_participant_from_conference_through_call(removed_mgrs, participants_mgrs, lcs, confListener, conf, conf_mgr, del_mgr);
+			break;
+		}
+	}
+}
 
 static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
@@ -1337,15 +1348,20 @@ void custom_mgr_destroy(LinphoneCoreManager *mgr) {
 	linphone_core_manager_destroy(mgr);
 }
 
+LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
+
+	LinphoneCoreManager *mgr = create_mgr_and_detect_subscribe(rc_file);
+	*lcs = bctbx_list_append(*lcs, mgr->lc);
+	add_participant_to_conference_through_call(mgrs, *lcs, confListener, conf, conf_mgr, mgr, pause_call);
+
+	return mgr;
+}
+
 void send_added_notify_through_call() {
-	LinphoneCoreManager *marie = create_mgr_and_detect_subscribe("marie_rc");
 	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
 
 	bctbx_list_t *lcs = NULL;
-	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
-	lcs = bctbx_list_append(lcs, laure->lc);
 
 	bctbx_list_t *mgrs = NULL;
 	mgrs = bctbx_list_append(mgrs, pauline);
@@ -1364,11 +1380,11 @@ void send_added_notify_through_call() {
 	localConf->addListener(confListener);
 
 	// Add participants
-	// Marie - call not paused
-	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
+	// call not paused
+	create_core_and_add_to_conference("marie_rc", &mgrs, &lcs, confListener, localConf, pauline, FALSE);
 
-	// Laure - call paused
-	add_participant_to_conference_through_call(&mgrs, lcs, confListener, localConf, pauline, laure, TRUE);
+	// call paused
+	create_core_and_add_to_conference((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp", &mgrs, &lcs, confListener, localConf, pauline, TRUE);
 
 	localConf->terminate();
 	localConf->unref();
@@ -1384,11 +1400,8 @@ void send_added_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
+		custom_mgr_destroy(m);
 	}
-
-	custom_mgr_destroy(marie);
-	custom_mgr_destroy(laure);
-	custom_mgr_destroy(pauline);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(mgrs);
@@ -1396,14 +1409,10 @@ void send_added_notify_through_call() {
 }
 
 void send_removed_notify_through_call() {
-	LinphoneCoreManager *marie = create_mgr_and_detect_subscribe("marie_rc");
 	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_and_detect_subscribe((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp");
 
 	bctbx_list_t *lcs = NULL;
-	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
-	lcs = bctbx_list_append(lcs, laure->lc);
 
 	bctbx_list_t *participants_mgrs = NULL;
 	participants_mgrs = bctbx_list_append(participants_mgrs, pauline);
@@ -1424,10 +1433,10 @@ void send_removed_notify_through_call() {
 	localConf->addListener(confListener);
 
 	// Add participants
-	add_participant_to_conference_through_call(&participants_mgrs, lcs, confListener, localConf, pauline, marie, FALSE);
-	add_participant_to_conference_through_call(&participants_mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+	LinphoneCoreManager * marie = create_core_and_add_to_conference("marie_rc", &participants_mgrs, &lcs, confListener, localConf, pauline, FALSE);
+	LinphoneCoreManager * laure = create_core_and_add_to_conference((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp", &participants_mgrs, &lcs, confListener, localConf, pauline, TRUE);
 
-	remove_participant_from_conference_through_call(&removed_mgrs, &participants_mgrs, lcs, confListener, localConf, pauline, laure, FALSE);
+	remove_head_participant_list_from_conference_through_call(&removed_mgrs, &participants_mgrs, lcs, confListener, localConf, pauline);
 
 	localConf->terminate();
 	localConf->unref();
@@ -1455,7 +1464,6 @@ void send_removed_notify_through_call() {
 	custom_mgr_destroy(marie);
 	custom_mgr_destroy(laure);
 	custom_mgr_destroy(pauline);
-
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants_mgrs);
 	bctbx_list_free(removed_mgrs);
