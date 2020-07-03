@@ -19,6 +19,7 @@
 
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference.h"
+#include "linphone/wrapper_utils.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference_private.h"
 
