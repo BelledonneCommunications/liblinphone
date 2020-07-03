@@ -383,60 +383,66 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		{
-			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-			Address remoteContactAddress(remoteContactAddressStr);
-			ms_free(remoteContactAddressStr);
+			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
 
-			// Check if the request was sent by the focus
-			ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-			shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+				// Check if the request was sent by the focus
+				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
-			// Terminate conference is found
-			if (conference != nullptr) {
-				conference->setState(ConferenceInterface::State::TerminationPending);
-				setConference (nullptr);
-			}
+				// Terminate conference is found
+				if (conference != nullptr) {
+					conference->setState(ConferenceInterface::State::TerminationPending);
+					setConference (nullptr);
+				}
 
-			if (linphone_core_get_calls_nb(lc) == 0) {
-				linphone_core_notify_last_call_ended(lc);
+				if (linphone_core_get_calls_nb(lc) == 0) {
+					linphone_core_notify_last_call_ended(lc);
+				}
 			}
 		}
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-			Address remoteContactAddress(remoteContactAddressStr);
-			ms_free(remoteContactAddressStr);
+			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
 
-			// Check if the request was sent by the focus
-			if (remoteContactAddress.hasParam("isfocus")) {
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-				// It is expected that the core of the remote conference is the participant one
-				std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+				// Check if the request was sent by the focus
+				if (remoteContactAddress.hasParam("isfocus")) {
+					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+					// It is expected that the core of the remote conference is the participant one
+					std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+				}
 			}
 		}
 		break;
 		case CallSession::State::StreamsRunning:
 		{
-			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-			Address remoteContactAddress(remoteContactAddressStr);
-			ms_free(remoteContactAddressStr);
+			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				Address remoteContactAddress(remoteContactAddressStr);
+				ms_free(remoteContactAddressStr);
 
-			// Check if the request was sent by the focus
-			if (remoteContactAddress.hasParam("isfocus")) {
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
-				shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
+				// Check if the request was sent by the focus
+				if (remoteContactAddress.hasParam("isfocus")) {
+					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+					shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
 
-				// Create remote conference if no conference with the expected ID is found in the database
-				if (conference == nullptr) {
-					// It is expected that the core of the remote conference is the participant one
-					remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
-				} else {
-					remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
+					// Create remote conference if no conference with the expected ID is found in the database
+					if (conference == nullptr) {
+						// It is expected that the core of the remote conference is the participant one
+						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+					} else {
+						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
+					}
+					// Here, the conference subscribes to the handler
+					remoteConf->finalizeCreation();
 				}
-				// Here, the conference subscribes to the handler
-				remoteConf->finalizeCreation();
 			}
 		}
 		break;
