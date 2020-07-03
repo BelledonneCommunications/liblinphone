@@ -7750,9 +7750,9 @@ static int _linphone_core_delayed_conference_destruction_cb(void *user_data, uns
 	return 0;
 }
 
-static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneChatRoomState cstate, void *user_data) {
+static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate, void *user_data) {
 	LinphoneCore *lc = (LinphoneCore *)user_data;
-	if(cstate == LinphoneChatRoomStateCreationFailed || cstate == LinphoneChatRoomStateTerminated) {
+	if(cstate == LinphoneConferenceStateCreationFailed || cstate == LinphoneConferenceStateTerminated) {
 		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destruction_cb, conf, "Conference destruction task");
 		lc->conf_ctx = NULL;
 	}

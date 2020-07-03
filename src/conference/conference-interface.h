@@ -60,20 +60,20 @@ public:
 	 * State is used to indicate the current state of a Conference.
 	 */
 	enum class State{
-		None = LinphoneChatRoomStateNone, /**< Initial state */
-		Instantiated = LinphoneChatRoomStateInstantiated, /**< Conference is now instantiated participants can be added, but no focus address is ready yet */
-		CreationPending = LinphoneChatRoomStateCreationPending, /**< If not focus,  creation request was sent to the server, else conference id allocation is ongoing */
-		Created = LinphoneChatRoomStateCreated, /**<  Conference was created with a conference id. Communication can start*/
-		CreationFailed = LinphoneChatRoomStateCreationFailed, /**< Creation failed */
-		TerminationPending = LinphoneChatRoomStateTerminationPending, /**< Wait for Conference termination */
-		Terminated = LinphoneChatRoomStateTerminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
-		TerminationFailed = LinphoneChatRoomStateTerminationFailed, /**< Conference termination failed */
+		None = LinphoneConferenceStateNone, /**< Initial state */
+		Instantiated = LinphoneConferenceStateInstantiated, /**< Conference is now instantiated participants can be added, but no focus address is ready yet */
+		CreationPending = LinphoneConferenceStateCreationPending, /**< If not focus,  creation request was sent to the server, else conference id allocation is ongoing */
+		Created = LinphoneConferenceStateCreated, /**<  Conference was created with a conference id. Communication can start*/
+		CreationFailed = LinphoneConferenceStateCreationFailed, /**< Creation failed */
+		TerminationPending = LinphoneConferenceStateTerminationPending, /**< Wait for Conference termination */
+		Terminated = LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
+		TerminationFailed = LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
 		Deleted /**< Conference is deleted on the server //fixme jehan creuser ce point  */
 	};
 
 	//casting to int to get rid of the enum compare warning.
 	//Here we are comparing two enums serving the same purpose
-	static_assert((int)ConferenceInterface::State::Deleted == (int)LinphoneChatRoomStateDeleted, "LinphoneConferenceState and ConferenceInterface::State are not synchronized, fix this !");
+	static_assert((int)ConferenceInterface::State::Deleted == (int)LinphoneConferenceStateDeleted, "LinphoneConferenceState and ConferenceInterface::State are not synchronized, fix this !");
 
 	virtual ~ConferenceInterface () = default;
 
@@ -345,8 +345,6 @@ class LINPHONE_PUBLIC ConferenceFactoryInterface {
 	std::shared_ptr<ConferenceInterface>& createConference(const std::shared_ptr<ConferenceParamsInterface> &params,
 	const std::list<IdentityAddress> &participants);
 };
-
-//typedef enum _LinphoneConferenceState {} LinphoneConferenceState; // same as ConferenceInterface::State
 
 /*
  * Event used to repport media availability changes from a conference.
