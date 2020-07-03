@@ -63,6 +63,14 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_call_get_callbacks_list(const Linph
 LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const LinphoneChatRoom *cr);
 
 /**
+ * Gets the list of listener in the conference.
+ * @param[in] conference LinphoneConference object
+ * @return \bctbx_list{LinphoneConferenceCbs}
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConference *conference);
+
+/**
  * Sets the current LinphoneChatRoomCbs.
  * @param[in] cr LinphoneChatRoom object
  * @param[in] cbs LinphoneChatRoomCbs object
