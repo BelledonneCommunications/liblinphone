@@ -80,6 +80,8 @@ set(C_API_HEADER_FILES
 	c-call-cbs.h
 	c-call-stats.h
 	c-call.h
+	c-conference.h
+	c-conference-cbs.h
 	c-callbacks.h
 	c-chat-message-cbs.h
 	c-chat-message.h
