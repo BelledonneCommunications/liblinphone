@@ -761,7 +761,7 @@ void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneC
 	stats mgrStats = mgr->stat;
 	if (cr) {
 		linphone_core_delete_chat_room(mgr->lc, cr);
-		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateDeleted, mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateDeleted, mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
 	}
 }
 

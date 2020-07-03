@@ -334,12 +334,12 @@ void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc,
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
+void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneConferenceState state) {
 	NOTIFY_IF_EXIST(chat_room_state_changed, lc, cr, state);
 	cleanup_dead_vtable_refs(lc);
 }
 
-void linphone_core_notify_conference_state_changed(LinphoneCore *lc, LinphoneConference *conference, LinphoneChatRoomState cstate){
+void linphone_core_notify_conference_state_changed(LinphoneCore *lc, LinphoneConference *conference, LinphoneConferenceState cstate){
 	NOTIFY_IF_EXIST(conference_state_changed, lc,conference,cstate);
 	cleanup_dead_vtable_refs(lc);
 }

@@ -191,6 +191,15 @@ typedef struct _stats {
 	int number_of_LinphoneCallEarlyUpdatedByRemote;
 	int number_of_LinphoneCallEarlyUpdating;
 
+	int number_of_LinphoneConferenceStateInstantiated;
+	int number_of_LinphoneConferenceStateCreationPending;
+	int number_of_LinphoneConferenceStateCreated;
+	int number_of_LinphoneConferenceStateCreationFailed;
+	int number_of_LinphoneConferenceStateTerminationPending;
+	int number_of_LinphoneConferenceStateTerminated;
+	int number_of_LinphoneConferenceStateTerminationFailed;
+	int number_of_LinphoneConferenceStateDeleted;
+
 	int number_of_LinphoneTransferCallOutgoingInit;
 	int number_of_LinphoneTransferCallOutgoingProgress;
 	int number_of_LinphoneTransferCallOutgoingRinging;
@@ -219,14 +228,6 @@ typedef struct _stats {
 	int progress_of_LinphoneFileTransfer;
 
 	int number_of_LinphoneChatRoomConferenceJoined;
-	int number_of_LinphoneChatRoomStateInstantiated;
-	int number_of_LinphoneChatRoomStateCreationPending;
-	int number_of_LinphoneChatRoomStateCreated;
-	int number_of_LinphoneChatRoomStateCreationFailed;
-	int number_of_LinphoneChatRoomStateTerminationPending;
-	int number_of_LinphoneChatRoomStateTerminated;
-	int number_of_LinphoneChatRoomStateTerminationFailed;
-	int number_of_LinphoneChatRoomStateDeleted;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
 	int number_of_X3dhUserCreationSuccess;
@@ -492,7 +493,7 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
-void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneConferenceState state);
 void liblinphone_tester_x3dh_user_created(LinphoneCore *lc, const bool_t status, const char* userId, const char *info);
 void core_chat_room_subject_changed (LinphoneCore *core, LinphoneChatRoom *cr);
 
