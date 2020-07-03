@@ -156,6 +156,7 @@ static void linphone_core_run_hooks(LinphoneCore *lc);
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
 static void _linphone_core_stop_async_end(LinphoneCore *lc);
+static LinphoneStatus _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config, bool_t applyIt);
 
 #include "enum.h"
 #include "contact_providers_priv.h"
@@ -1543,8 +1544,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	certificates_config_read(lc);
 	/*setting the dscp must be done before starting the transports, otherwise it is not taken into effect*/
 	lc->sal->setDscp(linphone_core_get_sip_dscp(lc));
-	/*start listening on ports*/
-	linphone_core_set_sip_transports(lc,&tr);
+	/*set transport configuration, but do not apply it (do not open sockets). It will be done from linphone_core_start().*/
+	_linphone_core_set_sip_transports(lc, &tr, FALSE);
 
 	tmpstr=lp_config_get_string(lc->config,"sip","contact",NULL);
 	if (tmpstr==NULL || linphone_core_set_primary_contact(lc,tmpstr)==-1) {
@@ -2817,7 +2818,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		}
 
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
-
+		_linphone_core_apply_transports(lc);
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
 		//to give a chance to change uuid before starting
@@ -3558,7 +3559,7 @@ void linphone_transports_set_dtls_port(LinphoneTransports *transports, int port)
 	transports->dtls_port = port;
 }
 
-LinphoneStatus linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config /*config to be saved*/){
+static LinphoneStatus _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config, bool_t applyIt){
 	LinphoneSipTransports tr=*tr_config;
 
 	if (lp_config_get_int(lc->config,"sip","sip_random_port",0)==1) {
@@ -3588,8 +3589,13 @@ LinphoneStatus linphone_core_set_sip_transports(LinphoneCore *lc, const Linphone
 		lp_config_set_int(lc->config,"sip","sip_tls_port",tr_config->tls_port);
 	}
 
-	if (lc->sal==NULL) return 0;
+	if (lc->sal == NULL || !applyIt) return 0;
 	return _linphone_core_apply_transports(lc);
+}
+
+LinphoneStatus linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config /*config to be saved*/){
+	return _linphone_core_set_sip_transports(lc, tr_config, TRUE);
+	
 }
 
 LinphoneStatus linphone_core_set_transports(LinphoneCore *lc, const LinphoneTransports * transports){
@@ -6329,30 +6335,6 @@ void linphone_core_set_mtu(LinphoneCore *lc, int mtu){
 	}else ms_factory_set_mtu(lc->factory, 0);//use mediastreamer2 default value
 }
 
-void linphone_core_set_waiting_callback(LinphoneCore *lc, LinphoneCoreWaitingCallback cb, void *user_context){
-	lc->wait_cb=cb;
-	lc->wait_ctx=user_context;
-}
-
-void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose){
-	if (lc->wait_cb){
-		lc->wait_ctx=lc->wait_cb(lc,lc->wait_ctx,LinphoneWaitingStart,purpose,0);
-	}
-}
-
-void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progress){
-	if (lc->wait_cb){
-		lc->wait_ctx=lc->wait_cb(lc,lc->wait_ctx,LinphoneWaitingProgress,purpose,progress);
-	}else{
-		ms_usleep(50000);
-	}
-}
-
-void linphone_core_stop_waiting(LinphoneCore *lc){
-	if (lc->wait_cb){
-		lc->wait_ctx=lc->wait_cb(lc,lc->wait_ctx,LinphoneWaitingFinished,NULL,0);
-	}
-}
 
 void linphone_core_set_rtp_transport_factories(LinphoneCore* lc, LinphoneRtpTransportFactories *factories){
 	lc->rtptf=factories;
