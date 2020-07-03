@@ -6065,6 +6065,13 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with generic CN", call_with_generic_cn),
 	TEST_NO_TAG("Call with transport change after released", call_with_transport_change_after_released),
 	TEST_NO_TAG("Unsuccessful call with transport change after released", unsucessfull_call_with_transport_change_after_released),
+	
+};
+
+test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(call_tests) / sizeof(call_tests[0]), call_tests};
+
+test_t call_tests_2[] = {
 	TEST_NO_TAG("Simple stereo call with L16", simple_stereo_call_l16),
 	TEST_NO_TAG("Simple stereo call with opus", simple_stereo_call_opus),
 	TEST_NO_TAG("Simple mono call with opus", simple_mono_call_opus),
@@ -6090,5 +6097,6 @@ test_t call_tests[] = {
 	TEST_ONE_TAG("Async core stop", async_core_stop_after_call, "LeaksMemory")
 };
 
-test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-								sizeof(call_tests) / sizeof(call_tests[0]), call_tests};
+
+test_suite_t call_test_suite_2 = {"Single Call 2", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(call_tests_2) / sizeof(call_tests_2[0]), call_tests_2};

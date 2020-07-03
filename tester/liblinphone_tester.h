@@ -48,6 +48,7 @@ extern void *system_context;
 
 extern test_suite_t account_creator_test_suite;
 extern test_suite_t call_test_suite;
+extern test_suite_t call_test_suite_2;
 extern test_suite_t push_incoming_call_test_suite;
 
 #if VIDEO_ENABLED
