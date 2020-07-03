@@ -3185,7 +3185,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	initialMarieStats = marie->stat;
 	initialPaulineStats = pauline->stat;
 
-	//kill flexisip just before this line (not LinphoneChatRoomStateDeleted will not work a the end
+	//kill flexisip just before this line (not LinphoneConferenceStateDeleted will not work a the end
 	linphone_core_refresh_registers(marie->lc);
 	linphone_core_refresh_registers(pauline->lc);
 	wait_for_list(coresList, 0, 1, 2000);
