@@ -69,6 +69,12 @@ LINPHONE_PUBLIC LinphoneCore* linphone_conference_get_core(const LinphoneConfere
 LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference);
 LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference);
 
+/**
+ * Gets the list of LinphoneConferenceCbs.
+ * @param[in] call LinphoneConference object
+ * @return \bctbx_list{LinphoneConferenceCbs}
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_conference_get_callbacks_list(const LinphoneConference *conference);
 
 /**
  * @}
