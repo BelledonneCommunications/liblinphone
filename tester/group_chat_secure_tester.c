@@ -655,8 +655,8 @@ static void group_chat_lime_x3dh_send_encrypted_file_with_or_without_text (bool_
 	bctbx_list_t *participantsAddresses = NULL;
 	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
 	char *sendFilepath2 = NULL;
-	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
-	char *receiveChloeFilepath = bc_tester_file("receive_file_chloe.dump");
+	char *receivePaulineFilepath = bc_tester_file("receive_file_secure_pauline.dump");
+	char *receiveChloeFilepath = bc_tester_file("receive_file_secure_chloe.dump");
 	const char *text = "Hello Group !";
 
 	if (two_files) {
