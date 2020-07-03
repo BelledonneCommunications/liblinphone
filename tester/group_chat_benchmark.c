@@ -318,7 +318,7 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 	belle_sip_object_ref(chatRoom);
 	if (!chatRoom) return -1;
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateInstantiated, initialStats.number_of_LinphoneChatRoomStateInstantiated + 1, 2000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateInstantiated, initialStats.number_of_LinphoneConferenceStateInstantiated + 1, 2000));
 
 	if (enable_limex3dh) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesEncrypted);
@@ -327,8 +327,8 @@ int create_chat_room(bctbx_list_t* coresList, LinphoneCoreManager *mgr, const ch
 	//Remove chatroom creator from invited participants
 	linphone_chat_room_add_participants(chatRoom, participantsAddresses->next);
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + 1, 1000));
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + 1, 1000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreationPending, initialStats.number_of_LinphoneConferenceStateCreationPending + 1, 1000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, initialStats.number_of_LinphoneConferenceStateCreated + 1, 1000));
 
 	if (linphone_chat_room_get_nb_participants(chatRoom) != (int) bctbx_list_size(participantsAddresses) - 1) {
 		ret = 1;
@@ -346,10 +346,10 @@ int wait_chat_room_creation(bctbx_list_t *coresList, LinphoneCoreManager *mgr, c
 	int ret = 0;
 	stats initialStats = mgr->stat;
 
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreationPending, initialStats.number_of_LinphoneChatRoomStateCreationPending + nb_instance_participants, nb_participants * 2000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreationPending, initialStats.number_of_LinphoneConferenceStateCreationPending + nb_instance_participants, nb_participants * 2000));
 
 	//Wait as long as needed to join the chat room
-	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneChatRoomStateCreated, initialStats.number_of_LinphoneChatRoomStateCreated + nb_instance_participants, nb_participants * 2000));
+	ret &= BC_ASSERT_TRUE(wait_for_list(coresList, &mgr->stat.number_of_LinphoneConferenceStateCreated, initialStats.number_of_LinphoneConferenceStateCreated + nb_instance_participants, nb_participants * 2000));
 
 	return ret;
 }

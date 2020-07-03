@@ -69,7 +69,7 @@ void linphone_conference_set_user_data (LinphoneConference *conference, void *ud
 	MediaConference::Conference::toCpp(conference)->setUserData(ud);
 }
 
-const char *linphone_conference_state_to_string (LinphoneChatRoomState state) {
+const char *linphone_conference_state_to_string (LinphoneConferenceState state) {
 	return ms_strdup(Utils::toString((LinphonePrivate::ConferenceInterface::State)state).c_str());
 }
 
@@ -89,8 +89,8 @@ LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *co
 	return (new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis()))->toC();
 }
 
-LinphoneChatRoomState linphone_conference_get_state (const LinphoneConference *obj) {
-	return (LinphoneChatRoomState)MediaConference::Conference::toCpp(obj)->getState();
+LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *obj) {
+	return (LinphoneConferenceState)MediaConference::Conference::toCpp(obj)->getState();
 }
 
 const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj){
