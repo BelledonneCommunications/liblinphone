@@ -1235,9 +1235,11 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	BC_ASSERT_TRUE(call(conf_mgr, participant_mgr));
 
 	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(participantCall);
 	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
 	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
 	LinphoneCall * confCall = linphone_core_get_call_by_remote_address(conf_mgr->lc, participantUri.c_str());
+	BC_ASSERT_PTR_NOT_NULL(confCall);
 
 	if (pause_call) {
 		// Conference pauses the call
