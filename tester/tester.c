@@ -466,6 +466,59 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 	bctbx_free(database_path_format);
 }
 
+static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
+	LinphoneCore *core = linphone_conference_get_core(conference);
+	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
+	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
+
+	if (addr_str) {
+		ms_message("Conference [%s] state changed: %d", addr_str, newState);
+	}
+	switch (newState) {
+		case LinphoneConferenceStateNone:
+			break;
+		case LinphoneConferenceStateInstantiated:
+			manager->stat.number_of_LinphoneConferenceStateInstantiated++;
+			break;
+		case LinphoneConferenceStateCreationPending:
+			manager->stat.number_of_LinphoneConferenceStateCreationPending++;
+			break;
+		case LinphoneConferenceStateCreated:
+			manager->stat.number_of_LinphoneConferenceStateCreated++;
+			break;
+		case LinphoneConferenceStateCreationFailed:
+			manager->stat.number_of_LinphoneConferenceStateCreationFailed++;
+			break;
+		case LinphoneConferenceStateTerminationPending:
+			manager->stat.number_of_LinphoneConferenceStateTerminationPending++;
+			break;
+		case LinphoneConferenceStateTerminated:
+			manager->stat.number_of_LinphoneConferenceStateTerminated++;
+			break;
+		case LinphoneConferenceStateTerminationFailed:
+			manager->stat.number_of_LinphoneConferenceStateTerminationFailed++;
+			break;
+		case LinphoneConferenceStateDeleted:
+			manager->stat.number_of_LinphoneConferenceStateDeleted++;
+			break;
+		default:
+			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", addr_str);
+			break;
+	}
+
+	bctbx_free(addr_str);
+}
+
+void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
+	if (state == LinphoneConferenceStateInstantiated) {
+		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
+		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
+
+		linphone_conference_add_callbacks(conference, cbs);
+		linphone_conference_cbs_unref(cbs);
+	}
+}
+
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
 #endif
@@ -503,6 +556,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	linphone_core_cbs_set_audio_device_changed(mgr->cbs, audio_device_changed);
 	linphone_core_cbs_set_audio_devices_list_updated(mgr->cbs, audio_devices_list_updated);
 	linphone_core_cbs_set_imee_user_registration(mgr->cbs, liblinphone_tester_x3dh_user_created);
+	linphone_core_cbs_set_conference_state_changed(mgr->cbs, core_conference_state_changed);
 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 

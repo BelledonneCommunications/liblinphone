@@ -667,62 +667,9 @@ public:
 
 };
 
-static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
-	LinphoneCore *core = linphone_conference_get_core(conference);
-	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
-
-	if (addr_str) {
-		ms_message("Conference [%s] state changed: %d", addr_str, newState);
-	}
-	switch (newState) {
-		case LinphoneConferenceStateNone:
-			break;
-		case LinphoneConferenceStateInstantiated:
-			manager->stat.number_of_LinphoneConferenceStateInstantiated++;
-			break;
-		case LinphoneConferenceStateCreationPending:
-			manager->stat.number_of_LinphoneConferenceStateCreationPending++;
-			break;
-		case LinphoneConferenceStateCreated:
-			manager->stat.number_of_LinphoneConferenceStateCreated++;
-			break;
-		case LinphoneConferenceStateCreationFailed:
-			manager->stat.number_of_LinphoneConferenceStateCreationFailed++;
-			break;
-		case LinphoneConferenceStateTerminationPending:
-			manager->stat.number_of_LinphoneConferenceStateTerminationPending++;
-			break;
-		case LinphoneConferenceStateTerminated:
-			manager->stat.number_of_LinphoneConferenceStateTerminated++;
-			break;
-		case LinphoneConferenceStateTerminationFailed:
-			manager->stat.number_of_LinphoneConferenceStateTerminationFailed++;
-			break;
-		case LinphoneConferenceStateDeleted:
-			manager->stat.number_of_LinphoneConferenceStateDeleted++;
-			break;
-		default:
-			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", addr_str);
-			break;
-	}
-
-	bctbx_free(addr_str);
-}
-
 void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
 	_linphone_core_add_callbacks(lcm->lc, cbs, TRUE);
 	linphone_core_set_user_data(lcm->lc, lcm);
-}
-
-void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
-	if (state == LinphoneConferenceStateInstantiated) {
-		LinphoneConferenceCbs * cbs = linphone_factory_create_conference_cbs(linphone_factory_get());
-		linphone_conference_cbs_set_state_changed(cbs, conference_state_changed);
-
-		linphone_conference_add_callbacks(conference, cbs);
-		linphone_conference_cbs_unref(cbs);
-	}
 }
 
 void first_notify_parsing() {
@@ -1329,7 +1276,6 @@ LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
 	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
 	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
-	linphone_core_cbs_set_conference_state_changed(cbs, core_conference_state_changed);
 	configure_core_for_conference_callbacks(mgr, cbs);
 	linphone_core_cbs_unref(cbs);
 
