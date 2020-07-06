@@ -100,7 +100,8 @@ public:
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) = 0;
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
-	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override = 0;
+	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
+	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::removeParticipant;
