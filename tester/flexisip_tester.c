@@ -1411,7 +1411,9 @@ static void tls_client_auth_try_register(const char *identity, LinphoneCoreAuthe
 
 	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_enable_register(cfg, TRUE);
-	linphone_proxy_config_set_identity(cfg, identity);
+	LinphoneAddress *addr = linphone_address_new(identity);
+	linphone_proxy_config_set_identity_address(cfg, addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_core_add_proxy_config(lcm->lc, cfg);
 	if (must_work){
 		BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
@@ -1486,11 +1488,11 @@ void transcoder_tester(void) {
 	disable_all_audio_codecs_except_one(pauline->lc,"pcma",-1);
 
 	/*caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player*/
-	linphone_core_use_files(marie->lc,TRUE);
+	linphone_core_set_use_files(marie->lc,TRUE);
 	linphone_core_set_play_file(marie->lc,NULL);
 
 	/*callee is recording and plays file*/
-	linphone_core_use_files(pauline->lc,TRUE);
+	linphone_core_set_use_files(pauline->lc,TRUE);
 	linphone_core_set_play_file(pauline->lc,NULL);
 	linphone_core_set_record_file(pauline->lc,recordpath);
 
@@ -2058,7 +2060,9 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_set_route(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_enable_register(cfg, TRUE);
-	linphone_proxy_config_set_identity(cfg, "sip:gandalf@sip.example.org");
+	LinphoneAddress *addr = linphone_address_new("sip:gandalf@sip.example.org");
+	linphone_proxy_config_set_identity_address(cfg, addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_core_add_proxy_config(gandalf->lc, cfg);
 
 	BC_ASSERT_TRUE(wait_for(gandalf->lc, NULL, &gandalf->stat.number_of_LinphoneRegistrationOk, 1));

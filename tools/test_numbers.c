@@ -30,7 +30,7 @@ int main(int argc, char *argv[]) {
 	}
 	linphone_core_enable_logs(stderr);
 	linphone_core_set_log_level(ORTP_DEBUG);
-	cfg = linphone_proxy_config_new();
+	cfg = linphone_core_create_proxy_config(NULL);
 	if (argc > 2)
 		linphone_proxy_config_set_dial_prefix(cfg, argv[2]);
 	if (argc > 3 && strcmp(argv[3], "--escape-plus") == 0)

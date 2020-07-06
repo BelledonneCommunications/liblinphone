@@ -50,16 +50,16 @@ LINPHONE_PUBLIC void linphone_nat_policy_unref(LinphoneNatPolicy *policy);
 /**
  * Retrieve the user pointer associated with the #LinphoneNatPolicy object.
  * @param[in] policy #LinphoneNatPolicy object.
- * @return The user pointer associated with the #LinphoneNatPolicy object.
+ * @return The user pointer associated with the #LinphoneNatPolicy object. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_nat_policy_get_user_data(const LinphoneNatPolicy *policy);
 
 /**
  * Assign a user pointer to the #LinphoneNatPolicy object.
  * @param[in] policy #LinphoneNatPolicy object.
- * @param[in] ud The user pointer to associate with the #LinphoneNatPolicy object.
+ * @param[in] user_data The user pointer to associate with the #LinphoneNatPolicy object. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_nat_policy_set_user_data(LinphoneNatPolicy *policy, void *ud);
+LINPHONE_PUBLIC void linphone_nat_policy_set_user_data(LinphoneNatPolicy *policy, void *user_data);
 
 /**
  * Clear a NAT policy (deactivate all protocols and unset the STUN server).
@@ -131,7 +131,7 @@ LINPHONE_PUBLIC void linphone_nat_policy_enable_upnp(LinphoneNatPolicy *policy, 
  * Get the STUN/TURN server to use with this NAT policy.
  * Used when STUN or TURN are enabled.
  * @param[in] policy #LinphoneNatPolicy object
- * @return The STUN server used by this NAT policy.
+ * @return The STUN server used by this NAT policy. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_nat_policy_get_stun_server(const LinphoneNatPolicy *policy);
 
@@ -139,7 +139,7 @@ LINPHONE_PUBLIC const char * linphone_nat_policy_get_stun_server(const LinphoneN
  * Set the STUN/TURN server to use with this NAT policy.
  * Used when STUN or TURN are enabled.
  * @param[in] policy #LinphoneNatPolicy object
- * @param[in] stun_server The STUN server to use with this NAT policy.
+ * @param[in] stun_server The STUN server to use with this NAT policy. @maybenil
  */
 LINPHONE_PUBLIC void linphone_nat_policy_set_stun_server(LinphoneNatPolicy *policy, const char *stun_server);
 
@@ -148,7 +148,7 @@ LINPHONE_PUBLIC void linphone_nat_policy_set_stun_server(LinphoneNatPolicy *poli
  * The authentication will search for a #LinphoneAuthInfo with this username.
  * If it is not set the username of the currently used #LinphoneProxyConfig is used to search for a LinphoneAuthInfo.
  * @param[in] policy #LinphoneNatPolicy object
- * @return The username used to authenticate with the STUN/TURN server.
+ * @return The username used to authenticate with the STUN/TURN server. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_nat_policy_get_stun_server_username(const LinphoneNatPolicy *policy);
 
@@ -157,7 +157,7 @@ LINPHONE_PUBLIC const char * linphone_nat_policy_get_stun_server_username(const 
  * The authentication will search for a #LinphoneAuthInfo with this username.
  * If it is not set the username of the currently used #LinphoneProxyConfig is used to search for a LinphoneAuthInfo.
  * @param[in] policy #LinphoneNatPolicy object
- * @param[in] username The username used to authenticate with the STUN/TURN server.
+ * @param[in] username The username used to authenticate with the STUN/TURN server. @maybenil
  */
 LINPHONE_PUBLIC void linphone_nat_policy_set_stun_server_username(LinphoneNatPolicy *policy, const char *username);
 
@@ -227,6 +227,7 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNa
 /**
  * Returns the #LinphoneCore object managing this nat policy, if any.
  * @param[in] fr #LinphoneNatPolicy object
+ * @return the #LinphoneCore object associated.
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy);
 

@@ -263,14 +263,14 @@ LINPHONE_PUBLIC void linphone_address_remove_uri_param (LinphoneAddress *address
 
 /**
  * Destroys a #LinphoneAddress object (actually calls linphone_address_unref()).
- * @deprecated Use linphone_address_unref() instead
+ * @deprecated 04/09/17 Use linphone_address_unref() instead
  * @donotwrap
  **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_address_destroy (LinphoneAddress *address);
 
 /**
  * Returns true if address refers to a secure location (sips)
- * @deprecated use linphone_address_get_secure()
+ * @deprecated 04/09/17 use linphone_address_get_secure()
  * @donotwrap
  **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC bool_t linphone_address_is_secure (const LinphoneAddress *address);

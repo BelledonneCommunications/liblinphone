@@ -43,7 +43,7 @@ The speudo code below shows how to register a keep alive handler:
 	linphone_core_refresh_registers(theLinphoneCore);
 	//wait for registration answer
 	int i=0;
-	while (!linphone_proxy_config_is_registered(proxyCfg) && i++<40 ) {
+	while (!linphone_proxy_config_get_state(prpxyCfg) == LinphoneRegistrationOk && i++<40 ) {
 		linphone_core_iterate(theLinphoneCore);
 		usleep(100000);
 	}

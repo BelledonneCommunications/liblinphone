@@ -59,10 +59,10 @@ typedef enum _LinphoneLogLevel {
  * 
  * @param log_service A pointer on the logging service singleton.
  * @param domain A string describing which sub-library of liblinphone the message is coming from.
- * @param lev Verbosity level of the message.
+ * @param level Verbosity level of the message.
  * @param message Content of the message.
  */
-typedef void (*LinphoneLoggingServiceCbsLogMessageWrittenCb)(LinphoneLoggingService *log_service, const char *domain, LinphoneLogLevel lev, const char *message);
+typedef void (*LinphoneLoggingServiceCbsLogMessageWrittenCb)(LinphoneLoggingService *log_service, const char *domain, LinphoneLogLevel level, const char *message);
 
 
 
@@ -74,45 +74,50 @@ typedef void (*LinphoneLoggingServiceCbsLogMessageWrittenCb)(LinphoneLoggingServ
  * The singleton is automatically instantiated if it hasn't
  * been done yet.
  * 
- * @return A pointer on the singleton.
+ * @return A pointer on the #LinphoneLoggingService singleton.
  */
 LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_get(void);
 
 /**
  * @brief Increases the reference counter.
+ * @param[in] log_service the #LinphoneLoggingService object
+ * @return the same #LinphoneLoggingService object
  */
-LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_ref(LinphoneLoggingService *service);
+LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_ref(LinphoneLoggingService *log_service);
 
 /**
  * @brief Decreases the reference counter and destroy the object
  * if the counter reaches 0.
+ * @param[in] log_service the #LinphoneLoggingService object
  */
-LINPHONE_PUBLIC void linphone_logging_service_unref(LinphoneLoggingService *service);
+LINPHONE_PUBLIC void linphone_logging_service_unref(LinphoneLoggingService *log_service);
 
 /**
  * @brief Gets the logging service listener.
- * @deprecated Use add_callbacks / remove_callbacks instead
+ * @param[in] log_service the #LinphoneLoggingService object
+ * @deprecated 19/02/2019 Use add_callbacks / remove_callbacks instead
+ * @donotwrap
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_callbacks(const LinphoneLoggingService *log_service);
 
 /**
  * Adds a callback object to the list of listeners
- * @param log_service the LinphoneLoggingService object
- * @param cbs the LinphoneLoggingServiceCbs to add
+ * @param log_service the #LinphoneLoggingService object
+ * @param cbs the #LinphoneLoggingServiceCbs to add
  */
 LINPHONE_PUBLIC void linphone_logging_service_add_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
 
 /**
  * Removes a callback object from the list of listeners
- * @param log_service the LinphoneLoggingService object
- * @param cbs the LinphoneLoggingServiceCbs to remove
+ * @param log_service the #LinphoneLoggingService object
+ * @param cbs the #LinphoneLoggingServiceCbs to remove
  */
 LINPHONE_PUBLIC void linphone_logging_service_remove_callbacks(LinphoneLoggingService *log_service, LinphoneLoggingServiceCbs *cbs);
 
 /**
  * Returns the current callbacks being called while iterating on callbacks
- * @param log_service the LinphoneLoggingService object
- * @return A pointer to the current LinphoneLoggingServiceCbs object
+ * @param log_service the #LinphoneLoggingService object
+ * @return A pointer to the current #LinphoneLoggingServiceCbs object
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_current_callbacks(const LinphoneLoggingService *log_service);
 
@@ -121,12 +126,13 @@ LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_current_
  * 
  * For instance, a level of #LinphoneLogLevelMessage will let pass fatal, error, warning and message-typed messages
  * whereas trace and debug messages will be dumped out.
+ * @param log_service the #LinphoneLoggingService object
  */
 LINPHONE_PUBLIC void linphone_logging_service_set_log_level(LinphoneLoggingService *log_service, LinphoneLogLevel level);
 
 /**
  * @brief Sets the types of messages that will be authorized to be written in the log.
- * @param log_service The logging service singleton.
+ * @param log_service the #LinphoneLoggingService object
  * @param mask Example: #LinphoneLogLevelMessage|#LinphoneLogLevelError will ONLY let pass message-typed and error messages.
  * @note Calling that function reset the log level that has been specified by #linphone_logging_service_set_log_level().
  */
@@ -134,6 +140,8 @@ LINPHONE_PUBLIC void linphone_logging_service_set_log_level_mask(LinphoneLogging
 
 /**
  * @brief Gets the log level mask.
+ * @param log_service the #LinphoneLoggingService object
+ * @return the log level mask
  */
 LINPHONE_PUBLIC unsigned int linphone_logging_service_get_log_level_mask(const LinphoneLoggingService *log_service);
 
@@ -143,6 +151,7 @@ LINPHONE_PUBLIC unsigned int linphone_logging_service_get_log_level_mask(const L
  * That function enables an internal log handler that writes log messages in
  * log-rotated files.
  * 
+ * @param log_service the #LinphoneLoggingService object
  * @param dir Directory where to create the distinct parts of the log.
  * @param filename Name of the log file.
  * @param max_size The maximal size of each part of the log. The log rotating is triggered
@@ -152,7 +161,7 @@ LINPHONE_PUBLIC void linphone_logging_service_set_log_file(const LinphoneLogging
 
 /**
  * @brief Set the domain where application logs are written (for example with #linphone_logging_service_message()).
- * @param log_service The logging service singleton.
+ * @param log_service the #LinphoneLoggingService object
  * @param domain The domain.
  * @note The domain is mandatory to write logs. This needs to be set before setting the log level.
  */
@@ -160,54 +169,55 @@ LINPHONE_PUBLIC void linphone_logging_service_set_domain(LinphoneLoggingService 
 
 /**
  * @brief Get the domain where application logs are written (for example with #linphone_logging_service_message()).
- * @param log_service The logging service singleton.
+ * @param log_service the #LinphoneLoggingService object
  */
 LINPHONE_PUBLIC const char *linphone_logging_service_get_domain(LinphoneLoggingService *log_service);
 
 /**
  * @brief Write a LinphoneLogLevelDebug message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_debug(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Write a LinphoneLogLevelTrace message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_trace(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Write a LinphoneLogLevelMessage message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_message(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Write a LinphoneLogLevelWarning message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_warning(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_warning(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Write a LinphoneLogLevelError message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_error(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_error(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Write a LinphoneLogLevelFatal message to the logs.
- * @param log_service The logging service singleton.
- * @param msg The log message.
+ * @param log_service the #LinphoneLoggingService object
+ * @param message The log message.
  */
-LINPHONE_PUBLIC void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *msg);
+LINPHONE_PUBLIC void linphone_logging_service_fatal(LinphoneLoggingService *log_service, const char *message);
 
 /**
  * @brief Increases the reference counter.
+ * @param cbs the #LinphoneLoggingServiceCbs object.
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_cbs_ref(LinphoneLoggingServiceCbs *cbs);
 
@@ -215,16 +225,19 @@ LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_cbs_ref(Linp
  * @brief Decreases the reference counter.
  * 
  * The object is automatically destroyed once the counter reach 0.
+ * @param cbs the #LinphoneLoggingServiceCbs object.
  */
 LINPHONE_PUBLIC void linphone_logging_service_cbs_unref(LinphoneLoggingServiceCbs *cbs);
 
 /**
  * @brief Sets the callback to call each time liblinphone writes a log message.
+ * @param cbs the #LinphoneLoggingServiceCbs object.
  */
 LINPHONE_PUBLIC void linphone_logging_service_cbs_set_log_message_written(LinphoneLoggingServiceCbs *cbs, LinphoneLoggingServiceCbsLogMessageWrittenCb cb);
 
 /**
  * @brief Gets the value of the message event callback.
+ * @param cbs the #LinphoneLoggingServiceCbs object.
  */
 LINPHONE_PUBLIC LinphoneLoggingServiceCbsLogMessageWrittenCb linphone_logging_service_cbs_get_log_message_written(const LinphoneLoggingServiceCbs *cbs);
 
@@ -232,11 +245,15 @@ LINPHONE_PUBLIC LinphoneLoggingServiceCbsLogMessageWrittenCb linphone_logging_se
  * @brief Pass a pointer on a custom object.
  * 
  * That pointer can be get back by callbacks by using #linphone_logging_service_get_cbs() and #linphone_logging_service_cbs_get_user_data().
+ * @param cbs the #LinphoneLoggingServiceCbs object.
+ * @param user_data the user data pointer. @maybenil
  */
 LINPHONE_PUBLIC void linphone_logging_service_cbs_set_user_data(LinphoneLoggingServiceCbs *cbs, void *user_data);
 
 /**
  * @brief Gets the user_data pointer back.
+ * @param cbs the #LinphoneLoggingServiceCbs object.
+ * @return the user data pointer. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_logging_service_cbs_get_user_data(const LinphoneLoggingServiceCbs *cbs);
 

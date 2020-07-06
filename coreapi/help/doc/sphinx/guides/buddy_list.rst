@@ -12,7 +12,7 @@ Here under a typical buddy creation:
 
 .. code-block:: c
 
-	LinphoneFriend* my_friend=linphone_friend_new_with_addr("sip:joe@sip.linphone.org"); /*creates friend object for buddy joe*/
+	LinphoneFriend* my_friend=linphone_core_create_friend_with_address("sip:joe@sip.linphone.org"); /*creates friend object for buddy joe*/
 	linphone_friend_enable_subscribes(my_friend,TRUE); /*configure this friend to emit SUBSCRIBE message after being added to LinphoneCore*/
 	linphone_friend_set_inc_subscribe_policy(my_friend,LinphoneSPAccept); /* accept Incoming subscription request for this friend*/
 

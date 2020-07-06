@@ -35,32 +35,35 @@
 
 /**
  * Increment reference count of #LinphoneParticipant object.
+ * @param[in] participant a #LinphoneParticipant object
+ * @return the same #LinphoneParticipant object
  **/
 LINPHONE_PUBLIC LinphoneParticipant *linphone_participant_ref (LinphoneParticipant *participant);
 
 /**
  * Decrement reference count of #LinphoneParticipant object.
+ * @param[in] participant a #LinphoneParticipant object
  **/
 LINPHONE_PUBLIC void linphone_participant_unref (LinphoneParticipant *participant);
 
 /**
  * Retrieve the user pointer associated with the conference participant.
  * @param[in] participant A #LinphoneParticipant object
- * @return The user pointer associated with the participant.
+ * @return The user pointer associated with the participant. @maybenil
 **/
 LINPHONE_PUBLIC void * linphone_participant_get_user_data(const LinphoneParticipant *participant);
 
 /**
  * Assign a user pointer to the conference participant.
  * @param[in] participant A #LinphoneParticipant object
- * @param[in] ud The user pointer to associate with the participant
+ * @param[in] user_data The user pointer to associate with the participant. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_participant_set_user_data(LinphoneParticipant *participant, void *ud);
+LINPHONE_PUBLIC void linphone_participant_set_user_data(LinphoneParticipant *participant, void *user_data);
 
 /**
  * Get the address of a conference participant.
  * @param[in] participant A #LinphoneParticipant object
- * @return The address of the participant
+ * @return The #LinphoneAddress of the participant
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_get_address (const LinphoneParticipant *participant);
 
@@ -72,9 +75,9 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_get_address (const 
 LINPHONE_PUBLIC bool_t linphone_participant_is_admin (const LinphoneParticipant *participant);
 
 /**
- * Get the security level of a chat room.
- * @param[in] cr A #LinphoneChatRoom object
- * @return The security level of the chat room
+ * Get the security level of a participant.
+ * @param[in] participant A #LinphoneParticipant object
+ * @return The #LinphoneChatRoomSecurityLevel of the participant
  */
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant);
 
@@ -89,7 +92,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphonePa
  * Find a device in the list of devices from a chat room's participant.
  * @param[in] participant A #LinphoneParticipant object
  * @param[in] address A #LinphoneAddress object
- * @return a #LinphoneParticipantDevice or NULL if not found
+ * @return a #LinphoneParticipantDevice or NULL if not found. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address);
 

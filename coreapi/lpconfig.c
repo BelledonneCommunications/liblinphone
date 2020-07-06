@@ -1178,7 +1178,7 @@ const char** linphone_config_get_sections_names(LpConfig *lpconfig) {
 	return sections_names;
 }
 
-const bctbx_list_t * linphone_config_get_sections_names_list(LpConfig *lpconfig) {
+const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
 	const bctbx_list_t *sections = lpconfig->sections;
 	bctbx_list_t *sections_names = NULL;
 	int i;

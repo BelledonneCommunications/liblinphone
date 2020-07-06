@@ -64,6 +64,7 @@ LINPHONE_PUBLIC void linphone_factory_clean(void);
  *        It is OPTIONAL, use NULL if unneeded.
  * @see linphone_core_new_with_config
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
+ * @donotwrap
  */
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
 	const LinphoneFactory *factory,
@@ -93,6 +94,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
  * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
  * @see linphone_core_new_with_config
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
+ * @donotwrap
  */
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2 (
 	const LinphoneFactory *factory,
@@ -181,6 +183,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
  * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
  * @see linphone_core_new
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
+ * @donotwrap
  */
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config (
 	const LinphoneFactory *factory,
@@ -202,6 +205,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
  * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
  * @see linphone_core_new
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
+ * @donotwrap
  */
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_2 (
 	const LinphoneFactory *factory,
@@ -266,6 +270,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
 
 /**
  * Instanciate a #LinphoneCoreCbs object.
+ * @param[in] factory The #LinphoneFactory singleton.
  * @return a new #LinphoneCoreCbs.
  */
 LINPHONE_PUBLIC LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory);
@@ -335,20 +340,21 @@ LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const Linphon
 
 /**
  * Create a LinphoneChatRoomCbs object that holds callbacks for events happening on a chat room.
- * @param[in] factory LinphoneFactory singletion object
- * @return A new LinphoneChatRoomCbs object
+ * @param[in] factory #LinphoneFactory singletion object
+ * @return A new #LinphoneChatRoomCbs object
  */
 LINPHONE_PUBLIC LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory);
 
 /**
  * Create a LinphoneChatMessageCbs object that holds callbacks for events happening on a chat message.
- * @param[in] factory LinphoneFactory singletion object
- * @return A new LinphoneChatMessageCbs object
+ * @param[in] factory #LinphoneFactory singletion object
+ * @return A new #LinphoneChatMessageCbs object
  */
 LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
 
 /**
  * Create an empty #LinphoneVcard.
+ * @param[in] factory #LinphoneFactory singletion object
  * @return a new #LinphoneVcard.
  * @ingroup initializing
  */
@@ -452,7 +458,7 @@ LINPHONE_PUBLIC void linphone_factory_set_image_resources_dir(LinphoneFactory *f
 /**
  * Get the directory where the mediastreamer2 plugins are located.
  * @param[in] factory #LinphoneFactory object
- * @return The path to the directory where the mediastreamer2 plugins are located, or NULL if it has not been set
+ * @return The path to the directory where the mediastreamer2 plugins are located, or NULL if it has not been set. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory);
 
@@ -466,21 +472,21 @@ LINPHONE_PUBLIC void linphone_factory_set_msplugins_dir(LinphoneFactory *factory
 /**
  * Creates an object LinphoneErrorInfo.
  * @param[in] factory #LinphoneFactory object
- * @return  #LinphoneErrorInfo object.
+ * @return a #LinphoneErrorInfo object.
  */
 LINPHONE_PUBLIC  LinphoneErrorInfo *linphone_factory_create_error_info(LinphoneFactory *factory);
 
 /**
  * Creates an object LinphoneRange.
  * @param[in] factory #LinphoneFactory object
- * @return  #LinphoneRange object.
+ * @return a #LinphoneRange object.
  */
 LINPHONE_PUBLIC LinphoneRange *linphone_factory_create_range(LinphoneFactory *factory);
 
 /**
  * Creates an object LinphoneTransports.
  * @param[in] factory #LinphoneFactory object
- * @return  #LinphoneTransports object.
+ * @return a #LinphoneTransports object.
  */
 LINPHONE_PUBLIC LinphoneTransports *linphone_factory_create_transports(LinphoneFactory *factory);
 
@@ -494,7 +500,7 @@ LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_factory_create_video_act
 /**
  * Returns a bctbx_list_t of all DialPlans
  * @param[in] factory the #LinphoneFactory object
- * @return \bctbx_list{LinphoneDialPlan} a list of DialPlan
+ * @return \bctbx_list{LinphoneDialPlan} a list of #LinphoneDialPlan
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_dial_plans(const LinphoneFactory *factory);
 
@@ -557,14 +563,14 @@ LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config_from_string(Linph
 /**
  * Gets the user data in the #LinphoneFactory object
  * @param[in] factory the #LinphoneFactory
- * @return the user data
+ * @return the user data. @maybenil
 */
 LINPHONE_PUBLIC void *linphone_factory_get_user_data(const LinphoneFactory *factory);
 
 /**
  * Sets the user data in the #LinphoneFactory object
  * @param[in] factory the #LinphoneFactory object
- * @param[in] data the user data
+ * @param[in] data the user data. @maybenil
 */
 LINPHONE_PUBLIC void linphone_factory_set_user_data(LinphoneFactory *factory, void *data);
 
@@ -578,7 +584,7 @@ LINPHONE_PUBLIC void linphone_factory_set_log_collection_path(LinphoneFactory *f
 /**
  * Enables or disables log collection
  * @param[in] factory the #LinphoneFactory
- * @param[in] state the policy for log collection
+ * @param[in] state the #LinphoneLogCollectionState for log collection
  */
 LINPHONE_PUBLIC void linphone_factory_enable_log_collection(LinphoneFactory *factory, LinphoneLogCollectionState state);
 
@@ -656,7 +662,7 @@ LINPHONE_PUBLIC bool_t linphone_factory_is_imdn_available(LinphoneFactory *facto
 /**
  * Get the config path
  * @param[in] factory the #LinphoneFactory
- * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @param[in] context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
  * @return The config path
  * @ingroup misc
 **/
@@ -665,7 +671,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_config_dir(LinphoneFactory *fac
 /**
  * Get the data path
  * @param[in] factory the #LinphoneFactory
- * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @param[in] context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
  * @return The data path
  * @ingroup misc
 **/
@@ -674,7 +680,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *facto
 /**
  * Get the download path
  * @param[in] factory the #LinphoneFactory
- * @param[in] context used to compute path. can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
+ * @param[in] context used to compute path. Can be NULL. JavaPlatformHelper on Android and char *appGroupId on iOS with shared core.
  * @return The download path
  * @ingroup misc
 **/

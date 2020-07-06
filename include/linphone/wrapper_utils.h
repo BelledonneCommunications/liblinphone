@@ -95,10 +95,10 @@ LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMes
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param[in] cr A chat room.
- * @param[in] msg The message to send.
+ * @param[in] chat_room A chat room.
+ * @param[in] message The message to send.
  */
-LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Resend a chat message if it is in the 'not delivered' state for whatever reason.
@@ -106,12 +106,15 @@ LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *cr
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param[in] msg #LinphoneChatMessage object
+ * @param[in] message #LinphoneChatMessage object
  */
-LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *msg);
+LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *message);
 
 /**
  * Accessor for the shared_ptr&lt;BelCard&gt; stored by a #LinphoneVcard
+ * @param[in] vcard a #LinphoneVcard
+ * @return a shared_ptr<BelCard>
+ * @donotwrap
  */
 LINPHONE_PUBLIC void *linphone_vcard_get_belcard(LinphoneVcard *vcard);
 
