@@ -151,11 +151,14 @@ int Conference::terminate () {
 }
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+	LinphonePrivate::ConferenceInterface::State previousState = getState();
 	shared_ptr<Conference> ref = getSharedFromThis();
 	LinphonePrivate::Conference::setState(state);
 	// TODO Delete
-	if (mStateChangedCb) {
-		mStateChangedCb(toC(), (LinphoneConferenceState)state, mUserData);
+	if (previousState != state) {
+		if (mStateChangedCb) {
+			mStateChangedCb(toC(), (LinphoneConferenceState)state, mUserData);
+		}
 	}
 
 }
@@ -468,7 +471,9 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	}
 	
-	if (getSize() == 0) setState(ConferenceInterface::State::Terminated);
+	if ((getSize() == 0) && (getState() != ConferenceInterface::State::Deleted)) {
+		setState(ConferenceInterface::State::Terminated);
+	}
 	return err;
 }
 
