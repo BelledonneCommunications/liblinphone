@@ -282,7 +282,7 @@ void Imdn::send () {
 	try {
 		if (!chatRoom->getCore()->getCCore()->send_imdn_if_unregistered) {
 			LinphoneProxyConfig *cfg = getRelatedProxyConfig();
-			if (cfg && linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
+			if (!cfg || linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk){
 				lInfo() << "Proxy config not registered, will wait to send pending IMDNs";
 				return;
 			}
