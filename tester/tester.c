@@ -1135,17 +1135,17 @@ void compare_files(const char *path1, const char *path2) {
 	BC_ASSERT_PTR_NOT_NULL(f2);
 	if (f1 == NULL || f2 == NULL) return;
 
-	int64_t s1 = bctbx_file_size(f1);
-	int64_t s2 = bctbx_file_size(f2);
+	ssize_t s1 = bctbx_file_size(f1);
+	ssize_t s2 = bctbx_file_size(f2);
 
-	BC_ASSERT_EQUAL(s1,s1, int64_t, "%ld");
+	BC_ASSERT_EQUAL(s1,s1, ssize_t, "%zd");
 	if (s1 != s2) return;
 
 	buf1 = bctbx_malloc(s1);
 	buf2 = bctbx_malloc(s2);
 
-	BC_ASSERT_EQUAL(bctbx_file_read(f1, buf1, s1, 0), s1, int64_t, "%ld");
-	BC_ASSERT_EQUAL(bctbx_file_read(f2, buf2, s2, 0), s2, int64_t, "%ld");
+	BC_ASSERT_EQUAL(bctbx_file_read(f1, buf1, s1, 0), s1, ssize_t, "%zd");
+	BC_ASSERT_EQUAL(bctbx_file_read(f2, buf2, s2, 0), s2, ssize_t, "%zd");
 
 	bctbx_file_close(f1);
 	bctbx_file_close(f2);
