@@ -345,6 +345,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
+	printf("Call %p state %s\n", this, Utils::toString(getState()).c_str());
+
 	switch(state) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
