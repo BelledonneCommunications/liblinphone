@@ -177,8 +177,7 @@ void AuthInfo::setAvailableAlgorithms(const list<string> &algorithms){
 void AuthInfo::addAvailableAlgorithm(const string &algorithm){
     if (!algorithm.empty() && algorithm != "MD5" && algorithm != "SHA-256"){
         lError() << "Given algorithm is not correct. Add algorithm failed";
-    }
-    if(find(mAvailableAlgorithms.begin(), mAvailableAlgorithms.end(),algorithm) == mAvailableAlgorithms.end())
+    }else if(find(mAvailableAlgorithms.begin(), mAvailableAlgorithms.end(),algorithm) == mAvailableAlgorithms.end())
         mAvailableAlgorithms.push_back(algorithm);
 }
 
