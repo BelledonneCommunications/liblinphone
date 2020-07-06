@@ -222,7 +222,9 @@ static void linphone_interpret_url_test(void) {
 	if (!BC_ASSERT_PTR_NOT_NULL( lc )) return;
 
 	proxy_config =linphone_core_create_proxy_config(lc);
-	linphone_proxy_config_set_identity(proxy_config, "sip:moi@sip.linphone.org");
+	LinphoneAddress *addr = linphone_address_new("sip:moi@sip.linphone.org");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_proxy_config_enable_register(proxy_config, FALSE);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
 	linphone_core_add_proxy_config(lc, proxy_config);
@@ -406,13 +408,15 @@ void linphone_proxy_config_address_equal_test(void) {
 }
 
 void linphone_proxy_config_is_server_config_changed_test(void) {
-	LinphoneProxyConfig* proxy_config = linphone_proxy_config_new();
+	LinphoneProxyConfig* proxy_config = linphone_core_create_proxy_config(NULL);
 
 	linphone_proxy_config_done(proxy_config); /*test done without edit*/
 
-	linphone_proxy_config_set_identity(proxy_config,"sip:toto@titi");
+	LinphoneAddress *addr = linphone_address_new("sip:toto@titi");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
 	linphone_proxy_config_edit(proxy_config);
-	linphone_proxy_config_set_identity(proxy_config,"sips:toto@titi");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	if (addr) linphone_address_unref(addr);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
@@ -444,7 +448,7 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 	linphone_proxy_config_enable_register(proxy_config,TRUE);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressEqual, int, "%d");
 
-	linphone_proxy_config_destroy(proxy_config);
+	linphone_proxy_config_unref(proxy_config);
 }
 
 static void chat_room_test(void) {
@@ -722,7 +726,7 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
 	linphone_friend_set_name(chloeFriend, chloeName);
@@ -1120,7 +1124,7 @@ static void search_friend_with_presence(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
@@ -1238,7 +1242,7 @@ static void search_friend_in_call_log_already_exist(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
 	linphone_friend_set_name(chloeFriend, chloeName);

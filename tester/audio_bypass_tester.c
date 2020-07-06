@@ -484,7 +484,7 @@ static void audio_bypass(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_core_get_playback_device(pauline_lc), AUDIO_BYPASS_SOUNDCARD);
 
 	set_jitter_buffer_params(pauline_lc);
-	linphone_core_use_files(pauline_lc, TRUE);
+	linphone_core_set_use_files(pauline_lc, TRUE);
 	linphone_core_set_play_file(pauline_lc, NULL);
 	linphone_core_set_record_file(pauline_lc, recordpath);
 

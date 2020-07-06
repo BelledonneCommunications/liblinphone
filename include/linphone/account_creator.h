@@ -148,16 +148,16 @@ LINPHONE_PUBLIC void linphone_account_creator_unref(LinphoneAccountCreator *crea
 /**
  * Retrieve the user pointer associated with the LinphoneAccountCreator.
  * @param[in] creator #LinphoneAccountCreator object.
- * @return The user pointer associated with the LinphoneAccountCreator.
+ * @return The user pointer associated with the LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_account_creator_get_user_data(const LinphoneAccountCreator *creator);
 
 /**
  * Assign a user pointer to the LinphoneAccountCreator.
  * @param[in] creator #LinphoneAccountCreator object.
- * @param[in] ud The user pointer to associate with the LinphoneAccountCreator.
+ * @param[in] user_data The user pointer to associate with the LinphoneAccountCreator. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *ud);
+LINPHONE_PUBLIC void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *user_data);
 
 /**
  * Assign a proxy config pointer to the LinphoneAccountCreator.
@@ -177,7 +177,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorUsernameStatus linphone_account_creator_se
 /**
  * Get the username.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The username of the #LinphoneAccountCreator
+ * @return The username of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_username(const LinphoneAccountCreator *creator);
 
@@ -193,7 +193,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_cre
 /**
  * Get the RFC 3966 normalized phone number.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The phone number of the #LinphoneAccountCreator
+ * @return The phone number of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_phone_number(const LinphoneAccountCreator *creator);
 
@@ -208,7 +208,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorPasswordStatus linphone_account_creator_se
 /**
  * Get the password.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The password of the #LinphoneAccountCreator
+ * @return The password of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_password(const LinphoneAccountCreator *creator);
 
@@ -223,7 +223,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorPasswordStatus linphone_account_creator_se
 /**
  * Get the ha1.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The ha1 of the #LinphoneAccountCreator
+ * @return The ha1 of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_ha1(const LinphoneAccountCreator *creator);
 
@@ -238,7 +238,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorActivationCodeStatus linphone_account_crea
 /**
  * Get the activation code.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The activation code of the #LinphoneAccountCreator
+ * @return The activation code of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_activation_code(const LinphoneAccountCreator *creator);
 
@@ -253,7 +253,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorLanguageStatus linphone_account_creator_se
 /**
  * Get the language use in email of SMS.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The language of the #LinphoneAccountCreator
+ * @return The language of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_language(const LinphoneAccountCreator *creator);
 
@@ -268,7 +268,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_al
 /**
  * Get the algorithm configured in the account creator.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The algorithm of the #LinphoneAccountCreator
+ * @return The algorithm of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_algorithm(const LinphoneAccountCreator *creator);
 
@@ -283,7 +283,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorUsernameStatus linphone_account_creator_se
 /**
  * Get the display name.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The display name of the #LinphoneAccountCreator
+ * @return The display name of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_display_name(const LinphoneAccountCreator *creator);
 
@@ -298,7 +298,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorEmailStatus linphone_account_creator_set_e
 /**
  * Get the email.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The email of the #LinphoneAccountCreator
+ * @return The email of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_email(const LinphoneAccountCreator *creator);
 
@@ -313,7 +313,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorDomainStatus linphone_account_creator_set_
 /**
  * Get the domain.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The domain of the #LinphoneAccountCreator
+ * @return The domain of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_domain(const LinphoneAccountCreator *creator);
 
@@ -326,9 +326,9 @@ LINPHONE_PUBLIC const char * linphone_account_creator_get_domain(const LinphoneA
 LINPHONE_PUBLIC LinphoneAccountCreatorTransportStatus linphone_account_creator_set_transport(LinphoneAccountCreator *creator, LinphoneTransportType transport);
 
 /**
- * get Transport
+ * Get Transport
  * @param[in] creator #LinphoneAccountCreator object
- * @return The transport of #LinphoneAccountCreator
+ * @return The #LinphoneTransportType of the creator.
 **/
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccountCreator *creator);
 
@@ -343,7 +343,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_accoun
 /**
  * Get the route.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The route of the #LinphoneAccountCreator
+ * @return The route of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator);
 
@@ -358,7 +358,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_as_def
 /**
  * Get the set_as_default property.
  * @param[in] creator #LinphoneAccountCreator object
- * @return The set_as_default of the #LinphoneAccountCreator
+ * @return TRUE if account will be set as default, FALSE otherwise.
  **/
 LINPHONE_PUBLIC bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator *creator);
 
@@ -366,7 +366,7 @@ LINPHONE_PUBLIC bool_t linphone_account_creator_get_set_as_default(const Linphon
  * Get the #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
  * @param[in] creator #LinphoneAccountCreator object
  * @return The #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator.
- * @deprecated use add_callbacks / remove_callbacks instead
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator);
 
@@ -419,16 +419,16 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_unref(LinphoneAccountCreatorCb
 /**
  * Retrieve the user pointer associated with a #LinphoneAccountCreatorCbs object.
  * @param[in] cbs #LinphoneAccountCreatorCbs object.
- * @return The user pointer associated with the #LinphoneAccountCreatorCbs object.
+ * @return The user pointer associated with the #LinphoneAccountCreatorCbs object. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_account_creator_cbs_get_user_data(const LinphoneAccountCreatorCbs *cbs);
 
 /**
  * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
  * @param[in] cbs #LinphoneAccountCreatorCbs object.
- * @param[in] ud The user pointer to associate with the #LinphoneAccountCreatorCbs object.
+ * @param[in] user_data The user pointer to associate with the #LinphoneAccountCreatorCbs object. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_account_creator_cbs_set_user_data(LinphoneAccountCreatorCbs *cbs, void *ud);
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_user_data(LinphoneAccountCreatorCbs *cbs, void *user_data);
 
 /**
  * Get the create account request.
@@ -589,7 +589,7 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(Lin
 /**
  * Create and configure a proxy config and a authentication info for an account creator
  * @param[in] creator #LinphoneAccountCreator object
- * @return A #LinphoneProxyConfig object if successful, NULL otherwise
+ * @return A #LinphoneProxyConfig object if successful, NULL otherwise. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
 
@@ -597,7 +597,8 @@ LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_conf
  * Configure an account (create a proxy config and authentication info for it).
  * @param[in] creator #LinphoneAccountCreator object
  * @return A #LinphoneProxyConfig object if successful, NULL otherwise
- * @deprecated Use linphone_account_creator_create_proxy_config instead
+ * @deprecated 13/04/2017 Use linphone_account_creator_create_proxy_config() instead
+ * @donotwrap
 **/
 LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator);
 

@@ -1339,7 +1339,7 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 const Address& CallSession::getLocalAddress () const {
 	L_D();
 	return *L_GET_CPP_PTR_FROM_C_OBJECT((d->direction == LinphoneCallIncoming)
-		? linphone_call_log_get_to(d->log) : linphone_call_log_get_from(d->log));
+		? linphone_call_log_get_to_address(d->log) : linphone_call_log_get_from_address(d->log));
 }
 
 LinphoneCallLog * CallSession::getLog () const {
@@ -1364,7 +1364,7 @@ const string &CallSession::getReferTo () const {
 const Address *CallSession::getRemoteAddress () const {
 	L_D();
 	const LinphoneAddress *address = (d->direction == LinphoneCallIncoming)
-	? linphone_call_log_get_from(d->log) : linphone_call_log_get_to(d->log);
+	? linphone_call_log_get_from_address(d->log) : linphone_call_log_get_to_address(d->log);
 	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
@@ -1420,7 +1420,7 @@ CallSession::State CallSession::getPreviousState () const {
 
 const Address& CallSession::getToAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to(d->log));
+	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log));
 }
 
 CallSession::State CallSession::getTransferState () const {

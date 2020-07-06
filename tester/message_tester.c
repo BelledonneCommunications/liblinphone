@@ -420,7 +420,7 @@ void text_message_from_non_default_proxy_config(void) {
 	}
 	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
 	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
-	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	BC_ASSERT_TRUE(linphone_proxy_config_get_state(proxyConfig) == LinphoneRegistrationOk);
 	
 	const LinphoneAddress *localAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	const LinphoneAddress *remoteAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
@@ -457,7 +457,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	}
 	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
 	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
-	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	BC_ASSERT_TRUE(linphone_proxy_config_get_state(proxyConfig) == LinphoneRegistrationOk);
 	
 	const LinphoneAddress *marieLocalAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marieLocalAddr);

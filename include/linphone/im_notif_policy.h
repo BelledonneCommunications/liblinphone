@@ -50,16 +50,16 @@ LINPHONE_PUBLIC void linphone_im_notif_policy_unref(LinphoneImNotifPolicy *polic
 /**
  * Retrieve the user pointer associated with the #LinphoneImNotifPolicy object.
  * @param[in] policy #LinphoneImNotifPolicy object.
- * @return The user pointer associated with the #LinphoneImNotifPolicy object.
+ * @return The user pointer associated with the #LinphoneImNotifPolicy object. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_im_notif_policy_get_user_data(const LinphoneImNotifPolicy *policy);
 
 /**
  * Assign a user pointer to the #LinphoneImNotifPolicy object.
  * @param[in] policy #LinphoneImNotifPolicy object.
- * @param[in] ud The user pointer to associate with the #LinphoneImNotifPolicy object.
+ * @param[in] user_data The user pointer to associate with the #LinphoneImNotifPolicy object. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_im_notif_policy_set_user_data(LinphoneImNotifPolicy *policy, void *ud);
+LINPHONE_PUBLIC void linphone_im_notif_policy_set_user_data(LinphoneImNotifPolicy *policy, void *user_data);
 
 /**
  * Clear an IM notif policy (deactivate all receiving and sending of notifications).

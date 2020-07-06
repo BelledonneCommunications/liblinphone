@@ -305,8 +305,8 @@ void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, Lin
 	LinphoneCallLog *log = session->getLog();
 	linphone_core_report_early_failed_call(getCore()->getCCore(),
 		linphone_call_log_get_dir(log),
-		linphone_address_clone(linphone_call_log_get_from(log)),
-		linphone_address_clone(linphone_call_log_get_to(log)),
+		linphone_address_clone(linphone_call_log_get_from_address(log)),
+		linphone_address_clone(linphone_call_log_get_to_address(log)),
 		ei,
 		log->call_id);
 	linphone_call_unref(this->toC());

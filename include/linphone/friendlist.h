@@ -36,209 +36,209 @@ extern "C" {
 
 /**
  * Acquire a reference to the friend list.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @return The same #LinphoneFriendList object.
 **/
-LINPHONE_PUBLIC LinphoneFriendList * linphone_friend_list_ref(LinphoneFriendList *list);
+LINPHONE_PUBLIC LinphoneFriendList * linphone_friend_list_ref(LinphoneFriendList *friend_list);
 
 /**
  * Release reference to the friend list.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_unref(LinphoneFriendList *list);
+LINPHONE_PUBLIC void linphone_friend_list_unref(LinphoneFriendList *friend_list);
 
 /**
  * Retrieve the user pointer associated with the friend list.
- * @param[in] list #LinphoneFriendList object.
- * @return The user pointer associated with the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @return The user pointer associated with the friend list. @maybenil
 **/
-LINPHONE_PUBLIC void * linphone_friend_list_get_user_data(const LinphoneFriendList *list);
+LINPHONE_PUBLIC void * linphone_friend_list_get_user_data(const LinphoneFriendList *friend_list);
 
 /**
  * Assign a user pointer to the friend list.
- * @param[in] list #LinphoneFriendList object.
- * @param[in] ud The user pointer to associate with the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @param[in] user_data The user pointer to associate with the friend list. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_user_data(LinphoneFriendList *list, void *ud);
+LINPHONE_PUBLIC void linphone_friend_list_set_user_data(LinphoneFriendList *friend_list, void *user_data);
 
 /**
  * Get the display name of the friend list.
- * @param[in] list #LinphoneFriendList object.
- * @return The display name of the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @return The display name of the friend list. @maybenil
 **/
-LINPHONE_PUBLIC const char * linphone_friend_list_get_display_name(const LinphoneFriendList *list);
+LINPHONE_PUBLIC const char * linphone_friend_list_get_display_name(const LinphoneFriendList *friend_list);
 
 /**
  * Set the display name of the friend list.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] display_name The new display name of the friend list.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_display_name(LinphoneFriendList *list, const char *display_name);
+LINPHONE_PUBLIC void linphone_friend_list_set_display_name(LinphoneFriendList *friend_list, const char *display_name);
 
 /**
  * Get the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
- * @param[in] list #LinphoneFriendList object.
- * @return The RLS URI associated with the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @return The RLS URI associated with the friend list. @maybenil
 **/
-LINPHONE_PUBLIC const char * linphone_friend_list_get_rls_uri(const LinphoneFriendList *list);
+LINPHONE_PUBLIC const char * linphone_friend_list_get_rls_uri(const LinphoneFriendList *friend_list);
 
 /**
  * Set the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] rls_uri The RLS URI to associate with the friend list.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_rls_uri(LinphoneFriendList *list, const char *rls_uri);
+LINPHONE_PUBLIC void linphone_friend_list_set_rls_uri(LinphoneFriendList *friend_list, const char *rls_uri);
 
 /**
  * Get the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
- * @param[in] list #LinphoneFriendList object.
- * @return The RLS URI associated with the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @return The RLS URI as #LinphoneAddress associated with the friend list. @maybenil
 **/
-LINPHONE_PUBLIC const LinphoneAddress * linphone_friend_list_get_rls_address(const LinphoneFriendList *list);
+LINPHONE_PUBLIC const LinphoneAddress * linphone_friend_list_get_rls_address(const LinphoneFriendList *friend_list);
 
 /**
  * Set the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] rls_addr The RLS URI to associate with the friend list.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_rls_address(LinphoneFriendList *list, const LinphoneAddress *rls_addr);
+LINPHONE_PUBLIC void linphone_friend_list_set_rls_address(LinphoneFriendList *friend_list, const LinphoneAddress *rls_addr);
 
 /**
  * Add a friend to a friend list. If or when a remote CardDAV server will be attached to the list, the friend will be sent to the server.
- * @param[in] list #LinphoneFriendList object.
- * @param[in] lf #LinphoneFriend object to add to the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @param[in] linphone_friend #LinphoneFriend object to add to the friend list.
  * @return #LinphoneFriendListOK if successfully added, #LinphoneFriendListInvalidFriend if the friend is not valid.
 **/
-LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_add_friend(LinphoneFriendList *list, LinphoneFriend *lf);
+LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_add_friend(LinphoneFriendList *friend_list, LinphoneFriend *linphone_friend);
 
 /**
  * Add a friend to a friend list. The friend will never be sent to a remote CardDAV server.
  * Warning! #LinphoneFriends added this way will be removed on the next synchronization, and the callback contact_deleted will be called.
- * @param[in] list #LinphoneFriendList object.
- * @param[in] lf #LinphoneFriend object to add to the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @param[in] linphone_friend #LinphoneFriend object to add to the friend list.
  * @return #LinphoneFriendListOK if successfully added, #LinphoneFriendListInvalidFriend if the friend is not valid.
 **/
-LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_add_local_friend(LinphoneFriendList *list, LinphoneFriend *lf);
+LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_add_local_friend(LinphoneFriendList *friend_list, LinphoneFriend *linphone_friend);
 
 /**
  * Remove a friend from a friend list.
- * @param[in] list #LinphoneFriendList object.
- * @param[in] lf #LinphoneFriend object to remove from the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @param[in] linphone_friend #LinphoneFriend object to remove from the friend list.
  * @return #LinphoneFriendListOK if removed successfully, #LinphoneFriendListNonExistentFriend if the friend is not in the list.
 **/
-LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_remove_friend(LinphoneFriendList *list, LinphoneFriend *lf);
+LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_remove_friend(LinphoneFriendList *friend_list, LinphoneFriend *linphone_friend);
 
 /**
  * Retrieves the list of #LinphoneFriend from this LinphoneFriendList.
- * @param[in] list #LinphoneFriendList object
+ * @param[in] friend_list #LinphoneFriendList object
  * @return \bctbx_list{LinphoneFriend} a list of #LinphoneFriend
  */
-LINPHONE_PUBLIC const bctbx_list_t * linphone_friend_list_get_friends(const LinphoneFriendList *list);
+LINPHONE_PUBLIC const bctbx_list_t * linphone_friend_list_get_friends(const LinphoneFriendList *friend_list);
 
 /**
  * Find a friend in the friend list using a LinphoneAddress.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] address #LinphoneAddress object of the friend we want to search for.
- * @return A #LinphoneFriend if found, NULL otherwise.
+ * @return A #LinphoneFriend if found, NULL otherwise. @maybenil
  * @maybenil
 **/
-LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFriendList *list, const LinphoneAddress *address);
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFriendList *friend_list, const LinphoneAddress *address);
 
 /**
  * Find a friend in the friend list using a phone number.
- * @param[in] list #LinphoneFriendList object.
- * @param[in] phoneNumber a string of the phone number for which we want to find a friend.
- * @return A #LinphoneFriend if found, NULL otherwise.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @param[in] phone_number a string of the phone number for which we want to find a friend.
+ * @return A #LinphoneFriend if found, NULL otherwise. @maybenil
  * @maybenil
 **/
-LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list, const char *phoneNumber);
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *friend_list, const char *phone_number);
 
 /**
  * Find all friends in the friend list using a LinphoneAddress.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] address #LinphoneAddress object of the friends we want to search for.
- * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise.
+ * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise. @maybenil
 **/
-LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *list, const LinphoneAddress *address);
+LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *friend_list, const LinphoneAddress *address);
 
 /**
  * Find a friend in the friend list using an URI string.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] uri A string containing the URI of the friend we want to search for.
- * @return A #LinphoneFriend if found, NULL otherwise.
+ * @return A #LinphoneFriend if found, NULL otherwise. @maybenil
 **/
-LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendList *list, const char *uri);
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_uri(const LinphoneFriendList *friend_list, const char *uri);
 
 /**
  * Find all friends in the friend list using an URI string.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] uri A string containing the URI of the friends we want to search for.
- * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise.
+ * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise. @maybenil
 **/
-LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *list, const char *uri);
+LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *friend_list, const char *uri);
 
 /**
  * Find a friend in the friend list using a ref key.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] ref_key The ref key string of the friend we want to search for.
- * @return A #LinphoneFriend if found, NULL otherwise.
+ * @return A #LinphoneFriend if found, NULL otherwise. @maybenil
 **/
-LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_ref_key(const LinphoneFriendList *list, const char *ref_key);
+LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_ref_key(const LinphoneFriendList *friend_list, const char *ref_key);
 
 /**
  * Update presence subscriptions for the entire list. Calling this function is necessary when list subscriptions are enabled,
  * ie when a RLS presence server is used.
  * @param[in] list the friend list
 **/
-LINPHONE_PUBLIC void linphone_friend_list_update_subscriptions(LinphoneFriendList *list);
+LINPHONE_PUBLIC void linphone_friend_list_update_subscriptions(LinphoneFriendList *friend_list);
 
 /**
  * Notify our presence to all the friends in the friend list that have subscribed to our presence directly (not using a RLS).
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] presence #LinphonePresenceModel object.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_notify_presence(LinphoneFriendList *list, LinphonePresenceModel *presence);
+LINPHONE_PUBLIC void linphone_friend_list_notify_presence(LinphoneFriendList *friend_list, LinphonePresenceModel *presence);
 
 /**
  * Get the URI associated with the friend list.
- * @param[in] list #LinphoneFriendList object.
- * @return The URI associated with the friend list.
+ * @param[in] friend_list #LinphoneFriendList object.
+ * @return The URI associated with the friend list. @maybenil
 **/
-LINPHONE_PUBLIC const char * linphone_friend_list_get_uri(const LinphoneFriendList *list);
+LINPHONE_PUBLIC const char * linphone_friend_list_get_uri(const LinphoneFriendList *friend_list);
 
 /**
  * Set the URI associated with the friend list.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] uri The URI to associate with the friend list.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_uri(LinphoneFriendList *list, const char *uri);
+LINPHONE_PUBLIC void linphone_friend_list_set_uri(LinphoneFriendList *friend_list, const char *uri);
 
 /**
  * Get wheter the subscription of the friend list is bodyless or not.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @return Wheter the subscription of the friend list is bodyless or not.
 **/
-LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *list);
+LINPHONE_PUBLIC bool_t linphone_friend_list_is_subscription_bodyless(LinphoneFriendList *friend_list);
 
 /**
  * Set wheter the subscription of the friend list is bodyless or not.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] a boolean telling if the subscription of the friend list is bodyless or not.
 **/
-LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *list, bool_t bodyless);
+LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFriendList *friend_list, bool_t bodyless);
 
 /**
  * Sets the revision from the last synchronization.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @param[in] rev The revision
  */
-LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *list, int rev);
+LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *friend_list, int rev);
 
 /**
  * Get the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
  * @param[in] friend_list #LinphoneFriendList object
  * @return The #LinphoneFriendListCbs object associated with the LinphoneFriendList.
- * @deprecated use add_callbacks / remove_callbacks instead
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
 **/
 LINPHONE_PUBLIC LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list);
 
@@ -279,16 +279,16 @@ LINPHONE_PUBLIC void linphone_friend_list_cbs_unref(LinphoneFriendListCbs *cbs);
 /**
  * Retrieve the user pointer associated with a #LinphoneFriendListCbs object.
  * @param[in] cbs #LinphoneFriendListCbs object.
- * @return The user pointer associated with the #LinphoneFriendListCbs object.
+ * @return The user pointer associated with the #LinphoneFriendListCbs object. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_friend_list_cbs_get_user_data(const LinphoneFriendListCbs *cbs);
 
 /**
  * Assign a user pointer to a #LinphoneFriendListCbs object.
  * @param[in] cbs #LinphoneFriendListCbs object.
- * @param[in] ud The user pointer to associate with the #LinphoneFriendListCbs object.
+ * @param[in] user_data The user pointer to associate with the #LinphoneFriendListCbs object. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_friend_list_cbs_set_user_data(LinphoneFriendListCbs *cbs, void *ud);
+LINPHONE_PUBLIC void linphone_friend_list_cbs_set_user_data(LinphoneFriendListCbs *cbs, void *user_data);
 
 /**
  * Get the contact created callback.
@@ -362,22 +362,22 @@ LINPHONE_PUBLIC void linphone_friend_list_cbs_set_presence_received(LinphoneFrie
 
 /**
  * Starts a CardDAV synchronization using value set using linphone_friend_list_set_uri.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  */
-LINPHONE_PUBLIC void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *list);
+LINPHONE_PUBLIC void linphone_friend_list_synchronize_friends_from_server(LinphoneFriendList *friend_list);
 
 /**
  * Goes through all the #LinphoneFriend that are dirty and does a CardDAV PUT to update the server.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  */
-LINPHONE_PUBLIC void linphone_friend_list_update_dirty_friends(LinphoneFriendList *list);
+LINPHONE_PUBLIC void linphone_friend_list_update_dirty_friends(LinphoneFriendList *friend_list);
 
 /**
  * Returns the #LinphoneCore object attached to this LinphoneFriendList.
- * @param[in] list #LinphoneFriendList object.
+ * @param[in] friend_list #LinphoneFriendList object.
  * @return a #LinphoneCore object
  */
-LINPHONE_PUBLIC LinphoneCore* linphone_friend_list_get_core(const LinphoneFriendList *list);
+LINPHONE_PUBLIC LinphoneCore* linphone_friend_list_get_core(const LinphoneFriendList *friend_list);
 
 /**
  * Creates and adds #LinphoneFriend objects to #LinphoneFriendList from a file that contains the vCard(s) to parse
@@ -385,7 +385,7 @@ LINPHONE_PUBLIC LinphoneCore* linphone_friend_list_get_core(const LinphoneFriend
  * @param[in] vcard_file the path to a file that contains the vCard(s) to parse
  * @return the amount of linphone friends created
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_friend_list_import_friends_from_vcard4_file(LinphoneFriendList *list, const char *vcard_file);
+LINPHONE_PUBLIC LinphoneStatus linphone_friend_list_import_friends_from_vcard4_file(LinphoneFriendList *friend_list, const char *vcard_file);
 
 /**
  * Creates and adds #LinphoneFriend objects to #LinphoneFriendList from a buffer that contains the vCard(s) to parse
@@ -393,28 +393,28 @@ LINPHONE_PUBLIC LinphoneStatus linphone_friend_list_import_friends_from_vcard4_f
  * @param[in] vcard_buffer the buffer that contains the vCard(s) to parse
  * @return the amount of linphone friends created
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_friend_list_import_friends_from_vcard4_buffer(LinphoneFriendList *list, const char *vcard_buffer);
+LINPHONE_PUBLIC LinphoneStatus linphone_friend_list_import_friends_from_vcard4_buffer(LinphoneFriendList *friend_list, const char *vcard_buffer);
 
 /**
  * Creates and export #LinphoneFriend objects from #LinphoneFriendList to a file using vCard 4 format
  * @param[in] list the #LinphoneFriendList object
  * @param[in] vcard_file the path to a file that will contain the vCards
  */
-LINPHONE_PUBLIC void linphone_friend_list_export_friends_as_vcard4_file(LinphoneFriendList *list, const char *vcard_file);
+LINPHONE_PUBLIC void linphone_friend_list_export_friends_as_vcard4_file(LinphoneFriendList *friend_list, const char *vcard_file);
 
 /**
  * Enable subscription to NOTIFYes of all friends list
  * @param[in] list the #LinphoneFriendList object
  * @param[in] enabled should subscription be enabled or not
  */
-LINPHONE_PUBLIC void linphone_friend_list_enable_subscriptions(LinphoneFriendList *list, bool_t enabled);
+LINPHONE_PUBLIC void linphone_friend_list_enable_subscriptions(LinphoneFriendList *friend_list, bool_t enabled);
 
 /**
  * Gets whether subscription to NOTIFYes of all friends list are enabled or not
  * @param[in] list the #LinphoneFriendList object
  * @return Whether subscriptions are enabled or not
  */
-LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *list);
+LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *friend_list);
 
 /**
  * @}

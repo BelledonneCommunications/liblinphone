@@ -898,7 +898,7 @@ typedef unsigned int LinphonePrivacyMask;
  * might already be a list of configured proxy that can be examined with
  * linphone_core_get_proxy_config_list().
  *
- * The default proxy (see linphone_core_set_default_proxy() ) is the one of the list
+ * The default proxy (see linphone_core_set_default_proxy_config() ) is the one of the list
  * that is used by default for calls.
  * @ingroup proxies
 **/

@@ -37,49 +37,47 @@ extern "C" {
 
 /**
  * Add a header to an info message to be sent.
- * @param im the info message
+ * @param info_message the #LinphoneInfoMessage object
  * @param name the header'name
  * @param value the header's value
 **/
-LINPHONE_PUBLIC void linphone_info_message_add_header(LinphoneInfoMessage *im, const char *name, const char *value);
+LINPHONE_PUBLIC void linphone_info_message_add_header(LinphoneInfoMessage *info_message, const char *name, const char *value);
 
 /**
  * Obtain a header value from a received info message.
- * @param im the info message
+ * @param info_message the #LinphoneInfoMessage object
  * @param name the header'name
- * @return the corresponding header's value, or NULL if not exists.
+ * @return the corresponding header's value, or NULL if not exists. @maybenil
 **/
-LINPHONE_PUBLIC const char *linphone_info_message_get_header(const LinphoneInfoMessage *im, const char *name);
+LINPHONE_PUBLIC const char *linphone_info_message_get_header(const LinphoneInfoMessage *info_message, const char *name);
 
 /**
  * Assign a content to the info message.
- * @param im the linphone info message
+ * @param info_message the #LinphoneInfoMessage object
  * @param content the content described as a #LinphoneContent structure.
  * All fields of the #LinphoneContent are copied, thus the application can destroy/modify/recycloe the content object freely ater the function returns.
 **/
-LINPHONE_PUBLIC void linphone_info_message_set_content(LinphoneInfoMessage *im, const LinphoneContent *content);
+LINPHONE_PUBLIC void linphone_info_message_set_content(LinphoneInfoMessage *info_message, const LinphoneContent *content);
 
 /**
  * Returns the info message's content as a #LinphoneContent structure.
+ * @param info_message the #LinphoneInfoMessage object
+ * @return the #LinphoneContent object. @maybenil
 **/
-LINPHONE_PUBLIC const LinphoneContent * linphone_info_message_get_content(const LinphoneInfoMessage *im);
+LINPHONE_PUBLIC const LinphoneContent * linphone_info_message_get_content(const LinphoneInfoMessage *info_message);
 
 /**
  * Take a reference on a #LinphoneInfoMessage.
+ * @param info_message the #LinphoneInfoMessage object
+ * @return the same #LinphoneInfoMessage object
  */
-LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_ref(LinphoneInfoMessage *im);
+LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_ref(LinphoneInfoMessage *info_message);
 
 /**
  * Release a reference on a #LinphoneInfoMessage.
+ * @param info_message the linphone info message
  */
-LINPHONE_PUBLIC void linphone_info_message_unref(LinphoneInfoMessage *im);
-
-/**
- * Destroy a LinphoneInfoMessage.
- * @deprecated Use linphone_info_message_unref() instead.
- * @donotwrap
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_info_message_destroy(LinphoneInfoMessage *im);
+LINPHONE_PUBLIC void linphone_info_message_unref(LinphoneInfoMessage *info_message);
 
 LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *orig);
 

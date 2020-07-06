@@ -50,16 +50,16 @@ LINPHONE_PUBLIC void linphone_video_definition_unref(LinphoneVideoDefinition *vd
 /**
  * Retrieve the user pointer associated with the video definition.
  * @param[in] vdef #LinphoneVideoDefinition object.
- * @return The user pointer associated with the video definition.
+ * @return The user pointer associated with the video definition. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_video_definition_get_user_data(const LinphoneVideoDefinition *vdef);
 
 /**
  * Assign a user pointer to the video definition.
  * @param[in] vdef #LinphoneVideoDefinition object.
- * @param[in] ud The user pointer to associate with the video definition.
+ * @param[in] user_data The user pointer to associate with the video definition. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_video_definition_set_user_data(LinphoneVideoDefinition *vdef, void *ud);
+LINPHONE_PUBLIC void linphone_video_definition_set_user_data(LinphoneVideoDefinition *vdef, void *user_data);
 
 /**
  * Clone a video definition.
@@ -107,7 +107,7 @@ LINPHONE_PUBLIC void linphone_video_definition_set_definition(LinphoneVideoDefin
 /**
  * Get the name of the video definition.
  * @param[in] vdef #LinphoneVideoDefinition object
- * @return The name of the video definition
+ * @return The name of the video definition @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_video_definition_get_name(const LinphoneVideoDefinition *vdef);
 

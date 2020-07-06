@@ -49,14 +49,14 @@ LINPHONE_PUBLIC void linphone_content_unref (LinphoneContent *content);
 /**
  * Retrieve the user pointer associated with the content.
  * @param[in] content #LinphoneContent object.
- * @return The user pointer associated with the content.
+ * @return The user pointer associated with the content. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_content_get_user_data (const LinphoneContent *content);
 
 /**
  * Assign a user pointer to the content.
  * @param[in] content #LinphoneContent object.
- * @param[in] ud The user pointer to associate with the content.
+ * @param[in] ud The user pointer to associate with the content. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_content_set_user_data (LinphoneContent *content, void *user_data);
 
@@ -90,7 +90,7 @@ LINPHONE_PUBLIC void linphone_content_set_subtype (LinphoneContent *content, con
 
 /**
  * Adds a parameter to the ContentType header.
- * @param[in] content LinphoneContent object.
+ * @param[in] content #LinphoneContent object.
  * @param[in] name the name of the parameter to add.
  * @param[in] value the value of the parameter to add.
  */
@@ -188,16 +188,15 @@ LINPHONE_PUBLIC bool_t linphone_content_is_multipart (const LinphoneContent *con
 /**
  * Get all the parts from a multipart content.
  * @param[in] content #LinphoneContent object.
- * @return A \bctbx_list{LinphoneContent} \onTheFlyList object holding the part if found, NULL otherwise.
+ * @return A \bctbx_list{LinphoneContent} \onTheFlyList object holding the part if found, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC 
-bctbx_list_t *linphone_content_get_parts (const LinphoneContent *content);
+LINPHONE_PUBLIC bctbx_list_t *linphone_content_get_parts (const LinphoneContent *content);
 
 /**
  * Get a part from a multipart content according to its index.
  * @param[in] content #LinphoneContent object.
  * @param[in] idx The index of the part to get.
- * @return A #LinphoneContent object holding the part if found, NULL otherwise.
+ * @return A #LinphoneContent object holding the part if found, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC LinphoneContent *linphone_content_get_part (const LinphoneContent *content, int idx);
 
@@ -206,7 +205,7 @@ LINPHONE_PUBLIC LinphoneContent *linphone_content_get_part (const LinphoneConten
  * @param[in] content #LinphoneContent object.
  * @param[in] header_name The name of the header to look for.
  * @param[in] header_value The value of the header to look for.
- * @return A #LinphoneContent object object the part if found, NULL otherwise.
+ * @return A #LinphoneContent object object the part if found, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC LinphoneContent *linphone_content_find_part_by_header (
 	const LinphoneContent *content,
@@ -218,14 +217,14 @@ LINPHONE_PUBLIC LinphoneContent *linphone_content_find_part_by_header (
  * Get a custom header value of a content.
  * @param[in] content #LinphoneContent object.
  * @param[in] header_name The name of the header to get the value from.
- * @return The value of the header if found, NULL otherwise.
+ * @return The value of the header if found, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_content_get_custom_header (const LinphoneContent *content, const char *header_name);
 
 /**
  * Get the key associated with a RCS file transfer message if encrypted
  * @param[in] content #LinphoneContent object.
- * @return The key to encrypt/decrypt the file associated to this content.
+ * @return The key to encrypt/decrypt the file associated to this content. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_content_get_key (const LinphoneContent *content);
 
@@ -247,7 +246,7 @@ LINPHONE_PUBLIC void linphone_content_set_key (LinphoneContent *content, const c
 /**
  * Get the file transfer filepath set for this content (replace linphone_chat_message_get_file_transfer_filepath).
  * @param[in] content #LinphoneContent object.
- * @return The file path set for this content if it has been set, NULL otherwise.
+ * @return The file path set for this content if it has been set, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_content_get_file_path (const LinphoneContent *content);
 
@@ -261,21 +260,21 @@ LINPHONE_PUBLIC void linphone_content_set_file_path (LinphoneContent *content, c
 /**
  * Tells whether or not this content contains text.
  * @param[in] content #LinphoneContent object.
- * @return True if this content contains plain text, false otherwise.
+ * @return TRUE if this content contains plain text, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_content_is_text (const LinphoneContent *content);
 
 /**
  * Tells whether or not this content contains a file.
  * @param[in] content #LinphoneContent object.
- * @return True if this content contains a file, false otherwise.
+ * @return TRUE if this content contains a file, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_content_is_file (const LinphoneContent *content);
 
 /**
  * Tells whether or not this content is a file transfer.
  * @param[in] content #LinphoneContent object.
- * @return True if this content is a file transfer, false otherwise.
+ * @return TRUE if this content is a file transfer, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_content_is_file_transfer (const LinphoneContent *content);
 

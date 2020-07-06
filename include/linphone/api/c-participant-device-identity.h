@@ -40,18 +40,23 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_i
 
 /**
  * Clones a #LinphoneParticipantDeviceIdentity object.
+ * @param[in] device_identity the #LinphoneParticipantDeviceIdentity object
+ * @return a cloned #LinphoneParticipantDeviceIdentity object
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Increment reference count of #LinphoneParticipantDeviceIdentity object.
+ * @param[in] device_identity the #LinphoneParticipantDeviceIdentity object
+ * @return the same #LinphoneParticipantDeviceIdentity object
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Decrement reference count of #LinphoneParticipantDeviceIdentity object. When dropped to zero, memory is freed.
+ * @param[in] device_identity the #LinphoneParticipantDeviceIdentity object
  **/
-LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * @}
