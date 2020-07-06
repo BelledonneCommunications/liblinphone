@@ -50,14 +50,14 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_unref (LinphoneChatRoomCbs *cbs);
 /**
  * Retrieve the user pointer associated with the chat room callbacks object.
  * @param[in] cr The chat room callbacks object
- * @return The user pointer associated with the chat room callbacks object
+ * @return The user pointer associated with the chat room callbacks object. @maybenil
 **/
 LINPHONE_PUBLIC void * linphone_chat_room_cbs_get_user_data (const LinphoneChatRoomCbs *cbs);
 
 /**
  * Assign a user pointer to the chat room callbacks object.
  * @param[in] cr The chat room callbacks object
- * @param[in] ud The user pointer to associate with the chat room callbacks object
+ * @param[in] ud The user pointer to associate with the chat room callbacks object. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_user_data (LinphoneChatRoomCbs *cbs, void *ud);
 

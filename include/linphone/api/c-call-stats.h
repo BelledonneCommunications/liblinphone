@@ -47,6 +47,7 @@
 /**
  * Increment refcount.
  * @param[in] stats #LinphoneCallStats object
+ * @return the same #LinphoneCallStats object
  * @ingroup misc
 **/
 LINPHONE_PUBLIC LinphoneCallStats *linphone_call_stats_ref (LinphoneCallStats *stats);
@@ -61,7 +62,7 @@ LINPHONE_PUBLIC void linphone_call_stats_unref (LinphoneCallStats *stats);
 /**
  * Gets the user data in the #LinphoneCallStats object
  * @param[in] stats the #LinphoneCallStats
- * @return the user data
+ * @return the user data. @maybenil
  * @ingroup misc
 */
 LINPHONE_PUBLIC void *linphone_call_stats_get_user_data (const LinphoneCallStats *stats);
@@ -69,7 +70,7 @@ LINPHONE_PUBLIC void *linphone_call_stats_get_user_data (const LinphoneCallStats
 /**
  * Sets the user data in the #LinphoneCallStats object
  * @param[in] stats the #LinphoneCallStats object
- * @param[in] data the user data
+ * @param[in] data the user data. @maybenil
  * @ingroup misc
 */
 LINPHONE_PUBLIC void linphone_call_stats_set_user_data (LinphoneCallStats *stats, void *data);
@@ -77,30 +78,34 @@ LINPHONE_PUBLIC void linphone_call_stats_set_user_data (LinphoneCallStats *stats
 /**
  * Get the type of the stream the stats refer to.
  * @param[in] stats #LinphoneCallStats object
- * @return The type of the stream the stats refer to
+ * @return The #LinphoneStreamType the stats refer to
  */
 LINPHONE_PUBLIC LinphoneStreamType linphone_call_stats_get_type (const LinphoneCallStats *stats);
 
 /**
  * Get the local loss rate since last report
+ * @param[in] stats #LinphoneCallStats object
  * @return The sender loss rate
 **/
 LINPHONE_PUBLIC float linphone_call_stats_get_sender_loss_rate (const LinphoneCallStats *stats);
 
 /**
  * Gets the remote reported loss rate since last report
+ * @param[in] stats #LinphoneCallStats object
  * @return The receiver loss rate
 **/
 LINPHONE_PUBLIC float linphone_call_stats_get_receiver_loss_rate (const LinphoneCallStats *stats);
 
 /**
  * Get the local loss rate since last report
+ * @param[in] stats #LinphoneCallStats object
  * @return The local loss rate
 **/
 LINPHONE_PUBLIC float linphone_call_stats_get_local_loss_rate (const LinphoneCallStats *stats);
 
 /**
  * Gets the local late rate since last report
+ * @param[in] stats #LinphoneCallStats object
  * @return The local late rate
 **/
 LINPHONE_PUBLIC float linphone_call_stats_get_local_late_rate (const LinphoneCallStats *stats);
