@@ -50,16 +50,16 @@ LINPHONE_PUBLIC void linphone_call_cbs_unref (LinphoneCallCbs *cbs);
 /**
  * Retrieve the user pointer associated with the #LinphoneCallCbs object.
  * @param[in] cbs #LinphoneCallCbs object.
- * @return The user pointer associated with the #LinphoneCallCbs object.
+ * @return The user pointer associated with the #LinphoneCallCbs object or NULL. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_call_cbs_get_user_data (const LinphoneCallCbs *cbs);
 
 /**
  * Assign a user pointer to the #LinphoneCallCbs object.
  * @param[in] cbs #LinphoneCallCbs object.
- * @param[in] ud The user pointer to associate with the #LinphoneCallCbs object.
+ * @param[in] user_data The user pointer to associate with the #LinphoneCallCbs object. @maybenil
  */
-LINPHONE_PUBLIC void linphone_call_cbs_set_user_data (LinphoneCallCbs *cbs, void *ud);
+LINPHONE_PUBLIC void linphone_call_cbs_set_user_data (LinphoneCallCbs *cbs, void *user_data);
 
 /**
  * Get the dtmf received callback.
