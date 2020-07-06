@@ -60,10 +60,10 @@ typedef void (*LinphoneCallCbsInfoMessageReceivedCb)(LinphoneCall *call, const L
 /**
  * Call state notification callback.
  * @param call #LinphoneCall whose state is changed.
- * @param cstate The new state of the call
+ * @param state The new state of the call
  * @param message An informational message about the state.
  */
-typedef void (*LinphoneCallCbsStateChangedCb)(LinphoneCall *call, LinphoneCallState cstate, const char *message);
+typedef void (*LinphoneCallCbsStateChangedCb)(LinphoneCall *call, LinphoneCallState state, const char *message);
 
 /**
  * Callback for receiving quality statistics for calls.
@@ -75,9 +75,9 @@ typedef void (*LinphoneCallCbsStatsUpdatedCb)(LinphoneCall *call, const Linphone
 /**
  * Callback for notifying progresses of transfers.
  * @param call #LinphoneCall that was transfered
- * @param cstate The state of the call to transfer target at the far end.
+ * @param state The state of the call to transfer target at the far end.
  */
-typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, LinphoneCallState cstate);
+typedef void (*LinphoneCallCbsTransferStateChangedCb)(LinphoneCall *call, LinphoneCallState state);
 
 /**
  * Callback for notifying the processing SIP ACK messages.
@@ -98,9 +98,9 @@ typedef void (*LinphoneCallCbsTmmbrReceivedCb)(LinphoneCall *call, int stream_in
 /**
  * Callback for notifying a snapshot taken.
  * @param call LinphoneCall for which the snapshot was taken
- * @param filepath the name of the saved file
+ * @param file_path the name of the saved file
  */
-typedef void (*LinphoneCallCbsSnapshotTakenCb)(LinphoneCall *call, const char *filepath);
+typedef void (*LinphoneCallCbsSnapshotTakenCb)(LinphoneCall *call, const char *file_path);
 
 /**
  * Callback to notify a next video frame has been decoded
@@ -125,9 +125,9 @@ typedef void (*LinphoneCallCbsCameraNotWorkingCb)(LinphoneCall *call, const char
  * Callback to notify that the audio device has been changed.
  *
  * @param call LinphoneCall for which the audio device has changed
- * @param audioDevice the new audio device used for this call
+ * @param audio_device the new audio device used for this call
  */
-typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, LinphoneAudioDevice *audioDevice);
+typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, LinphoneAudioDevice *audio_device);
 
 /**
  * @}
@@ -144,7 +144,7 @@ typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, Linphone
  * @param msg #LinphoneChatMessage object
  * @param status #LinphoneChatMessageState
  * @param ud application user data
- * @deprecated Use #LinphoneChatMessageCbsMsgStateChangedCb instead.
+ * @deprecated 03/07/2018 Use #LinphoneChatMessageCbsMsgStateChangedCb instead.
  * @donotwrap
  */
 typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* msg, LinphoneChatMessageState state, void* ud);

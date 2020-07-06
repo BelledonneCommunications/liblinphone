@@ -1128,8 +1128,8 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 
 	if (linphone_call_is_op_configured(call)) {
 		LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-		char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
-		char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+		char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
+		char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
 
 		const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
 		const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
@@ -1381,8 +1381,8 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
-	char* to=linphone_address_as_string(linphone_call_log_get_to(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to(clog));
+	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
 	stats* counters;
 	ms_message("Transferred call from [%s] to [%s], new state is [%s]",from,to,linphone_call_state_to_string(new_call_state));
 	ms_free(to);
@@ -1524,8 +1524,8 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
-	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+	char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
 	stats* counters;
 	ms_message(" %s call from [%s] to [%s], is now [%s]",linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 		   ,from

@@ -35,46 +35,49 @@
 
 /**
  * Increment reference count of #LinphoneParticipantDevice object.
+ * @param[in] participant_device the #LinphoneParticipantDevice object
+ * @return the same #LinphoneParticipantDevice object
  **/
 LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_device_ref (LinphoneParticipantDevice *participant_device);
 
 /**
  * Decrement reference count of #LinphoneParticipantDevice object.
+ * @param[in] participant_device the #LinphoneParticipantDevice object
  **/
 LINPHONE_PUBLIC void linphone_participant_device_unref (LinphoneParticipantDevice *participant_device);
 
 /**
  * Retrieve the user pointer associated with the participant's device.
  * @param[in] participant_device A #LinphoneParticipantDevice object
- * @return The user pointer associated with the participant's device.
+ * @return The user pointer associated with the participant's device. @maybenil
 **/
 LINPHONE_PUBLIC void * linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device);
 
 /**
  * Assign a user pointer to the participant's device.
  * @param[in] participant_device A #LinphoneParticipantDevice object
- * @param[in] ud The user pointer to associate with the participant's device
+ * @param[in] ud The user pointer to associate with the participant's device. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_participant_device_set_user_data(LinphoneParticipantDevice *participant_device, void *ud);
 
 /**
  * Get the address of a participant's device.
  * @param[in] participant_device A #LinphoneParticipantDevice object
- * @return The address of the participant's device
+ * @return The #LinphoneAddress of the participant's device
  */
-LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_device_get_address (const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_get_address (const LinphoneParticipantDevice *participant_device);
 
 /**
  * Get the security level of a participant's device.
  * @param[in] participant_device A #LinphoneParticipantDevice object
- * @return The security level of the device
+ * @return The #LinphoneChatRoomSecurityLevel of the device
 */
 LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device);
 
 /**
  * Return the name of the device or NULL.
  * @param[in] participant_device A #LinphoneParticipantDevice object
- * @return the name of the device or NULL
+ * @return the name of the device or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *LinphoneParticipantDevice);
 

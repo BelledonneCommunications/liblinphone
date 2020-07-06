@@ -1146,7 +1146,7 @@ lpc_cmd_proxy(LinphoneCore *lc, char *args)
 			else linphonec_out("Current default proxy is %d.\n", proxynum);
 		}
 	}else if (strcmp(arg1, "unuse")==0){
-		linphone_core_set_default_proxy(lc, NULL);
+		linphone_core_set_default_proxy_config(lc, NULL);
 		linphonec_out("Use no proxy.\n");
 	}
 
@@ -1288,11 +1288,11 @@ static int lpc_cmd_soundcard(LinphoneCore *lc, char *args)
 		if (strcmp(arg2, "files")==0)
 		{
 			linphonec_out("Using wav files instead of soundcard.\n");
-			linphone_core_use_files(lc,TRUE);
+			linphone_core_set_use_files(lc,TRUE);
 			return 1;
 		}
 
-		linphone_core_use_files(lc,FALSE);
+		linphone_core_set_use_files(lc,FALSE);
 
 		dev=linphone_core_get_sound_devices(lc);
 		index=atoi(arg2); /* FIXME: handle not-a-number */
@@ -1572,7 +1572,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 		{
 			linphonec_out("Invalid sip address (sip:sip.domain.tld).\n");
 			free(input);
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			continue;
 		}
 		free(input);
@@ -1589,7 +1589,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 
 		if ( ! input ) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			return;
 		}
 
@@ -1600,13 +1600,15 @@ linphonec_proxy_add(LinphoneCore *lc)
 			continue;
 		}
 
-		linphone_proxy_config_set_identity(cfg, clean);
+		LinphoneAddress *identity = linphone_address_new(clean);
+		linphone_proxy_config_set_identity_address(cfg, identity);
 		if ( ! linphone_proxy_config_get_identity (cfg))
 		{
 			linphonec_out("Invalid identity (sip:name@sip.domain.tld).\n");
 			free(input);
 			continue;
 		}
+		if (identity) linphone_address_unref(identity);
 		free(input);
 		break;
 	}
@@ -1621,7 +1623,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 
 		if ( ! input ) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			return;
 		}
 
@@ -1657,7 +1659,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 
 			if ( ! input ) {
 				linphonec_out("Aborted.\n");
-				linphone_proxy_config_destroy(cfg);
+				linphone_proxy_config_unref(cfg);
 				return;
 			}
 
@@ -1682,7 +1684,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 
 		if ( ! input ) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			return;
 		}
 
@@ -1722,7 +1724,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 
 		if ( ! input ) {
 			linphonec_out("Aborted.\n");
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			return;
 		}
 
@@ -1737,7 +1739,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 		else if ( ! strcmp(clean, "no") )
 		{
 			linphonec_out("Declined.\n");
-			linphone_proxy_config_destroy(cfg);
+			linphone_proxy_config_unref(cfg);
 			free(input);
 			return;
 		}
@@ -1751,7 +1753,7 @@ linphonec_proxy_add(LinphoneCore *lc)
 	linphone_core_add_proxy_config(lc,cfg);
 
 	/* automatically set the last entered proxy as the default one */
-	linphone_core_set_default_proxy(lc,cfg);
+	linphone_core_set_default_proxy_config(lc,cfg);
 
 	linphonec_out("Proxy added.\n");
 }
@@ -1760,14 +1762,15 @@ static void
 linphonec_proxy_display(LinphoneProxyConfig *cfg)
 {
 	const char *route=linphone_proxy_config_get_route(cfg);
-	const char *identity=linphone_proxy_config_get_identity(cfg);
+	char *identity=linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg));
 	linphonec_out("sip address: %s\nroute: %s\nidentity: %s\nregister: %s\nexpires: %i\nregistered: %s\n",
 			linphone_proxy_config_get_addr(cfg),
 			(route!=NULL)? route:"",
 			(identity!=NULL)?identity:"",
 			linphone_proxy_config_register_enabled (cfg)?"yes":"no",
 			linphone_proxy_config_get_expires (cfg),
-			linphone_proxy_config_is_registered(cfg) ? "yes" : "no");
+			linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk ? "yes" : "no");
+	ms_free(identity);
 }
 
 static void linphonec_proxy_show(LinphoneCore *lc, int index)
@@ -1828,7 +1831,7 @@ linphonec_proxy_use(LinphoneCore *lc, int index)
 		linphonec_out("No such proxy (try 'proxy list').");
 		return 0;
 	}
-	linphone_core_set_default_proxy(lc,cfg);
+	linphone_core_set_default_proxy_config(lc,cfg);
 	return 1;
 }
 
@@ -1959,7 +1962,7 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args){
 			LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
 			if (cfg)
 			{
-				if(!linphone_proxy_config_is_registered(cfg)) {
+				if(linphone_proxy_config_get_state(cfg) != LinphoneRegistrationOk) {
 				linphone_proxy_config_enable_register(cfg,TRUE);
 				linphone_proxy_config_done(cfg);
 			}else{
@@ -1993,18 +1996,20 @@ static int lpc_cmd_register(LinphoneCore *lc, char *args){
 		linphone_proxy_config_edit(cfg);
 	}
 	else cfg=linphone_core_create_proxy_config(lc);
-	linphone_proxy_config_set_identity(cfg,identity);
+	LinphoneAddress *addr = linphone_address_new(identity);
+	linphone_proxy_config_set_identity_address(cfg,addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_proxy_config_set_server_addr(cfg,proxy);
 	linphone_proxy_config_enable_register(cfg,TRUE);
 	if (elem) linphone_proxy_config_done(cfg);
 	else linphone_core_add_proxy_config(lc,cfg);
-	linphone_core_set_default_proxy(lc,cfg);
+	linphone_core_set_default_proxy_config(lc,cfg);
 	return 1;
 }
 
 static int lpc_cmd_unregister(LinphoneCore *lc, char *args){
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
-	if (cfg && linphone_proxy_config_is_registered(cfg)) {
+	if (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
 		linphone_proxy_config_edit(cfg);
 		linphone_proxy_config_enable_register(cfg,FALSE);
 		linphone_proxy_config_done(cfg);
@@ -2036,7 +2041,7 @@ static int lpc_cmd_status(LinphoneCore *lc, char *args)
 	{
 		if (cfg)
 		{
-			if (linphone_proxy_config_is_registered(cfg)){
+			if (linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk){
 				linphonec_out("registered, identity=%s duration=%i\n",
 					linphone_proxy_config_get_identity(cfg),
 					linphone_proxy_config_get_expires(cfg));
@@ -2048,7 +2053,7 @@ static int lpc_cmd_status(LinphoneCore *lc, char *args)
 	}
 	else if (strstr(args,"autoanswer"))
 	{
-		if (cfg && linphone_proxy_config_is_registered(cfg))
+		if (cfg && linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk)
 			linphonec_out("autoanswer=%i\n",linphonec_get_autoanswer());
 		else linphonec_out("unregistered\n");
 	}

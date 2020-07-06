@@ -71,21 +71,21 @@ LINPHONE_PUBLIC void linphone_buffer_unref(LinphoneBuffer *buffer);
 /**
  * Retrieve the user pointer associated with the buffer.
  * @param[in] buffer #LinphoneBuffer object.
- * @return The user pointer associated with the buffer.
+ * @return The user pointer associated with the buffer. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_buffer_get_user_data(const LinphoneBuffer *buffer);
 
 /**
  * Assign a user pointer to the buffer.
  * @param[in] buffer #LinphoneBuffer object.
- * @param[in] ud The user pointer to associate with the buffer.
+ * @param[in] user_data The user pointer to associate with the buffer. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *ud);
+LINPHONE_PUBLIC void linphone_buffer_set_user_data(LinphoneBuffer *buffer, void *user_data);
 
 /**
  * Get the content of the data buffer.
  * @param[in] buffer #LinphoneBuffer object.
- * @return The content of the data buffer.
+ * @return The content of the data buffer. @maybenil
  */
 LINPHONE_PUBLIC const uint8_t * linphone_buffer_get_content(const LinphoneBuffer *buffer);
 
@@ -100,7 +100,7 @@ LINPHONE_PUBLIC void linphone_buffer_set_content(LinphoneBuffer *buffer, const u
 /**
  * Get the string content of the data buffer.
  * @param[in] buffer #LinphoneBuffer object
- * @return The string content of the data buffer.
+ * @return The string content of the data buffer. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_buffer_get_string_content(const LinphoneBuffer *buffer);
 

@@ -53,198 +53,199 @@ LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(
 	const char *algorithm);
 /**
  * Instantiates a new auth info with values from source.
- * @param[in] source The #LinphoneAuthInfo object to be cloned
+ * @param[in] auth_info The #LinphoneAuthInfo object to be cloned
  * @return The newly created #LinphoneAuthInfo object.
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_clone(const LinphoneAuthInfo *source);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_clone(const LinphoneAuthInfo *auth_info);
 
 /**
  * Take a reference on a #LinphoneAuthInfo.
  */
-LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_ref(LinphoneAuthInfo *info);
+LINPHONE_PUBLIC LinphoneAuthInfo *linphone_auth_info_ref(LinphoneAuthInfo *auth_info);
 
 /**
  * Release a #LinphoneAuthInfo.
  */
-LINPHONE_PUBLIC void linphone_auth_info_unref(LinphoneAuthInfo *info);
+LINPHONE_PUBLIC void linphone_auth_info_unref(LinphoneAuthInfo *auth_info);
 
 /**
  * Sets the password.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] passwd The password.
- * @deprecated, use linphone_auth_info_set_password instead
+ * @deprecated 13/10/2017 use linphone_auth_info_set_password instead
+ * @donotwrap
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_passwd(LinphoneAuthInfo *info, const char *passwd);
+LINPHONE_PUBLIC void linphone_auth_info_set_passwd(LinphoneAuthInfo *auth_info, const char *passwd);
 
 /**
  * Sets the password.
- * @param[in] info The #LinphoneAuthInfo object
- * @param[in] passwd The password.
+ * @param[in] auth_info The #LinphoneAuthInfo object
+ * @param[in] password The password.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *info, const char *passwd);
+LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *auth_info, const char *password);
 
 /**
  * Sets the username.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] username The username.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_username(LinphoneAuthInfo *info, const char *username);
+LINPHONE_PUBLIC void linphone_auth_info_set_username(LinphoneAuthInfo *auth_info, const char *username);
 
 /**
  * Sets the algorithm.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] algorithm The algorithm.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *info, const char *algorithm);
+LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *auth_info, const char *algorithm);
 
 /**
- * Sets the userid.
- * @param[in] info The #LinphoneAuthInfo object
- * @param[in] userid The userid.
+ * Sets the user id.
+ * @param[in] auth_info The #LinphoneAuthInfo object
+ * @param[in] user_id The userid.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_userid(LinphoneAuthInfo *info, const char *userid);
+LINPHONE_PUBLIC void linphone_auth_info_set_userid(LinphoneAuthInfo *auth_info, const char *user_id);
 
 /**
  * Sets the realm.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] realm The realm.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_realm(LinphoneAuthInfo *info, const char *realm);
+LINPHONE_PUBLIC void linphone_auth_info_set_realm(LinphoneAuthInfo *auth_info, const char *realm);
 
 /**
  * Sets the domain for which this authentication is valid.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] domain The domain.
  * This should not be necessary because realm is supposed to be unique and sufficient.
  * However, many SIP servers don't set realm correctly, then domain has to be used to distinguish between several SIP account bearing the same username.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_domain(LinphoneAuthInfo *info, const char *domain);
+LINPHONE_PUBLIC void linphone_auth_info_set_domain(LinphoneAuthInfo *auth_info, const char *domain);
 
 /**
  * Sets the ha1.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] ha1 The ha1.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_ha1(LinphoneAuthInfo *info, const char *ha1);
+LINPHONE_PUBLIC void linphone_auth_info_set_ha1(LinphoneAuthInfo *auth_info, const char *ha1);
 
 /**
  * Sets the TLS certificate.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] tls_cert The TLS certificate.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert(LinphoneAuthInfo *info, const char *tls_cert);
+LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert(LinphoneAuthInfo *auth_info, const char *tls_cert);
 
 /**
  * Sets the TLS key.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] tls_key The TLS key.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_tls_key(LinphoneAuthInfo *info, const char *tls_key);
+LINPHONE_PUBLIC void linphone_auth_info_set_tls_key(LinphoneAuthInfo *auth_info, const char *tls_key);
 
 /**
  * Sets the TLS certificate path.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] tls_cert_path The TLS certificate path.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert_path(LinphoneAuthInfo *info, const char *tls_cert_path);
+LINPHONE_PUBLIC void linphone_auth_info_set_tls_cert_path(LinphoneAuthInfo *auth_info, const char *tls_cert_path);
 
 /**
  * Sets the TLS key path.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @param[in] tls_key_path The TLS key path.
 **/
-LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info, const char *tls_key_path);
+LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *auth_info, const char *tls_key_path);
 
 /**
  * Gets the username.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The username.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_username(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_username(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the algorithm.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The algorithm.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the password.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The password.
- * @deprecated, use linphone_auth_info_get_password instead
+ * @deprecated 13/10/2017 use linphone_auth_info_get_password instead
+ * @donotwrap
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the password.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The password.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_password(const LinphoneAuthInfo *info);
-
+LINPHONE_PUBLIC const char *linphone_auth_info_get_password(const LinphoneAuthInfo *auth_info);
 
 /**
- * Gets the userid.
- * @param[in] info The #LinphoneAuthInfo object
- * @return The userid.
+ * Gets the user id.
+ * @param[in] auth_info The #LinphoneAuthInfo object
+ * @return The user id.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_userid(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_userid(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the realm.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The realm.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_realm(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_realm(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the domain.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The domain.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_domain(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_domain(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the ha1.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The ha1.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_ha1(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_ha1(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the TLS certificate.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The TLS certificate.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the TLS key.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The TLS key.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the TLS certificate path.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The TLS certificate path.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneAuthInfo *auth_info);
 
 /**
  * Gets the TLS key path.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param[in] auth_info The #LinphoneAuthInfo object
  * @return The TLS key path.
  */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *info);
+LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *auth_info);
 
 /* you don't need those function*/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *auth_info);
 
-void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *obj, int pos);
+void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *auth_info, int pos);
 
 LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int pos);
 

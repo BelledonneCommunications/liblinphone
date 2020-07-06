@@ -37,31 +37,31 @@
 LinphoneChatMessageCbs *linphone_chat_message_cbs_new (void);
 
 /**
- * Acquire a reference to the chat room callbacks object.
- * @param[in] cbs The chat room callbacks object
- * @return The same chat room callbacks object
+ * Acquire a reference to the chat message callbacks object.
+ * @param[in] cbs The #LinphoneChatMessageCbs object
+ * @return The same chat message callbacks object
 **/
 LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_chat_message_cbs_ref (LinphoneChatMessageCbs *cbs);
 
 /**
- * Release reference to the chat room callbacks object.
- * @param[in] cr The chat room callbacks object
+ * Release reference to the chat message callbacks object.
+ * @param[in] cbs The #LinphoneChatMessageCbs object
 **/
 LINPHONE_PUBLIC void linphone_chat_message_cbs_unref (LinphoneChatMessageCbs *cbs);
 
 /**
- * Retrieve the user pointer associated with the chat room callbacks object.
- * @param[in] cr The chat room callbacks object
- * @return The user pointer associated with the chat room callbacks object
+ * Retrieve the user pointer associated with the chat message callbacks object.
+ * @param[in] cbs The #LinphoneChatMessageCbs object
+ * @return The user pointer associated with the chat message callbacks object. @maybenil
 **/
 LINPHONE_PUBLIC void * linphone_chat_message_cbs_get_user_data (const LinphoneChatMessageCbs *cbs);
 
 /**
- * Assign a user pointer to the chat room callbacks object.
- * @param[in] cr The chat room callbacks object
- * @param[in] ud The user pointer to associate with the chat room callbacks object
+ * Assign a user pointer to the chat message callbacks object.
+ * @param[in] cbs The #LinphoneChatMessageCbs object
+ * @param[in] user_data The user pointer to associate with the chat message callbacks object. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_chat_message_cbs_set_user_data (LinphoneChatMessageCbs *cbs, void *ud);
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_user_data (LinphoneChatMessageCbs *cbs, void *user_data);
 
 /**
  * Get the message state changed callback.

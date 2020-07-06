@@ -42,7 +42,7 @@ extern "C" {
  * Creates a presence model specifying an activity.
  * @param[in] activity The activity to set for the created presence model.
  * @param[in] description An additional description of the activity (mainly useful for the 'other' activity). Set it to NULL to not add a description.
- * @return The created presence model, or NULL if an error occured.
+ * @return The created #LinphonePresenceModel, or NULL if an error occured. @maybenil
  * @see linphone_presence_model_new
  * @see linphone_presence_model_new_with_activity_and_note
  *
@@ -56,7 +56,7 @@ LINPHONE_PUBLIC LinphonePresenceModel * linphone_presence_model_new_with_activit
  * @param[in] description An additional description of the activity (mainly useful for the 'other' activity). Set it to NULL to not add a description.
  * @param[in] note An additional note giving additional information about the contact presence.
  * @param[in] lang The language the note is written in. It can be set to NULL in order to not specify the language of the note.
- * @return The created presence model, or NULL if an error occured.
+ * @return The created #LinphonePresenceModel, or NULL if an error occured. @maybenil
  * @see linphone_presence_model_new_with_activity
  * @see linphone_presence_model_new_with_activity_and_note
  *
@@ -89,7 +89,7 @@ LINPHONE_PUBLIC time_t linphone_presence_model_get_timestamp(const LinphonePrese
 /**
  * Gets the contact of a presence model.
  * @param[in] model The #LinphonePresenceModel object to get the contact from.
- * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found.
+ * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -114,7 +114,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_model_set_presentity(LinphonePr
 /**
  * Gets the presentity of a presence model.
  * @param[in] model The #LinphonePresenceModel object to get the contact from.
- * @return A pointer to a const LinphoneAddress, or NULL if no contact is found.
+ * @return A pointer to a const #LinphoneAddress, or NULL if no contact is found. @maybenil
  *
  */
 LINPHONE_PUBLIC const LinphoneAddress * linphone_presence_model_get_presentity(const LinphonePresenceModel *model);
@@ -122,7 +122,7 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_presence_model_get_presentity(c
 /**
  * Gets the first activity of a presence model (there is usually only one).
  * @param[in] model The #LinphonePresenceModel object to get the activity from.
- * @return A #LinphonePresenceActivity object if successful, NULL otherwise.
+ * @return A #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_model_get_activity(const LinphonePresenceModel *model);
 
@@ -149,10 +149,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_model_get_nb_activities(const Lin
 /**
  * Gets the nth activity of a presence model.
  * @param[in] model The #LinphonePresenceModel object to get the activity from.
- * @param[in] idx The index of the activity to get (the first activity having the index 0).
- * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise.
+ * @param[in] index The index of the activity to get (the first activity having the index 0).
+ * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_model_get_nth_activity(const LinphonePresenceModel *model, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_model_get_nth_activity(const LinphonePresenceModel *model, unsigned int index);
 
 /**
  * Adds an activity to a presence model.
@@ -173,7 +173,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_model_clear_activities(Linphone
  * Gets the first note of a presence model (there is usually only one).
  * @param[in] model The #LinphonePresenceModel object to get the note from.
  * @param[in] lang The language of the note to get. Can be NULL to get a note that has no language specified or to get the first note whatever language it is written into.
- * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise.
+ * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_model_get_note(const LinphonePresenceModel *model, const char *lang);
 
@@ -209,7 +209,7 @@ LINPHONE_PUBLIC LinphoneConsolidatedPresence linphone_presence_model_get_consoli
 
 /**
  * Creates a default presence model.
- * @return The created presence model, NULL on error.
+ * @return The created presence model, NULL on error. @maybenil
  * @see linphone_presence_model_new_with_activity
  * @see linphone_presence_model_new_with_activity_and_note
  *
@@ -227,10 +227,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_model_get_nb_services(const Linph
 /**
  * Gets the nth service of a presence model.
  * @param[in] model The #LinphonePresenceModel object to get the service from.
- * @param[in] idx The index of the service to get (the first service having the index 0).
- * @return A pointer to a #LinphonePresenceService object if successful, NULL otherwise.
+ * @param[in] index The index of the service to get (the first service having the index 0).
+ * @return A pointer to a #LinphonePresenceService object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceService * linphone_presence_model_get_nth_service(const LinphonePresenceModel *model, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceService * linphone_presence_model_get_nth_service(const LinphonePresenceModel *model, unsigned int index);
 
 /**
  * Adds a service to a presence model.
@@ -257,10 +257,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_model_get_nb_persons(const Linpho
 /**
  * Gets the nth person of a presence model.
  * @param[in] model The #LinphonePresenceModel object to get the person from.
- * @param[in] idx The index of the person to get (the first person having the index 0).
- * @return A pointer to a #LinphonePresencePerson object if successful, NULL otherwise.
+ * @param[in] index The index of the person to get (the first person having the index 0).
+ * @return A pointer to a #LinphonePresencePerson object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresencePerson * linphone_presence_model_get_nth_person(const LinphonePresenceModel *model, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresencePerson * linphone_presence_model_get_nth_person(const LinphonePresenceModel *model, unsigned int index);
 
 /**
  * Adds a person to a presence model.
@@ -306,7 +306,7 @@ char * linphone_presence_basic_status_to_string(LinphonePresenceBasicStatus basi
  * @param[in] id The id of the presence service to be created. Can be NULL to generate it automatically.
  * @param[in] basic_status The #LinphonePresenceBasicStatus to set for the #LinphonePresenceService object.
  * @param[in] contact The contact string to set.
- * @return The created presence service, NULL on error.
+ * @return The created presence service, NULL on error. @maybenil
  *
  * The created presence service has the basic status 'closed'.
  */
@@ -315,7 +315,7 @@ LINPHONE_PUBLIC LinphonePresenceService * linphone_presence_service_new(const ch
 /**
  * Gets the id of a presence service.
  * @param[in] service The #LinphonePresenceService object to get the id from.
- * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error.
+ * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -324,7 +324,7 @@ LINPHONE_PUBLIC char * linphone_presence_service_get_id(const LinphonePresenceSe
 /**
  * Sets the id of a presence service.
  * @param[in] service The #LinphonePresenceService object for which to set the id.
- * @param[in] id The id string to set. Can be NULL to generate it automatically.
+ * @param[in] id The id string to set. Can be NULL to generate it automatically. @maybenil
  * @return 0 if successful, a value < 0 in case of error.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_id(LinphonePresenceService *service, const char *id);
@@ -347,7 +347,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_basic_status(Linpho
 /**
  * Gets the contact of a presence service.
  * @param[in] service The #LinphonePresenceService object to get the contact from.
- * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found.
+ * @return A pointer to a dynamically allocated string containing the contact, or NULL if no contact is found. @maybenil
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -388,10 +388,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_service_get_nb_notes(const Linpho
 /**
  * Gets the nth note of a presence service.
  * @param[in] service The #LinphonePresenceService object to get the note from.
- * @param[in] idx The index of the note to get (the first note having the index 0).
- * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise.
+ * @param[in] index The index of the note to get (the first note having the index 0).
+ * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_service_get_nth_note(const LinphonePresenceService *service, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_service_get_nth_note(const LinphonePresenceService *service, unsigned int index);
 
 /**
  * Adds a note to a presence service.
@@ -416,14 +416,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_clear_notes(LinphonePre
 /**
  * Creates a presence person.
  * @param[in] id The id of the presence person to be created. Can be NULL to generate it automatically.
- * @return The created presence person, NULL on error.
+ * @return The created presence person, NULL on error. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresencePerson * linphone_presence_person_new(const char *id);
 
 /**
  * Gets the id of a presence person.
  * @param[in] person The #LinphonePresencePerson object to get the id from.
- * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error.
+ * @return A pointer to a dynamically allocated string containing the id, or NULL in case of error. @maybenil
  *
  * The returned string is to be freed by calling ms_free().
  */
@@ -432,7 +432,7 @@ LINPHONE_PUBLIC char * linphone_presence_person_get_id(const LinphonePresencePer
 /**
  * Sets the id of a presence person.
  * @param[in] person The #LinphonePresencePerson object for which to set the id.
- * @param[in] id The id string to set. Can be NULL to generate it automatically.
+ * @param[in] id The id string to set. Can be NULL to generate it automatically. @maybenil
  * @return 0 if successful, a value < 0 in case of error.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_person_set_id(LinphonePresencePerson *person, const char *id);
@@ -447,10 +447,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_person_get_nb_activities(const Li
 /**
  * Gets the nth activity of a presence person.
  * @param[in] person The #LinphonePresencePerson object to get the activity from.
- * @param[in] idx The index of the activity to get (the first activity having the index 0).
- * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise.
+ * @param[in] index The index of the activity to get (the first activity having the index 0).
+ * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_person_get_nth_activity(const LinphonePresencePerson *person, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_person_get_nth_activity(const LinphonePresencePerson *person, unsigned int index);
 
 /**
  * Adds an activity to a presence person.
@@ -477,10 +477,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_person_get_nb_notes(const Linphon
 /**
  * Gets the nth note of a presence person.
  * @param[in] person The #LinphonePresencePerson object to get the note from.
- * @param[in] idx The index of the note to get (the first note having the index 0).
- * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise.
+ * @param[in] index The index of the note to get (the first note having the index 0).
+ * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_person_get_nth_note(const LinphonePresencePerson *person, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_person_get_nth_note(const LinphonePresencePerson *person, unsigned int index);
 
 /**
  * Adds a note to a presence person.
@@ -507,10 +507,10 @@ LINPHONE_PUBLIC unsigned int linphone_presence_person_get_nb_activities_notes(co
 /**
  * Gets the nth activities note of a presence person.
  * @param[in] person The #LinphonePresencePerson object to get the activities note from.
- * @param[in] idx The index of the activities note to get (the first note having the index 0).
- * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise.
+ * @param[in] index The index of the activities note to get (the first note having the index 0).
+ * @return A pointer to a #LinphonePresenceNote object if successful, NULL otherwise. @maybenil
  */
-LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_person_get_nth_activities_note(const LinphonePresencePerson *person, unsigned int idx);
+LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_person_get_nth_activities_note(const LinphonePresencePerson *person, unsigned int index);
 
 /**
  * Adds an activities note to a presence person.
@@ -536,7 +536,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_person_clear_activities_notes(L
  * Creates a presence activity.
  * @param[in] acttype The #LinphonePresenceActivityType to set for the activity.
  * @param[in] description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added.
- * @return The created presence activity, NULL on error.
+ * @return The created presence activity, NULL on error. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_activity_new(LinphonePresenceActivityType acttype, const char *description);
 
@@ -567,14 +567,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_activity_set_type(LinphonePrese
 /**
  * Gets the description of a presence activity.
  * @param[in] activity A pointer to the #LinphonePresenceActivity for which to get the description.
- * @return A pointer to the description string of the presence activity, or NULL if no description is specified.
+ * @return A pointer to the description string of the presence activity, or NULL if no description is specified. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_presence_activity_get_description(const LinphonePresenceActivity *activity);
 
 /**
  * Sets the description of a presence activity.
  * @param[in] activity The #LinphonePresenceActivity object for which to set the description.
- * @param[in] description An additional description of the activity. Can be NULL if no additional description is to be added.
+ * @param[in] description An additional description of the activity. Can be NULL if no additional description is to be added. @maybenil
  * @return 0 if successful, a value < 0 in case of error.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_activity_set_description(LinphonePresenceActivity *activity, const char *description);
@@ -588,7 +588,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_activity_set_description(Linpho
  * Creates a presence note.
  * @param[in] content The content of the note to be created.
  * @param[in] lang The language of the note to be created. Can be NULL if no language is to be specified for the note.
- * @return The created presence note, NULL on error.
+ * @return The created presence note, NULL on error. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_note_new(const char *content, const char *lang);
 
@@ -610,7 +610,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_presence_note_set_content(LinphonePresen
 /**
  * Gets the language of a presence note.
  * @param[in] note A pointer to the #LinphonePresenceNote for which to get the language.
- * @return A pointer to the language string of the presence note, or NULL if no language is specified.
+ * @return A pointer to the language string of the presence note, or NULL if no language is specified. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_presence_note_get_lang(const LinphonePresenceNote *note);
 
@@ -644,14 +644,14 @@ LINPHONE_PUBLIC LinphonePresenceModel * linphone_presence_model_unref(LinphonePr
 /**
  * Sets the user data of a #LinphonePresenceModel object.
  * @param[in] model The #LinphonePresenceModel object for which to set the user data.
- * @param[in] user_data A pointer to the user data to set.
+ * @param[in] user_data A pointer to the user data to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_presence_model_set_user_data(LinphonePresenceModel *model, void *user_data);
 
 /**
  * Gets the user data of a #LinphonePresenceModel object.
  * @param[in] model The #LinphonePresenceModel object for which to get the user data.
- * @return A pointer to the user data.
+ * @return A pointer to the user data. @maybenil
  */
 LINPHONE_PUBLIC void * linphone_presence_model_get_user_data(const LinphonePresenceModel *model);
 
@@ -721,14 +721,14 @@ LINPHONE_PUBLIC LinphonePresenceService * linphone_presence_service_unref(Linpho
 /**
  * Sets the user data of a #LinphonePresenceService object.
  * @param[in] service The #LinphonePresenceService object for which to set the user data.
- * @param[in] user_data A pointer to the user data to set.
+ * @param[in] user_data A pointer to the user data to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_presence_service_set_user_data(LinphonePresenceService *service, void *user_data);
 
 /**
  * Gets the user data of a #LinphonePresenceService object.
  * @param[in] service The #LinphonePresenceService object for which to get the user data.
- * @return A pointer to the user data.
+ * @return A pointer to the user data. @maybenil
  */
 LINPHONE_PUBLIC void * linphone_presence_service_get_user_data(const LinphonePresenceService *service);
 
@@ -749,14 +749,14 @@ LINPHONE_PUBLIC LinphonePresencePerson * linphone_presence_person_unref(Linphone
 /**
  * Sets the user data of a #LinphonePresencePerson object.
  * @param[in] person The #LinphonePresencePerson object for which to set the user data.
- * @param[in] user_data A pointer to the user data to set.
+ * @param[in] user_data A pointer to the user data to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_presence_person_set_user_data(LinphonePresencePerson *person, void *user_data);
 
 /**
  * Gets the user data of a #LinphonePresencePerson object.
  * @param[in] person The #LinphonePresencePerson object for which to get the user data.
- * @return A pointer to the user data.
+ * @return A pointer to the user data. @maybenil
  */
 LINPHONE_PUBLIC void * linphone_presence_person_get_user_data(const LinphonePresencePerson *person);
 
@@ -777,14 +777,14 @@ LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_activity_unref(Linp
 /**
  * Sets the user data of a #LinphonePresenceActivity object.
  * @param[in] activity The #LinphonePresenceActivity object for which to set the user data.
- * @param[in] user_data A pointer to the user data to set.
+ * @param[in] user_data A pointer to the user data to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_presence_activity_set_user_data(LinphonePresenceActivity *activity, void *user_data);
 
 /**
  * Gets the user data of a #LinphonePresenceActivity object.
  * @param[in] activity The #LinphonePresenceActivity object for which to get the user data.
- * @return A pointer to the user data.
+ * @return A pointer to the user data. @maybenil
  */
 LINPHONE_PUBLIC void * linphone_presence_activity_get_user_data(const LinphonePresenceActivity *activity);
 
@@ -805,14 +805,14 @@ LINPHONE_PUBLIC LinphonePresenceNote * linphone_presence_note_unref(LinphonePres
 /**
  * Sets the user data of a #LinphonePresenceNote object.
  * @param[in] note The #LinphonePresenceNote object for which to set the user data.
- * @param[in] user_data A pointer to the user data to set.
+ * @param[in] user_data A pointer to the user data to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_presence_note_set_user_data(LinphonePresenceNote *note, void *user_data);
 
 /**
  * Gets the user data of a #LinphonePresenceNote object.
  * @param[in] note The #LinphonePresenceNote object for which to get the user data.
- * @return A pointer to the user data.
+ * @return A pointer to the user data. @maybenil
  */
 LINPHONE_PUBLIC void * linphone_presence_note_get_user_data(const LinphonePresenceNote *note);
 

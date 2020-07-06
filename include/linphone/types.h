@@ -378,7 +378,7 @@ typedef unsigned int LinphoneContactSearchID;
 
 /**
  * Old name of #LinphoneContactSearchID
- * @deprecated
+ * @deprecated 03/02/2017
  * @donotwrap
  */
 LINPHONE_DEPRECATED typedef LinphoneContactSearchID ContactSearchID;
@@ -446,7 +446,7 @@ typedef struct _LinphoneFactory LinphoneFactory;
 /**
  * Policy to use to pass through firewalls.
  * @ingroup network_parameters
- * @deprecated Use #LinphoneNatPolicy instead.
+ * @deprecated 03/02/2017 Use #LinphoneNatPolicy instead.
  * @donotwrap
 **/
 typedef enum _LinphoneFirewallPolicy {
@@ -649,7 +649,7 @@ typedef struct _LinphoneNatPolicy LinphoneNatPolicy;
 
 /**
  * Enum describing remote friend status
- * @deprecated Use #LinphonePresenceModel and #LinphonePresenceActivity instead
+ * @deprecated 03/02/2017 Use #LinphonePresenceModel and #LinphonePresenceActivity instead
  * @donotwrap
  */
 typedef enum _LinphoneOnlineStatus{
@@ -898,7 +898,7 @@ typedef unsigned int LinphonePrivacyMask;
  * might already be a list of configured proxy that can be examined with
  * linphone_core_get_proxy_config_list().
  *
- * The default proxy (see linphone_core_set_default_proxy() ) is the one of the list
+ * The default proxy (see linphone_core_set_default_proxy_config() ) is the one of the list
  * that is used by default for calls.
  * @ingroup proxies
 **/
@@ -972,7 +972,7 @@ typedef struct _LinphoneRingtonePlayer LinphoneRingtonePlayer;
  * Linphone core SIP transport ports.
  * Special values #LC_SIP_TRANSPORT_RANDOM, #LC_SIP_TRANSPORT_RANDOM, #LC_SIP_TRANSPORT_DONTBIND can be used.
  * Use with #linphone_core_set_sip_transports
- * @deprecated
+ * @deprecated 18/04/2017
  * @donotwrap
  */
 typedef struct _LinphoneSipTransports {
@@ -992,7 +992,7 @@ typedef struct _LinphoneTransports LinphoneTransports;
 
 /**
  * Old name of #LinphoneSipTransports
- * @deprecated
+ * @deprecated 03/02/2017
  * @donotwrap
  */
 LINPHONE_DEPRECATED typedef struct _LinphoneSipTransports LCSipTransports;
@@ -1137,7 +1137,7 @@ typedef struct _LinphoneVideoDefinition LinphoneVideoDefinition;
 /**
  * Structure describing policy regarding video streams establishments.
  * @ingroup media_parameters
- * @deprecated
+ * @deprecated 18/04/17
  * @donotwrap
 **/
 typedef struct _LinphoneVideoPolicy {
@@ -1159,7 +1159,7 @@ typedef struct LinphoneVideoSizeDef {
 
 /**
  * Old name of #LinphoneVideoSizeDef
- * @deprecated
+ * @deprecated 03/02/2017
  */
 typedef LinphoneVideoSizeDef MSVideoSizeDef;
 

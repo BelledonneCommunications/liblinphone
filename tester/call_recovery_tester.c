@@ -420,7 +420,7 @@ static void recovered_call_on_network_switch_in_early_media_base (bool_t callerL
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, 1000));
 
-	if (linphone_core_inc_invite_pending(pauline->lc)) {
+	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
 		/* Send a 183 to initiate the early media */
 		linphone_call_accept_early_media(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 2000) );

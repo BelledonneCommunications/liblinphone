@@ -127,7 +127,7 @@ int main(int argc, char *argv[]){
 	/*sip proxy might be requested*/
 	if (identity != NULL)  {
 		/*create proxy config*/
-		LinphoneProxyConfig* proxy_cfg = linphone_proxy_config_new();
+		LinphoneProxyConfig* proxy_cfg = linphone_core_create_proxy_config(NULL);
 		/*parse identity*/
 		LinphoneAddress *from = linphone_address_new(identity);
 		LinphoneAuthInfo *info;
@@ -141,14 +141,14 @@ int main(int argc, char *argv[]){
 		}
 
 		// configure proxy entries
-		linphone_proxy_config_set_identity(proxy_cfg,identity); /*set identity with user name and domain*/
+		linphone_proxy_config_set_identity_address(proxy_cfg,from); /*set identity with user name and domain*/
 		linphone_proxy_config_set_server_addr(proxy_cfg,linphone_address_get_domain(from)); /* we assume domain = proxy server address*/
 		linphone_proxy_config_enable_register(proxy_cfg,TRUE); /*activate registration for this proxy config*/
 		linphone_proxy_config_enable_publish(proxy_cfg,TRUE); /* enable presence satus publication for this proxy*/
 		linphone_address_unref(from); /*release resource*/
 
 		linphone_core_add_proxy_config(lc,proxy_cfg); /*add proxy config to linphone core*/
-		linphone_core_set_default_proxy(lc,proxy_cfg); /*set to default proxy*/
+		linphone_core_set_default_proxy_config(lc,proxy_cfg); /*set to default proxy*/
 
 
 		/* Loop until registration status is available */

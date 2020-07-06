@@ -65,16 +65,19 @@ LINPHONE_PUBLIC const char *linphone_stream_type_to_string(const LinphoneStreamT
 
 /**
  * Human readable version of the #LinphoneRegistrationState
- * @param cs sate
+ * @param state sate the value for which we want a string representation
+ * @return a string representation of the state
  * @ingroup proxies
  */
-LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegistrationState cs);
+LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegistrationState state);
 
 /**
  * Convert enum member to string.
+ * @param[in] media_encryption the #LinphoneMediaEncryption to convert
+ * @return a string representation of the media encryption
  * @ingroup media_parameters
 **/
-LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc);
+LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEncryption media_encryption);
 
 LINPHONE_PUBLIC const char* linphone_privacy_to_string(LinphonePrivacy privacy);
 
@@ -92,30 +95,34 @@ LINPHONE_PUBLIC const char *linphone_call_state_to_string(LinphoneCallState cs);
 
 /**
  * Converts a _LinphoneConfiguringState enum to a string.
+ * @param state sate the value for which we want a string representation
+ * @return a string representation of the state
  * @ingroup misc
 **/
-LINPHONE_PUBLIC const char *linphone_configuring_state_to_string(LinphoneConfiguringState cs);
+LINPHONE_PUBLIC const char *linphone_configuring_state_to_string(LinphoneConfiguringState state);
 
 /**
  * Returns a #LinphoneChatMessageState as a string.
+ * @param state sate the value for which we want a string representation
+ * @return a string representation of the state
  */
 LINPHONE_PUBLIC	const char* linphone_chat_message_state_to_string(const LinphoneChatMessageState state);
 
 /**
  * Converts a #LinphoneReason enum to a string.
- * @param[in] err A #LinphoneReason
+ * @param[in] error A #LinphoneReason
  * @return The string representation of the specified #LinphoneReason
  * @ingroup misc
 **/
-LINPHONE_PUBLIC const char *linphone_reason_to_string(LinphoneReason err);
+LINPHONE_PUBLIC const char *linphone_reason_to_string(LinphoneReason error);
 
 /**
  * Return humain readable presence status
- * @param ss
- * @deprecated Use #LinphonePresenceModel, #LinphonePresenceActivity and linphone_presence_activity_to_string() instead.
+ * @param status
+ * @deprecated 03/02/2017 Use #LinphonePresenceModel, #LinphonePresenceActivity and linphone_presence_activity_to_string() instead.
  * @donotwrap
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_online_status_to_string(LinphoneOnlineStatus ss);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_online_status_to_string(LinphoneOnlineStatus status);
 
 /**
  * Convert a string into #LinphoneTunnelMode enum
@@ -140,6 +147,8 @@ LINPHONE_PUBLIC bool_t linphone_local_player_matroska_supported(void);
 
 /**
  * Converts a #LinphoneTransportType enum to a lowercase string.
+ * @param[in] transport a #LinphoneTransportType to convert to string
+ * @return the string representation of the transport
  * @ingroup misc
 **/
 LINPHONE_PUBLIC const char* linphone_transport_to_string(LinphoneTransportType transport);
@@ -147,25 +156,26 @@ LINPHONE_PUBLIC const char* linphone_transport_to_string(LinphoneTransportType t
 /**
  * Converts a lowercase string to a #LinphoneTransportType enum.
  * @ingroup misc
+ * @param[in] transport the transport to parse.
  * @return Transport matching input, or #LinphoneTransportUdp if nothing is found
 **/
 LINPHONE_PUBLIC LinphoneTransportType linphone_transport_parse(const char* transport);
 
 /**
 * Check whether an error code is in Retry-After field.
-* @param[in] err An error code
+* @param[in] error An error code
 * @return TRUE if it is in Retry-After field
 * @ingroup misc
 **/
-LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int err);
+LINPHONE_PUBLIC bool_t linphone_error_code_is_retry_after(int error);
 
 /**
  * Converts an error code to a LinphoneReason.
- * @param[in] err An error code
+ * @param[in] error An error code
  * @return The #LinphoneReason corresponding to the specified error code
  * @ingroup misc
 **/
-LINPHONE_PUBLIC LinphoneReason linphone_error_code_to_reason(int err);
+LINPHONE_PUBLIC LinphoneReason linphone_error_code_to_reason(int error);
 
 /**
  * Converts a #LinphoneReason to an error code.
@@ -178,6 +188,7 @@ LINPHONE_PUBLIC int linphone_reason_to_error_code(LinphoneReason reason);
 /**
  * Increment refcount.
  * @param[in] range #LinphoneRange object
+ * @return the same #LinphoneRange object
  * @ingroup misc
 **/
 LINPHONE_PUBLIC LinphoneRange *linphone_range_ref(LinphoneRange *range);
@@ -192,7 +203,7 @@ LINPHONE_PUBLIC void linphone_range_unref(LinphoneRange *range);
 /**
  * Gets the user data in the #LinphoneRange object
  * @param[in] range the #LinphoneRange
- * @return the user data
+ * @return the user data. @maybenil
  * @ingroup misc
 */
 LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
@@ -200,10 +211,10 @@ LINPHONE_PUBLIC void *linphone_range_get_user_data(const LinphoneRange *range);
 /**
  * Sets the user data in the #LinphoneRange object
  * @param[in] range the #LinphoneRange object
- * @param[in] data the user data
+ * @param[in] user_data the user data @maybenil
  * @ingroup misc
 */
-LINPHONE_PUBLIC void linphone_range_set_user_data(LinphoneRange *range, void *data);
+LINPHONE_PUBLIC void linphone_range_set_user_data(LinphoneRange *range, void *user_data);
 
 /**
  * Gets the lower value of the range

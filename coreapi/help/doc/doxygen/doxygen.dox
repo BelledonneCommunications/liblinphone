@@ -76,10 +76,10 @@
  * @brief Managing proxies.
  * 
  * User registration is controled by  #LinphoneProxyConfig settings.<br> Each #LinphoneProxyConfig object can be configured with registration informations
- * like \link linphone_proxy_config_set_server_addr() proxy address \endlink , \link linphone_proxy_config_set_identity() user id \endlink, \link linphone_proxy_config_expires()
+ * like \link linphone_proxy_config_set_server_addr() proxy address \endlink , \link linphone_proxy_config_set_identity_address() user id \endlink, \link linphone_proxy_config_expires()
  * refresh period \endlink, and so on.
- * <br> A created proxy config using linphone_proxy_config_new(), once configured, must be added to #LinphoneCore using function linphone_core_add_proxy_config().
- * <br> It is recommended to set a default \link #LinphoneProxyConfig proxy config \endlink using function linphone_core_set_default_proxy(). Once done, if \link #LinphoneProxyConfig
+ * <br> A created proxy config using linphone_core_create_proxy_config(lc), once configured, must be added to #LinphoneCore using function linphone_core_add_proxy_config().
+ * <br> It is recommended to set a default \link #LinphoneProxyConfig proxy config \endlink using function linphone_core_set_default_proxy_config(). Once done, if \link #LinphoneProxyConfig
  * a proxy config \endlink has been configured with attribute \link linphone_proxy_config_enable_register() enable register \endlink  , next call to linphone_core_iterate() triggers
  * a SIP register.
  * <br> Registration status is reported by LinphoneCoreRegistrationStateChangedCb.
@@ -89,7 +89,7 @@
  *
  *	LinphoneProxyConfig* proxy_cfg;
  *	/*create proxy config*/
- *	proxy_cfg = linphone_proxy_config_new();
+ *	proxy_cfg = linphone_core_create_proxy_config(lc);
  *	/*parse identity*/
  *	LinphoneAddress *from = linphone_address_new("sip:toto@sip.titi.com");
  *	LinphoneAuthInfo *info;
@@ -98,14 +98,14 @@
  *		linphone_core_add_auth_info(lc,info); /*add authentication info to LinphoneCore*/
  *	}
  *	// configure proxy entries
- *	linphone_proxy_config_set_identity(proxy_cfg,identity); /*set identity with user name and domain*/
+ *	linphone_proxy_config_set_identity_address(proxy_cfg,identity); /*set identity with user name and domain*/
  *	const char* server_addr = linphone_address_get_domain(from); /*extract domain address from identity*/
  *	linphone_proxy_config_set_server_addr(proxy_cfg,server_addr); /* we assume domain = proxy server address*/
  *	linphone_proxy_config_enable_register(proxy_cfg,TRUE); /*activate registration for this proxy config*/
  *	linphone_address_destroy(from); /*release resource*/
  *
  *	linphone_core_add_proxy_config(lc,proxy_cfg); /*add proxy config to linphone core*/
- *	linphone_core_set_default_proxy(lc,proxy_cfg); /*set to default proxy*/ \endcode
+ *	linphone_core_set_default_proxy_config(lc,proxy_cfg); /*set to default proxy*/ \endcode
  *<br>
  * Registration sate call back:
  \code
@@ -154,7 +154,7 @@
  * <br>Here under a typical buddy creation:
  * <br>
  * \code
- * LinphoneFriend* my_friend=linphone_friend_new_with_addr("sip:joe@sip.linphone.org"); /*creates friend object for buddy joe*/
+ * LinphoneFriend* my_friend=linphone_core_create_friend_with_address("sip:joe@sip.linphone.org"); /*creates friend object for buddy joe*/
  * linphone_friend_enable_subscribes(my_friend,TRUE); /*configure this friend to emit SUBSCRIBE message after being added to LinphoneCore*/
  * linphone_friend_set_inc_subscribe_policy(my_friend,LinphoneSPAccept); /* accept Incoming subscription request for this friend*/
  * \endcode
@@ -299,7 +299,7 @@ and register a keep-alive handler for periodically refreshing the registration. 
 	linphone_core_refresh_registers(theLinphoneCore);
 	//wait for registration answer
 	int i=0;
-	while (!linphone_proxy_config_is_registered(proxyCfg) && i++<40 ) {
+	while (!linphone_proxy_config_get_state(proxyCfg) == LinphoneRegistrationOk && i++<40 ) {
 		linphone_core_iterate(theLinphoneCore);
 		usleep(100000);
 	}
