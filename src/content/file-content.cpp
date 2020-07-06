@@ -181,7 +181,7 @@ const string FileContent::getPlainFilePath() const {
 			std::remove(plainPath.data());
 			return std::string();
 		}
-		auto write = bctbx_file_write(pf, readBuf, read, readSize);
+		auto write = bctbx_file_write(pf, readBuf, (size_t)read, readSize);
 		if (write < 0 || write != read) {
 			lError()<<"Can't write file "<<plainPath<<" - plain version of "<<d->filePath;
 			bctbx_file_close(cf);
