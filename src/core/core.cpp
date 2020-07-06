@@ -284,7 +284,7 @@ Sal * CorePrivate::getSal(){
 	return getPublic()->getCCore()->sal;
 }
 
-LinphoneCore *CorePrivate::getCCore(){
+LinphoneCore *CorePrivate::getCCore() const {
 	return getPublic()->getCCore();
 }
 

@@ -19,6 +19,7 @@
 
 #include "chat-room-params.h"
 #include "chat-room.h"
+#include "logger/logger.h"
 
 using namespace std;
 
@@ -30,10 +31,14 @@ ChatRoomParams::ChatRoomParams() {
 	mEncrypted = false;
 	mGroup = false;
 	mRtt = false;
+	mSubject = "";
 }
 
 ChatRoomParams::ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend)
-	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group) {
+	: ChatRoomParams("", encrypted, group, backend) {}
+
+ChatRoomParams::ChatRoomParams(string subject, bool encrypted, bool group, ChatRoomBackend backend)
+	: mChatRoomBackend(backend), mEncrypted(encrypted), mGroup(group), mSubject(subject) {
 	if (encrypted) {
 		mChatRoomEncryptionBackend = ChatRoomEncryptionBackend::Lime;
 	}
@@ -45,6 +50,7 @@ ChatRoomParams::ChatRoomParams(const ChatRoomParams &other) : HybridObject(other
 	mEncrypted = other.mEncrypted;
 	mGroup = other.mGroup;
 	mRtt = other.mRtt;
+	mSubject = other.mSubject;
 }
 
 ChatRoomParams::ChatRoomBackend ChatRoomParams::getChatRoomBackend() const { return mChatRoomBackend; }
@@ -57,6 +63,7 @@ bool ChatRoomParams::isGroup() const { return mGroup; }
 
 bool ChatRoomParams::isRealTimeText() const { return mRtt; }
 
+const string& ChatRoomParams::getSubject() const { return mSubject; }
 
 void ChatRoomParams::setChatRoomBackend(ChatRoomParams::ChatRoomBackend backend) { mChatRoomBackend = backend; }
 
@@ -78,6 +85,8 @@ void ChatRoomParams::setGroup(bool group) {
 }
 
 void ChatRoomParams::setRealTimeText(bool rtt) { mRtt = rtt; }
+
+void ChatRoomParams::setSubject(string subject) { mSubject = subject; }
 
 shared_ptr<ChatRoomParams> ChatRoomParams::getDefaults() {
 	return ChatRoomParams::create();
@@ -137,15 +146,23 @@ ChatRoom::CapabilitiesMask ChatRoomParams::toCapabilities(const std::shared_ptr<
 //Returns false	if there are any inconsistencies between parameters
 bool ChatRoomParams::isValid() const {
 	if (mEncrypted && mChatRoomEncryptionBackend != ChatRoomEncryptionBackend::Lime) {
+		lError() << "Currently only Lime encryption backend is supported";
 		return false;
 	}
 	if (mEncrypted && mChatRoomBackend == ChatRoomBackend::Basic) {
+		lError() << "Encryption isn't supported with Basic backend";
 		return false;
 	}
 	if (mGroup && mChatRoomBackend != ChatRoomBackend::FlexisipChat) {
+		lError() << "FlexisipChat backend must be used when group is enabled";
 		return false;
 	}
 	if (mRtt && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
+		lError() << "Real time text chat room isn't compatible with FlexisipChat backend";
+		return false;
+	}
+	if (mSubject.empty() && mChatRoomBackend == ChatRoomBackend::FlexisipChat) {
+		lError() << "You must set a non empty subject when using the FlexisipChat backend";
 		return false;
 	}
 	return true;
@@ -154,6 +171,7 @@ bool ChatRoomParams::isValid() const {
 std::string ChatRoomParams::toString() const {
 	std::ostringstream ss;
 
+	ss << "Subject[" << mSubject << "];";
 	ss << "Encrypted[" << mEncrypted << "];";
 	ss << "Group[" << mGroup << "];";
 	ss << "Rtt[" << mRtt << "];";

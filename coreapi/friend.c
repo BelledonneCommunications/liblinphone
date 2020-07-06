@@ -467,6 +467,39 @@ bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *lf) {
 	return NULL;
 }
 
+bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *phoneNumber) {
+	if (!lf || !phoneNumber) return FALSE;
+
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lf->lc);
+	if (phoneNumber == NULL || !linphone_proxy_config_is_phone_number(cfg, phoneNumber)) {
+		ms_warning("Phone number [%s] isn't valid", phoneNumber);
+		return FALSE;
+	}
+
+	char *normalized_phone_number = linphone_proxy_config_normalize_phone_number(cfg, phoneNumber);
+
+	bool_t found = FALSE;
+	if (linphone_core_vcard_supported()) {
+		bctbx_list_t *numbers = linphone_friend_get_phone_numbers(lf);
+		bctbx_list_t *it = NULL;
+		for (it = numbers; it != NULL; it = bctbx_list_next(it)) {
+			const char *value = (const char *)bctbx_list_get_data(it);
+			char *normalized_value = linphone_proxy_config_normalize_phone_number(cfg, value);
+			if (normalized_value && strcmp(normalized_value, normalized_phone_number) == 0) {
+				found = TRUE;
+				ms_free(normalized_value);
+				break;
+			}
+			if (normalized_value) ms_free(normalized_value);
+		}
+		bctbx_list_free(numbers);
+	}
+
+	if (normalized_phone_number) ms_free(normalized_phone_number);
+
+	return found;
+}
+
 void linphone_friend_remove_phone_number(LinphoneFriend *lf, const char *phone) {
 	if (!lf || !phone || !lf->vcard) return;
 
@@ -990,6 +1023,17 @@ LinphoneFriend *linphone_core_find_friend(const LinphoneCore *lc, const Linphone
 	while (lists && !lf) {
 		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
 		lf = linphone_friend_list_find_friend_by_address(list, addr);
+		lists = bctbx_list_next(lists);
+	}
+	return lf;
+}
+
+LinphoneFriend *linphone_core_find_friend_by_phone_number(const LinphoneCore *lc, const char* phoneNumber) {
+	bctbx_list_t *lists = lc->friends_lists;
+	LinphoneFriend *lf = NULL;
+	while (lists && !lf) {
+		LinphoneFriendList *list = (LinphoneFriendList *)bctbx_list_get_data(lists);
+		lf = linphone_friend_list_find_friend_by_phone_number(list, phoneNumber);
 		lists = bctbx_list_next(lists);
 	}
 	return lf;

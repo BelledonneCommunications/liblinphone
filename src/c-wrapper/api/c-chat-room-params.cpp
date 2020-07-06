@@ -19,6 +19,7 @@
 
 #include "linphone/api/c-chat-room-params.h"
 #include "chat/chat-room/chat-room-params.h"
+#include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
@@ -28,6 +29,10 @@ using namespace LinphonePrivate;
 
 LinphoneChatRoomParams *linphone_chat_room_params_new(void) {
 	return ChatRoomParams::createCObject();
+}
+
+LinphoneChatRoomParams *linphone_chat_room_params_clone(const LinphoneChatRoomParams *params) {
+	return LinphonePrivate::ChatRoomParams::toCpp(params)->clone()->toC();
 }
 
 LinphoneChatRoomParams *linphone_chat_room_params_ref(LinphoneChatRoomParams *params) {
@@ -81,4 +86,12 @@ void linphone_chat_room_params_enable_encryption(LinphoneChatRoomParams *params,
 
 void linphone_chat_room_params_enable_rtt(LinphoneChatRoomParams *params, bool_t rtt) {
 	ChatRoomParams::toCpp(params)->setRealTimeText(!!rtt);
+}
+
+const char * linphone_chat_room_params_get_subject(LinphoneChatRoomParams *params) {
+	return L_STRING_TO_C(ChatRoomParams::toCpp(params)->getSubject());
+}
+
+void linphone_chat_room_params_set_subject(LinphoneChatRoomParams *params, const char *subject) {
+	ChatRoomParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
 }

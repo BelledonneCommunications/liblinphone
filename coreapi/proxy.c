@@ -744,7 +744,7 @@ bool_t linphone_proxy_config_is_phone_number(LinphoneProxyConfig *proxy, const c
 }
 
 //remove anything but [0-9] and +
-static char *flatten_number(const char *number){
+static char *linphone_proxy_config_flatten_phone_number(LinphoneProxyConfig *proxy, const char *number) {
 	char *result=reinterpret_cast<char *>(ms_malloc0(strlen(number)+1));
 	char *w=result;
 	const char *r;
@@ -782,7 +782,7 @@ char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy, c
 	int ccc = -1;
 
 	if (linphone_proxy_config_is_phone_number(tmpproxy, username)){
-		char * flatten=flatten_number(username);
+		char * flatten = linphone_proxy_config_flatten_phone_number(proxy, username);
 		ms_debug("Flattened number is '%s' for '%s'",flatten, username);
 
 		ccc = DialPlan::lookupCccFromE164(flatten);
