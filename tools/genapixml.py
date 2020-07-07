@@ -93,6 +93,7 @@ class CArgument(CObject):
 		self.containedType = None
 		self.onTheFlyList = False
 		self.maybenil = False
+		self.notnil = False
 		keywords = [ 'const', 'struct', 'enum', 'signed', 'unsigned', 'short', 'long', '*' ]
 		fullySplittedType = []
 		splittedType = t.strip().split(' ')
@@ -565,6 +566,7 @@ class Project:
 		returndesc = node.find("./detaileddescription/para/simplesect[@kind='return']")
 		if returndesc is not None:
 			returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
+			returnarg.notnil = True if returndesc.find('.//notnil') is not None else False
 			if returnarg.ctype == 'MSList' or returnarg.ctype == 'bctbx_list_t':
 				n = returndesc.find('.//bctbxlist')
 				if n is not None:
@@ -594,6 +596,7 @@ class Project:
 								if n is not None:
 									arg.containedType = n.text
 							arg.maybenil = True if paramdesc.find('.//maybenil') is not None else False
+							arg.notnil = True if paramdesc.find('.//notnil') is not None else False
 							arg.description = self.__cleanDescription(paramdesc.find('./parameterdescription'))
 				missingDocWarning = ''
 				for arg in argslist.arguments:
