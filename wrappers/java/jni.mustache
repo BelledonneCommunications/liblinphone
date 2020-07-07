@@ -664,4 +664,8 @@ JNIEXPORT jobject JNICALL Java_org_linphone_core_FactoryImpl_getCore(JNIEnv *env
 	return getCore(env, (LinphoneCore*)lcPtr, TRUE);
 }
 
+JNIEXPORT jlong JNICALL Java_org_linphone_core_FactoryImpl_init(JNIEnv *env, jobject thiz, jlong ptr) {
+	return (jlong)linphone_factory_get();
+}
+
 } // End of extern C
