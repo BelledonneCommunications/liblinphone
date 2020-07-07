@@ -82,7 +82,6 @@ void Video::exec(Daemon* app, const string& args)
 	app->sendResponse(Response(activate ? "Camera activated." : "Camera deactivated", Response::Ok));
 }
 
-
 VideoSource::VideoSource():
 	DaemonCommand("videosource",
 				  "videosource cam|dummy [<call_id>]",
@@ -144,7 +143,7 @@ void VideoSource::exec(Daemon* app, const string& args)
 		return;
 	}
 	linphone_call_enable_camera(call,activate);
-	app->sendResponse(Response(activate ? "Dummy source selected." : "Webcam source selected.", Response::Ok));
+	app->sendResponse(Response(activate ? "Webcam source selected." : "Dummy source selected.", Response::Ok));
 }
 
 
@@ -172,4 +171,102 @@ void AutoVideo::exec(Daemon* app, const string& args)
 	linphone_core_set_video_policy(lc, &vpol);
 	app->setAutoVideo(enable);
 	app->sendResponse(Response(enable?"Auto video ON": "Auto video OFF", Response::Ok));
+}
+
+//--------------------------------------------------
+
+VideoSourceGet::VideoSourceGet():
+	DaemonCommand("videosource-get",
+				  "videosource-get",
+				  "Get the current video source.")
+{
+	addExample(new DaemonCommandExample("videosource-get",
+										"Status: Ok\n\n"
+										"V4L2: /dev/video2"));
+}
+
+void VideoSourceGet::exec(Daemon* app, const string& args)
+{
+	app->sendResponse(Response(linphone_core_get_video_device(app->getCore()), Response::Ok));
+}
+
+//--------------------------------------------------
+
+VideoSourceList::VideoSourceList():
+	DaemonCommand("videosource-list",
+				  "videosource-list",
+				  "Get the list of all available video source.")
+{
+	addExample(new DaemonCommandExample("videosource-list",
+										"Status: Ok\n\n"
+										"V4L2: /dev/video2"));
+	addExample(new DaemonCommandExample("videosource-list",
+										"Status: Error\n\n"
+										"No video source found."));
+}
+
+void VideoSourceList::exec(Daemon* app, const string& args)
+{
+	ostringstream ost;
+	for (const bctbx_list_t *node = linphone_core_get_video_devices_list(app->getCore()); node != NULL; node = bctbx_list_next(node))
+		ost << static_cast<char *>(node->data) << "\n";
+	if (ost.str().empty()) {
+		app->sendResponse(Response("No video source found.", Response::Error));
+	} else {
+		app->sendResponse(Response(ost.str(), Response::Ok));
+	}
+}
+
+//--------------------------------------------------
+
+VideoSourceSet::VideoSourceSet():
+	DaemonCommand("videosource-set",
+				  "videosource-set",
+				  "Set the current video source.")
+{
+	addExample(new DaemonCommandExample("videosource-set V4L2: /dev/video2",
+										"Status: Ok\n\n"
+										"V4L2: /dev/video2"));
+	addExample(new DaemonCommandExample("videosource-set V4L: /dev/video42",
+										"Status: Error\n\n"
+										"No video source found."));
+}
+
+void VideoSourceSet::exec(Daemon* app, const string& args)
+{
+	const bctbx_list_t *node = linphone_core_get_video_devices_list(app->getCore());
+	for (; node != NULL; node = bctbx_list_next(node))
+		if( static_cast<char *>(node->data) == args)
+			break;
+	if( node == NULL){
+		app->sendResponse(Response("No video source found.", Response::Error));
+	}else{
+		linphone_core_set_video_device(app->getCore(), args.c_str());
+		app->sendResponse(Response(args, Response::Ok));
+	}
+}
+
+//--------------------------------------------------
+
+VideoSourceReload::VideoSourceReload():
+	DaemonCommand("videosourcereload",
+				  "videosourcereload",
+				  "Update detection of camera devices and get the list")
+{
+	addExample(new DaemonCommandExample("videosourcereload",
+										"Status: Ok\n\n"
+										"V4L2: /dev/video2"));
+}
+
+void VideoSourceReload::exec(Daemon* app, const string& args)
+{
+	ostringstream ost;
+	linphone_core_reload_video_devices(app->getCore());
+	for (const bctbx_list_t *node = linphone_core_get_video_devices_list(app->getCore()); node != NULL; node = bctbx_list_next(node))
+		ost << static_cast<char *>(node->data) << "\n";
+	if (ost.str().empty()) {
+		app->sendResponse(Response("No video source found.", Response::Error));
+	} else {
+		app->sendResponse(Response(ost.str(), Response::Ok));
+	}
 }
