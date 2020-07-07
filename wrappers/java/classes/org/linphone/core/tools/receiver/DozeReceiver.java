@@ -24,18 +24,13 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.PowerManager;
 
-import org.linphone.core.tools.AndroidPlatformHelper;
 import org.linphone.core.tools.Log;
 
 /*
  * Purpose of this receiver is to disable keep alives when device is on idle
  */
 public class DozeReceiver extends android.content.BroadcastReceiver {
-    private AndroidPlatformHelper mHelper;
-
-    public DozeReceiver(AndroidPlatformHelper helper) {
-        mHelper = helper;
-    }
+    public DozeReceiver() { }
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -43,10 +38,6 @@ public class DozeReceiver extends android.content.BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             boolean dozeM = pm.isDeviceIdleMode();
             Log.i("[Platform Helper] [Doze Receiver] Doze mode enabled: " + dozeM);
-            if (mHelper != null) {
-                mHelper.setDozeModeEnabled(dozeM);
-                mHelper.updateNetworkReachability();
-            }
         }
     }
 }
