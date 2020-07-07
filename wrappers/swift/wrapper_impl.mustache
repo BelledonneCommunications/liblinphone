@@ -42,7 +42,7 @@ public struct {{enumName}}:OptionSet
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+	public static let {{name}} = Linphone{{enumName}}(rawValue: {{{value}}})
 	{{/values}}
 }
 {{/isFlag}}
@@ -90,9 +90,9 @@ public class LinphoneObject {
 	}
 }
 
-func StringArrayToBctbxList(list: [String]) -> UnsafeMutablePointer<bctbx_list_t>? {
+func StringArrayToBctbxList(list: [String]?) -> UnsafeMutablePointer<bctbx_list_t>? {
 	var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
-	for data in list {
+	for data in list ?? [] {
 		let sData:NSString = data as NSString
 		cList = bctbx_list_append(cList, unsafeBitCast(sData.utf8String, to: UnsafeMutablePointer<CChar>.self))
 	}
@@ -285,7 +285,6 @@ public class {{className}} : LinphoneObject
 	{{/isFlag}}
 	{{/classEnums}}
 	{{#properties}}
-	{{#has_property}}
 
 	{{#doc}}
 	{{#lines}}
@@ -297,6 +296,7 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/detailedDoc}}
+	{{#has_property}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
 	{{#has_getter}}
@@ -409,6 +409,7 @@ public class {{className}} : LinphoneObject
 	{{/exception}}
 	{{/has_setter}}
 	}
+	{{/has_property}}
 	{{#has_setter}}
 	{{#exception}}
 
@@ -453,7 +454,6 @@ public class {{className}} : LinphoneObject
 	}
 	{{/exception}}
 	{{/has_setter}}
-	{{/has_property}}
 	{{#listener}}
 	public func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
 	{
