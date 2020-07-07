@@ -327,7 +327,6 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 		lError() << "Could not remove the call from the list!!!";
 	if (getConference() && isInConference()) {
 		lInfo() << "Removing terminated call from LinphoneConference " << getConference();
-		printf("Removing terminated call %p from LinphoneConference %p Confertence %p\n", this, getConference(), MediaConference::Conference::toCpp(getConference()));
 		MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
 	}
 #if 0
@@ -345,8 +344,6 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
-
-	printf("Call %p state %s\n", this, Utils::toString(getState()).c_str());
 
 	switch(state) {
 		case CallSession::State::OutgoingInit:

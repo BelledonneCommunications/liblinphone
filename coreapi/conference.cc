@@ -91,7 +91,6 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 	}
 	LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
 	lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
-	printf("The Conference has been given the address %s\n", conferenceAddress.asString().c_str());
 
 	getCore()->insertAudioVideoConference(getSharedFromThis());
 
@@ -113,11 +112,6 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	//const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 	const Address * remoteContact = call->getRemoteAddress();
-printf("%s - remote address %s", __func__, remoteContact->asString().c_str());
-if(static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress() != NULL) {
-printf(" remote contact address %s\n", static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress()->asString().c_str());
-}
-printf("\n");
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact, call->getActiveSession());
 
 	shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
@@ -174,7 +168,6 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	// - current state is not Deleted
 	// - current state is Deleted and trying to move to Instantiated state
 	if ((previousState != ConferenceInterface::State::Deleted) || ((previousState == ConferenceInterface::State::Deleted) && (state == ConferenceInterface::State::Instantiated))) {
-printf("%s - conference %p previous state %s new state %s\n", __func__, this, Utils::toString(previousState).c_str(), Utils::toString(state).c_str());
 		shared_ptr<Conference> ref = getSharedFromThis();
 		LinphonePrivate::Conference::setState(state);
 		// TODO Delete
@@ -387,9 +380,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		ms_error("Already in conference");
 		return false;
 	}
-
-	printf("Trying to add participant to conference %p while it is in state %s\n",
-	this, linphone_conference_state_to_string((LinphoneConferenceState)getState()));
 
 	// Add participant only if creation is successful
 	if (getState() == ConferenceInterface::State::Created) {
