@@ -1799,8 +1799,10 @@ void MainDb::init () {
 	/* Enable secure delete - so that erased chat messages are really erased and not just marked as unused.
 	 * See https://sqlite.org/pragma.html#pragma_secure_delete 
 	 * This setting is global for the database.
+	 * It is enabled only for sqlite3 backend, which is the one used for liblinphone clients.
+	 * The mysql backend (used server-side) doesn't support this PRAGMA.
 	 */
-	*session << string("PRAGMA secure_delete = ON");
+	if (backend == Sqlite3) *session << string("PRAGMA secure_delete = ON");
 
 	*session <<
 		"CREATE TABLE IF NOT EXISTS sip_address ("
