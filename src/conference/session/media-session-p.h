@@ -132,6 +132,8 @@ public:
 	void lossOfMediaDetected();
 	/* test function */
 	IceSession *getIceSession()const;
+	
+	void setState (CallSession::State newState, const std::string &message) override;
 private:
 	/* IceServiceListener methods:*/
 	virtual void onGatheringFinished(IceService &service) override;
@@ -144,7 +146,7 @@ private:
 #endif // ifdef TEST_EXT_RENDERER
 	static int sendDtmf (void *data, unsigned int revents);
 
-	void setState (CallSession::State newState, const std::string &message) override;
+	
 
 	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
 	void assignStreamsIndexes(bool localIsOfferer);

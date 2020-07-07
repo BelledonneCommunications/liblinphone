@@ -64,7 +64,7 @@ static void play_file(const char *filename, bool_t supported_format, const char 
 	if(lc_manager) linphone_core_manager_destroy(lc_manager);
 }
 
-static void wav_player_test(void){
+static void wav_player_test(bool_t seek){
 	LinphoneCoreManager *lc_manager = linphone_core_manager_new("marie_rc");
 	LinphonePlayer *player;
 	LinphonePlayerCbs *cbs;
@@ -101,7 +101,15 @@ static void wav_player_test(void){
 	BC_ASSERT_GREATER((int)current_position, 1000, int, "%d");
 	BC_ASSERT_LOWER((int)current_position, 3000, int, "%d");
 
-	BC_ASSERT_TRUE(wait_for_until(lc_manager->lc, NULL, &eof, 1, (int)(linphone_player_get_duration(player) * 1.05)));
+	if (seek) {
+		res = linphone_player_seek(player, 15000);
+		BC_ASSERT_EQUAL(res, 0, int, "%d");
+		if(res == -1) goto fail;
+
+		BC_ASSERT_TRUE(wait_for_until(lc_manager->lc, NULL, &eof, 1, 8000));
+	} else {	
+		BC_ASSERT_TRUE(wait_for_until(lc_manager->lc, NULL, &eof, 1, (int)(linphone_player_get_duration(player) * 1.05)));
+	}
 
 	linphone_player_close(player);
 
@@ -109,6 +117,14 @@ static void wav_player_test(void){
 	if(player) linphone_player_unref(player);
 	if(lc_manager) linphone_core_manager_destroy(lc_manager);
 	bc_free(filename);
+}
+
+static void wav_player_simple_test(void) {
+	wav_player_test(FALSE);
+}
+
+static void wav_player_seeking_test(void){
+	wav_player_test(TRUE);
 }
 
 static void sintel_trailer_opus_h264_test(void) {
@@ -136,7 +152,8 @@ static void sintel_trailer_opus_vp8_test(void) {
 }
 
 test_t player_tests[] = {
-	TEST_NO_TAG("Wav file", wav_player_test),
+	TEST_NO_TAG("Wav file", wav_player_simple_test),
+	TEST_NO_TAG("Wav seeking", wav_player_seeking_test),
 	TEST_NO_TAG("Sintel trailer opus/h264", sintel_trailer_opus_h264_test),
 	TEST_NO_TAG("Sintel trailer pcmu/h264", sintel_trailer_pcmu_h264_test),
 	TEST_NO_TAG("Sintel trailer opus/VP8", sintel_trailer_opus_vp8_test)

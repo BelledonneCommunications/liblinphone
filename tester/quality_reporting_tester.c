@@ -81,7 +81,7 @@ static void on_report_send_with_rtcp_xr_local (const LinphoneCall *call, SalStre
 	const char *body = NULL;
 	const char *local_metrics_start = NULL;
 	const char *remote_metrics_start = NULL;
-	reporting_session_report_t *report = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_log(call)))[stream_type];
+	reporting_session_report_t *report = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_call_log(call)))[stream_type];
 	on_report_send_mandatory(call, stream_type, content);
 
 	body = linphone_content_get_string_buffer(content);
@@ -94,7 +94,7 @@ static void on_report_send_with_rtcp_xr_local (const LinphoneCall *call, SalStre
 
 static void on_report_send_with_rtcp_xr_remote (const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content) {
 	char *body = (char *)linphone_content_get_buffer(content);
-	reporting_session_report_t *report = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_log(call)))[stream_type];
+	reporting_session_report_t *report = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_call_log(call)))[stream_type];
 
 	on_report_send_mandatory(call, stream_type, content);
 	if ((report->remote_metrics.rtcp_sr_count + report->remote_metrics.rtcp_xr_count) > 0) {
@@ -147,7 +147,7 @@ static void quality_reporting_not_used_without_config (void) {
 		BC_ASSERT_FALSE(linphone_proxy_config_quality_reporting_enabled(linphone_call_get_dest_proxy(call_pauline)));
 
 		// This field should be already filled
-		quality_reports = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_log(call_marie)));
+		quality_reports = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_call_log(call_marie)));
 		BC_ASSERT_PTR_NOT_NULL(quality_reports[0]->info.local_addr.ip);
 
 		// But not this one since it is updated at the end of call
@@ -255,7 +255,7 @@ static void quality_reporting_at_call_termination (void) {
 		linphone_core_terminate_all_calls(marie->lc);
 
 		// Now dialog id should be filled
-		quality_reports = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_log(call_marie)));
+		quality_reports = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_call_log(call_marie)));
 		BC_ASSERT_PTR_NOT_NULL(quality_reports[0]->dialog_id);
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1, 10000));

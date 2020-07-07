@@ -125,6 +125,7 @@ protected:
 	LinphoneErrorInfo *ei = nullptr;
 	LinphoneCallLog *log = nullptr;
 	std::string referTo;
+	std::string emptyString = "";
 
 	SalCallOp *op = nullptr;
 

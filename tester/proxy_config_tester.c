@@ -60,7 +60,7 @@ static void phone_normalization_without_proxy(void) {
 }
 
 static void phone_normalization_with_proxy(void) {
-	LinphoneProxyConfig *proxy = linphone_proxy_config_new();
+	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "012 3456 789"), "+33123456789");
 	linphone_proxy_config_set_dial_prefix(proxy, NULL);
@@ -151,7 +151,7 @@ static void phone_normalization_with_proxy(void) {
 }
 
 static void phone_normalization_with_dial_escape_plus(void){
-	LinphoneProxyConfig *proxy = linphone_proxy_config_new();
+	LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_set_dial_escape_plus(proxy, TRUE);
 	BC_ASSERT_STRING_EQUAL(phone_normalization(proxy, "0033952636505"), "0033952636505");
@@ -177,10 +177,12 @@ static void phone_normalization_with_dial_escape_plus(void){
 }
 
 #define SIP_URI_CHECK(actual, expected) { \
-		LinphoneProxyConfig *proxy = linphone_proxy_config_new(); \
+		LinphoneProxyConfig *proxy = linphone_core_create_proxy_config(NULL); \
 		LinphoneAddress* res;\
 		char* actual_str;\
-		linphone_proxy_config_set_identity(proxy, "sip:username@linphone.org"); \
+		LinphoneAddress *addr = linphone_address_new("sip:username@linphone.org"); \
+		linphone_proxy_config_set_identity_address(proxy, addr); \
+		if (addr) linphone_address_unref(addr); \
 		res  = linphone_proxy_config_normalize_sip_uri(proxy, actual); \
 		actual_str = linphone_address_as_string_uri_only(res); \
 		BC_ASSERT_STRING_EQUAL(actual_str, expected); \

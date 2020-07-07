@@ -53,7 +53,6 @@
 #include "linphone/utils/algorithm.h"
 #include "linphone/lpconfig.h"
 
-#include "call/call-p.h"
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
 #include "conference_private.h"
@@ -285,7 +284,7 @@ Sal * CorePrivate::getSal(){
 	return getPublic()->getCCore()->sal;
 }
 
-LinphoneCore *CorePrivate::getCCore(){
+LinphoneCore *CorePrivate::getCCore() const {
 	return getPublic()->getCCore();
 }
 
@@ -385,7 +384,7 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 
 void CorePrivate::updateVideoDevice(){
 	if (currentCall && currentCall->getState() == CallSession::State::StreamsRunning){
-		VideoControlInterface *i = currentCall->getPrivate()->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
+		VideoControlInterface *i = currentCall->getMediaSession()->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 		if (i) i->parametersChanged();
 	}
 	if (getCCore()->conf_ctx){

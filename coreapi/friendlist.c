@@ -877,6 +877,21 @@ LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFrien
 	return lf;
 }
 
+LinphoneFriend * linphone_friend_list_find_friend_by_phone_number(const LinphoneFriendList *list, const char *phoneNumber) {
+	LinphoneFriend *result = NULL;
+	
+	const bctbx_list_t *elem;
+	for (elem = list->friends; elem != NULL; elem = bctbx_list_next(elem)) {
+		LinphoneFriend *lf = (LinphoneFriend *)bctbx_list_get_data(elem);
+		if (linphone_friend_has_phone_number(lf, phoneNumber)) {
+			result = lf;
+			break;
+		}
+	}
+
+	return result;
+}
+
 bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *list, const LinphoneAddress *address) {
 	LinphoneAddress *clean_addr = linphone_address_clone(address);
 	bctbx_list_t *result = NULL;

@@ -56,6 +56,8 @@ void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudio
 
 LinphoneCall * linphone_call_new_outgoing(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, const LinphoneCallParams *params, LinphoneProxyConfig *cfg);
 LinphoneCall * linphone_call_new_incoming(struct _LinphoneCore *lc, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
+
+void linphone_call_configure (LinphoneCall *call, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op);
 LINPHONE_PUBLIC LinphoneCallLog *linphone_call_log_new(LinphoneCallDir dir, LinphoneAddress *from, LinphoneAddress * to);
 void linphone_call_log_set_call_id(LinphoneCallLog *cl, const char *call_id);
 LinphonePlayer *linphone_call_build_player(LinphoneCall*call);
@@ -66,9 +68,6 @@ LinphonePrivate::SalCallOp *linphone_call_get_op(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_get_dest_proxy(const LinphoneCall *call);
 
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
-
-// FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
-LINPHONE_PUBLIC LinphoneCallLog * linphone_call_get_log(const LinphoneCall *call);
 
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC IceSession *linphone_call_get_ice_session(const LinphoneCall *call);
@@ -122,8 +121,13 @@ void linphone_call_params_set_used_video_codec(LinphoneCallParams *params, OrtpP
 void linphone_call_params_set_used_text_codec(LinphoneCallParams *params, OrtpPayloadType *codec);
 bool_t linphone_call_params_get_no_user_consent(const LinphoneCallParams *params);
 
+
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC void linphone_call_params_set_no_user_consent(LinphoneCallParams *params, bool_t value);
+LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
+LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
@@ -419,7 +423,6 @@ LinphoneChatMessageStateChangedCb linphone_chat_message_get_message_state_change
 void linphone_chat_message_set_message_state_changed_cb(LinphoneChatMessage* msg, LinphoneChatMessageStateChangedCb cb);
 void linphone_chat_message_set_message_state_changed_cb_user_data(LinphoneChatMessage* msg, void *user_data);
 void * linphone_chat_message_get_message_state_changed_cb_user_data(LinphoneChatMessage* msg);
-LinphoneChatRoom *_linphone_core_create_chat_room_from_call(LinphoneCall *call);
 
 bool_t linphone_core_tone_indications_enabled(LinphoneCore*lc);
 const char *linphone_core_create_uuid(LinphoneCore *lc);

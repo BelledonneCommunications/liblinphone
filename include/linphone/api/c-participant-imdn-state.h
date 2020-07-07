@@ -35,32 +35,35 @@
 
 /**
  * Increment reference count of LinphoneParticipantImdnState object.
+ * @param[in] state the #LinphoneParticipantImdnState object
+ * @return the same #LinphoneParticipantImdnState object
  **/
 LINPHONE_PUBLIC LinphoneParticipantImdnState *linphone_participant_imdn_state_ref (LinphoneParticipantImdnState *state);
 
 /**
  * Decrement reference count of LinphoneParticipantImdnState object.
+ * @param[in] state the #LinphoneParticipantImdnState object
  **/
 LINPHONE_PUBLIC void linphone_participant_imdn_state_unref (LinphoneParticipantImdnState *state);
 
 /**
  * Retrieve the user pointer associated with a LinphoneParticipantImdnState.
  * @param[in] state A LinphoneParticipantImdnState object
- * @return The user pointer associated with the LinphoneParticipantImdnState.
+ * @return The user pointer associated with the LinphoneParticipantImdnState. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_participant_imdn_state_get_user_data(const LinphoneParticipantImdnState *state);
 
 /**
  * Assign a user pointer to a LinphoneParticipantImdnState.
  * @param[in] state A LinphoneParticipantImdnState object
- * @param[in] ud The user pointer to associate with the LinphoneParticipantImdnState
+ * @param[in] user_data The user pointer to associate with the LinphoneParticipantImdnState. @maybenil
 **/
-LINPHONE_PUBLIC void linphone_participant_imdn_state_set_user_data(LinphoneParticipantImdnState *state, void *ud);
+LINPHONE_PUBLIC void linphone_participant_imdn_state_set_user_data(LinphoneParticipantImdnState *state, void *user_data);
 
 /**
  * Get the participant concerned by a LinphoneParticipantImdnState.
  * @param[in] state A LinphoneParticipantImdnState object
- * @return The participant concerned by the LinphoneParticipantImdnState
+ * @return The #LinphoneParticipant concerned by the LinphoneParticipantImdnState
  */
 LINPHONE_PUBLIC const LinphoneParticipant *linphone_participant_imdn_state_get_participant (
 	const LinphoneParticipantImdnState *state
@@ -69,7 +72,7 @@ LINPHONE_PUBLIC const LinphoneParticipant *linphone_participant_imdn_state_get_p
 /**
  * Get the chat message state the participant is in.
  * @param state A LinphoneParticipantImdnState object
- * @return The chat message state the participant is in
+ * @return The #LinphoneChatMessageState the participant is in
  */
 LINPHONE_PUBLIC LinphoneChatMessageState linphone_participant_imdn_state_get_state (const LinphoneParticipantImdnState *state);
 

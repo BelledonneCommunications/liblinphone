@@ -118,14 +118,9 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
 	c-wrapper/internal/c-tools.h
-	call/call-p.h
 	call/call.h
 	call/audio-device/audio-device.h
 	call/audio-device/audio-device.cpp
-	call/local-conference-call-p.h
-	call/local-conference-call.h
-	call/remote-conference-call-p.h
-	call/remote-conference-call.h
 	chat/chat-message/chat-message-p.h
 	chat/chat-message/chat-message.h
 	chat/chat-message/imdn-message-p.h
@@ -324,8 +319,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	call/call.cpp
-	call/local-conference-call.cpp
-	call/remote-conference-call.cpp
 	chat/chat-message/chat-message.cpp
 	chat/chat-message/imdn-message.cpp
 	chat/chat-message/is-composing-message.cpp
@@ -587,12 +580,13 @@ if(ENABLE_SHARED)
 		set_source_files_properties(${LINPHONE_C_API_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/api")
 		set_source_files_properties(${LINPHONE_ENUMS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/enums")
 		set_source_files_properties(${LINPHONE_UTILS_HEADER_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION "Headers/utils")
-
+		list(GET LINPHONE_ROOT_HEADER_FILES 0 one_header_file)
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
 			RESOURCE "${LINPHONE_RESOURCES}"
+			PUBLIC_HEADER "${one_header_file}"
 		)
 	endif()
 	set_target_properties(linphone PROPERTIES LINKER_LANGUAGE CXX)

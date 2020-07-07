@@ -874,7 +874,7 @@ static void group_chat_room_add_participant (void) {
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
-	paulineCr = linphone_core_get_chat_room(pauline->lc, paulineAddr);
+	paulineCr = linphone_core_find_chat_room(pauline->lc, paulineAddr, NULL);
 	linphone_address_unref(paulineAddr);
 
 	// Pauline adds Chloe to the chat room

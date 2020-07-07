@@ -222,7 +222,9 @@ static void linphone_interpret_url_test(void) {
 	if (!BC_ASSERT_PTR_NOT_NULL( lc )) return;
 
 	proxy_config =linphone_core_create_proxy_config(lc);
-	linphone_proxy_config_set_identity(proxy_config, "sip:moi@sip.linphone.org");
+	LinphoneAddress *addr = linphone_address_new("sip:moi@sip.linphone.org");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_proxy_config_enable_register(proxy_config, FALSE);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
 	linphone_core_add_proxy_config(lc, proxy_config);
@@ -406,13 +408,15 @@ void linphone_proxy_config_address_equal_test(void) {
 }
 
 void linphone_proxy_config_is_server_config_changed_test(void) {
-	LinphoneProxyConfig* proxy_config = linphone_proxy_config_new();
+	LinphoneProxyConfig* proxy_config = linphone_core_create_proxy_config(NULL);
 
 	linphone_proxy_config_done(proxy_config); /*test done without edit*/
 
-	linphone_proxy_config_set_identity(proxy_config,"sip:toto@titi");
+	LinphoneAddress *addr = linphone_address_new("sip:toto@titi");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
 	linphone_proxy_config_edit(proxy_config);
-	linphone_proxy_config_set_identity(proxy_config,"sips:toto@titi");
+	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	if (addr) linphone_address_unref(addr);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
@@ -444,7 +448,7 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 	linphone_proxy_config_enable_register(proxy_config,TRUE);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressEqual, int, "%d");
 
-	linphone_proxy_config_destroy(proxy_config);
+	linphone_proxy_config_unref(proxy_config);
 }
 
 static void chat_room_test(void) {
@@ -722,7 +726,7 @@ static void search_friend_with_domain_without_filter(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
 	linphone_friend_set_name(chloeFriend, chloeName);
@@ -980,6 +984,131 @@ static void search_friend_with_phone_number(void) {
 	linphone_core_manager_destroy(manager);
 }
 
+static void search_friend_with_phone_number_2(void) {
+	LinphoneCoreManager* manager = linphone_core_manager_new2("chloe_rc", FALSE);
+	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
+	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
+	LinphoneFriend *laureFriend = linphone_core_create_friend(manager->lc);
+	LinphoneVcard *stephanieVcard = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *laureVcard = linphone_factory_create_vcard(linphone_factory_get());
+	const char* stephanieName = {"stephanie de monaco"};
+	const char* laureName = {"Laure"};
+	const char* stephaniePhoneNumber = {"0633889977"};
+	const char* laurePhoneNumber = {"+33641424344"};
+
+	linphone_vcard_set_full_name(stephanieVcard, stephanieName);
+	linphone_vcard_add_phone_number(stephanieVcard, stephaniePhoneNumber);
+	linphone_friend_set_vcard(stephanieFriend, stephanieVcard);
+	linphone_core_add_friend(manager->lc, stephanieFriend);
+
+	linphone_vcard_set_full_name(laureVcard, laureName);
+	linphone_vcard_add_phone_number(laureVcard, laurePhoneNumber);
+	linphone_friend_set_vcard(laureFriend, laureVcard);
+	linphone_core_add_friend(manager->lc, laureFriend);
+
+	LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(manager->lc);
+	BC_ASSERT_PTR_NOT_NULL(lpc);
+	if (lpc) {
+		const char *prefix = linphone_proxy_config_get_dial_prefix(lpc);
+		BC_ASSERT_PTR_NULL(prefix);
+	}
+
+	// Exists as-is
+	LinphoneFriend *lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+33641424344");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, laureFriend);
+	}
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+(33) 6 41 42 43 44");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, laureFriend);
+	}
+
+	// Can be found by remove the prefix if it is known
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "0641424344");
+	BC_ASSERT_PTR_NULL(lf);
+
+	// Exists as-is
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "0633889977");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
+	}
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "06 33 88 99 77");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
+	}
+
+	// Can be found by adding the prefix if it is known
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+33633889977");
+	BC_ASSERT_PTR_NULL(lf);
+
+	// Doesn't exists
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "0612131415");
+	BC_ASSERT_PTR_NULL(lf);
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+33612131415");
+	BC_ASSERT_PTR_NULL(lf);
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+ (33) 6 12 13 14 15");
+	BC_ASSERT_PTR_NULL(lf);
+
+	if (lpc) {
+		linphone_proxy_config_set_dial_prefix(lpc, "33");
+		const char *prefix = linphone_proxy_config_get_dial_prefix(lpc);
+		BC_ASSERT_PTR_NOT_NULL(prefix);
+		if (prefix) {
+			BC_ASSERT_STRING_EQUAL(prefix, "33");
+		}
+	}
+
+	// Exists as-is
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+33641424344");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, laureFriend);
+	}
+
+	// Can be found by remove the prefix if it is known
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "0641424344");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, laureFriend);
+	}
+
+	// Exists as-is
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "0633889977");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
+	}
+
+	// Can be found by adding the prefix if it is known
+	lf = linphone_core_find_friend_by_phone_number(manager->lc, "+33633889977");
+	BC_ASSERT_PTR_NOT_NULL(lf);
+	if (lf) {
+		BC_ASSERT_PTR_EQUAL(lf, stephanieFriend);
+	}
+
+	// Doesn't exists
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "0612131415");
+	BC_ASSERT_PTR_NULL(lf);
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+33612131415");
+	BC_ASSERT_PTR_NULL(lf);
+	lf = linphone_friend_list_find_friend_by_phone_number(lfl, "+ (33) 6 12 13 14 15");
+	BC_ASSERT_PTR_NULL(lf);
+
+	linphone_friend_list_remove_friend(lfl, stephanieFriend);
+	if (stephanieFriend) linphone_friend_unref(stephanieFriend);
+	if (stephanieVcard) linphone_vcard_unref(stephanieVcard);
+
+	linphone_friend_list_remove_friend(lfl, laureFriend);
+	if (laureFriend) linphone_friend_unref(laureFriend);
+	if (laureVcard) linphone_vcard_unref(laureVcard);
+
+	linphone_core_manager_destroy(manager);
+}
+
 static void search_friend_with_presence(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
@@ -995,7 +1124,7 @@ static void search_friend_with_presence(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
@@ -1113,7 +1242,7 @@ static void search_friend_in_call_log_already_exist(void) {
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
-	linphone_core_set_default_proxy(manager->lc, proxy);
+	linphone_core_set_default_proxy_config(manager->lc, proxy);
 
 	linphone_presence_model_set_contact(chloePresence, chloeSipUri);
 	linphone_friend_set_name(chloeFriend, chloeName);
@@ -2005,6 +2134,7 @@ test_t setup_tests[] = {
 	TEST_ONE_TAG("Multiple looking for friends with the same cache", search_friend_research_estate, "MagicSearch"),
 	TEST_ONE_TAG("Multiple looking for friends with cache resetting", search_friend_research_estate_reset, "MagicSearch"),
 	TEST_ONE_TAG("Search friend with phone number", search_friend_with_phone_number, "MagicSearch"),
+	TEST_NO_TAG("Search friend with phone number 2", search_friend_with_phone_number_2),
 	TEST_ONE_TAG("Search friend and find it with its presence", search_friend_with_presence, "MagicSearch"),
 	TEST_ONE_TAG("Search friend in call log", search_friend_in_call_log, "MagicSearch"),
 	TEST_ONE_TAG("Search friend in call log but don't add address which already exist", search_friend_in_call_log_already_exist, "MagicSearch"),

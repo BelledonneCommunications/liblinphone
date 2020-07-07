@@ -1852,7 +1852,7 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_setDefaultProxyConfig(	J
 		,jobject  thiz
 		,jlong lc
 		,jlong pc) {
-	linphone_core_set_default_proxy((LinphoneCore*)lc,(LinphoneProxyConfig*)pc);
+	linphone_core_set_default_proxy_config((LinphoneCore*)lc,(LinphoneProxyConfig*)pc);
 }
 
 extern "C" jobject Java_org_linphone_core_LinphoneCoreImpl_getDefaultProxyConfig(JNIEnv*  env
@@ -2003,7 +2003,7 @@ extern "C" jboolean Java_org_linphone_core_LinphoneCoreImpl_isInComingInvitePend
 		,jobject  thiz
 		,jlong lc) {
 
-	return (jboolean)linphone_core_inc_invite_pending((LinphoneCore*)lc);
+	return (jboolean)linphone_core_is_incoming_invite_pending((LinphoneCore*)lc);
 }
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_acceptCall(JNIEnv* env
 		,jobject  thiz
@@ -2862,7 +2862,9 @@ extern "C" void  Java_org_linphone_core_LinphoneProxyConfigImpl_finalize(JNIEnv*
 
 extern "C" void Java_org_linphone_core_LinphoneProxyConfigImpl_setIdentity(JNIEnv* env,jobject thiz,jlong proxyCfg,jstring jidentity) {
 	const char* identity = GetStringUTFChars(env, jidentity);
-	linphone_proxy_config_set_identity((LinphoneProxyConfig*)proxyCfg,identity);
+	LinphoneAddress *addr = linphone_address_new(identity);
+	linphone_proxy_config_set_identity_address((LinphoneProxyConfig*)proxyCfg,addr);
+	if (addr) linphone_address_unref(addr);
 	ReleaseStringUTFChars(env, jidentity, identity);
 }
 extern "C" jstring Java_org_linphone_core_LinphoneProxyConfigImpl_getIdentity(JNIEnv* env,jobject thiz,jlong proxyCfg) {
@@ -2944,7 +2946,7 @@ extern "C" void Java_org_linphone_core_LinphoneProxyConfigImpl_enableRegister(JN
 	linphone_proxy_config_enable_register((LinphoneProxyConfig*)proxyCfg,enableRegister);
 }
 extern "C" jboolean Java_org_linphone_core_LinphoneProxyConfigImpl_isRegistered(JNIEnv* env,jobject thiz,jlong proxyCfg) {
-	return (jboolean)linphone_proxy_config_is_registered((LinphoneProxyConfig*)proxyCfg);
+	return (jboolean)linphone_proxy_config_get_state((LinphoneProxyConfig*)proxyCfg) == LinphoneRegistrationOk
 }
 extern "C" jboolean Java_org_linphone_core_LinphoneProxyConfigImpl_isRegisterEnabled(JNIEnv* env,jobject thiz,jlong proxyCfg) {
 	return (jboolean)linphone_proxy_config_register_enabled((LinphoneProxyConfig*)proxyCfg);
@@ -5407,7 +5409,7 @@ extern "C" jint Java_org_linphone_core_LinphoneProxyConfigImpl_getPrivacy(JNIEnv
 }
 
 extern "C" void  Java_org_linphone_core_LinphoneProxyConfigImpl_enableAvpf(JNIEnv *env, jobject thiz, jlong ptr, jboolean enable) {
-	linphone_proxy_config_enable_avpf((LinphoneProxyConfig *)ptr, (bool)enable);
+	
 }
 
 extern "C" jboolean  Java_org_linphone_core_LinphoneProxyConfigImpl_avpfEnabled(JNIEnv *env, jobject thiz, jlong ptr) {

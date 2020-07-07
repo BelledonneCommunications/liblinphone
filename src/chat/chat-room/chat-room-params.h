@@ -61,8 +61,9 @@ public:
 	//Base constructor is protected	anyways to prevent unmanaged creation.
 	ChatRoomParams();
 	ChatRoomParams(const ChatRoomParams &other);
-	//Convenience constructor
+	//Convenience constructors
 	ChatRoomParams(bool encrypted, bool group, ChatRoomBackend backend);
+	ChatRoomParams(std::string subject, bool encrypted, bool group, ChatRoomBackend backend);
 
 	ChatRoomParams *clone() const override { return new ChatRoomParams(*this); }
 
@@ -74,12 +75,14 @@ public:
 	bool isEncrypted() const;
 	bool isGroup() const;
 	bool isRealTimeText() const;
+	const std::string& getSubject() const;
 
 	void setChatRoomBackend(ChatRoomBackend backend);
 	void setChatRoomEncryptionBackend(ChatRoomEncryptionBackend backend);
 	void setEncrypted(bool encrypted);
 	void setGroup(bool group);
 	void setRealTimeText(bool rtt);
+	void setSubject(std::string subject);
 
 protected:
 	~ChatRoomParams() = default;
@@ -90,6 +93,7 @@ private:
 	bool mEncrypted = false;
 	bool mGroup = false; //one to one
 	bool mRtt = false; //Real Time Text
+	std::string mSubject;
 };
 
 LINPHONE_END_NAMESPACE

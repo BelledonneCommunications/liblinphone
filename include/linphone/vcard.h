@@ -38,24 +38,9 @@ extern "C"
 #define LINPHONE_VCARD BELLE_SIP_CAST(object, LinphoneVcard)
 
 /**
- * Creates a #LinphoneVcard object that has a pointer to an empty vCard
- * @return a new #LinphoneVcard object
- * @deprecated Use linphone_factory_create_vcard() instead.
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneVcard* linphone_vcard_new(void);
-
-/**
- * Deletes a #LinphoneVcard object properly
- * @param[in] vCard the #LinphoneVcard to destroy
- * @deprecated Use linphone_vcard_unref() or belle_sip_object_unref() instead.
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_vcard_free(LinphoneVcard *vCard);
-
-/**
  * Take a ref on a #LinphoneVcard.
  * @param[in] vCard #LinphoneVcard object
+ * @return the same #LinphoneVcard object
  */
 LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_ref(LinphoneVcard *vCard);
 
@@ -75,7 +60,7 @@ LINPHONE_PUBLIC LinphoneVcard *linphone_vcard_clone(const LinphoneVcard *vCard);
 /**
  * Returns the vCard4 representation of the LinphoneVcard.
  * @param[in] vCard the #LinphoneVcard
- * @return a const char * that represents the vCard
+ * @return a const char * that represents the vCard. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_as_vcard4_string(LinphoneVcard *vCard);
 
@@ -89,7 +74,7 @@ LINPHONE_PUBLIC void linphone_vcard_set_full_name(LinphoneVcard *vCard, const ch
 /**
  * Returns the FN attribute of the vCard, or NULL if it isn't set yet.
  * @param[in] vCard the #LinphoneVcard
- * @return the display name of the vCard, or NULL
+ * @return the display name of the vCard, or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_get_full_name(const LinphoneVcard *vCard);
 
@@ -159,7 +144,7 @@ LINPHONE_PUBLIC void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, 
 /**
  * Returns the list of SIP addresses (as LinphoneAddress) in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or NULL
  * @param[in] vCard the #LinphoneVcard
- * @return \bctbx_list{LinphoneAddress}
+ * @return \bctbx_list{LinphoneAddress} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard);
 
@@ -180,21 +165,21 @@ LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, co
 /**
  * Returns the list of phone numbers (as string) in the vCard (all the TEL attributes) or NULL
  * @param[in] vCard the #LinphoneVcard
- * @return \bctbx_list{const char *}
+ * @return \bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 
 /**
  * Fills the Organization field of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @param[in] organization the Organization
+ * @param[in] organization the Organization. @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_organization(LinphoneVcard *vCard, const char *organization);
 
 /**
  * Gets the Organization of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @return the Organization of the vCard or NULL
+ * @return the Organization of the vCard or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_get_organization(const LinphoneVcard *vCard);
 
@@ -216,35 +201,35 @@ LINPHONE_PUBLIC void linphone_vcard_set_uid(LinphoneVcard *vCard, const char *ui
 /**
  * Gets the UID of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @return the UID of the vCard, otherwise NULL
+ * @return the UID of the vCard, otherwise NULL. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_get_uid(const LinphoneVcard *vCard);
 
 /**
  * Sets the eTAG of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @param[in] etag the eTAG
+ * @param[in] etag the eTAG. @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_etag(LinphoneVcard *vCard, const char * etag);
 
 /**
  * Gets the eTag of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @return the eTag of the vCard in the CardDAV server, otherwise NULL
+ * @return the eTag of the vCard in the CardDAV server, otherwise NULL. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_get_etag(const LinphoneVcard *vCard);
 
 /**
  * Sets the URL of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @param[in] url the URL
+ * @param[in] url the URL. @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_url(LinphoneVcard *vCard, const char *url);
 
 /**
  * Gets the URL of the vCard
  * @param[in] vCard the #LinphoneVcard
- * @return the URL of the vCard in the CardDAV server, otherwise NULL
+ * @return the URL of the vCard in the CardDAV server, otherwise NULL. @maybenil
  */
 LINPHONE_PUBLIC const char* linphone_vcard_get_url(const LinphoneVcard *vCard);
 

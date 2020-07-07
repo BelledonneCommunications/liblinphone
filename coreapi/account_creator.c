@@ -73,8 +73,10 @@ static const char* ha1_for_passwd(const char* username, const char* realm, const
 static unsigned int validate_uri(const char* username, const char* domain, const char* display_name) {
 	LinphoneAddress* addr;
 	unsigned int status = 0;
-	LinphoneProxyConfig* proxy = linphone_proxy_config_new();
-	linphone_proxy_config_set_identity(proxy, "sip:?@domain.com");
+	LinphoneProxyConfig* proxy = linphone_core_create_proxy_config(NULL);
+	addr = linphone_address_new("sip:?@domain.com");
+	linphone_proxy_config_set_identity_address(proxy, addr);
+	if (addr) linphone_address_unref(addr);
 
 	if (username) {
 		addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
@@ -96,7 +98,7 @@ static unsigned int validate_uri(const char* username, const char* domain, const
 	}
 	linphone_address_unref(addr);
 end:
-	linphone_proxy_config_destroy(proxy);
+	linphone_proxy_config_unref(proxy);
 	return status;
 }
 
@@ -127,7 +129,7 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 		identity = linphone_address_as_string(addr);
 		linphone_address_unref(addr);
 		end:
-		linphone_proxy_config_destroy(proxy);
+		linphone_proxy_config_unref(proxy);
 	}
 	return identity;
 }
@@ -186,7 +188,7 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 
 	if (linphone_core_add_proxy_config(creator->core, cfg) != -1) {
 		if (creator->set_as_default) {
-			linphone_core_set_default_proxy(creator->core, cfg);
+			linphone_core_set_default_proxy_config(creator->core, cfg);
 		}
 		return cfg;
 	}

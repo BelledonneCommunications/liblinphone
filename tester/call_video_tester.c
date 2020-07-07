@@ -1420,7 +1420,7 @@ void two_accepted_call_in_send_only(void) {
 	bctbx_list_t *lcs=NULL;
 
 	marie = linphone_core_manager_new("marie_rc");
-	linphone_core_use_files(marie->lc, TRUE);
+	linphone_core_set_use_files(marie->lc, TRUE);
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	laure = linphone_core_manager_new("laure_rc_udp");
 

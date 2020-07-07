@@ -55,7 +55,7 @@ public:
 		linphone_core_manager_destroy(mCoreManager);
 	}
 
-	const MainDb &getMainDb () {
+	MainDb &getMainDb () {
 		return *L_GET_PRIVATE(mCoreManager->lc->cppPtr)->mainDb;
 	}
 
@@ -190,7 +190,8 @@ static void get_conference_notified_events (void) {
 
 static void get_chat_rooms() {
 	MainDbProvider provider;
-	const MainDb &mainDb = provider.getMainDb();
+	MainDb &mainDb = provider.getMainDb();
+	std::string utf8Txt = "Héllo world ! Welcome to ベルドンヌ通信.";
 	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
 	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
 
@@ -224,11 +225,15 @@ static void get_chat_rooms() {
 	if (emptyMessageRoom != nullptr) {
 		shared_ptr<ChatMessage> lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NULL(lastMessage);
-		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessage("Hello world !");
+		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessage(utf8Txt);
 		newMessage->send();
 		lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
+		mainDb.loadChatMessageContents(lastMessage);// Force read Database
+		for (const Content *content : lastMessage->getContents()){
+			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt),0, int, "%d");
+		}
 	}
 
 	// Check last_message_id is updated to 0 if we remove the last message from a chat room with exactly 1 message
@@ -252,15 +257,18 @@ static void get_chat_rooms() {
 		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
 
 		// Check a non empty chat room last_message_id is updated after adding a message into it
-		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessage("Hello world !");
+		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessage(utf8Txt);
 		newMessage->send();
 		lastMessage = multiMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		BC_ASSERT_PTR_EQUAL(lastMessage, newMessage);
 		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
+		mainDb.loadChatMessageContents(lastMessage);// Force read Database
+		for (const Content *content : lastMessage->getContents()){
+			BC_ASSERT_EQUAL(content->getBodyAsUtf8String().compare(utf8Txt),0, int, "%d");
+		}
 	}
 }
-
 static void load_a_lot_of_chatrooms(void) {
 	chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now();
 	MainDbProvider provider("db/chatrooms.db");

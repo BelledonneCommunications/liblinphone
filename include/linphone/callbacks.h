@@ -41,18 +41,18 @@
 
 /**
  * Callback notifying that a new #LinphoneCall (either incoming or outgoing) has been created.
- * @param[in] lc #LinphoneCore object that has created the call
+ * @param[in] core #LinphoneCore object that has created the call
  * @param[in] call The newly created #LinphoneCall object
  */
-typedef void (*LinphoneCoreCbsCallCreatedCb)(LinphoneCore *lc, LinphoneCall *call);
+typedef void (*LinphoneCoreCbsCallCreatedCb)(LinphoneCore *core, LinphoneCall *call);
 
 /**
  * Global state notification callback.
- * @param lc the #LinphoneCore.
- * @param gstate the global state
+ * @param core the #LinphoneCore.
+ * @param state the global state
  * @param message informational message.
  */
-typedef void (*LinphoneCoreCbsGlobalStateChangedCb)(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
+typedef void (*LinphoneCoreCbsGlobalStateChangedCb)(LinphoneCore *core, LinphoneGlobalState state, const char *message);
 
 /**
  * Old name of #LinphoneCoreCbsGlobalStateChangedCb.
@@ -61,12 +61,12 @@ typedef LinphoneCoreCbsGlobalStateChangedCb LinphoneCoreGlobalStateChangedCb;
 
 /**
  * Call state notification callback.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param call the call object whose state is changed.
- * @param cstate the new state of the call
+ * @param state the new state of the call
  * @param message a non NULL informational message about the state.
  */
-typedef void (*LinphoneCoreCbsCallStateChangedCb)(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
+typedef void (*LinphoneCoreCbsCallStateChangedCb)(LinphoneCore *core, LinphoneCall *call, LinphoneCallState state, const char *message);
 
 /**
  * Old name of #LinphoneCoreCbsCallStateChangedCb.
@@ -75,12 +75,12 @@ typedef LinphoneCoreCbsCallStateChangedCb LinphoneCoreCallStateChangedCb;
 
 /**
  * Call encryption changed callback.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param call the call on which encryption is changed.
- * @param on whether encryption is activated.
+ * @param media_encryption_enabled whether encryption is activated.
  * @param authentication_token an authentication_token, currently set for ZRTP kind of encryption only.
  */
-typedef void (*LinphoneCoreCbsCallEncryptionChangedCb)(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
+typedef void (*LinphoneCoreCbsCallEncryptionChangedCb)(LinphoneCore *core, LinphoneCall *call, bool_t media_encryption_enabled, const char *authentication_token);
 
 /**
  * Old name of #LinphoneCoreCbsCallEncryptionChangedCb.
@@ -91,7 +91,7 @@ typedef LinphoneCoreCbsCallEncryptionChangedCb LinphoneCoreCallEncryptionChanged
  * Registration state notification callback prototype
  * @ingroup Proxies
  */
-typedef void (*LinphoneCoreCbsRegistrationStateChangedCb)(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message);
+typedef void (*LinphoneCoreCbsRegistrationStateChangedCb)(LinphoneCore *core, LinphoneProxyConfig *proxy_config, LinphoneRegistrationState state, const char *message);
 
 /**
  * Old name of #LinphoneCoreCbsRegistrationStateChangedCb.
@@ -100,10 +100,10 @@ typedef LinphoneCoreCbsRegistrationStateChangedCb LinphoneCoreRegistrationStateC
 
 /**
  * Report status change for a friend previously \link linphone_core_add_friend() added \endlink to #LinphoneCore.
- * @param lc #LinphoneCore object .
- * @param lf Updated #LinphoneFriend .
+ * @param core #LinphoneCore object .
+ * @param linphone_friend Updated #LinphoneFriend .
  */
-typedef void (*LinphoneCoreCbsNotifyPresenceReceivedCb)(LinphoneCore *lc, LinphoneFriend * lf);
+typedef void (*LinphoneCoreCbsNotifyPresenceReceivedCb)(LinphoneCore *core, LinphoneFriend * linphone_friend);
 
 /**
  * Old name of #LinphoneCoreCbsNotifyPresenceReceivedCb.
@@ -112,12 +112,12 @@ typedef LinphoneCoreCbsNotifyPresenceReceivedCb LinphoneCoreNotifyPresenceReceiv
 
 /**
  * Reports presence model change for a specific URI or phone number of a friend
- * @param lc #LinphoneCore object
- * @param lf #LinphoneFriend object
+ * @param core #LinphoneCore object
+ * @param linphone_friend #LinphoneFriend object
  * @param uri_or_tel The URI or phone number for which teh presence model has changed
  * @param presence_model The new presence model
  */
-typedef void (*LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb)(LinphoneCore *lc, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence_model);
+typedef void (*LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb)(LinphoneCore *core, LinphoneFriend *linphone_friend, const char *uri_or_tel, const LinphonePresenceModel *presence_model);
 
 /**
  * Old name of #LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb.
@@ -127,11 +127,11 @@ typedef LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb LinphoneCoreNotifyPre
 /**
  * Reports that a new subscription request has been received and wait for a decision.
  * Status on this subscription request is notified by \link linphone_friend_set_inc_subscribe_policy() changing policy \endlink for this friend
- * @param lc #LinphoneCore object
- * @param lf #LinphoneFriend corresponding to the subscriber
+ * @param core #LinphoneCore object
+ * @param linphone_friend #LinphoneFriend corresponding to the subscriber
  * @param url of the subscriber
  */
-typedef void (*LinphoneCoreCbsNewSubscriptionRequestedCb)(LinphoneCore *lc, LinphoneFriend *lf, const char *url);
+typedef void (*LinphoneCoreCbsNewSubscriptionRequestedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend, const char *url);
 
 /**
  * Old name of #LinphoneCoreCbsNewSubscriptionRequestedCb.
@@ -140,22 +140,22 @@ typedef LinphoneCoreCbsNewSubscriptionRequestedCb LinphoneCoreNewSubscriptionReq
 
 /**
  * Callback for requesting authentication information to application or user.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param realm the realm (domain) on which authentication is required.
  * @param username the username that needs to be authenticated.
  * @param domain the domain on which authentication is required.
  * Application shall reply to this callback using linphone_core_add_auth_info().
  */
-typedef void (*LinphoneCoreAuthInfoRequestedCb)(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
+typedef void (*LinphoneCoreAuthInfoRequestedCb)(LinphoneCore *core, const char *realm, const char *username, const char *domain);
 
 /**
  * Callback for requesting authentication information to application or user.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param auth_info a #LinphoneAuthInfo pre-filled with username, realm and domain values as much as possible
  * @param method the type of authentication requested
  * Application shall reply to this callback using linphone_core_add_auth_info().
  */
-typedef void (*LinphoneCoreCbsAuthenticationRequestedCb)(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method);
+typedef void (*LinphoneCoreCbsAuthenticationRequestedCb)(LinphoneCore *core, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method);
 
 /**
  * Old name of #LinphoneCoreCbsAuthenticationRequestedCb.
@@ -165,10 +165,10 @@ typedef LinphoneCoreCbsAuthenticationRequestedCb LinphoneCoreAuthenticationReque
 /**
  * Callback to notify a new call-log entry has been added.
  * This is done typically when a call terminates.
- * @param lc the #LinphoneCore
- * @param newcl the new call log entry added.
+ * @param core the #LinphoneCore
+ * @param call_log the new call log entry added.
  */
-typedef void (*LinphoneCoreCbsCallLogUpdatedCb)(LinphoneCore *lc, LinphoneCallLog *newcl);
+typedef void (*LinphoneCoreCbsCallLogUpdatedCb)(LinphoneCore *core, LinphoneCallLog *call_log);
 
 /**
  * Old name of #LinphoneCoreCbsCallLogUpdatedCb.
@@ -177,32 +177,32 @@ typedef LinphoneCoreCbsCallLogUpdatedCb LinphoneCoreCallLogUpdatedCb;
 
 /**
  * Callback prototype
- * @param lc #LinphoneCore object
- * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
+ * @param core #LinphoneCore object
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
  * @param from #LinphoneAddress from
  * @param message incoming message
- * @deprecated use #LinphoneCoreMessageReceivedCb instead.
+ * @deprecated 30/03/2017 use #LinphoneCoreMessageReceivedCb instead.
  * @donotwrap
  */
-typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message);
+typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, const LinphoneAddress *from, const char *message);
 
 /**
  * Chat message callback prototype
- * @param lc #LinphoneCore object
- * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
+ * @param core #LinphoneCore object
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
  * @param #LinphoneChatMessage incoming message
  */
-typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Called after the #send method of the #LinphoneChatMessage was called.
  * The message will be in state InProgress.
  * In case of resend this callback won't be called.
- * @param lc #LinphoneCore object
- * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
+ * @param core #LinphoneCore object
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
  * @param #LinphoneChatMessage outgoing message
  */
-typedef void (*LinphoneCoreCbsMessageSentCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+typedef void (*LinphoneCoreCbsMessageSentCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Old name of #LinphoneCoreCbsMessageReceivedCb.
@@ -211,56 +211,56 @@ typedef LinphoneCoreCbsMessageReceivedCb LinphoneCoreMessageReceivedCb;
 
 /**
  * Chat room marked as read callback
- * @param lc #LinphoneCore object
- * @param room #LinphoneChatRoom that has been marked as read.
+ * @param core #LinphoneCore object
+ * @param chat_room #LinphoneChatRoom that has been marked as read.
  */
-typedef void (*LinphoneCoreCbsChatRoomReadCb)(LinphoneCore *lc, LinphoneChatRoom *room);
+typedef void (*LinphoneCoreCbsChatRoomReadCb)(LinphoneCore *core, LinphoneChatRoom *chat_room);
 
 /**
  * Chat message not decrypted callback prototype
- * @param lc #LinphoneCore object
- * @param room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
+ * @param core #LinphoneCore object
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room.
  * @param #LinphoneChatMessage incoming message
  */
-typedef void (*LinphoneCoreCbsMessageReceivedUnableDecryptCb)(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
+typedef void (*LinphoneCoreCbsMessageReceivedUnableDecryptCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * File transfer receive callback prototype. This function is called by the core upon an incoming File transfer is started. This function may be call several time for the same file in case of large file.
- * @param lc #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param message #LinphoneChatMessage message from which the body is received.
  * @param content #LinphoneContent incoming content information
- * @param buff pointer to the received data
+ * @param buffer pointer to the received data
  * @param size number of bytes to be read from buff. 0 means end of file.
  */
-typedef void (*LinphoneCoreFileTransferRecvCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, const char* buff, size_t size);
+typedef void (*LinphoneCoreFileTransferRecvCb)(LinphoneCore *core, LinphoneChatMessage *message, LinphoneContent* content, const char* buffer, size_t size);
 
 /**
  * File transfer send callback prototype. This function is called by the core upon an outgoing file transfer is started. This function is called until size is set to 0.
- * @param lc #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param message #LinphoneChatMessage message from which the body is received.
  * @param content #LinphoneContent outgoing content
- * @param buff pointer to the buffer where data chunk shall be written by the app
+ * @param buffer pointer to the buffer where data chunk shall be written by the app
  * @param size as input value, it represents the number of bytes expected by the framework. As output value, it means the number of bytes wrote by the application in the buffer. 0 means end of file.
  *
  */
-typedef void (*LinphoneCoreFileTransferSendCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, char* buff, size_t* size);
+typedef void (*LinphoneCoreFileTransferSendCb)(LinphoneCore *core, LinphoneChatMessage *message, LinphoneContent* content, char* buffer, size_t* size);
 
 /**
  * File transfer progress indication callback prototype.
- * @param lc #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param message #LinphoneChatMessage message from which the body is received.
  * @param content #LinphoneContent incoming content information
  * @param offset The number of bytes sent/received since the beginning of the transfer.
  * @param total The total number of bytes to be sent/received.
  */
-typedef void (*LinphoneCoreFileTransferProgressIndicationCb)(LinphoneCore *lc, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
+typedef void (*LinphoneCoreFileTransferProgressIndicationCb)(LinphoneCore *core, LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 
 /**
  * Is composing notification callback prototype.
- * @param[in] lc #LinphoneCore object
- * @param[in] room #LinphoneChatRoom involved in the conversation.
+ * @param[in] core #LinphoneCore object
+ * @param[in] chat_room #LinphoneChatRoom involved in the conversation.
  */
-typedef void (*LinphoneCoreCbsIsComposingReceivedCb)(LinphoneCore *lc, LinphoneChatRoom *room);
+typedef void (*LinphoneCoreCbsIsComposingReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room);
 
 /**
  * Old name of #LinphoneCoreCbsIsComposingReceivedCb.
@@ -269,7 +269,7 @@ typedef LinphoneCoreCbsIsComposingReceivedCb LinphoneCoreIsComposingReceivedCb;
 
 /**
  * Callback for being notified of DTMFs received.
- * @param lc the linphone core
+ * @param core the linphone core
  * @param call the call that received the dtmf
  * @param dtmf the ascii code of the dtmf
  */
@@ -281,7 +281,7 @@ typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* lc, LinphoneCall *ca
 typedef LinphoneCoreCbsDtmfReceivedCb LinphoneCoreDtmfReceivedCb;
 
 /** Callback prototype */
-typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *lc, const char *refer_to);
+typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *core, const char *refer_to);
 
 /**
  * Old name of #LinphoneCoreCbsReferReceivedCb.
@@ -289,7 +289,7 @@ typedef void (*LinphoneCoreCbsReferReceivedCb)(LinphoneCore *lc, const char *ref
 typedef LinphoneCoreCbsReferReceivedCb LinphoneCoreReferReceivedCb;
 
 /** Callback prototype */
-typedef void (*LinphoneCoreCbsBuddyInfoUpdatedCb)(LinphoneCore *lc, LinphoneFriend *lf);
+typedef void (*LinphoneCoreCbsBuddyInfoUpdatedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend);
 
 /**
  * Old name of #LinphoneCoreCbsBuddyInfoUpdatedCb.
@@ -298,11 +298,11 @@ typedef LinphoneCoreCbsBuddyInfoUpdatedCb LinphoneCoreBuddyInfoUpdatedCb;
 
 /**
  * Callback for notifying progresses of transfers.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param transfered the call that was transfered
- * @param new_call_state the state of the call to transfer target at the far end.
+ * @param call_state the state of the call to transfer target at the far end.
  */
-typedef void (*LinphoneCoreCbsTransferStateChangedCb)(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
+typedef void (*LinphoneCoreCbsTransferStateChangedCb)(LinphoneCore *core, LinphoneCall *transfered, LinphoneCallState call_state);
 
 /**
  * Old name of LinphoneCoreCbsTransferStateChangedCb.
@@ -311,11 +311,11 @@ typedef LinphoneCoreCbsTransferStateChangedCb LinphoneCoreTransferStateChangedCb
 
 /**
  * Callback for receiving quality statistics for calls.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param call the call
- * @param stats the call statistics.
+ * @param call_stats the call statistics.
  */
-typedef void (*LinphoneCoreCbsCallStatsUpdatedCb)(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallStats *stats);
+typedef void (*LinphoneCoreCbsCallStatsUpdatedCb)(LinphoneCore *core, LinphoneCall *call, const LinphoneCallStats *call_stats);
 
 /**
  * Old name of #LinphoneCoreCbsCallStatsUpdatedCb.
@@ -324,11 +324,11 @@ typedef LinphoneCoreCbsCallStatsUpdatedCb LinphoneCoreCallStatsUpdatedCb;
 
 /**
  * Callback prototype for receiving info messages.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param call the call whose info message belongs to.
- * @param msg the info message.
+ * @param message the info message.
  */
-typedef void (*LinphoneCoreCbsInfoReceivedCb)(LinphoneCore *lc, LinphoneCall *call, const LinphoneInfoMessage *msg);
+typedef void (*LinphoneCoreCbsInfoReceivedCb)(LinphoneCore *core, LinphoneCall *call, const LinphoneInfoMessage *message);
 
 /**
  * Old name of #LinphoneCoreCbsInfoReceivedCb.
@@ -337,10 +337,10 @@ typedef LinphoneCoreCbsInfoReceivedCb LinphoneCoreInfoReceivedCb;
 
 /**
  * Callback prototype for configuring status changes notification
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param message informational message.
  */
-typedef void (*LinphoneCoreCbsConfiguringStatusCb)(LinphoneCore *lc, LinphoneConfiguringState status, const char *message);
+typedef void (*LinphoneCoreCbsConfiguringStatusCb)(LinphoneCore *core, LinphoneConfiguringState status, const char *message);
 
 /**
  * Old name of #LinphoneCoreCbsConfiguringStatusCb.
@@ -349,10 +349,10 @@ typedef LinphoneCoreCbsConfiguringStatusCb LinphoneCoreConfiguringStatusCb;
 
 /**
  * Callback prototype for reporting network change either automatically detected or notified by #linphone_core_set_network_reachable.
- * @param lc the #LinphoneCore
+ * @param core the #LinphoneCore
  * @param reachable true if network is reachable.
  */
-typedef void (*LinphoneCoreCbsNetworkReachableCb)(LinphoneCore *lc, bool_t reachable);
+typedef void (*LinphoneCoreCbsNetworkReachableCb)(LinphoneCore *core, bool_t reachable);
 
 /**
  * Old name of #LinphoneCoreCbsNetworkReachableCb.
@@ -361,11 +361,11 @@ typedef LinphoneCoreCbsNetworkReachableCb LinphoneCoreNetworkReachableCb;
 
 /**
  * Callback prototype for reporting log collection upload state change.
- * @param[in] lc #LinphoneCore object
+ * @param[in] core #LinphoneCore object
  * @param[in] state The state of the log collection upload
  * @param[in] info Additional information: error message in case of error state, URL of uploaded file in case of success.
  */
-typedef void (*LinphoneCoreCbsLogCollectionUploadStateChangedCb)(LinphoneCore *lc, LinphoneCoreLogCollectionUploadState state, const char *info);
+typedef void (*LinphoneCoreCbsLogCollectionUploadStateChangedCb)(LinphoneCore *core, LinphoneCoreLogCollectionUploadState state, const char *info);
 
 /**
  * Old name of #LinphoneCoreCbsLogCollectionUploadStateChangedCb.
@@ -374,9 +374,9 @@ typedef LinphoneCoreCbsLogCollectionUploadStateChangedCb LinphoneCoreLogCollecti
 
 /**
  * Callback prototype for reporting log collection upload progress indication.
- * @param[in] lc #LinphoneCore object
+ * @param[in] core #LinphoneCore object
  */
-typedef void (*LinphoneCoreCbsLogCollectionUploadProgressIndicationCb)(LinphoneCore *lc, size_t offset, size_t total);
+typedef void (*LinphoneCoreCbsLogCollectionUploadProgressIndicationCb)(LinphoneCore *core, size_t offset, size_t total);
 
 /**
  * Old name of #LinphoneCoreCbsLogCollectionUploadProgressIndicationCb.
@@ -385,10 +385,10 @@ typedef LinphoneCoreCbsLogCollectionUploadProgressIndicationCb LinphoneCoreLogCo
 
 /**
  * Callback prototype for reporting when a friend list has been added to the core friends list.
- * @param[in] lc #LinphoneCore object
- * @param[in] list #LinphoneFriendList object
+ * @param[in] core #LinphoneCore object
+ * @param[in] friend_list #LinphoneFriendList object
  */
-typedef void (*LinphoneCoreCbsFriendListCreatedCb) (LinphoneCore *lc, LinphoneFriendList *list);
+typedef void (*LinphoneCoreCbsFriendListCreatedCb) (LinphoneCore *core, LinphoneFriendList *friend_list);
 
 /**
  * Old name of #LinphoneCoreCbsFriendListCreatedCb.
@@ -397,10 +397,10 @@ typedef LinphoneCoreCbsFriendListCreatedCb LinphoneCoreFriendListCreatedCb;
 
 /**
  * Callback prototype for reporting when a friend list has been removed from the core friends list.
- * @param[in] lc #LinphoneCore object
- * @param[in] list #LinphoneFriendList object
+ * @param[in] core #LinphoneCore object
+ * @param[in] friend_list #LinphoneFriendList object
  */
-typedef void (*LinphoneCoreCbsFriendListRemovedCb) (LinphoneCore *lc, LinphoneFriendList *list);
+typedef void (*LinphoneCoreCbsFriendListRemovedCb) (LinphoneCore *core, LinphoneFriendList *friend_list);
 
 /**
  * Old name of #LinphoneCoreCbsFriendListRemovedCb.
@@ -409,75 +409,75 @@ typedef LinphoneCoreCbsFriendListRemovedCb LinphoneCoreFriendListRemovedCb;
 
 /**
  * Callback prototype for reporting the result of a version update check.
- * @param[in] lc #LinphoneCore object
+ * @param[in] core #LinphoneCore object
  * @param[in] result The result of the version update check
  * @param[in] url The url where to download the new version if the result is #LinphoneVersionUpdateCheckNewVersionAvailable
  */
-typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
+typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore *core, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom state has changed.
- * @param[in] lc #LinphoneCore object
- * @param[in] cr The #LinphoneChatRoom object for which the state has changed
+ * @param[in] core #LinphoneCore object
+ * @param[in] chat_room The #LinphoneChatRoom object for which the state has changed
  */
-typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
+typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatRoomState state);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom subject has changed.
- * @param[in] lc #LinphoneCore object
- * @param[in] cr The #LinphoneChatRoom object for which the subject has changed
+ * @param[in] core #LinphoneCore object
+ * @param[in] chat_room The #LinphoneChatRoom object for which the subject has changed
  */
-typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
+typedef void (*LinphoneCoreCbsChatRoomSubjectChangedCb) (LinphoneCore *core, LinphoneChatRoom *chat_room);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom ephemeral message has expired.
- * @param[in] lc #LinphoneCore object
- * @param[in] cr The #LinphoneChatRoom object for which a message has expired.
+ * @param[in] core #LinphoneCore object
+ * @param[in] chat_room The #LinphoneChatRoom object for which a message has expired.
  */
-typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *lc, LinphoneChatRoom *cr);
+typedef void (*LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb) (LinphoneCore *core, LinphoneChatRoom *chat_room);
 
 /**
  * Callback prototype telling that an Instant Message Encryption Engine user registered on the server with or without success.
- * @param[in] lc #LinphoneCore object
+ * @param[in] core #LinphoneCore object
  * @param[in] status the return status of the registration action.
- * @param[in] userId the userId published on the encryption engine server
+ * @param[in] user_id the userId published on the encryption engine server
  * @param[in] info information about failure
  */
-typedef void (*LinphoneCoreCbsImeeUserRegistrationCb) (LinphoneCore *lc, const bool_t status, const char *userId, const char *info);
+typedef void (*LinphoneCoreCbsImeeUserRegistrationCb) (LinphoneCore *core, const bool_t status, const char *user_id, const char *info);
 
 /**
  * Callback prototype telling the result of decoded qrcode
- * @param[in] lc LinphoneCore object
+ * @param[in] core LinphoneCore object
  * @param[in] result The result of the decoded qrcode
  */
-typedef void (*LinphoneCoreCbsQrcodeFoundCb)(LinphoneCore *lc, const char *result);
+typedef void (*LinphoneCoreCbsQrcodeFoundCb)(LinphoneCore *core, const char *result);
 
 /**
  * Callback prototype telling a call has started (incoming or outgoing) while there was no other call.
- * @param[in] lc LinphoneCore object
+ * @param[in] core LinphoneCore object
  */
-typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *lc);
+typedef void (*LinphoneCoreCbsFirstCallStartedCb)(LinphoneCore *core);
 
 /**
  * Callback prototype telling the last call has ended (#LinphoneCore.get_calls_nb() returns 0)
- * @param[in] lc LinphoneCore object
+ * @param[in] core LinphoneCore object
  */
-typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *lc);
+typedef void (*LinphoneCoreCbsLastCallEndedCb)(LinphoneCore *core);
 
 /**
  * Callback prototype telling that the audio device for at least one call has changed
- * @param[in] lc LinphoneCore object
- * @param[in] audioDevice the newly used LinphoneAudioDevice object
+ * @param[in] core LinphoneCore object
+ * @param[in] audio_device the newly used LinphoneAudioDevice object
  */
-typedef void (*LinphoneCoreCbsAudioDeviceChangedCb)(LinphoneCore *lc, LinphoneAudioDevice *audioDevice);
+typedef void (*LinphoneCoreCbsAudioDeviceChangedCb)(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
  * Callback prototype telling the audio devices list has been updated.
  * Either a new device is available or a previously available device isn't anymore.
  * You can call linphone_core_get_audio_devices() to get the new list.
- * @param[in] lc LinphoneCore object
+ * @param[in] core LinphoneCore object
  */
-typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *lc);
+typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
 
 /**
  * @}
@@ -491,7 +491,7 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *lc);
 /**
  * Callback prototype for notifying the application about notification received from the network.
 **/
-typedef void (*LinphoneCoreCbsNotifyReceivedCb)(LinphoneCore *lc, LinphoneEvent *lev, const char *notified_event, const LinphoneContent *body);
+typedef void (*LinphoneCoreCbsNotifyReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *notified_event, const LinphoneContent *body);
 
 /**
  * Old name of #LinphoneCoreCbsNotifyReceivedCb.
@@ -501,7 +501,7 @@ typedef LinphoneCoreCbsNotifyReceivedCb LinphoneCoreNotifyReceivedCb;
 /**
  * Callback prototype for notifying the application about subscription received from the network.
 **/
-typedef void (*LinphoneCoreCbsSubscribeReceivedCb)(LinphoneCore *lc, LinphoneEvent *lev, const char *subscribe_event, const LinphoneContent *body);
+typedef void (*LinphoneCoreCbsSubscribeReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *subscribe_event, const LinphoneContent *body);
 
 /**
  * Old name of #LinphoneCoreCbsSubscribeReceivedCb.
@@ -511,7 +511,7 @@ typedef LinphoneCoreCbsSubscribeReceivedCb LinphoneCoreSubscribeReceivedCb;
 /**
  * Callback prototype for notifying the application about changes of subscription states, including arrival of new subscriptions.
 **/
-typedef void (*LinphoneCoreCbsSubscriptionStateChangedCb)(LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state);
+typedef void (*LinphoneCoreCbsSubscriptionStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphoneSubscriptionState state);
 
 /**
  * Old name of #LinphoneCoreCbsSubscriptionStateChangedCb.
@@ -521,7 +521,7 @@ typedef LinphoneCoreCbsSubscriptionStateChangedCb LinphoneCoreSubscriptionStateC
 /**
  * Callback prototype for notifying the application about changes of publish states.
 **/
-typedef void (*LinphoneCoreCbsPublishStateChangedCb)(LinphoneCore *lc, LinphoneEvent *lev, LinphonePublishState state);
+typedef void (*LinphoneCoreCbsPublishStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphonePublishState state);
 
 /**
  * Old name of LinphoneCoreCbsPublishStateChangedCb.
@@ -539,9 +539,9 @@ typedef LinphoneCoreCbsPublishStateChangedCb LinphoneCorePublishStateChangedCb;
 
 /**
  * Callback used to notify the response to a sent NOTIFY
- * @param ev The LinphoneEvent object that has sent the NOTIFY and for which we received a response
+ * @param linphone_event The LinphoneEvent object that has sent the NOTIFY and for which we received a response
 **/
-typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *ev);
+typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *linphone_event);
 
 /**
  * @}
@@ -554,40 +554,40 @@ typedef void (*LinphoneEventCbsNotifyResponseCb)(const LinphoneEvent *ev);
 
 /**
  * Callback used to notify a new contact has been created on the CardDAV server and downloaded locally
- * @param list The #LinphoneFriendList object the new contact is added to
- * @param lf The #LinphoneFriend object that has been created
+ * @param friend_list The #LinphoneFriendList object the new contact is added to
+ * @param linphone_friend The #LinphoneFriend object that has been created
 **/
-typedef void (*LinphoneFriendListCbsContactCreatedCb)(LinphoneFriendList *list, LinphoneFriend *lf);
+typedef void (*LinphoneFriendListCbsContactCreatedCb)(LinphoneFriendList *friend_list, LinphoneFriend *linphone_friend);
 
 /**
  * Callback used to notify a contact has been deleted on the CardDAV server
- * @param list The #LinphoneFriendList object a contact has been removed from
- * @param lf The #LinphoneFriend object that has been deleted
+ * @param friend_list The #LinphoneFriendList object a contact has been removed from
+ * @param linphone_friend The #LinphoneFriend object that has been deleted
 **/
-typedef void (*LinphoneFriendListCbsContactDeletedCb)(LinphoneFriendList *list, LinphoneFriend *lf);
+typedef void (*LinphoneFriendListCbsContactDeletedCb)(LinphoneFriendList *friend_list, LinphoneFriend *linphone_friend);
 
 /**
  * Callback used to notify a contact has been updated on the CardDAV server
- * @param list The #LinphoneFriendList object in which a contact has been updated
+ * @param friend_list The #LinphoneFriendList object in which a contact has been updated
  * @param new_friend The new #LinphoneFriend object corresponding to the updated contact
  * @param old_friend The old #LinphoneFriend object before update
 **/
-typedef void (*LinphoneFriendListCbsContactUpdatedCb)(LinphoneFriendList *list, LinphoneFriend *new_friend, LinphoneFriend *old_friend);
+typedef void (*LinphoneFriendListCbsContactUpdatedCb)(LinphoneFriendList *friend_list, LinphoneFriend *new_friend, LinphoneFriend *old_friend);
 
 /**
  * Callback used to notify the status of the synchronization has changed
- * @param list The #LinphoneFriendList object for which the status has changed
+ * @param friend_list The #LinphoneFriendList object for which the status has changed
  * @param status The new synchronisation status
- * @param msg An additional information on the status update
+ * @param message An additional information on the status update
 **/
-typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *list, LinphoneFriendListSyncStatus status, const char *msg);
+typedef void (*LinphoneFriendListCbsSyncStateChangedCb)(LinphoneFriendList *friend_list, LinphoneFriendListSyncStatus status, const char *message);
 
 /**
  * Callback used to notify a list with all friends that have received presence information.
- * @param list The #LinphoneFriendList object for which the status has changed
+ * @param friend_list The #LinphoneFriendList object for which the status has changed
  * @param friends A \bctbx_list{LinphoneFriend} of the relevant friends
 **/
-typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *list, const bctbx_list_t *friends);
+typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *friend_list, const bctbx_list_t *friends);
 
 /**
  * @}
@@ -600,82 +600,82 @@ typedef void (*LinphoneFriendListCbsPresenceReceivedCb)(LinphoneFriendList *list
 
 /**
  * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_result().
- * @param lc The core.
+ * @param core The core.
  * @param status The state of the calibrator.
  * @param delay_ms The measured delay if available.
  */
-typedef void (*LinphoneCoreCbsEcCalibrationResultCb)(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms);
+typedef void (*LinphoneCoreCbsEcCalibrationResultCb)(LinphoneCore *core, LinphoneEcCalibratorStatus status, int delay_ms);
 
 /**
  * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_audio_init().
- * @param lc The core.
+ * @param core The core.
  */
-typedef void (*LinphoneCoreCbsEcCalibrationAudioInitCb)(LinphoneCore *lc);
+typedef void (*LinphoneCoreCbsEcCalibrationAudioInitCb)(LinphoneCore *core);
 
 /**
  * @brief Function prototype used by #linphone_core_cbs_set_ec_calibrator_audio_uninit().
- * @param lc The core.
+ * @param core The core.
  */
-typedef void (*LinphoneCoreCbsEcCalibrationAudioUninitCb)(LinphoneCore *lc);
+typedef void (*LinphoneCoreCbsEcCalibrationAudioUninitCb)(LinphoneCore *core);
 
 /**
  * Callback to decrypt incoming #LinphoneChatMessage
  * @param engine ImEncryptionEngine object
- * @param room #LinphoneChatRoom object
- * @param msg #LinphoneChatMessage object
+ * @param chat_room #LinphoneChatRoom object
+ * @param message #LinphoneChatMessage object
  * @return -1 if nothing to be done, 0 on success or an integer > 0 for error
 */
-typedef int (*LinphoneImEncryptionEngineCbsIncomingMessageCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg);
+typedef int (*LinphoneImEncryptionEngineCbsIncomingMessageCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Callback to encrypt outgoing #LinphoneChatMessage
  * @param engine #LinphoneImEncryptionEngine object
- * @param room #LinphoneChatRoom object
- * @param msg #LinphoneChatMessage object
+ * @param chat_room #LinphoneChatRoom object
+ * @param message #LinphoneChatMessage object
  * @return -1 if nothing to be done, 0 on success or an integer > 0 for error
 */
-typedef int (*LinphoneImEncryptionEngineCbsOutgoingMessageCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg);
+typedef int (*LinphoneImEncryptionEngineCbsOutgoingMessageCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Callback to know whether or not the engine will encrypt files before uploading them
  * @param engine #LinphoneImEncryptionEngine object
- * @param room #LinphoneChatRoom object
+ * @param chat_room #LinphoneChatRoom object
  * @return TRUE if files will be encrypted, FALSE otherwise
 */
-typedef bool_t (*LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room);
+typedef bool_t (*LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *chat_room);
 
 /**
  * Callback to generate the key used to encrypt the files before uploading them
  * Key can be stored in the #LinphoneContent object inside the #LinphoneChatMessage using linphone_content_set_key
  * @param engine #LinphoneImEncryptionEngine object
- * @param room #LinphoneChatRoom object
- * @param msg #LinphoneChatMessage object
+ * @param chat_room #LinphoneChatRoom object
+ * @param message #LinphoneChatMessage object
 */
-typedef void (*LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *room, LinphoneChatMessage *msg);
+typedef void (*LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb)(LinphoneImEncryptionEngine *engine, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
  * Callback to decrypt downloading file
  * @param engine #LinphoneImEncryptionEngine object
- * @param msg #LinphoneChatMessage object
+ * @param message #LinphoneChatMessage object
  * @param offset The current offset of the upload
  * @param[in] buffer Encrypted data buffer
  * @param[in] size Size of the encrypted data buffer and maximum size of the decrypted data buffer
  * @param[out] decrypted_buffer Buffer in which to write the decrypted data which maximum size is size
  * @return -1 if nothing to be done, 0 on success or an integer > 0 for error
 */
-typedef int (*LinphoneImEncryptionEngineCbsDownloadingFileCb)(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer);
+typedef int (*LinphoneImEncryptionEngineCbsDownloadingFileCb)(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *message, size_t offset, const uint8_t *buffer, size_t size, uint8_t *decrypted_buffer);
 
 /**
  * Callback to encrypt uploading file
  * @param engine #LinphoneImEncryptionEngine object
- * @param msg #LinphoneChatMessage object
+ * @param message #LinphoneChatMessage object
  * @param offset The current offset of the upload
  * @param[in] buffer Encrypted data buffer
  * @param[in,out] size Size of the plain data buffer and the size of the encrypted data buffer once encryption is done
  * @param[out] encrypted_buffer Buffer in which to write the encrypted data which maxmimum size is size
  * @return -1 if nothing to be done, 0 on success or an integer > 0 for error
 */
-typedef int (*LinphoneImEncryptionEngineCbsUploadingFileCb)(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *msg, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer);
+typedef int (*LinphoneImEncryptionEngineCbsUploadingFileCb)(LinphoneImEncryptionEngine *engine, LinphoneChatMessage *message, size_t offset, const uint8_t *buffer, size_t *size, uint8_t *encrypted_buffer);
 
 /**
  * Callback used to notify the response to an XML-RPC request.

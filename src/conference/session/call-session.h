@@ -32,20 +32,16 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallPrivate;
 class CallSessionPrivate;
 class Content;
 class Core;
 
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
-	friend class CallPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ClientGroupChatRoomPrivate;
 	friend class Conference;
 	friend class CorePrivate;
-	friend class LocalConferenceCall;
-	friend class RemoteConferenceCall;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
 
@@ -55,6 +51,7 @@ public:
 	enum class State{
 		Idle = LinphoneCallStateIdle,
 		IncomingReceived = LinphoneCallStateIncomingReceived,
+		PushIncomingReceived = LinphoneCallStatePushIncomingReceived,
 		OutgoingInit = LinphoneCallStateOutgoingInit,
 		OutgoingProgress = LinphoneCallStateOutgoingProgress,
 		OutgoingRinging = LinphoneCallStateOutgoingRinging,
@@ -88,6 +85,8 @@ public:
 	LinphoneStatus accept (const CallSessionParams *csp = nullptr);
 	LinphoneStatus acceptUpdate (const CallSessionParams *csp = nullptr);
 	virtual void configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to);
+	void configure (LinphoneCallDir direction, const std::string &callid);
+	bool isOpConfigured ();
 	LinphoneStatus decline (LinphoneReason reason);
 	LinphoneStatus decline (const LinphoneErrorInfo *ei);
 	LinphoneStatus declineNotAnswered (LinphoneReason reason);
@@ -99,6 +98,8 @@ public:
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus redirect (const Address &redirectAddr);
 	virtual void startIncomingNotification (bool notifyRinging = true);
+	void startBasicIncomingNotification (bool notifyRinging = true);
+	void startPushIncomingNotification ();
 	virtual int startInvite (const Address *destination, const std::string &subject = "", const Content *content = nullptr);
 	LinphoneStatus terminate (const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer (const std::shared_ptr<CallSession> &dest);
@@ -115,26 +116,30 @@ public:
 	virtual const CallSessionParams *getParams () const;
 	LinphoneReason getReason () const;
 	std::shared_ptr<CallSession> getReferer () const;
-	std::string getReferTo () const;
-	const Address &getRemoteAddress () const;
-	std::string getRemoteContact () const;
+	const std::string &getReferTo () const;
+	const Address *getRemoteAddress () const;
+	const std::string &getRemoteContact () const;
 	const Address *getRemoteContactAddress () const;
 	const CallSessionParams *getRemoteParams ();
-	std::string getRemoteUserAgent () const;
+	const std::string &getRemoteUserAgent () const;
 	std::shared_ptr<CallSession> getReplacedCallSession () const;
 	CallSession::State getState () const;
 	const Address &getToAddress () const;
 	CallSession::State getTransferState () const;
 	std::shared_ptr<CallSession> getTransferTarget () const;
-	std::string getToHeader (const std::string &name) const;
+	const char *getToHeader (const std::string &name) const;
 
 	static bool isEarlyState (CallSession::State state);
+	void accepting ();
 
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;
 
 private:
+	bool mIsDeclining = false;
+	bool mIsAccepting = false;
+	LinphoneErrorInfo *mErrorCache = nullptr;
 	L_DECLARE_PRIVATE(CallSession);
 	L_DISABLE_COPY(CallSession);
 };
