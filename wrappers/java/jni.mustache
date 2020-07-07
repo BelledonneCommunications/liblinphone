@@ -605,7 +605,7 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 		list_it = bctbx_list_next(list_it);
 		i += 1;
 	}
-	{{#isNotConst}}bctbx_list_free(list);{{/isNotConst}}
+	{{#isNotConst}}{{#freeList}}bctbx_list_free(list);{{/freeList}}{{#freeListWithData}}bctbx_list_free_with_data(list, (void (*)(void *)){{cPrefix}}_unref);{{/freeListWithData}}{{/isNotConst}}
 	{{/hasListReturn}}{{#hasByteArrayReturn}}
 	{{c_type_return}} jni_result = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}});
 	if (!jni_result) return nullptr;
