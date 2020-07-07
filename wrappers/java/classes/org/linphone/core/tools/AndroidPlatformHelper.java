@@ -77,7 +77,6 @@ public class AndroidPlatformHelper {
 	private WakeLock mWakeLock;
 	private Resources mResources;
 	private TextureView mPreviewTextureView, mVideoTextureView;
-	private boolean mDozeModeEnabled;
 	private BroadcastReceiver mDozeReceiver;
 	private IntentFilter mDozeIntentFilter;
 	private boolean mWifiOnly;
@@ -108,8 +107,6 @@ public class AndroidPlatformHelper {
 		mDnsServers = null;
 		mResources = mContext.getResources();
 		mMainHandler = new Handler(mContext.getMainLooper());
-
-		mDozeModeEnabled = false;
 
 		MediastreamerAndroidContext.setContext(mContext);
 		Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
@@ -584,12 +581,6 @@ public class AndroidPlatformHelper {
 			return;
 		}
 
-		if (mDozeModeEnabled && DeviceUtils.isAppBatteryOptimizationEnabled(mContext)) {
-			Log.i("[Platform Helper] Device in idle mode: shutting down network");
-			setNetworkReachable(mNativePtr, false);
-			return;
-		}
-
 		boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
 		if (!connected) {
 			Log.i("[Platform Helper] No connectivity: setting network unreachable");
@@ -645,11 +636,6 @@ public class AndroidPlatformHelper {
 		}
 	}
 
-	public synchronized void setDozeModeEnabled(boolean b) {
-		mDozeModeEnabled = b;
-		Log.i("[Platform Helper] Device idle mode: " + mDozeModeEnabled);
-	}
-
 	private NetworkManagerInterface createNetworkManager() {
 		NetworkManagerInterface networkManager = null;
 		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
@@ -676,12 +662,12 @@ public class AndroidPlatformHelper {
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			mDozeIntentFilter = new IntentFilter();
 			mDozeIntentFilter.addAction(PowerManager.ACTION_DEVICE_IDLE_MODE_CHANGED);
-			mDozeReceiver = new DozeReceiver(this);
+			mDozeReceiver = new DozeReceiver();
 			Log.i("[Platform Helper] Registering doze receiver");
 			mContext.registerReceiver(mDozeReceiver, mDozeIntentFilter);
 		}
 
-		mInteractivityReceiver = new InteractivityReceiver(this);
+		mInteractivityReceiver = new InteractivityReceiver();
 		mInteractivityIntentFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
         mInteractivityIntentFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		Log.i("[Platform Helper] Registering interactivity receiver");
