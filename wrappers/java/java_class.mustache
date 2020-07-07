@@ -98,7 +98,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     public static final synchronized Factory instance() {
 		try {
 			if (_Factory == null) {
-				_Factory = new FactoryImpl(0); // This value is not relevant, correct factory pointer will be used in JNI layer
+				_Factory = new FactoryImpl();
 			}
 		} catch (Exception e) {
 			System.err.println("Cannot instanciate factory");
@@ -170,10 +170,19 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     protected transient Object userData = null;{{#hasCoreAccessor}}
     protected Core core = null;{{/hasCoreAccessor}}
 
+{{#isLinphoneFactory}}
+    protected FactoryImpl() {
+        nativePtr = init();
+    }
+
+    private native long init();
+{{/isLinphoneFactory}}
+{{#isNotLinphoneFactory}}
     protected {{classImplName}}(long ptr) {
         nativePtr = ptr;{{#hasCoreAccessor}}
         core = getCore();{{/hasCoreAccessor}}
     }
+{{/isNotLinphoneFactory}}
 
     public long getNativePointer() {
         return nativePtr;
