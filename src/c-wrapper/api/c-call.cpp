@@ -50,7 +50,6 @@ void _post_configure_audio_stream (AudioStream *st, LinphoneCore *lc, bool_t mut
 // =============================================================================
 
 void _linphone_call_set_conf_ref (LinphoneCall *call, LinphoneConference *ref) {
-printf("%s - c call %p cpp call %p conference %p\n", __func__, call, Call::toCpp(call), ref);
 	Call::toCpp(call)->setConference(ref);
 }
 
