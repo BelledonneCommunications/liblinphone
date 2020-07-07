@@ -32,6 +32,7 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	offeranswer.h
 	private.h
 	quality_reporting.h
+	sqlite3_bctbx_vfs.h
 	vcard_private.h
 	xml2lpc.h
 )
@@ -84,6 +85,7 @@ set(LINPHONE_SOURCE_FILES_C
 	ringtoneplayer.c
 	siplogin.c
 	sipsetup.c
+	sqlite3_bctbx_vfs.c
 	update_check.c
 	video_definition.c
 	xml2lpc.c

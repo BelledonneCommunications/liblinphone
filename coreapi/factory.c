@@ -25,7 +25,7 @@
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "bctoolbox/crypto.h"
-#include "bctoolbox/sqlite3_vfs.h"
+#include "sqlite3_bctbx_vfs.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
