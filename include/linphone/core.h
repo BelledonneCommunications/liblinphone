@@ -3617,7 +3617,6 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *c
  * @param[in] addr #LinphoneAddress object
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
  * @deprecated 29/10/2018 Use #linphone_core_get_call_history_2 instead.
- * @donotwrap
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *core, const LinphoneAddress *addr);
 
@@ -4559,7 +4558,7 @@ LINPHONE_PUBLIC void linphone_core_enter_foreground(LinphoneCore *core);
  * @param[in] core #LinphoneCore object
  * The application can use the LpConfig object to insert its own private
  * sections and pairs of key=value in the configuration file.
- * @return a #LinphoneConfig object. @maybenil
+ * @return a #LinphoneConfig object.
  * @ingroup misc
 **/
 LINPHONE_PUBLIC LinphoneConfig * linphone_core_get_config(const LinphoneCore *core);

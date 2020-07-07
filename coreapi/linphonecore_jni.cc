@@ -2946,7 +2946,7 @@ extern "C" void Java_org_linphone_core_LinphoneProxyConfigImpl_enableRegister(JN
 	linphone_proxy_config_enable_register((LinphoneProxyConfig*)proxyCfg,enableRegister);
 }
 extern "C" jboolean Java_org_linphone_core_LinphoneProxyConfigImpl_isRegistered(JNIEnv* env,jobject thiz,jlong proxyCfg) {
-	return (jboolean)linphone_proxy_config_get_state((LinphoneProxyConfig*)proxyCfg) == LinphoneRegistrationOk
+	return (jboolean)linphone_proxy_config_get_state(((LinphoneProxyConfig*)proxyCfg)) == LinphoneRegistrationOk;
 }
 extern "C" jboolean Java_org_linphone_core_LinphoneProxyConfigImpl_isRegisterEnabled(JNIEnv* env,jobject thiz,jlong proxyCfg) {
 	return (jboolean)linphone_proxy_config_register_enabled((LinphoneProxyConfig*)proxyCfg);
@@ -5268,7 +5268,7 @@ extern "C" void  Java_org_linphone_core_LinphoneCallParamsImpl_setVideoDirection
 
 
 extern "C" void Java_org_linphone_core_LinphoneCallParamsImpl_destroy(JNIEnv *env, jobject thiz, jlong lc){
-	return linphone_call_params_destroy((LinphoneCallParams*)lc);
+	return linphone_call_params_unref((LinphoneCallParams*)lc);
 }
 
 /*
@@ -5853,7 +5853,7 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelSetHttpProxy(JNIEn
 
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelAutoDetect(JNIEnv *env,jobject thiz,jlong pCore) {
 	LinphoneTunnel *tunnel=((LinphoneCore *) pCore)->tunnel; if (!tunnel) return;
-	linphone_tunnel_auto_detect(tunnel);
+	linphone_tunnel_set_mode(tunnel, LinphoneTunnelModeAuto);
 }
 
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelCleanServers(JNIEnv *env,jobject thiz,jlong pCore) {
@@ -5863,7 +5863,8 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelCleanServers(JNIEn
 
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelEnable(JNIEnv *env,jobject thiz,jlong pCore, jboolean enable) {
 	LinphoneTunnel *tunnel=((LinphoneCore *) pCore)->tunnel; if (!tunnel) return;
-	linphone_tunnel_enable(tunnel, enable);
+	if (enable) linphone_tunnel_set_mode(tunnel, LinphoneTunnelModeEnable);
+	else linphone_tunnel_set_mode(tunnel, LinphoneTunnelModeDisable);
 }
 
 extern "C" void Java_org_linphone_core_LinphoneCoreImpl_tunnelSetMode(JNIEnv *env, jobject thiz, jlong pCore, jint mode) {
@@ -6419,7 +6420,7 @@ extern "C" jstring  Java_org_linphone_core_LinphoneInfoMessageImpl_getHeader(JNI
  * Signature: (J)V
  */
 extern "C" void  Java_org_linphone_core_LinphoneInfoMessageImpl_delete(JNIEnv *env, jobject jobj , jlong infoptr){
-	linphone_info_message_destroy((LinphoneInfoMessage*)infoptr);
+	linphone_info_message_unref((LinphoneInfoMessage*)infoptr);
 }
 
 extern "C" jobject  Java_org_linphone_core_LinphoneEventImpl_getCore(JNIEnv *env, jobject jobj, jlong evptr){
