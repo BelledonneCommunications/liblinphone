@@ -80,7 +80,7 @@ LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_get(void);
 
 /**
  * @brief Increases the reference counter.
- * @param[in] log_service the #LinphoneLoggingService object
+ * @param log_service the #LinphoneLoggingService object
  * @return the same #LinphoneLoggingService object
  */
 LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_ref(LinphoneLoggingService *log_service);
@@ -88,13 +88,13 @@ LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_ref(LinphoneLog
 /**
  * @brief Decreases the reference counter and destroy the object
  * if the counter reaches 0.
- * @param[in] log_service the #LinphoneLoggingService object
+ * @param log_service the #LinphoneLoggingService object
  */
 LINPHONE_PUBLIC void linphone_logging_service_unref(LinphoneLoggingService *log_service);
 
 /**
  * @brief Gets the logging service listener.
- * @param[in] log_service the #LinphoneLoggingService object
+ * @param log_service the #LinphoneLoggingService object
  * @deprecated 19/02/2019 Use add_callbacks / remove_callbacks instead
  * @donotwrap
  */

@@ -48,7 +48,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_callbacks_list(const LinphoneCor
 
 /**
  * @brief Gets the list of listener in the call.
- * @param[in] call #LinphoneCall object.
+ * @param call #LinphoneCall object.
  * @return The list of #LinphoneCallCbs.
  * @donotwrap
  */
@@ -56,7 +56,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_call_get_callbacks_list(const Linph
 
 /**
  * @brief Gets the list of listener in the chat room.
- * @param[in] cr #LinphoneChatRoom object.
+ * @param cr #LinphoneChatRoom object.
  * @return The list of #LinphoneChatRoomCbs.
  * @donotwrap
  */
@@ -64,15 +64,15 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const 
 
 /**
  * Sets the current LinphoneChatRoomCbs.
- * @param[in] cr LinphoneChatRoom object
- * @param[in] cbs LinphoneChatRoomCbs object
+ * @param cr LinphoneChatRoom object
+ * @param cbs LinphoneChatRoomCbs object
  * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_current_callbacks(LinphoneChatRoom *cr, LinphoneChatRoomCbs *cbs);
 
 /**
  * @brief Gets the list of listener in the chat mesasge.
- * @param[in] msg #LinphoneChatMessage object.
+ * @param msg #LinphoneChatMessage object.
  * @return The list of #LinphoneChatMessageCbs.
  * @donotwrap
  */
@@ -80,8 +80,8 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(con
 
 /**
  * Sets the current LinphoneChatMessageCbs.
- * @param[in] msg LinphoneChatMessage object
- * @param[in] cbs LinphoneChatMessageCbs object
+ * @param msg LinphoneChatMessage object
+ * @param cbs LinphoneChatMessageCbs object
  * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs);
@@ -95,8 +95,8 @@ LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMes
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param[in] chat_room A chat room.
- * @param[in] message The message to send.
+ * @param chat_room A chat room.
+ * @param message The message to send.
  */
 LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
@@ -106,13 +106,13 @@ LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *ch
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param[in] message #LinphoneChatMessage object
+ * @param message #LinphoneChatMessage object
  */
 LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *message);
 
 /**
  * Accessor for the shared_ptr&lt;BelCard&gt; stored by a #LinphoneVcard
- * @param[in] vcard a #LinphoneVcard
+ * @param vcard a #LinphoneVcard
  * @return a shared_ptr<BelCard>
  * @donotwrap
  */

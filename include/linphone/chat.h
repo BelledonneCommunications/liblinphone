@@ -42,14 +42,14 @@ extern "C" {
 
 /**
  * Returns an list of chat rooms
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{LinphoneChatRoom}
 **/
 LINPHONE_PUBLIC const bctbx_list_t* linphone_core_get_chat_rooms(LinphoneCore *core);
 
 /**
  * Creates and returns the default chat room parameters.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A #LinphoneChatRoomParams object
 **/
 LINPHONE_PUBLIC LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *core);

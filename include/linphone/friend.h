@@ -188,7 +188,7 @@ LINPHONE_PUBLIC	void linphone_friend_done(LinphoneFriend *linphone_friend);
 
 /**
  * Get the status of a friend
- * @param[in] lf A #LinphoneFriend object
+ * @param lf A #LinphoneFriend object
  * @return #LinphoneOnlineStatus
  * @deprecated 19/06/2013 Use linphone_friend_get_presence_model() instead
  * @donotwrap
@@ -197,65 +197,65 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_friend_get_sta
 
 /**
  * Get subscription state of a friend
- * @param[in] linphone_friend A #LinphoneFriend object
+ * @param linphone_friend A #LinphoneFriend object
  * @return the #LinphoneSubscriptionState object
  */
 LINPHONE_PUBLIC LinphoneSubscriptionState linphone_friend_get_subscription_state(const LinphoneFriend *linphone_friend);
 
 /**
  * Get the presence model of a friend
- * @param[in] linphone_friend A #LinphoneFriend object
+ * @param linphone_friend A #LinphoneFriend object
  * @return A #LinphonePresenceModel object, or NULL if the friend do not have presence information (in which case he is considered offline). @maybenil
  */
 LINPHONE_PUBLIC const LinphonePresenceModel * linphone_friend_get_presence_model(const LinphoneFriend *linphone_friend);
 
 /**
  * Get the consolidated presence of a friend.
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return The #LinphoneConsolidatedPresence of the friend
  */
 LINPHONE_PUBLIC LinphoneConsolidatedPresence linphone_friend_get_consolidated_presence(const LinphoneFriend *linphone_friend);
 
 /**
  * Get the presence model for a specific SIP URI or phone number of a friend
- * @param[in] linphone_friend A #LinphoneFriend object
- * @param[in] uri_or_tel The SIP URI or phone number for which to get the presence model
+ * @param linphone_friend A #LinphoneFriend object
+ * @param uri_or_tel The SIP URI or phone number for which to get the presence model
  * @return A #LinphonePresenceModel object, or NULL if the friend do not have presence information for this SIP URI or phone number. @maybenil
  */
 LINPHONE_PUBLIC const LinphonePresenceModel * linphone_friend_get_presence_model_for_uri_or_tel(const LinphoneFriend *linphone_friend, const char *uri_or_tel);
 
 /**
  * Set the presence model of a friend
- * @param[in] linphone_friend A #LinphoneFriend object
- * @param[in] presence The #LinphonePresenceModel object to set for the friend
+ * @param linphone_friend A #LinphoneFriend object
+ * @param presence The #LinphonePresenceModel object to set for the friend
  */
 LINPHONE_PUBLIC void linphone_friend_set_presence_model(LinphoneFriend *linphone_friend, LinphonePresenceModel *presence);
 
 /**
  * Set the presence model for a specific SIP URI or phone number of a friend
- * @param[in] linphone_friend A #LinphoneFriend object
- * @param[in] uri_or_tel The SIP URI or phone number for which to set the presence model
- * @param[in] presence The #LinphonePresenceModel object to set
+ * @param linphone_friend A #LinphoneFriend object
+ * @param uri_or_tel The SIP URI or phone number for which to set the presence model
+ * @param presence The #LinphonePresenceModel object to set
  */
 LINPHONE_PUBLIC void linphone_friend_set_presence_model_for_uri_or_tel(LinphoneFriend *linphone_friend, const char *uri_or_tel, LinphonePresenceModel *presence);
 
 /**
  * Tells whether we already received presence information for a friend.
- * @param[in] linphone_friend A #LinphoneFriend object
+ * @param linphone_friend A #LinphoneFriend object
  * @return TRUE if presence information has been received for the friend, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_friend_is_presence_received(const LinphoneFriend *linphone_friend);
 
 /**
  * Store user pointer to friend object.
- * @param[in] linphone_friend A #LinphoneFriend object
- * @param[in] user_data the user data to store. @maybenil
+ * @param linphone_friend A #LinphoneFriend object
+ * @param user_data the user data to store. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_friend_set_user_data(LinphoneFriend *linphone_friend, void *user_data);
 
 /**
  * Retrieve user data associated with friend.
- * @param[in] linphone_friend A #LinphoneFriend object
+ * @param linphone_friend A #LinphoneFriend object
  * @return the user data pointer. @maybenil
 **/
 LINPHONE_PUBLIC void* linphone_friend_get_user_data(const LinphoneFriend *linphone_friend);
@@ -264,63 +264,63 @@ LINPHONE_PUBLIC BuddyInfo * linphone_friend_get_info(const LinphoneFriend *linph
 
 /**
  * Set the reference key of a friend.
- * @param[in] linphone_friend #LinphoneFriend object.
- * @param[in] key The reference key to use for the friend.
+ * @param linphone_friend #LinphoneFriend object.
+ * @param key The reference key to use for the friend.
 **/
 LINPHONE_PUBLIC void linphone_friend_set_ref_key(LinphoneFriend *linphone_friend, const char *key);
 
 /**
  * Get the reference key of a friend.
- * @param[in] linphone_friend #LinphoneFriend object.
+ * @param linphone_friend #LinphoneFriend object.
  * @return The reference key of the friend. @maybenil
 **/
 LINPHONE_PUBLIC const char *linphone_friend_get_ref_key(const LinphoneFriend *linphone_friend);
 
 /**
  * Check that the given friend is in a friend list.
- * @param[in] linphone_friend #LinphoneFriend object.
+ * @param linphone_friend #LinphoneFriend object.
  * @return TRUE if the friend is in a friend list, FALSE otherwise.
 **/
 LINPHONE_PUBLIC bool_t linphone_friend_in_list(const LinphoneFriend *linphone_friend);
 
 /**
  * Acquire a reference to the linphone friend.
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return The same #LinphoneFriend object
 **/
 LINPHONE_PUBLIC LinphoneFriend * linphone_friend_ref(LinphoneFriend *linphone_friend);
 
 /**
  * Release a reference to the linphone friend.
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
 **/
 LINPHONE_PUBLIC void linphone_friend_unref(LinphoneFriend *linphone_friend);
 
 /**
  * Returns the #LinphoneCore object managing this friend, if any.
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return the #LinphoneCore object associated.
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_friend_get_core(const LinphoneFriend *linphone_friend);
 
 /**
  * Returns the vCard object associated to this friend, if any
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return the #LinphoneVcard or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneVcard* linphone_friend_get_vcard(const LinphoneFriend *linphone_friend);
 
 /**
  * Binds a vCard object to a friend
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] vcard The #LinphoneVcard object to bind
+ * @param linphone_friend #LinphoneFriend object
+ * @param vcard The #LinphoneVcard object to bind
  */
 LINPHONE_PUBLIC void linphone_friend_set_vcard(LinphoneFriend *linphone_friend, LinphoneVcard *vcard);
 
 /**
  * Creates a vCard object associated to this friend if there isn't one yet and if the full name is available, either by the parameter or the one in the friend's SIP URI
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] name The full name of the friend or NULL to use the one from the friend's SIP URI
+ * @param linphone_friend #LinphoneFriend object
+ * @param name The full name of the friend or NULL to use the one from the friend's SIP URI
  * @return TRUE if the vCard has been created, FALSE if it wasn't possible (for exemple if name and the friend's SIP URI are null or if the friend's SIP URI doesn't have a display name), or if there is already one vcard
  */
 LINPHONE_PUBLIC bool_t linphone_friend_create_vcard(LinphoneFriend *linphone_friend, const char *name);
@@ -341,48 +341,48 @@ LINPHONE_PUBLIC void linphone_friend_save(LinphoneFriend *linphone_friend, Linph
 
 /**
  * Returns the capabilities associated to this friend
- * @param[in] linphone_friend #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return an int representing the capabilities of the friend
  */
 LINPHONE_PUBLIC int linphone_friend_get_capabilities(const LinphoneFriend *linphone_friend);
 
 /**
  * Returns whether or not a friend has a capbility
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] capability #LinphoneFriendCapability object
+ * @param linphone_friend #LinphoneFriend object
+ * @param capability #LinphoneFriendCapability object
  * @return whether or not a friend has a capbility
  */
 LINPHONE_PUBLIC bool_t linphone_friend_has_capability(const LinphoneFriend *linphone_friend, const LinphoneFriendCapability capability);
 
 /**
  * Returns whether or not a friend has a capbility with a given version.
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] capability #LinphoneFriendCapability object
- * @param[in] version the version to test
+ * @param linphone_friend #LinphoneFriend object
+ * @param capability #LinphoneFriendCapability object
+ * @param version the version to test
  * @return whether or not a friend has a capbility with a given version or -1.0 if friend has not capability.
  */
 LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *linphone_friend, const LinphoneFriendCapability capability, float version);
 
 /**
  * Returns whether or not a friend has a capbility with a given version or more.
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] capability #LinphoneFriendCapability object
- * @param[in] version the version to test
+ * @param linphone_friend #LinphoneFriend object
+ * @param capability #LinphoneFriendCapability object
+ * @param version the version to test
  * @return whether or not a friend has a capbility with a given version or more.
  */
 LINPHONE_PUBLIC bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend *linphone_friend, const LinphoneFriendCapability capability, float version);
 
 /**
  * Returns the version of a friend's capbility.
- * @param[in] linphone_friend #LinphoneFriend object
- * @param[in] capability #LinphoneFriendCapability object
+ * @param linphone_friend #LinphoneFriend object
+ * @param capability #LinphoneFriendCapability object
  * @return the version of a friend's capbility.
  */
 LINPHONE_PUBLIC float linphone_friend_get_capability_version(const LinphoneFriend *linphone_friend, const LinphoneFriendCapability capability);
 
 /**
  * Removes a friend from it's friend list and from the rc if exists
- * @param[in] linphone_friend #LinphoneFriend object to delete
+ * @param linphone_friend #LinphoneFriend object to delete
  */
 LINPHONE_PUBLIC void linphone_friend_remove(LinphoneFriend *linphone_friend);
 

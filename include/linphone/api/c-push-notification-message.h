@@ -41,70 +41,70 @@ LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_mess
 
 /**
  * Take a reference on a #LinphonePushNotificationMessage.
- * @param[in] message the #LinphonePushNotificationMessage object
- * @return the same #LinphonePushNotificationMessage object
+ * @param message the #LinphonePushNotificationMessage object @notnil
+ * @return the same #LinphonePushNotificationMessage object @notnil
  */
 LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_message_ref(LinphonePushNotificationMessage *message);
 
 /**
  * Release a #LinphonePushNotificationMessage.
- * @param[in] message the #LinphonePushNotificationMessage object
+ * @param message the #LinphonePushNotificationMessage object @notnil
  */
 LINPHONE_PUBLIC void linphone_push_notification_message_unref(LinphonePushNotificationMessage *message);
 
 /**
  * is #LinphonePushNotificationMessage build from UserDefaults data or from a #LinphoneChatMessage
- * @param[in] message The #LinphonePushNotificationMessage object
+ * @param message The #LinphonePushNotificationMessage object @notnil
  * @return The is_using_user_defaults.
  */
 LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_using_user_defaults(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the call id.
- * @param[in] message The #LinphonePushNotificationMessage object
- * @return The call id.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return The call id. @notnil
  */
 LINPHONE_PUBLIC const char *linphone_push_notification_message_get_call_id(const LinphonePushNotificationMessage *message);
 
 /**
  * Returns wether it is a text message or not.
- * @param[in] message The #LinphonePushNotificationMessage object
+ * @param message The #LinphonePushNotificationMessage object @notnil
  * @return TRUE if it is a text message, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_text(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the text content.
- * @param[in] message The #LinphonePushNotificationMessage object
+ * @param message The #LinphonePushNotificationMessage object @notnil
  * @return The text content or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_push_notification_message_get_text_content(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the subject.
- * @param[in] message The #LinphonePushNotificationMessage object
+ * @param message The #LinphonePushNotificationMessage object @notnil
  * @return The subject or NULL. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_push_notification_message_get_subject(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the from address.
- * @param[in] message The #LinphonePushNotificationMessage object
- * @return The from #LinphoneAddress.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return The from #LinphoneAddress. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_from_addr(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the local address.
- * @param[in] message The #LinphonePushNotificationMessage object
- * @return The local #LinphoneAddress.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return The local #LinphoneAddress. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_local_addr(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the peer address.
- * @param[in] message The #LinphonePushNotificationMessage object
- * @return The peer #LinphoneAddress.
+ * @param message The #LinphonePushNotificationMessage object @notnil
+ * @return The peer #LinphoneAddress. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *message);
 

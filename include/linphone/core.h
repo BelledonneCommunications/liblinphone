@@ -81,8 +81,8 @@ extern "C" {
 
 /**
  * Create a #LinphoneAddress object by parsing the user supplied address, given as a string.
- * @param[in] core #LinphoneCore object
- * @param[in] address String containing the user supplied address
+ * @param core #LinphoneCore object
+ * @param address String containing the user supplied address
  * @return The create #LinphoneAddress object
  * @ingroup linphone_address
  */
@@ -117,7 +117,7 @@ LINPHONE_PUBLIC LinphoneInfoMessage *linphone_core_create_info_message(LinphoneC
 
 /**
  * Create a #LinphoneMagicSearch object.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The create #LinphoneMagicSearch object
  * @ingroup misc
  */
@@ -132,15 +132,15 @@ LINPHONE_PUBLIC void linphone_core_check_for_update(LinphoneCore *core, const ch
 
 /**
  * Return the global unread chat message count.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The global unread chat message count.
  */
 LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count (const LinphoneCore *core);
 
 /**
  * Return the unread chat message count for a given local address.
- * @param[in] core #LinphoneCore object.
- * @param[in] address #LinphoneAddress object.
+ * @param core #LinphoneCore object.
+ * @param address #LinphoneAddress object.
  * @return The unread chat message count.
  */
 LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_local (
@@ -150,7 +150,7 @@ LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_local (
 
 /**
  * Return the unread chat message count for all active local address. (Primary contact + proxy configs.)
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The unread chat message count.
  */
 LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_active_locals (const LinphoneCore *core);
@@ -161,7 +161,7 @@ LINPHONE_PUBLIC int linphone_core_get_unread_chat_message_count_from_active_loca
 
 /**
  * Get the remote address of the current call.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The remote address of the current call or NULL if there is no current call.
  * @ingroup call_control
  */
@@ -292,14 +292,14 @@ LINPHONE_PUBLIC void linphone_core_cbs_unref(LinphoneCoreCbs *cbs);
 
 /**
  * Set private data to be get from each callbacks.
- * @param[in] cbs the #LinphoneCoreCbs object
- * @param[in] user_data the user data pointer. @maybenil
+ * @param cbs the #LinphoneCoreCbs object
+ * @param user_data the user data pointer. @maybenil
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_user_data(LinphoneCoreCbs *cbs, void *user_data);
 
 /**
  * Get the user pointer.
- * @param[in] cbs the #LinphoneCoreCbs object
+ * @param cbs the #LinphoneCoreCbs object
  * @return the user data pointer. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_core_cbs_get_user_data(const LinphoneCoreCbs *cbs);
@@ -314,575 +314,575 @@ LINPHONE_PUBLIC LinphoneCoreCbs *linphone_core_get_current_callbacks(const Linph
 
 /**
  * Set the #LinphoneCoreGlobalStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_global_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsGlobalStateChangedCb cb);
 
 /**
  * Get the # callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsGlobalStateChangedCb linphone_core_cbs_get_global_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsRegistrationStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_registration_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsRegistrationStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsRegistrationStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsRegistrationStateChangedCb linphone_core_cbs_get_registration_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_call_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsCallStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallStateChangedCb linphone_core_cbs_get_call_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNotifyPresenceReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_notify_presence_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifyPresenceReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsNotifyPresenceReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNotifyPresenceReceivedCb linphone_core_cbs_get_notify_presence_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_notify_presence_received_for_uri_or_tel(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb cb);
 
 /**
  * Get the #LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb linphone_core_cbs_get_notify_presence_received_for_uri_or_tel(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNewSubscriptionRequestedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_new_subscription_requested(LinphoneCoreCbs *cbs, LinphoneCoreCbsNewSubscriptionRequestedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsNewSubscriptionRequestedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNewSubscriptionRequestedCb linphone_core_cbs_get_new_subscription_requested(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsAuthenticationRequestedCb callback.'
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_authentication_requested(LinphoneCoreCbs *cbs, LinphoneCoreCbsAuthenticationRequestedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsAuthenticationRequestedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAuthenticationRequestedCb linphone_core_cbs_get_authentication_requested(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallLogUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_call_log_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallLogUpdatedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsCallLogUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallLogUpdatedCb linphone_core_cbs_get_call_log_updated(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_message_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsMessageReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedCb linphone_core_cbs_get_message_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageSentCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_message_sent(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageSentCb cb);
 
 /**
  * Get the #LinphoneCoreCbsMessageSentCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageSentCb linphone_core_cbs_get_message_sent(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsChatRoomReadCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_read(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomReadCb cb);
 
 /**
  * Get the #LinphoneCoreCbsChatRoomReadCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsChatRoomReadCb linphone_core_cbs_get_chat_room_read(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsMessageReceivedUnableDecryptCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_message_received_unable_decrypt(LinphoneCoreCbs *cbs, LinphoneCoreCbsMessageReceivedUnableDecryptCb cb);
 
 /**
  * Get the #LinphoneCoreCbsMessageReceivedUnableDecryptCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsMessageReceivedUnableDecryptCb linphone_core_cbs_get_message_received_unable_decrypt(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsIsComposingReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_is_composing_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsIsComposingReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsIsComposingReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsIsComposingReceivedCb linphone_core_cbs_get_is_composing_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsDtmfReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_dtmf_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsDtmfReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsDtmfReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsDtmfReceivedCb linphone_core_cbs_get_dtmf_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsReferReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_refer_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsReferReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsReferReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsReferReceivedCb linphone_core_cbs_get_refer_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallEncryptionChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_call_encryption_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallEncryptionChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsCallEncryptionChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallEncryptionChangedCb linphone_core_cbs_get_call_encryption_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsTransferStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_transfer_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsTransferStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsTransferStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsTransferStateChangedCb linphone_core_cbs_get_transfer_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsBuddyInfoUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_buddy_info_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsBuddyInfoUpdatedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsBuddyInfoUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsBuddyInfoUpdatedCb linphone_core_cbs_get_buddy_info_updated(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsCallStatsUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_call_stats_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallStatsUpdatedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsCallStatsUpdatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallStatsUpdatedCb linphone_core_cbs_get_call_stats_updated(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsInfoReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_info_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsInfoReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsInfoReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsInfoReceivedCb linphone_core_cbs_get_info_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsSubscriptionStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_subscription_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsSubscriptionStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsSubscriptionStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsSubscriptionStateChangedCb linphone_core_cbs_get_subscription_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNotifyReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_notify_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsNotifyReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsNotifyReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNotifyReceivedCb linphone_core_cbs_get_notify_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsSubscribeReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_subscribe_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsSubscribeReceivedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsSubscribeReceivedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsSubscribeReceivedCb linphone_core_cbs_get_subscribe_received(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsPublishStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_publish_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsPublishStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsPublishStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsPublishStateChangedCb linphone_core_cbs_get_publish_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsConfiguringStatusCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_configuring_status(LinphoneCoreCbs *cbs, LinphoneCoreCbsConfiguringStatusCb cb);
 
 /**
  * Get the #LinphoneCoreCbsConfiguringStatusCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsConfiguringStatusCb linphone_core_cbs_get_configuring_status(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsNetworkReachableCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_network_reachable(LinphoneCoreCbs *cbs, LinphoneCoreCbsNetworkReachableCb cb);
 
 /**
  * Get the #LinphoneCoreCbsNetworkReachableCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsNetworkReachableCb linphone_core_cbs_get_network_reachable(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsLogCollectionUploadStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_log_collection_upload_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsLogCollectionUploadStateChangedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsLogCollectionUploadStateChangedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsLogCollectionUploadStateChangedCb linphone_core_cbs_get_log_collection_upload_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsLogCollectionUploadProgressIndicationCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_log_collection_upload_progress_indication(LinphoneCoreCbs *cbs, LinphoneCoreCbsLogCollectionUploadProgressIndicationCb cb);
 
 /**
  * Get the #LinphoneCoreCbsLogCollectionUploadProgressIndicationCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsLogCollectionUploadProgressIndicationCb linphone_core_cbs_get_log_collection_upload_progress_indication(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsFriendListCreatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_friend_list_created(LinphoneCoreCbs *cbs, LinphoneCoreCbsFriendListCreatedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsFriendListCreatedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsFriendListCreatedCb linphone_core_cbs_get_friend_list_created(LinphoneCoreCbs *cbs);
 
 /**
  * Set the #LinphoneCoreCbsFriendListRemovedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
- * @param[in] cb The callback.
+ * @param cbs A #LinphoneCoreCbs.
+ * @param cb The callback.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_friend_list_removed(LinphoneCoreCbs *cbs, LinphoneCoreCbsFriendListRemovedCb cb);
 
 /**
  * Get the #LinphoneCoreCbsFriendListRemovedCb callback.
- * @param[in] cbs A #LinphoneCoreCbs.
+ * @param cbs A #LinphoneCoreCbs.
  * @return The callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsFriendListRemovedCb linphone_core_cbs_get_friend_list_removed(LinphoneCoreCbs *cbs);
 
 /**
  * Set the call created callback.
- * @param[in] cbs #LinphoneCallCbs object.
- * @param[in] cb The call created callback to be used.
+ * @param cbs #LinphoneCallCbs object.
+ * @param cb The call created callback to be used.
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_call_created(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallCreatedCb cb);
 
 /**
  * Get the call created callback.
- * @param[in] cbs #LinphoneCoreCbs object.
+ * @param cbs #LinphoneCoreCbs object.
  * @return The current call created callback.
  */
 LINPHONE_PUBLIC LinphoneCoreCbsCallCreatedCb linphone_core_cbs_get_call_created(LinphoneCoreCbs *cbs);
 
 /**
  * Set the version update check result callback.
- * @param[in] cbs #LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs #LinphoneCoreCbs object
+ * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_version_update_check_result_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsVersionUpdateCheckResultReceivedCb cb);
 
 /**
  * Get the version update check result callback.
- * @param[in] cbs #LinphoneCoreCbs object
+ * @param cbs #LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsVersionUpdateCheckResultReceivedCb linphone_core_cbs_get_version_update_check_result_received(LinphoneCoreCbs *cbs);
 
 /**
  * Get the chat room state changed callback.
- * @param[in] cbs #LinphoneCoreCbs object
+ * @param cbs #LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat_room_state_changed (LinphoneCoreCbs *cbs);
 
 /**
  * Set the chat room state changed callback.
- * @param[in] cbs #LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs #LinphoneCoreCbs object
+ * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomStateChangedCb cb);
 
 /**
  * Get the chat room subject changed callback.
- * @param[in] cbs #LinphoneCoreCbs object
+ * @param cbs #LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsChatRoomSubjectChangedCb linphone_core_cbs_get_chat_room_subject_changed (LinphoneCoreCbs *cbs);
 
 /**
  * Set the chat room subject changed callback.
- * @param[in] cbs #LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs #LinphoneCoreCbs object
+ * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_subject_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomSubjectChangedCb cb);
 
 /**
  * Get the chat room ephemeral message deleted callback.
- * @param[in] cbs #LinphoneCoreCbs object
+ * @param cbs #LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb linphone_core_cbs_get_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs);
 
 /**
  * Set the chat room ephemeral message deleted callback.
- * @param[in] cbs #LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs #LinphoneCoreCbs object
+ * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_ephemeral_message_deleted (LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomEphemeralMessageDeleteCb cb);
 
 /**
  * Get the IMEE user registration callback
- * @param[in] cbs #LinphoneCoreCbs object
+ * @param cbs #LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsImeeUserRegistrationCb linphone_core_cbs_get_imee_user_registration (LinphoneCoreCbs *cbs);
 
 /**
  * Set the IMEE user registration callback.
- * @param[in] cbs #LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs #LinphoneCoreCbs object
+ * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_imee_user_registration (LinphoneCoreCbs *cbs, LinphoneCoreCbsImeeUserRegistrationCb cb);
 
 /**
  * Get the qrcode found callback.
- * @param[in] cbs LinphoneCoreCbs object
+ * @param cbs LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsQrcodeFoundCb linphone_core_cbs_get_qrcode_found(LinphoneCoreCbs *cbs);
 
 /**
  * Set the qrcode found callback.
- * @param[in] cbs LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs LinphoneCoreCbs object
+ * @param cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_qrcode_found(LinphoneCoreCbs *cbs, LinphoneCoreCbsQrcodeFoundCb cb);
 
 /**
  * Gets the first call started callback.
- * @param[in] cbs LinphoneCoreCbs object
+ * @param cbs LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsFirstCallStartedCb linphone_core_cbs_get_first_call_started(LinphoneCoreCbs *cbs);
 
 /**
  * Sets the first call started callback.
- * @param[in] cbs LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs LinphoneCoreCbs object
+ * @param cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_first_call_started(LinphoneCoreCbs *cbs, LinphoneCoreCbsFirstCallStartedCb cb);
 
 /**
  * Gets the last call ended callback.
- * @param[in] cbs LinphoneCoreCbs object
+ * @param cbs LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsLastCallEndedCb linphone_core_cbs_get_last_call_ended(LinphoneCoreCbs *cbs);
 
 /**
  * Sets the last call ended callback.
- * @param[in] cbs LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs LinphoneCoreCbs object
+ * @param cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_last_call_ended(LinphoneCoreCbs *cbs, LinphoneCoreCbsLastCallEndedCb cb);
 
 /**
  * Gets the audio device changed callback.
- * @param[in] cbs LinphoneCoreCbs object
+ * @param cbs LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAudioDeviceChangedCb linphone_core_cbs_get_audio_device_changed(LinphoneCoreCbs *cbs);
 
 /**
  * Sets the audio device changed callback.
- * @param[in] cbs LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs LinphoneCoreCbs object
+ * @param cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_audio_device_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDeviceChangedCb cb);
 
 /**
  * Gets the audio devices list updated callback.
- * @param[in] cbs LinphoneCoreCbs object
+ * @param cbs LinphoneCoreCbs object
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsAudioDevicesListUpdatedCb linphone_core_cbs_get_audio_devices_list_updated(LinphoneCoreCbs *cbs);
 
 /**
  * Sets the audio devices list updated callback.
- * @param[in] cbs LinphoneCoreCbs object
- * @param[in] cb The callback to use
+ * @param cbs LinphoneCoreCbs object
+ * @param cb The callback to use
  **/
 LINPHONE_PUBLIC void linphone_core_cbs_set_audio_devices_list_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsAudioDevicesListUpdatedCb cb);
 
@@ -921,7 +921,7 @@ LINPHONE_PUBLIC LinphoneLogCollectionState linphone_core_log_collection_enabled(
 
 /**
  * Enable the linphone core log collection to upload logs on a server.
- * @param[in] state #LinphoneLogCollectionState value telling whether to enable log collection or not.
+ * @param state #LinphoneLogCollectionState value telling whether to enable log collection or not.
  */
 LINPHONE_PUBLIC void linphone_core_enable_log_collection(LinphoneLogCollectionState state);
 
@@ -933,7 +933,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_log_collection_path(void);
 
 /**
  * Set the path of a directory where the log files will be written for log collection.
- * @param[in] path The path where the log files will be written.
+ * @param path The path where the log files will be written.
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_path(const char *path);
 
@@ -945,7 +945,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_log_collection_prefix(void);
 
 /**
  * Set the prefix of the filenames that will be used for log collection.
- * @param[in] prefix The prefix to use for the filenames for log collection.
+ * @param prefix The prefix to use for the filenames for log collection.
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_prefix(const char *prefix);
 
@@ -961,27 +961,27 @@ LINPHONE_PUBLIC size_t linphone_core_get_log_collection_max_file_size(void);
  * dynamically but instead only before calling @see
  * linphone_core_enable_log_collection. If you increase max size
   * on runtime, logs chronological order COULD be broken.
- * @param[in] size The max file size in bytes of the files used for log collection.
+ * @param size The max file size in bytes of the files used for log collection.
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_max_file_size(size_t size);
 
 /**
  * Set the url of the server where to upload the collected log files.
- * @param[in] core #LinphoneCore object
- * @param[in] server_url The url of the server where to upload the collected log files. @maybenil
+ * @param core #LinphoneCore object
+ * @param server_url The url of the server where to upload the collected log files. @maybenil
  */
 LINPHONE_PUBLIC void linphone_core_set_log_collection_upload_server_url(LinphoneCore *core, const char *server_url);
 
 /**
  * Gets the url of the server where to upload the collected log files.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The url of the server where to upload the collected log files. @maybenil
  */
 LINPHONE_PUBLIC const char * linphone_core_get_log_collection_upload_server_url(LinphoneCore *core);
 
 /**
  * Upload the log collection to the configured server url.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  */
 LINPHONE_PUBLIC void linphone_core_upload_log_collection(LinphoneCore *core);
 
@@ -1146,7 +1146,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_core_new_with_config(
  * Also re-initialize a #LinphoneCore object that has been stopped using linphone_core_stop().
  * Must be called only if #LinphoneGlobalState is either Ready of Off. State will changed to Startup, Configuring and then On.
  * @ingroup initializing
- * @param[in] core The #LinphoneCore object to be started
+ * @param core The #LinphoneCore object to be started
  * @return 0: success, -1: global failure, -2: could not connect database
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *core);
@@ -1156,7 +1156,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_start(LinphoneCore *core);
  * If stopped, it can be started again using linphone_core_start().
  * Must be called only if #LinphoneGlobalState is either On. State will changed to Shutdown and then Off.
  * @ingroup initializing
- * @param[in] core The #LinphoneCore object to be stopped
+ * @param core The #LinphoneCore object to be stopped
  */
 LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
 
@@ -1167,7 +1167,7 @@ LINPHONE_PUBLIC void linphone_core_stop (LinphoneCore *core);
  * Must be called only if #LinphoneGlobalState is On.
  * When #LinphoneGlobalState is Off #LinphoneCore can be started again using linphone_core_start().
  * @ingroup initializing
- * @param[in] core The #LinphoneCore object to be stopped
+ * @param core The #LinphoneCore object to be stopped
  */
 LINPHONE_PUBLIC void linphone_core_stop_async (LinphoneCore *core);
 
@@ -1200,7 +1200,7 @@ LINPHONE_PUBLIC void linphone_core_unref(LinphoneCore *core);
  * other liblinphone methods. If it is not the case make sure all liblinphone calls are
  * serialized with a mutex.
  * For ICE to work properly it should be called every 20ms.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_iterate(LinphoneCore *core);
@@ -1249,9 +1249,9 @@ LINPHONE_PUBLIC void linphone_core_remove_callbacks(LinphoneCore *core, const Li
  * If NULL is given to "ua_name" and "version" both, the User-agent header will be empty.
  *
  * This function should be called just after linphone_factory_create_core() ideally.
- * @param[in] core The core.
- * @param[in] ua_name Name of the user agent.
- * @param[in] version Version of the user agent.
+ * @param core The core.
+ * @param ua_name Name of the user agent.
+ * @param version Version of the user agent.
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char *ua_name, const char *version);
@@ -1259,8 +1259,8 @@ LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char
 /**
  * See linphone_proxy_config_normalize_sip_uri for documentation. Default proxy config is used to parse
  * the address.
- * @param[in] core The core
- * @param[in] url the url to parse
+ * @param core The core
+ * @param url the url to parse
  * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil
  * @ingroup misc
  */
@@ -1272,8 +1272,8 @@ LINPHONE_PUBLIC LinphoneAddress * linphone_core_interpret_url(LinphoneCore *core
  * The application doesn't own a reference to the returned LinphoneCall object.
  * Use linphone_call_ref() to safely keep the LinphoneCall pointer valid within your application.
  *
- * @param[in] core LinphoneCore object
- * @param[in] url The destination of the call (sip address, or phone number).
+ * @param core LinphoneCore object
+ * @param url The destination of the call (sip address, or phone number).
  * @return A #LinphoneCall object or NULL in case of failure. @maybenil
  * @ingroup call_control
 **/
@@ -1285,8 +1285,8 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite(LinphoneCore *core, const ch
  * created by linphone_core_interpret_url().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
- * @param[in] core #LinphoneCore object
- * @param[in] addr The destination of the call (sip address).
+ * @param core #LinphoneCore object
+ * @param addr The destination of the call (sip address).
  * @return A #LinphoneCall object or NULL in case of failure. @maybenil
  * @ingroup call_control
 **/
@@ -1296,9 +1296,9 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address(LinphoneCore *core, 
  * Initiates an outgoing call according to supplied call parameters
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
- * @param[in] core #LinphoneCore object
- * @param[in] url The destination of the call (sip address, or phone number).
- * @param[in] params Call parameters
+ * @param core #LinphoneCore object
+ * @param url The destination of the call (sip address, or phone number).
+ * @param params Call parameters
  * @return A #LinphoneCall object or NULL in case of failure. @maybenil
  * @ingroup call_control
 **/
@@ -1310,9 +1310,9 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
  * created by linphone_core_interpret_url().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
- * @param[in] core #LinphoneCore object
- * @param[in] addr The destination of the call (sip address).
- * @param[in] params Call parameters
+ * @param core #LinphoneCore object
+ * @param addr The destination of the call (sip address).
+ * @param params Call parameters
  * @return A #LinphoneCall object or NULL in case of failure. @maybenil
  * @ingroup call_control
 **/
@@ -1326,9 +1326,9 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address_with_params(Linphone
  * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
  * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
- * @param[in] core #LinphoneCore object
- * @param[in] call The call to be transfered
- * @param[in] refer_to The destination the call is to be refered to
+ * @param core #LinphoneCore object
+ * @param call The call to be transfered
+ * @param refer_to The destination the call is to be refered to
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 12/01/2017 Use #linphone_call_transfer() instead.
@@ -1347,9 +1347,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_transfer_call(L
  * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
  * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
- * @param[in] core #LinphoneCore object
- * @param[in] call A running call you want to transfer
- * @param[in] dest A running call whose remote person will receive the transfer
+ * @param core #LinphoneCore object
+ * @param call A running call you want to transfer
+ * @param dest A running call whose remote person will receive the transfer
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 12/01/2017 Use #linphone_call_transfer_to_another() instead.
@@ -1363,9 +1363,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_transfer_call_t
  * This function is for advanced usage: the execution of transfers is automatically managed by the LinphoneCore. However if an application
  * wants to have control over the call parameters for the new call, it should call this function immediately during the #LinphoneCallRefered notification.
  * @see LinphoneCoreVTable::call_state_changed
- * @param[in] core #LinphoneCore object
- * @param[in] call A call that has just been notified about #LinphoneCallRefered state event.
- * @param[in] params The call parameters to be applied to the new call.
+ * @param core #LinphoneCore object
+ * @param call A call that has just been notified about #LinphoneCallRefered state event.
+ * @param params The call parameters to be applied to the new call.
  * @return A #LinphoneCall corresponding to the new call that is attempted to the transfer destination. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneCall * linphone_core_start_refered_call(LinphoneCore *core, LinphoneCall *call, const LinphoneCallParams *params);
@@ -1374,14 +1374,14 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_start_refered_call(LinphoneCore *co
  * @brief Tells whether there is an incoming invite pending.
  *
  * @ingroup call_control
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean telling whether an incoming invite is pending or not.
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_incoming_invite_pending(LinphoneCore*lc);
 
 /**
  * Tells whether there is a call running.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether a call is currently running or not
  * @ingroup call_control
 **/
@@ -1389,7 +1389,7 @@ LINPHONE_PUBLIC bool_t linphone_core_in_call(const LinphoneCore *core);
 
 /**
  * Gets the current call.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current call or NULL if no call is running. @maybenil
  * @ingroup call_control
 **/
@@ -1402,8 +1402,8 @@ LINPHONE_PUBLIC LinphoneCall *linphone_core_get_current_call(const LinphoneCore 
  * call_state_changed callback of the #LinphoneCoreVTable structure, where it will receive
  * a #LinphoneCallIncoming event with the associated #LinphoneCall object.
  * The application can later accept the call using this method.
- * @param[in] core #LinphoneCore object
- * @param[in] call The #LinphoneCall object representing the call to be answered
+ * @param core #LinphoneCore object
+ * @param call The #LinphoneCall object representing the call to be answered
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_accept() instead.
@@ -1419,9 +1419,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_call(Lin
  * a #LinphoneCallIncoming event with the associated #LinphoneCall object.
  * The application can later accept the call using
  * this method.
- * @param[in] core #LinphoneCore object
- * @param[in] call The #LinphoneCall object representing the call to be answered
- * @param[in] params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use default parameters
+ * @param core #LinphoneCore object
+ * @param call The #LinphoneCall object representing the call to be answered
+ * @param params The specific parameters for this call, for example whether video is accepted or not. Use NULL to use default parameters
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_accept_with_params() instead.
@@ -1435,9 +1435,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_call_wit
  * This means the call is not accepted but audio & video streams can be established if the remote party supports early media.
  * However, unlike after call acceptance, mic and camera input are not sent during early-media, though received audio & video are played normally.
  * The call can then later be fully accepted using linphone_core_accept_call() or linphone_core_accept_call_with_params().
- * @param[in] core #LinphoneCore object
- * @param[in] call The call to accept
- * @param[in] params The call parameters to use (can be NULL)
+ * @param core #LinphoneCore object
+ * @param call The call to accept
+ * @param params The call parameters to use (can be NULL)
  * @return 0 if successful, -1 otherwise
  * @ingroup call_control
  * @deprecated 10/10/2017 Use linphone_call_accept_early_media_with_params() instead.
@@ -1449,8 +1449,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_early_me
  * @brief Accept an early media session for an incoming call.
  *
  * This is identical as calling linphone_core_accept_early_media_with_params() with NULL call parameters.
- * @param[in] core #LinphoneCore object
- * @param[in] call The incoming call to accept
+ * @param core #LinphoneCore object
+ * @param call The incoming call to accept
  * @return 0 if successful, -1 otherwise
  * @ingroup call_control
  * @see linphone_core_accept_early_media_with_params()
@@ -1462,8 +1462,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_early_me
 /**
  * @brief Terminates a call.
  *
- * @param[in] core LinphoneCore object
- * @param[in] call The LinphoneCall object representing the call to be terminated
+ * @param core LinphoneCore object
+ * @param call The LinphoneCall object representing the call to be terminated
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_terminate() instead.
@@ -1473,9 +1473,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_terminate_call(
 
 /**
  * Redirect the specified call to the given redirect URI.
- * @param[in] core #LinphoneCore object
- * @param[in] call The #LinphoneCall to redirect
- * @param[in] redirect_uri The URI to redirect the call to
+ * @param core #LinphoneCore object
+ * @param call The #LinphoneCall to redirect
+ * @param redirect_uri The URI to redirect the call to
  * @return 0 if successful, -1 on error.
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_redirect() instead.
@@ -1485,9 +1485,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_redirect_call(L
 
 /**
  * @brief Decline a pending incoming call, with a reason.
- * @param[in] core #LinphoneCore object
- * @param[in] call The #LinphoneCall to decline, must be in the IncomingReceived state
- * @param[in] reason The reason for rejecting the call: #LinphoneReasonDeclined or #LinphoneReasonBusy
+ * @param core #LinphoneCore object
+ * @param call The #LinphoneCall to decline, must be in the IncomingReceived state
+ * @param reason The reason for rejecting the call: #LinphoneReasonDeclined or #LinphoneReasonBusy
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_decline() instead.
@@ -1497,7 +1497,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_decline_call(Li
 
 /**
  * Terminates all the calls.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return 0
  * @ingroup call_control
 **/
@@ -1508,8 +1508,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_all_calls(LinphoneCore *c
  * this file will be played to the remote user.
  *
  * The only way to resume a paused call is to call linphone_core_resume_call().
- * @param[in] core #LinphoneCore object
- * @param[in] call The call to pause
+ * @param core #LinphoneCore object
+ * @param call The call to pause
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @see linphone_core_resume_call()
@@ -1520,7 +1520,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_pause_call(Linp
 
 /**
  * Pause all currently running calls.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return 0
  * @ingroup call_control
 **/
@@ -1530,8 +1530,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_pause_all_calls(LinphoneCore *core)
  * @brief Resumes a call.
  *
  * The call needs to have been paused previously with linphone_core_pause_call().
- * @param[in] core #LinphoneCore object
- * @param[in] call The call to resume
+ * @param core #LinphoneCore object
+ * @param call The call to resume
  * @return 0 on success, -1 on failure
  * @ingroup call_control
  * @see linphone_core_pause_call()
@@ -1550,9 +1550,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_resume_call(Lin
  * WARNING: Updating a call in the #LinphoneCallPaused state will still result in a paused call even if the media directions set in the
  * params are sendrecv. To resume a paused call, you need to call linphone_core_resume_call().
  *
- * @param[in] core #LinphoneCore object
- * @param[in] call The call to be updated
- * @param[in] params The new call parameters to use (may be NULL)
+ * @param core #LinphoneCore object
+ * @param call The call to be updated
+ * @param params The new call parameters to use (may be NULL)
  * @return 0 if successful, -1 otherwise.
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_update() instead.
@@ -1576,8 +1576,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_update_call(Lin
  * in the 200Ok, and when the ACK containing the SDP answer is received, #LinphoneCallUpdatedByRemote is triggered to notify the application of possible
  * changes in the media session. However in such case defering the update has no meaning since we just generating an offer.
  *
- * @param[in] core #LinphoneCore object
- * @param[in] call The call for which to defer the update
+ * @param core #LinphoneCore object
+ * @param call The call for which to defer the update
  * @return 0 if successful, -1 if the linphone_core_defer_call_update() was done outside a valid #LinphoneCallUpdatedByRemote notification
  * @ingroup call_control
  * @deprecated 13/02/2017 Use linphone_call_defer_update() instead
@@ -1598,9 +1598,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_defer_call_upda
  * If params is not NULL, then the update will be accepted according to the parameters passed.
  * Typical example is when a user accepts to start video, then params should indicate that video stream should be used
  * (see linphone_call_params_enable_video()).
- * @param[in] core #LinphoneCore object
- * @param[in] call The call for which to accept an update
- * @param[in] params A #LinphoneCallParams object describing the call parameters to accept
+ * @param core #LinphoneCore object
+ * @param call The call for which to accept an update
+ * @param params A #LinphoneCallParams object describing the call parameters to accept
  * @return 0 if successful, -1 otherwise (actually when this function call is performed outside ot #LinphoneCallUpdatedByRemote state)
  * @ingroup call_control
  * @deprecated 13/02/2017 Use #linphone_call_accept_update() instead.
@@ -1612,8 +1612,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_accept_call_upd
  * Create a #LinphoneCallParams suitable for linphone_core_invite_with_params(), linphone_core_accept_call_with_params(), linphone_core_accept_early_media_with_params(),
  * linphone_core_accept_call_update().
  * The parameters are initialized according to the current #LinphoneCore configuration and the current state of the LinphoneCall.
- * @param[in] core #LinphoneCore object
- * @param[in] call #LinphoneCall for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new outgoing call. @maybenil
+ * @param core #LinphoneCore object
+ * @param call #LinphoneCall for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new outgoing call. @maybenil
  * @return A new #LinphoneCallParams object. @maybenil
  * @ingroup call_control
  */
@@ -1621,8 +1621,8 @@ LINPHONE_PUBLIC LinphoneCallParams *linphone_core_create_call_params(LinphoneCor
 
 /**
  * Get the call with the remote_address specified
- * @param[in] core #LinphoneCore object
- * @param[in] remote_address The remote address of the call that we want to get
+ * @param core #LinphoneCore object
+ * @param remote_address The remote address of the call that we want to get
  * @return The call if it has been found, NULL otherwise. @maybenil
  * @ingroup call_control
  */
@@ -1676,7 +1676,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_primary_contact(LinphoneCore *core
  * If no default proxy is set, this will return the primary contact (
  * see linphone_core_get_primary_contact() ). If a default proxy is set
  * it returns the registered identity on the proxy.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The default identity SIP address.
  * @ingroup proxies
 **/
@@ -1700,8 +1700,8 @@ LINPHONE_PUBLIC bool_t linphone_core_get_guess_hostname(LinphoneCore *core);
 
 /**
  * Tells to #LinphoneCore to use Linphone Instant Messaging encryption
- * @param[in] core #LinphoneCore object
- * @param[in] enable The new lime state
+ * @param core #LinphoneCore object
+ * @param enable The new lime state
  * @ingroup network_parameters
  * @deprecated 04/02/2019 Use linphone_core_enable_lime_x3dh instead.
  */
@@ -1709,7 +1709,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_enable_lime(LinphoneCore 
 
 /**
  * Returns the lime state
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current lime state
  * @ingroup network_parameters
  * @deprecated 04/02/2019 Use linphone_core_lime_x3dh_enabled instead.
@@ -1718,7 +1718,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneLimeState linphone_core_lime_enabled
 
 /**
  * Tells if lime is available
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup network_parameters
  * @deprecated 04/02/2019 Use linphone_core_lime_x3dh_available instead.
 **/
@@ -1726,15 +1726,15 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_lime_available(const Li
 
 /**
  * Tells to LinphoneCore to use LIME X3DH
- * @param[in] core LinphoneCore object
- * @param[in] enable A boolean value telling whether to enable or disable LIME X3DH
+ * @param core LinphoneCore object
+ * @param enable A boolean value telling whether to enable or disable LIME X3DH
  * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_core_enable_lime_x3dh(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells wether LIME X3DH is enabled or not
- * @param[in] core LinphoneCore object
+ * @param core LinphoneCore object
  * @return The current lime state
  * @ingroup misc
 **/
@@ -1744,15 +1744,15 @@ LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_enabled(const LinphoneCore *core)
  * Set the x3dh server url.
  * If empty, this function will disable LIME X3DH from core.
  * Otherwise, or if different from the existing value, this will (re-)initialize the LIME X3DH engine.
- * @param[in] core LinphoneCore object
- * @param[in] url The x3dh server url. @maybenil
+ * @param core LinphoneCore object
+ * @param url The x3dh server url. @maybenil
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_set_lime_x3dh_server_url(LinphoneCore *core, const char *url);
 
 /**
  * Get the x3dh server url.
- * @param[in] core LinphoneCore object
+ * @param core LinphoneCore object
  * @return The x3dh server url. @maybenil
  * @ingroup misc
 **/
@@ -1760,14 +1760,14 @@ LINPHONE_PUBLIC const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore 
 
 /**
  * Tells if LIME X3DH is available
- * @param[in] core LinphoneCore object
+ * @param core LinphoneCore object
  * @ingroup misc
 **/
 LINPHONE_PUBLIC bool_t linphone_core_lime_x3dh_available(const LinphoneCore *core);
 
 /**
  * Tells whether IPv6 is enabled or not.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether IPv6 is enabled or not
  * @ingroup network_parameters
  * @see linphone_core_enable_ipv6() for more details on how IPv6 is supported in liblinphone.
@@ -1776,15 +1776,15 @@ LINPHONE_PUBLIC bool_t linphone_core_ipv6_enabled(LinphoneCore *core);
 
 /**
  * Turns IPv6 support on or off.
- * @param[in] core #LinphoneCore object
- * @param[in] val A boolean value telling whether to enable IPv6 support
+ * @param core #LinphoneCore object
+ * @param val A boolean value telling whether to enable IPv6 support
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_ipv6(LinphoneCore *core, bool_t val);
 
 /**
  * Tells whether NACK context is enabled or not.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether NACK context is enabled or not
  * @ingroup media_parameters
 **/
@@ -1792,15 +1792,15 @@ LINPHONE_PUBLIC bool_t linphone_core_retransmission_on_nack_enabled(LinphoneCore
 
 /**
  * Turns NACK context on or off.
- * @param[in] core #LinphoneCore object
- * @param[in] enable A boolean value telling whether to enable NACK context
+ * @param core #LinphoneCore object
+ * @param enable A boolean value telling whether to enable NACK context
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_retransmission_on_nack(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether Wifi only mode is enabled or not
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether Wifi only mode is enabled or not
  * @ingroup network_parameters
 **/
@@ -1808,8 +1808,8 @@ LINPHONE_PUBLIC bool_t linphone_core_wifi_only_enabled(LinphoneCore *core);
 
 /**
  * Turns Wifi only mode on or off
- * @param[in] core #LinphoneCore object
- * @param[in] enable A boolean value telling whether to enable IPv6 support
+ * @param core #LinphoneCore object
+ * @param enable A boolean value telling whether to enable IPv6 support
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_wifi_only(LinphoneCore *core, bool_t enable);
@@ -1972,15 +1972,15 @@ LINPHONE_PUBLIC int linphone_core_get_upload_ptime(LinphoneCore *core);
 
 /**
  * Set the SIP transport timeout.
- * @param[in] core #LinphoneCore object.
- * @param[in] timeout_ms The SIP transport timeout in milliseconds.
+ * @param core #LinphoneCore object.
+ * @param timeout_ms The SIP transport timeout in milliseconds.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_sip_transport_timeout(LinphoneCore *core, int timeout_ms);
 
 /**
  * Get the SIP transport timeout.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The SIP transport timeout in milliseconds.
  * @ingroup media_parameters
  */
@@ -1988,15 +1988,15 @@ LINPHONE_PUBLIC int linphone_core_get_sip_transport_timeout(LinphoneCore *core);
 
 /**
  * Enable or disable DNS SRV resolution.
- * @param[in] core #LinphoneCore object.
- * @param[in] enable TRUE to enable DNS SRV resolution, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param enable TRUE to enable DNS SRV resolution, FALSE to disable it.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_dns_srv(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether DNS SRV resolution is enabled.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if DNS SRV resolution is enabled, FALSE if disabled.
  * @ingroup media_parameters
  */
@@ -2004,15 +2004,15 @@ LINPHONE_PUBLIC bool_t linphone_core_dns_srv_enabled(const LinphoneCore *core);
 
 /**
  * Enable or disable DNS search (use of local domain if the fully qualified name did return results).
- * @param[in] core #LinphoneCore object.
- * @param[in] enable TRUE to enable DNS search, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param enable TRUE to enable DNS search, FALSE to disable it.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_dns_search(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether DNS search (use of local domain if the fully qualified name did return results) is enabled.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if DNS search is enabled, FALSE if disabled.
  * @ingroup media_parameters
  */
@@ -2020,7 +2020,7 @@ LINPHONE_PUBLIC bool_t linphone_core_dns_search_enabled(const LinphoneCore *core
 
 /**
  * Tells if the DNS was set by an application
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if DNS was set by app, FALSE otherwise.
  *@ingroup media_parameters
  */
@@ -2029,8 +2029,8 @@ LINPHONE_PUBLIC bool_t linphone_core_get_dns_set_by_app(LinphoneCore *core);
 /**
  * Forces liblinphone to use the supplied list of dns servers, instead of system's ones
  * and set dns_set_by_app at true or false according to value of servers list.
- * @param[in] core #LinphoneCore object.
- * @param[in] servers \bctbx_list{const char *} A list of strings containing the IP addresses of DNS servers to be used.
+ * @param core #LinphoneCore object.
+ * @param servers \bctbx_list{const char *} A list of strings containing the IP addresses of DNS servers to be used.
  * Setting to NULL restores default behaviour, which is to use the DNS server list provided by the system.
  * The list is copied internally. @maybenil
  * @ingroup media_parameters
@@ -2039,8 +2039,8 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers_app(LinphoneCore *core, const
 
 /**
  * Forces liblinphone to use the supplied list of dns servers, instead of system's ones.
- * @param[in] core #LinphoneCore object.
- * @param[in] servers \bctbx_list{const char *} A list of strings containing the IP addresses of DNS servers to be used.
+ * @param core #LinphoneCore object.
+ * @param servers \bctbx_list{const char *} A list of strings containing the IP addresses of DNS servers to be used.
  * Setting to NULL restores default behaviour, which is to use the DNS server list provided by the system.
  * The list is copied internally. @maybenil
  * @ingroup media_parameters
@@ -2049,7 +2049,7 @@ LINPHONE_PUBLIC void linphone_core_set_dns_servers(LinphoneCore *core, const bct
 
 /**
  * Return the list of the available audio payload types.
- * @param[in] core The core.
+ * @param core The core.
  * @return \bctbx_list{LinphonePayloadType} A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref.
  * @ingroup media_parameters
@@ -2058,8 +2058,8 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_payload_types(LinphoneCore
 
 /**
  * Redefine the list of the available payload types.
- * @param[in] core The core.
- * @param[in] payload_types \bctbx_list{LinphonePayloadType} The new list of payload types. The core does not take
+ * @param core The core.
+ * @param payload_types \bctbx_list{LinphonePayloadType} The new list of payload types. The core does not take
  * ownership on it.
  * @ingroup media_parameters
  */
@@ -2067,7 +2067,7 @@ LINPHONE_PUBLIC void linphone_core_set_audio_payload_types(LinphoneCore *core, c
 
 /**
  * Returns the list of available audio codecs.
- * @param[in] core The #LinphoneCore object
+ * @param core The #LinphoneCore object
  * @return \bctbx_list{OrtpPayloadType}
  *
  * This list is unmodifiable. The ->data field of the bctbx_list_t points a PayloadType
@@ -2082,8 +2082,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const bctbx_list_t *linphone_core_get_audio_
 
 /**
  * Sets the list of audio codecs.
- * @param[in] core The #LinphoneCore object
- * @param[in] codecs \bctbx_list{OrtpPayloadType}
+ * @param core The #LinphoneCore object
+ * @param codecs \bctbx_list{OrtpPayloadType}
  * @return 0
  * The list is taken by the #LinphoneCore thus the application should not free it.
  * This list is made of struct PayloadType describing the codec parameters.
@@ -2095,7 +2095,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_audio_codec
 
 /**
  * Return the list of the available video payload types.
- * @param[in] core The core.
+ * @param core The core.
  * @return \bctbx_list{LinphonePayloadType} A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref.
  * @ingroup media_parameters
@@ -2104,8 +2104,8 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_video_payload_types(LinphoneCore
 
 /**
  * Redefine the list of the available video payload types.
- * @param[in] core The core.
- * @param[in] payload_types \bctbx_list{LinphonePayloadType} The new list of codecs. The core does not take
+ * @param core The core.
+ * @param payload_types \bctbx_list{LinphonePayloadType} The new list of codecs. The core does not take
  * ownership on it.
  * @ingroup media_parameters
  */
@@ -2113,7 +2113,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_payload_types(LinphoneCore *core, c
 
 /**
  * Returns the list of available video codecs.
- * @param[in] core The #LinphoneCore object
+ * @param core The #LinphoneCore object
  * @return \bctbx_list{OrtpPayloadType}
  *
  * This list is unmodifiable. The ->data field of the bctbx_list_t points a PayloadType
@@ -2128,8 +2128,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const bctbx_list_t *linphone_core_get_video_
 
 /**
  * Sets the list of video codecs.
- * @param[in] core The #LinphoneCore object
- * @param[in] codecs \bctbx_list{OrtpPayloadType}
+ * @param core The #LinphoneCore object
+ * @param codecs \bctbx_list{OrtpPayloadType}
  * @return 0
  *
  * The list is taken by the #LinphoneCore thus the application should not free it.
@@ -2142,7 +2142,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_video_codec
 
 /**
  * Return the list of the available text payload types.
- * @param[in] core The core.
+ * @param core The core.
  * @return \bctbx_list{LinphonePayloadType} A freshly allocated list of the available payload types. The list
  * must be destroyed with bctbx_list_free() after usage. The elements of the list haven't to be unref.
  * @ingroup media_parameters
@@ -2151,8 +2151,8 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_text_payload_types(LinphoneCore 
 
 /**
  * Redefine the list of the available payload types.
- * @param[in] core The core.
- * @param[in] payload_types \bctbx_list{LinphonePayloadType} The new list of payload types. The core does not take
+ * @param core The core.
+ * @param payload_types \bctbx_list{LinphonePayloadType} The new list of payload types. The core does not take
  * ownership on it.
  * @ingroup media_parameters
  */
@@ -2160,7 +2160,7 @@ LINPHONE_PUBLIC void linphone_core_set_text_payload_types(LinphoneCore *core, co
 
 /**
  * Returns the list of available text codecs.
- * @param[in] core The #LinphoneCore object
+ * @param core The #LinphoneCore object
  * @return \bctbx_list{OrtpPayloadType}
  *
  * This list is unmodifiable. The ->data field of the bctbx_list_t points a PayloadType
@@ -2175,8 +2175,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const bctbx_list_t *linphone_core_get_text_c
 
 /**
  * Sets the list of text codecs.
- * @param[in] core The #LinphoneCore object
- * @param[in] codecs \bctbx_list{LinphonePayloadType}
+ * @param core The #LinphoneCore object
+ * @param codecs \bctbx_list{LinphonePayloadType}
  * @return 0
  *
  * The list is taken by the #LinphoneCore thus the application should not free it.
@@ -2190,8 +2190,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_text_codecs
 /**
  * Enable RFC3389 generic comfort noise algorithm (CN payload type).
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
- * @param[in] core #LinphoneCore object
- * @param[in] enabled TRUE if enabled, FALSE otherwise.
+ * @param core #LinphoneCore object
+ * @param enabled TRUE if enabled, FALSE otherwise.
  * @deprecated 20/12/2016 Use linphone_core_enable_generic_comfort_noise() instead
  * @donotwrap
  */
@@ -2199,7 +2199,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_text_codecs
 
 /**
  * Returns enablement of RFC3389 generic comfort noise algorithm.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return TRUE or FALSE.
  * @deprecated 20/12/2016 Use linphone_core_generic_comfort_noise_enabled() instead
  * @donotwrap
@@ -2209,22 +2209,22 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_core_set_text_codecs
 /**
  * Enable RFC3389 generic comfort noise algorithm (CN payload type).
  * It is disabled by default, because this algorithm is only relevant for legacy codecs (PCMU, PCMA, G722).
- * @param[in] core #LinphoneCore object
- * @param[in] enabled TRUE if enabled, FALSE otherwise.
+ * @param core #LinphoneCore object
+ * @param enabled TRUE if enabled, FALSE otherwise.
 **/
 LINPHONE_PUBLIC void linphone_core_enable_generic_comfort_noise(LinphoneCore *core, bool_t enabled);
 
 /**
  * Returns enablement of RFC3389 generic comfort noise algorithm.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return TRUE or FALSE.
 **/
 LINPHONE_PUBLIC bool_t linphone_core_generic_comfort_noise_enabled(const LinphoneCore *core);
 
 /**
  * Tells whether the specified payload type is enabled.
- * @param[in] core #LinphoneCore object.
- * @param[in] pt The payload type to check.
+ * @param core #LinphoneCore object.
+ * @param pt The payload type to check.
  * @return TRUE if the payload type is enabled, FALSE if disabled.
  * @ingroup media_parameters
  * @deprecated 31/03/2017 Use linphone_payload_type_enabled() instead.
@@ -2234,8 +2234,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_payload_type_enabled(co
 
 /**
  * Tells whether the specified payload type represents a variable bitrate codec.
- * @param[in] core #LinphoneCore object.
- * @param[in] pt The payload type to check.
+ * @param core #LinphoneCore object.
+ * @param pt The payload type to check.
  * @return TRUE if the payload type represents a VBR codec, FALSE if disabled.
  * @ingroup media_parameters
  * @deprecated 31/03/2017 Use linphone_payload_type_is_vbr() instead.
@@ -2245,9 +2245,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_payload_type_is_vbr(con
 
 /**
  * Set an explicit bitrate (IP bitrate, not codec bitrate) for a given codec, in kbit/s.
- * @param[in] core the #LinphoneCore object
- * @param[in] pt the payload type to modify.
- * @param[in] bitrate the IP bitrate in kbit/s.
+ * @param core the #LinphoneCore object
+ * @param pt the payload type to modify.
+ * @param bitrate the IP bitrate in kbit/s.
  * @ingroup media_parameters
  * @deprecated 31/03/2017 Use linphone_payload_type_set_normal_bitrate() instead.
  * @donotwrap
@@ -2256,8 +2256,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_payload_type_bitrate(
 
 /**
  * Get the bitrate explicitely set with linphone_core_set_payload_type_bitrate().
- * @param[in] core the #LinphoneCore object
- * @param[in] pt the payload type to modify.
+ * @param core the #LinphoneCore object
+ * @param pt the payload type to modify.
  * @return bitrate the IP bitrate in kbit/s, or -1 if an error occured.
  * @ingroup media_parameters
  * @deprecated 31/03/2017 Use linphone_payload_type_get_bitrate().
@@ -2267,9 +2267,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_payload_type_bitrate(L
 
 /**
  * Enable or disable the use of the specified payload type.
- * @param[in] core #LinphoneCore object.
- * @param[in] pt The payload type to enable or disable. It can be retrieved using #linphone_core_find_payload_type
- * @param[in] enable TRUE to enable the payload type, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param pt The payload type to enable or disable. It can be retrieved using #linphone_core_find_payload_type
+ * @param enable TRUE to enable the payload type, FALSE to disable it.
  * @return 0 if successful, any other value otherwise.
  * @ingroup media_parameters
  * @deprecated 31/03/2017 Use linphone_payload_type_enable().
@@ -2336,8 +2336,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_payload_type_number(L
 
 /**
  * Get a description of the encoder used to supply a payload type.
- * @param[in] core The core.
- * @param[in] pt The payload type.
+ * @param core The core.
+ * @param pt The payload type.
  * @return The description of the encoder. Can be NULL if the format is not supported by Mediastreamer2.
  * @deprecated 31/03/2017 Use linphone_payload_type_get_encoder_description() instead.
  * @donotwrap
@@ -2359,7 +2359,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_check_payload_type_usab
 
 /**
  * Create a proxy config with default values from Linphone core.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return #LinphoneProxyConfig with default values set
  */
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_core_create_proxy_config(LinphoneCore *core);
@@ -2385,7 +2385,7 @@ LINPHONE_PUBLIC void linphone_core_remove_proxy_config(LinphoneCore *core, Linph
 
 /**
  * Returns an unmodifiable list of entered proxy configurations.
- * @param[in] core The #LinphoneCore object
+ * @param core The #LinphoneCore object
  * @return \bctbx_list{LinphoneProxyConfig}
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const LinphoneCore *core);
@@ -2393,7 +2393,7 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const Li
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
 
 /**
- * @param[in] idkey An arbitrary idkey string associated to a proxy configuration
+ * @param idkey An arbitrary idkey string associated to a proxy configuration
  * @return the proxy configuration for the given idkey value, or NULL if none found
  **/
 LINPHONE_PUBLIC LinphoneProxyConfig *linphone_core_get_proxy_config_by_idkey(LinphoneCore *core, const char *idkey);
@@ -2407,7 +2407,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_default_proxy(Linphone
 
 /**
  * @return the default proxy configuration, that is the one used to determine the current identity.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The default proxy configuration. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_core_get_default_proxy_config(const LinphoneCore *core);
@@ -2418,8 +2418,8 @@ LINPHONE_PUBLIC LinphoneProxyConfig * linphone_core_get_default_proxy_config(con
  * This default proxy must be part of the list of already entered LinphoneProxyConfig.
  * Toggling it as default will make #LinphoneCore use the identity associated with
  * the proxy configuration in all incoming and outgoing calls.
- * @param[in] core #LinphoneCore object
- * @param[in] config The proxy configuration to use as the default one.
+ * @param core #LinphoneCore object
+ * @param config The proxy configuration to use as the default one.
 **/
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, LinphoneProxyConfig *config);
 
@@ -2429,13 +2429,13 @@ LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, 
 
 /**
  * Create an authentication information with default values from Linphone core.
- * @param[in] core #LinphoneCore object
- * @param[in] username String containing the username part of the authentication credentials
- * @param[in] userid String containing the username to use to calculate the authentication digest (optional)
- * @param[in] passwd String containing the password of the authentication credentials (optional, either passwd or ha1 must be set)
- * @param[in] ha1 String containing a ha1 hash of the password (optional, either passwd or ha1 must be set)
- * @param[in] realm String used to discriminate different SIP authentication domains (optional)
- * @param[in] domain String containing the SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
+ * @param core #LinphoneCore object
+ * @param username String containing the username part of the authentication credentials
+ * @param userid String containing the username to use to calculate the authentication digest (optional)
+ * @param passwd String containing the password of the authentication credentials (optional, either passwd or ha1 must be set)
+ * @param ha1 String containing a ha1 hash of the password (optional, either passwd or ha1 must be set)
+ * @param realm String used to discriminate different SIP authentication domains (optional)
+ * @param domain String containing the SIP domain for which this authentication information is valid, if it has to be restricted for a single SIP domain.
  * @return #LinphoneAuthInfo with default values set
  * @ingroup authentication
  * @deprecated 13/02/2019 use linphone_factory_create_auth_info() instead.
@@ -2446,23 +2446,23 @@ LINPHONE_PUBLIC LinphoneAuthInfo * linphone_core_create_auth_info(LinphoneCore *
 /**
  * Adds authentication information to the #LinphoneCore.
  * That piece of information will be used during all SIP transactions that require authentication.
- * @param[in] core The #LinphoneCore.
- * @param[in] info The #LinphoneAuthInfo to add.
+ * @param core The #LinphoneCore.
+ * @param info The #LinphoneAuthInfo to add.
  * @ingroup authentication
  */
 LINPHONE_PUBLIC void linphone_core_add_auth_info(LinphoneCore *core, const LinphoneAuthInfo *info);
 
 /**
  * Removes an authentication information object.
- * @param[in] core The #LinphoneCore from which the #LinphoneAuthInfo will be removed.
- * @param[in] info The #LinphoneAuthInfo to remove.
+ * @param core The #LinphoneCore from which the #LinphoneAuthInfo will be removed.
+ * @param info The #LinphoneAuthInfo to remove.
  * @ingroup authentication
  */
 LINPHONE_PUBLIC void linphone_core_remove_auth_info(LinphoneCore *core, const LinphoneAuthInfo *info);
 
 /**
  * Returns an unmodifiable list of currently entered #LinphoneAuthInfo.
- * @param[in] core The #LinphoneCore object.
+ * @param core The #LinphoneCore object.
  * @return \bctbx_list{LinphoneAuthInfo}
  * @ingroup authentication
  */
@@ -2509,15 +2509,15 @@ LINPHONE_PUBLIC LinphoneAccountCreatorService * linphone_core_get_account_creato
 
 /**
  * Enable or disable the audio adaptive jitter compensation.
- * @param[in] core #LinphoneCore object
- * @param[in] enable TRUE to enable the audio adaptive jitter compensation, FALSE to disable it.
+ * @param core #LinphoneCore object
+ * @param enable TRUE to enable the audio adaptive jitter compensation, FALSE to disable it.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_audio_adaptive_jittcomp(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether the audio adaptive jitter compensation is enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return TRUE if the audio adaptive jitter compensation is enabled, FALSE otherwise.
  * @ingroup media_parameters
  */
@@ -2525,7 +2525,7 @@ LINPHONE_PUBLIC bool_t linphone_core_audio_adaptive_jittcomp_enabled(LinphoneCor
 
 /**
  * Returns the nominal audio jitter buffer size in milliseconds.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The nominal audio jitter buffer size in milliseconds
  * @ingroup media_parameters
 **/
@@ -2541,15 +2541,15 @@ LINPHONE_PUBLIC void linphone_core_set_audio_jittcomp(LinphoneCore *core, int mi
 
 /**
  * Enable or disable the video adaptive jitter compensation.
- * @param[in] core #LinphoneCore object
- * @param[in] enable TRUE to enable the video adaptive jitter compensation, FALSE to disable it.
+ * @param core #LinphoneCore object
+ * @param enable TRUE to enable the video adaptive jitter compensation, FALSE to disable it.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_video_adaptive_jittcomp(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether the video adaptive jitter compensation is enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return TRUE if the video adaptive jitter compensation is enabled, FALSE otherwise.
  * @ingroup media_parameters
  */
@@ -2557,7 +2557,7 @@ LINPHONE_PUBLIC bool_t linphone_core_video_adaptive_jittcomp_enabled(LinphoneCor
 
 /**
  * Returns the nominal video jitter buffer size in milliseconds.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The nominal video jitter buffer size in milliseconds
  * @ingroup media_parameters
 **/
@@ -2573,7 +2573,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_jittcomp(LinphoneCore *core, int mi
 
 /**
  * Gets the UDP port used for audio streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The UDP port used for audio streaming
  * @ingroup network_parameters
 **/
@@ -2581,7 +2581,7 @@ LINPHONE_PUBLIC int linphone_core_get_audio_port(const LinphoneCore *core);
 
 /**
  * Get the audio port range from which is randomly chosen the UDP port used for audio streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] min_port The lower bound of the audio port range being used
  * @param[out] max_port The upper bound of the audio port range being used
  * @ingroup network_parameters
@@ -2591,7 +2591,7 @@ LINPHONE_PUBLIC void linphone_core_get_audio_port_range(const LinphoneCore *core
 
 /**
  * Get the audio port range from which is randomly chosen the UDP port used for audio streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return a #LinphoneRange object
  * @ingroup network_parameters
  */
@@ -2599,7 +2599,7 @@ LINPHONE_PUBLIC LinphoneRange *linphone_core_get_audio_ports_range(const Linphon
 
 /**
  * Gets the UDP port used for video streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The UDP port used for video streaming
  * @ingroup network_parameters
 **/
@@ -2607,7 +2607,7 @@ LINPHONE_PUBLIC int linphone_core_get_video_port(const LinphoneCore *core);
 
 /**
  * Get the video port range from which is randomly chosen the UDP port used for video streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] min_port The lower bound of the video port range being used
  * @param[out] max_port The upper bound of the video port range being used
  * @ingroup network_parameters
@@ -2617,7 +2617,7 @@ LINPHONE_PUBLIC void linphone_core_get_video_port_range(const LinphoneCore *core
 
 /**
  * Get the video port range from which is randomly chosen the UDP port used for video streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return a #LinphoneRange object
  * @ingroup network_parameters
  */
@@ -2625,7 +2625,7 @@ LINPHONE_PUBLIC LinphoneRange *linphone_core_get_video_ports_range(const Linphon
 
 /**
  * Gets the UDP port used for text streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The UDP port used for text streaming
  * @ingroup network_parameters
 **/
@@ -2633,7 +2633,7 @@ LINPHONE_PUBLIC int linphone_core_get_text_port(const LinphoneCore *core);
 
 /**
  * Get the video port range from which is randomly chosen the UDP port used for text streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] min_port The lower bound of the text port range being used
  * @param[out] max_port The upper bound of the text port range being used
  * @ingroup network_parameters
@@ -2643,7 +2643,7 @@ LINPHONE_PUBLIC void linphone_core_get_text_port_range(const LinphoneCore *core,
 
 /**
  * Get the text port range from which is randomly chosen the UDP port used for text streaming.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return a #LinphoneRange object
  * @ingroup network_parameters
  */
@@ -2656,7 +2656,7 @@ LINPHONE_PUBLIC LinphoneRange *linphone_core_get_text_ports_range(const Linphone
  * #LinphoneCore will consider the call is broken (remote end crashed or
  * disconnected from the network), and thus will terminate the call.
  * The no-rtp timeout is the duration above which the call is considered broken.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The value of the no-rtp timeout in seconds
  * @ingroup media_parameters
 **/
@@ -2666,17 +2666,17 @@ LINPHONE_PUBLIC int linphone_core_get_nortp_timeout(const LinphoneCore *core);
  * Sets the UDP port used for audio streaming.
  * A value of -1 will request the system to allocate the local port randomly.
  * This is recommended in order to avoid firewall warnings.
- * @param[in] core #LinphoneCore object
- * @param[in] port The UDP port to use for audio streaming
+ * @param core #LinphoneCore object
+ * @param port The UDP port to use for audio streaming
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_audio_port(LinphoneCore *core, int port);
 
 /**
  * Sets the UDP port range from which to randomly select the port used for audio streaming.
- * @param[in] core #LinphoneCore object
- * @param[in] min_port The lower bound of the audio port range to use
- * @param[in] max_port The upper bound of the audio port range to use
+ * @param core #LinphoneCore object
+ * @param min_port The lower bound of the audio port range to use
+ * @param max_port The upper bound of the audio port range to use
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_audio_port_range(LinphoneCore *core, int min_port, int max_port);
@@ -2685,17 +2685,17 @@ LINPHONE_PUBLIC void linphone_core_set_audio_port_range(LinphoneCore *core, int 
  * Sets the UDP port used for video streaming.
  * A value of -1 will request the system to allocate the local port randomly.
  * This is recommended in order to avoid firewall warnings.
- * @param[in] core #LinphoneCore object
- * @param[in] port The UDP port to use for video streaming
+ * @param core #LinphoneCore object
+ * @param port The UDP port to use for video streaming
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_video_port(LinphoneCore *core, int port);
 
 /**
  * Sets the UDP port range from which to randomly select the port used for video streaming.
- * @param[in] core #LinphoneCore object
- * @param[in] min_port The lower bound of the video port range to use
- * @param[in] max_port The upper bound of the video port range to use
+ * @param core #LinphoneCore object
+ * @param min_port The lower bound of the video port range to use
+ * @param max_port The upper bound of the video port range to use
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_video_port_range(LinphoneCore *core, int min_port, int max_port);
@@ -2704,25 +2704,25 @@ LINPHONE_PUBLIC void linphone_core_set_video_port_range(LinphoneCore *core, int 
  * Sets the UDP port used for text streaming.
  * A value if -1 will request the system to allocate the local port randomly.
  * This is recommended in order to avoid firewall warnings.
- * @param[in] core #LinphoneCore object
- * @param[in] port The UDP port to use for text streaming
+ * @param core #LinphoneCore object
+ * @param port The UDP port to use for text streaming
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_text_port(LinphoneCore *core, int port);
 
 /**
  * Sets the UDP port range from which to randomly select the port used for text streaming.
- * @param[in] core #LinphoneCore object
- * @param[in] min_port The lower bound of the text port range to use
- * @param[in] max_port The upper bound of the text port range to use
+ * @param core #LinphoneCore object
+ * @param min_port The lower bound of the text port range to use
+ * @param max_port The upper bound of the text port range to use
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_text_port_range(LinphoneCore *core, int min_port, int max_port);
 
 /**
  * Sets the no-rtp timeout value in seconds.
- * @param[in] core #LinphoneCore object
- * @param[in] seconds The no-rtp timeout value to use in seconds
+ * @param core #LinphoneCore object
+ * @param seconds The no-rtp timeout value to use in seconds
  * @ingroup media_parameters
  * @see linphone_core_get_nortp_timeout() for details.
 **/
@@ -2730,15 +2730,15 @@ LINPHONE_PUBLIC void linphone_core_set_nortp_timeout(LinphoneCore *core, int sec
 
 /**
  * Sets whether SIP INFO is to be used to send digits.
- * @param[in] core #LinphoneCore object
- * @param[in] use_info A boolean value telling whether to use SIP INFO to send digits
+ * @param core #LinphoneCore object
+ * @param use_info A boolean value telling whether to use SIP INFO to send digits
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_use_info_for_dtmf(LinphoneCore *core, bool_t use_info);
 
 /**
  * Indicates whether SIP INFO is used to send digits.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether SIP INFO is used to send digits
  * @ingroup media_parameters
 **/
@@ -2746,15 +2746,15 @@ LINPHONE_PUBLIC bool_t linphone_core_get_use_info_for_dtmf(LinphoneCore *core);
 
 /**
  * Sets whether RFC2833 is to be used to send digits.
- * @param[in] core #LinphoneCore object
- * @param[in] use_rfc2833 A boolean value telling whether to use RFC2833 to send digits
+ * @param core #LinphoneCore object
+ * @param use_rfc2833 A boolean value telling whether to use RFC2833 to send digits
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_use_rfc2833_for_dtmf(LinphoneCore *core,bool_t use_rfc2833);
 
 /**
  * Indicates whether RFC2833 is used to send digits.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether RFC2833 is used to send digits
  * @ingroup media_parameters
 **/
@@ -2762,8 +2762,8 @@ LINPHONE_PUBLIC bool_t linphone_core_get_use_rfc2833_for_dtmf(LinphoneCore *core
 
 /**
  * Sets the UDP port to be used by SIP.
- * @param[in] core #LinphoneCore object
- * @param[in] port The UDP port to be used by SIP
+ * @param core #LinphoneCore object
+ * @param port The UDP port to be used by SIP
  * @ingroup network_parameters
  * @deprecated 20/12/2016 use linphone_core_set_sip_transports() instead.
  * @donotwrap
@@ -2772,7 +2772,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_sip_port(LinphoneCore
 
 /**
  * Gets the UDP port used by SIP.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The UDP port used by SIP
  * @ingroup network_parameters
  * @deprecated 20/12/2016 use linphone_core_get_sip_transports() instead.
@@ -2784,8 +2784,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED int linphone_core_get_sip_port(LinphoneCore 
  * Sets the ports to be used for each of transport (UDP or TCP)
  * A zero value port for a given transport means the transport
  * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be choosen randomly by the system.
- * @param[in] core #LinphoneCore object
- * @param[in] transports A #LinphoneSipTransports structure giving the ports to use
+ * @param core #LinphoneCore object
+ * @param transports A #LinphoneSipTransports structure giving the ports to use
  * @return 0
  * @ingroup network_parameters
  * @deprecated 18/04/2017 Use linphone_core_set_transports instead
@@ -2797,7 +2797,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_sip_transports(LinphoneCore *co
  * Retrieves the port configuration used for each transport (udp, tcp, tls).
  * A zero value port for a given transport means the transport
  * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be chosen randomly by the system.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] transports A #LinphoneSipTransports structure that will receive the configured ports
  * @return 0
  * @ingroup network_parameters
@@ -2810,7 +2810,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_get_sip_transports(LinphoneCore *co
  * Retrieves the real port number assigned for each sip transport (udp, tcp, tls).
  * A zero value means that the transport is not activated.
  * If LC_SIP_TRANSPORT_RANDOM was passed to linphone_core_set_sip_transports(), the random port choosed by the system is returned.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] tr A #LinphoneSipTransports structure that will receive the ports being used
  * @ingroup network_parameters
  * @deprecated 18/04/2017 Use linphone_core_get_transports_used instead
@@ -2822,8 +2822,8 @@ LINPHONE_PUBLIC void linphone_core_get_sip_transports_used(LinphoneCore *core, L
  * Sets the ports to be used for each of transport (UDP or TCP)
  * A zero value port for a given transport means the transport
  * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be choosen randomly by the system.
- * @param[in] core #LinphoneCore object
- * @param[in] transports A #LinphoneSipTransports structure giving the ports to use
+ * @param core #LinphoneCore object
+ * @param transports A #LinphoneSipTransports structure giving the ports to use
  * @return 0
  * @ingroup network_parameters
 **/
@@ -2833,7 +2833,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_transports(LinphoneCore *core, 
  * Retrieves the port configuration used for each transport (udp, tcp, tls).
  * A zero value port for a given transport means the transport
  * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be chosen randomly by the system.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A #LinphoneTransports structure with the configured ports
  * @ingroup network_parameters
 **/
@@ -2843,7 +2843,7 @@ LINPHONE_PUBLIC LinphoneTransports *linphone_core_get_transports(LinphoneCore *c
  * Retrieves the real port number assigned for each sip transport (udp, tcp, tls).
  * A zero value means that the transport is not activated.
  * If LC_SIP_TRANSPORT_RANDOM was passed to linphone_core_set_sip_transports(), the random port choosed by the system is returned.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A #LinphoneTransports structure with the ports being used
  * @ingroup network_parameters
 **/
@@ -2851,21 +2851,21 @@ LINPHONE_PUBLIC LinphoneTransports *linphone_core_get_transports_used(LinphoneCo
 
 /**
  * Increment refcount.
- * @param[in] transports #LinphoneTransports object
+ * @param transports #LinphoneTransports object
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC LinphoneTransports *linphone_transports_ref(LinphoneTransports *transports);
 
 /**
  * Decrement refcount and possibly free the object.
- * @param[in] transports #LinphoneTransports object
+ * @param transports #LinphoneTransports object
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_transports_unref(LinphoneTransports *transports);
 
 /**
  * Gets the user data in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports
+ * @param transports the #LinphoneTransports
  * @return the user data. @maybenil
  * @ingroup network_parameters
 */
@@ -2873,15 +2873,15 @@ LINPHONE_PUBLIC void *linphone_transports_get_user_data(const LinphoneTransports
 
 /**
  * Sets the user data in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
- * @param[in] user_data the user data @maybenil
+ * @param transports the #LinphoneTransports object
+ * @param user_data the user data @maybenil
  * @ingroup network_parameters
 */
 LINPHONE_PUBLIC void linphone_transports_set_user_data(LinphoneTransports *transports, void *user_data);
 
 /**
  * Gets the UDP port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
+ * @param transports the #LinphoneTransports object
  * @return the UDP port
  * @ingroup network_parameters
  */
@@ -2889,7 +2889,7 @@ LINPHONE_PUBLIC int linphone_transports_get_udp_port(const LinphoneTransports* t
 
 /**
  * Gets the TCP port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
+ * @param transports the #LinphoneTransports object
  * @return the TCP port
  * @ingroup network_parameters
  */
@@ -2897,7 +2897,7 @@ LINPHONE_PUBLIC int linphone_transports_get_tcp_port(const LinphoneTransports* t
 
 /**
  * Gets the TLS port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
+ * @param transports the #LinphoneTransports object
  * @return the TLS port
  * @ingroup network_parameters
  */
@@ -2905,7 +2905,7 @@ LINPHONE_PUBLIC int linphone_transports_get_tls_port(const LinphoneTransports* t
 
 /**
  * Gets the DTLS port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
+ * @param transports the #LinphoneTransports object
  * @return the DTLS port
  * @ingroup network_parameters
  */
@@ -2913,40 +2913,40 @@ LINPHONE_PUBLIC int linphone_transports_get_dtls_port(const LinphoneTransports* 
 
 /**
  * Sets the UDP port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
- * @param[in] port the UDP port
+ * @param transports the #LinphoneTransports object
+ * @param port the UDP port
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_transports_set_udp_port(LinphoneTransports *transports, int port);
 
 /**
  * Sets the TCP port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
- * @param[in] port the TCP port
+ * @param transports the #LinphoneTransports object
+ * @param port the TCP port
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_transports_set_tcp_port(LinphoneTransports *transports, int port);
 
 /**
  * Sets the TLS port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
- * @param[in] port the TLS port
+ * @param transports the #LinphoneTransports object
+ * @param port the TLS port
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_transports_set_tls_port(LinphoneTransports *transports, int port);
 
 /**
  * Sets the DTLS port in the #LinphoneTransports object
- * @param[in] transports the #LinphoneTransports object
- * @param[in] port the DTLS port
+ * @param transports the #LinphoneTransports object
+ * @param port the DTLS port
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_transports_set_dtls_port(LinphoneTransports *transports, int port);
 
 /**
  * Tells whether the given transport type is supported by the library.
- * @param[in] core #LinphoneCore object
- * @param[in] tp #LinphoneTranportType to check for support
+ * @param core #LinphoneCore object
+ * @param tp #LinphoneTranportType to check for support
  * @return A boolean value telling whether the given transport type is supported by the library
 **/
 LINPHONE_PUBLIC bool_t linphone_core_sip_transport_supported(const LinphoneCore *core, LinphoneTransportType tp);
@@ -2966,8 +2966,8 @@ LINPHONE_DEPRECATED ortp_socket_t linphone_core_get_sip_socket(LinphoneCore *cor
  * Set the incoming call timeout in seconds.
  * If an incoming call isn't answered for this timeout period, it is
  * automatically declined.
- * @param[in] core #LinphoneCore object
- * @param[in] seconds The new timeout in seconds
+ * @param core #LinphoneCore object
+ * @param seconds The new timeout in seconds
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC void linphone_core_set_inc_timeout(LinphoneCore *core, int seconds);
@@ -2975,7 +2975,7 @@ LINPHONE_PUBLIC void linphone_core_set_inc_timeout(LinphoneCore *core, int secon
 /**
  * Returns the incoming call timeout
  * See linphone_core_set_inc_timeout() for details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current incoming call timeout in seconds
  * @ingroup call_control
 **/
@@ -2984,8 +2984,8 @@ LINPHONE_PUBLIC int linphone_core_get_inc_timeout(LinphoneCore *core);
 /**
  * Configure the minimum interval between a push notification and the corresponding incoming INVITE.
  * If exceeded, Linphone Call is transitioned to CallError and further incoming invite associated to this push is declined if any.
- * @param[in] core #LinphoneCore object
- * @param[in] seconds The new timeout in seconds
+ * @param core #LinphoneCore object
+ * @param seconds The new timeout in seconds
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC void linphone_core_set_push_incoming_call_timeout(LinphoneCore *core, int seconds);
@@ -2993,7 +2993,7 @@ LINPHONE_PUBLIC void linphone_core_set_push_incoming_call_timeout(LinphoneCore *
 /**
  * Returns the push incoming call timeout
  * See linphone_core_set_push_incoming_call_timeout() for details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current push incoming call timeout in seconds
  * @ingroup call_control
 **/
@@ -3002,8 +3002,8 @@ LINPHONE_PUBLIC int linphone_core_get_push_incoming_call_timeout(const LinphoneC
 /**
  * Set the in call timeout in seconds.
  * After this timeout period, the call is automatically hangup.
- * @param[in] core #LinphoneCore object
- * @param[in] seconds The new timeout in seconds
+ * @param core #LinphoneCore object
+ * @param seconds The new timeout in seconds
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC void linphone_core_set_in_call_timeout(LinphoneCore *core, int seconds);
@@ -3011,7 +3011,7 @@ LINPHONE_PUBLIC void linphone_core_set_in_call_timeout(LinphoneCore *core, int s
 /**
  * Gets the in call timeout
  * See linphone_core_set_in_call_timeout() for details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current in call timeout in seconds
  * @ingroup call_control
 **/
@@ -3020,8 +3020,8 @@ LINPHONE_PUBLIC int linphone_core_get_in_call_timeout(LinphoneCore *core);
 /**
  * Set the in delayed timeout in seconds.
  * After this timeout period, a delayed call (internal call initialisation or resolution) is resumed.
- * @param[in] core #LinphoneCore object
- * @param[in] seconds The new delayed timeout
+ * @param core #LinphoneCore object
+ * @param seconds The new delayed timeout
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC void linphone_core_set_delayed_timeout(LinphoneCore *core, int seconds);
@@ -3029,7 +3029,7 @@ LINPHONE_PUBLIC void linphone_core_set_delayed_timeout(LinphoneCore *core, int s
 /**
  * Gets the delayed timeout
  * See linphone_core_set_delayed_timeout() for details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current delayed timeout in seconds
  * @ingroup call_control
 **/
@@ -3037,15 +3037,15 @@ LINPHONE_PUBLIC int linphone_core_get_delayed_timeout(LinphoneCore *core);
 
 /**
  * Set the STUN server address to use when the firewall policy is set to STUN.
- * @param[in] core #LinphoneCore object
- * @param[in] server The STUN server address to use.
+ * @param core #LinphoneCore object
+ * @param server The STUN server address to use.
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_stun_server(LinphoneCore *core, const char *server);
 
 /**
  * Get the STUN server address being used.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The STUN server address being used. @maybenil
  * @ingroup network_parameters
  */
@@ -3080,15 +3080,15 @@ LINPHONE_PUBLIC const char * linphone_core_get_upnp_external_ipaddress(const Lin
 
 /**
  * Set the public IP address of NAT when using the firewall policy is set to use NAT.
- * @param[in] core #LinphoneCore object.
- * @param[in] addr The public IP address of NAT to use.
+ * @param core #LinphoneCore object.
+ * @param addr The public IP address of NAT to use.
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_nat_address(LinphoneCore *core, const char *addr);
 
 /**
  * Get the public IP address of NAT being used.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The public IP address of NAT being used. @maybenil
  * @ingroup network_parameters
  */
@@ -3096,8 +3096,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *co
 
 /**
  * Set the policy to use to pass through firewalls.
- * @param[in] core #LinphoneCore object.
- * @param[in] pol The #LinphoneFirewallPolicy to use.
+ * @param core #LinphoneCore object.
+ * @param pol The #LinphoneFirewallPolicy to use.
  * @ingroup network_parameters
  * @deprecated 30/03/2016 Use linphone_core_set_nat_policy() instead.
  * @donotwrap
@@ -3106,7 +3106,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_set_firewall_policy(Linph
 
 /**
  * Get the policy that is used to pass through firewalls.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The #LinphoneFirewallPolicy that is being used.
  * @ingroup network_parameters
  * @deprecated 27/03/2016 Use linphone_core_get_nat_policy() instead
@@ -3117,8 +3117,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneFirewallPolicy linphone_core_get_fir
 /**
  * Set the policy to use to pass through NATs/firewalls.
  * It may be overridden by a NAT policy for a specific proxy config.
- * @param[in] core #LinphoneCore object
- * @param[in] policy #LinphoneNatPolicy object
+ * @param core #LinphoneCore object
+ * @param policy #LinphoneNatPolicy object
  * @ingroup network_parameters
  * @see linphone_proxy_config_set_nat_policy()
  */
@@ -3127,7 +3127,7 @@ LINPHONE_PUBLIC void linphone_core_set_nat_policy(LinphoneCore *core, LinphoneNa
 /**
  * Get The policy that is used to pass through NATs/firewalls.
  * It may be overridden by a NAT policy for a specific proxy config.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return #LinphoneNatPolicy object in use. @maybenil
  * @ingroup network_parameters
  * @see linphone_proxy_config_get_nat_policy()
@@ -3136,7 +3136,7 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_get_nat_policy(const LinphoneC
 
 /**
  * Gets the list of the available sound devices.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return An unmodifiable array of strings contanining the names of the available sound devices that is NULL terminated
  * @ingroup media_parameters
  * @donotwrap
@@ -3146,7 +3146,7 @@ LINPHONE_PUBLIC const char** linphone_core_get_sound_devices(LinphoneCore *core)
 
 /**
  * Gets the list of the available sound devices.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{char *} An unmodifiable array of strings contanining the names of the available sound devices that is NULL terminated. @maybenil
  * @ingroup media_parameters
 **/
@@ -3162,15 +3162,15 @@ LINPHONE_PUBLIC void linphone_core_set_default_sound_devices(LinphoneCore *core)
  *
  * Use this function when the application is notified of USB plug events, so that
  * list of available hardwares for sound playback and capture is updated.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_reload_sound_devices(LinphoneCore *core);
 
 /**
  * Tells whether a specified sound device can capture sound.
- * @param[in] core #LinphoneCore object
- * @param[in] device the device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param device the device name as returned by linphone_core_get_sound_devices()
  * @return A boolean value telling whether the specified sound device can capture sound
  * @ingroup media_parameters
 **/
@@ -3178,8 +3178,8 @@ LINPHONE_PUBLIC bool_t linphone_core_sound_device_can_capture(LinphoneCore *core
 
 /**
  * Tells whether a specified sound device can play sound.
- * @param[in] core #LinphoneCore object
- * @param[in] device the device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param device the device name as returned by linphone_core_get_sound_devices()
  * @return A boolean value telling whether the specified sound device can play sound
  * @ingroup media_parameters
 **/
@@ -3255,15 +3255,15 @@ LINPHONE_DEPRECATED void linphone_core_set_sound_source(LinphoneCore *core, char
 
 /**
  * Allow to control microphone level: gain in db.
- * @param[in] core #LinphoneCore object
- * @param[in] level The new microphone level
+ * @param core #LinphoneCore object
+ * @param level The new microphone level
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_mic_gain_db(LinphoneCore *core, float level);
 
 /**
  * Get microphone gain in db.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current microphone gain
  * @ingroup media_parameters
 **/
@@ -3271,15 +3271,15 @@ LINPHONE_PUBLIC float linphone_core_get_mic_gain_db(LinphoneCore *core);
 
 /**
  * Allow to control play level before entering sound card:  gain in db
- * @param[in] core #LinphoneCore object
- * @param[in] level The new play level
+ * @param core #LinphoneCore object
+ * @param level The new play level
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_playback_gain_db(LinphoneCore *core, float level);
 
 /**
  * Get playback gain in db before entering  sound card.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current playback gain
  * @ingroup media_parameters
 **/
@@ -3287,7 +3287,7 @@ LINPHONE_PUBLIC float linphone_core_get_playback_gain_db(LinphoneCore *core);
 
 /**
  * Gets the name of the currently assigned sound device for ringing.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the currently assigned sound device for ringing. @maybenil
  * @ingroup media_parameters
 **/
@@ -3295,7 +3295,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_ringer_device(LinphoneCore *core)
 
 /**
  * Gets the name of the currently assigned sound device for playback.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the currently assigned sound device for playback. @maybenil
  * @ingroup media_parameters
 **/
@@ -3303,7 +3303,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_playback_device(LinphoneCore *cor
 
 /**
  * Gets the name of the currently assigned sound device for capture.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the currently assigned sound device for capture. @maybenil
  * @ingroup media_parameters
 **/
@@ -3311,7 +3311,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_capture_device(LinphoneCore *core
 
 /**
  * Gets the name of the currently assigned sound device for media.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the currently assigned sound device for capture. @maybenil
  * @ingroup media_parameters
 **/
@@ -3319,8 +3319,8 @@ LINPHONE_PUBLIC const char * linphone_core_get_media_device(LinphoneCore *core);
 
 /**
  * Sets the sound device used for ringing.
- * @param[in] core #LinphoneCore object
- * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param devid The device name as returned by linphone_core_get_sound_devices()
  * @return 0
  * @ingroup media_parameters
 **/
@@ -3328,8 +3328,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *cor
 
 /**
  * Sets the sound device used for playback.
- * @param[in] core #LinphoneCore object
- * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param devid The device name as returned by linphone_core_get_sound_devices()
  * @return 0
  * @ingroup media_parameters
 **/
@@ -3337,8 +3337,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_playback_device(LinphoneCore *c
 
 /**
  * Sets the sound device used for capture.
- * @param[in] core #LinphoneCore object
- * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param devid The device name as returned by linphone_core_get_sound_devices()
  * @return 0
  * @ingroup media_parameters
 **/
@@ -3346,8 +3346,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_capture_device(LinphoneCore *co
 
 /**
  * Sets the sound device used for media.
- * @param[in] core #LinphoneCore object
- * @param[in] devid The device name as returned by linphone_core_get_sound_devices()
+ * @param core #LinphoneCore object
+ * @param devid The device name as returned by linphone_core_get_sound_devices()
  * @return 0
  * @ingroup media_parameters
 **/
@@ -3356,7 +3356,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_device(LinphoneCore *core
 /**
  * Whenever the liblinphone is playing a ring to advertise an incoming call or ringback of an outgoing call, this function stops
  * the ringing. Typical use is to stop ringing when the user requests to ignore the call.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_stop_ringing(LinphoneCore *core);
@@ -3364,15 +3364,15 @@ LINPHONE_PUBLIC void linphone_core_stop_ringing(LinphoneCore *core);
 /**
  * Sets the path to a wav file used for ringing. The file must be a wav 16bit linear.
  * If null, ringing is disable unless #linphone_core_get_use_native_ringing is enabled, in which case we use the device ringtone.
- * @param[in] core #LinphoneCore object
- * @param[in] path The path to a wav file to be used for ringing, null to disable or use device ringing depending on #linphone_core_get_use_native_ringing. @maybenil
+ * @param core #LinphoneCore object
+ * @param path The path to a wav file to be used for ringing, null to disable or use device ringing depending on #linphone_core_get_use_native_ringing. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_ring(LinphoneCore *core, const char *path);
 
 /**
  * Returns the path to the wav file used for ringing.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The path to the wav file used for ringing. @maybenil
  * @ingroup media_parameters
 **/
@@ -3380,15 +3380,15 @@ LINPHONE_PUBLIC const char *linphone_core_get_ring(const LinphoneCore *core);
 
 /**
  * Sets whether to use the native ringing (Android only).
- * @param[in] core #LinphoneCore object
- * @param[in] enable True to enable native ringing, false otherwise
+ * @param core #LinphoneCore object
+ * @param enable True to enable native ringing, false otherwise
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_native_ringing_enabled(LinphoneCore *core, bool_t enable);
 
 /**
  * Returns whether the native ringing is enabled or not.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return True if we use the native ringing, false otherwise
  * @ingroup media_parameters
 **/
@@ -3396,23 +3396,23 @@ LINPHONE_PUBLIC bool_t linphone_core_is_native_ringing_enabled(const LinphoneCor
 
 /**
  * Specify whether the tls server certificate must be verified when connecting to a SIP/TLS server.
- * @param[in] core #LinphoneCore object
- * @param[in] yesno A boolean value telling whether the tls server certificate must be verified
+ * @param core #LinphoneCore object
+ * @param yesno A boolean value telling whether the tls server certificate must be verified
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_verify_server_certificates(LinphoneCore *core, bool_t yesno);
 
 /**
  * Specify whether the tls server certificate common name must be verified when connecting to a SIP/TLS server.
- * @param[in] core #LinphoneCore object
- * @param[in] yesno A boolean value telling whether the tls server certificate common name must be verified
+ * @param core #LinphoneCore object
+ * @param yesno A boolean value telling whether the tls server certificate common name must be verified
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_verify_server_cn(LinphoneCore *core, bool_t yesno);
 
 /**
  * Gets the path to a file or folder containing the trusted root CAs (PEM format)
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The path to a file or folder containing the trusted root CAs. @maybenil
  * @ingroup initializing
 **/
@@ -3420,16 +3420,16 @@ LINPHONE_PUBLIC const char *linphone_core_get_root_ca(LinphoneCore *core);
 
 /**
  * Sets the path to a file or folder containing trusted root CAs (PEM format)
- * @param[in] core #LinphoneCore object
- * @param[in] path The path to a file or folder containing trusted root CAs. @maybenil
+ * @param core #LinphoneCore object
+ * @param path The path to a file or folder containing trusted root CAs. @maybenil
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_set_root_ca(LinphoneCore *core, const char *path);
 
 /**
  * Sets the trusted root CAs (PEM format)
- * @param[in] core #LinphoneCore object
- * @param[in] data The trusted root CAs as a string
+ * @param core #LinphoneCore object
+ * @param data The trusted root CAs as a string
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_set_root_ca_data(LinphoneCore *core, const char *data);
@@ -3438,7 +3438,7 @@ LINPHONE_PUBLIC void linphone_core_set_root_ca_data(LinphoneCore *core, const ch
  * @internal
  * Set the pointer to an externally provided ssl configuration for the crypto library
  * @param core #LinphoneCore object
- * @param[in] ssl_config A pointer to an opaque structure which will be provided directly to the crypto library used in bctoolbox. Use with extra care.
+ * @param ssl_config A pointer to an opaque structure which will be provided directly to the crypto library used in bctoolbox. Use with extra care.
  * This ssl_config structure is responsibility of the caller and will not be freed at the connection's end.
  * @ingroup initializing
  * @endinternal
@@ -3449,15 +3449,15 @@ LINPHONE_PUBLIC void linphone_core_set_ssl_config(LinphoneCore *core, void *ssl_
  * Sets the path to a wav file used for ringing back.
  * Ringback means the ring that is heard when it's ringing at the remote party.
  * The file must be a wav 16bit linear.
- * @param[in] core #LinphoneCore object
- * @param[in] path The path to a wav file to be used for ringing back. @maybenil
+ * @param core #LinphoneCore object
+ * @param path The path to a wav file to be used for ringing back. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_ringback(LinphoneCore *core, const char *path);
 
 /**
  * Returns the path to the wav file used for ringing back.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The path to the wav file used for ringing back. @maybenil
  * @ingroup media_parameters
 **/
@@ -3465,15 +3465,15 @@ LINPHONE_PUBLIC const char * linphone_core_get_ringback(const LinphoneCore *core
 
 /**
  * Specify a ring back tone to be played to far end during incoming calls.
- * @param[in] core #LinphoneCore object
- * @param[in] ring The path to the remote ring back tone to be played. @maybenil
+ * @param core #LinphoneCore object
+ * @param ring The path to the remote ring back tone to be played. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_remote_ringback_tone(LinphoneCore *core, const char *ring);
 
 /**
  * Get the ring back tone played to far end during incoming calls.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return the path to the remote ring back tone to be played. @maybenil
  * @ingroup media_parameters
 **/
@@ -3481,15 +3481,15 @@ LINPHONE_PUBLIC const char *linphone_core_get_remote_ringback_tone(const Linphon
 
 /**
  * Enable or disable the ring play during an incoming early media call.
- * @param[in] core #LinphoneCore object
- * @param[in] enable A boolean value telling whether to enable ringing during an incoming early media call.
+ * @param core #LinphoneCore object
+ * @param enable A boolean value telling whether to enable ringing during an incoming early media call.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_ring_during_incoming_early_media(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether the ring play is enabled during an incoming early media call.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_core_get_ring_during_incoming_early_media(const LinphoneCore *core);
@@ -3505,8 +3505,8 @@ LINPHONE_PUBLIC MSFactory* linphone_core_get_ms_factory(LinphoneCore* lc);
  * Plays an audio file to the local user.
  * This function works at any time, during calls, or when no calls are running.
  * It doesn't request the underlying audio system to support multiple playback streams.
- * @param[in] core #LinphoneCore object
- * @param[in] audiofile The path to an audio file in wav PCM 16 bit format
+ * @param core #LinphoneCore object
+ * @param audiofile The path to an audio file in wav PCM 16 bit format
  * @return 0 on success, -1 on error
  * @ingroup misc
 **/
@@ -3517,15 +3517,15 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_play_local(LinphoneCore *core, cons
  * This actually controls software echo cancellation. If hardware echo cancellation is available,
  * it will be always used and activated for calls, regardless of the value passed to this function.
  * When hardware echo cancellation is available, the software one is of course not activated.
- * @param[in] core #LinphoneCore object
- * @param[in] val A boolean value telling whether echo cancellation is to be enabled or disabled.
+ * @param core #LinphoneCore object
+ * @param val A boolean value telling whether echo cancellation is to be enabled or disabled.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_echo_cancellation(LinphoneCore *core, bool_t val);
 
 /**
  * Returns TRUE if echo cancellation is enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether echo cancellation is enabled or disabled
  * @ingroup media_parameters
 **/
@@ -3533,15 +3533,15 @@ LINPHONE_PUBLIC bool_t linphone_core_echo_cancellation_enabled(const LinphoneCor
 
 /**
  * Enables or disable echo limiter.
- * @param[in] core #LinphoneCore object.
- * @param[in] val TRUE to enable echo limiter, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param val TRUE to enable echo limiter, FALSE to disable it.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_echo_limiter(LinphoneCore *core, bool_t val);
 
 /**
  * Tells whether echo limiter is enabled.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if the echo limiter is enabled, FALSE otherwise.
  * @ingroup media_parameters
 **/
@@ -3566,15 +3566,15 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_mic_muted(LinphoneCo
 
 /**
  * Enable or disable the microphone.
- * @param[in] core #LinphoneCore object
- * @param[in] enable TRUE to enable the microphone, FALSE to disable it.
+ * @param core #LinphoneCore object
+ * @param enable TRUE to enable the microphone, FALSE to disable it.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_mic(LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether the microphone is enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return TRUE if the microphone is enabled, FALSE if disabled.
  * @ingroup media_parameters
 **/
@@ -3605,7 +3605,7 @@ LINPHONE_PUBLIC void linphone_core_set_rtp_no_xmit_on_audio_mute(LinphoneCore *c
 
 /**
  * Get the list of call logs (past calls).
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{LinphoneCallLog}
 **/
 LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *core);
@@ -3613,8 +3613,8 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *c
 /**
  * Get the list of call logs (past calls) that matches the given #LinphoneAddress.
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
- * @param[in] core #LinphoneCore object
- * @param[in] addr #LinphoneAddress object
+ * @param core #LinphoneCore object
+ * @param addr #LinphoneAddress object
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
  * @deprecated 29/10/2018 Use #linphone_core_get_call_history_2 instead.
 **/
@@ -3623,8 +3623,8 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(Linpho
 /**
  * Get the list of call logs (past calls).
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
- * @param[in] core #LinphoneCore object.
- * @param[in] peer_addr A #LinphoneAddress object.
+ * @param core #LinphoneCore object.
+ * @param peer_addr A #LinphoneAddress object.
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList @maybenil
 **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
@@ -3635,44 +3635,44 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
 
 /**
  * Get the latest outgoing call log.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The last outgoing call log if any. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *core);
 
 /**
  * Get the call log matching the call id, or NULL if can't be found.
- * @param[in] core #LinphoneCore object
- * @param[in] call_id Call id of the call log to find
+ * @param core #LinphoneCore object
+ * @param call_id Call id of the call log to find
  * @return A call log matching the call id if any. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *core, const char *call_id);
 
 /**
  * Erase the call log.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
 **/
 LINPHONE_PUBLIC void linphone_core_clear_call_logs(LinphoneCore *core);
 
 /**
  * Get the number of missed calls.
  * Once checked, this counter can be reset with linphone_core_reset_missed_calls_count().
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The number of missed calls.
 **/
 LINPHONE_PUBLIC int linphone_core_get_missed_calls_count(LinphoneCore *core);
 
 /**
  * Reset the counter of missed calls.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
 **/
 LINPHONE_PUBLIC void linphone_core_reset_missed_calls_count(LinphoneCore *core);
 
 /**
  * Remove a specific call log from call history list.
  * This function destroys the call log object. It must not be accessed anymore by the application after calling this function.
- * @param[in] core #LinphoneCore object
- * @param[in] call_log #LinphoneCallLog object to remove.
+ * @param core #LinphoneCore object
+ * @param call_log #LinphoneCallLog object to remove.
 **/
 LINPHONE_PUBLIC void linphone_core_remove_call_log(LinphoneCore *core, LinphoneCallLog *call_log);
 
@@ -3745,8 +3745,8 @@ LINPHONE_PUBLIC bool_t linphone_core_video_enabled(LinphoneCore *core);
  *
  * This function does not have any effect during calls. It just indicates the #LinphoneCore to
  * initiate future calls with video capture or not.
- * @param[in] core #LinphoneCore object.
- * @param[in] enable TRUE to enable video capture, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param enable TRUE to enable video capture, FALSE to disable it.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_video_capture(LinphoneCore *core, bool_t enable);
@@ -3756,8 +3756,8 @@ LINPHONE_PUBLIC void linphone_core_enable_video_capture(LinphoneCore *core, bool
  *
  * This function does not have any effect during calls. It just indicates the #LinphoneCore to
  * initiate future calls with video display or not.
- * @param[in] core #LinphoneCore object.
- * @param[in] enable TRUE to enable video display, FALSE to disable it.
+ * @param core #LinphoneCore object.
+ * @param enable TRUE to enable video display, FALSE to disable it.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_enable_video_display(LinphoneCore *core, bool_t enable);
@@ -3772,15 +3772,15 @@ LINPHONE_PUBLIC void linphone_core_enable_video_display(LinphoneCore *core, bool
  * This function does not have any effect durfing calls. It just indicates the #LinphoneCore to
  * initiate future calls with video source reuse or not.
  * Also, at the end of a video call, the source will be closed whatsoever for now.
- * @param[in] core #LinphoneCore object
- * @param[in] enable TRUE to enable video source reuse. FALSE to disable it for subsequent calls.
+ * @param core #LinphoneCore object
+ * @param enable TRUE to enable video source reuse. FALSE to disable it for subsequent calls.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_video_source_reuse(LinphoneCore* lc, bool_t enable);
 
 /**
  * Tells whether video capture is enabled.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if video capture is enabled, FALSE if disabled.
  * @ingroup media_parameters
 **/
@@ -3788,7 +3788,7 @@ LINPHONE_PUBLIC bool_t linphone_core_video_capture_enabled(LinphoneCore *core);
 
 /**
  * Tells whether video display is enabled.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if video display is enabled, FALSE if disabled.
  * @ingroup media_parameters
 **/
@@ -3800,8 +3800,8 @@ LINPHONE_PUBLIC bool_t linphone_core_video_display_enabled(LinphoneCore *core);
  * - video shall be initiated by default for outgoing calls
  * - video shall be accepter by default for incoming calls
  *
- * @param[in] core #LinphoneCore object
- * @param[in] policy The video policy to use
+ * @param core #LinphoneCore object
+ * @param policy The video policy to use
  * @ingroup media_parameters
  * @deprecated 19/04/2017 Use linphone_video_activation_policy_set_automatically_accept instead
  * @donotwrap
@@ -3811,7 +3811,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_video_policy(Linphone
 /**
  * Get the default policy for video.
  * See linphone_core_set_video_policy() for more details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The video policy being used
  * @ingroup media_parameters
  * @deprecated 19/04/2017 Use linphone_video_activation_policy_get_automatically_accept instead
@@ -3821,21 +3821,21 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const LinphoneVideoPolicy *linphone_core_get
 
 /**
  * Increment refcount.
- * @param[in] policy #LinphoneVideoActivationPolicy object
+ * @param policy #LinphoneVideoActivationPolicy object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_video_activation_policy_ref(LinphoneVideoActivationPolicy *policy);
 
 /**
  * Decrement refcount and possibly free the object.
- * @param[in] policy #LinphoneVideoActivationPolicy object
+ * @param policy #LinphoneVideoActivationPolicy object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_video_activation_policy_unref(LinphoneVideoActivationPolicy *policy);
 
 /**
  * Gets the user data in the #LinphoneVideoActivationPolicy object
- * @param[in] policy the #LinphoneVideoActivationPolicy
+ * @param policy the #LinphoneVideoActivationPolicy
  * @return the user data
  * @ingroup media_parameters
 */
@@ -3843,15 +3843,15 @@ LINPHONE_PUBLIC void *linphone_video_activation_policy_get_user_data(const Linph
 
 /**
  * Sets the user data in the #LinphoneVideoActivationPolicy object
- * @param[in] policy the #LinphoneVideoActivationPolicy object
- * @param[in] data the user data
+ * @param policy the #LinphoneVideoActivationPolicy object
+ * @param data the user data
  * @ingroup media_parameters
 */
 LINPHONE_PUBLIC void linphone_video_activation_policy_set_user_data(LinphoneVideoActivationPolicy *policy, void *data);
 
 /**
  * Gets the value for the automatically accept video policy
- * @param[in] policy the #LinphoneVideoActivationPolicy object
+ * @param policy the #LinphoneVideoActivationPolicy object
  * @return whether or not to automatically accept video requests is enabled
  * @ingroup media_parameters
 */
@@ -3859,7 +3859,7 @@ LINPHONE_PUBLIC bool_t linphone_video_activation_policy_get_automatically_accept
 
 /**
  * Gets the value for the automatically initiate video policy
- * @param[in] policy the #LinphoneVideoActivationPolicy object
+ * @param policy the #LinphoneVideoActivationPolicy object
  * @return whether or not to automatically initiate video calls is enabled
  * @ingroup media_parameters
 */
@@ -3867,16 +3867,16 @@ LINPHONE_PUBLIC bool_t linphone_video_activation_policy_get_automatically_initia
 
 /**
  * Sets the value for the automatically accept video policy
- * @param[in] policy the #LinphoneVideoActivationPolicy object
- * @param[in] enable whether or not to enable automatically accept video requests
+ * @param policy the #LinphoneVideoActivationPolicy object
+ * @param enable whether or not to enable automatically accept video requests
  * @ingroup media_parameters
 */
 LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_accept(LinphoneVideoActivationPolicy *policy, bool_t enable);
 
 /**
  * Sets the value for the automatically initiate video policy
- * @param[in] policy the #LinphoneVideoActivationPolicy object
- * @param[in] enable whether or not to enable automatically initiate video calls
+ * @param policy the #LinphoneVideoActivationPolicy object
+ * @param enable whether or not to enable automatically initiate video calls
  * @ingroup media_parameters
 */
 LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_initiate(LinphoneVideoActivationPolicy *policy, bool_t enable);
@@ -3886,8 +3886,8 @@ LINPHONE_PUBLIC void linphone_video_activation_policy_set_automatically_initiate
  * This policy defines whether:
  * - video shall be initiated by default for outgoing calls
  * - video shall be accepted by default for incoming calls
- * @param[in] core #LinphoneCore object
- * @param[in] policy The video policy to use
+ * @param core #LinphoneCore object
+ * @param policy The video policy to use
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_video_activation_policy(LinphoneCore *core, const LinphoneVideoActivationPolicy *policy);
@@ -3895,7 +3895,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_activation_policy(LinphoneCore *cor
 /**
  * Get the default policy for video.
  * See linphone_core_set_video_activation_policy() for more details.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The video policy being used
  * @ingroup media_parameters
 **/
@@ -3912,8 +3912,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const MSVideoSizeDef *linphone_core_get_supp
 /**
  * Set the preferred video definition for the stream that is captured and sent to the remote party.
  * All standard video definitions are accepted on the receive path.
- * @param[in] core #LinphoneCore object
- * @param[in] vdef #LinphoneVideoDefinition object
+ * @param core #LinphoneCore object
+ * @param vdef #LinphoneVideoDefinition object
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition(LinphoneCore *core, LinphoneVideoDefinition *vdef);
@@ -3934,8 +3934,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preferred_video_size(
  * This method is for advanced usage where a video capture must be set independently of the definition of the stream actually sent through the call.
  * This allows for example to have the preview window in High Definition  even if due to bandwidth constraint the sent video definition is small.
  * Using this feature increases the CPU consumption, since a rescaling will be done internally.
- * @param[in] core #LinphoneCore object
- * @param[in] vdef #LinphoneVideoDefinition object
+ * @param core #LinphoneCore object
+ * @param vdef #LinphoneVideoDefinition object
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_preview_video_definition(LinphoneCore *core, LinphoneVideoDefinition *vdef);
@@ -3965,7 +3965,7 @@ LINPHONE_PUBLIC void linphone_core_set_preview_video_size_by_name(LinphoneCore *
 
 /**
  * Get the definition of the captured video.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The captured #LinphoneVideoDefinition if it was previously set by linphone_core_set_preview_video_definition(), otherwise a 0x0 LinphoneVideoDefinition.
  * @see linphone_core_set_preview_video_definition()
  * @ingroup media_parameters
@@ -3986,7 +3986,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED MSVideoSize linphone_core_get_preview_video_
 /**
  * Get the effective video definition provided by the camera for the captured video.
  * When preview is disabled or not yet started this function returns a 0x0 video definition.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The captured #LinphoneVideoDefinition. @maybenil
  * @ingroup media_parameters
  * @see linphone_core_set_preview_video_definition()
@@ -4008,7 +4008,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED MSVideoSize linphone_core_get_current_previe
 
 /**
  * Get the preferred video definition for the stream that is captured and sent to the remote party.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The preferred #LinphoneVideoDefinition
  * @ingroup media_parameters
  */
@@ -4024,7 +4024,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED MSVideoSize linphone_core_get_preferred_vide
 
 /**
  * Get the name of the current preferred video size for sending.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return A string containing the name of the current preferred video size (to be freed with ms_free()).
  * @deprecated 28/03/2017 Use linphone_core_get_preferred_video_defintion() and linphone_video_definition_get_name() instead
  * @donotwrap
@@ -4071,8 +4071,8 @@ LINPHONE_PUBLIC void linphone_core_preview_ogl_render(const LinphoneCore *core);
 
 /**
  * Controls video preview enablement.
- * @param[in] core #LinphoneCore object
- * @param[in] val A boolean value telling whether the video preview is to be shown
+ * @param core #LinphoneCore object
+ * @param val A boolean value telling whether the video preview is to be shown
  * Video preview refers to the action of displaying the local webcam image
  * to the user while not in call.
  * @ingroup media_parameters
@@ -4081,7 +4081,7 @@ LINPHONE_PUBLIC void linphone_core_enable_video_preview(LinphoneCore *core, bool
 
 /**
  * Tells whether video preview is enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether video preview is enabled
  * @ingroup media_parameters
 **/
@@ -4089,26 +4089,26 @@ LINPHONE_PUBLIC bool_t linphone_core_video_preview_enabled(const LinphoneCore *c
 
 /**
  * Controls QRCode enablement.
- * @param[in] core LinphoneCore object
- * @param[in] val A boolean value telling whether the QRCode is enabled in the preview.
+ * @param core LinphoneCore object
+ * @param val A boolean value telling whether the QRCode is enabled in the preview.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_enable_qrcode_video_preview(LinphoneCore *core, bool_t val);
 
 /**
  * Set the rectangle where the decoder will search a QRCode
- * @param[in] core LinphoneCore* object
- * @param[in] x axis
- * @param[in] y axis
- * @param[in] w width
- * @param[in] h height
+ * @param core LinphoneCore* object
+ * @param x axis
+ * @param y axis
+ * @param w width
+ * @param h height
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_qrcode_decode_rect(LinphoneCore *core, const int x, const int y, const int w, const int h);
 
 /**
  * Tells whether QRCode is enabled in the preview.
- * @param[in] core LinphoneCore object
+ * @param core LinphoneCore object
  * @return A boolean value telling whether QRCode is enabled in the preview.
  * @ingroup media_parameters
  **/
@@ -4126,8 +4126,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore 
 
 /**
  * Enables or disable self view during calls.
- * @param[in] core #LinphoneCore object
- * @param[in] val A boolean value telling whether to enable self view
+ * @param core #LinphoneCore object
+ * @param val A boolean value telling whether to enable self view
  * Self-view refers to having local webcam image inserted in corner
  * of the video window during calls.
  * This function works at any time, including during calls.
@@ -4137,7 +4137,7 @@ LINPHONE_PUBLIC void linphone_core_enable_self_view(LinphoneCore *core, bool_t v
 
 /**
  * Tells whether video self view during call is enabled or not.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether self view is enabled
  * @see linphone_core_enable_self_view() for details.
  * @ingroup media_parameters
@@ -4149,14 +4149,14 @@ LINPHONE_PUBLIC bool_t linphone_core_self_view_enabled(const LinphoneCore *core)
  *
  * Use this function when the application is notified of USB plug events, so that
  * list of available hardwares for video capture is updated.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @ingroup media_parameters
  **/
 LINPHONE_PUBLIC void linphone_core_reload_video_devices(LinphoneCore *core);
 
 /**
  * Gets the list of the available video capture devices.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return An unmodifiable array of strings contanining the names of the available video capture devices that is NULL terminated
  * @ingroup media_parameters
  * @deprecated 12/10/2017 use linphone_core_get_video_devices_list instead
@@ -4166,7 +4166,7 @@ LINPHONE_PUBLIC const char**  linphone_core_get_video_devices(const LinphoneCore
 
 /**
  * Gets the list of the available video capture devices.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{char *} An unmodifiable array of strings contanining the names of the available video capture devices that is NULL terminated. @maybenil
  * @ingroup media_parameters
 **/
@@ -4174,7 +4174,7 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_video_devices_list(const Linpho
 
 /**
  * Sets the active video device.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param id The name of the video device to use as returned by linphone_core_get_video_devices()
  * @ingroup media_parameters
 **/
@@ -4182,7 +4182,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_video_device(LinphoneCore *core
 
 /**
  * Returns the name of the currently active video device.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the currently active video device. @maybenil
  * @ingroup media_parameters
 **/
@@ -4190,15 +4190,15 @@ LINPHONE_PUBLIC const char *linphone_core_get_video_device(const LinphoneCore *c
 
 /**
  * Set the path to the image file to stream when "Static picture" is set as the video device.
- * @param[in] core #LinphoneCore object.
- * @param[in] path The path to the image file to use.
+ * @param core #LinphoneCore object.
+ * @param path The path to the image file to use.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_static_picture(LinphoneCore *core, const char *path);
 
 /**
  * Get the path to the image file streamed when "Static picture" is set as the video device.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The path to the image file streamed when "Static picture" is set as the video device. @maybenil
  * @ingroup media_parameters
  */
@@ -4206,15 +4206,15 @@ LINPHONE_PUBLIC const char *linphone_core_get_static_picture(LinphoneCore *core)
 
 /**
  * Set the frame rate for static picture.
- * @param[in] core #LinphoneCore object.
- * @param[in] fps The new frame rate to use for static picture.
+ * @param core #LinphoneCore object.
+ * @param fps The new frame rate to use for static picture.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_static_picture_fps(LinphoneCore *core, float fps);
 
 /**
  * Get the frame rate for static picture
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The frame rate used for static picture.
  * @ingroup media_parameters
  */
@@ -4222,7 +4222,7 @@ LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
 
 /**
  * Get the native window handle of the video window.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The native window handle of the video window. @maybenil
  * @ingroup media_parameters
 **/
@@ -4244,14 +4244,14 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
  * @ingroup media_parameters
  * Set the native video window id where the video is to be displayed.
  * For MacOS, Linux, Windows: if not set or LINPHONE_VIDEO_DISPLAY_AUTO the core will create its own window, unless the special id LINPHONE_VIDEO_DISPLAY_NONE is given.
- * @param[in] core #LinphoneCore object
- * @param[in] id The native window id where the remote video is to be displayed. @maybenil
+ * @param core #LinphoneCore object
+ * @param id The native window id where the remote video is to be displayed. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core, void *id);
 
 /**
  * Get the native window handle of the video preview window.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The native window handle of the video preview window. @maybenil
  * @ingroup media_parameters
 **/
@@ -4261,8 +4261,8 @@ LINPHONE_PUBLIC void * linphone_core_get_native_preview_window_id(const Linphone
  * Set the native window id where the preview video (local camera) is to be displayed.
  * This has to be used in conjonction with linphone_core_use_preview_window().
  * MacOS, Linux, Windows: if not set or zero the core will create its own window, unless the special id -1 is given.
- * @param[in] core #LinphoneCore object
- * @param[in] id The native window id where the preview video is to be displayed. @maybenil
+ * @param core #LinphoneCore object
+ * @param id The native window id where the preview video is to be displayed. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_native_preview_window_id(LinphoneCore *core, void *id);
@@ -4270,15 +4270,15 @@ LINPHONE_PUBLIC void linphone_core_set_native_preview_window_id(LinphoneCore *co
 /**
  * Tells the core to use a separate window for local camera preview video, instead of
  * inserting local view within the remote video window.
- * @param[in] core #LinphoneCore object.
- * @param[in] yesno TRUE to use a separate window, FALSE to insert the preview in the remote video window.
+ * @param core #LinphoneCore object.
+ * @param yesno TRUE to use a separate window, FALSE to insert the preview in the remote video window.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_use_preview_window(LinphoneCore *core, bool_t yesno);
 
 /**
  * Gets the current device orientation.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current device orientation
  * @ingroup media_parameters
  * @see linphone_core_set_device_rotation()
@@ -4291,8 +4291,8 @@ LINPHONE_PUBLIC int linphone_core_get_device_rotation(LinphoneCore *core);
  * oriented images. The exact meaning of the value in rotation if left to each device
  * specific implementations.
  * IOS supported values are 0 for UIInterfaceOrientationPortrait and 270 for UIInterfaceOrientationLandscapeRight.
- * @param[in] core #LinphoneCore object
- * @param[in] rotation The orientation to use
+ * @param core #LinphoneCore object
+ * @param rotation The orientation to use
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_device_rotation(LinphoneCore *core, int rotation);
@@ -4316,8 +4316,8 @@ void linphone_core_show_video(LinphoneCore *core, bool_t show);
 
 /**
  * Ask the core to stream audio from and to files, instead of using the soundcard.
- * @param[in] core #LinphoneCore object
- * @param[in] yesno A boolean value asking to stream audio from and to files or not.
+ * @param core #LinphoneCore object
+ * @param yesno A boolean value asking to stream audio from and to files or not.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_use_files(LinphoneCore *core, bool_t yesno);
@@ -4325,7 +4325,7 @@ LINPHONE_PUBLIC void linphone_core_set_use_files(LinphoneCore *core, bool_t yesn
 /**
  * Gets whether linphone is currently streaming audio from and to files, rather
  * than using the soundcard.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value representing whether linphone is streaming audio from and to files or not.
  * @ingroup media_parameters
 **/
@@ -4336,7 +4336,7 @@ LINPHONE_PUBLIC bool_t linphone_core_get_use_files(LinphoneCore *core);
  * or when files are used instead of soundcards (see linphone_core_set_use_files()).
  *
  * The file is a 16 bit linear wav file.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The path to the file that is played when putting somebody on hold. @maybenil
  * @ingroup media_parameters
  */
@@ -4347,8 +4347,8 @@ LINPHONE_PUBLIC const char * linphone_core_get_play_file(const LinphoneCore *cor
  * or when files are used instead of soundcards (see linphone_core_set_use_files()).
  *
  * The file must be a 16 bit linear wav file.
- * @param[in] core #LinphoneCore object
- * @param[in] file The path to the file to be played when putting somebody on hold. @maybenil
+ * @param core #LinphoneCore object
+ * @param file The path to the file to be played when putting somebody on hold. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_play_file(LinphoneCore *core, const char *file);
@@ -4359,7 +4359,7 @@ LINPHONE_PUBLIC void linphone_core_set_play_file(LinphoneCore *core, const char 
  *
  * This feature is different from call recording (linphone_call_params_set_record_file())
  * The file is a 16 bit linear wav file.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The path to the file where incoming stream is recorded. @maybenil
  * @ingroup media_parameters
 **/
@@ -4371,24 +4371,24 @@ LINPHONE_PUBLIC const char * linphone_core_get_record_file(const LinphoneCore *c
  *
  * This feature is different from call recording (linphone_call_params_set_record_file())
  * The file will be a 16 bit linear wav file.
- * @param[in] core #LinphoneCore object
- * @param[in] file The path to the file where incoming stream is to be recorded. @maybenil
+ * @param core #LinphoneCore object
+ * @param file The path to the file where incoming stream is to be recorded. @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_record_file(LinphoneCore *core, const char *file);
 
 /**
  * Plays a dtmf sound to the local user.
- * @param[in] core #LinphoneCore object
- * @param[in] dtmf DTMF to play ['0'..'16'] | '#' | '#'
- * @param[in] duration_ms Duration in ms, -1 means play until next further call to #linphone_core_stop_dtmf()
+ * @param core #LinphoneCore object
+ * @param dtmf DTMF to play ['0'..'16'] | '#' | '#'
+ * @param duration_ms Duration in ms, -1 means play until next further call to #linphone_core_stop_dtmf()
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_play_dtmf(LinphoneCore *core, char dtmf, int duration_ms);
 
 /**
  * Stops playing a dtmf started by linphone_core_play_dtmf().
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_stop_dtmf(LinphoneCore *core);
@@ -4405,76 +4405,76 @@ LINPHONE_PUBLIC int linphone_core_get_mtu(const LinphoneCore *core);
  * Sets the maximum transmission unit size in bytes.
  * This information is useful for sending RTP packets.
  * Default value is 1500.
- * @param[in] core #LinphoneCore object
- * @param[in] mtu The MTU in bytes
+ * @param core #LinphoneCore object
+ * @param mtu The MTU in bytes
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_mtu(LinphoneCore *core, int mtu);
 
 /**
  * Enable or disable the UPDATE method support
- * @param[in] core #LinphoneCore object
- * @param[in] value Enable or disable it
+ * @param core #LinphoneCore object
+ * @param value Enable or disable it
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_enable_sip_update(const LinphoneCore *core, int value);
 
 /**
  * Enable the Session Timers support
- * @param[in] core #LinphoneCore object
- * @param[in] enabled Enable or disable it
+ * @param core #LinphoneCore object
+ * @param enabled Enable or disable it
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_session_expires_enabled(const LinphoneCore *core, bool_t enabled);
 
 /**
  * Check if the Session Timers feature is enabled
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_core_get_session_expires_enabled(const LinphoneCore *core);
 
 /**
  * Sets the session expires value, 0 by default
- * @param[in] core #LinphoneCore object
- * @param[in] expire The session expires value
+ * @param core #LinphoneCore object
+ * @param expire The session expires value
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_session_expires_value(const LinphoneCore *core, int expires);
 
 /**
  * Returns the session expires value
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC int linphone_core_get_session_expires_value(const LinphoneCore *core);
 
 /**
  * Sets the session expires refresher value
- * @param[in] core #LinphoneCore object
- * @param[in] refresher The refresher configuration value
+ * @param core #LinphoneCore object
+ * @param refresher The refresher configuration value
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_session_expires_refresher_value(const LinphoneCore *core, LinphoneSessionExpiresRefresher refresher);
 
 /**
  * Returns the session expires refresher value
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC LinphoneSessionExpiresRefresher linphone_core_get_session_expires_refresher_value(const LinphoneCore *core);
 
 /**
  * Sets the session expires minSE value, forced to a minimum of 90 by default
- * @param[in] core #LinphoneCore object
- * @param[in] expire The minSE value
+ * @param core #LinphoneCore object
+ * @param expire The minSE value
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_session_expires_min_value(const LinphoneCore *core, int min);
 
 /**
  * Returns the session expires min value, 90 by default
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC int linphone_core_get_session_expires_min_value(const LinphoneCore *core);
@@ -4511,15 +4511,15 @@ LINPHONE_PUBLIC void linphone_core_set_media_network_reachable(LinphoneCore* lc,
 
 /**
  * Enables signaling keep alive, small udp packet sent periodically to keep udp NAT association.
- * @param[in] core #LinphoneCore object
- * @param[in] enable A boolean value telling whether signaling keep alive is to be enabled
+ * @param core #LinphoneCore object
+ * @param enable A boolean value telling whether signaling keep alive is to be enabled
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_keep_alive(LinphoneCore* lc, bool_t enable);
 
 /**
  * Is signaling keep alive enabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether signaling keep alive is enabled
  * @ingroup network_parameters
  */
@@ -4527,7 +4527,7 @@ LINPHONE_PUBLIC bool_t linphone_core_keep_alive_enabled(LinphoneCore* lc);
 
 /**
  * Retrieves the user pointer that was given to linphone_core_new()
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The user data associated with the #LinphoneCore object. @maybenil
  * @ingroup initializing
 **/
@@ -4535,8 +4535,8 @@ LINPHONE_PUBLIC void *linphone_core_get_user_data(const LinphoneCore *core);
 
 /**
  * Associate a user pointer to the linphone core.
- * @param[in] core #LinphoneCore object
- * @param[in] user_data The user data to associate with the #LinphoneCore object. @maybenil
+ * @param core #LinphoneCore object
+ * @param user_data The user data to associate with the #LinphoneCore object. @maybenil
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_set_user_data(LinphoneCore *core, void *user_data);
@@ -4555,7 +4555,7 @@ LINPHONE_PUBLIC void linphone_core_enter_foreground(LinphoneCore *core);
 
 /**
  * Returns the config object used to manage the storage (config) file.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * The application can use the LpConfig object to insert its own private
  * sections and pairs of key=value in the configuration file.
  * @return a #LinphoneConfig object.
@@ -4565,8 +4565,8 @@ LINPHONE_PUBLIC LinphoneConfig * linphone_core_get_config(const LinphoneCore *co
 
 /**
  * Create a LpConfig object from a user config file.
- * @param[in] core #LinphoneCore object
- * @param[in] filename The filename of the config file to read to fill the instantiated LpConfig
+ * @param core #LinphoneCore object
+ * @param filename The filename of the config file to read to fill the instantiated LpConfig
  * @ingroup misc
  * @deprecated 12/01/2017 Use linphone_core_create_config() instead.
  * @donotwrap
@@ -4575,8 +4575,8 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneConfig * linphone_core_create_lp_con
 
 /**
  * Create a #LinphoneConfig object from a user config file.
- * @param[in] core #LinphoneCore object
- * @param[in] filename The filename of the config file to read to fill the instantiated #LinphoneConfig
+ * @param core #LinphoneCore object
+ * @param filename The filename of the config file to read to fill the instantiated #LinphoneConfig
  * @ingroup misc
  */
 LINPHONE_PUBLIC LinphoneConfig * linphone_core_create_config(LinphoneCore *core, const char *filename);
@@ -4593,7 +4593,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_sip_setups(LinphoneCore *
 
 /**
  * Destroys a #LinphoneCore
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @ingroup initializing
  * @deprecated 12/01/2017 Use linphone_core_unref() instead.
  * @donotwrap
@@ -4618,7 +4618,7 @@ void linphone_core_set_rtp_transport_factories(LinphoneCore* lc, LinphoneRtpTran
 
 /**
  * Retrieve RTP statistics regarding current call.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @param[out] local RTP statistics computed locally.
  * @param[out] remote RTP statistics computed by far end (obtained via RTCP feedback).
  * @return 0 or -1 if no call is running.
@@ -4628,7 +4628,7 @@ int linphone_core_get_current_call_stats(LinphoneCore *core, rtp_stats_t *local,
 
 /**
  * Get the number of Call
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current number of calls
  * @ingroup call_control
 **/
@@ -4639,7 +4639,7 @@ LINPHONE_PUBLIC int linphone_core_get_calls_nb(const LinphoneCore *core);
  * Note that this list is read-only and might be changed by the core after a function call to linphone_core_iterate().
  * Similarly the #LinphoneCall objects inside it might be destroyed without prior notice.
  * To hold references to #LinphoneCall object into your program, you must use linphone_call_ref().
- * @param[in] core The #LinphoneCore object
+ * @param core The #LinphoneCore object
  * @return \bctbx_list{LinphoneCall}
  * @ingroup call_control
 **/
@@ -4647,8 +4647,8 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_calls(LinphoneCore *core);
 
 /**
  * Get the call by callid.
- * @param[in] core The #LinphoneCore object
- * @param[in] callid of call
+ * @param core The #LinphoneCore object
+ * @param callid of call
  * @return call #LinphoneCall, return null if there is no call find. @maybenil
  * @ingroup call_control
 **/
@@ -4664,15 +4664,15 @@ LINPHONE_PUBLIC void linphone_core_refresh_registers(LinphoneCore* lc);
 
 /**
  * Set the path to the file storing the zrtp secrets cache.
- * @param[in] core #LinphoneCore object
- * @param[in] file The path to the file to use to store the zrtp secrets cache. @maybenil
+ * @param core #LinphoneCore object
+ * @param file The path to the file to use to store the zrtp secrets cache. @maybenil
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_set_zrtp_secrets_file(LinphoneCore *core, const char* file);
 
 /**
  * Get the path to the file storing the zrtp secrets cache.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The path to the file storing the zrtp secrets cache. @maybenil
  * @ingroup initializing
  */
@@ -4680,7 +4680,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_zrtp_secrets_file(LinphoneCore *co
 
 /**
  * Get a pointer to the sqlite db holding zrtp/lime cache.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
  * @ingroup initializing
  */
@@ -4696,7 +4696,7 @@ typedef struct _zrtpCacheAccess zrtpCacheAccess;
  * Get a pointer to a structure holding pointers to access zrtp/lime cache.
  * The structure will hold a sqlite db pointer and a bctoolbox mutex pointer
  *
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return a structure holding db pointer(NULL is cache is not available by built or runtime error) and the mutex associated to it
  */
 LINPHONE_PUBLIC  zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCore *core);
@@ -4704,8 +4704,8 @@ LINPHONE_PUBLIC  zrtpCacheAccess linphone_core_get_zrtp_cache_access(LinphoneCor
 /**
  * Get the zrtp sas validation status for a peer uri.
  * Once the SAS has been validated or rejected, the status will never return to Unknown (unless you delete your cache)
- * @param[in] core #LinphoneCore object.
- * @param[in] addr the peer uri
+ * @param core #LinphoneCore object.
+ * @param addr the peer uri
  * @ingroup media_parameters
  * @return  - LinphoneZrtpPeerStatusUnknown: this uri is not present in cache OR during calls with the active device, SAS never was validated or rejected
  *  		- LinphoneZrtpPeerStatusValid: the active device status is set to valid
@@ -4715,15 +4715,15 @@ LINPHONE_PUBLIC LinphoneZrtpPeerStatus linphone_core_get_zrtp_status(LinphoneCor
 
 /**
  * Set the path to the directory storing the user's x509 certificates (used by dtls)
- * @param[in] core #LinphoneCore object
- * @param[in] path The path to the directory to use to store the user's certificates. @maybenil
+ * @param core #LinphoneCore object
+ * @param path The path to the directory to use to store the user's certificates. @maybenil
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_set_user_certificates_path(LinphoneCore *core, const char* path);
 
 /**
  * Get the path to the directory storing the user's certificates.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The path to the directory storing the user's certificates. @maybenil
  * @ingroup initializing
  */
@@ -4731,8 +4731,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_user_certificates_path(LinphoneCor
 
 /**
  * Reload mediastreamer2 plugins from specified directory.
- * @param[in] core #LinphoneCore object.
- * @param[in] path the path from where plugins are to be loaded, pass NULL to use default (compile-time determined) plugin directory. @maybenil
+ * @param core #LinphoneCore object.
+ * @param path the path from where plugins are to be loaded, pass NULL to use default (compile-time determined) plugin directory. @maybenil
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const char *path);
@@ -4879,14 +4879,14 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_get_conference(LinphoneCore *c
 /**
  * Enable the conference server feature. This has the effect to listen of the conference factory uri
  * to create new conferences when receiving INVITE messages there.
- * @param[in] core A #LinphoneCore object
- * @param[in] enable A boolean value telling whether to enable or disable the conference server feature
+ * @param core A #LinphoneCore object
+ * @param enable A boolean value telling whether to enable or disable the conference server feature
  */
 LINPHONE_PUBLIC void linphone_core_enable_conference_server (LinphoneCore *core, bool_t enable);
 
 /**
  * Tells whether the conference server feature is enabled.
- * @param[in] core A #LinphoneCore object
+ * @param core A #LinphoneCore object
  * @return A boolean value telling whether the conference server feature is enabled or not
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled (const LinphoneCore *core);
@@ -4918,7 +4918,7 @@ LINPHONE_PUBLIC void linphone_core_set_max_calls(LinphoneCore *core, int max);
  * In order to prevent this situation, an application can use linphone_core_sound_resources_locked() to know whether
  * it is possible at a given time to start a new outgoing call.
  * When the function returns TRUE, an application should not allow the user to start an outgoing call.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A boolean value telling whether a call will need the sound resources in near future
  * @ingroup call_control
 **/
@@ -4935,8 +4935,8 @@ LINPHONE_PUBLIC bool_t linphone_core_media_encryption_supported(const LinphoneCo
 
 /**
  * Choose the media encryption policy to be used for RTP packets.
- * @param[in] core #LinphoneCore object.
- * @param[in] menc The media encryption policy to be used.
+ * @param core #LinphoneCore object.
+ * @param menc The media encryption policy to be used.
  * @return 0 if successful, any other value otherwise.
  * @ingroup media_parameters
  */
@@ -4944,7 +4944,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *
 
 /**
  * Get the media encryption policy being used for RTP packets.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The #LinphoneMediaEncryption policy being used.
  * @ingroup media_parameters
  */
@@ -4952,7 +4952,7 @@ LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(Linph
 
 /**
  * Check if the configured media encryption is mandatory or not.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return TRUE if media encryption is mandatory; FALSE otherwise.
  * @ingroup media_parameters
  */
@@ -4962,8 +4962,8 @@ LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore 
  * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result
  * in the desired media encryption then the call will fail. If not an INVITE will be resent with encryption
  * disabled.
- * @param[in] core #LinphoneCore object.
- * @param[in] m TRUE to set it mandatory; FALSE otherwise.
+ * @param core #LinphoneCore object.
+ * @param m TRUE to set it mandatory; FALSE otherwise.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_media_encryption_mandatory(LinphoneCore *core, bool_t m);
@@ -4990,8 +4990,8 @@ LINPHONE_PUBLIC LinphoneTunnel *linphone_core_get_tunnel(const LinphoneCore *cor
 /**
  * Set the DSCP field for SIP signaling channel.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
- * @param[in] dscp The DSCP value to set
+ * @param core #LinphoneCore object
+ * @param dscp The DSCP value to set
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_sip_dscp(LinphoneCore *core, int dscp);
@@ -4999,7 +4999,7 @@ LINPHONE_PUBLIC void linphone_core_set_sip_dscp(LinphoneCore *core, int dscp);
 /**
  * Get the DSCP field for SIP signaling channel.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current DSCP value
  * @ingroup network_parameters
 **/
@@ -5008,8 +5008,8 @@ LINPHONE_PUBLIC int linphone_core_get_sip_dscp(const LinphoneCore *core);
 /**
  * Set the DSCP field for outgoing audio streams.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
- * @param[in] dscp The DSCP value to set
+ * @param core #LinphoneCore object
+ * @param dscp The DSCP value to set
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_audio_dscp(LinphoneCore *core, int dscp);
@@ -5017,7 +5017,7 @@ LINPHONE_PUBLIC void linphone_core_set_audio_dscp(LinphoneCore *core, int dscp);
 /**
  * Get the DSCP field for outgoing audio streams.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current DSCP value
  * @ingroup network_parameters
 **/
@@ -5026,8 +5026,8 @@ LINPHONE_PUBLIC int linphone_core_get_audio_dscp(const LinphoneCore *core);
 /**
  * Set the DSCP field for outgoing video streams.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
- * @param[in] dscp The DSCP value to set
+ * @param core #LinphoneCore object
+ * @param dscp The DSCP value to set
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_video_dscp(LinphoneCore *core, int dscp);
@@ -5035,7 +5035,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_dscp(LinphoneCore *core, int dscp);
 /**
  * Get the DSCP field for outgoing video streams.
  * The DSCP defines the quality of service in IP packets.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current DSCP value
  * @ingroup network_parameters
 **/
@@ -5043,7 +5043,7 @@ LINPHONE_PUBLIC int linphone_core_get_video_dscp(const LinphoneCore *core);
 
 /**
  * Get the name of the mediastreamer2 filter used for rendering video.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The currently selected video display filter. @maybenil
  * @ingroup media_parameters
 **/
@@ -5061,7 +5061,7 @@ LINPHONE_PUBLIC void linphone_core_set_video_display_filter(LinphoneCore *core, 
 /**
  * Get the name of the default mediastreamer2 filter used for rendering video on the current platform.
  * This is for advanced users of the library, mainly to expose mediastreamer video filter name and status.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The default video display filter.
  * @ingroup media_parameters
  **/
@@ -5070,8 +5070,8 @@ LINPHONE_PUBLIC const char *linphone_core_get_default_video_display_filter(Linph
 /**
  * Checks if the given media filter is loaded and usable.
  * This is for advanced users of the library, mainly to expose mediastreamer video filter status.
- * @param[in] core #LinphoneCore object
- * @param[in] filtername the filter name
+ * @param core #LinphoneCore object
+ * @param filtername the filter name
  * @return true	if the filter is loaded and usable, false otherwise
  * @ingroup media_parameters
  **/
@@ -5079,7 +5079,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_media_filter_supported(LinphoneCore *cor
 
 /**
  * Get the name of the mediastreamer2 filter used for echo cancelling.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the mediastreamer2 filter used for echo cancelling. @maybenil
  * @ingroup media_parameters
  */
@@ -5088,8 +5088,8 @@ LINPHONE_PUBLIC const char * linphone_core_get_echo_canceller_filter_name(const 
 /**
  * Set the name of the mediastreamer2 filter to be used for echo cancelling.
  * This is for advanced users of the library.
- * @param[in] core #LinphoneCore object
- * @param[in] filtername The name of the mediastreamer2 filter to be used for echo cancelling. @maybenil
+ * @param core #LinphoneCore object
+ * @param filtername The name of the mediastreamer2 filter to be used for echo cancelling. @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_echo_canceller_filter_name(LinphoneCore *core, const char *filtername);
@@ -5174,15 +5174,15 @@ LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *core, LinphoneToneID i
 
 /**
  * Globaly set an http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml. This value can also be set for a dedicated account using #linphone_proxy_config_set_file_transfer_server
- * @param[in] core #LinphoneCore to be modified
- * @param[in] server_url URL of the file server like https://file.linphone.org/upload.php. @maybenil
+ * @param core #LinphoneCore to be modified
+ * @param server_url URL of the file server like https://file.linphone.org/upload.php. @maybenil
  * @ingroup misc
  * */
 LINPHONE_PUBLIC void linphone_core_set_file_transfer_server(LinphoneCore *core, const char * server_url);
 
 /**
  * Get the globaly set http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml.
- * @param[in] core #LinphoneCore from which to get the server_url
+ * @param core #LinphoneCore from which to get the server_url
  * @return URL of the file server like https://file.linphone.org/upload.php. @maybenil
  * @ingroup misc
  * */
@@ -5217,8 +5217,8 @@ LINPHONE_PUBLIC bool_t linphone_core_file_format_supported(LinphoneCore *core, c
 
 /**
  * Set the supported tags
- * @param[in] core #LinphoneCore object
- * @param[in] tag The feature tags to set
+ * @param core #LinphoneCore object
+ * @param tag The feature tags to set
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_set_supported_tag(LinphoneCore *core, const char *tags);
@@ -5226,16 +5226,16 @@ LINPHONE_PUBLIC void linphone_core_set_supported_tag(LinphoneCore *core, const c
 /**
  * This function controls signaling features supported by the core.
  * They are typically included in a SIP Supported header.
- * @param[in] core #LinphoneCore object
- * @param[in] tag The feature tag name
+ * @param core #LinphoneCore object
+ * @param tag The feature tag name
  * @ingroup initializing
 **/
 LINPHONE_PUBLIC void linphone_core_add_supported_tag(LinphoneCore *core, const char *tag);
 
 /**
  * Remove a supported tag.
- * @param[in] core #LinphoneCore object
- * @param[in] tag The tag to remove
+ * @param core #LinphoneCore object
+ * @param tag The tag to remove
  * @ingroup initializing
  * @see linphone_core_add_supported_tag()
 **/
@@ -5246,15 +5246,15 @@ LINPHONE_PUBLIC void linphone_core_remove_supported_tag(LinphoneCore *core, cons
  * Setting #LinphoneAVPFDefault is equivalent to LinphoneAVPFDisabled.
  * This setting can be overriden per #LinphoneProxyConfig with linphone_proxy_config_set_avpf_mode().
  * The value set here is used for calls placed or received out of any proxy configured, or if the proxy config is configured with LinphoneAVPFDefault.
- * @param[in] core #LinphoneCore object
- * @param[in] mode The AVPF mode to use.
+ * @param core #LinphoneCore object
+ * @param mode The AVPF mode to use.
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_avpf_mode(LinphoneCore *core, LinphoneAVPFMode mode);
 
 /**
  * Return AVPF enablement. See linphone_core_set_avpf_mode() .
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current AVPF mode
  * @ingroup media_parameters
 **/
@@ -5263,15 +5263,15 @@ LINPHONE_PUBLIC LinphoneAVPFMode linphone_core_get_avpf_mode(const LinphoneCore 
 /**
  * Set the avpf report interval in seconds.
  * This value can be overriden by the proxy config using linphone_proxy_config_set_avpf_rr_interval().
- * @param[in] core #LinphoneCore object
- * @param[in] interval The report interval in seconds
+ * @param core #LinphoneCore object
+ * @param interval The report interval in seconds
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_avpf_rr_interval(LinphoneCore *core, int interval);
 
 /**
  * Return the avpf report interval in seconds.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The current AVPF report interval in seconds
  * @ingroup media_parameters
 **/
@@ -5384,7 +5384,7 @@ LINPHONE_PUBLIC bool_t linphone_core_video_multicast_enabled(const LinphoneCore 
 /**
  * Returns whether RTP bundle mode (also known as Media Multiplexing) is enabled.
  * See https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 for more information.
- * @param[in] core the #LinphoneCore
+ * @param core the #LinphoneCore
  * @return a boolean indicating the enablement of rtp bundle mode.
  * @ingroup media_parameters
  */
@@ -5396,8 +5396,8 @@ LINPHONE_PUBLIC bool_t linphone_core_rtp_bundle_enabled(const LinphoneCore *core
  * When enabled, liblinphone will try to negociate the use of a single port for all streams when doing an outgoing call.
  * It automatically enables rtcp-mux.
  * This feature can also be enabled per-call using #LinphoneCallParams.
- * @param[in] core the #LinphoneCore
- * @param[in] value a boolean to indicate whether the feature is to be enabled.
+ * @param core the #LinphoneCore
+ * @param value a boolean to indicate whether the feature is to be enabled.
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_rtp_bundle(LinphoneCore *core, bool_t value);
@@ -5429,15 +5429,15 @@ LINPHONE_PUBLIC const OrtpNetworkSimulatorParams *linphone_core_get_network_simu
 
 /**
  * Set the video preset to be used for video calls.
- * @param[in] core #LinphoneCore object
- * @param[in] preset The name of the video preset to be used (can be NULL to use the default video preset). @maybenil
+ * @param core #LinphoneCore object
+ * @param preset The name of the video preset to be used (can be NULL to use the default video preset). @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_video_preset(LinphoneCore *core, const char *preset);
 
 /**
  * Get the video preset used for video calls.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The name of the video preset used for video calls (can be NULL if the default video preset is used). @maybenil
  * @ingroup media_parameters
  */
@@ -5445,7 +5445,7 @@ LINPHONE_PUBLIC const char * linphone_core_get_video_preset(const LinphoneCore *
 
 /**
  * Gets if realtime text is enabled or not
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return true if realtime text is enabled, false otherwise
  * @ingroup media_parameters
  */
@@ -5455,7 +5455,7 @@ LINPHONE_PUBLIC void linphone_core_enable_realtime_text(LinphoneCore *core, bool
 
 /**
  * Gets keep alive interval of real time text.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return keep alive interval of real time text.
  * @ingroup media_parameters
  */
@@ -5463,31 +5463,31 @@ LINPHONE_PUBLIC unsigned int linphone_core_realtime_text_get_keepalive_interval(
 
 /**
  * Set keep alive interval for real time text.
- * @param[in] core #LinphoneCore object
- * @param[in] interval The keep alive interval of real time text, 25000 by default.
+ * @param core #LinphoneCore object
+ * @param interval The keep alive interval of real time text, 25000 by default.
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_realtime_text_set_keepalive_interval(LinphoneCore *core, unsigned int interval);
 
 /**
  * Set http proxy address to be used for signaling during next channel connection. Use #linphone_core_set_network_reachable FASLE/TRUE to force channel restart.
- * @param[in] core #LinphoneCore object
- * @param[in] host Hostname of IP adress of the http proxy (can be NULL to disable). @maybenil
+ * @param core #LinphoneCore object
+ * @param host Hostname of IP adress of the http proxy (can be NULL to disable). @maybenil
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_http_proxy_host(LinphoneCore *core, const char *host) ;
 
 /**
  * Set http proxy port to be used for signaling.
- * @param[in] core #LinphoneCore object
- * @param[in] port of the http proxy.
+ * @param core #LinphoneCore object
+ * @param port of the http proxy.
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_http_proxy_port(LinphoneCore *core, int port) ;
 
 /**
  * Get http proxy address to be used for signaling.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return hostname of IP adress of the http proxy (can be NULL to disable). @maybenil
  * @ingroup network_parameters
  */
@@ -5495,7 +5495,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_http_proxy_host(const LinphoneCore
 
 /**
  * Get http proxy port to be used for signaling.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return port of the http proxy.
  * @ingroup network_parameters
  */
@@ -5591,8 +5591,8 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngine * linphone_core_get_im_encryption_eng
 
 /**
  * Tells whether a content type is supported.
- * @param[in] core #LinphoneCore object
- * @param[in] content_type The content type to check
+ * @param core #LinphoneCore object
+ * @param content_type The content type to check
  * @return A boolean value telling whether the specified content type is supported or not.
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_content_type_supported(const LinphoneCore *core, const char *content_type);
@@ -5600,22 +5600,22 @@ LINPHONE_PUBLIC bool_t linphone_core_is_content_type_supported(const LinphoneCor
 /**
  * Add support for the specified content type.
  * It is the application responsibility to handle it correctly afterwards.
- * @param[in] core #LinphoneCore object
- * @param[in] content_type The content type to add support for
+ * @param core #LinphoneCore object
+ * @param content_type The content type to add support for
  */
 LINPHONE_PUBLIC void linphone_core_add_content_type_support(LinphoneCore *core, const char *content_type);
 
 /**
  * Remove support for the specified content type.
  * It is the application responsibility to handle it correctly afterwards.
- * @param[in] core LinphoneCore object
- * @param[in] content_type The content type to remove support for
+ * @param core LinphoneCore object
+ * @param content_type The content type to remove support for
  */
 LINPHONE_PUBLIC void linphone_core_remove_content_type_support(LinphoneCore *core, const char *content_type);
 
 /**
  * Get the linphone specs value telling what functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The linphone specs telling what functionalities the linphone client supports
  * @ingroup initializing
  * @deprecated 07/02/2019 Use linphone_core_get_linphone_specs_list instead.
@@ -5624,8 +5624,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_core_get_linphone_specs
 
 /**
  * Set the linphone specs value telling what functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @param[in] specs The linphone specs to set
+ * @param core #LinphoneCore object
+ * @param specs The linphone specs to set
  * @ingroup initializing
  * @deprecated 07/02/2019 Use linphone_core_set_linphone_specs_list or linphone_core_add_linphone_spec instead.
  */
@@ -5633,31 +5633,31 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_linphone_specs (Linph
 
 /**
  * Set the linphone specs list value telling what functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @param[in] specs \bctbx_list{char *} The list of string specs to set
+ * @param core #LinphoneCore object
+ * @param specs \bctbx_list{char *} The list of string specs to set
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_set_linphone_specs_list (LinphoneCore *core, const bctbx_list_t *specs);
 
 /**
  * Add the given linphone specs to the list of functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @param[in] spec The spec to add
+ * @param core #LinphoneCore object
+ * @param spec The spec to add
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_add_linphone_spec (LinphoneCore *core, const char *spec);
 
 /**
  * Remove the given linphone specs from the list of functionalities the linphone client supports.
- * @param[in] core #LinphoneCore object
- * @param[in] spec The spec to remove
+ * @param core #LinphoneCore object
+ * @param spec The spec to remove
  * @ingroup initializing
  */
 LINPHONE_PUBLIC void linphone_core_remove_linphone_spec (LinphoneCore *core, const char *spec);
 
 /**
  * Get the list of linphone specs string values representing what functionalities the linphone client supports
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{char *} a list of supported specs. The list must be freed with bctbx_list_free() after usage
  * @ingroup initializing
  */
@@ -5692,9 +5692,9 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC const char *linphone_core_get_chat_database_
  * create at the server side and add participants to it.
  * Also, the created chat room will not be a one-to-one chat room even if linphone_chat_room_add_participants() is called with only one participant.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] subject The subject of the group chat room
- * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
+ * @param core A #LinphoneCore object
+ * @param subject The subject of the group chat room
+ * @param fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
  * @return The newly created client-side group chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5706,10 +5706,10 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom * linphone_core_create_clie
  * create at the server side and add participants to it.
  * Also, the created chat room will not be a one-to-one chat room even if linphone_chat_room_add_participants() is called with only one participant.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] subject The subject of the group chat room
- * @param[in] fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
- * @param[in] encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
+ * @param core A #LinphoneCore object
+ * @param subject The subject of the group chat room
+ * @param fallback Boolean value telling whether we should plan on being able to fallback to a basic chat room if the client-side group chat room creation fails
+ * @param encrypted Boolean value telling whether we should apply encryption or not on chat messages sent and received on this room.
  * @return The newly created client-side group chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5718,11 +5718,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_clien
 /**
  * Create a chat room.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
- * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
- * @param[in] subject The subject of the group chat room
- * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @param core A #LinphoneCore object
+ * @param params The chat room creation parameters #LinphoneChatRoomParams
+ * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
+ * @param subject The subject of the group chat room
+ * @param participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5731,9 +5731,9 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room(LinphoneCore *c
 /**
  * Create a chat room.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
- * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @param core A #LinphoneCore object
+ * @param params The chat room creation parameters #LinphoneChatRoomParams
+ * @param participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5741,9 +5741,9 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_2(LinphoneCore 
 
 /**
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] subject The subject of the group chat room
- * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @param core A #LinphoneCore object
+ * @param subject The subject of the group chat room
+ * @param participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5751,10 +5751,10 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_3(LinphoneCore 
 
 /**
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
- * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
- * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @param core A #LinphoneCore object
+ * @param params The chat room creation parameters #LinphoneChatRoomParams
+ * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation
+ * @param participant #LinphoneAddress representing the initial participant to add to the chat room
  * @return The newly created chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5762,8 +5762,8 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_4(LinphoneCore 
 
 /**
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] participant #LinphoneAddress representing the initial participant to add to the chat room
+ * @param core A #LinphoneCore object
+ * @param participant #LinphoneAddress representing the initial participant to add to the chat room
  * @return The newly created chat room. @maybenil
  * @deprecated 02/07/2020, use linphone_core_create_chat_room_6() instead
  */
@@ -5772,10 +5772,10 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore 
 /**
  * Create a chat room.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] params The chat room creation parameters #LinphoneChatRoomParams
- * @param[in] localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
- * @param[in] participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
+ * @param core A #LinphoneCore object
+ * @param params The chat room creation parameters #LinphoneChatRoomParams
+ * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
+ * @param participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room
  * @return The newly created chat room or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *core, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
@@ -5784,11 +5784,11 @@ LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore 
 /**
  * Find a chat room.
  *
- * @param[in] core A #LinphoneCore object
- * @param[in] params The chat room parameters to match #LinphoneChatRoomParams or NULL @maybenil
- * @param[in] localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
- * @param[in] remoteAddr #LinphoneAddress to search for or NULL @maybenil
- * @param[in] participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find
+ * @param core A #LinphoneCore object
+ * @param params The chat room parameters to match #LinphoneChatRoomParams or NULL @maybenil
+ * @param localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
+ * @param remoteAddr #LinphoneAddress to search for or NULL @maybenil
+ * @param participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find
  * @return A matching chat room or NULL if none matches. @maybenil
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *core, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
@@ -5904,7 +5904,7 @@ LINPHONE_PUBLIC bool_t linphone_core_chat_enabled(const LinphoneCore *core);
 
 /**
  * Get the #LinphoneImNotifPolicy object controlling the instant messaging notifications.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A #LinphoneImNotifPolicy object. @maybenil
  */
 LINPHONE_PUBLIC LinphoneImNotifPolicy * linphone_core_get_im_notif_policy(const LinphoneCore *core);
@@ -5915,7 +5915,7 @@ LINPHONE_PUBLIC LinphoneImNotifPolicy * linphone_core_get_im_notif_policy(const 
 
 /**
  * Create a content with default values from Linphone core.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return #LinphoneContent object with default values set
  * @ingroup misc
  */
@@ -6023,25 +6023,25 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_core_create_one_shot_publish(LinphoneCor
 
 /**
  * Create a default LinphoneFriend.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The created #LinphoneFriend object
  */
 LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend(LinphoneCore *core);
 
 /**
  * Create a #LinphoneFriend from the given address.
- * @param[in] core #LinphoneCore object
- * @param[in] address A string containing the address to create the #LinphoneFriend from
+ * @param core #LinphoneCore object
+ * @param address A string containing the address to create the #LinphoneFriend from
  * @return The created #LinphoneFriend object. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend_with_address(LinphoneCore *core, const char *address);
 
 /**
  * Set my presence status
- * @param[in] core #LinphoneCore object
- * @param[in] minutes_away how long in away
- * @param[in] alternative_contact sip uri used to redirect call in state #LinphoneStatusMoved
- * @param[in] os #LinphoneOnlineStatus
+ * @param core #LinphoneCore object
+ * @param minutes_away how long in away
+ * @param alternative_contact sip uri used to redirect call in state #LinphoneStatusMoved
+ * @param os #LinphoneOnlineStatus
  * @deprecated 03/02/2017 Use linphone_core_set_presence_model() instead
  * @donotwrap
  */
@@ -6049,14 +6049,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_presence_info(Linphon
 
 /**
  * Set my presence model
- * @param[in] core #LinphoneCore object
- * @param[in] presence #LinphonePresenceModel
+ * @param core #LinphoneCore object
+ * @param presence #LinphonePresenceModel
  */
 LINPHONE_PUBLIC void linphone_core_set_presence_model(LinphoneCore *core, LinphonePresenceModel *presence);
 
 /**
  * Get my presence status
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return #LinphoneOnlineStatus
  * @deprecated 03/02/2017 Use linphone_core_get_presence_model() instead
  * @donotwrap
@@ -6065,22 +6065,22 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_core_get_prese
 
 /**
  * Get my presence model
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A #LinphonePresenceModel object, or NULL if no presence model has been set. @maybenil
  */
 LINPHONE_PUBLIC LinphonePresenceModel * linphone_core_get_presence_model(const LinphoneCore *core);
 
 /**
  * Get my consolidated presence
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return My consolidated presence
  */
 LINPHONE_PUBLIC LinphoneConsolidatedPresence linphone_core_get_consolidated_presence(const LinphoneCore *core);
 
 /**
  * Set my consolidated presence
- * @param[in] core #LinphoneCore object
- * @param[in] presence #LinphoneConsolidatedPresence value
+ * @param core #LinphoneCore object
+ * @param presence #LinphoneConsolidatedPresence value
  */
 LINPHONE_PUBLIC void linphone_core_set_consolidated_presence(LinphoneCore *core, LinphoneConsolidatedPresence presence);
 
@@ -6117,7 +6117,7 @@ LINPHONE_PUBLIC void linphone_core_reject_subscriber(LinphoneCore *core, Linphon
 
 /**
  * Get Buddy list of #LinphoneFriend
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{LinphoneFriend}
  * @deprecated 03/02/2017 use linphone_core_get_friends_lists() or linphone_friend_list_get_friends() instead.
  * @donotwrap
@@ -6133,8 +6133,8 @@ LINPHONE_PUBLIC void linphone_core_notify_all_friends(LinphoneCore *core, Linpho
 
 /**
  * Search a #LinphoneFriend by its address.
- * @param[in] core #LinphoneCore object.
- * @param[in] addr The address to use to search the friend.
+ * @param core #LinphoneCore object.
+ * @param addr The address to use to search the friend.
  * @return The #LinphoneFriend object corresponding to the given address.
  * @deprecated 03/02/2017 use linphone_core_find_friend() instead.
  * @donotwrap
@@ -6143,32 +6143,32 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend *linphone_core_get_friend_by_
 
 /**
  * Search a #LinphoneFriend by its address.
- * @param[in] core #LinphoneCore object.
- * @param[in] addr The address to use to search the friend.
+ * @param core #LinphoneCore object.
+ * @param addr The address to use to search the friend.
  * @return The #LinphoneFriend object corresponding to the given address or NULL if not found. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend(const LinphoneCore *core, const LinphoneAddress *addr);
 
 /**
  * Search a #LinphoneFriend by its phone number.
- * @param[in] core #LinphoneCore object.
- * @param[in] phoneNumber The phone number to use to search the friend.
+ * @param core #LinphoneCore object.
+ * @param phoneNumber The phone number to use to search the friend.
  * @return The #LinphoneFriend object corresponding to the given phone number or NULL if not found. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_find_friend_by_phone_number(const LinphoneCore *core, const char* phoneNumber);
 
 /**
  * Search all #LinphoneFriend matching an address.
- * @param[in] core #LinphoneCore object.
- * @param[in] addr The address to use to search the friends.
+ * @param core #LinphoneCore object.
+ * @param addr The address to use to search the friends.
  * @return \bctbx_list{LinphoneFriend} a list of #LinphoneFriend corresponding to the given address. @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_find_friends(const LinphoneCore *core, const LinphoneAddress *addr);
 
 /**
  * Search a #LinphoneFriend by its reference key.
- * @param[in] core #LinphoneCore object.
- * @param[in] key The reference key to use to search the friend.
+ * @param core #LinphoneCore object.
+ * @param key The reference key to use to search the friend.
  * @return The #LinphoneFriend object corresponding to the given reference key. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriend *linphone_core_get_friend_by_ref_key(const LinphoneCore *core, const char *key);
@@ -6192,129 +6192,129 @@ LINPHONE_PUBLIC const char* linphone_core_get_friends_database_path(LinphoneCore
 
 /**
  * Create a new empty #LinphoneFriendList object.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return A new #LinphoneFriendList object.
 **/
 LINPHONE_PUBLIC LinphoneFriendList * linphone_core_create_friend_list(LinphoneCore *core);
 
 /**
  * Add a friend list.
- * @param[in] core #LinphoneCore object
- * @param[in] list #LinphoneFriendList object
+ * @param core #LinphoneCore object
+ * @param list #LinphoneFriendList object
  */
 LINPHONE_PUBLIC void linphone_core_add_friend_list(LinphoneCore *core, LinphoneFriendList *list);
 
 /**
  * Removes a friend list.
- * @param[in] core #LinphoneCore object
- * @param[in] list #LinphoneFriendList object
+ * @param core #LinphoneCore object
+ * @param list #LinphoneFriendList object
  */
 LINPHONE_PUBLIC void linphone_core_remove_friend_list(LinphoneCore *core, LinphoneFriendList *list);
 
 /**
  * Retrieves the list of #LinphoneFriendList from the core.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return \bctbx_list{LinphoneFriendList} a list of #LinphoneFriendList. @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_friends_lists(const LinphoneCore *core);
 
 /**
  * Retrieves the first list of #LinphoneFriend from the core.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return the first #LinphoneFriendList object or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriendList * linphone_core_get_default_friend_list(const LinphoneCore *core);
 
 /**
  * Retrieves the list of #LinphoneFriend from the core that has the given display name.
- * @param[in] core #LinphoneCore object
- * @param[in] name the name of the list
+ * @param core #LinphoneCore object
+ * @param name the name of the list
  * @return the first #LinphoneFriendList object or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneFriendList* linphone_core_get_friend_list_by_name(const LinphoneCore *core, const char *name);
 
 /**
  * Sets whether or not to start friend lists subscription when in foreground
- * @param[in] core The #LinphoneCore
- * @param[in] enable whether or not to enable the feature
+ * @param core The #LinphoneCore
+ * @param enable whether or not to enable the feature
 **/
 LINPHONE_PUBLIC void linphone_core_enable_friend_list_subscription(LinphoneCore *core, bool_t enable);
 
 /**
  * Returns whether or not friend lists subscription are enabled
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @return whether or not the feature is enabled
 **/
 LINPHONE_PUBLIC bool_t linphone_core_is_friend_list_subscription_enabled(LinphoneCore *core);
 
 /**
  * Retrieves a list of #LinphoneAddress sort and filter
- * @param[in] core #LinphoneCore object
- * @param[in] filter Chars used for the filter*
- * @param[in] sip_only Only sip address or not
+ * @param core #LinphoneCore object
+ * @param filter Chars used for the filter*
+ * @param sip_only Only sip address or not
  * @return \bctbx_list{LinphoneAddress} a list of filtered #LinphoneAddress + the #LinphoneAddress created with the filter. @maybenil
 **/
 LINPHONE_PUBLIC const bctbx_list_t * linphone_core_find_contacts_by_char(LinphoneCore *core, const char *filter, bool_t sip_only);
 
 /**
  * Create a #LinphonePresenceActivity with the given type and description.
- * @param[in] core #LinphoneCore object.
- * @param[in] acttype The #LinphonePresenceActivityType to set for the activity.
- * @param[in] description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
+ * @param core #LinphoneCore object.
+ * @param acttype The #LinphonePresenceActivityType to set for the activity.
+ * @param description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
  * @return The created #LinphonePresenceActivity object.
  */
 LINPHONE_PUBLIC LinphonePresenceActivity * linphone_core_create_presence_activity(LinphoneCore *core, LinphonePresenceActivityType acttype, const char *description);
 
 /**
  * Create a default LinphonePresenceModel.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return The created #LinphonePresenceModel object.
  */
 LINPHONE_PUBLIC LinphonePresenceModel * linphone_core_create_presence_model(LinphoneCore *core);
 
 /**
  * Create a #LinphonePresenceModel with the given activity type and activity description.
- * @param[in] core #LinphoneCore object.
- * @param[in] acttype The #LinphonePresenceActivityType to set for the activity of the created model.
- * @param[in] description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
+ * @param core #LinphoneCore object.
+ * @param acttype The #LinphonePresenceActivityType to set for the activity of the created model.
+ * @param description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
  * @return The created #LinphonePresenceModel object.
  */
 LINPHONE_PUBLIC LinphonePresenceModel * linphone_core_create_presence_model_with_activity(LinphoneCore *core, LinphonePresenceActivityType acttype, const char *description);
 
 /**
  * Create a #LinphonePresenceModel with the given activity type, activity description, note content and note language.
- * @param[in] core #LinphoneCore object.
- * @param[in] acttype The #LinphonePresenceActivityType to set for the activity of the created model.
- * @param[in] description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
- * @param[in] note The content of the note to be added to the created model.
- * @param[in] lang The language of the note to be added to the created model.
+ * @param core #LinphoneCore object.
+ * @param acttype The #LinphonePresenceActivityType to set for the activity of the created model.
+ * @param description An additional description of the activity to set for the activity. Can be NULL if no additional description is to be added. @maybenil
+ * @param note The content of the note to be added to the created model.
+ * @param lang The language of the note to be added to the created model.
  * @return The created #LinphonePresenceModel object.
  */
 LINPHONE_PUBLIC LinphonePresenceModel * linphone_core_create_presence_model_with_activity_and_note(LinphoneCore *core, LinphonePresenceActivityType acttype, const char *description, const char *note, const char *lang);
 
 /**
  * Create a #LinphonePresenceNote with the given content and language.
- * @param[in] core #LinphoneCore object.
- * @param[in] content The content of the note to be created.
- * @param[in] lang The language of the note to be created.
+ * @param core #LinphoneCore object.
+ * @param content The content of the note to be created.
+ * @param lang The language of the note to be created.
  * @return The created #LinphonePresenceNote object.
  */
 LINPHONE_PUBLIC LinphonePresenceNote * linphone_core_create_presence_note(LinphoneCore *core, const char *content, const char *lang);
 
 /**
  * Create a #LinphonePresencePerson with the given id.
- * @param[in] core #LinphoneCore object
- * @param[in] id The id of the person to be created.
+ * @param core #LinphoneCore object
+ * @param id The id of the person to be created.
  * @return The created #LinphonePresencePerson object.
  */
 LINPHONE_PUBLIC LinphonePresencePerson * linphone_core_create_presence_person(LinphoneCore *core, const char *id);
 
 /**
  * Create a #LinphonePresenceService with the given id, basic status and contact.
- * @param[in] core #LinphoneCore object.
- * @param[in] id The id of the service to be created.
- * @param[in] basic_status The basic status of the service to be created.
- * @param[in] contact A string containing a contact information corresponding to the service to be created.
+ * @param core #LinphoneCore object.
+ * @param id The id of the service to be created.
+ * @param basic_status The basic status of the service to be created.
+ * @param contact A string containing a contact information corresponding to the service to be created.
  * @return The created #LinphonePresenceService object.
  */
 LINPHONE_PUBLIC LinphonePresenceService * linphone_core_create_presence_service(LinphoneCore *core, const char *id, LinphonePresenceBasicStatus basic_status, const char *contact);
@@ -6324,8 +6324,8 @@ LINPHONE_PUBLIC LinphonePresenceService * linphone_core_create_presence_service(
  * Notifies the upper layer that a presence status has been received by calling the appropriate
  * callback if one has been set.
  * This method is for advanced usage, where customization of the liblinphone's internal behavior is required.
- * @param[in]  lc the #LinphoneCore object.
- * @param[in]  lf the #LinphoneFriend whose presence information has been received.
+ * @param  lc the #LinphoneCore object.
+ * @param  lf the #LinphoneFriend whose presence information has been received.
  */
 LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received(LinphoneCore *core, LinphoneFriend *lf);
 
@@ -6334,24 +6334,24 @@ LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received(LinphoneCore 
  * Notifies the upper layer that a presence model change has been received for the uri or
  * telephone number given as a parameter, by calling the appropriate callback if one has been set.
  * This method is for advanced usage, where customization of the liblinphone's internal behavior is required.
- * @param[in]  lc  the #LinphoneCore object.
- * @param[in]  lf  the #LinphoneFriend whose presence information has been received.
- * @param[in]  uri_or_tel  telephone number or sip uri
- * @param[in]  presence_model the #LinphonePresenceModel that has been modified
+ * @param  lc  the #LinphoneCore object.
+ * @param  lf  the #LinphoneFriend whose presence information has been received.
+ * @param  uri_or_tel  telephone number or sip uri
+ * @param  presence_model the #LinphonePresenceModel that has been modified
  */
 LINPHONE_PUBLIC void linphone_core_notify_notify_presence_received_for_uri_or_tel(LinphoneCore *core, LinphoneFriend *lf, const char *uri_or_tel, const LinphonePresenceModel *presence_model);
 
 /**
  * Sets the size under which incoming files in chat messages will be downloaded automatically.
- * @param[in] core #LinphoneCore object
- * @param[in] size The size in bytes, -1 to disable the autodownload feature, 0 to download them all no matter the size
+ * @param core #LinphoneCore object
+ * @param size The size in bytes, -1 to disable the autodownload feature, 0 to download them all no matter the size
  * @ingroup chat
 **/
 LINPHONE_PUBLIC void linphone_core_set_max_size_for_auto_download_incoming_files(LinphoneCore *core, int size);
 
 /**
  * Gets the size under which incoming files in chat messages will be downloaded automatically.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return The size in bytes, -1 if autodownload feature is disabled, 0 to download them all no matter the size
  * @ingroup chat
 **/
@@ -6359,15 +6359,15 @@ LINPHONE_PUBLIC int linphone_core_get_max_size_for_auto_download_incoming_files(
 
 /**
  * Returns whether or not sender name is hidden in forward message.
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @return whether or not the feature
 **/
 LINPHONE_PUBLIC bool_t linphone_core_is_sender_name_hidden_in_forward_message(LinphoneCore *core);
 
 /**
  * Enable whether or not to hide sender name in forward message
- * @param[in] core The #LinphoneCore
- * @param[in] enable whether or not to enable the feature
+ * @param core The #LinphoneCore
+ * @param enable whether or not to enable the feature
 **/
 LINPHONE_PUBLIC void linphone_core_enable_sender_name_hidden_in_forward_message(LinphoneCore *core, bool_t enable);
 
@@ -6378,7 +6378,7 @@ LINPHONE_PUBLIC void linphone_core_enable_sender_name_hidden_in_forward_message(
 
 /**
  * Create a new #LinphoneNatPolicy object with every policies being disabled.
- * @param[in] core #LinphoneCore object
+ * @param core #LinphoneCore object
  * @return A new #LinphoneNatPolicy object.
  * @ingroup network_parameters
  */
@@ -6386,8 +6386,8 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore
 
 /**
  * Create a new #LinphoneNatPolicy by reading the config of a #LinphoneCore according to the passed ref.
- * @param[in] core #LinphoneCore object
- * @param[in] ref The reference of a NAT policy in the config of the #LinphoneCore
+ * @param core #LinphoneCore object
+ * @param ref The reference of a NAT policy in the config of the #LinphoneCore
  * @return A new #LinphoneNatPolicy object. @maybenil
  * @ingroup network_parameters
  */
@@ -6396,8 +6396,8 @@ LINPHONE_PUBLIC LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(
 
 /**
  * Create a #LinphoneAccountCreator and set Linphone Request callbacks.
- * @param[in] core The #LinphoneCore used for the XML-RPC communication
- * @param[in] xmlrpc_url The URL to the XML-RPC server. Must be NON NULL.
+ * @param core The #LinphoneCore used for the XML-RPC communication
+ * @param xmlrpc_url The URL to the XML-RPC server. Must be NON NULL.
  * @return The new #LinphoneAccountCreator object.
  * @ingroup account_creator
 **/
@@ -6405,8 +6405,8 @@ LINPHONE_PUBLIC LinphoneAccountCreator * linphone_core_create_account_creator(Li
 
 /**
  * Create a #LinphoneXmlRpcSession for a given url.
- * @param[in] core The #LinphoneCore used for the XML-RPC communication
- * @param[in] url The URL to the XML-RPC server. Must be NON NULL.
+ * @param core The #LinphoneCore used for the XML-RPC communication
+ * @param url The URL to the XML-RPC server. Must be NON NULL.
  * @return The new #LinphoneXmlRpcSession object.
  * @ingroup misc
 **/
@@ -6414,8 +6414,8 @@ LINPHONE_PUBLIC LinphoneXmlRpcSession * linphone_core_create_xml_rpc_session(Lin
 
 /**
  * Update current config with the content of a xml config file
- * @param[in] core The #LinphoneCore to update
- * @param[in] xml_uri the path to the xml file
+ * @param core The #LinphoneCore to update
+ * @param xml_uri the path to the xml file
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *core, const char * xml_uri);
@@ -6424,7 +6424,7 @@ LINPHONE_PUBLIC void linphone_core_load_config_from_xml(LinphoneCore *core, cons
  * Call this method when you receive a push notification (if you handle push notifications manually).
  * It will ensure the proxy configs are correctly registered to the proxy server,
  * so the call or the message will be correctly delivered.
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @ingroup misc
 **/
 LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *core);
@@ -6433,8 +6433,8 @@ LINPHONE_PUBLIC void linphone_core_ensure_registered(LinphoneCore *core);
  * Get the chat message with the call_id included in the push notification body
  * This will start the core given in parameter, iterate until the message is received and return it.
  * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
- * @param[in] core The #LinphoneCore
- * @param[in] call_id The callId of the Message SIP transaction
+ * @param core The #LinphoneCore
+ * @param call_id The callId of the Message SIP transaction
  * @return The #LinphoneChatMessage object. @maybenil
  * @ingroup misc
 **/
@@ -6444,8 +6444,8 @@ LINPHONE_PUBLIC LinphonePushNotificationMessage * linphone_core_get_new_message_
  * Get the chat room we have been added into using the chat_room_addr included in the push notification body
  * This will start the core given in parameter, iterate until the new chat room is received and return it.
  * By default, after 25 seconds the function returns because iOS kills the app extension after 30 seconds.
- * @param[in] core The #LinphoneCore
- * @param[in] chat_room_addr The sip address of the chat room
+ * @param core The #LinphoneCore
+ * @param chat_room_addr The sip address of the chat room
  * @return The #LinphoneChatRoom object. @maybenil
  * @ingroup misc
 **/
@@ -6455,15 +6455,15 @@ LINPHONE_PUBLIC LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_add
  * Enable or disable push notifications on Android & iOS.
  * If enabled, it will try to get the push token add configure each proxy config with push_notification_allowed
  * set to true with push parameters.
- * @param[in] core The #LinphoneCore
- * @param[in] enable TRUE to enable push notifications, FALSE to disable
+ * @param core The #LinphoneCore
+ * @param enable TRUE to enable push notifications, FALSE to disable
  * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable);
 
 /**
  * Gets whether push notifications are enabled or not (Android & iOS only).
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @return TRUE if push notifications are enabled, FALSE otherwise
  * @ingroup misc
  */
@@ -6471,7 +6471,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
 
 /**
  * Gets whether push notifications are available or not (Android & iOS only).
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @return TRUE if push notifications are available, FALSE otherwise
  * @ingroup misc
  */
@@ -6481,15 +6481,15 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
  * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
  * If disabled, it is the application that must do this job.
- * @param[in] core The #LinphoneCore
- * @param[in] enable TRUE to enable auto iterate, FALSE to disable
+ * @param core The #LinphoneCore
+ * @param enable TRUE to enable auto iterate, FALSE to disable
  * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable);
 
 /**
  * Gets whether auto iterate is enabled or not (Android & iOS only).
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @return TRUE if #linphone_core_iterate() is scheduled automatically, FALSE otherwise
  * @ingroup misc
  */
@@ -6498,7 +6498,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_auto_iterate_enabled(LinphoneCore *core)
 /**
  * Returns a list of audio devices, with only the first device for each type
  * To have the list of all audio devices, use #linphone_core_get_extended_audio_devices
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns \bctbx_list{LinphoneAudioDevice} A list with the first #LinphoneAudioDevice of each type
  * @ingroup audio
  */
@@ -6506,7 +6506,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_audio_devices(const LinphoneCore
 
 /**
  * Returns the list of all audio devices
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns \bctbx_list{LinphoneAudioDevice} A list of all #LinphoneAudioDevice
  * @ingroup audio
  */
@@ -6514,23 +6514,23 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_extended_audio_devices(const Lin
 
 /**
  * Sets the given #LinphoneAudioDevice as input for all active calls.
- * @param[in] core The #LinphoneCore
- * @param[in] audio_device The #LinphoneAudioDevice
+ * @param core The #LinphoneCore
+ * @param audio_device The #LinphoneAudioDevice
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
  * Sets the given #LinphoneAudioDevice as output for all active calls.
- * @param[in] core The #LinphoneCore
- * @param[in] audio_device The #LinphoneAudioDevice
+ * @param core The #LinphoneCore
+ * @param audio_device The #LinphoneAudioDevice
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
  * Gets the input audio device for the current call
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns The input audio device for the current or first call, NULL if there is no call. @maybenil
  * @ingroup audio
  */
@@ -6538,7 +6538,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_input_audio_device(
 
 /**
  * Gets the output audio device for the current call
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns The output audio device for the current or first call, NULL if there is no call. @maybenil
  * @ingroup audio
  */
@@ -6546,23 +6546,23 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_output_audio_device
 
 /**
  * Sets the given #LinphoneAudioDevice as default input for next calls.
- * @param[in] core The #LinphoneCore
- * @param[in] audio_device The #LinphoneAudioDevice
+ * @param core The #LinphoneCore
+ * @param audio_device The #LinphoneAudioDevice
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_input_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
  * Sets the given #LinphoneAudioDevice as default output for next calls.
- * @param[in] core The #LinphoneCore
- * @param[in] audio_device The #LinphoneAudioDevice
+ * @param core The #LinphoneCore
+ * @param audio_device The #LinphoneAudioDevice
  * @ingroup audio
  */
 LINPHONE_PUBLIC void linphone_core_set_default_output_audio_device(LinphoneCore *core, LinphoneAudioDevice *audio_device);
 
 /**
  * Gets the default input audio device
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns The default input audio device
  * @ingroup audio
  */
@@ -6570,7 +6570,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
 
 /**
  * Gets the default output audio device 
- * @param[in] core The #LinphoneCore
+ * @param core The #LinphoneCore
  * @returns The default output audio device
  * @ingroup audio
  */

@@ -49,14 +49,14 @@ extern "C" {
 
 /**
  * Take a reference on a #LinphoneConferencParams.
- * @param[in] params The #LinphoneConferenceParams to ref.
+ * @param params The #LinphoneConferenceParams to ref.
  * @return The freshly refed #LinphoneConferenceParams.
  */
 LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_ref(LinphoneConferenceParams *params);
 
 /**
  * Release a #LinphoneConferenceParams.
- * @param[in] params The #LinphoneConferenceParams to release.
+ * @param params The #LinphoneConferenceParams to release.
  */
 LINPHONE_PUBLIC void linphone_conference_params_unref(LinphoneConferenceParams *params);
 
@@ -106,14 +106,14 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_local_participant_enabled(cons
 
 /**
  * Take a reference on a #LinphoneConference.
- * @param[in] conf The #LinphoneConference to ref.
+ * @param conf The #LinphoneConference to ref.
  * @return The freshly refed #LinphoneConference.
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_conference_ref(LinphoneConference *conf);
 
 /**
  * Release a #LinphoneConference.
- * @param[in] conf The #LinphoneConference to release.
+ * @param conf The #LinphoneConference to release.
  */
 LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
 

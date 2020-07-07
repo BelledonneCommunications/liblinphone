@@ -33,56 +33,59 @@ extern "C" {
 
 /**
  * Returns the id of the audio device
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @return the id of the audio device
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @return the id of the audio device. @notnil
  */
-LINPHONE_PUBLIC const char *linphone_audio_device_get_id(const LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC const char *linphone_audio_device_get_id(const LinphoneAudioDevice *audio_device);
 
 /**
  * Returns the name of the audio device
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @return the name of the audio device
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @return the name of the audio device. @notnil
  */
-LINPHONE_PUBLIC const char *linphone_audio_device_get_device_name(const LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC const char *linphone_audio_device_get_device_name(const LinphoneAudioDevice *audio_device);
 
 /**
  * Returns the driver name used by the device
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @returns the name of the driver used by this audio device
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @returns the name of the driver used by this audio device. @notnil
  */
-LINPHONE_PUBLIC const char *linphone_audio_device_get_driver_name(const LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC const char *linphone_audio_device_get_driver_name(const LinphoneAudioDevice *audio_device);
 
 /**
  * Returns the capabilities of the device
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @returns the capabilities of the audio device (RECORD, PLAY or both) as a bit mask
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @returns the #LinphoneAudioDeviceCapabilities of the audio device (RECORD, PLAY or both) as a bit mask
  */
-LINPHONE_PUBLIC LinphoneAudioDeviceCapabilities linphone_audio_device_get_capabilities(const LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC LinphoneAudioDeviceCapabilities linphone_audio_device_get_capabilities(const LinphoneAudioDevice *audio_device);
 
 /**
  * Returns the type of the device
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @returns the type of the audio device (microphone, speaker, earpiece, bluetooth, etc...)
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @returns the #LinphoneAudioDeviceType of the audio device (microphone, speaker, earpiece, bluetooth, etc...)
  */
-LINPHONE_PUBLIC LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC LinphoneAudioDeviceType linphone_audio_device_get_type(const LinphoneAudioDevice *audio_device);
 
 /**
  * Returns whether or not the audio device has the given capability
- * @param[in] audioDevice the #LinphoneAudioDevice
- * @param[in] capability the capability to check
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @param capability the #LinphoneAudioDeviceCapabilities to check
  * @returns TRUE if the audio device has the capability, FALSE otherwise
  */
-LINPHONE_PUBLIC  bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audioDevice, const LinphoneAudioDeviceCapabilities capability);
+LINPHONE_PUBLIC bool_t linphone_audio_device_has_capability(const LinphoneAudioDevice *audio_device, const LinphoneAudioDeviceCapabilities capability);
 
 /**
  * Takes a reference on a #LinphoneAudioDevice.
+ * @param audio_device the #LinphoneAudioDevice. @notnil
+ * @return the same #LinphoneAudioDevice object
  */
-LINPHONE_PUBLIC LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevice *audio_device);
 
 /**
  * Releases a #LinphoneAudioDevice.
+ * @param audio_device the #LinphoneAudioDevice. @notnil
  */
-LINPHONE_PUBLIC void linphone_audio_device_unref(LinphoneAudioDevice *audioDevice);
+LINPHONE_PUBLIC void linphone_audio_device_unref(LinphoneAudioDevice *audio_device);
 
 /**
  * @}

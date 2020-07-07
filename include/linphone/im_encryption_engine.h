@@ -33,7 +33,7 @@ extern "C" {
 
 /**
  * Acquire a reference to the LinphoneImEncryptionEngineCbs.
- * @param[in] cbs #LinphoneImEncryptionEngineCbs object.
+ * @param cbs #LinphoneImEncryptionEngineCbs object.
  * @return The same #LinphoneImEncryptionEngineCbs object.
  * @donotwrap
 **/
@@ -41,14 +41,14 @@ LinphoneImEncryptionEngineCbs * linphone_im_encryption_engine_cbs_ref(LinphoneIm
 
 /**
  * Release reference to the LinphoneImEncryptionEngineCbs.
- * @param[in] cbs #LinphoneImEncryptionEngineCbs object.
+ * @param cbs #LinphoneImEncryptionEngineCbs object.
  * @donotwrap
 **/
 void linphone_im_encryption_engine_cbs_unref(LinphoneImEncryptionEngineCbs *cbs);
 
 /**
  * Gets the user data in the #LinphoneImEncryptionEngineCbs object
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs
+ * @param cbs the #LinphoneImEncryptionEngineCbs
  * @return the user data
  * @donotwrap
 */
@@ -56,15 +56,15 @@ LINPHONE_PUBLIC void *linphone_im_encryption_engine_cbs_get_user_data(const Linp
 
 /**
  * Sets the user data in the #LinphoneImEncryptionEngineCbs object
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] data the user data
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param data the user data
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_user_data(LinphoneImEncryptionEngineCbs *cbs, void *data);
 
 /**
  * Acquire a reference to the LinphoneImEncryptionEngine.
- * @param[in] imee #LinphoneImEncryptionEngine object.
+ * @param imee #LinphoneImEncryptionEngine object.
  * @return The same #LinphoneImEncryptionEngine object.
  * @donotwrap
 **/
@@ -72,14 +72,14 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngine * linphone_im_encryption_engine_ref(L
 
 /**
  * Release reference to the LinphoneImEncryptionEngine.
- * @param[in] imee #LinphoneImEncryptionEngine object.
+ * @param imee #LinphoneImEncryptionEngine object.
  * @donotwrap
 **/
 LINPHONE_PUBLIC void linphone_im_encryption_engine_unref(LinphoneImEncryptionEngine *imee);
 
 /**
  * Gets the user data in the #LinphoneImEncryptionEngine object
- * @param[in] imee the #LinphoneImEncryptionEngine
+ * @param imee the #LinphoneImEncryptionEngine
  * @return the user data
  * @donotwrap
 */
@@ -87,15 +87,15 @@ LINPHONE_PUBLIC void *linphone_im_encryption_engine_get_user_data(const Linphone
 
 /**
  * Sets the user data in the #LinphoneImEncryptionEngine object
- * @param[in] imee the #LinphoneImEncryptionEngine object
- * @param[in] data the user data
+ * @param imee the #LinphoneImEncryptionEngine object
+ * @param data the user data
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_set_user_data(LinphoneImEncryptionEngine *imee, void *data);
 
 /**
  * Gets the #LinphoneCore object that created the IM encryption engine
- * @param[in] imee #LinphoneImEncryptionEngine object
+ * @param imee #LinphoneImEncryptionEngine object
  * @return The #LinphoneCore object that created the IM encryption engine
  * @donotwrap
  */
@@ -103,7 +103,7 @@ LINPHONE_PUBLIC LinphoneCore * linphone_im_encryption_engine_get_core(LinphoneIm
 
 /**
  * Gets the #LinphoneImEncryptionEngineCbs object that holds the callbacks
- * @param[in] imee the #LinphoneImEncryptionEngine object
+ * @param imee the #LinphoneImEncryptionEngine object
  * @return the #LinphoneImEncryptionEngineCbs object
  * @donotwrap
 */
@@ -111,7 +111,7 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbs* linphone_im_encryption_engine_get
 
 /**
  * Gets the callback that will decrypt the chat messages upon reception
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -119,15 +119,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsIncomingMessageCb linphone_im_encry
 
 /**
  * Sets the callback that will decrypt the chat messages upon reception
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_incoming_message(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsIncomingMessageCb cb);
 
 /**
  * Gets the callback that will encrypt the chat messages before sending them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -135,15 +135,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsOutgoingMessageCb linphone_im_encry
 
 /**
  * Sets the callback that will encrypt the chat messages before sending them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_outgoing_message(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsOutgoingMessageCb cb);
 
 /**
  * Gets the callback that will decrypt the files while downloading them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -151,15 +151,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsDownloadingFileCb linphone_im_encry
 
 /**
  * Sets the callback that will decrypt the files while downloading them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_downloading_file(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsDownloadingFileCb cb);
 
 /**
  * Gets the callback that will will encrypt the files while uploading them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -167,15 +167,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsUploadingFileCb linphone_im_encrypt
 
 /**
  * Sets the callback that will encrypt the files while uploading them
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_process_uploading_file(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsUploadingFileCb cb);
 
 /**
  * Gets the callback telling whether or not to encrypt the files
- * @param[in] cbs the LinphoneImEncryptionEngineCbs object
+ * @param cbs the LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -183,15 +183,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferC
 
 /**
  * Sets the callback telling whether or not to encrypt the files
- * @param[in] cbs the LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_is_encryption_enabled_for_file_transfer(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsIsEncryptionEnabledForFileTransferCb cb);
 
 /**
  * Gets the callback that will generate the key to encrypt the file before uploading it
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
  * @return the callback
  * @donotwrap
 */
@@ -199,15 +199,15 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb linphone_
 
 /**
  * Sets the callback that will generate the key to encrypt the file before uploading it
- * @param[in] cbs the #LinphoneImEncryptionEngineCbs object
- * @param[in] cb the callback to call
+ * @param cbs the #LinphoneImEncryptionEngineCbs object
+ * @param cb the callback to call
  * @donotwrap
 */
 LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_generate_file_transfer_key(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb cb);
 
 /** Set a chat message text to be sent by #linphone_chat_room_send_message
- * @param[in] msg #LinphoneChatMessage
- * @param[in] text Const char *
+ * @param msg #LinphoneChatMessage
+ * @param text Const char *
  * @return 0 if succeed.
  * @donotwrap
 */

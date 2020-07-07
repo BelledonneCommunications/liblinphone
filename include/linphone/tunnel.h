@@ -106,14 +106,14 @@ LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_tunnel_config_new(void);
 
 /**
  * Take a reference on a #LinphoneTunnel.
- * @param[in] tunnel The #LinphoneTunnel whose the ref counter will be increased.
+ * @param tunnel The #LinphoneTunnel whose the ref counter will be increased.
  * @return Pointer on the freshly refed #LinphoneTunnel.
  */
 LINPHONE_PUBLIC LinphoneTunnel *linphone_tunnel_ref(LinphoneTunnel *tunnel);
 
 /**
  * Release a reference on a #LinphoneTunnel.
- * @param[in] tunnel The #LinphoneTunnel whose the ref counter will be decreased.
+ * @param tunnel The #LinphoneTunnel whose the ref counter will be decreased.
  */
 LINPHONE_PUBLIC void linphone_tunnel_unref(LinphoneTunnel *tunnel);
 
