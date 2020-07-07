@@ -3617,7 +3617,6 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *c
  * @param[in] addr #LinphoneAddress object
  * @return \bctbx_list{LinphoneCallLog} \onTheFlyList
  * @deprecated 29/10/2018 Use #linphone_core_get_call_history_2 instead.
- * @donotwrap
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *core, const LinphoneAddress *addr);
 
