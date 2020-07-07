@@ -608,13 +608,6 @@ Participant* MediaSessionPrivate::getMe () const {
 void MediaSessionPrivate::setState (CallSession::State newState, const string &message) {
 	L_Q();
 
-printf("%s - media session %p (", __func__, this);
-if (q->getRemoteAddress())
-	printf("remote %s ", q->getRemoteAddress()->asString().c_str());
-//if (getLocalAddress())
-printf(" local %s", q->getLocalAddress().asString().c_str());
-printf(") previous state %s new state %s - message %s\n", Utils::toString(q->getState()).c_str(), Utils::toString(newState).c_str(), message.c_str());
-
 	// Take a ref on the session otherwise it might get destroyed during the call to setState
 	shared_ptr<CallSession> sessionRef = q->getSharedFromThis();
 	if ((newState != state) && (newState != CallSession::State::StreamsRunning))
