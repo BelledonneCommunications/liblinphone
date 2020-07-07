@@ -33,7 +33,7 @@
 #include "conference_private.h"
 #include "logger/logger.h"
 
-#include "bctoolbox/sqlite3_vfs.h"
+#include "sqlite3_bctbx_vfs.h"
 
 #include <math.h>
 #include <sys/types.h>

@@ -19,7 +19,7 @@
 
 #include "linphone/utils/utils.h"
 
-#include "bctoolbox/sqlite3_vfs.h"
+#include "sqlite3_bctbx_vfs.h"
 #include "db-session.h"
 #include "logger/logger.h"
 
