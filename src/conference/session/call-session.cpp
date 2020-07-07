@@ -1397,6 +1397,9 @@ const Address *CallSession::getRemoteContactAddress () const {
 	if (!d->op) {
 		return nullptr;
 	}
+	if (!d->op->getRemoteContactAddress()) {
+		return nullptr;
+	}
 	char *addrStr = sal_address_as_string(d->op->getRemoteContactAddress());
 	d->remoteContactAddress = Address(addrStr);
 	bctbx_free(addrStr);
