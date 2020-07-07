@@ -70,7 +70,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC int linphone_core_start_echo_calibration(Lin
 
 /**
  * @brief Starts an echo calibration of the sound devices, in order to find adequate settings for the echo canceler automatically.
- * @param[in] core #LinphoneCore object.
+ * @param core #LinphoneCore object.
  * @return #LinphoneStatus whether calibration has started or not.
  * @ingroup misc
 **/

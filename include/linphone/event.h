@@ -102,7 +102,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_event_refresh_publish(LinphoneEvent *lin
  * This is useful to let registrations to expire naturally (or) when the application wants to keep control on when
  * refreshes are sent.
  * The refreshing operations can be resumed with linphone_proxy_config_refresh_register().
- * @param[in] linphone_event #LinphoneEvent object.
+ * @param linphone_event #LinphoneEvent object.
  **/
 LINPHONE_PUBLIC void linphone_event_pause_publish(LinphoneEvent *linphone_event);
 
@@ -176,7 +176,7 @@ LINPHONE_PUBLIC const char *linphone_event_get_custom_header(LinphoneEvent *linp
  * Terminate an incoming or outgoing subscription that was previously acccepted, or a previous publication.
  * The #LinphoneEvent shall not be used anymore after this operation, unless the application explicitely took a reference on the object with
  * linphone_event_ref().
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
 **/
 LINPHONE_PUBLIC void linphone_event_terminate(LinphoneEvent *linphone_event);
 
@@ -185,7 +185,7 @@ LINPHONE_PUBLIC void linphone_event_terminate(LinphoneEvent *linphone_event);
  * By default #LinphoneEvents created by the core are owned by the core only.
  * An application that wishes to retain a reference to it must call linphone_event_ref().
  * When this reference is no longer needed, linphone_event_unref() must be called.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return the same #LinphoneEvent object.
  *
 **/
@@ -193,49 +193,49 @@ LINPHONE_PUBLIC LinphoneEvent *linphone_event_ref(LinphoneEvent *linphone_event)
 
 /**
  * Decrease reference count.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @see linphone_event_ref()
 **/
 LINPHONE_PUBLIC void linphone_event_unref(LinphoneEvent *linphone_event);
 
 /**
  * Get the name of the event as specified in the event package RFC.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return the event name.
 **/
 LINPHONE_PUBLIC const char *linphone_event_get_name(const LinphoneEvent *linphone_event);
 
 /**
  * Get the "from" address of the subscription.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return the from #LinphoneAddress.
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *linphone_event);
 
 /**
  * Get the resource address of the subscription or publish.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return the resource #LinphoneAddress.
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_resource(const LinphoneEvent *linphone_event);
 
 /**
  * Get the "contact" address of the subscription.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return The "contact" address of the subscription
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_remote_contact (const LinphoneEvent *linphone_event);
 
 /**
  * Returns back pointer to the #LinphoneCore that created this #LinphoneEvent
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return the #LinphoneCore object associated.
 **/
 LINPHONE_PUBLIC LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event);
 
 /**
  * Get the LinphoneEventCbs object associated with a LinphoneEvent.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return The LinphoneEventCbs object associated with the LinphoneEvent.
  * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
 **/
@@ -243,21 +243,21 @@ LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEve
 
 /**
  * Adds a LinphoneEventCbs object to be associated with a LinphoneEvent.
- * @param[in] linphone_event #LinphoneEvent object
- * @param[in] cbs The LinphoneEventCbs object to add
+ * @param linphone_event #LinphoneEvent object
+ * @param cbs The LinphoneEventCbs object to add
 **/
 LINPHONE_PUBLIC void linphone_event_add_callbacks(LinphoneEvent *linphone_event, LinphoneEventCbs *cbs);
 
 /**
  * Removes a LinphoneEventCbs object associated with a LinphoneEvent.
- * @param[in] linphone_event #LinphoneEvent object
- * @param[in] cbs The LinphoneEventCbs object to remove
+ * @param linphone_event #LinphoneEvent object
+ * @param cbs The LinphoneEventCbs object to remove
 **/
 LINPHONE_PUBLIC void linphone_event_remove_callbacks(LinphoneEvent *linphone_event, LinphoneEventCbs *cbs);
 
 /**
  * Get the current LinphoneEventCbs object associated with a LinphoneEvent.
- * @param[in] linphone_event #LinphoneEvent object
+ * @param linphone_event #LinphoneEvent object
  * @return The current LinphoneEventCbs object associated with the LinphoneEvent.
 **/
 LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *linphone_event);
@@ -270,35 +270,35 @@ LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_cbs_ref(LinphoneEventCbs *cbs);
 
 /**
  * Release a reference to a LinphoneEventCbs object.
- * @param[in] cbs LinphoneEventCbs object.
+ * @param cbs LinphoneEventCbs object.
 **/
 LINPHONE_PUBLIC void linphone_event_cbs_unref(LinphoneEventCbs *cbs);
 
 /**
  * Retrieve the user pointer associated with a LinphoneEventCbs object.
- * @param[in] cbs LinphoneEventCbs object.
+ * @param cbs LinphoneEventCbs object.
  * @return The user pointer associated with the LinphoneEventCbs object. @maybenil
 **/
 LINPHONE_PUBLIC void *linphone_event_cbs_get_user_data(const LinphoneEventCbs *cbs);
 
 /**
  * Assign a user pointer to a LinphoneEventCbs object.
- * @param[in] cbs LinphoneEventCbs object.
- * @param[in] user_data The user pointer to associate with the LinphoneEventCbs object. @maybenil
+ * @param cbs LinphoneEventCbs object.
+ * @param user_data The user pointer to associate with the LinphoneEventCbs object. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_event_cbs_set_user_data(LinphoneEventCbs *cbs, void *user_data);
 
 /**
  * Get the notify response callback.
- * @param[in] cbs LinphoneEventCbs object.
+ * @param cbs LinphoneEventCbs object.
  * @return The current notify response callback.
 **/
 LINPHONE_PUBLIC LinphoneEventCbsNotifyResponseCb linphone_event_cbs_get_notify_response(const LinphoneEventCbs *cbs);
 
 /**
  * Set the notify response callback.
- * @param[in] cbs LinphoneEventCbs object.
- * @param[in] cb The notify response callback to be used.
+ * @param cbs LinphoneEventCbs object.
+ * @param cb The notify response callback to be used.
 **/
 LINPHONE_PUBLIC void linphone_event_cbs_set_notify_response(LinphoneEventCbs *cbs, LinphoneEventCbsNotifyResponseCb cb);
 

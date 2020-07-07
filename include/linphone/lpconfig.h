@@ -138,9 +138,9 @@ LINPHONE_PUBLIC LinphoneStatus linphone_config_load_from_xml_string(LpConfig *lp
  *
  * The default value string is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_string The default value to return if not found. @maybenil
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_string The default value to return if not found. @maybenil
  * @return the found value or the default one if not found. @maybenil
 **/
 LINPHONE_PUBLIC const char *linphone_config_get_string(const LinphoneConfig *config, const char *section, const char *key, const char *default_string);
@@ -148,10 +148,10 @@ LINPHONE_PUBLIC const char *linphone_config_get_string(const LinphoneConfig *con
 /**
  * Retrieves a configuration item as a list of strings, given its section, key, and default value.
  * The default value is returned if the config item is not found.
- * @param[in] config A #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_list \bctbx_list{const char *} @maybenil
+ * @param config A #LinphoneConfig object
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_list \bctbx_list{const char *} @maybenil
  * @return \bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t * linphone_config_get_string_list(const LinphoneConfig *config, const char *section, const char *key, bctbx_list_t *default_list);
@@ -160,12 +160,12 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_config_get_string_list(const LinphoneCon
  * Retrieves a configuration item as a range, given its section, key, and default min and max values.
  *
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
  * @param[out] min The min value found or default_min
  * @param[out] max The max value found or default_max
- * @param[in] default_min the default min value to return if not found
- * @param[in] default_max the default max value to return if not found.
+ * @param default_min the default min value to return if not found
+ * @param default_max the default max value to return if not found.
  * @return TRUE if the value is successfully parsed as a range, FALSE otherwise.
  * If FALSE is returned, min and max are filled respectively with default_min and default_max values.
  */
@@ -176,9 +176,9 @@ LINPHONE_PUBLIC bool_t linphone_config_get_range(const LinphoneConfig *config, c
  *
  * The default integer value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found value or default_value if not found.
 **/
 LINPHONE_PUBLIC int linphone_config_get_int(const LinphoneConfig *config, const char *section, const char *key, int default_value);
@@ -188,9 +188,9 @@ LINPHONE_PUBLIC int linphone_config_get_int(const LinphoneConfig *config, const 
  *
  * The default boolean value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found value or default_value if not found.
 **/
 LINPHONE_PUBLIC bool_t linphone_config_get_bool(const LpConfig *lpconfig, const char *section, const char *key, bool_t default_value);
@@ -200,9 +200,9 @@ LINPHONE_PUBLIC bool_t linphone_config_get_bool(const LpConfig *lpconfig, const 
  *
  * The default integer value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found value or default_value if not found.
 **/
 LINPHONE_PUBLIC int64_t linphone_config_get_int64(const LinphoneConfig *config, const char *section, const char *key, int64_t default_value);
@@ -212,9 +212,9 @@ LINPHONE_PUBLIC int64_t linphone_config_get_int64(const LinphoneConfig *config, 
  *
  * The default float value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found value or default_value if not found.
 **/
 LINPHONE_PUBLIC float linphone_config_get_float(const LinphoneConfig *config, const char *section, const char *key, float default_value);
@@ -222,73 +222,73 @@ LINPHONE_PUBLIC float linphone_config_get_float(const LinphoneConfig *config, co
 /**
  * Sets a string config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value The value to set @maybenil
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value The value to set @maybenil
 **/
 LINPHONE_PUBLIC void linphone_config_set_string(LinphoneConfig *config,const char *section, const char *key, const char *value);
 
 /**
  * Sets a string list config item
- * @param[in] config A #LinphoneConfig object
- * @param[in] section The name of the section to put the configuration item into
- * @param[in] key The name of the configuration item to set
- * @param[in] value \bctbx_list{const char *} The value to set. @maybenil
+ * @param config A #LinphoneConfig object
+ * @param section The name of the section to put the configuration item into
+ * @param key The name of the configuration item to set
+ * @param value \bctbx_list{const char *} The value to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_config_set_string_list(LinphoneConfig *config, const char *section, const char *key, const bctbx_list_t *value);
 
 /**
  * Sets a range config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] min_value the min value to set
- * @param[in] max_value the max value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param min_value the min value to set
+ * @param max_value the max value to set
  */
 LINPHONE_PUBLIC void linphone_config_set_range(LinphoneConfig *config, const char *section, const char *key, int min_value, int max_value);
 
 /**
  * Sets an integer config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value the value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value the value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_int(LinphoneConfig *config,const char *section, const char *key, int value);
 
 /**
  * Sets a boolean config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value the value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value the value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_bool(LinphoneConfig *config,const char *section, const char *key, bool_t value);
 
 /**
  * Sets an integer config item, but store it as hexadecimal
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value the value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value the value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_int_hex(LinphoneConfig *config,const char *section, const char *key, int value);
 
 /**
  * Sets a 64 bits integer config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value the value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value the value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_int64(LinphoneConfig *config,const char *section, const char *key, int64_t value);
 
 /**
  * Sets a float config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve a configuration item
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] value the value to set
+ * @param section The section from which to retrieve a configuration item
+ * @param key The name of the configuration item to retrieve
+ * @param value the value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_float(LinphoneConfig *config,const char *section, const char *key, float value);
 
@@ -307,7 +307,7 @@ LINPHONE_PUBLIC void linphone_config_reload(LinphoneConfig *config);
 /**
  * Returns if a given section is present in the configuration.
  * @param config The #LinphoneConfig object
- * @param[in] section the section to check if exists
+ * @param section the section to check if exists
  * @return 1 if it exists, 0 otherwise 
 **/
 LINPHONE_PUBLIC int linphone_config_has_section(const LinphoneConfig *config, const char *section);
@@ -315,30 +315,30 @@ LINPHONE_PUBLIC int linphone_config_has_section(const LinphoneConfig *config, co
 /**
  * Removes every pair of key,value in a section and remove the section.
  * @param config The #LinphoneConfig object
- * @param[in] section the section to clean
+ * @param section the section to clean
 **/
 LINPHONE_PUBLIC void linphone_config_clean_section(LinphoneConfig *config, const char *section);
 
 /**
  * Returns if a given section  with a given key is present in the configuration.
- * @param[in] config The #LinphoneConfig object
- * @param[in] section to check if the given entry exists
- * @param[in] key to check if it exists
+ * @param config The #LinphoneConfig object
+ * @param section to check if the given entry exists
+ * @param key to check if it exists
  * @return 1 if it exists, 0 otherwise
  **/
 LINPHONE_PUBLIC int linphone_config_has_entry(const LinphoneConfig *config, const char *section, const char *key);
 
 /**
  * Removes entries for key,value in a section.
- * @param[in] lpconfig The #LinphoneConfig object
- * @param[in] section the section for which to clean the key entry
- * @param[in] key the key to clean
+ * @param lpconfig The #LinphoneConfig object
+ * @param section the section for which to clean the key entry
+ * @param key the key to clean
  **/
 LINPHONE_PUBLIC void linphone_config_clean_entry(LinphoneConfig *config, const char *section, const char *key);
 
 /**
  * Returns the list of sections' names in the LinphoneConfig.
- * @param[in] lpconfig The #LinphoneConfig object
+ * @param lpconfig The #LinphoneConfig object
  * @return a null terminated static array of strings
  * @deprecated 12/10/2017 use linphone_config_get_sections_names_list instead
  * @donotwrap
@@ -347,7 +347,7 @@ LINPHONE_PUBLIC const char** linphone_config_get_sections_names(LinphoneConfig *
 
 /**
  * Returns the list of sections' names in the LinphoneConfig.
- * @param[in] config The #LinphoneConfig object
+ * @param config The #LinphoneConfig object
  * @return \bctbx_list{char *} a null terminated static array of strings
 **/
 LINPHONE_PUBLIC const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *config);
@@ -373,9 +373,9 @@ LINPHONE_PUBLIC void linphone_config_destroy(LinphoneConfig *cfg);
  * Retrieves a default configuration item as an integer, given its section, key, and default value.
  * The default integer value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the default value
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve the default value
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found default value or default_value if not found.
 **/
 LINPHONE_PUBLIC int linphone_config_get_default_int(const LinphoneConfig *config, const char *section, const char *key, int default_value);
@@ -384,9 +384,9 @@ LINPHONE_PUBLIC int linphone_config_get_default_int(const LinphoneConfig *config
  * Retrieves a default configuration item as a 64 bit integer, given its section, key, and default value.
  * The default integer value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the default value
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve the default value
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found default value or default_value if not found.
 **/
 LINPHONE_PUBLIC int64_t linphone_config_get_default_int64(const LinphoneConfig *config, const char *section, const char *key, int64_t default_value);
@@ -395,9 +395,9 @@ LINPHONE_PUBLIC int64_t linphone_config_get_default_int64(const LinphoneConfig *
  * Retrieves a default configuration item as a float, given its section, key, and default value.
  * The default float value is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the default value
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve the default value
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found default value or default_value if not found.
 **/
 LINPHONE_PUBLIC float linphone_config_get_default_float(const LinphoneConfig *config, const char *section, const char *key, float default_value);
@@ -406,9 +406,9 @@ LINPHONE_PUBLIC float linphone_config_get_default_float(const LinphoneConfig *co
  * Retrieves a default configuration item as a string, given its section, key, and default value.
  * The default value string is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the default value
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found
+ * @param section The section from which to retrieve the default value
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found
  * @return the found default value or default_value if not found.
 **/
 LINPHONE_PUBLIC const char* linphone_config_get_default_string(const LinphoneConfig *config, const char *section, const char *key, const char *default_value);
@@ -417,9 +417,9 @@ LINPHONE_PUBLIC const char* linphone_config_get_default_string(const LinphoneCon
  * Retrieves a section parameter item as a string, given its section and key.
  * The default value string is returned if the config item isn't found.
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the default value
- * @param[in] key The name of the configuration item to retrieve
- * @param[in] default_value The default value to return if not found. @maybenil
+ * @param section The section from which to retrieve the default value
+ * @param key The name of the configuration item to retrieve
+ * @param default_value The default value to return if not found. @maybenil
  * @return the found default value or default_value if not found. @maybenil
 **/
 LINPHONE_PUBLIC const char* linphone_config_get_section_param_string(const LinphoneConfig *config, const char *section, const char *key, const char *default_value);
@@ -481,8 +481,8 @@ LINPHONE_PUBLIC char* linphone_config_dump(const LinphoneConfig *config);
 /**
  * Retrieves the overwrite flag for a config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the overwrite flag
- * @param[in] key The name of the configuration item to retrieve the overwrite flag from.
+ * @param section The section from which to retrieve the overwrite flag
+ * @param key The name of the configuration item to retrieve the overwrite flag from.
  * @return TRUE if overwrite flag is set, FALSE otherwise.
 **/
 LINPHONE_PUBLIC bool_t linphone_config_get_overwrite_flag_for_entry(const LinphoneConfig *config, const char *section, const char *key);
@@ -490,16 +490,16 @@ LINPHONE_PUBLIC bool_t linphone_config_get_overwrite_flag_for_entry(const Linpho
 /**
  * Sets the overwrite flag for a config item (used when dumping config as xml)
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to set the overwrite flag
- * @param[in] key The name of the configuration item to set the overwrite flag from
- * @param[in] value The overwrite flag value to set
+ * @param section The section from which to set the overwrite flag
+ * @param key The name of the configuration item to set the overwrite flag from
+ * @param value The overwrite flag value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_overwrite_flag_for_entry(LinphoneConfig *config, const char *section, const char *key, bool_t value);
 
 /**
  * Retrieves the overwrite flag for a config section
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the overwrite flag
+ * @param section The section from which to retrieve the overwrite flag
  * @return TRUE if overwrite flag is set, FALSE otherwise.
 **/
 LINPHONE_PUBLIC bool_t linphone_config_get_overwrite_flag_for_section(const LinphoneConfig *config, const char *section);
@@ -507,16 +507,16 @@ LINPHONE_PUBLIC bool_t linphone_config_get_overwrite_flag_for_section(const Linp
 /**
  * Sets the overwrite flag for a config section (used when dumping config as xml)
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to set the overwrite flag
- * @param[in] value The overwrite flag value to set
+ * @param section The section from which to set the overwrite flag
+ * @param value The overwrite flag value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_overwrite_flag_for_section(LinphoneConfig *config, const char *section, bool_t value);
 
 /**
  * Retrieves the skip flag for a config item
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the skip flag
- * @param[in] key The name of the configuration item to retrieve the skip flag from
+ * @param section The section from which to retrieve the skip flag
+ * @param key The name of the configuration item to retrieve the skip flag from
  * @return TRUE if skip flag is set, FALSE otherwise.
 **/
 LINPHONE_PUBLIC bool_t linphone_config_get_skip_flag_for_entry(const LinphoneConfig *config, const char *section, const char *key);
@@ -524,16 +524,16 @@ LINPHONE_PUBLIC bool_t linphone_config_get_skip_flag_for_entry(const LinphoneCon
 /**
  * Sets the skip flag for a config item (used when dumping config as xml)
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to set the skip flag
- * @param[in] key The name of the configuration item to set the skip flag from
- * @param[in] value The skip flag value to set
+ * @param section The section from which to set the skip flag
+ * @param key The name of the configuration item to set the skip flag from
+ * @param value The skip flag value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_skip_flag_for_entry(LinphoneConfig *config, const char *section, const char *key, bool_t value);
 
 /**
  * Retrieves the skip flag for a config section
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to retrieve the skip flag
+ * @param section The section from which to retrieve the skip flag
  * @return TRUE if skip flag is set, FALSE otherwise.
 **/
 LINPHONE_PUBLIC bool_t linphone_config_get_skip_flag_for_section(const LinphoneConfig *config, const char *section);
@@ -541,15 +541,15 @@ LINPHONE_PUBLIC bool_t linphone_config_get_skip_flag_for_section(const LinphoneC
 /**
  * Sets the skip flag for a config section (used when dumping config as xml)
  * @param config The #LinphoneConfig object
- * @param[in] section The section from which to set the skip flag
- * @param[in] value The skip flag value to set
+ * @param section The section from which to set the skip flag
+ * @param value The skip flag value to set
 **/
 LINPHONE_PUBLIC void linphone_config_set_skip_flag_for_section(LinphoneConfig *config, const char *section, bool_t value);
 
 /**
  * Converts a config section into a dictionary.
  * @param config The #LinphoneConfig object
- * @param[in] section The section to dump as dictionary
+ * @param section The section to dump as dictionary
  * @return a dictionary with all the keys from a section, or NULL if the section doesn't exist. @maybenil
  */
 LINPHONE_PUBLIC LinphoneDictionary * lp_config_section_to_dict(const LpConfig* config, const char* section);
@@ -558,8 +558,8 @@ LINPHONE_PUBLIC LinphoneDictionary * lp_config_section_to_dict(const LpConfig* c
  * Loads a dictionary into a section of the lpconfig. If the section doesn't exist it is created.
  * Overwrites existing keys, creates non-existing keys.
  * @param config The #LinphoneConfig object
- * @param[in] section The section to dump as dictionary
- * @param[in] dict the dictionnary to load into the section
+ * @param section The section to dump as dictionary
+ * @param dict the dictionnary to load into the section
  */
 LINPHONE_PUBLIC void lp_config_load_dict_to_section(LpConfig* lpconfig, const char* section, const LinphoneDictionary* dict);
 
