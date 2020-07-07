@@ -72,7 +72,6 @@ public class AndroidPlatformHelper {
     private WakeLock mWakeLock;
     private Resources mResources;
     private TextureView mPreviewTextureView, mVideoTextureView;
-    private boolean mDozeModeEnabled;
     private BroadcastReceiver mDozeReceiver;
     private boolean mWifiOnly;
     private boolean mUsingHttpProxy;
@@ -107,8 +106,6 @@ public class AndroidPlatformHelper {
         mDnsServers = null;
         mResources = mContext.getResources();
         mMainHandler = new Handler(mContext.getMainLooper());
-
-        mDozeModeEnabled = false;
 
         MediastreamerAndroidContext.setContext(mContext);
         Log.i("[Platform Helper] Created, wifi only mode is " + (mWifiOnly ? "enabled" : "disabled"));
@@ -599,12 +596,6 @@ public class AndroidPlatformHelper {
             return;
         }
 
-        if (mDozeModeEnabled && DeviceUtils.isAppBatteryOptimizationEnabled(mContext)) {
-            Log.i("[Platform Helper] Device in idle (doze) mode: shutting down network");
-            setNetworkReachable(mNativePtr, false);
-            return;
-        }
-
         boolean connected = mNetworkManager.isCurrentlyConnected(mContext);
         if (!connected) {
             Log.i("[Platform Helper] No connectivity: setting network unreachable");
@@ -659,10 +650,6 @@ public class AndroidPlatformHelper {
         mLastNetworkType = currentNetworkType;
         Log.i("[Platform Helper] Network reachability enabled");
         setNetworkReachable(mNativePtr, true);
-    }
-
-    public synchronized void setDozeModeEnabled(boolean b) {
-        mDozeModeEnabled = b;
     }
 
     private NetworkManagerInterface createNetworkManager() {

@@ -43,10 +43,6 @@ public class DozeReceiver extends android.content.BroadcastReceiver {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             boolean dozeM = pm.isDeviceIdleMode();
             Log.i("[Platform Helper] [Doze Receiver] Doze mode enabled: " + dozeM);
-            if (mHelper != null) {
-                mHelper.setDozeModeEnabled(dozeM);
-                mHelper.updateNetworkReachability();
-            }
         }
     }
 }
