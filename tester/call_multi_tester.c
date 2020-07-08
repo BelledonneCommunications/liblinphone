@@ -1371,10 +1371,10 @@ static void eject_from_3_participants_local_conference(void) {
 }
 
 static void eject_from_4_participants_conference(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
-	LinphoneCoreManager* michelle = linphone_core_manager_new( "michelle_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1404,9 +1404,12 @@ static void eject_from_4_participants_conference(void) {
 
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 
-	linphone_core_add_to_conference(marie->lc,marie_call_laure);
-	linphone_core_add_to_conference(marie->lc,marie_call_michelle);
-	linphone_core_add_to_conference(marie->lc,marie_call_pauline);
+	bctbx_list_t* calls=NULL;
+	calls=bctbx_list_append(calls,marie_call_laure);
+	calls=bctbx_list_append(calls,marie_call_michelle);
+	calls=bctbx_list_append(calls,marie_call_pauline);
+	add_calls_to_conference(lcs, marie, calls);
+	bctbx_list_free(calls);
 
 	/* Wait that the three participants are joined to the local conference, by checking the StreamsRunning states*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
