@@ -551,7 +551,9 @@ LinphoneStatus add_participant_to_conference_through_invite(bctbx_list_t *lcs, L
 		int idx = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallIncomingReceived,(participants_initial_stats[idx].number_of_LinphoneCallIncomingReceived + 1),5000));
+			if (linphone_core_is_network_reachable(m->lc)) {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallIncomingReceived,(participants_initial_stats[idx].number_of_LinphoneCallIncomingReceived + 1),10000));
+			}
 			idx++;
 		}
 	}
