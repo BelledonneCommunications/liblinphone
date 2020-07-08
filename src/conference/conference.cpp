@@ -381,6 +381,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, Utils::toString(state).c_str());
+		printf("Switching conference [%p] from state %s to state '%s'\n", this, Utils::toString(this->state).c_str(), Utils::toString(state).c_str());
 		this->state = state;
 		notifyStateChanged(state);
 	}
