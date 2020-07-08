@@ -34,16 +34,16 @@ LINPHONE_PUBLIC void linphone_ringtoneplayer_destroy(LinphoneRingtonePlayer* rp)
 LINPHONE_PUBLIC LinphoneStatus linphone_ringtoneplayer_start(MSFactory *factory, LinphoneRingtonePlayer* rp, MSSndCard* card, const char* ringtone, int loop_pause_ms);
 /**
  * Start a ringtone player
- * @param factory A MSFactory object
- * @param rp #LinphoneRingtonePlayer object
- * @param card unused argument
- * @param ringtone path to the ringtone to play
+ * @param factory A MSFactory object @notnil
+ * @param ringtone_player #LinphoneRingtonePlayer object @notnil
+ * @param card unused argument @maybenil
+ * @param ringtone path to the ringtone to play @notnil
  * @param loop_pause_ms pause interval in milliseconds to be observed between end of play and resuming at start. A value of -1 disables loop mode
- * @param end_of_ringtone A callback function called when the ringtone ends
- * @param user_data A user data passed to the callback function called when the ringtone ends
+ * @param end_of_ringtone A #LinphoneRingtonePlayerFunc callback function called when the ringtone ends
+ * @param user_data A user data passed to the callback function called when the ringtone ends @maybenil
  * @return 0 if the player successfully started, positive error code otherwise
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_ringtoneplayer_start_with_cb(MSFactory *factory, LinphoneRingtonePlayer* rp, MSSndCard* card,
+LINPHONE_PUBLIC LinphoneStatus linphone_ringtoneplayer_start_with_cb(MSFactory *factory, LinphoneRingtonePlayer* ringtone_player, MSSndCard* card,
 														  const char* ringtone, int loop_pause_ms, LinphoneRingtonePlayerFunc end_of_ringtone, void * user_data);
 LINPHONE_PUBLIC bool_t linphone_ringtoneplayer_is_started(LinphoneRingtonePlayer* rp);
 LINPHONE_PUBLIC RingStream* linphone_ringtoneplayer_get_stream(LinphoneRingtonePlayer* rp);

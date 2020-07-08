@@ -438,7 +438,7 @@ static void only_enable_payload(LinphoneCore *lc, const char *mime, int rate, in
  * This is important so that the audio comparison is succesful*/
 static void set_jitter_buffer_params(LinphoneCore *lc){
 	int jitter_buffer_ms = 300;
-	lp_config_set_int(linphone_core_get_config(lc), "rtp", "jitter_buffer_min_size", jitter_buffer_ms);
+	linphone_config_set_int(linphone_core_get_config(lc), "rtp", "jitter_buffer_min_size", jitter_buffer_ms);
 	linphone_core_set_audio_jittcomp(lc, jitter_buffer_ms);
 }
 
@@ -459,8 +459,8 @@ static void audio_bypass(void) {
 	double similar=1;
 	const double threshold = 0.85;
 
-	lp_config_set_string(linphone_core_get_config(marie_lc), "sound", "features", "None");
-	lp_config_set_string(linphone_core_get_config(pauline_lc), "sound", "features", "None");
+	linphone_config_set_string(linphone_core_get_config(marie_lc), "sound", "features", "None");
+	linphone_config_set_string(linphone_core_get_config(pauline_lc), "sound", "features", "None");
 
 	/*make sure the record file doesn't already exists, otherwise this test will append new samples to it*/
 	unlink(recordpath);

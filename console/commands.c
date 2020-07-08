@@ -2133,12 +2133,12 @@ static int lpc_cmd_param(LinphoneCore *lc, char *args)
 	switch (sscanf(args,"%19s %19s %49s",section,param,value)) {
 		// case 1 might show all current settings under a section
 		case 2:
-			string = lp_config_get_string(linphone_core_get_config(lc), section, param, "(undef)");
+			string = linphone_config_get_string(linphone_core_get_config(lc), section, param, "(undef)");
 			linphonec_out("current value: %s\n", string);
 			break;
 		case 3:
-			if (lp_config_get_string(linphone_core_get_config(lc), section, param, NULL) != NULL) {
-				lp_config_set_string(linphone_core_get_config(lc), section, param, value);
+			if (linphone_config_get_string(linphone_core_get_config(lc), section, param, NULL) != NULL) {
+				linphone_config_set_string(linphone_core_get_config(lc), section, param, value);
 			// no indication of existence
 				linphonec_out("updated value: %s\n", value);
 			} else {
@@ -2334,16 +2334,16 @@ static int lpc_cmd_echocancellation(LinphoneCore *lc, char *args){
             n = sscanf(arg2, "%d %d %d", &delay, &tail_len, &frame_size);
 
             if (n == 1) {
-                lp_config_set_int(config,"sound","ec_delay",delay);
+                linphone_config_set_int(config,"sound","ec_delay",delay);
             }
             else if (n == 2) {
-                lp_config_set_int(config,"sound","ec_delay",delay);
-                lp_config_set_int(config,"sound","ec_tail_len",tail_len);
+                linphone_config_set_int(config,"sound","ec_delay",delay);
+                linphone_config_set_int(config,"sound","ec_tail_len",tail_len);
             }
             else if (n == 3) {
-                lp_config_set_int(config,"sound","ec_delay",delay);
-                lp_config_set_int(config,"sound","ec_tail_len",tail_len);
-                lp_config_set_int(config,"sound","ec_framesize",frame_size);
+                linphone_config_set_int(config,"sound","ec_delay",delay);
+                linphone_config_set_int(config,"sound","ec_tail_len",tail_len);
+                linphone_config_set_int(config,"sound","ec_framesize",frame_size);
             }
         }
     }
@@ -2353,9 +2353,9 @@ static int lpc_cmd_echocancellation(LinphoneCore *lc, char *args){
     else if (strcmp(arg1,"show")==0){
         linphonec_out("echo cancellation is %s; delay %d, tail length %d, frame size %d\n",
             linphone_core_echo_cancellation_enabled(lc) ? "on" : "off",
-            lp_config_get_int(config,"sound","ec_delay",0),
-            lp_config_get_int(config,"sound","ec_tail_len",0),
-            lp_config_get_int(config,"sound","ec_framesize",0));
+            linphone_config_get_int(config,"sound","ec_delay",0),
+            linphone_config_get_int(config,"sound","ec_tail_len",0),
+            linphone_config_get_int(config,"sound","ec_framesize",0));
     }
     else {
         return 0;

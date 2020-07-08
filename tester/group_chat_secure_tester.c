@@ -910,8 +910,8 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 	LinphoneChatRoom *marieCr = NULL;
 	LinphoneChatRoom *paulineCr = NULL;
 
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
-	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
 
 	set_lime_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
@@ -979,7 +979,7 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 	const char *marieMessage = "I have a sensitive piece of information for you";
 	LinphoneChatMessage *msg = _send_message(marieCr, marieMessage);
 
-	if (lp_config_get_int(linphone_core_get_config(marie->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 1) {
+	if (linphone_config_get_int(linphone_core_get_config(marie->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 1) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
 	linphone_chat_message_unref(msg);
 		LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
@@ -1170,8 +1170,8 @@ static void group_chat_lime_x3dh_message_before_reject_sas_curve(const int curve
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
-	lp_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "lime", "unsafe_if_sas_refused", 1);
 
 	set_lime_curve_list(curveId,coresManagerList);
 	stats initialMarieStats = marie->stat;
@@ -1797,7 +1797,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	// Check the chat room security level got downgraded for Pauline
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(laureCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
-	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
+	if (linphone_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");
 		// Check that pauline's chatroom received a security event
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_ManInTheMiddleDetected, initialPaulineStats.number_of_ManInTheMiddleDetected + 1, 3000));
@@ -2182,7 +2182,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 
 	const char *laureMessage = "I'm going to the cinema";
 	// Laure sends a messages to trigger a LIME X3DH security alerts because maxNumberOfDevicePerParticipant has been exceeded
-	if (lp_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
+	if (linphone_config_get_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
 		LinphoneChatMessage *msg = _send_message(laureCr, laureMessage);
 		int dummy=0;
 		wait_for_list(coresList, &dummy, 1, 500); // sleep for 500 ms
@@ -2191,10 +2191,10 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 		BC_ASSERT_FALSE((pauline2->stat.number_of_LinphoneMessageReceived == initialPauline2Stats.number_of_LinphoneMessageReceived + 1));
 		linphone_chat_message_unref(msg);
 
-		lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 1);
+		linphone_config_set_int(linphone_core_get_config(laure->lc), "lime", "allow_message_in_unsafe_chatroom", 1);
 	}
 	// to allow message to be sent
-	lp_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "lime", "max_nb_device_per_participant", 2);
 	msg = _send_message(laureCr, laureMessage);
 
 	// Check that the message was correctly received and decrypted by Marie
@@ -2303,7 +2303,7 @@ static void group_chat_lime_x3dh_call_security_alert_curve(const int curveId) {
 
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelSafe, int, "%d");
-	if (lp_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
+	if (linphone_config_get_int(linphone_core_get_config(pauline->lc), "lime", "unsafe_if_sas_refused", 0) == 1) {
 		// Check chatroom security event
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_ManInTheMiddleDetected, initialPaulineStats.number_of_ManInTheMiddleDetected + 1, 3000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(paulineCr), LinphoneChatRoomSecurityLevelUnsafe, int, "%d");

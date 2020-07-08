@@ -40,51 +40,51 @@ extern "C" {
 
 /**
  * @brief Gets the list of listener in the core.
- * @param lc The #LinphoneCore.
- * @return The list of #LinphoneCoreCbs.
+ * @param core The #LinphoneCore. @notnil
+ * @return The list of #LinphoneCoreCbs. @maybenil
  * @donotwrap
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_callbacks_list(const LinphoneCore *lc);
+LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_callbacks_list(const LinphoneCore *core);
 
 /**
  * @brief Gets the list of listener in the call.
- * @param call #LinphoneCall object.
- * @return The list of #LinphoneCallCbs.
+ * @param call #LinphoneCall object. @notnil
+ * @return The list of #LinphoneCallCbs. @maybenil
  * @donotwrap
  */
 LINPHONE_PUBLIC const bctbx_list_t *linphone_call_get_callbacks_list(const LinphoneCall *call);
 
 /**
  * @brief Gets the list of listener in the chat room.
- * @param cr #LinphoneChatRoom object.
- * @return The list of #LinphoneChatRoomCbs.
+ * @param chat_room #LinphoneChatRoom object. @notnil
+ * @return The list of #LinphoneChatRoomCbs. @maybenil
  * @donotwrap
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const LinphoneChatRoom *cr);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_room_get_callbacks_list(const LinphoneChatRoom *chat_room);
 
 /**
  * Sets the current LinphoneChatRoomCbs.
- * @param cr LinphoneChatRoom object
+ * @param chat_room LinphoneChatRoom object
  * @param cbs LinphoneChatRoomCbs object
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_chat_room_set_current_callbacks(LinphoneChatRoom *cr, LinphoneChatRoomCbs *cbs);
+LINPHONE_PUBLIC void linphone_chat_room_set_current_callbacks(LinphoneChatRoom *chat_room, LinphoneChatRoomCbs *cbs);
 
 /**
  * @brief Gets the list of listener in the chat mesasge.
- * @param msg #LinphoneChatMessage object.
+ * @param message #LinphoneChatMessage object.
  * @return The list of #LinphoneChatMessageCbs.
  * @donotwrap
  */
-LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(const LinphoneChatMessage *msg);
+LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(const LinphoneChatMessage *message);
 
 /**
  * Sets the current LinphoneChatMessageCbs.
- * @param msg LinphoneChatMessage object
+ * @param message LinphoneChatMessage object
  * @param cbs LinphoneChatMessageCbs object
  * @donotwrap
  */
-LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *msg, LinphoneChatMessageCbs *cbs);
+LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
 
 /**
  * Send a message to peer member of this chat room.
@@ -95,8 +95,10 @@ LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMes
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param chat_room A chat room.
- * @param message The message to send.
+ * @param chat_room A chat room. @notnil
+ * @param message The message to send. @notnil
+ * @deprecated 08/07/2020 Use linphone_chat_message_send() instead.
+ * @donotwrap It doesn't says what the doc says it does
  */
 LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
@@ -106,7 +108,9 @@ LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *ch
  * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
  * that function.
  *
- * @param message #LinphoneChatMessage object
+ * @param message #LinphoneChatMessage object @notnil
+ * @deprecated 08/07/2020 Use linphone_chat_message_send instead.
+ * @donotwrap It doesn't says what the doc says it does
  */
 LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *message);
 

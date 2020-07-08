@@ -319,9 +319,9 @@ int linphone_core_start_echo_calibration(LinphoneCore *lc, LinphoneEcCalibration
 		ms_error("Echo calibration is still on going !");
 		return -1;
 	}
-	rate = (unsigned int)lp_config_get_int(lc->config,"sound","echo_cancellation_rate",8000);
+	rate = (unsigned int)linphone_config_get_int(lc->config,"sound","echo_cancellation_rate",8000);
 	lc->ecc=ec_calibrator_new(lc->factory, lc->sound_conf.play_sndcard,lc->sound_conf.capt_sndcard,rate,cb,audio_init_cb,audio_uninit_cb,cb_data);
-	lc->ecc->play_cool_tones = !!lp_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
+	lc->ecc->play_cool_tones = !!linphone_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
 	ec_calibrator_start(lc->ecc);
 	return 0;
 }
@@ -350,12 +350,12 @@ LinphoneStatus linphone_core_start_echo_canceller_calibration(LinphoneCore *lc) 
 		ms_error("Echo calibration is still on going !");
 		return -1;
 	}
-	rate = (unsigned int)lp_config_get_int(lc->config,"sound","echo_cancellation_rate",8000);
+	rate = (unsigned int)linphone_config_get_int(lc->config,"sound","echo_cancellation_rate",8000);
 	lc->ecc=ec_calibrator_new(lc->factory, lc->sound_conf.play_sndcard, lc->sound_conf.capt_sndcard, rate,
 		_ec_calibration_result_cb,
 		_ec_calibration_audio_init_cb,
 		_ec_calibration_audio_uninit_cb, lc);
-	lc->ecc->play_cool_tones = !!lp_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
+	lc->ecc->play_cool_tones = !!linphone_config_get_int(lc->config, "sound", "ec_calibrator_cool_tones", 0);
 	getPlatformHelpers(lc)->startAudioForEchoTestOrCalibration();
 	ec_calibrator_start(lc->ecc);
 	return 0;

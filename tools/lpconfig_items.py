@@ -32,11 +32,11 @@ def get_files_in_coreapi_directory():
 def parse_file(filename):
 	with open('../coreapi/' + filename, 'r') as infile:
 		for line in infile:
-			if 'lp_config_get_' in line:
+			if 'linphone_config_get_' in line:
 				parse_lpconfig_line(line)
 
 def parse_lpconfig_line(line):
-	token = line[line.find('lp_config_get_') + len('lp_config_get_'):]
+	token = line[line.find('linphone_config_get_') + len('linphone_config_get_'):]
 	split = token.split('(', 1)
 	item_type = split[0]
 	if '_' in item_type:

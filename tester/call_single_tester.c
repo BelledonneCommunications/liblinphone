@@ -4453,7 +4453,7 @@ static void call_log_from_taken_from_p_asserted_id(void) {
 	/*fixme, should be able to add several time the same header linphone_call_params_add_custom_header(params,"P-Asserted-Identity","\"Paupauche\" <tel:+12345>");*/
 
 	marie_lp = linphone_core_get_config(marie->lc);
-	lp_config_set_int(marie_lp,"sip","call_logs_use_asserted_id_instead_of_from",1);
+	linphone_config_set_int(marie_lp,"sip","call_logs_use_asserted_id_instead_of_from",1);
 
 
 	BC_ASSERT_TRUE(call_ok=call_with_caller_params(pauline,marie,params));
@@ -4598,7 +4598,7 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
 	}
 	/*
 		Marie calls Pauline, and after the call has rung, transitions to an early_media session
@@ -4820,8 +4820,8 @@ static void simple_stereo_call(const char *codec_name, int clock_rate, int bitra
 	linphone_core_set_record_file(pauline->lc, recordpath);
 
 	/*stereo is supported only without volume control, echo canceller...*/
-	lp_config_set_string(linphone_core_get_config(marie->lc),"sound","features","REMOTE_PLAYING");
-	lp_config_set_string(linphone_core_get_config(pauline->lc),"sound","features","REMOTE_PLAYING");
+	linphone_config_set_string(linphone_core_get_config(marie->lc),"sound","features","REMOTE_PLAYING");
+	linphone_config_set_string(linphone_core_get_config(pauline->lc),"sound","features","REMOTE_PLAYING");
 
 	if (!BC_ASSERT_TRUE(call(pauline,marie))) goto end;
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 6000);
@@ -4993,9 +4993,9 @@ static void call_with_fqdn_in_sdp(void) {
 	bool_t call_ok;
 
 	lp = linphone_core_get_config(marie->lc);
-	lp_config_set_string(lp,"rtp","bind_address","localhost");
+	linphone_config_set_string(lp,"rtp","bind_address","localhost");
 	lp = linphone_core_get_config(pauline->lc);
-	lp_config_set_string(lp,"rtp","bind_address","localhost");
+	linphone_config_set_string(lp,"rtp","bind_address","localhost");
 
 	BC_ASSERT_TRUE(call_ok=call(marie,pauline));
 	if (!call_ok) goto end;
@@ -5040,12 +5040,12 @@ static void call_with_rtp_io_mode(void) {
 
 		/* The callee uses the RTP IO mode with the PCMU codec to send back audio to the caller. */
 		disable_all_audio_codecs_except_one(pauline->lc, "pcmu", -1);
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_io", 1);
-		lp_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_local_addr", linphone_core_ipv6_enabled(pauline->lc) ? "::1" : "127.0.0.1");
-		lp_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_remote_addr", linphone_core_ipv6_enabled(pauline->lc) ? "::1" : "127.0.0.1");
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_local_port", 17076);
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_remote_port", 17076);
-		lp_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_map", "pcmu/8000/1");
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_io", 1);
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_local_addr", linphone_core_ipv6_enabled(pauline->lc) ? "::1" : "127.0.0.1");
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_remote_addr", linphone_core_ipv6_enabled(pauline->lc) ? "::1" : "127.0.0.1");
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_local_port", 17076);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sound", "rtp_remote_port", 17076);
+		linphone_config_set_string(linphone_core_get_config(pauline->lc), "sound", "rtp_map", "pcmu/8000/1");
 
 		BC_ASSERT_TRUE((call_ok = call(marie, pauline)));
 		if (!call_ok) goto end;
@@ -5108,7 +5108,7 @@ static void call_with_generic_nack_rtcp_feedback(void) {
 	linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 	linphone_core_set_avpf_mode(pauline->lc, LinphoneAVPFEnabled);
 	lp = linphone_core_get_config(pauline->lc);
-	lp_config_set_int(lp, "rtp", "rtcp_fb_generic_nack_enabled", 1);
+	linphone_config_set_int(lp, "rtp", "rtcp_fb_generic_nack_enabled", 1);
 
 
 	BC_ASSERT_TRUE(call_ok = call(pauline, marie));
@@ -5679,10 +5679,10 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
 	if (caller_rtcp_mux){
-		lp_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
 	}
 	if (callee_rtcp_mux){
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
 	}
 	if (with_ice){
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
@@ -5691,8 +5691,8 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 		linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	}
 	if (!with_ice_reinvite) {
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);
-		lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed", 0);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed", 0);
 	}
 
 	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
@@ -5750,7 +5750,7 @@ static void v6_to_v4_call_without_relay(void){
 		linphone_core_enable_ipv6(pauline->lc, FALSE);
 		/*RTP symmetric must be enabled for this test to pass, because the IPv4-only client cannot send by itself to
 		 * the IPv6 address in the SDP*/
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
 		linphone_core_manager_start(pauline, TRUE);
 
 		if (BC_ASSERT_TRUE(call(marie,pauline))){

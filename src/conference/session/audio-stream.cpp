@@ -70,7 +70,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 		zrtpParams.peerUri = peerUri;
 		zrtpParams.selfUri = selfUri;
 		/* Get key lifespan from config file, default is 0:forever valid */
-		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(lp_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
+		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
 		setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
 		audio_stream_enable_zrtp(mStream, &zrtpParams);
 		if (peerUri)
@@ -154,7 +154,7 @@ void MS2AudioStream::configureAudioStream(){
 	}
 	
 	if (linphone_core_echo_limiter_enabled(getCCore())) {
-		string type = lp_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
+		string type = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
 		if (type == "mic")
 			audio_stream_enable_echo_limiter(mStream, ELControlMic);
 		else if (type == "full")
@@ -163,27 +163,27 @@ void MS2AudioStream::configureAudioStream(){
 
 	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
 	// Any other value than mic will default to output graph for compatibility.
-	string location = lp_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", "hp");
+	string location = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", "hp");
 	mStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
 
 	audio_stream_enable_gain_control(mStream, true);
 	if (linphone_core_echo_cancellation_enabled(getCCore())) {
-		int len = lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_tail_len", 0);
-		int delay = lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_delay", 0);
-		int framesize = lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_framesize", 0);
+		int len = linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_tail_len", 0);
+		int delay = linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_delay", 0);
+		int framesize = linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "ec_framesize", 0);
 		audio_stream_set_echo_canceller_params(mStream, len, delay, framesize);
 		if (mStream->ec) {
 			char *statestr=static_cast<char *>(ms_malloc0(ecStateMaxLen));
-			if (lp_config_relative_file_exists(linphone_core_get_config(getCCore()), ecStateStore)
-				&& (lp_config_read_relative_file(linphone_core_get_config(getCCore()), ecStateStore, statestr, ecStateMaxLen) == 0)) {
+			if (linphone_config_relative_file_exists(linphone_core_get_config(getCCore()), ecStateStore)
+				&& (linphone_config_read_relative_file(linphone_core_get_config(getCCore()), ecStateStore, statestr, ecStateMaxLen) == 0)) {
 				ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_SET_STATE_STRING, statestr);
 			}
 			ms_free(statestr);
 		}
 	}
 	audio_stream_enable_automatic_gain_control(mStream, linphone_core_agc_enabled(getCCore()));
-	bool_t enabled = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "noisegate", 0);
+	bool_t enabled = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "noisegate", 0);
 	audio_stream_enable_noise_gate(mStream, enabled);
 	audio_stream_set_features(mStream, linphone_core_get_audio_features(getCCore()));
 }
@@ -304,14 +304,14 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	if (listener && listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())) {
 		captcard = nullptr;
 		playfile = ""; /* It is setup later */
-		if (lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "send_ringback_without_playback", 0) == 1) {
+		if (linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "send_ringback_without_playback", 0) == 1) {
 			playcard = nullptr;
 			recfile = "";
 		}
 	}
 	// If playfile are supplied don't use soundcards
-	bool useRtpIo = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io", false);
-	bool useRtpIoEnableLocalOutput = !!lp_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io_enable_local_output", false);
+	bool useRtpIo = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io", false);
+	bool useRtpIoEnableLocalOutput = !!linphone_config_get_int(linphone_core_get_config(getCCore()), "sound", "rtp_io_enable_local_output", false);
 	if (getCCore()->use_files || (useRtpIo && !useRtpIoEnableLocalOutput)) {
 		captcard = playcard = nullptr;
 	}
@@ -458,7 +458,7 @@ void MS2AudioStream::stop(){
 		ms_filter_call_method(mStream->ec, MS_ECHO_CANCELLER_GET_STATE_STRING, &stateStr);
 		if (stateStr) {
 			lInfo() << "Writing echo canceler state, " << (int)strlen(stateStr) << " bytes";
-			lp_config_write_relative_file(linphone_core_get_config(getCCore()), ecStateStore, stateStr);
+			linphone_config_write_relative_file(linphone_core_get_config(getCCore()), ecStateStore, stateStr);
 		}
 	}
 	VideoStream *vs = getPeerVideoStream();
@@ -508,17 +508,17 @@ void MS2AudioStream::setRoute(LinphoneAudioRoute route){
 
 void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 	LinphoneConfig *config = linphone_core_get_config(lc);
-	const char *eqActive = lp_config_get_string(config, "sound", "eq_active", nullptr);
+	const char *eqActive = linphone_config_get_string(config, "sound", "eq_active", nullptr);
 	if (eqActive)
 		lWarning() << "'eq_active' linphonerc parameter has no effect anymore. Please use 'mic_eq_active' or 'spk_eq_active' instead";
-	const char *eqGains = lp_config_get_string(config, "sound", "eq_gains", nullptr);
+	const char *eqGains = linphone_config_get_string(config, "sound", "eq_gains", nullptr);
 	if(eqGains)
 		lWarning() << "'eq_gains' linphonerc parameter has no effect anymore. Please use 'mic_eq_gains' or 'spk_eq_gains' instead";
 	if (as->mic_equalizer) {
 		MSFilter *f = as->mic_equalizer;
-		bool enabled = !!lp_config_get_int(config, "sound", "mic_eq_active", 0);
+		bool enabled = !!linphone_config_get_int(config, "sound", "mic_eq_active", 0);
 		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
-		const char *gains = lp_config_get_string(config, "sound", "mic_eq_gains", nullptr);
+		const char *gains = linphone_config_get_string(config, "sound", "mic_eq_gains", nullptr);
 		if (enabled && gains) {
 			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
 			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
@@ -532,9 +532,9 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 	}
 	if (as->spk_equalizer) {
 		MSFilter *f = as->spk_equalizer;
-		bool enabled = !!lp_config_get_int(config, "sound", "spk_eq_active", 0);
+		bool enabled = !!linphone_config_get_int(config, "sound", "spk_eq_active", 0);
 		ms_filter_call_method(f, MS_EQUALIZER_SET_ACTIVE, &enabled);
-		const char *gains = lp_config_get_string(config, "sound", "spk_eq_gains", nullptr);
+		const char *gains = linphone_config_get_string(config, "sound", "spk_eq_gains", nullptr);
 		if (enabled && gains) {
 			bctbx_list_t *gainsList = ms_parse_equalizer_string(gains);
 			for (bctbx_list_t *it = gainsList; it; it = bctbx_list_next(it)) {
@@ -562,16 +562,16 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 			lWarning() << "Could not apply playback gain: gain control wasn't activated";
 	}
 	LinphoneConfig *config = linphone_core_get_config(lc);
-	float ngThres = lp_config_get_float(config, "sound", "ng_thres", 0.05f);
-	float ngFloorGain = lp_config_get_float(config, "sound", "ng_floorgain", 0);
+	float ngThres = linphone_config_get_float(config, "sound", "ng_thres", 0.05f);
+	float ngFloorGain = linphone_config_get_float(config, "sound", "ng_floorgain", 0);
 	if (as->volsend) {
-		int dcRemoval = lp_config_get_int(config, "sound", "dc_removal", 0);
+		int dcRemoval = linphone_config_get_int(config, "sound", "dc_removal", 0);
 		ms_filter_call_method(as->volsend, MS_VOLUME_REMOVE_DC, &dcRemoval);
-		float speed = lp_config_get_float(config, "sound", "el_speed", -1);
-		float thres = lp_config_get_float(config, "sound", "el_thres", -1);
-		float force = lp_config_get_float(config, "sound", "el_force", -1);
-		int sustain = lp_config_get_int(config, "sound", "el_sustain", -1);
-		float transmitThres = lp_config_get_float(config, "sound", "el_transmit_thres", -1);
+		float speed = linphone_config_get_float(config, "sound", "el_speed", -1);
+		float thres = linphone_config_get_float(config, "sound", "el_thres", -1);
+		float force = linphone_config_get_float(config, "sound", "el_force", -1);
+		int sustain = linphone_config_get_int(config, "sound", "el_sustain", -1);
+		float transmitThres = linphone_config_get_float(config, "sound", "el_transmit_thres", -1);
 		if (static_cast<int>(speed) == -1)
 			speed = 0.03f;
 		if (static_cast<int>(force) == -1)
@@ -591,7 +591,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
 		float floorGain = (float)(1 / pow(10, micGain / 10));
-		int spkAgc = lp_config_get_int(config, "sound", "speaker_agc_enabled", 0);
+		int spkAgc = linphone_config_get_int(config, "sound", "speaker_agc_enabled", 0);
 		MSFilter *f = as->volrecv;
 		ms_filter_call_method(f, MS_VOLUME_ENABLE_AGC, &spkAgc);
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_THRESHOLD, &ngThres);

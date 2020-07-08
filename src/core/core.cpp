@@ -80,9 +80,9 @@ void CorePrivate::init () {
 
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		AbstractDb::Backend backend;
-		string uri = L_C_TO_STRING(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
+		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
 		if (!uri.empty())
-			backend = strcmp(lp_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
+			backend = strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
 				? MainDb::Mysql
 				: MainDb::Sqlite3;
 		else {
@@ -106,7 +106,7 @@ void CorePrivate::init () {
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
 
-	isFriendListSubscriptionEnabled = !!lp_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
+	isFriendListSubscriptionEnabled = !!linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -505,13 +505,13 @@ void Core::enableLimeX3dh (bool enable) {
 
 	if (d->imee == nullptr) {
 		LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-		string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+		string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 		if (serverUrl.empty()) {
 			lInfo() << "Lime X3DH server URL not set, can't enable";
 			//Do not enable encryption engine if url is undefined
 			return;
 		}
-		string dbAccess = lp_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
+		string dbAccess = linphone_config_get_string(lpconfig, "lime", "x3dh_db_path", "");
 		if (dbAccess.empty()) {
 			dbAccess = getDataPath() + "x3dh.c25519.sqlite3";
 		}
@@ -533,9 +533,9 @@ void Core::setX3dhServerUrl(const std::string &url) {
 		return;
 	}
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string prevUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
-	lp_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
-	lp_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
+	string prevUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	linphone_config_set_string(lpconfig, "lime", "lime_server_url", url.c_str());
+	linphone_config_clean_entry(lpconfig, "lime", "x3dh_server_url");
 	if (url.empty()) {
 		enableLimeX3dh(false);
 	} else if (url.compare(prevUrl)) {
@@ -547,7 +547,7 @@ void Core::setX3dhServerUrl(const std::string &url) {
 
 std::string Core::getX3dhServerUrl() const {
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCCore());
-	string serverUrl = lp_config_get_string(lpconfig, "lime", "lime_server_url", lp_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
+	string serverUrl = linphone_config_get_string(lpconfig, "lime", "lime_server_url", linphone_config_get_string(lpconfig, "lime", "x3dh_server_url", ""));
 	return serverUrl;
 }
 
@@ -625,7 +625,7 @@ void Core::enableFriendListSubscription (bool enable) {
 	L_D();
 	if (d->isFriendListSubscriptionEnabled != enable) {
 		d->isFriendListSubscriptionEnabled = enable;
-		lp_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
+		linphone_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
 	}
 	d->enableFriendListsSubscription(enable);
 }

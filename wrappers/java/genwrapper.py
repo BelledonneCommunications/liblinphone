@@ -214,8 +214,10 @@ class JavaTranslator(object):
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
-        methodDict['return_maybenil'] = _method.maybenil
-        methodDict['return_notnil'] = _method.notnil
+        isArray = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace) == 'jobjectArray'
+        # Wrapper takes care or never returning a null array even if the doc says it can return a null list
+        methodDict['return_maybenil'] = _method.maybenil and not isArray
+        methodDict['return_notnil'] = _method.notnil or isArray
         methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'

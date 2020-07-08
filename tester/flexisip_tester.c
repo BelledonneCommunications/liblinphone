@@ -566,8 +566,8 @@ static void call_forking_with_push_notification_double_contact(void){
 	int dummy=0;
 
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
 	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
 	linphone_proxy_config_set_contact_uri_parameters(
@@ -1116,7 +1116,7 @@ static void test_subscribe_notify_with_sipp_publisher(void) {
 
 	ms_free(lf_identity);
 
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",5);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -1158,7 +1158,7 @@ static void test_subscribe_notify_with_sipp_publisher_double_publish(void) {
 	char* lf_identity=linphone_address_as_string_uri_only(marie->identity);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 	ms_free(lf_identity);
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",5);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -1552,7 +1552,7 @@ static void test_removing_old_tport(void) {
 
 	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
 	const char *uuid = linphone_config_get_string(linphone_core_get_config(marie1->lc), "misc", "uuid", "0");
-	lp_config_set_string(linphone_core_get_config(marie2->lc), "misc", "uuid", uuid);
+	linphone_config_set_string(linphone_core_get_config(marie2->lc), "misc", "uuid", uuid);
 	linphone_core_manager_start(marie2, TRUE);
 	lcs = bctbx_list_append(lcs, marie2->lc);
 	linphone_core_refresh_registers(marie2->lc);

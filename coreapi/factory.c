@@ -165,9 +165,9 @@ static LinphoneCore *_linphone_factory_create_core (
 	bool_t automatically_start
 ) {
 	bctbx_init_logger(FALSE);
-	LpConfig *config = lp_config_new_with_factory(config_path, factory_config_path);
+	LpConfig *config = linphone_config_new_with_factory(config_path, factory_config_path);
 	LinphoneCore *lc = _linphone_core_new_with_config(cbs, config, user_data, system_context, automatically_start);
-	lp_config_unref(config);
+	linphone_config_unref(config);
 	bctbx_uninit_logger();
 	return lc;
 }
@@ -186,7 +186,7 @@ static LinphoneCore *_linphone_factory_create_shared_core (
 	bctbx_init_logger(FALSE);
 	LpConfig *config = linphone_config_new_for_shared_core(app_group_id, config_filename, factory_config_path);
 	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id, main_core);
-	lp_config_unref(config);
+	linphone_config_unref(config);
 	bctbx_uninit_logger();
 	return lc;
 }
@@ -562,15 +562,15 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }

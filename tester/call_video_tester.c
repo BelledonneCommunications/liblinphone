@@ -102,7 +102,7 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 	if (use_video_policy_for_re_invite_sdp_200) {
 		LpConfig *marie_lp;
 		marie_lp = linphone_core_get_config(marie->lc);
-		lp_config_set_int(marie_lp,"sip","sdp_200_ack_follow_video_policy",1);
+		linphone_config_set_int(marie_lp,"sip","sdp_200_ack_follow_video_policy",1);
 	}
 	/*now pauline wants to resume*/
 	if (resume_in_audio_send_only_video_inactive_first) {
@@ -744,10 +744,10 @@ static void video_call_without_rtcp(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	lp = linphone_core_get_config(marie->lc);
-	lp_config_set_int(lp,"rtp","rtcp_enabled",0);
+	linphone_config_set_int(lp,"rtp","rtcp_enabled",0);
 
 	lp = linphone_core_get_config(pauline->lc);
-	lp_config_set_int(lp,"rtp","rtcp_enabled",0);
+	linphone_config_set_int(lp,"rtp","rtcp_enabled",0);
 
 	video_call_base(marie,pauline,FALSE,LinphoneMediaEncryptionNone,TRUE,TRUE);
 	linphone_core_manager_destroy(marie);
@@ -761,7 +761,7 @@ static void video_call_disable_implicit_AVPF_on_callee(void) {
 	const LinphoneCallParams *params, *params2;
 
 	callee_lp = linphone_core_get_config(callee->lc);
-	lp_config_set_int(callee_lp,"rtp","rtcp_fb_implicit_rtcp_fb",0);
+	linphone_config_set_int(callee_lp,"rtp","rtcp_fb_implicit_rtcp_fb",0);
 
 	video_call_base_3(caller,callee,TRUE,LinphoneMediaEncryptionNone,TRUE,TRUE);
 	if(BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(callee->lc))) {
@@ -785,7 +785,7 @@ static void video_call_disable_implicit_AVPF_on_caller(void) {
 	const LinphoneCallParams *params, *params2;
 
 	caller_lp = linphone_core_get_config(caller->lc);
-	lp_config_set_int(caller_lp, "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
+	linphone_config_set_int(caller_lp, "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
 
 	video_call_base_3(caller, callee, TRUE, LinphoneMediaEncryptionNone, TRUE, TRUE);
 	params = linphone_call_get_current_params(linphone_core_get_current_call(callee->lc));
@@ -1342,7 +1342,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
 
 	/*The send-only client shall set rtp symmetric in absence of media relay for this test.*/
-	lp_config_set_int(linphone_core_get_config(marie->lc),"rtp","symmetric",1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc),"rtp","symmetric",1);
 
 	liblinphone_tester_set_next_video_frame_decoded_cb(linphone_core_invite_address(pauline->lc,marie->identity));
 

@@ -143,7 +143,7 @@ static void core_init_stop_start_test(void) {
 
 	/* until we have good certificates on our test server... */
 	linphone_core_verify_server_certificates(lc, FALSE);
-	const char *uuid = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	const char *uuid = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
 	BC_ASSERT_STRING_NOT_EQUAL(uuid, "");
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
@@ -155,7 +155,7 @@ static void core_init_stop_start_test(void) {
 		linphone_core_start(lc);
 		BC_ASSERT_EQUAL(linphone_core_get_global_state(lc), LinphoneGlobalOn, int, "%i");
 	}
-	const char *uuid2 = lp_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
+	const char *uuid2 = linphone_config_get_string(linphone_core_get_config(lc), "misc", "uuid", NULL);
 	BC_ASSERT_STRING_NOT_EQUAL(uuid2, "");
 	BC_ASSERT_STRING_EQUAL(uuid, uuid2);
 
@@ -205,9 +205,9 @@ static void core_sip_transport_test(void) {
 	BC_ASSERT_NOT_EQUAL(tr.udp_port,5060,int,"%d"); /*default config*/
 	BC_ASSERT_NOT_EQUAL(tr.tcp_port,5060,int,"%d"); /*default config*/
 
-	BC_ASSERT_EQUAL(lp_config_get_int(linphone_core_get_config(lc),"sip","sip_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
-	BC_ASSERT_EQUAL(lp_config_get_int(linphone_core_get_config(lc),"sip","sip_tcp_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
-	BC_ASSERT_EQUAL(lp_config_get_int(linphone_core_get_config(lc),"sip","sip_tls_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
+	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc),"sip","sip_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
+	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc),"sip","sip_tcp_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
+	BC_ASSERT_EQUAL(linphone_config_get_int(linphone_core_get_config(lc),"sip","sip_tls_port",-2),LC_SIP_TRANSPORT_RANDOM, int, "%d");
 
 	linphone_core_unref(lc);
 }
@@ -285,13 +285,13 @@ static void linphone_lpconfig_from_buffer(void){
 	const char* buffer_linebreaks = "[buffer_linebreaks]\n\n\n\r\n\n\r\ntest=ok";
 	LpConfig* conf;
 
-	conf = lp_config_new_from_buffer(buffer);
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"buffer","test",""),"ok");
-	lp_config_destroy(conf);
+	conf = linphone_config_new_from_buffer(buffer);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"buffer","test",""),"ok");
+	linphone_config_destroy(conf);
 
-	conf = lp_config_new_from_buffer(buffer_linebreaks);
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"buffer_linebreaks","test",""),"ok");
-	lp_config_destroy(conf);
+	conf = linphone_config_new_from_buffer(buffer_linebreaks);
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"buffer_linebreaks","test",""),"ok");
+	linphone_config_destroy(conf);
 }
 
 static void linphone_lpconfig_from_buffer_zerolen_value(void){
@@ -299,15 +299,15 @@ static void linphone_lpconfig_from_buffer_zerolen_value(void){
 	const char* zerolen = "[test]\nzero_len=\nnon_zero_len=test";
 	LpConfig* conf;
 
-	conf = lp_config_new_from_buffer(zerolen);
+	conf = linphone_config_new_from_buffer(zerolen);
 
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","zero_len","LOL"),"LOL");
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len",""),"test");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","zero_len","LOL"),"LOL");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len",""),"test");
 
-	lp_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
+	linphone_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
 
-	lp_config_destroy(conf);
+	linphone_config_destroy(conf);
 }
 
 static void linphone_lpconfig_from_file_zerolen_value(void){
@@ -316,20 +316,20 @@ static void linphone_lpconfig_from_file_zerolen_value(void){
 	char* rc_path = ms_strdup_printf("%s/rcfiles/%s", bc_tester_get_resource_dir_prefix(), zero_rc_file);
 	LpConfig* conf;
 
-	/* not using lp_config_new() because it expects a readable file, and iOS (for instance)
+	/* not using linphone_config_new() because it expects a readable file, and iOS (for instance)
 	   stores the app bundle in read-only */
-	conf = lp_config_new_with_factory(NULL, rc_path);
+	conf = linphone_config_new_with_factory(NULL, rc_path);
 
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","zero_len","LOL"),"LOL");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","zero_len","LOL"),"LOL");
 
 	// non_zero_len=test -> should return test
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len",""),"test");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len",""),"test");
 
-	lp_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
+	linphone_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
 
 	ms_free(rc_path);
-	lp_config_destroy(conf);
+	linphone_config_destroy(conf);
 }
 
 void linphone_lpconfig_invalid_friend(void) {
@@ -371,11 +371,11 @@ static void linphone_lpconfig_from_xml_zerolen_value(void){
 
 	conf = linphone_core_get_config(mgr->lc);
 
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","zero_len","LOL"),"LOL");
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len",""),"test");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","zero_len","LOL"),"LOL");
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len",""),"test");
 
-	lp_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
-	BC_ASSERT_STRING_EQUAL(lp_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
+	linphone_config_set_string(conf, "test", "non_zero_len", ""); /* should remove "non_zero_len" */
+	BC_ASSERT_STRING_EQUAL(linphone_config_get_string(conf,"test","non_zero_len","LOL"), "LOL");
 
 	linphone_core_manager_destroy(mgr);
 	ms_free(xml_path);
