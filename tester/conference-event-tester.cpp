@@ -656,11 +656,6 @@ public:
 
 };
 
-void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
-	_linphone_core_add_callbacks(lcm->lc, cbs, TRUE);
-	linphone_core_set_user_data(lcm->lc, lcm);
-}
-
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
@@ -1246,37 +1241,6 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 }
 
-void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
-	int *subscription_received = (int*)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
-	*subscription_received += 1;
-}
-
-void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
-	LinphoneCoreManager *mgr = get_manager(lc);
-	mgr->stat.number_of_NotifyReceived++;
-}
-
-LinphoneCoreManager *create_mgr_and_detect_subscribe(const char * rc_file) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
-
-	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-
-	linphone_core_cbs_set_new_subscription_requested(cbs, new_subscription_requested);
-	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
-	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
-	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
-	configure_core_for_conference_callbacks(mgr, cbs);
-	linphone_core_cbs_unref(cbs);
-
-	linphone_core_set_user_data(mgr->lc, mgr);
-
-	int* subscription_received = (int *)ms_new0(int, 1);
-	*subscription_received = 0;
-	mgr->user_info = subscription_received;
-
-	return mgr;
-}
-
 void custom_mgr_destroy(LinphoneCoreManager *mgr) {
 	if (mgr->user_info) {
 		delete static_cast<int*>(mgr->user_info);
@@ -1287,7 +1251,7 @@ void custom_mgr_destroy(LinphoneCoreManager *mgr) {
 
 LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
 
-	LinphoneCoreManager *mgr = create_mgr_and_detect_subscribe(rc_file);
+	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file);
 	*lcs = bctbx_list_append(*lcs, mgr->lc);
 	add_participant_to_conference_through_call(mgrs, *lcs, confListener, conf, conf_mgr, mgr, pause_call);
 
@@ -1295,7 +1259,7 @@ LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bc
 }
 
 void send_added_notify_through_call() {
-	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	bctbx_list_t *lcs = NULL;
 	lcs = bctbx_list_append(lcs, pauline->lc);
@@ -1346,7 +1310,7 @@ void send_added_notify_through_call() {
 }
 
 void send_removed_notify_through_call() {
-	LinphoneCoreManager *pauline = create_mgr_and_detect_subscribe(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	bctbx_list_t *lcs = NULL;
 	lcs = bctbx_list_append(lcs, pauline->lc);
