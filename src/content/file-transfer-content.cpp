@@ -22,6 +22,7 @@
 
 #include "content-p.h"
 #include "file-transfer-content.h"
+#include "bctoolbox/crypto.h"
 
 // =============================================================================
 
@@ -40,6 +41,11 @@ public:
 	size_t fileSize = 0;
 	std::vector<char> fileKey;
 	std::vector<char> fileAuthTag;
+	~FileTransferContentPrivate() {
+		if (!fileKey.empty()) {
+			bctbx_clean(fileKey.data(), fileKey.size());
+		}
+	};
 };
 
 // -----------------------------------------------------------------------------

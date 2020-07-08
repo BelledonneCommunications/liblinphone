@@ -345,6 +345,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 
 									//cleaning
 									xmlFree(typeAttribute);
+									bctbx_clean(keyb64, b64Size);
 									ms_free(keyb64);
 
 									// Do we have an authentication tag? If yes insert it
