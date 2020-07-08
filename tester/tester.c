@@ -749,12 +749,12 @@ LinphoneStatus remove_participant_from_conference(bctbx_list_t *lcs, LinphoneCor
 	int expected_no_participants = 0;
 	if (participant_size == 2) {
 		expected_no_participants = 0;
+		BC_ASSERT_TRUE(!linphone_core_is_in_conference(conf_mgr->lc));
 	} else {
 		expected_no_participants = (participant_size - 1);
+		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
 	}
 
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
-	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
 
 	// Other participants call should not have their state modified
 	if (participants != NULL) {
