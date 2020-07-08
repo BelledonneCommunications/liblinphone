@@ -510,7 +510,6 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
 	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
-	bctbx_list_t *participants = NULL;
 	bctbx_list_t *lcs = NULL;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -526,9 +525,6 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 
-	participants = bctbx_list_append(participants, pauline->identity);
-	participants = bctbx_list_append(participants, laure->identity);
-	
 	if (with_video){
 		LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 		linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
@@ -549,11 +545,11 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		linphone_core_enable_video_display(laure->lc, TRUE);
 	}
 
-	linphone_conference_invite_participants(conf, participants, NULL);
+	bctbx_list_t *participants = NULL;
+	participants = bctbx_list_append(participants, laure);
+	participants = bctbx_list_append(participants, pauline);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,2,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	add_participant_to_conference_through_invite(lcs, marie, participants, NULL);
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	laure_call = linphone_core_get_current_call(laure->lc);
@@ -777,7 +773,6 @@ static void simple_conference_from_scratch_no_answer(void){
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
-	bctbx_list_t *participants = NULL;
 	bctbx_list_t *lcs = NULL;
 
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -790,16 +785,16 @@ static void simple_conference_from_scratch_no_answer(void){
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
 
-	participants = bctbx_list_append(participants, pauline->identity);
-	participants = bctbx_list_append(participants, laure->identity);
-
-	linphone_conference_invite_participants(conf, participants, NULL);
 	linphone_conference_unref(conf);
-	
+
+	bctbx_list_t *participants = NULL;
+	participants = bctbx_list_append(participants, laure);
+	participants = bctbx_list_append(participants, pauline);
+
+	add_participant_to_conference_through_invite(lcs, marie, participants, NULL);
+
 	lcs = bctbx_list_remove(lcs, laure->lc);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call){
