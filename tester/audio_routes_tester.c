@@ -832,6 +832,7 @@ static void simple_call_with_audio_devices_reload(void) {
 }
 
 static void simple_conference_with_audio_device_change_base(bool_t during_setup, bool_t before_all_join, bool_t after_all_join) {
+#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -889,7 +890,8 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_core_set_use_files(pauline->lc, FALSE);
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
-	LinphoneCoreManager* laure = linphone_core_manager_new(liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -904,15 +906,12 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_conference_params_unref(conf_params);
 
 	bctbx_list_t *participants = NULL;
-	participants = bctbx_list_append(participants, pauline->identity);
-	participants = bctbx_list_append(participants, marie->identity);
+	participants = bctbx_list_append(participants, pauline);
+	participants = bctbx_list_append(participants, marie);
 
 	int noParticipants = (int)bctbx_list_size(participants);
 
-	linphone_conference_invite_participants(conf, participants, NULL);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallOutgoingProgress,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	add_participant_to_conference_through_invite(lcs, laure, participants, NULL);
 
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
@@ -990,6 +989,9 @@ end:
 	linphone_audio_device_unref(current_dev);
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+#else
+	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
+#endif
 }
 
 static void simple_conference_with_audio_device_change_during_setup(void) {
@@ -1009,6 +1011,7 @@ static void simple_conference_with_audio_device_change_pingpong(void) {
 }
 
 static void simple_conference_with_audio_device_change_during_pause_base(bool_t callee, bool_t caller) {
+#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -1110,7 +1113,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
-	LinphoneCoreManager* laure = linphone_core_manager_new(liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -1127,15 +1130,12 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_conference_params_unref(conf_params);
 
 	bctbx_list_t *participants = NULL;
-	participants = bctbx_list_append(participants, laure->identity);
-	participants = bctbx_list_append(participants, marie->identity);
+	participants = bctbx_list_append(participants, laure);
+	participants = bctbx_list_append(participants, marie);
 
 	int noParticipants = (int)bctbx_list_size(participants);
 
-	linphone_conference_invite_participants(conf, participants, NULL);
-
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1,2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	add_participant_to_conference_through_invite(lcs, pauline, participants, NULL);
 
 	linphone_audio_device_unref(marie_current_dev);
 	marie_current_dev = linphone_audio_device_ref(marie_dev1);
@@ -1248,6 +1248,9 @@ end:
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+#else
+	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
+#endif
 }
 
 static void simple_conference_with_audio_device_change_during_pause_callee(void) {
@@ -1261,6 +1264,7 @@ static void simple_conference_with_audio_device_change_during_pause_caller(void)
 static void simple_conference_with_audio_device_change_during_pause_caller_callee(void) {
 	simple_conference_with_audio_device_change_during_pause_base(TRUE, TRUE);
 }
+
 
 test_t audio_routes_tests[] = {
 	TEST_NO_TAG("Simple call with audio devices reload", simple_call_with_audio_devices_reload),
