@@ -104,8 +104,8 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	bool success = LinphonePrivate::Conference::addParticipant(participantAddress);
 
 	if (success == true) {
-//		time_t creationTime = time(nullptr);
-//		notifyParticipantAdded(creationTime, false, participantAddress);
+		time_t creationTime = time(nullptr);
+		notifyParticipantAdded(creationTime, false, participantAddress);
 	}
 	return 0;
 }
@@ -120,8 +120,8 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	device->setSession(call->getActiveSession());
 	participants.push_back(p);
 
-//	time_t creationTime = time(nullptr);
-//	notifyParticipantAdded(creationTime, false, *call->getRemoteAddress());
+	time_t creationTime = time(nullptr);
+	notifyParticipantAdded(creationTime, false, *call->getRemoteAddress());
 //	Conference::addParticipant(call);
 	return 0;
 }
@@ -131,8 +131,8 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	if (!p)
 		return -1;
 	participants.remove(p);
-//	time_t creationTime = time(nullptr);
-//	notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
 	return 0;
 }
 
@@ -141,8 +141,8 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	if (!p)
 		return -1;
 	participants.remove(p);
-//	time_t creationTime = time(nullptr);
-//	notifyParticipantRemoved(creationTime, false, addr);
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, addr);
 	return 0;
 }
 
@@ -383,7 +383,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	// Add participant only if creation is successful
 	if (getState() == ConferenceInterface::State::Created) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
-printf("Adding call %p to conference [%p] - call state '%s'\n", call.get(), this, Utils::toString(call->getState()).c_str());
 		bool localEndpointCanBeAdded = false;
 		switch(state){
 			case LinphoneCallOutgoingInit:
@@ -437,7 +436,6 @@ printf("Adding call %p to conference [%p] - call state '%s'\n", call.get(), this
 			 */
 			addLocalEndpoint();
 		}
-printf("%s - AFTER ADDING PARTICIPANT counts %0d\n",__func__, getParticipantCount());
 		return true;
 	}
 
@@ -460,11 +458,9 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		err = call->pause();
 	}
 	
-printf("%s - BEFORE participant counts %0d\n",__func__,  getParticipantCount());
 	Conference::removeParticipant(call);
 	mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 	_linphone_call_set_conf_ref(call->toC(), nullptr);
-printf("%s - AFTER participant counts %0d\n",__func__, getParticipantCount());
 	/* 
 	 * Handle the case where only the local participant and a unique remote participant are remaining.
 	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
