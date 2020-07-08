@@ -809,8 +809,10 @@ LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * con
 		linphone_core_terminate_all_calls(m->lc);
 
 		// Wait for all calls to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, participants_initial_stats[idx].number_of_LinphoneCallEnd + no_calls, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, participants_initial_stats[idx].number_of_LinphoneCallEnd + no_calls, 5000));
+		//BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, participants_initial_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		//BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, participants_initial_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, no_calls, 10000));
 
 		// Wait for all conferences to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
