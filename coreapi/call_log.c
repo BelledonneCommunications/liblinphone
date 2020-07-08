@@ -91,27 +91,27 @@ void call_logs_write_to_config_file(LinphoneCore *lc){
 	for(i=0,elem=lc->call_logs;elem!=NULL;elem=elem->next,++i){
 		LinphoneCallLog *cl=(LinphoneCallLog*)elem->data;
 		snprintf(logsection,sizeof(logsection),"call_log_%i",i);
-		lp_config_clean_section(cfg,logsection);
-		lp_config_set_int(cfg,logsection,"dir",cl->dir);
-		lp_config_set_int(cfg,logsection,"status",cl->status);
+		linphone_config_clean_section(cfg,logsection);
+		linphone_config_set_int(cfg,logsection,"dir",cl->dir);
+		linphone_config_set_int(cfg,logsection,"status",cl->status);
 		tmp=linphone_address_as_string(cl->from);
-		lp_config_set_string(cfg,logsection,"from",tmp);
+		linphone_config_set_string(cfg,logsection,"from",tmp);
 		ms_free(tmp);
 		tmp=linphone_address_as_string(cl->to);
-		lp_config_set_string(cfg,logsection,"to",tmp);
+		linphone_config_set_string(cfg,logsection,"to",tmp);
 		ms_free(tmp);
 		if (cl->start_date_time)
-			lp_config_set_int64(cfg,logsection,"start_date_time",(int64_t)cl->start_date_time);
-		else lp_config_set_string(cfg,logsection,"start_date",cl->start_date);
-		lp_config_set_int(cfg,logsection,"duration",cl->duration);
-		if (cl->refkey) lp_config_set_string(cfg,logsection,"refkey",cl->refkey);
-		lp_config_set_float(cfg,logsection,"quality",cl->quality);
-		lp_config_set_int(cfg,logsection,"video_enabled", cl->video_enabled);
-		lp_config_set_string(cfg,logsection,"call_id",cl->call_id);
+			linphone_config_set_int64(cfg,logsection,"start_date_time",(int64_t)cl->start_date_time);
+		else linphone_config_set_string(cfg,logsection,"start_date",cl->start_date);
+		linphone_config_set_int(cfg,logsection,"duration",cl->duration);
+		if (cl->refkey) linphone_config_set_string(cfg,logsection,"refkey",cl->refkey);
+		linphone_config_set_float(cfg,logsection,"quality",cl->quality);
+		linphone_config_set_int(cfg,logsection,"video_enabled", cl->video_enabled);
+		linphone_config_set_string(cfg,logsection,"call_id",cl->call_id);
 	}
 	for(;i<lc->max_call_logs;++i){
 		snprintf(logsection,sizeof(logsection),"call_log_%i",i);
-		lp_config_clean_section(cfg,logsection);
+		linphone_config_clean_section(cfg,logsection);
 	}
 }
 
@@ -125,36 +125,36 @@ bctbx_list_t * linphone_core_read_call_logs_from_config_file(LinphoneCore *lc){
 
 	for(i=0;;++i){
 		snprintf(logsection,sizeof(logsection),"call_log_%i",i);
-		if (lp_config_has_section(cfg,logsection)){
+		if (linphone_config_has_section(cfg,logsection)){
 			LinphoneCallLog *cl;
 			LinphoneAddress *from=NULL,*to=NULL;
-			tmp=lp_config_get_string(cfg,logsection,"from",NULL);
+			tmp=linphone_config_get_string(cfg,logsection,"from",NULL);
 			if (tmp) from=linphone_address_new(tmp);
-			tmp=lp_config_get_string(cfg,logsection,"to",NULL);
+			tmp=linphone_config_get_string(cfg,logsection,"to",NULL);
 			if (tmp) to=linphone_address_new(tmp);
 			if (!from || !to)
 				continue;
-			cl=linphone_call_log_new(static_cast<LinphoneCallDir>(lp_config_get_int(cfg,logsection,"dir",0)),from,to);
-			cl->status=static_cast<LinphoneCallStatus>(lp_config_get_int(cfg,logsection,"status",0));
-			sec=(uint64_t)lp_config_get_int64(cfg,logsection,"start_date_time",0);
+			cl=linphone_call_log_new(static_cast<LinphoneCallDir>(linphone_config_get_int(cfg,logsection,"dir",0)),from,to);
+			cl->status=static_cast<LinphoneCallStatus>(linphone_config_get_int(cfg,logsection,"status",0));
+			sec=(uint64_t)linphone_config_get_int64(cfg,logsection,"start_date_time",0);
 			if (sec) {
 				/*new call log format with date expressed in seconds */
 				cl->start_date_time=(time_t)sec;
 				set_call_log_date(cl,cl->start_date_time);
 			}else{
-				tmp=lp_config_get_string(cfg,logsection,"start_date",NULL);
+				tmp=linphone_config_get_string(cfg,logsection,"start_date",NULL);
 				if (tmp) {
 					strncpy(cl->start_date,tmp,sizeof(cl->start_date));
 					cl->start_date[sizeof(cl->start_date) - 1] = '\0';
 					cl->start_date_time=string_to_time(cl->start_date);
 				}
 			}
-			cl->duration=lp_config_get_int(cfg,logsection,"duration",0);
-			tmp=lp_config_get_string(cfg,logsection,"refkey",NULL);
+			cl->duration=linphone_config_get_int(cfg,logsection,"duration",0);
+			tmp=linphone_config_get_string(cfg,logsection,"refkey",NULL);
 			if (tmp) cl->refkey=ms_strdup(tmp);
-			cl->quality=lp_config_get_float(cfg,logsection,"quality",-1);
-			cl->video_enabled=!!lp_config_get_int(cfg,logsection,"video_enabled",0);
-			tmp=lp_config_get_string(cfg,logsection,"call_id",NULL);
+			cl->quality=linphone_config_get_float(cfg,logsection,"quality",-1);
+			cl->video_enabled=!!linphone_config_get_int(cfg,logsection,"video_enabled",0);
+			tmp=linphone_config_get_string(cfg,logsection,"call_id",NULL);
 			if (tmp) cl->call_id=ms_strdup(tmp);
 			call_logs=bctbx_list_append(call_logs,cl);
 		}else break;

@@ -53,9 +53,9 @@ const LinphoneAddress *get_identity_address(LinphoneCoreManager *mgr) {
 static void enable_deflate_content_encoding(LinphoneCoreManager *mgr, bool_t enable) {
 	LinphoneCore *lc = mgr->lc;
 	if (enable == TRUE)
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "deflate");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "deflate");
 	else
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "none");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "handle_content_encoding", "none");
 }
 
 char * generate_random_e164_phone_from_dial_plan(const LinphoneDialPlan *dialPlan) {
@@ -93,7 +93,7 @@ static void simple(void) {
 	_linphone_core_add_callbacks(pauline->lc, callbacks, TRUE);
 	linphone_core_cbs_unref(callbacks);
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 	enable_publish(pauline, TRUE);
@@ -139,7 +139,7 @@ static void fast_activity_change(void) {
 	LinphoneFriend* f = linphone_core_create_friend_with_address(marie->lc, get_identity(pauline));
 	LinphonePresenceActivity *activity = NULL;
 
-	lp_config_set_int(marie->lc->config, "sip", "subscribe_expires", 40);
+	linphone_config_set_int(marie->lc->config, "sip", "subscribe_expires", 40);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 	enable_publish(pauline, TRUE);
@@ -192,7 +192,7 @@ static void subscriber_no_longer_reachable(void){
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline1->lc);
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 80);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 80);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 	linphone_core_set_user_agent(pauline1->lc, "full-presence-support-bypass", NULL);
 
@@ -285,7 +285,7 @@ static void subscribe_with_late_publish(void) {
 	lf_identity=linphone_address_as_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",10);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",10);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -377,7 +377,7 @@ static void test_forked_subscribe_notify_publish(void) {
 	lf_identity=linphone_address_as_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",5);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -688,7 +688,7 @@ static void test_presence_list_subscription_expire_for_unknown(void) {
 	const char *rls_uri = "sip:rls@sip.example.org";
 	LinphoneFriendList *lfl;
 	LinphoneFriend *lf;
-	lp_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 3);
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 3);
 
 	lfl = linphone_core_create_friend_list(laure->lc);
 	linphone_friend_list_set_rls_uri(lfl, rls_uri);
@@ -719,7 +719,7 @@ static void test_presence_list_subscribe_with_error(bool_t io_error) {
 	int dummy = 0;
 	LinphonePresenceModel *presence;
 
-	lp_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
 	pauline_identity = get_identity(pauline);
 
 	presence = linphone_core_create_presence_model_with_activity(pauline->lc, LinphonePresenceActivityVacation, NULL);
@@ -809,7 +809,7 @@ static void presence_list_subscribe_network_changes(void) {
 	int dummy = 0;
 	LinphonePresenceModel *presence;
 
-	lp_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "sip", "rls_presence_expires", 5);
 	pauline_identity = get_identity(pauline);
 
 	presence = linphone_core_create_presence_model_with_activity(pauline->lc, LinphonePresenceActivityVacation, NULL);
@@ -1256,7 +1256,7 @@ static void multiple_publish_aggregation(void) {
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, pauline2->lc);
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(pauline2->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
@@ -1328,7 +1328,7 @@ static void extended_notify_only_both_side_subscribed(void) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 40);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support", NULL);
 	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
 	enable_publish(pauline, TRUE);

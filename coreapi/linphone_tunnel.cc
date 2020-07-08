@@ -228,7 +228,7 @@ static void linphone_tunnel_save_config(const LinphoneTunnel *tunnel) {
 			}
 		}
 	}
-	lp_config_set_string(config(tunnel), "tunnel", "server_addresses", tmp);
+	linphone_config_set_string(config(tunnel), "tunnel", "server_addresses", tmp);
 	if(tmp != NULL) {
 		ms_free(tmp);
 	}
@@ -264,7 +264,7 @@ static void linphone_tunnel_add_server_intern(LinphoneTunnel *tunnel, LinphoneTu
 
 
 static void linphone_tunnel_load_config(LinphoneTunnel *tunnel){
-	const char * confaddress = lp_config_get_string(config(tunnel), "tunnel", "server_addresses", NULL);
+	const char * confaddress = linphone_config_get_string(config(tunnel), "tunnel", "server_addresses", NULL);
 	char *tmp;
 	const char *it;
 	LinphoneTunnelConfig *tunnel_config;
@@ -330,7 +330,7 @@ void linphone_tunnel_clean_servers(LinphoneTunnel *tunnel){
 }
 
 void linphone_tunnel_set_mode(LinphoneTunnel *tunnel, LinphoneTunnelMode mode){
-	lp_config_set_string(config(tunnel),"tunnel","mode", linphone_tunnel_mode_to_string(mode));
+	linphone_config_set_string(config(tunnel),"tunnel","mode", linphone_tunnel_mode_to_string(mode));
 	bcTunnel(tunnel)->setMode(mode);
 }
 
@@ -339,7 +339,7 @@ LinphoneTunnelMode linphone_tunnel_get_mode(const LinphoneTunnel *tunnel){
 }
 
 void linphone_tunnel_enable_dual_mode(LinphoneTunnel *tunnel, bool_t dual_mode_enabled) {
-	lp_config_set_int(config(tunnel), "tunnel", "dual_mode", (dual_mode_enabled ? TRUE : FALSE));
+	linphone_config_set_int(config(tunnel), "tunnel", "dual_mode", (dual_mode_enabled ? TRUE : FALSE));
 	bcTunnel(tunnel)->enableDualMode(dual_mode_enabled);
 }
 
@@ -361,17 +361,17 @@ void linphone_tunnel_set_http_proxy_auth_info(LinphoneTunnel *tunnel, const char
 
 void linphone_tunnel_set_http_proxy(LinphoneTunnel*tunnel, const char *host, int port, const char* username,const char* passwd){
 	bcTunnel(tunnel)->setHttpProxy(host, port, username, passwd);
-	lp_config_set_string(config(tunnel),"tunnel","http_proxy_host",host);
-	lp_config_set_int(config(tunnel),"tunnel","http_proxy_port",port);
-	lp_config_set_string(config(tunnel),"tunnel","http_proxy_username",username);
-	lp_config_set_string(config(tunnel),"tunnel","http_proxy_password",passwd);
+	linphone_config_set_string(config(tunnel),"tunnel","http_proxy_host",host);
+	linphone_config_set_int(config(tunnel),"tunnel","http_proxy_port",port);
+	linphone_config_set_string(config(tunnel),"tunnel","http_proxy_username",username);
+	linphone_config_set_string(config(tunnel),"tunnel","http_proxy_password",passwd);
 }
 
 void linphone_tunnel_get_http_proxy(LinphoneTunnel*tunnel,const char **host, int *port, const char **username, const char **passwd){
-	if (host) *host=lp_config_get_string(config(tunnel),"tunnel","http_proxy_host",NULL);
-	if (port) *port=lp_config_get_int(config(tunnel),"tunnel","http_proxy_port",0);
-	if (username) *username=lp_config_get_string(config(tunnel),"tunnel","http_proxy_username",NULL);
-	if (passwd) *passwd=lp_config_get_string(config(tunnel),"tunnel","http_proxy_password",NULL);
+	if (host) *host=linphone_config_get_string(config(tunnel),"tunnel","http_proxy_host",NULL);
+	if (port) *port=linphone_config_get_int(config(tunnel),"tunnel","http_proxy_port",0);
+	if (username) *username=linphone_config_get_string(config(tunnel),"tunnel","http_proxy_username",NULL);
+	if (passwd) *passwd=linphone_config_get_string(config(tunnel),"tunnel","http_proxy_password",NULL);
 }
 
 void linphone_tunnel_reconnect(LinphoneTunnel *tunnel){
@@ -380,7 +380,7 @@ void linphone_tunnel_reconnect(LinphoneTunnel *tunnel){
 
 void linphone_tunnel_enable_sip(LinphoneTunnel *tunnel, bool_t enable) {
 	bcTunnel(tunnel)->tunnelizeSipPackets(enable == FALSE ? false : true);
-	lp_config_set_int(config(tunnel), "tunnel", "sip", (enable ? TRUE : FALSE));
+	linphone_config_set_int(config(tunnel), "tunnel", "sip", (enable ? TRUE : FALSE));
 }
 
 bool_t linphone_tunnel_sip_enabled(const LinphoneTunnel *tunnel) {
@@ -389,7 +389,7 @@ bool_t linphone_tunnel_sip_enabled(const LinphoneTunnel *tunnel) {
 
 void linphone_tunnel_verify_server_certificate(LinphoneTunnel *tunnel, bool_t enable) {
 	bcTunnel(tunnel)->verifyServerCertificate(enable == FALSE ? false : true);
-	lp_config_set_int(config(tunnel), "tunnel", "verify_cert", (enable ? TRUE : FALSE));
+	linphone_config_set_int(config(tunnel), "tunnel", "verify_cert", (enable ? TRUE : FALSE));
 }
 
 bool_t linphone_tunnel_verify_server_certificate_enabled(const LinphoneTunnel *tunnel) {
@@ -402,12 +402,12 @@ bool_t linphone_tunnel_verify_server_certificate_enabled(const LinphoneTunnel *t
  * Called internally from linphonecore at startup.
  */
 void linphone_tunnel_configure(LinphoneTunnel *tunnel){
-	LinphoneTunnelMode mode = linphone_tunnel_mode_from_string(lp_config_get_string(config(tunnel), "tunnel", "mode", NULL));
-	bool_t tunnelizeSIPPackets = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "sip", TRUE);
-	bool_t tunnelVerifyServerCertificate = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "verify_cert", FALSE);
-	bool_t useDualMode = (bool_t)lp_config_get_int(config(tunnel), "tunnel", "dual_mode", FALSE);
-	const char *username = lp_config_get_string(config(tunnel), "tunnel", "username", NULL);
-	const char *domain = lp_config_get_string(config(tunnel), "tunnel", "domain", NULL);
+	LinphoneTunnelMode mode = linphone_tunnel_mode_from_string(linphone_config_get_string(config(tunnel), "tunnel", "mode", NULL));
+	bool_t tunnelizeSIPPackets = (bool_t)linphone_config_get_int(config(tunnel), "tunnel", "sip", TRUE);
+	bool_t tunnelVerifyServerCertificate = (bool_t)linphone_config_get_int(config(tunnel), "tunnel", "verify_cert", FALSE);
+	bool_t useDualMode = (bool_t)linphone_config_get_int(config(tunnel), "tunnel", "dual_mode", FALSE);
+	const char *username = linphone_config_get_string(config(tunnel), "tunnel", "username", NULL);
+	const char *domain = linphone_config_get_string(config(tunnel), "tunnel", "domain", NULL);
 	const char *http_host, *http_username, *http_passwd;
 	int http_port;
 	linphone_tunnel_get_http_proxy(tunnel,&http_host, &http_port, &http_username, &http_passwd);
@@ -447,20 +447,20 @@ bool_t linphone_tunnel_auto_detect_enabled(LinphoneTunnel *tunnel) {
 
 void linphone_tunnel_set_username(LinphoneTunnel *tunnel, const char *username) {
 	bcTunnel(tunnel)->setUsername(username);
-	lp_config_set_string(config(tunnel), "tunnel", "username", username);
+	linphone_config_set_string(config(tunnel), "tunnel", "username", username);
 }
 
 const char *linphone_tunnel_get_username(LinphoneTunnel *tunnel) {
-	return lp_config_get_string(config(tunnel), "tunnel", "username", NULL);
+	return linphone_config_get_string(config(tunnel), "tunnel", "username", NULL);
 }
 
 void linphone_tunnel_set_domain(LinphoneTunnel *tunnel, const char *domain) {
 	bcTunnel(tunnel)->setDomain(domain);
-	lp_config_set_string(config(tunnel), "tunnel", "domain", domain);
+	linphone_config_set_string(config(tunnel), "tunnel", "domain", domain);
 }
 
 const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel) {
-	return lp_config_get_string(config(tunnel), "tunnel", "domain", NULL);
+	return linphone_config_get_string(config(tunnel), "tunnel", "domain", NULL);
 }
 
 void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled) {

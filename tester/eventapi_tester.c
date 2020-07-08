@@ -90,7 +90,7 @@ static void subscribe_test_with_args(bool_t terminated_by_subscriber, RefreshTes
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	if (refresh_type==ManualRefresh){
-		lp_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_subscribe",0);
+		linphone_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_subscribe",0);
 	}
 
 	content = linphone_core_create_content(marie->lc);
@@ -148,7 +148,7 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
 	if (refresh_type==ManualRefresh){
-		lp_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_subscribe",0);
+		linphone_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_subscribe",0);
 	}
 
 	content = linphone_core_create_content(marie->lc);
@@ -406,7 +406,7 @@ static void publish_test_with_args(bool_t refresh, int expires){
 	linphone_content_set_subtype(content,"somexml");
 	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
 
-	lp_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_publish",refresh);
+	linphone_config_set_int(linphone_core_get_config(marie->lc),"sip","refresh_generic_publish",refresh);
 
 	lev=linphone_core_create_publish(marie->lc,pauline->identity,"dodo",expires);
 	linphone_event_add_custom_header(lev,"CustomHeader","someValue");

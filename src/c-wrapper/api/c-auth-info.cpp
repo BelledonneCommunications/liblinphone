@@ -36,7 +36,7 @@ LinphoneAuthInfo *linphone_auth_info_new_for_algorithm(const char *username, con
 LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig * config, int pos){
     char key[50];
     sprintf(key, "auth_info_%i", pos);
-    if (lp_config_has_section(config, key)) {
+    if (linphone_config_has_section(config, key)) {
         LinphoneAuthInfo *ai = AuthInfo::createCObject(config, key);
         return ai;
     }
@@ -50,7 +50,7 @@ void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *obj, in
     } else {
         char key[50];
         sprintf(key, "auth_info_%i", pos);
-	    lp_config_clean_section(config, key);
+	    linphone_config_clean_section(config, key);
     }
 }
 

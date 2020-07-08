@@ -505,7 +505,7 @@ LinphoneFriendList * linphone_core_create_friend_list(LinphoneCore *lc) {
 	list->lc = lc;
 	if (lc) { // Will be NULL if created from database
 		// We can't use linphone_core_is_friend_list_subscription_enabled because this will be called before the C++ core is initialized
-		list->enable_subscriptions = !!lp_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
+		list->enable_subscriptions = !!linphone_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
 	}
 	return list;
 }
@@ -569,7 +569,7 @@ const LinphoneAddress * _linphone_friend_list_get_rls_address(const LinphoneFrie
 	if (list->rls_addr)
 		return list->rls_addr;
 	else if (list->lc) {
-		const char* rls_uri = lp_config_get_string(list->lc->config, "sip", "rls_uri", NULL);
+		const char* rls_uri = linphone_config_get_string(list->lc->config, "sip", "rls_uri", NULL);
 		if (list->lc->default_rls_addr)
 			linphone_address_unref(list->lc->default_rls_addr);
 
@@ -1000,7 +1000,7 @@ static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFrien
 	} else {
 		LinphoneContent *content;
 		bctbx_list_t * elem = NULL;
-		int expires = lp_config_get_int(list->lc->config, "sip", "rls_presence_expires", 3600);
+		int expires = linphone_config_get_int(list->lc->config, "sip", "rls_presence_expires", 3600);
 		list->expected_notification_version = 0;
 		if (list->content_digest)
 			ms_free(list->content_digest);
@@ -1039,7 +1039,7 @@ static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFrien
 
 static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFriendList *list, const LinphoneAddress *address) {
 	bctbx_list_t *elem = NULL;
-	int expires = lp_config_get_int(list->lc->config, "sip", "rls_presence_expires", 3600);
+	int expires = linphone_config_get_int(list->lc->config, "sip", "rls_presence_expires", 3600);
 	list->expected_notification_version = 0;
 	if (list->content_digest)
 		ms_free(list->content_digest);

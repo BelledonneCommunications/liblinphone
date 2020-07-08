@@ -93,8 +93,8 @@ void MS2VideoMixer::addLocalParticipant(){
 	io.output.type = MSResourceDefault;
 	
 	video_stream_set_device_rotation(st, mSession.getCCore()->device_rotation);
-	video_stream_set_freeze_on_error(st, !!lp_config_get_int(linphone_core_get_config(mSession.getCCore()), "video", "freeze_on_error", 1));
-	video_stream_use_video_preset(st, lp_config_get_string(linphone_core_get_config(mSession.getCCore()), "video", "preset", nullptr));
+	video_stream_set_freeze_on_error(st, !!linphone_config_get_int(linphone_core_get_config(mSession.getCCore()), "video", "freeze_on_error", 1));
+	video_stream_use_video_preset(st, linphone_config_get_string(linphone_core_get_config(mSession.getCCore()), "video", "preset", nullptr));
 	media_stream_set_max_network_bitrate(&st->ms, outputBandwidth);
 	pt = rtp_profile_get_payload(mLocalDummyProfile, sVP8PayloadTypeNumber);
 	pt->normal_bitrate =  outputBandwidth; /* Is it really needed ?*/
