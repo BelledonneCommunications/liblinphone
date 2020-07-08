@@ -269,7 +269,7 @@ LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
-LINPHONE_PUBLIC int linphone_conference_add_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_with_call(LinphoneConference *obj, LinphoneCall *call);
 int linphone_conference_get_size(const LinphoneConference *obj);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
