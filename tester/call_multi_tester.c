@@ -42,6 +42,43 @@ static const char* get_laure_rc(void) {
 		return "laure_rc_udp";
 	}
 }
+
+static void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+	int *subscription_received = (int*)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
+	*subscription_received += 1;
+}
+
+static void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+	LinphoneCoreManager *mgr = get_manager(lc);
+	mgr->stat.number_of_NotifyReceived++;
+}
+
+static void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
+	_linphone_core_add_callbacks(lcm->lc, cbs, TRUE);
+	linphone_core_set_user_data(lcm->lc, lcm);
+}
+
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	// Add subscribe and notify received here as when a participant is added, we must wait for its notify is the call goes to StreamRunning
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
+	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
+	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
+	configure_core_for_conference_callbacks(mgr, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	linphone_core_set_user_data(mgr->lc, mgr);
+
+	int* subscription_received = (int *)ms_new0(int, 1);
+	*subscription_received = 0;
+	mgr->user_info = subscription_received;
+
+	return mgr;
+}
+
 static void call_waiting_indication_with_param(bool_t enable_caller_privacy) {
 	bctbx_list_t *iterator;
 	bctbx_list_t* lcs;
@@ -1343,12 +1380,6 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 end:
 	bctbx_list_free(lcs);
 }
-
-void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
-	LinphoneCoreManager *mgr = get_manager(lc);
-	mgr->stat.number_of_NotifyReceived++;
-}
-
 
 static void eject_from_3_participants_local_conference(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
