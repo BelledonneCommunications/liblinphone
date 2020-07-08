@@ -562,15 +562,15 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
 	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
-	return ms_strdup(path.c_str());
+	return path.c_str();
 }
