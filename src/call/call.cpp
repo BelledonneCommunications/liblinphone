@@ -428,6 +428,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		break;
 		case CallSession::State::StreamsRunning:
 		{
+
+			if (getConference() && !isInConference()) {
+				lInfo() << "Adding call to LinphoneConference " << getConference();
+				MediaConference::Conference::toCpp(getConference())->addParticipant(getSharedFromThis());
+			}
+
 			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
