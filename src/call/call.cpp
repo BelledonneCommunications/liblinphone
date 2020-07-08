@@ -429,9 +429,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::StreamsRunning:
 		{
 
-			if (getConference() && !isInConference()) {
-				lInfo() << "Adding call to LinphoneConference " << getConference();
-				MediaConference::Conference::toCpp(getConference())->addParticipant(getSharedFromThis());
+			// Try to add device
+			if (getConference() && isInConference()) {
+				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
 			}
 
 			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
