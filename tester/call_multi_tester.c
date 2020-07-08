@@ -495,9 +495,9 @@ end:
 }
 
 static void simple_conference(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -507,9 +507,9 @@ static void simple_conference(void) {
 
 static void _simple_conference_from_scratch(bool_t with_video){
 #if 0
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -601,9 +601,9 @@ static void simple_conference_from_scratch_with_video(void){
 }
 
 static void video_conference_by_merging_calls(void){
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	LinphoneConference *conf = NULL;
 	LinphoneCallParams *params;
 	LinphoneConferenceParams *conf_params;
@@ -745,9 +745,9 @@ end:
 
 static void simple_conference_from_scratch_no_answer(void){
 #if 0
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -835,9 +835,9 @@ static void simple_conference_from_scratch_no_answer(void){
 }
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
@@ -870,9 +870,9 @@ static void simple_zrtp_conference_with_ice(void) {
 }
 
 static void conference_hang_up_call_on_hold(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new(get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference(get_laure_rc());
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1382,17 +1382,11 @@ end:
 }
 
 static void eject_from_3_participants_local_conference(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
-
-	// TODO: Create a method to share zith all managers
-	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
-	_linphone_core_add_callbacks(pauline->lc, cbs, TRUE);
-	linphone_core_set_user_data(pauline->lc, pauline);
-	linphone_core_cbs_unref(cbs);
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
@@ -1490,9 +1484,9 @@ end:
 
 
 void simple_remote_conference(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
+	LinphoneCoreManager *laure = create_mgr_for_conference(get_laure_rc());
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -1516,9 +1510,9 @@ void simple_remote_conference(void) {
 }
 
 void simple_remote_conference_shut_down_focus(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
+	LinphoneCoreManager *laure = create_mgr_for_conference(get_laure_rc());
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", FALSE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -1542,9 +1536,9 @@ void simple_remote_conference_shut_down_focus(void) {
 }
 
 void eject_from_3_participants_remote_conference(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
