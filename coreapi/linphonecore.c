@@ -7826,9 +7826,10 @@ LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *lc) {
 
 LinphoneStatus linphone_core_remove_from_conference(LinphoneCore *lc, LinphoneCall *call) {
 	if(lc->conf_ctx) {
-		const LinphoneAddress *uri = linphone_call_get_remote_address(call);
-		LinphoneParticipant * participant = linphone_conference_find_participant(lc->conf_ctx, uri);
-		return linphone_conference_remove_participant(lc->conf_ctx, participant);
+//		const LinphoneAddress *uri = linphone_call_get_remote_address(call);
+//		LinphoneParticipant * participant = linphone_conference_find_participant(lc->conf_ctx, uri);
+//		return linphone_conference_remove_participant(lc->conf_ctx, participant);
+		return linphone_conference_remove_participant_with_call(lc->conf_ctx, call);
 	}
 	else return -1;
 }
