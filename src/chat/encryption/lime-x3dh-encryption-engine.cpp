@@ -572,8 +572,9 @@ void LimeX3dhEncryptionEngine::generateFileTransferKey (
 ) {
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
-    sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
+	sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
 	fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
+	bctbx_clean(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 }
 
 int LimeX3dhEncryptionEngine::downloadingFile (
