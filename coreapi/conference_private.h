@@ -103,6 +103,8 @@ public:
 	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 
+	bool addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
+
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;

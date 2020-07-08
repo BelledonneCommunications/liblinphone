@@ -112,18 +112,38 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
-	//const Address * remoteContact = call->getRemoteAddress();
-	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteContact, call->getActiveSession());
-
-	shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
-	device->setSession(call->getActiveSession());
+	const Address * remoteAddress = call->getRemoteAddress();
+	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteAddress, call->getActiveSession());
 	participants.push_back(p);
 
+	addParticipantDevice(call);
+
 	time_t creationTime = time(nullptr);
-	notifyParticipantAdded(creationTime, false, *call->getRemoteAddress());
+	notifyParticipantAdded(creationTime, false, *remoteAddress);
 //	Conference::addParticipant(call);
 	return 0;
+}
+
+bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+	if (p) {
+		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
+		if (remoteContact) {
+			// If device is not found, then add it
+			if (p->findDevice(*remoteContact) == nullptr) {
+				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
+				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
+				device->setSession(call->getActiveSession());
+
+				time_t creationTime = time(nullptr);
+				notifyParticipantDeviceAdded(creationTime, false, p->getAddress(), *remoteContact, "");
+
+				return true;
+			}
+		}
+	}
+
+	return false;
 }
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -360,7 +380,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 			if (!call){
 				ms_error("LocalConference::inviteAddresses(): could not invite participant");
 			} else {
-				_linphone_call_set_conf_ref(call, toC());
+				addParticipant(Call::toCpp(call)->getSharedFromThis());
 			}
 			linphone_call_params_unref(new_params);
 		} else {
