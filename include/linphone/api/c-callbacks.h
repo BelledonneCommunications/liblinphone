@@ -139,16 +139,6 @@ typedef void (*LinphoneCallCbsAudioDeviceChangedCb)(LinphoneCall *call, Linphone
  * @{
  */
 
- /**
- * Call back used to notify message delivery status
- * @param message #LinphoneChatMessage object @notnil
- * @param state #LinphoneChatMessageState
- * @param user_data application user data
- * @deprecated 03/07/2018 Use #LinphoneChatMessageCbsMsgStateChangedCb instead.
- * @donotwrap
- */
-typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* message, LinphoneChatMessageState state, void* user_data);
-
 /**
  * Call back used to notify message delivery status
  * @param message #LinphoneChatMessage object @notnil
@@ -358,6 +348,20 @@ typedef void (*LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequested
  * @param message The #LinphoneChatMessage that is being received @notnil
  */
 typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+ /**
+ * Call back used to notify message delivery status
+ * @param message #LinphoneChatMessage object @notnil
+ * @param state #LinphoneChatMessageState
+ * @param user_data application user data
+ * @deprecated 03/07/2018 Use #LinphoneChatMessageCbsMsgStateChangedCb instead.
+ * @donotwrap
+ */
+typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* message, LinphoneChatMessageState state, void* user_data);
 
 /**
  * @}

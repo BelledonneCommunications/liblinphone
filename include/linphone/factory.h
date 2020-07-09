@@ -45,66 +45,6 @@ LINPHONE_PUBLIC LinphoneFactory *linphone_factory_get(void);
 LINPHONE_PUBLIC void linphone_factory_clean(void);
 
 /**
- * Instanciate a #LinphoneCore object.
- *
- * The #LinphoneCore object is the primary handle for doing all phone actions.
- * It should be unique within your application.
- * @param factory The #LinphoneFactory singleton.
- * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
- * will be taken on it until the destruciton of the core or the unregistration
- * with linphone_core_remove_cbs().
- * @param config_path a path to a config file. If it does not exists it will be created.
- *        The config file is used to store all settings, call logs, friends, proxies... so that all these settings
- *	       become persistent over the life of the LinphoneCore object.
- *	       It is allowed to set a NULL config file. In that case LinphoneCore will not store any settings.
- * @param factory_config_path a path to a read-only config file that can be used to
- *        to store hard-coded preference such as proxy settings or internal preferences.
- *        The settings in this factory file always override the one in the normal config file.
- *        It is OPTIONAL, use NULL if unneeded.
- * @see linphone_core_new_with_config
- * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path
-);
-
-/**
- * Instanciate a #LinphoneCore object.
- *
- * The #LinphoneCore object is the primary handle for doing all phone actions.
- * It should be unique within your application.
- * @param factory The #LinphoneFactory singleton.
- * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
- * will be taken on it until the destruciton of the core or the unregistration
- * with linphone_core_remove_cbs().
- * @param config_path a path to a config file. If it does not exists it will be created.
- *        The config file is used to store all settings, call logs, friends, proxies... so that all these settings
- *	       become persistent over the life of the LinphoneCore object.
- *	       It is allowed to set a NULL config file. In that case LinphoneCore will not store any settings.
- * @param factory_config_path a path to a read-only config file that can be used to
- *        to store hard-coded preference such as proxy settings or internal preferences.
- *        The settings in this factory file always override the one in the normal config file.
- *        It is OPTIONAL, use NULL if unneeded.
- * @param user_data an application pointer associated with the returned core.
- * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
- * @see linphone_core_new_with_config
- * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2 (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context
-);
-
-/**
  * Instantiate a #LinphoneCore object.
  *
  * The #LinphoneCore object is the primary handle for doing all phone actions. It should be unique within your
@@ -121,6 +61,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2
  * normal config file. It is optional, use NULL if unneeded. @maybenil
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
+ * @return a #LinphoneCore object @notnil
  * @see linphone_core_new_with_config_3
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
@@ -159,6 +100,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  * pass an android Context on android, pass NULL on other platforms. @maybenil
  * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
+ * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_shared_core_with_config
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
@@ -168,50 +110,6 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
 	void *system_context,
 	const char *app_group_id,
 	bool_t main_core
-);
-
-/**
- * Instantiates a #LinphoneCore object with a given LpConfig.
- *
- * @param factory The #LinphoneFactory singleton.
- * The #LinphoneCore object is the primary handle for doing all phone actions.
- * It should be unique within your application.
- * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
- * will be taken on it until the destruciton of the core or the unregistration
- * with linphone_core_remove_cbs().
- * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
- * @see linphone_core_new
- * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config
-);
-
-/**
- * Instantiates a #LinphoneCore object with a given LpConfig.
- *
- * @param factory The #LinphoneFactory singleton.
- * The #LinphoneCore object is the primary handle for doing all phone actions.
- * It should be unique within your application.
- * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
- * will be taken on it until the destruciton of the core or the unregistration
- * with linphone_core_remove_cbs().
- * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
- * @param user_data an application pointer associated with the returned core.
- * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
- * @see linphone_core_new
- * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
- * @donotwrap
- */
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_2 (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	LinphoneConfig *config,
-	void *user_data,
-	void *system_context
 );
 
 /**
@@ -226,6 +124,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
  * @param config A #LinphoneConfig object holding the configuration for the #LinphoneCore to be instantiated. @notnil
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
+ * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_core_3
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
@@ -257,6 +156,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  * pass an android Context on android, pass NULL on other platforms. @maybenil
  * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
+ * @return a #LinphoneCore object @notnil
  * @see linphone_factory_create_shared_core
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
@@ -287,7 +187,7 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_factory_create_address(const LinphoneF
  * @param factory The #LinphoneFactory singleton. @notnil
  * @param address #LinphoneAddress object. @notnil
  * @param name the name given to the device. @maybenil
- * @return A new #LinphoneParticipantDeviceIdentity. @maybenil
+ * @return A new #LinphoneParticipantDeviceIdentity. @notnil
  */
 LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
 	const LinphoneFactory *factory,
@@ -354,7 +254,7 @@ LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cb
 /**
  * Create an empty #LinphoneVcard.
  * @param factory #LinphoneFactory singletion object @notnil
- * @return a new #LinphoneVcard. @maybenil
+ * @return a new #LinphoneVcard. @notnil
  * @ingroup initializing
  */
 LINPHONE_PUBLIC LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory);
@@ -684,6 +584,114 @@ LINPHONE_PUBLIC const char *linphone_factory_get_data_dir(LinphoneFactory *facto
  * @ingroup misc
 **/
 LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Instanciate a #LinphoneCore object.
+ *
+ * The #LinphoneCore object is the primary handle for doing all phone actions.
+ * It should be unique within your application.
+ * @param factory The #LinphoneFactory singleton.
+ * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
+ * will be taken on it until the destruciton of the core or the unregistration
+ * with linphone_core_remove_cbs().
+ * @param config_path a path to a config file. If it does not exists it will be created.
+ *        The config file is used to store all settings, call logs, friends, proxies... so that all these settings
+ *	       become persistent over the life of the LinphoneCore object.
+ *	       It is allowed to set a NULL config file. In that case LinphoneCore will not store any settings.
+ * @param factory_config_path a path to a read-only config file that can be used to
+ *        to store hard-coded preference such as proxy settings or internal preferences.
+ *        The settings in this factory file always override the one in the normal config file.
+ *        It is OPTIONAL, use NULL if unneeded.
+ * @see linphone_core_new_with_config
+ * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
+ * @donotwrap
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
+	const LinphoneFactory *factory,
+	LinphoneCoreCbs *cbs,
+	const char *config_path,
+	const char *factory_config_path
+);
+
+/**
+ * Instanciate a #LinphoneCore object.
+ *
+ * The #LinphoneCore object is the primary handle for doing all phone actions.
+ * It should be unique within your application.
+ * @param factory The #LinphoneFactory singleton.
+ * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
+ * will be taken on it until the destruciton of the core or the unregistration
+ * with linphone_core_remove_cbs().
+ * @param config_path a path to a config file. If it does not exists it will be created.
+ *        The config file is used to store all settings, call logs, friends, proxies... so that all these settings
+ *	       become persistent over the life of the LinphoneCore object.
+ *	       It is allowed to set a NULL config file. In that case LinphoneCore will not store any settings.
+ * @param factory_config_path a path to a read-only config file that can be used to
+ *        to store hard-coded preference such as proxy settings or internal preferences.
+ *        The settings in this factory file always override the one in the normal config file.
+ *        It is OPTIONAL, use NULL if unneeded.
+ * @param user_data an application pointer associated with the returned core.
+ * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
+ * @see linphone_core_new_with_config
+ * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
+ * @donotwrap
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2 (
+	const LinphoneFactory *factory,
+	LinphoneCoreCbs *cbs,
+	const char *config_path,
+	const char *factory_config_path,
+	void *user_data,
+	void *system_context
+);
+
+/**
+ * Instantiates a #LinphoneCore object with a given LpConfig.
+ *
+ * @param factory The #LinphoneFactory singleton.
+ * The #LinphoneCore object is the primary handle for doing all phone actions.
+ * It should be unique within your application.
+ * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
+ * will be taken on it until the destruciton of the core or the unregistration
+ * with linphone_core_remove_cbs().
+ * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
+ * @see linphone_core_new
+ * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
+ * @donotwrap
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config (
+	const LinphoneFactory *factory,
+	LinphoneCoreCbs *cbs,
+	LinphoneConfig *config
+);
+
+/**
+ * Instantiates a #LinphoneCore object with a given LpConfig.
+ *
+ * @param factory The #LinphoneFactory singleton.
+ * The #LinphoneCore object is the primary handle for doing all phone actions.
+ * It should be unique within your application.
+ * @param cbs a #LinphoneCoreCbs object holding your application callbacks. A reference
+ * will be taken on it until the destruciton of the core or the unregistration
+ * with linphone_core_remove_cbs().
+ * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
+ * @param user_data an application pointer associated with the returned core.
+ * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
+ * @see linphone_core_new
+ * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
+ * @donotwrap
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_2 (
+	const LinphoneFactory *factory,
+	LinphoneCoreCbs *cbs,
+	LinphoneConfig *config,
+	void *user_data,
+	void *system_context
+);
 
 /**
  * @}

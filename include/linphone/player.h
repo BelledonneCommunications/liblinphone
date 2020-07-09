@@ -63,14 +63,6 @@ LINPHONE_PUBLIC void *linphone_player_get_user_data(const LinphonePlayer *player
 LINPHONE_PUBLIC void linphone_player_set_user_data(LinphonePlayer *player, void *user_data);
 
 /**
- * Get the #LinphonePlayerCbs object associated with the LinphonePlayer.
- * @param player #LinphonePlayer object @notnil
- * @return The #LinphonePlayerCbs object associated with the LinphonePlayer.
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead @notnil
- */
-LINPHONE_PUBLIC LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player);
-
-/**
  * Adds a #LinphonePlayerCbs object associated to the LinphonePlayer.
  * @param player #LinphonePlayer object @notnil
  * @param cbs The #LinphonePlayerCbs object to be added to the LinphonePlayer. @notnil
@@ -194,6 +186,18 @@ LINPHONE_PUBLIC LinphonePlayerCbsEofReachedCb linphone_player_cbs_get_eof_reache
  * @param cb The end-of-file reached callback to be used.
  */
 LINPHONE_PUBLIC void linphone_player_cbs_set_eof_reached(LinphonePlayerCbs *cbs, LinphonePlayerCbsEofReachedCb cb);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get the #LinphonePlayerCbs object associated with the LinphonePlayer.
+ * @param player #LinphonePlayer object @notnil
+ * @return The #LinphonePlayerCbs object associated with the LinphonePlayer.
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead @notnil
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphonePlayerCbs * linphone_player_get_callbacks(const LinphonePlayer *player);
 
 /**
  * @}

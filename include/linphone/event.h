@@ -239,14 +239,6 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_remote_contact (const 
 LINPHONE_PUBLIC LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event);
 
 /**
- * Get the LinphoneEventCbs object associated with a LinphoneEvent.
- * @param linphone_event #LinphoneEvent object @notnil
- * @return The LinphoneEventCbs object associated with the LinphoneEvent. @notnil
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
-**/
-LINPHONE_PUBLIC LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEvent *linphone_event);
-
-/**
  * Adds a LinphoneEventCbs object to be associated with a LinphoneEvent.
  * @param linphone_event #LinphoneEvent object @notnil
  * @param cbs The LinphoneEventCbs object to add @notnil
@@ -306,6 +298,18 @@ LINPHONE_PUBLIC LinphoneEventCbsNotifyResponseCb linphone_event_cbs_get_notify_r
  * @param cb The notify response callback to be used.
 **/
 LINPHONE_PUBLIC void linphone_event_cbs_set_notify_response(LinphoneEventCbs *cbs, LinphoneEventCbsNotifyResponseCb cb);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get the LinphoneEventCbs object associated with a LinphoneEvent.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return The LinphoneEventCbs object associated with the LinphoneEvent. @notnil
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneEventCbs *linphone_event_get_callbacks(const LinphoneEvent *linphone_event);
 
 /**
  * @}

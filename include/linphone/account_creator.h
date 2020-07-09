@@ -334,21 +334,6 @@ LINPHONE_PUBLIC LinphoneAccountCreatorTransportStatus linphone_account_creator_s
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccountCreator *creator);
 
 /**
- * Set the route.
- * @param creator #LinphoneAccountCreator object @notnil
- * @param route The route to set @maybenil
- * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
-**/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route);
-
-/**
- * Get the route.
- * @param creator #LinphoneAccountCreator object @notnil
- * @return The route of the #LinphoneAccountCreator. @maybenil
-**/
-LINPHONE_DEPRECATED LINPHONE_PUBLIC const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator);
-
-/**
  * Set the set_as_default property.
  * @param creator #LinphoneAccountCreator object @notnil
  * @param set_as_default TRUE for the created proxy config to be set as default in #LinphoneCore, FALSE otherwise
@@ -362,14 +347,6 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_as_def
  * @return TRUE if account will be set as default, FALSE otherwise.
  **/
 LINPHONE_PUBLIC bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator *creator);
-
-/**
- * Get the #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
- * @param creator #LinphoneAccountCreator object @notnil
- * @return The #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator. @maybenil
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator);
 
 /**
  * Add the #LinphoneAccountCreatorCbs object to a LinphoneAccountCreator.
@@ -593,6 +570,33 @@ LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(Lin
  * @return A #LinphoneProxyConfig object if successful, NULL otherwise. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get the #LinphoneAccountCreatorCbs object associated with a LinphoneAccountCreator.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The #LinphoneAccountCreatorCbs object associated with the LinphoneAccountCreator. @maybenil
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+**/
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator);
+
+/**
+ * Set the route.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param route The route to set @maybenil
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route);
+
+/**
+ * Get the route.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return The route of the #LinphoneAccountCreator. @maybenil
+**/
+LINPHONE_DEPRECATED LINPHONE_PUBLIC const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator);
 
 /**
  * Configure an account (create a proxy config and authentication info for it).

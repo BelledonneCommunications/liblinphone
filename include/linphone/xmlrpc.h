@@ -85,14 +85,6 @@ LINPHONE_PUBLIC void linphone_xml_rpc_request_add_int_arg(LinphoneXmlRpcRequest 
 LINPHONE_PUBLIC void linphone_xml_rpc_request_add_string_arg(LinphoneXmlRpcRequest *request, const char *value);
 
 /**
- * Get the #LinphoneXmlRpcRequestCbs object associated with a LinphoneXmlRpcRequest.
- * @param request #LinphoneXmlRpcRequest object @notnil
- * @return The #LinphoneXmlRpcRequestCbs object associated with the LinphoneXmlRpcRequest. @maybenil
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
-**/
-LINPHONE_PUBLIC LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request);
-
-/**
  * Add the current #LinphoneXmlRpcRequestCbs object to a LinphoneXmlRpcRequest.
  * @param request #LinphoneXmlRpcRequest object @notnil
  * @param cbs The #LinphoneXmlRpcRequestCbs object to add to the LinphoneXmlRpcRequest. @notnil
@@ -254,6 +246,18 @@ LINPHONE_PUBLIC void linphone_xml_rpc_request_cbs_set_response(LinphoneXmlRpcReq
  * @return a #LinphoneXmlRpcRequest object @notnil
  */
 LINPHONE_PUBLIC LinphoneXmlRpcRequest * linphone_xml_rpc_session_create_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcArgType return_type, const char *method);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get the #LinphoneXmlRpcRequestCbs object associated with a LinphoneXmlRpcRequest.
+ * @param request #LinphoneXmlRpcRequest object @notnil
+ * @return The #LinphoneXmlRpcRequestCbs object associated with the LinphoneXmlRpcRequest. @maybenil
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_get_callbacks(const LinphoneXmlRpcRequest *request);
 
 /**
  * @}

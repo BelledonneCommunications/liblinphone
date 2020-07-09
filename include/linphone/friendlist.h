@@ -233,14 +233,6 @@ LINPHONE_PUBLIC void linphone_friend_list_set_subscription_bodyless(LinphoneFrie
 LINPHONE_PUBLIC void linphone_friend_list_update_revision(LinphoneFriendList *friend_list, int revision);
 
 /**
- * Get the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
- * @param friend_list #LinphoneFriendList object @notnil
- * @return The #LinphoneFriendListCbs object associated with the LinphoneFriendList.
- * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
-**/
-LINPHONE_PUBLIC LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list);
-
-/**
  * Adds the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
  * @param friend_list #LinphoneFriendList object @notnil
  * @param cbs The current #LinphoneFriendListCbs object to be added to the LinphoneFriendList. @notnil
@@ -413,6 +405,18 @@ LINPHONE_PUBLIC void linphone_friend_list_enable_subscriptions(LinphoneFriendLis
  * @return Whether subscriptions are enabled or not
  */
 LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *friend_list);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get the #LinphoneFriendListCbs object associated with a LinphoneFriendList.
+ * @param friend_list #LinphoneFriendList object @notnil
+ * @return The #LinphoneFriendListCbs object associated with the LinphoneFriendList.
+ * @deprecated 19/02/2019 use add_callbacks / remove_callbacks instead
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriendListCbs * linphone_friend_list_get_callbacks(const LinphoneFriendList *friend_list);
 
 /**
  * @}

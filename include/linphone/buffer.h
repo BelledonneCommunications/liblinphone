@@ -51,7 +51,7 @@ LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new_from_data(const uint8_t *da
 /**
  * Create a new #LinphoneBuffer object from a string.
  * @param data The initial string content of the LinphoneBuffer. @notnil
- * @return A new #LinphoneBuffer object.
+ * @return A new #LinphoneBuffer object. @notnil
  */
 LINPHONE_PUBLIC LinphoneBuffer * linphone_buffer_new_from_string(const char *data);
 

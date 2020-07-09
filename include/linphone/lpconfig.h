@@ -339,15 +339,6 @@ LINPHONE_PUBLIC void linphone_config_clean_entry(LinphoneConfig *config, const c
 
 /**
  * Returns the list of sections' names in the LinphoneConfig.
- * @param config The #LinphoneConfig object
- * @return a null terminated static array of strings
- * @deprecated 12/10/2017 use linphone_config_get_sections_names_list instead
- * @donotwrap
-**/
-LINPHONE_PUBLIC const char** linphone_config_get_sections_names(LinphoneConfig *config);
-
-/**
- * Returns the list of sections' names in the LinphoneConfig.
  * @param config The #LinphoneConfig object @notnil
  * @return \bctbx_list{char *} a null terminated static array of strings @maybenil
 **/
@@ -565,6 +556,19 @@ LINPHONE_PUBLIC LinphoneDictionary * linphone_config_section_to_dict(const Linph
  * @donotwrap LinphoneDictionary can't be wrapped
  */
 LINPHONE_PUBLIC void linphone_config_load_dict_to_section(LinphoneConfig* config, const char* section, const LinphoneDictionary* dict);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Returns the list of sections' names in the LinphoneConfig.
+ * @param config The #LinphoneConfig object
+ * @return a null terminated static array of strings
+ * @deprecated 12/10/2017 use linphone_config_get_sections_names_list instead
+ * @donotwrap
+**/
+LINPHONE_PUBLIC const char** linphone_config_get_sections_names(LinphoneConfig *config);
 
 #ifdef __cplusplus
 }

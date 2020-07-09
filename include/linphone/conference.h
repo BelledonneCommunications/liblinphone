@@ -61,14 +61,6 @@ LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_ref(Linphon
 LINPHONE_PUBLIC void linphone_conference_params_unref(LinphoneConferenceParams *params);
 
 /**
- * Free a #LinphoneConferenceParams
- * @param params #LinphoneConferenceParams to free @notnil
- * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
-
-/**
  * Clone a #LinphoneConferenceParams
  * @param params The #LinphoneConferenceParams to clone @notnil
  * @return An allocated #LinphoneConferenceParams with the same parameters than params @notnil
@@ -181,6 +173,18 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
  * @param conference_id the conference id to set. @notnil
  */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Free a #LinphoneConferenceParams
+ * @param params #LinphoneConferenceParams to free @notnil
+ * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
 
 /**
  * @}

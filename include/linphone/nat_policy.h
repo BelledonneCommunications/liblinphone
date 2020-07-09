@@ -227,7 +227,7 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNa
 /**
  * Returns the #LinphoneCore object managing this nat policy, if any.
  * @param policy #LinphoneNatPolicy object @notnil
- * @return the #LinphoneCore object associated.
+ * @return the #LinphoneCore object associated. @notnil
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy);
 

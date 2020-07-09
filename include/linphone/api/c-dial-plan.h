@@ -96,13 +96,6 @@ LINPHONE_PUBLIC	int linphone_dial_plan_lookup_ccc_from_iso(const char* iso);
 LINPHONE_PUBLIC	int linphone_dial_plan_lookup_ccc_from_e164(const char* e164);
 
 /**
- * Return NULL-terminated array of all known dial plans
- * @deprecated 16/10/2017 use linphone_dial_plan_get_all_list instead, this method will always return NULL
- * @donotwrap
-**/
-LINPHONE_PUBLIC const LinphoneDialPlan* linphone_dial_plan_get_all(void);
-
-/**
  * Returns a list of all known dial plans
  * @return \bctbx_list{LinphoneDialPlan} of all known dial plans @notnil
 **/
@@ -127,6 +120,17 @@ LINPHONE_PUBLIC const LinphoneDialPlan* linphone_dial_plan_by_ccc_as_int(int ccc
  * @return TRUE if generic, FALSE otherwise
 **/
 LINPHONE_PUBLIC bool_t linphone_dial_plan_is_generic(const LinphoneDialPlan *ccc);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Return NULL-terminated array of all known dial plans
+ * @deprecated 16/10/2017 use linphone_dial_plan_get_all_list instead, this method will always return NULL
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const LinphoneDialPlan* linphone_dial_plan_get_all(void);
 
 /**
  * @}

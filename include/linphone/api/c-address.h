@@ -305,6 +305,10 @@ LINPHONE_PUBLIC void linphone_address_set_uri_params (LinphoneAddress *address, 
  */
 LINPHONE_PUBLIC void linphone_address_remove_uri_param (LinphoneAddress *address, const char *uri_param_name);
 
+/************ */
+/* DEPRECATED */
+/* ********** */
+
 /**
  * Destroys a #LinphoneAddress object (actually calls linphone_address_unref()).
  * @deprecated 04/09/17 Use linphone_address_unref() instead

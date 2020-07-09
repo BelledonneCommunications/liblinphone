@@ -92,14 +92,6 @@ LINPHONE_PUBLIC LinphoneLoggingService *linphone_logging_service_ref(LinphoneLog
 LINPHONE_PUBLIC void linphone_logging_service_unref(LinphoneLoggingService *log_service);
 
 /**
- * @brief Gets the logging service listener.
- * @param log_service the #LinphoneLoggingService object
- * @deprecated 19/02/2019 Use add_callbacks / remove_callbacks instead
- * @donotwrap
- */
-LINPHONE_PUBLIC LinphoneLoggingServiceCbs *linphone_logging_service_get_callbacks(const LinphoneLoggingService *log_service);
-
-/**
  * Adds a callback object to the list of listeners
  * @param log_service the #LinphoneLoggingService object @notnil
  * @param cbs the #LinphoneLoggingServiceCbs to add @notnil
@@ -259,6 +251,18 @@ LINPHONE_PUBLIC void linphone_logging_service_cbs_set_user_data(LinphoneLoggingS
  * @return the user data pointer. @maybenil
  */
 LINPHONE_PUBLIC void *linphone_logging_service_cbs_get_user_data(const LinphoneLoggingServiceCbs *cbs);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * @brief Gets the logging service listener.
+ * @param log_service the #LinphoneLoggingService object
+ * @deprecated 19/02/2019 Use add_callbacks / remove_callbacks instead
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneLoggingServiceCbs *linphone_logging_service_get_callbacks(const LinphoneLoggingService *log_service);
 
 
 /**

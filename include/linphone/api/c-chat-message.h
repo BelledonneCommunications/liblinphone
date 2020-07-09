@@ -136,15 +136,6 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type (const Linpho
 LINPHONE_PUBLIC void linphone_chat_message_set_content_type (LinphoneChatMessage *message, const char *content_type);
 
 /**
- * Get text part of this message
- * @param message #LinphoneChatMessage object.
- * @return text or NULL if no text.
- * @deprecated 07/11/2017 use getTextContent() instead
- * @donotwrap
- */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_text (const LinphoneChatMessage* message);
-
-/**
  * Get the message identifier.
  * It is used to identify a message so that it can be notified as delivered and/or displayed.
  * @param message #LinphoneChatMessage object. @notnil
@@ -178,15 +169,6 @@ LINPHONE_PUBLIC void linphone_chat_message_set_appdata (LinphoneChatMessage *mes
  * @return the #LinphoneChatRoom in which this message has been sent or received. @notnil
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_chat_message_get_chat_room (const LinphoneChatMessage *message);
-
-/**
- * Get the path to the file to read from or write to during the file transfer.
- * @param message #LinphoneChatMessage object
- * @return The path to the file to use for the file transfer.
- * @deprecated 12/07/2018 use linphone_content_get_file_path() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_file_transfer_filepath (const LinphoneChatMessage *message);
 
 // =============================================================================
 
@@ -230,45 +212,6 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_secured (const LinphoneChatMessa
 LINPHONE_PUBLIC LinphoneContent *linphone_chat_message_get_file_transfer_information (const LinphoneChatMessage *message);
 
 /**
- * Return whether or not a chat message is a file transfer.
- * @param message #LinphoneChatMessage object @notnil
- * @return Whether or not the message is a file transfer
- * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent for which linphone_content_is_file_transfer() returns TRUE.
- */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer (const LinphoneChatMessage *message);
-
-/**
- * Return whether or not a chat message is a text.
- * @param message #LinphoneChatMessage object. @notnil
- * @return Whether or not the message is a text
- * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type..
- */
-LINPHONE_PUBLIC bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
-
-/**
- * Start the download of the file from remote server
- *
- * @param message #LinphoneChatMessage object. @notnil
- * @param status_cb #LinphoneChatMessageStateChangeCb status callback invoked when file is downloaded or could not be downloaded
- * @param user_data user data
- * @deprecated 21/09/2017 Use linphone_chat_message_download_file() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_start_file_download (
-	LinphoneChatMessage *message,
-	LinphoneChatMessageStateChangedCb status_cb,
-	void *user_data
-);
-
-/**
- * Start the download of the file referenced in a #LinphoneChatMessage from remote server.
- * @param message #LinphoneChatMessage object. @notnil
- * @deprecated 12/07/2018 Use linphone_chat_message_download_content() instead
- * @donotwrap
- */
-LINPHONE_PUBLIC bool_t linphone_chat_message_download_file (LinphoneChatMessage *message);
-
-/**
  * Start the download of the #LinphoneContent referenced in the #LinphoneChatMessage from remote server.
  * @param message #LinphoneChatMessage object. @notnil
  * @param content the #LinphoneContent object to download (must have the linphone_content_is_file_transfer() method return TRUE). @notnil
@@ -287,14 +230,6 @@ LINPHONE_PUBLIC void linphone_chat_message_cancel_file_transfer (LinphoneChatMes
  * @param message #LinphoneChatMessage object. @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_message_send (LinphoneChatMessage *message);
-
-/**
- * Resend a chat message if it is in the 'not delivered' state for whatever reason.
- * @param message #LinphoneChatMessage object. @notnil
- * @deprecated 13/10/2017 Use linphone_chat_message_send instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_resend (LinphoneChatMessage *message);
 
 LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneChatMessage *message);
 
@@ -349,15 +284,6 @@ LINPHONE_PUBLIC LinphoneReason linphone_chat_message_get_reason (const LinphoneC
 LINPHONE_PUBLIC const LinphoneErrorInfo *linphone_chat_message_get_error_info (const LinphoneChatMessage *message);
 
 /**
- * Set the path to the file to read from or write to during the file transfer.
- * @param message #LinphoneChatMessage object. @notnil
- * @param filepath The path to the file to use for the file transfer. @notnil
- * @deprecated 12/07/2018 use linphone_content_set_file_path() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC void linphone_chat_message_set_file_transfer_filepath (LinphoneChatMessage *message, const char *filepath);
-
-/**
  * Returns wether the chat message is a forward message or not.
  * @param message #LinphoneChatMessage object. @notnil
  * @return TRUE if it is a forward message, FALSE otherwise
@@ -404,14 +330,6 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time (const Li
  * @return 0 if succeed.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessage *message, uint32_t character);
-
-/**
- * Get the #LinphoneChatMessageCbs object associated with the LinphoneChatMessage.
- * @param message #LinphoneChatMessage object. @notnil
- * @return The #LinphoneChatMessageCbs object associated with the LinphoneChatMessage. @notnil
- * @deprecated 19/02/2019
- */
-LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *message);
 
 /**
  * Add a listener in order to be notified of #LinphoneChatMessage events.
@@ -502,6 +420,92 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_sta
  * @return the call Id @notnil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChatMessage *message);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Get text part of this message
+ * @param message #LinphoneChatMessage object.
+ * @return text or NULL if no text.
+ * @deprecated 07/11/2017 use getTextContent() instead
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_text (const LinphoneChatMessage* message);
+
+/**
+ * Get the path to the file to read from or write to during the file transfer.
+ * @param message #LinphoneChatMessage object
+ * @return The path to the file to use for the file transfer.
+ * @deprecated 12/07/2018 use linphone_content_get_file_path() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_file_transfer_filepath (const LinphoneChatMessage *message);
+
+/**
+ * Return whether or not a chat message is a file transfer.
+ * @param message #LinphoneChatMessage object @notnil
+ * @return Whether or not the message is a file transfer
+ * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent for which linphone_content_is_file_transfer() returns TRUE.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_file_transfer (const LinphoneChatMessage *message);
+
+/**
+ * Return whether or not a chat message is a text.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return Whether or not the message is a text
+ * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type..
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
+
+/**
+ * Start the download of the file from remote server
+ *
+ * @param message #LinphoneChatMessage object. @notnil
+ * @param status_cb #LinphoneChatMessageStateChangeCb status callback invoked when file is downloaded or could not be downloaded
+ * @param user_data user data
+ * @deprecated 21/09/2017 Use linphone_chat_message_download_file() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_start_file_download (
+	LinphoneChatMessage *message,
+	LinphoneChatMessageStateChangedCb status_cb,
+	void *user_data
+);
+
+/**
+ * Start the download of the file referenced in a #LinphoneChatMessage from remote server.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @deprecated 12/07/2018 Use linphone_chat_message_download_content() instead
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_download_file (LinphoneChatMessage *message);
+
+/**
+ * Resend a chat message if it is in the 'not delivered' state for whatever reason.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @deprecated 13/10/2017 Use linphone_chat_message_send instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_resend (LinphoneChatMessage *message);
+
+/**
+ * Set the path to the file to read from or write to during the file transfer.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @param filepath The path to the file to use for the file transfer. @notnil
+ * @deprecated 12/07/2018 use linphone_content_set_file_path() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_set_file_transfer_filepath (LinphoneChatMessage *message, const char *filepath);
+
+/**
+ * Get the #LinphoneChatMessageCbs object associated with the LinphoneChatMessage.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return The #LinphoneChatMessageCbs object associated with the LinphoneChatMessage. @notnil
+ * @deprecated 19/02/2019
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *message);
 
 /**
  * @}
