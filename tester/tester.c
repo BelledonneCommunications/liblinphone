@@ -802,10 +802,12 @@ printf("%s - remove participant %p rc %s\n", __func__, participant_mgr, particip
 		int idx = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
+printf("%s - remove participant %p rc %s notify received %0d (expecting 2 more)\n", __func__, m, m->rc_path, participants_initial_stats[idx].number_of_NotifyReceived );
+			// Wait for notify of participant device deleted and participant deleted
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[idx].number_of_NotifyReceived + 2),10000));
 			// If removing last participant, then its call is kicked out of conference
 			// - Remote conference is deleted
 			// - parameters are updated
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[idx].number_of_NotifyReceived + 1),10000));
 			if (participant_size == 2) {
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));

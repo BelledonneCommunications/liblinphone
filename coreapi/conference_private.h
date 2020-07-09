@@ -108,6 +108,7 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
+	virtual int removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 	virtual int removeParticipant(const IdentityAddress &addr) = 0;
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
