@@ -47,7 +47,7 @@ public:
 	 * @param[in] state new state of the conference
 	 */
 	void onStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
-	void resetConference ();
+	void setConference (Conference *conference);
 
 	MediaConference::Conference *getMediaConference() const;
 private:
