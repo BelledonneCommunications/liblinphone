@@ -50,7 +50,6 @@ static void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent
 
 static void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
 	LinphoneCoreManager *mgr = get_manager(lc);
-printf("%s - BEFORE participant %p rc %s - notify value %0d\n", __func__, mgr, mgr->rc_path, mgr->stat.number_of_NotifyReceived);
 	mgr->stat.number_of_NotifyReceived++;
 printf("%s - AFTER participant %p rc %s - notify value %0d\n", __func__, mgr, mgr->rc_path, mgr->stat.number_of_NotifyReceived);
 }
@@ -366,6 +365,9 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	initial_pauline_stat=pauline->stat;
 	initial_laure_stat=laure->stat;
 
+	marie_call_laure=linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
+
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,laure);
 		// TODO: Find a way to extract participants managers from conference
@@ -375,9 +377,6 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 		bctbx_list_free(lcs2);
 		bctbx_list_free(new_participants);
 	} else {
-		marie_call_laure=linphone_core_get_current_call(marie->lc);
-
-		if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
 		linphone_core_add_to_conference(marie->lc,marie_call_laure);
 
 		if(focus_is_up) {
