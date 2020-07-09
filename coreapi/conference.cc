@@ -353,7 +353,9 @@ LocalConference::~LocalConference() {
 
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
+#ifdef HAVE_ADVANCED_IM
 		eventHandler->setConference(this);
+#endif // HAVE_ADVANCED_IM
 		setState(ConferenceInterface::State::Created);
 	}
 }
