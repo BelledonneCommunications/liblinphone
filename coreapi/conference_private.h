@@ -153,7 +153,7 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
-	void onConferenceTerminated (const IdentityAddress &addr) override;
+	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
@@ -190,6 +190,7 @@ public:
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
 	virtual void finalizeCreation() override;
+	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
 	virtual int enter() override;
 	virtual void leave() override;
