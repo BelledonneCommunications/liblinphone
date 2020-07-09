@@ -627,14 +627,15 @@ LinphoneStatus accept_call_in_conference(bctbx_list_t *lcs, LinphoneCoreManager 
 
 static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, stats conf_initial_stats, bctbx_list_t *new_participants, stats* new_participant_initial_stats, bctbx_list_t *participants, stats* participant_initial_stats) {
 
-	int no_new_participants = (int)bctbx_list_size(new_participants);
-	int no_participants = (int)bctbx_list_size(participants);
+	const int no_new_participants = (int)bctbx_list_size(new_participants);
+	const int no_participants = (int)bctbx_list_size(participants);
 	int init_subscription_count = *((int *)(conf_mgr->user_info));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + no_new_participants,3000));
 
-	int notifyExpected[no_participants];
+	int * notifyExpected = NULL;
 	for (int idx = 0; idx < no_participants; idx++) {
+		notifyExpected = (int*)realloc(notifyExpected, (idx + 1) * sizeof(int));
 		notifyExpected[idx] = 0;
 	}
 
