@@ -83,17 +83,6 @@ LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphonePro
 LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *proxy_config, const LinphoneAddress *identity);
 
 /**
- * Sets a SIP route.
- * When a route is set, all outgoing calls will go to the route's destination if this proxy
- * is the default one (see linphone_core_set_default_proxy_config() ).
- * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param route the SIP route to set @maybenil
- * @return -1 if route is invalid, 0 otherwise.
- * @deprecated 08/07/2020 use linphone_proxy_config_set_routes() instead
-**/
-LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *proxy_config, const char *route);
-
-/**
  * Sets a list of SIP route.
  * When a route is set, all outgoing calls will go to the route's destination if this proxy
  * is the default one (see linphone_core_set_default_proxy_config() ).
@@ -261,13 +250,6 @@ LINPHONE_PUBLIC const char *linphone_proxy_config_get_realm(const LinphoneProxyC
 LINPHONE_PUBLIC void linphone_proxy_config_set_realm(LinphoneProxyConfig *proxy_config, const char * realm);
 
 /**
- * @return the route set for this proxy configuration.
- * @deprecated 09/03/2018 Use linphone_proxy_config_get_routes() instead.
- * @donotwrap
-**/
-LINPHONE_PUBLIC const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *proxy_config);
-
-/**
  * Gets the list of the routes set for this proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return \bctbx_list{const char *} the list of routes. @maybenil
@@ -280,12 +262,6 @@ LINPHONE_PUBLIC const bctbx_list_t* linphone_proxy_config_get_routes(const Linph
  * @return the SIP identity that belongs to this proxy configuration. @maybenil
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_proxy_config_get_identity_address(const LinphoneProxyConfig *proxy_config);
-
-/**
- * @deprecated 29/07/2015 use linphone_proxy_config_get_identity_address()
- * @donotwrap
-**/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_identity(const LinphoneProxyConfig *cfg);
 
 /**
  * Gets if the PUBLISH is enabled.
@@ -589,9 +565,9 @@ LINPHONE_PUBLIC LinphoneProxyConfig *linphone_proxy_config_get_dependency(Linpho
  * This mecanism must be enabled before the proxy configuration is added to the core
  *
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param depends_on The reference key of a master #LinphoneProxyConfig. @maybenil
+ * @param depends_on The #LinphoneProxyConfig this one shall be depend on. @maybenil
  **/
-LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *proxy_config, LinphoneProxyConfig *dependency);
+LINPHONE_PUBLIC void linphone_proxy_config_set_dependency(LinphoneProxyConfig *proxy_config, LinphoneProxyConfig *depends_on);
 
 /**
  * Get the idkey property of a #LinphoneProxyConfig.
@@ -663,6 +639,34 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const 
  * @return The unread chat message count.
  */
 LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *proxy_config);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Sets a SIP route.
+ * When a route is set, all outgoing calls will go to the route's destination if this proxy
+ * is the default one (see linphone_core_set_default_proxy_config() ).
+ * @param proxy_config #LinphoneProxyConfig object. @notnil
+ * @param route the SIP route to set @maybenil
+ * @return -1 if route is invalid, 0 otherwise.
+ * @deprecated 08/07/2020 use linphone_proxy_config_set_routes() instead
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_proxy_config_set_route(LinphoneProxyConfig *proxy_config, const char *route);
+
+/**
+ * @return the route set for this proxy configuration.
+ * @deprecated 09/03/2018 Use linphone_proxy_config_get_routes() instead.
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_route(const LinphoneProxyConfig *proxy_config);
+
+/**
+ * @deprecated 29/07/2015 use linphone_proxy_config_get_identity_address()
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_identity(const LinphoneProxyConfig *cfg);
 
 /**
  * @}

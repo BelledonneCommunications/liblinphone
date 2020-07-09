@@ -75,15 +75,6 @@ LINPHONE_PUBLIC void linphone_auth_info_unref(LinphoneAuthInfo *auth_info);
 /**
  * Sets the password.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
- * @param passwd The password.
- * @deprecated 13/10/2017 use linphone_auth_info_set_password instead
- * @donotwrap
-**/
-LINPHONE_PUBLIC void linphone_auth_info_set_passwd(LinphoneAuthInfo *auth_info, const char *passwd);
-
-/**
- * Sets the password.
- * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @param password The password. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_auth_info_set_password(LinphoneAuthInfo *auth_info, const char *password);
@@ -177,15 +168,6 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthI
 /**
  * Gets the password.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
- * @return The password.
- * @deprecated 13/10/2017 use linphone_auth_info_get_password instead
- * @donotwrap
- */
-LINPHONE_PUBLIC const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *auth_info);
-
-/**
- * Gets the password.
- * @param auth_info The #LinphoneAuthInfo object. @notnil
  * @return The password. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_password(const LinphoneAuthInfo *auth_info);
@@ -246,12 +228,39 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneA
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *auth_info);
 
-/* you don't need those function*/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *auth_info);
-
 void linphone_auth_info_write_config(LpConfig *config, LinphoneAuthInfo *auth_info, int pos);
 
 LinphoneAuthInfo *linphone_auth_info_new_from_config_file(LpConfig *config, int pos);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Sets the password.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param passwd The password.
+ * @deprecated 13/10/2017 use linphone_auth_info_set_password instead
+ * @donotwrap
+**/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_set_passwd(LinphoneAuthInfo *auth_info, const char *passwd);
+
+/**
+ * Gets the password.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return The password.
+ * @deprecated 13/10/2017 use linphone_auth_info_get_password instead
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_auth_info_get_passwd(const LinphoneAuthInfo *auth_info);
+
+/**
+ * Destroys the auth info
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @deprecated 13/10/2017 use linphone_auth_info_unref() instead
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *auth_info);
 
 /**
  * @}

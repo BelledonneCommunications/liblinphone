@@ -87,34 +87,6 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_callbacks_list(con
 LINPHONE_PUBLIC void linphone_chat_message_set_current_callbacks(LinphoneChatMessage *message, LinphoneChatMessageCbs *cbs);
 
 /**
- * Send a message to peer member of this chat room.
- *
- * The state of the sending message will be notified via the callbacks defined in the #LinphoneChatMessageCbs object that can be obtained
- * by calling linphone_chat_message_get_callbacks().
- * @note Unlike linphone_chat_room_send_chat_message(), that function only takes a reference on the #LinphoneChatMessage
- * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
- * that function.
- *
- * @param chat_room A chat room. @notnil
- * @param message The message to send. @notnil
- * @deprecated 08/07/2020 Use linphone_chat_message_send() instead.
- * @donotwrap It doesn't says what the doc says it does
- */
-LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
-
-/**
- * Resend a chat message if it is in the 'not delivered' state for whatever reason.
- * @note Unlike linphone_chat_message_resend(), that function only takes a reference on the #LinphoneChatMessage
- * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
- * that function.
- *
- * @param message #LinphoneChatMessage object @notnil
- * @deprecated 08/07/2020 Use linphone_chat_message_send instead.
- * @donotwrap It doesn't says what the doc says it does
- */
-LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *message);
-
-/**
  * Accessor for the shared_ptr&lt;BelCard&gt; stored by a #LinphoneVcard
  * @param vcard a #LinphoneVcard
  * @return a shared_ptr<BelCard>
@@ -133,6 +105,38 @@ LINPHONE_PUBLIC void linphone_chat_room_allow_multipart(LinphoneChatRoom *room);
  * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_chat_room_allow_cpim(LinphoneChatRoom *room);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Send a message to peer member of this chat room.
+ *
+ * The state of the sending message will be notified via the callbacks defined in the #LinphoneChatMessageCbs object that can be obtained
+ * by calling linphone_chat_message_get_callbacks().
+ * @note Unlike linphone_chat_room_send_chat_message(), that function only takes a reference on the #LinphoneChatMessage
+ * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
+ * that function.
+ *
+ * @param chat_room A chat room. @notnil
+ * @param message The message to send. @notnil
+ * @deprecated 08/07/2020 Use linphone_chat_message_send() instead.
+ * @donotwrap It doesn't says what the doc says it does
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_chat_room_send_chat_message_2(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+
+/**
+ * Resend a chat message if it is in the 'not delivered' state for whatever reason.
+ * @note Unlike linphone_chat_message_resend(), that function only takes a reference on the #LinphoneChatMessage
+ * instead of totaly takes ownership on it. Thus, the #LinphoneChatMessage object must be released by the API user after calling
+ * that function.
+ *
+ * @param message #LinphoneChatMessage object @notnil
+ * @deprecated 08/07/2020 Use linphone_chat_message_send instead.
+ * @donotwrap It doesn't says what the doc says it does
+ */
+LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_chat_message_resend_2(LinphoneChatMessage *message);
 
 /**
  * @}

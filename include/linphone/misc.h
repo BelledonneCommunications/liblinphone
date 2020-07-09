@@ -119,14 +119,6 @@ LINPHONE_PUBLIC	const char* linphone_chat_message_state_to_string(const Linphone
 LINPHONE_PUBLIC const char *linphone_reason_to_string(LinphoneReason error);
 
 /**
- * Return humain readable presence status
- * @param status
- * @deprecated 03/02/2017 Use #LinphonePresenceModel, #LinphonePresenceActivity and linphone_presence_activity_to_string() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_online_status_to_string(LinphoneOnlineStatus status);
-
-/**
  * Convert a string into #LinphoneTunnelMode enum
  * @param string String to convert @maybenil
  * @return An #LinphoneTunnelMode enum. If the passed string is NULL or
@@ -249,6 +241,18 @@ LINPHONE_PUBLIC void linphone_range_set_min(LinphoneRange *range, int min);
  * @ingroup misc
  */
 LINPHONE_PUBLIC void linphone_range_set_max(LinphoneRange *range, int max);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Return humain readable presence status
+ * @param status
+ * @deprecated 03/02/2017 Use #LinphonePresenceModel, #LinphonePresenceActivity and linphone_presence_activity_to_string() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_online_status_to_string(LinphoneOnlineStatus status);
 
 
 #ifdef __cplusplus

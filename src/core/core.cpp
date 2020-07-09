@@ -714,8 +714,8 @@ const list<AudioDevice *> Core::getExtendedAudioDevices() const {
 }
 
 void Core::setInputAudioDevice(AudioDevice *audioDevice) {
-
 	L_D();
+	
 	bool success = d->setInputAudioDevice(audioDevice);
 
 	if (success) {
@@ -724,8 +724,8 @@ void Core::setInputAudioDevice(AudioDevice *audioDevice) {
 }
 
 void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
-
 	L_D();
+
 	bool success = d->setOutputAudioDevice(audioDevice);
 
 	if (success) {

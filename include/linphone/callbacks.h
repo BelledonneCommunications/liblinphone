@@ -145,17 +145,6 @@ typedef LinphoneCoreCbsNewSubscriptionRequestedCb LinphoneCoreNewSubscriptionReq
 /**
  * Callback for requesting authentication information to application or user.
  * @param core the #LinphoneCore @notnil
- * @param realm the realm (domain) on which authentication is required. @notnil
- * @param username the username that needs to be authenticated. @notnil
- * @param domain the domain on which authentication is required. @notnil
- * Application shall reply to this callback using linphone_core_add_auth_info().
- * @deprecated 08/07/2020 use #LinphoneCoreCbsAuthenticationRequestedCb instead
- */
-typedef void (*LinphoneCoreAuthInfoRequestedCb)(LinphoneCore *core, const char *realm, const char *username, const char *domain);
-
-/**
- * Callback for requesting authentication information to application or user.
- * @param core the #LinphoneCore @notnil
  * @param auth_info a #LinphoneAuthInfo pre-filled with username, realm and domain values as much as possible @notnil
  * @param method the type of authentication requested as #LinphoneAuthMethod enum @notnil
  * Application shall reply to this callback using linphone_core_add_auth_info().
@@ -179,17 +168,6 @@ typedef void (*LinphoneCoreCbsCallLogUpdatedCb)(LinphoneCore *core, LinphoneCall
  * Old name of #LinphoneCoreCbsCallLogUpdatedCb.
  */
 typedef LinphoneCoreCbsCallLogUpdatedCb LinphoneCoreCallLogUpdatedCb;
-
-/**
- * Callback prototype
- * @param core #LinphoneCore object @notnil
- * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
- * @param from #LinphoneAddress from @notnil
- * @param message incoming message @notnil
- * @deprecated 30/03/2017 use #LinphoneCoreMessageReceivedCb instead.
- * @donotwrap
- */
-typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, const LinphoneAddress *from, const char *message);
 
 /**
  * Chat message callback prototype
@@ -728,6 +706,32 @@ typedef void (*LinphoneXmlRpcRequestCbsResponseCb)(LinphoneXmlRpcRequest *reques
  * @param player The #LinphonePlayer object @notnil
 **/
 typedef void (*LinphonePlayerCbsEofReachedCb)(LinphonePlayer *player);
+
+/************ */
+/* DEPRECATED */
+/* ********** */
+
+/**
+ * Callback prototype
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
+ * @param from #LinphoneAddress from @notnil
+ * @param message incoming message @notnil
+ * @deprecated 30/03/2017 use #LinphoneCoreMessageReceivedCb instead.
+ * @donotwrap
+ */
+typedef void (*LinphoneCoreTextMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, const LinphoneAddress *from, const char *message);
+
+/**
+ * Callback for requesting authentication information to application or user.
+ * @param core the #LinphoneCore @notnil
+ * @param realm the realm (domain) on which authentication is required. @notnil
+ * @param username the username that needs to be authenticated. @notnil
+ * @param domain the domain on which authentication is required. @notnil
+ * Application shall reply to this callback using linphone_core_add_auth_info().
+ * @deprecated 08/07/2020 use #LinphoneCoreCbsAuthenticationRequestedCb instead
+ */
+typedef void (*LinphoneCoreAuthInfoRequestedCb)(LinphoneCore *core, const char *realm, const char *username, const char *domain);
 
 
 /**
