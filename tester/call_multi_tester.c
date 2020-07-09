@@ -372,7 +372,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 		// TODO: Find a way to extract participants managers from conference
 		bctbx_list_t* lcs2=bctbx_list_append(NULL,marie->lc);
 		lcs2=bctbx_list_append(lcs2,laure->lc);
-		add_calls_to_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, new_participants);
 		bctbx_list_free(lcs2);
 		bctbx_list_free(new_participants);
 	} else {
@@ -401,7 +401,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
-		add_calls_to_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, new_participants);
 		bctbx_list_free(new_participants);
 
 	} else {
@@ -457,7 +457,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			/* Since Laure has been removed, the conference will automatically disapear to let
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
-			remove_participant_from_conference(lcs, marie, laure);
+			remove_participant_from_local_conference(lcs, marie, laure);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 			BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -470,7 +470,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 		}
 	}else{
-		terminate_conference(lcs, marie);
+		terminate_local_conference(lcs, marie);
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,is_remote_conf?3:2,10000));
@@ -561,7 +561,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	participants = bctbx_list_append(participants, laure);
 	participants = bctbx_list_append(participants, pauline);
 
-	add_participant_to_conference_through_invite(lcs, marie, participants, NULL);
+	add_participant_to_local_conference_through_invite(lcs, marie, participants, NULL);
 
 	pauline_call = linphone_core_get_current_call(pauline->lc);
 	laure_call = linphone_core_get_current_call(laure->lc);
@@ -589,7 +589,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
-		terminate_conference(lcs, marie);
+		terminate_local_conference(lcs, marie);
 	}
 	linphone_conference_unref(conf);
 	linphone_core_manager_destroy(pauline);
@@ -732,7 +732,7 @@ static void video_conference_by_merging_calls(void){
 		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
 		wait_for_list(lcs ,NULL, 0, 2000);
 
-		terminate_conference(lcs, marie);
+		terminate_local_conference(lcs, marie);
 	}
 	
 	
@@ -771,7 +771,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	participants = bctbx_list_append(participants, laure);
 	participants = bctbx_list_append(participants, pauline);
 
-	add_participant_to_conference_through_invite(lcs, marie, participants, NULL);
+	add_participant_to_local_conference_through_invite(lcs, marie, participants, NULL);
 
 	lcs = bctbx_list_remove(lcs, laure->lc);
 
@@ -1254,7 +1254,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		// TODO: Find a way to extract participants managers from conference
 		bctbx_list_t* lcs2=bctbx_list_append(NULL,marie->lc);
 		lcs2=bctbx_list_append(lcs2,laure->lc);
-		add_calls_to_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, new_participants);
 		bctbx_list_free(lcs2);
 		bctbx_list_free(new_participants);
 	} else {
@@ -1276,7 +1276,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
-		add_calls_to_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, new_participants);
 		bctbx_list_free(new_participants);
 	} else {
 		linphone_core_add_to_conference(marie->lc,marie_call_pauline);
@@ -1297,7 +1297,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) {
 		ms_message("Removing pauline from conference.");
-		remove_participant_from_conference(lcs, marie, pauline);
+		remove_participant_from_local_conference(lcs, marie, pauline);
 	} else {
 		LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 		const LinphoneAddress *uri = linphone_call_get_remote_address(marie_call_pauline);
@@ -1389,7 +1389,7 @@ static void eject_from_4_participants_conference(void) {
 	new_participants=bctbx_list_append(new_participants,laure);
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, new_participants);
 	bctbx_list_free(new_participants);
 
 	/* Wait that the three participants are joined to the local conference, by checking the StreamsRunning states*/
@@ -1403,7 +1403,7 @@ static void eject_from_4_participants_conference(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
-	remove_participant_from_conference(lcs, marie, pauline);
+	remove_participant_from_local_conference(lcs, marie, pauline);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1698,7 +1698,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 
 	int noParticipants = (int)bctbx_list_size(participants);
 
-	add_participant_to_conference_through_invite(lcs, laure, participants, NULL);
+	add_participant_to_local_conference_through_invite(lcs, laure, participants, NULL);
 
 	LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
@@ -1756,7 +1756,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	// wait a bit before endign the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(lcs, laure);
+	terminate_local_conference(lcs, laure);
 
 	linphone_conference_unref(conf);
 	linphone_core_manager_destroy(marie);
@@ -1910,7 +1910,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	int noParticipants = (int)bctbx_list_size(participants);
 
-	add_participant_to_conference_through_invite(lcs, pauline, participants, NULL);
+	add_participant_to_local_conference_through_invite(lcs, pauline, participants, NULL);
 
 	linphone_audio_device_unref(marie_current_dev);
 	marie_current_dev = linphone_audio_device_ref(marie_dev1);
@@ -1995,7 +1995,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(lcs, pauline);
+	terminate_local_conference(lcs, pauline);
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card

@@ -519,7 +519,7 @@ void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conf
 	}
 }
 
-LinphoneStatus add_participant_to_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params) {
+LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params) {
 
 	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
 
@@ -560,7 +560,7 @@ LinphoneStatus add_participant_to_conference_through_invite(bctbx_list_t *lcs, L
 
 }
 
-LinphoneStatus accept_call_in_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
+LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
 
 	stats conf_initial_stats = conf_mgr->stat;
 	stats participant_initial_stats = participant_mgr->stat;
@@ -688,7 +688,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 }
 
-LinphoneStatus add_calls_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
+LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
 
 	stats conf_initial_stats = conf_mgr->stat;
 
@@ -741,7 +741,7 @@ LinphoneStatus add_calls_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * 
 	return 0;
 }
 
-LinphoneStatus remove_participant_from_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
+LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
 
 	stats conf_initial_stats = conf_mgr->stat;
 	stats participant_initial_stats = conf_mgr->stat;
@@ -822,7 +822,7 @@ LinphoneStatus remove_participant_from_conference(bctbx_list_t *lcs, LinphoneCor
 	return 0;
 }
 
-LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr) {
+LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr) {
 
 	stats* participants_initial_stats = NULL;
 	int counter = 1;
