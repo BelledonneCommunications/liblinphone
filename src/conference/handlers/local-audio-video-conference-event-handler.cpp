@@ -49,7 +49,7 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 		case ConferenceInterface::State::TerminationFailed:
 			break;
 		case ConferenceInterface::State::CreationPending:
-//			getMediaConference()->finalizeCreation();
+			getMediaConference()->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			getMediaConference()->resetLastNotify();
@@ -64,8 +64,8 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 
 }
 
-void LocalAudioVideoConferenceEventHandler::resetConference() {
-	conf = nullptr;
+void LocalAudioVideoConferenceEventHandler::setConference(Conference *conference) {
+	conf = conference;
 }
 
 LINPHONE_END_NAMESPACE
