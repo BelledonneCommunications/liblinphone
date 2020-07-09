@@ -887,7 +887,14 @@ void CallSessionPrivate::repairIfBroken () {
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
-			repairByInviteWithReplaces();
+			if (op->getRemoteTag() != nullptr){
+				repairByInviteWithReplaces();
+			}else{
+				lWarning() << "No remote tag in last provisional response, no early dialog, so trying to cancel lost INVITE and will retry later.";
+				if (op->cancelInvite() == 0){
+					reinviteOnCancelResponseRequested = true;
+				}
+			}
 			break;
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:

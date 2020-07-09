@@ -100,7 +100,7 @@ void IsComposing::startIdleTimer () {
 		idleTimer = core->sal->createTimer(idleTimerExpired, this,
 			duration * 1000, "composing idle timeout");
 	} else {
-		belle_sip_source_set_timeout(idleTimer, duration * 1000);
+		belle_sip_source_set_timeout_int64(idleTimer, duration * 1000LL);
 	}
 }
 
@@ -110,7 +110,7 @@ void IsComposing::startRefreshTimer () {
 		refreshTimer = core->sal->createTimer(refreshTimerExpired, this,
 			duration * 1000, "composing refresh timeout");
 	} else {
-		belle_sip_source_set_timeout(refreshTimer, duration * 1000);
+		belle_sip_source_set_timeout_int64(refreshTimer, duration * 1000LL);
 	}
 }
 
@@ -193,7 +193,7 @@ void IsComposing::startRemoteRefreshTimer (const string &uri, unsigned long long
 		pair<string, belle_sip_source_t *> p(uri, timer);
 		remoteRefreshTimers.insert(p);
 	} else
-		belle_sip_source_set_timeout(it->second, duration * 1000);
+		belle_sip_source_set_timeout_int64(it->second, duration * 1000LL);
 }
 
 void IsComposing::stopAllRemoteRefreshTimers () {
