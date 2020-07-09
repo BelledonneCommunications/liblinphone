@@ -672,7 +672,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				// Participant device added
 				notifyExpected[idx2] = notifyExpected[idx2] + 2;
 			}
-printf("%s - participant %p rc %s - waiting notify %0d start value %0d\n", __func__, m2, m2->rc_path, notifyExpected[idx2], participant_initial_stats[idx2].number_of_NotifyReceived);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m2->stat.number_of_NotifyReceived,(participant_initial_stats[idx2].number_of_NotifyReceived + notifyExpected[idx2]),10000));
 			idx2++;
 		}
@@ -731,7 +730,6 @@ LinphoneStatus add_calls_to_conference(bctbx_list_t *lcs, LinphoneCoreManager * 
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 
-printf("%s - ADDING participant %p rc %s\n", __func__, m, m->rc_path);
 		if (is_call_paused) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
 		} else {
@@ -746,7 +744,6 @@ printf("%s - ADDING participant %p rc %s\n", __func__, m, m->rc_path);
 
 LinphoneStatus remove_participant_from_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
 
-printf("%s - remove participant %p rc %s\n", __func__, participant_mgr, participant_mgr->rc_path);
 	stats conf_initial_stats = conf_mgr->stat;
 	stats participant_initial_stats = conf_mgr->stat;
 
@@ -802,7 +799,6 @@ printf("%s - remove participant %p rc %s\n", __func__, participant_mgr, particip
 		int idx = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
-printf("%s - remove participant %p rc %s notify received %0d (expecting 2 more)\n", __func__, m, m->rc_path, participants_initial_stats[idx].number_of_NotifyReceived );
 			// Wait for notify of participant device deleted and participant deleted
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[idx].number_of_NotifyReceived + 2),10000));
 			// If removing last participant, then its call is kicked out of conference
