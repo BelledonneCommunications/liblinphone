@@ -644,7 +644,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-printf("%s - CHECKING ADDITION participant %p rc %s\n", __func__, m, m->rc_path);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,new_participant_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1,3000));
 
 		// Remote conference creation
@@ -747,6 +746,7 @@ printf("%s - ADDING participant %p rc %s\n", __func__, m, m->rc_path);
 
 LinphoneStatus remove_participant_from_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
 
+printf("%s - remove participant %p rc %s\n", __func__, participant_mgr, participant_mgr->rc_path);
 	stats conf_initial_stats = conf_mgr->stat;
 	stats participant_initial_stats = conf_mgr->stat;
 
