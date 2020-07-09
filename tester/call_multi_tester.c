@@ -51,7 +51,6 @@ static void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent
 static void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
 	LinphoneCoreManager *mgr = get_manager(lc);
 	mgr->stat.number_of_NotifyReceived++;
-printf("%s - AFTER participant %p rc %s - notify value %0d\n", __func__, mgr, mgr->rc_path, mgr->stat.number_of_NotifyReceived);
 }
 
 static void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
