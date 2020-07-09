@@ -291,6 +291,12 @@ LocalConference::LocalConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
+
+#ifdef HAVE_ADVANCED_IM
+	eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
+	addListener(eventHandler);
+#endif // HAVE_ADVANCED_IM
+
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
@@ -310,9 +316,6 @@ LocalConference::LocalConference (
 
 	setConferenceId(ConferenceId(contactAddress, contactAddress));
 	setConferenceAddress(contactAddress);
-
-	finalizeCreation();
-
 }
 
 LocalConference::~LocalConference() {
@@ -326,11 +329,7 @@ LocalConference::~LocalConference() {
 
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
-#ifdef HAVE_ADVANCED_IM
-		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
-		addListener(eventHandler);
-#endif // HAVE_ADVANCED_IM
-
+		eventHandler->setConference(this);
 		setState(ConferenceInterface::State::Created);
 	}
 }
@@ -344,7 +343,7 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 
 void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->resetConference();
+	eventHandler->setConference(nullptr);
 #endif // HAVE_ADVANCED_IM
 	Conference::onConferenceTerminated(addr);
 }
