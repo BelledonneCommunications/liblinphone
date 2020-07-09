@@ -340,6 +340,14 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #endif // HAVE_ADVANCED_IM
 }
 
+void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
+#ifdef HAVE_ADVANCED_IM
+	eventHandler->resetConference();
+#endif // HAVE_ADVANCED_IM
+	Conference::onConferenceTerminated(addr);
+}
+
+
 void LocalConference::addLocalEndpoint () {
 	if (!confParams->localParticipantEnabled()) return;
 	
