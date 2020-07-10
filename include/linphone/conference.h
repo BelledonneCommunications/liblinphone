@@ -140,7 +140,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneCo
  * @warning The passed SIP URI must be one of the URIs returned by linphone_conference_get_participants()
  * @return 0 if succeeded, -1 if failed
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conf, const LinphoneAddress *uri);
+//LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conf, const LinphoneAddress *uri);
 
 /**
  * Find a participant from a conference
