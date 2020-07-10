@@ -95,12 +95,16 @@ public:
 
 	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
 
-	virtual std::shared_ptr<Conference> getConference () const {return conference;};
+	virtual std::shared_ptr<Conference> getConference () const override {return conference;};
 
 	static std::list<IdentityAddress> parseResourceLists (const Content &content);
 
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+
+	bool canHandleParticipants () const override {
+		return (getConference() == nullptr);
+	}
 
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const std::shared_ptr<Conference> &conf = nullptr);

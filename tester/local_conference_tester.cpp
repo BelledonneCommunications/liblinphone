@@ -92,10 +92,10 @@ public:
 		mParticipantDevices.insert({participant,participantDevice});
 	}
 private:
-	static void server_core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneConferenceState state) {
+	static void server_core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 		Focus *focus = (Focus*)(((LinphoneCoreManager *)linphone_core_get_user_data(core))->user_info);
 		switch (state) {
-			case LinphoneConferenceStateInstantiated: {
+			case LinphoneChatRoomStateInstantiated: {
 			if (linphone_chat_room_get_conference_address(cr) == NULL) {
 				char config_id[6];
 				belle_sip_random_token(config_id,sizeof(config_id));
