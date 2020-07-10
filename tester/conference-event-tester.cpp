@@ -637,18 +637,6 @@ static void setParticipantAsAdmin(shared_ptr<LocalConferenceTester> localConf, A
 	localConf->notifyParticipantSetAdmin(time(nullptr), false, addr, isAdmin);
 }
 
-/*
-class RemoteAudioVideoConferenceTester : public MediaConference::RemoteConference {
-	RemoteAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::RemoteConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
-}
-*/
-
-class LocalAudioVideoConferenceTester : public MediaConference::LocalConference {
-public:
-	LocalAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
-	virtual ~LocalAudioVideoConferenceTester () {}
-};
-
 void first_notify_parsing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneAddress *confAddress = linphone_core_interpret_url(marie->lc, confUri);
@@ -1039,7 +1027,7 @@ void send_added_notify_through_address() {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
+static void remove_participant_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1122,7 +1110,7 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 
 }
 
-static void remove_head_participant_list_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr) {
+static void remove_head_participant_list_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr) {
 	LinphoneCoreManager * del_mgr = nullptr;
 
 	for (bctbx_list_t *it = *participants_mgrs; it; it = bctbx_list_next(it)) {
@@ -1134,7 +1122,7 @@ static void remove_head_participant_list_from_conference_through_call(bctbx_list
 	}
 }
 
-static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
+static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr, LinphoneCoreManager *participant_mgr, bool_t pause_call) {
 
 	stats initial_conf_stats = conf_mgr->stat;
 	stats initial_participant_stats = participant_mgr->stat;
@@ -1242,7 +1230,7 @@ void custom_mgr_destroy(LinphoneCoreManager *mgr) {
 	linphone_core_manager_destroy(mgr);
 }
 
-LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<LocalAudioVideoConferenceTester> conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
+LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
 
 	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file);
 	*lcs = bctbx_list_append(*lcs, mgr->lc);
@@ -1264,7 +1252,7 @@ void send_added_notify_through_call() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	stats initialPaulineStats = pauline->stat;
-	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	shared_ptr<MediaConference::LocalConference> localConf = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc)), [](MediaConference::LocalConference * c){c->unref();});
 	localConf->ref();
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
@@ -1317,7 +1305,7 @@ void send_removed_notify_through_call() {
 	Address addr(identityStr);
 	bctbx_free(identityStr);
 	stats initialPaulineStats = pauline->stat;
-	shared_ptr<LocalAudioVideoConferenceTester> localConf = std::shared_ptr<LocalAudioVideoConferenceTester>(new LocalAudioVideoConferenceTester(pauline->lc->cppPtr, addr, nullptr), [](LocalAudioVideoConferenceTester * c){c->unref();});
+	shared_ptr<MediaConference::LocalConference> localConf = std::shared_ptr<MediaConference::LocalConference>(new MediaConference::LocalConference(pauline->lc->cppPtr, addr, nullptr, ConferenceParams::create(pauline->lc)), [](MediaConference::LocalConference * c){c->unref();});
 	localConf->ref();
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
