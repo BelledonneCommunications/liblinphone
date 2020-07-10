@@ -34,17 +34,12 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSessionParamsPrivate;
 class Core;
 
-namespace MediaConference {
-	class LocalConference;
-}
-
 class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
 	friend class CallSession;
 	friend class CallSessionPrivate;
 	friend class ClientGroupChatRoom;
 	friend class ToneManager;
 
-	friend class MediaConference::LocalConference;
 public:
 	CallSessionParams ();
 	CallSessionParams (const CallSessionParams &other);
