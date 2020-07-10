@@ -647,13 +647,6 @@ class LocalAudioVideoConferenceTester : public MediaConference::LocalConference 
 public:
 	LocalAudioVideoConferenceTester (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener) : MediaConference::LocalConference(core, myAddress, listener, ConferenceParams::create(core->getCCore())) {}
 	virtual ~LocalAudioVideoConferenceTester () {}
-
-	/* ConferenceInterface */
-	void setSubject (const std::string &subject) override {
-		LocalConference::setSubject(subject);
-		notifySubjectChanged(time(nullptr), false, subject);
-	}
-
 };
 
 void first_notify_parsing() {
