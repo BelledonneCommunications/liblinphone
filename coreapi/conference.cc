@@ -740,7 +740,7 @@ RemoteConference::RemoteConference (
 	m_focusContact = nullptr;
 	m_focusCall = nullptr;
 	m_coreCbs = nullptr;
-	m_focusAddr = lp_config_get_string(getCore()->getCCore()->config, "misc", "conference_focus_addr", "");
+	m_focusAddr = linphone_config_get_string(getCore()->getCCore()->config, "misc", "conference_focus_addr", "");
 	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
 	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
