@@ -422,7 +422,7 @@ typedef void (*LinphoneCoreCbsConferenceStateChangedCb) (LinphoneCore *lc, Linph
  * @param chat_room The #LinphoneChatRoom object for which the state has changed @notnil
  * @param state the current #LinphoneChatRoomState
  */
-typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *chat_room, LinphoneConferenceState state);
+typedef void (*LinphoneCoreCbsChatRoomStateChangedCb) (LinphoneCore *lc, LinphoneChatRoom *chat_room, LinphoneChatRoomState state);
 
 /**
  * Callback prototype telling that a #LinphoneChatRoom subject has changed.
