@@ -249,11 +249,11 @@ void VideoSourceSet::exec(Daemon* app, const string& args)
 //--------------------------------------------------
 
 VideoSourceReload::VideoSourceReload():
-	DaemonCommand("videosourcereload",
-				  "videosourcereload",
+	DaemonCommand("videosource-reload",
+				  "videosource-reload",
 				  "Update detection of camera devices and get the list")
 {
-	addExample(new DaemonCommandExample("videosourcereload",
+	addExample(new DaemonCommandExample("videosource-reload",
 										"Status: Ok\n\n"
 										"V4L2: /dev/video2"));
 }
