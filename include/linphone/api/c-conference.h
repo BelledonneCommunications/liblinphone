@@ -36,35 +36,39 @@
 /**
  * Add a listener in order to be notified of #LinphoneConference events. Once an event is received, registred #LinphoneConferenceCbs are
  * invoked sequencially.
- * @param[in] call #LinphoneConference object to monitor.
- * @param[in] cbs A #LinphoneConferenceCbs object holding the callbacks you need. A reference is taken by the #LinphoneConference until you invoke linphone_conference_remove_callbacks().
+ * @param conference #LinphoneConference object. @notnil
+ * @param cbs A #LinphoneConferenceCbs object holding the callbacks you need. A reference is taken by the #LinphoneConference until you invoke linphone_conference_remove_callbacks(). @notnil
+
  */
 LINPHONE_PUBLIC void linphone_conference_add_callbacks(LinphoneConference *conference, LinphoneConferenceCbs *cbs);
 
 /**
  * Remove a listener from a LinphoneConference
- * @param[in] call LinphoneConference object
- * @param[in] cbs LinphoneConferenceCbs object to remove.
+ * @param conference #LinphoneConference object. @notnil
+ * @param cbs #LinphoneConferenceCbs object to remove. @notnil
  */
 LINPHONE_PUBLIC void linphone_conference_remove_callbacks(LinphoneConference *conference, LinphoneConferenceCbs *cbs);
 
 /**
  * Gets the current LinphoneConferenceCbs.
  * This is meant only to be called from a callback to be able to get the user_data associated with the LinphoneConferenceCbs that is calling the callback.
- * @param[in] call LinphoneConference object
- * @return The LinphoneConferenceCbs that has called the last callback
+ * @param conference #LinphoneConference object. @notnil
+ * @return The LinphoneConferenceCbs that has called the last callback. @notnil
  */
 LINPHONE_PUBLIC LinphoneConferenceCbs *linphone_conference_get_current_callbacks(const LinphoneConference *conference);
 
 /**
+ * Returns core for a #LinphoneConference
+ * @param conference #LinphoneConference object. @notnil
+ * @return back pointer to #LinphoneCore object. @notnil
  * Returns back pointer to #LinphoneCore object.
 **/
 LINPHONE_PUBLIC LinphoneCore* linphone_conference_get_core(const LinphoneConference *conference);
 
 /**
  * Get the conference address of the conference.
- * @param[in] conference A #LinphoneConference object
- * @return The conference address of the conference or NULL if it is unknown
+ * @param conference A #LinphoneConference object. @notnil
+ * @return The conference address of the conference or NULL if it is unknown. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference);
 LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference);

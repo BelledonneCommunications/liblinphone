@@ -97,19 +97,24 @@ const LinphoneConferenceParams * linphone_conference_get_current_params(const Li
 	return MediaConference::Conference::toCpp(obj)->getCurrentParams().toC();
 }
 
-LinphoneStatus linphone_conference_add_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
+LinphoneStatus linphone_conference_add_participant (LinphoneConference *obj, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(obj)->addParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
-LinphoneStatus linphone_conference_add_participant_with_address (LinphoneConference *obj, const LinphoneAddress *uri) {
+LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *obj, const LinphoneAddress *uri) {
 	return MediaConference::Conference::toCpp(obj)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }
 
-LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, LinphoneParticipant *participant) {
+LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, const LinphoneAddress * uri) {
+	LinphoneParticipant * participant = linphone_conference_find_participant (obj, uri);
+	return linphone_conference_remove_participant_2 (obj, participant);
+}
+
+LinphoneStatus linphone_conference_remove_participant_2 (LinphoneConference *obj, LinphoneParticipant *participant) {
 	return MediaConference::Conference::toCpp(obj)->removeParticipant(Participant::toCpp(participant)->getSharedFromThis());
 }
 
-LinphoneStatus linphone_conference_remove_participant_with_call (LinphoneConference *obj, LinphoneCall *call) {
+LinphoneStatus linphone_conference_remove_participant_3 (LinphoneConference *obj, LinphoneCall *call) {
 	return MediaConference::Conference::toCpp(obj)->removeParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
@@ -171,6 +176,18 @@ int linphone_conference_get_size (const LinphoneConference *obj) {
 }
 
 bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *obj) {
+	bctbx_list_t * participants = linphone_conference_get_participant_list (obj);
+	bctbx_list_t * participant_addresses = NULL;
+	for (bctbx_list_t * iterator = participants; iterator; iterator = bctbx_list_next(iterator)) {
+		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(iterator);
+		LinphoneAddress * a = linphone_address_clone(linphone_participant_get_address(p));
+
+		participant_addresses = bctbx_list_append(participant_addresses, a);
+	}
+	return participant_addresses;
+}
+
+bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference *obj) {
 	const list<std::shared_ptr<LinphonePrivate::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
 	bctbx_list_t *participants_list = nullptr;
 	for (auto it = participants.begin(); it != participants.end(); it++) {
