@@ -329,7 +329,7 @@ void _linphone_chat_room_notify_participant_removed(LinphoneChatRoom *cr, const 
 void _linphone_chat_room_notify_participant_device_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_device_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
-void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneConferenceState newState);
+void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChatRoomState newState);
 void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
@@ -591,7 +591,7 @@ void linphone_core_notify_friend_list_removed(LinphoneCore *lc, LinphoneFriendLi
 void linphone_core_notify_call_created(LinphoneCore *lc, LinphoneCall *call);
 void linphone_core_notify_conference_state_changed (LinphoneCore *lc, LinphoneConference *conference, LinphoneConferenceState state);
 void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
-void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneConferenceState state);
+void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr);
 void linphone_core_notify_chat_room_ephemeral_message_deleted (LinphoneCore *lc, LinphoneChatRoom *cr);
 void linphone_core_notify_imee_user_registration (LinphoneCore *lc, bool_t status, const char *userId, const char *info);

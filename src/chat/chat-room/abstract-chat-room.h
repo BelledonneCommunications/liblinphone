@@ -138,6 +138,9 @@ public:
 
 	virtual bool update(const ConferenceParamsInterface &newParameters) override { return false; };
 
+	virtual bool canHandleParticipants () const = 0;
+	virtual std::shared_ptr<Conference> getConference () const = 0;
+
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 

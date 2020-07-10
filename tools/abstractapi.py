@@ -524,7 +524,7 @@ class CParser(object):
 			'LinphoneCallState'                          : 'LinphoneCall',
 			'LinphoneCallStatus'                         : 'LinphoneCall',
 			'LinphoneConferenceState'                    : 'LinphoneConference',
-			'LinphoneConferenceState'                    : 'LinphoneChatRoom',
+			'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
 			'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
 			'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
 			'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',

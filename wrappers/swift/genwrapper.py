@@ -594,7 +594,7 @@ if __name__ == '__main__':
         'LinphoneCallState'                          : 'LinphoneCall',
         'LinphoneCallStatus'                         : 'LinphoneCall',
         'LinphoneConferenceState'                    : 'LinphoneConference',
-        'LinphoneConferenceState'                    : 'LinphoneChatRoom',
+        'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
         'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
         'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
         'LinphoneCoreLogCollectionUploadState'       : 'LinphoneCore',
