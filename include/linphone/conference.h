@@ -127,28 +127,19 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const Linphon
 
 /**
  * @param obj A #LinphoneConference @notnil
- * @param participant participant to remove
+ * @param participant participant to remove @notnil
  * @warning The passed participant must be one of those returned by linphone_conference_get_participants()
  * @return 0 if succeeded, -1 if failed
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *obj, LinphoneParticipant *participant);
 
 /**
- * Remove a participant from a conference
- * @param conf A #LinphoneConference @notnil
- * @param uri the #LinphoneAddress of the participant to remove @notnil
- * @warning The passed SIP URI must be one of the URIs returned by linphone_conference_get_participants()
- * @return 0 if succeeded, -1 if failed
- */
-//LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conf, const LinphoneAddress *uri);
-
-/**
  * Find a participant from a conference
- * @param obj A #LinphoneConference
- * @param uri SIP URI of the participant to search
- * @return a pointer to the participant found or nullptr
+ * @param conference A #LinphoneConference. @notnil
+ * @param uri SIP URI of the participant to search. @notnil
+ * @return a pointer to the participant found or nullptr. @maybenil
  */
-LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(LinphoneConference *obj, const LinphoneAddress *uri);
+LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(LinphoneConference *conference, const LinphoneAddress *uri);
 
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
@@ -186,20 +177,6 @@ LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *conf, 
  * @return a #LinphoneConferenceParams . @notnil
  */
 LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conf);
-
-/**
- * Get the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @return the conference id @maybenil
- */
-LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *conf);
-
-/**
- * Set the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @param conference_id the conference id to set. @notnil
- */
-LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 
 /**
  * Free a #LinphoneConferenceParams
