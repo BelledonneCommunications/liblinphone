@@ -78,7 +78,7 @@ static void chat_room_participant_device_removed (LinphoneChatRoom *cr, const Li
 }
 
 
-static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneConferenceState newState) {
+static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState newState) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
 	const LinphoneAddress *addr = linphone_chat_room_get_conference_address(cr);
@@ -89,30 +89,30 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneConferenceSta
 		bctbx_free(addr_str);
 	}
 	switch (newState) {
-		case LinphoneConferenceStateNone:
+		case LinphoneChatRoomStateNone:
 			break;
-		case LinphoneConferenceStateInstantiated:
+		case LinphoneChatRoomStateInstantiated:
 			manager->stat.number_of_LinphoneConferenceStateInstantiated++;
 			break;
-		case LinphoneConferenceStateCreationPending:
+		case LinphoneChatRoomStateCreationPending:
 			manager->stat.number_of_LinphoneConferenceStateCreationPending++;
 			break;
-		case LinphoneConferenceStateCreated:
+		case LinphoneChatRoomStateCreated:
 			manager->stat.number_of_LinphoneConferenceStateCreated++;
 			break;
-		case LinphoneConferenceStateCreationFailed:
+		case LinphoneChatRoomStateCreationFailed:
 			manager->stat.number_of_LinphoneConferenceStateCreationFailed++;
 			break;
-		case LinphoneConferenceStateTerminationPending:
+		case LinphoneChatRoomStateTerminationPending:
 			manager->stat.number_of_LinphoneConferenceStateTerminationPending++;
 			break;
-		case LinphoneConferenceStateTerminated:
+		case LinphoneChatRoomStateTerminated:
 			manager->stat.number_of_LinphoneConferenceStateTerminated++;
 			break;
-		case LinphoneConferenceStateTerminationFailed:
+		case LinphoneChatRoomStateTerminationFailed:
 			manager->stat.number_of_LinphoneConferenceStateTerminationFailed++;
 			break;
-		case LinphoneConferenceStateDeleted:
+		case LinphoneChatRoomStateDeleted:
 			manager->stat.number_of_LinphoneConferenceStateDeleted++;
 			break;
 		default:
@@ -167,8 +167,8 @@ static void chat_room_message_ephemeral_deleted (LinphoneChatRoom *cr, const Lin
 	manager->stat.number_of_LinphoneChatRoomEphemeralDeleted++;
 }
 
-void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneConferenceState state) {
-	if (state == LinphoneConferenceStateInstantiated) {
+void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
+	if (state == LinphoneChatRoomStateInstantiated) {
 		LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 		linphone_chat_room_cbs_set_is_composing_received(cbs, chat_room_is_composing_received);
 		linphone_chat_room_cbs_set_participant_added(cbs, chat_room_participant_added);
