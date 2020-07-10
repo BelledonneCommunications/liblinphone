@@ -102,7 +102,7 @@ const char *linphone_core_get_lime_x3dh_server_url(LinphoneCore *lc) {
 
 //Deprecated
 const char *linphone_core_get_linphone_specs (const LinphoneCore *lc) {
-	return lp_config_get_string(linphone_core_get_config(lc), "sip", "linphone_specs", NULL);
+	return linphone_config_get_string(linphone_core_get_config(lc), "sip", "linphone_specs", NULL);
 }
 
 //Deprecated

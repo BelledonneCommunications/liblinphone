@@ -92,7 +92,7 @@ static void early_media_with_multicast_base(bool_t video) {
 	pauline2 = linphone_core_manager_new("pauline_tcp_rc");
 
 	marie_lp=linphone_core_get_config(marie->lc);
-	lp_config_set_int(marie_lp,"misc","real_early_media",1);
+	linphone_config_set_int(marie_lp,"misc","real_early_media",1);
 
 	if (video) {
 		linphone_core_enable_video_capture(pauline->lc, FALSE);

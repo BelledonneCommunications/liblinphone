@@ -96,7 +96,7 @@ void CorePrivate::iterateCalls (time_t currentRealTime, bool oneSecondElapsed) c
 void CorePrivate::notifySoundcardUsage (bool used) {
 	L_Q();
 	MSSndCard *card = q->getCCore()->sound_conf.capt_sndcard;
-	if (!!lp_config_get_int(linphone_core_get_config(q->getCCore()),"sound","usage_hint",1) && card && (ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW))
+	if (!!linphone_config_get_int(linphone_core_get_config(q->getCCore()),"sound","usage_hint",1) && card && (ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW))
 		ms_snd_card_set_usage_hint(card, used);
 }
 
@@ -228,8 +228,8 @@ void Core::soundcardHintCheck () {
 	}
 	// If no more calls or all calls are paused, we can free the soundcard
 	LinphoneConfig *config = linphone_core_get_config(L_GET_C_BACK_PTR(this));
-	bool useRtpIo = !!lp_config_get_int(config, "sound", "rtp_io", FALSE);
-	bool useRtpIoEnableLocalOutput = !!lp_config_get_int(config, "sound", "rtp_io_enable_local_output", FALSE);
+	bool useRtpIo = !!linphone_config_get_int(config, "sound", "rtp_io", FALSE);
+	bool useRtpIoEnableLocalOutput = !!linphone_config_get_int(config, "sound", "rtp_io_enable_local_output", FALSE);
 	
 	LinphoneConference *conf_ctx = getCCore()->conf_ctx;
 	if (conf_ctx && linphone_conference_get_size(conf_ctx) >= 1) return;

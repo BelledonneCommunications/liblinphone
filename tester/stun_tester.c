@@ -172,8 +172,8 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 		expected_ice_state = LinphoneIceStateRelayConnection;
 	}
 	if (rtcp_mux_enabled == TRUE) {
-		lp_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
 	}
 
 	linphone_core_manager_start(marie, TRUE);

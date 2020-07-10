@@ -57,10 +57,10 @@ int main(int argc, char *argv[]) {
 	ctx = xml2lpc_context_new(cb_function, NULL);
 	xml2lpc_set_xml_file(ctx, argv[2]);
 	if(strcmp("convert", argv[1]) == 0) {
-		LpConfig *lpc = lp_config_new(argv[3]);
+		LpConfig *lpc = linphone_config_new(argv[3]);
 		xml2lpc_convert(ctx, lpc);
-		lp_config_sync(lpc);
-		lp_config_destroy(lpc);
+		linphone_config_sync(lpc);
+		linphone_config_destroy(lpc);
 	} else if(strcmp("validate", argv[1]) == 0) {
 		xml2lpc_set_xsd_file(ctx, argv[3]);
 		xml2lpc_validate(ctx);

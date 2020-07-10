@@ -815,7 +815,7 @@ void ChatMessagePrivate::send () {
 	}
 
 	shared_ptr<Core> core = q->getCore();
-	if (lp_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
+	if (linphone_config_get_int(core->getCCore()->config, "sip", "chat_use_call_dialogs", 0) != 0) {
 		lcall = linphone_core_get_call_by_remote_address(core->getCCore(), toAddress.asString().c_str());
 		if (lcall) {
 			shared_ptr<Call> call = LinphonePrivate::Call::toCpp(lcall)->getSharedFromThis();
@@ -849,7 +849,7 @@ void ChatMessagePrivate::send () {
 		salOp = op = new SalMessageOp(core->getCCore()->sal);
 		linphone_configure_op_2(
 			core->getCCore(), op, local, peer, getSalCustomHeaders(),
-			!!lp_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
+			!!linphone_config_get_int(core->getCCore()->config, "sip", "chat_msg_with_contact", 0)
 		);
 		op->setUserPointer(q);     /* If out of call, directly store msg */
 		linphone_address_unref(local);
@@ -1384,7 +1384,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 
 	if (character == newLine || character == crlf || character == lf) {
 		shared_ptr<Core> core = getCore();
-		if (lp_config_get_int(core->getCCore()->config, "misc", "store_rtt_messages", 1) == 1) {
+		if (linphone_config_get_int(core->getCCore()->config, "misc", "store_rtt_messages", 1) == 1) {
 			lInfo() << "New line sent, forge a message with content " << d->rttMessage;
 			d->state = State::Displayed;
 			d->setText(d->rttMessage);

@@ -52,15 +52,15 @@ void AuthInfo::init(const string &username, const string &userid, const string &
 AuthInfo::AuthInfo(LpConfig *config, string key){
     const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *algo;
 
-    username = lp_config_get_string(config, key.c_str(), "username", "");
-    userid = lp_config_get_string(config, key.c_str(), "userid", "");
-    passwd = lp_config_get_string(config, key.c_str(), "passwd", "");
-    ha1 = lp_config_get_string(config, key.c_str(), "ha1", "");
-    realm = lp_config_get_string(config, key.c_str(), "realm", "");
-    domain = lp_config_get_string(config, key.c_str(), "domain", "");
-    tls_cert_path = lp_config_get_string(config, key.c_str(), "client_cert_chain", "");
-    tls_key_path = lp_config_get_string(config, key.c_str(), "client_cert_key", "");
-    algo = lp_config_get_string(config, key.c_str(), "algorithm", "");
+    username = linphone_config_get_string(config, key.c_str(), "username", "");
+    userid = linphone_config_get_string(config, key.c_str(), "userid", "");
+    passwd = linphone_config_get_string(config, key.c_str(), "passwd", "");
+    ha1 = linphone_config_get_string(config, key.c_str(), "ha1", "");
+    realm = linphone_config_get_string(config, key.c_str(), "realm", "");
+    domain = linphone_config_get_string(config, key.c_str(), "domain", "");
+    tls_cert_path = linphone_config_get_string(config, key.c_str(), "client_cert_chain", "");
+    tls_key_path = linphone_config_get_string(config, key.c_str(), "client_cert_key", "");
+    algo = linphone_config_get_string(config, key.c_str(), "algorithm", "");
 
     setTlsCertPath(tls_cert_path);
     setTlsKeyPath(tls_key_path);
@@ -197,12 +197,12 @@ void AuthInfo::setTlsKeyPath(const string &tlsKeyPath){
 void AuthInfo::writeConfig(LpConfig *config, int pos){
     char key[50];
     char *myHa1;
-    bool_t store_ha1_passwd = !!lp_config_get_int(config, "sip", "store_ha1_passwd", 1);
+    bool_t store_ha1_passwd = !!linphone_config_get_int(config, "sip", "store_ha1_passwd", 1);
 
     sprintf(key, "auth_info_%i", pos);
-    lp_config_clean_section(config, key);
+    linphone_config_clean_section(config, key);
 
-    if (lp_config_get_int(config, "sip", "store_auth_info", 1) == 0) {
+    if (linphone_config_get_int(config, "sip", "store_auth_info", 1) == 0) {
         return;
     }
     if ((getNeedToRenewHa1() || getHa1().empty()) && !getRealm().empty() && !getPassword().empty() && (!getUsername().empty() || !getUserid().empty()) && store_ha1_passwd) {
@@ -221,20 +221,20 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
             ms_free(myHa1);
         }
     }
-    lp_config_set_string(config, key, "username", getUsername().c_str());
-    lp_config_set_string(config, key, "userid", getUserid().c_str());
-    lp_config_set_string(config, key, "ha1", getHa1().c_str());
+    linphone_config_set_string(config, key, "username", getUsername().c_str());
+    linphone_config_set_string(config, key, "userid", getUserid().c_str());
+    linphone_config_set_string(config, key, "ha1", getHa1().c_str());
 
     if (store_ha1_passwd && !getHa1().empty()) {
         /*if we have our ha1 and store_ha1_passwd set to TRUE, then drop the clear text password for security*/
         setPassword("");
     }
-    lp_config_set_string(config, key, "passwd", getPassword().c_str());
-    lp_config_set_string(config, key, "realm", getRealm().c_str());
-    lp_config_set_string(config, key, "domain", getDomain().c_str());
-    lp_config_set_string(config, key, "client_cert_chain", getTlsCertPath().c_str());
-    lp_config_set_string(config, key, "client_cert_key", getTlsKeyPath().c_str());
-    lp_config_set_string(config, key, "algorithm",getAlgorithm().c_str());
+    linphone_config_set_string(config, key, "passwd", getPassword().c_str());
+    linphone_config_set_string(config, key, "realm", getRealm().c_str());
+    linphone_config_set_string(config, key, "domain", getDomain().c_str());
+    linphone_config_set_string(config, key, "client_cert_chain", getTlsCertPath().c_str());
+    linphone_config_set_string(config, key, "client_cert_key", getTlsKeyPath().c_str());
+    linphone_config_set_string(config, key, "algorithm",getAlgorithm().c_str());
 }
 
 std::string AuthInfo::toString() const{

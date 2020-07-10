@@ -341,11 +341,11 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 
 	if (chatMessage->getPrivate()->getContentType() == ContentType::ImIsComposing) {
 		onIsComposingReceived(chatMessage->getFromAddress(), chatMessage->getPrivate()->getText());
-		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
+		if (linphone_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
 			return;
 	} else if (chatMessage->getPrivate()->getContentType() == ContentType::Imdn) {
 		onImdnReceived(chatMessage);
-		if (lp_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
+		if (linphone_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
 			return;
 	}
 

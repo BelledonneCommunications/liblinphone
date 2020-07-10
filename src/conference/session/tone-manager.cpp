@@ -674,7 +674,7 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 		lc->ringstream = NULL;
 	}
 	if (lc->ringstream == NULL) {
-		float amp = lp_config_get_float(lc->config, "sound", "dtmf_player_amp", 0.1f);
+		float amp = linphone_config_get_float(lc->config, "sound", "dtmf_player_amp", 0.1f);
 		MSSndCard *ringcard = lc->sound_conf.lsd_card
 			? lc->sound_conf.lsd_card
 			: card

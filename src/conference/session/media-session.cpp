@@ -305,7 +305,7 @@ void MediaSessionPrivate::pauseForTransfer () {
 void MediaSessionPrivate::pausedByRemote () {
 	L_Q();
 	MediaSessionParams newParams(*getParams());
-	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
+	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 
@@ -430,7 +430,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
-		if (!rmd && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
+		if (!rmd && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
 			lInfo() << "Applying default policy for offering SDP on CallSession [" << q << "]";
 			setParams(new MediaSessionParams());
 			// Yes we init parameters as if we were in the case of an outgoing call, because it is a resume with no SDP.
@@ -565,7 +565,7 @@ void MediaSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool med
 	L_Q();
 	if (mediaNetworkReachable) {
 		LinphoneConfig *config = linphone_core_get_config(q->getCore()->getCCore());
-		if (lp_config_get_int(config, "net", "recreate_sockets_when_network_is_up", 0))
+		if (linphone_config_get_int(config, "net", "recreate_sockets_when_network_is_up", 0))
 			refreshSockets();
 	} else {
 		setBroken();
@@ -1019,7 +1019,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *
 			case CallSession::State::Paused:
 				if (sd->dir != SalStreamInactive) {
 					sd->dir = SalStreamSendOnly;
-					if ((sd->type == SalVideo) && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
+					if ((sd->type == SalVideo) && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 						sd->dir = SalStreamInactive;
 				}
 				break;
@@ -1121,7 +1121,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
-	bool rtcpMux = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
+	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
 
@@ -1349,8 +1349,8 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCrypto
 void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 	L_Q();
 	for (int i = 0; i < md->nb_streams; i++) {
-		md->streams[i].rtcp_fb.generic_nack_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
-		md->streams[i].rtcp_fb.tmmbr_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
+		md->streams[i].rtcp_fb.generic_nack_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
+		md->streams[i].rtcp_fb.tmmbr_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
 		md->streams[i].implicit_rtcp_fb = getParams()->getPrivate()->implicitRtcpFbEnabled();
 		for (const bctbx_list_t *it = md->streams[i].payloads; it != nullptr; it = bctbx_list_next(it)) {
 			OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
@@ -1370,9 +1370,9 @@ void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 
 void MediaSessionPrivate::setupRtcpXr (SalMediaDescription *md) {
 	L_Q();
-	md->rtcp_xr.enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_enabled", 1);
+	md->rtcp_xr.enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_enabled", 1);
 	if (md->rtcp_xr.enabled) {
-		const char *rcvr_rtt_mode = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_mode", "all");
+		const char *rcvr_rtt_mode = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_mode", "all");
 		if (strcasecmp(rcvr_rtt_mode, "all") == 0)
 			md->rtcp_xr.rcvr_rtt_mode = OrtpRtcpXrRcvrRttAll;
 		else if (strcasecmp(rcvr_rtt_mode, "sender") == 0)
@@ -1380,11 +1380,11 @@ void MediaSessionPrivate::setupRtcpXr (SalMediaDescription *md) {
 		else
 			md->rtcp_xr.rcvr_rtt_mode = OrtpRtcpXrRcvrRttNone;
 		if (md->rtcp_xr.rcvr_rtt_mode != OrtpRtcpXrRcvrRttNone)
-			md->rtcp_xr.rcvr_rtt_max_size = lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_max_size", 10000);
-		md->rtcp_xr.stat_summary_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_stat_summary_enabled", 1);
+			md->rtcp_xr.rcvr_rtt_max_size = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_max_size", 10000);
+		md->rtcp_xr.stat_summary_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_stat_summary_enabled", 1);
 		if (md->rtcp_xr.stat_summary_enabled)
 			md->rtcp_xr.stat_summary_flags = OrtpRtcpXrStatSummaryLoss | OrtpRtcpXrStatSummaryDup | OrtpRtcpXrStatSummaryJitt | OrtpRtcpXrStatSummaryTTL;
-		md->rtcp_xr.voip_metrics_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
+		md->rtcp_xr.voip_metrics_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
 	}
 	for (int i = 0; i < md->nb_streams; i++) {
 		memcpy(&md->streams[i].rtcp_xr, &md->rtcp_xr, sizeof(md->streams[i].rtcp_xr));
@@ -1410,7 +1410,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription
 void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
-	bool keepSrtpKeys = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
+	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	for (int i = 0; i < md->nb_streams; i++) {
 		if (sal_stream_description_has_srtp(&md->streams[i])) {
 			if (keepSrtpKeys && oldMd && sal_stream_description_enabled(&oldMd->streams[i]) && sal_stream_description_has_srtp(&oldMd->streams[i])) {
@@ -1727,7 +1727,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
-	bool proposeEarlyMedia = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
+	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
 	else
@@ -1976,7 +1976,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	L_Q();
 	SalMediaDescription *desc = op->getRemoteMediaDescription();
 
-	bool keepSdpVersion = !!lp_config_get_int(
+	bool keepSdpVersion = !!linphone_config_get_int(
 		linphone_core_get_config(q->getCore()->getCCore()),
 		"sip",
 		"keep_sdp_version",
@@ -2378,7 +2378,7 @@ LinphoneStatus MediaSession::sendDtmfs (const std::string &dtmfs) {
 		return -2;
 	}
 	if (!dtmfs.empty()) {
-		int delayMs = lp_config_get_int(linphone_core_get_config(getCore()->getCCore()), "net", "dtmf_delay_ms", 200);
+		int delayMs = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "net", "dtmf_delay_ms", 200);
 		if (delayMs < 0)
 			delayMs = 0;
 		d->dtmfSequence = dtmfs;

@@ -191,12 +191,12 @@ int linphone_run_stun_tests(LinphoneCore *lc, int audioPort, int videoPort, int 
 }
 
 int linphone_core_get_edge_bw(LinphoneCore *lc){
-	int edge_bw=lp_config_get_int(lc->config,"net","edge_bw",20);
+	int edge_bw=linphone_config_get_int(lc->config,"net","edge_bw",20);
 	return edge_bw;
 }
 
 int linphone_core_get_edge_ptime(LinphoneCore *lc){
-	int edge_ptime=lp_config_get_int(lc->config,"net","edge_ptime",100);
+	int edge_ptime=linphone_config_get_int(lc->config,"net","edge_ptime",100);
 	return edge_ptime;
 }
 
@@ -259,7 +259,7 @@ bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescr
 
 unsigned int linphone_core_get_audio_features(LinphoneCore *lc){
 	unsigned int ret=0;
-	const char *features=lp_config_get_string(lc->config,"sound","features",NULL);
+	const char *features=linphone_config_get_string(lc->config,"sound","features",NULL);
 	if (features){
 		char tmp[256]={0};
 		char name[256];
@@ -298,7 +298,7 @@ unsigned int linphone_core_get_audio_features(LinphoneCore *lc){
 }
 
 bool_t linphone_core_tone_indications_enabled(LinphoneCore*lc){
-	return !!lp_config_get_int(lc->config,"sound","tone_indications",1);
+	return !!linphone_config_get_int(lc->config,"sound","tone_indications",1);
 }
 
 int linphone_core_get_local_ip_for(int type, const char *dest, char *result){
@@ -462,11 +462,11 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
  * @ingroup media_parameters
 **/
 void linphone_core_set_video_display_filter(LinphoneCore *lc, const char *filter_name){
-	lp_config_set_string(lc->config,"video", "displaytype", filter_name);
+	linphone_config_set_string(lc->config,"video", "displaytype", filter_name);
 }
 
 const char *linphone_core_get_video_display_filter(LinphoneCore *lc){
-	return lp_config_get_string(lc->config, "video","displaytype", NULL);
+	return linphone_config_get_string(lc->config, "video","displaytype", NULL);
 }
 
 const char *linphone_core_get_default_video_display_filter(LinphoneCore *lc) {
@@ -478,14 +478,14 @@ bool_t linphone_core_is_media_filter_supported(LinphoneCore *lc, const char *fil
 }
 
 void linphone_core_set_echo_canceller_filter_name(LinphoneCore *lc, const char *filtername) {
-	lp_config_set_string(lc->config, "sound", "ec_filter", filtername);
+	linphone_config_set_string(lc->config, "sound", "ec_filter", filtername);
 	if (filtername != NULL) {
 		ms_factory_set_echo_canceller_filter_name(lc->factory, filtername);
 	}
 }
 
 const char * linphone_core_get_echo_canceller_filter_name(const LinphoneCore *lc) {
-	return lp_config_get_string(lc->config, "sound", "ec_filter", NULL);
+	return linphone_config_get_string(lc->config, "sound", "ec_filter", NULL);
 }
 
 /**
@@ -544,22 +544,22 @@ static void linphone_core_migrate_proxy_config(LinphoneCore *lc, LinphoneTranspo
 }
 
 LinphoneStatus linphone_core_migrate_to_multi_transport(LinphoneCore *lc){
-	if (!lp_config_get_int(lc->config,"sip","multi_transport_migration_done",0)){
+	if (!linphone_config_get_int(lc->config,"sip","multi_transport_migration_done",0)){
 		LinphoneTransportType tpt;
 		int port;
 		if (get_unique_transport(lc,&tpt,&port)==0){
 			LinphoneSipTransports newtp={0};
-			if (lp_config_get_int(lc->config,"sip","sip_random_port",0))
+			if (linphone_config_get_int(lc->config,"sip","sip_random_port",0))
 				port=-1;
 			ms_message("Core is using a single SIP transport, migrating proxy config and enabling multi-transport.");
 			linphone_core_migrate_proxy_config(lc,tpt);
 			newtp.udp_port=port;
 			newtp.tcp_port=port;
 			newtp.tls_port=LC_SIP_TRANSPORT_RANDOM;
-			lp_config_set_string(lc->config, "sip","sip_random_port",NULL); /*remove*/
+			linphone_config_set_string(lc->config, "sip","sip_random_port",NULL); /*remove*/
 			linphone_core_set_sip_transports(lc,&newtp);
 		}
-		lp_config_set_int(lc->config,"sip","multi_transport_migration_done",1);
+		linphone_config_set_int(lc->config,"sip","multi_transport_migration_done",1);
 		return 1;
 	}
 	return 0;
@@ -587,7 +587,7 @@ void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *aud
 }
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc){
-	const char *config= lp_config_get_string(lc->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
+	const char *config= linphone_config_get_string(lc->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
 	char *tmp=ms_strdup(config);
 
 	char *sep;
@@ -655,7 +655,7 @@ static char * seperate_string_list(char **str) {
 }
 
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]){
-	char * zrtpConfig = (char*)lp_config_get_string(lc->config, "sip", "zrtp_key_agreements_suites", NULL);
+	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_key_agreements_suites", NULL);
 	MsZrtpCryptoTypesCount key_agreements_count = 0;
 	char * entry, * origPtr;
 	if (zrtpConfig == NULL) {
@@ -677,7 +677,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore 
 }
 
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MSZrtpCipher ciphers[MS_MAX_ZRTP_CRYPTO_TYPES]){
-	char * zrtpConfig = (char*)lp_config_get_string(lc->config, "sip", "zrtp_cipher_suites", NULL);
+	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_cipher_suites", NULL);
 	MsZrtpCryptoTypesCount cipher_count = 0;
 	char * entry, * origPtr;
 	if (zrtpConfig == NULL) {
@@ -699,7 +699,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MS
 }
 
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZrtpHash hashes[MS_MAX_ZRTP_CRYPTO_TYPES]){
-	char * zrtpConfig = (char*)lp_config_get_string(lc->config, "sip", "zrtp_hash_suites", NULL);
+	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_hash_suites", NULL);
 	MsZrtpCryptoTypesCount hash_count = 0;
 	char * entry, * origPtr;
 	if (zrtpConfig == NULL) {
@@ -721,7 +721,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZr
 }
 
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_auth_suites(LinphoneCore *lc, MSZrtpAuthTag authTags[MS_MAX_ZRTP_CRYPTO_TYPES]){
-	char * zrtpConfig = (char*)lp_config_get_string(lc->config, "sip", "zrtp_auth_suites", NULL);
+	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_auth_suites", NULL);
 	MsZrtpCryptoTypesCount auth_tag_count = 0;
 	char * entry, * origPtr;
 	if (zrtpConfig == NULL) {
@@ -743,7 +743,7 @@ MsZrtpCryptoTypesCount linphone_core_get_zrtp_auth_suites(LinphoneCore *lc, MSZr
 }
 
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_sas_suites(LinphoneCore *lc, MSZrtpSasType sasTypes[MS_MAX_ZRTP_CRYPTO_TYPES]){
-	char * zrtpConfig = (char*)lp_config_get_string(lc->config, "sip", "zrtp_sas_suites", NULL);
+	char * zrtpConfig = (char*)linphone_config_get_string(lc->config, "sip", "zrtp_sas_suites", NULL);
 	MsZrtpCryptoTypesCount sas_count = 0;
 	char * entry, * origPtr;
 	if (zrtpConfig == NULL) {
@@ -798,7 +798,7 @@ bool_t linphone_core_symmetric_rtp_enabled(LinphoneCore*lc){
 	/* Clients don't really need rtp symmetric, unless they have a public IP address and want
 	 * to interoperate with natted client. This case is not frequent with client apps.
 	 */
-	return !!lp_config_get_int(lc->config,"rtp","symmetric",0);
+	return !!linphone_config_get_int(lc->config,"rtp","symmetric",0);
 }
 
 LinphoneStatus linphone_core_set_network_simulator_params(LinphoneCore *lc, const OrtpNetworkSimulatorParams *params){
