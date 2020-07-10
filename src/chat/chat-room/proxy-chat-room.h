@@ -86,6 +86,8 @@ public:
 	bool ephemeralSupportedByAllParticipants () const override;
 
 	const ConferenceAddress getConferenceAddress () const override;
+	std::shared_ptr<Conference> getConference () const override;
+	bool canHandleParticipants () const override;
 
 	void allowCpim (bool value) override;
 	void allowMultipart (bool value) override;

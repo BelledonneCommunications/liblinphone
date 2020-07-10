@@ -683,8 +683,8 @@ static void video_conference_by_merging_calls(void){
 	linphone_conference_params_unref(conf_params);
 	
 	/* She adds Pauline and Laure to the conference. */
-	linphone_conference_add_participant_with_call(conf, pauline_call);
-	linphone_conference_add_participant_with_call(conf, laure_call);
+	linphone_conference_add_participant(conf, pauline_call);
+	linphone_conference_add_participant(conf, laure_call);
 	
 	/* Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -1303,7 +1303,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		const LinphoneAddress *uri = linphone_call_get_remote_address(marie_call_pauline);
 		LinphoneParticipant * pauline_participant = linphone_conference_find_participant(conference, uri);
 		BC_ASSERT_PTR_NOT_NULL(pauline_participant);
-		linphone_conference_remove_participant(conference, pauline_participant);
+		linphone_conference_remove_participant_2(conference, pauline_participant);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,initial_pauline_stat.number_of_LinphoneCallEnd+2,5000));
 

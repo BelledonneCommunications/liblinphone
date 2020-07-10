@@ -49,6 +49,11 @@ ProxyChatRoom::ProxyChatRoom (ProxyChatRoomPrivate &p, const shared_ptr<ChatRoom
 
 // -----------------------------------------------------------------------------
 
+std::shared_ptr<Conference> ProxyChatRoom::getConference () const {
+	L_D();
+	return d->chatRoom->getConference();
+}
+
 const ConferenceId &ProxyChatRoom::getConferenceId () const {
 	L_D();
 	return d->chatRoom->getConferenceId();
@@ -382,5 +387,11 @@ void ProxyChatRoom::setState (ConferenceInterface::State state) {
 	L_D();
 	d->chatRoom->setState(state);
 }
+
+bool ProxyChatRoom::canHandleParticipants () const {
+	L_D();
+	return d->chatRoom->canHandleParticipants();
+}
+
 
 LINPHONE_END_NAMESPACE
