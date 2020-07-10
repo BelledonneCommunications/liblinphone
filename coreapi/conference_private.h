@@ -192,6 +192,7 @@ public:
 	virtual int terminate() override;
 	virtual void finalizeCreation() override;
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
+	virtual void setSubject (const std::string &subject) override;
 
 	virtual int enter() override;
 	virtual void leave() override;
