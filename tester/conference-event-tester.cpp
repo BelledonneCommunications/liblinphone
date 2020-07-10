@@ -1198,7 +1198,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 		int idx = 0;
 		for (bctbx_list_t *itm = other_participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(itm));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(other_participants_initial_stats[idx].number_of_NotifyReceived + 1),5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(other_participants_initial_stats[idx].number_of_NotifyReceived + 2),5000));
 			idx++;
 		}
 	}
@@ -1282,6 +1282,7 @@ void send_added_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
+		lcs = bctbx_list_remove(lcs, m->lc);
 		custom_mgr_destroy(m);
 	}
 
