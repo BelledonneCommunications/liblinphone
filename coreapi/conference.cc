@@ -570,6 +570,13 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	return ret;
 }
 
+/* ConferenceInterface */
+void LocalConference::setSubject (const std::string &subject) {
+	Conference::setSubject(subject);
+	time_t creationTime = time(nullptr);
+	notifySubjectChanged(creationTime, false, subject);
+}
+
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler->subscriptionStateChanged(event, state);
