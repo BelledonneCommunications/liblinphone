@@ -522,26 +522,22 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 			 * but it should contains all participants ideally.*/
 			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = *participants.begin();
-			std::shared_ptr<LinphonePrivate::CallSession> session = remaining_participant->getSession();
+			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 
-			CallSessionParams * params = const_cast<CallSessionParams *>(session->getParams());
-	//		const CallSessionParams * params = session->getParams();
-	//		CallSessionParams *currentParams = params->clone();
+			const MediaSessionParams * params = session->getMediaParams();
+			MediaSessionParams *currentParams = params->clone();
 			lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
 				" is our last call in our conference, we will reconnect directly to it.";
 
-			params->getPrivate()->setInConference(FALSE);
-	//		currentParams->getPrivate()->setInConference(FALSE);
+			currentParams->getPrivate()->setInConference(FALSE);
 			leave();
 			ms_message("Updating call to notify of conference removal.");
-	//		err = session->update(currentParams);
+			err = session->update(currentParams);
 			/* invoke removeParticipant() recursively to remove this last participant. */
-			//bool success = Conference::removeParticipant(remaining_participant->getAddress());
-			err = Conference::removeParticipant(remaining_participant->getAddress());
-			mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
+			bool success = Conference::removeParticipant(remaining_participant->getAddress());
+			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
 			setState(ConferenceInterface::State::TerminationPending);
-	//		return success;
-			return err;
+			return success;
 		} else if (getParticipantCount() == 0){
 			// We should never enter here
 			ms_error("Conference %p has still endpoints and no participants... Trying to end conference. %s will return an error", this, __func__);
