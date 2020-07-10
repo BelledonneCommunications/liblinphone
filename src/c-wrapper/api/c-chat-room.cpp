@@ -301,8 +301,8 @@ LinphoneChatMessage *linphone_chat_room_find_message (LinphoneChatRoom *cr, cons
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id));
 }
 
-LinphoneConferenceState linphone_chat_room_get_state (const LinphoneChatRoom *cr) {
-	return (LinphoneConferenceState)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getState();
+LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr) {
+	return (LinphoneChatRoomState)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getState();
 }
 
 bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *cr) {
@@ -331,6 +331,10 @@ LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
 	)->toC();
+}
+
+bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->canHandleParticipants();
 }
 
 LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities (const LinphoneChatRoom *cr) {
@@ -521,7 +525,7 @@ void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoo
 	NOTIFY_IF_EXIST(ParticipantAdminStatusChanged, participant_admin_status_changed, cr, event_log)
 }
 
-void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneConferenceState newState) {
+void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChatRoomState newState) {
 	NOTIFY_IF_EXIST(StateChanged, state_changed, cr, newState)
 }
 

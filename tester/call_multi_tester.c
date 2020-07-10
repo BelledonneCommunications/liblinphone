@@ -683,8 +683,8 @@ static void video_conference_by_merging_calls(void){
 	linphone_conference_params_unref(conf_params);
 	
 	/* She adds Pauline and Laure to the conference. */
-	linphone_conference_add_participant_with_call(conf, pauline_call);
-	linphone_conference_add_participant_with_call(conf, laure_call);
+	linphone_conference_add_participant(conf, pauline_call);
+	linphone_conference_add_participant(conf, laure_call);
 	
 	/* Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
