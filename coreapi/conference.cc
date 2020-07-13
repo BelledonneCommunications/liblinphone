@@ -114,12 +114,13 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteAddress, call->getActiveSession());
 	participants.push_back(p);
 
-	addParticipantDevice(call);
+	bool success = addParticipantDevice(call);
 
-	time_t creationTime = time(nullptr);
-	notifyParticipantAdded(creationTime, false, *remoteAddress);
-//	Conference::addParticipant(call);
-	return 0;
+	if (success) {
+		time_t creationTime = time(nullptr);
+		notifyParticipantAdded(creationTime, false, *remoteAddress);
+	}
+	return success;
 }
 
 bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
@@ -182,6 +183,15 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	if (!p)
 		return -1;
+printf("%s - iterating through devices\n", __func__);
+	// Delete all devices of a participant
+	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = p->getDevices().begin(); device != p->getDevices().end(); device++) {
+printf("%s - get devices %p\n", __func__, (*device).get());
+		const IdentityAddress & deviceAddress = (*device)->getAddress();
+		time_t creationTime = time(nullptr);
+		notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), deviceAddress);
+	}
+	p->clearDevices();
 	participants.remove(p);
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, addr);
