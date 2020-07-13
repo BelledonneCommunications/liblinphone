@@ -110,6 +110,7 @@ public:
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 	virtual int removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 	virtual int removeParticipant(const IdentityAddress &addr) = 0;
+	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) override;
 
 	virtual int terminate() = 0;
