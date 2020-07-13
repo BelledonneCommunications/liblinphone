@@ -283,6 +283,8 @@ private:
 	LinphoneCallCbs *mCurrentCbs = nullptr;
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
+
+	void removeFromConference(const Address & remoteContactAddress);
 	
 	void *mUserData = nullptr;
 };
