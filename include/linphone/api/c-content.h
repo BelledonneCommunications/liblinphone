@@ -111,7 +111,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const uint8_t *linphone_content_get_buffer (
 /**
  * Get the content data buffer, usually a string. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
- * @return The content data buffer.
+ * @return The content data buffer. @notnil
  */
 LINPHONE_PUBLIC const uint8_t *linphone_content_get_utf8_buffer (const LinphoneContent *content);
 
@@ -143,8 +143,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_content_get_string_buff
 /**
  * Get the string content data buffer. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
- * @return The string content data buffer in UTF8.
- * @maybenil
+ * @return The string content data buffer in UTF8. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_content_get_utf8_text(const LinphoneContent *content);
 
