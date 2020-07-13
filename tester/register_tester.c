@@ -1478,6 +1478,19 @@ static void register_with_specific_client_port(void){
 #endif
 }
 
+static void unreliable_channels_cleanup(void){
+	LinphoneCoreManager *lcm = linphone_core_manager_new2("pauline_tcp_rc", TRUE);
+	
+	BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 1, int, "%i");
+	/* wait 4 seconds */
+	wait_for_until(lcm->lc, lcm->lc, NULL, 0, 4000);
+	/* simulate a push notification to be received, in order to have the unreliable connection to be closed. */
+	linphone_core_ensure_registered(lcm->lc);
+	/* this should result in a new register to be done */
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &lcm->stat.number_of_LinphoneRegistrationOk, 2, 8000));
+	linphone_core_manager_destroy(lcm);	
+}
+
 
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
@@ -1532,7 +1545,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Register get GRUU", register_get_gruu),
 	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
 	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
-	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port)
+	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port),
+	TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
