@@ -1077,8 +1077,6 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 		expectedParticipants = (participantSize - 1);
 	}
 
-	BC_ASSERT_EQUAL(confListener->participants.size(), expectedParticipants, int, "%d");
-	BC_ASSERT_EQUAL(confListener->participantDevices.size(), expectedParticipants, int, "%d");
 	BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
 
 	// Other participants call should not have their state modified
@@ -1108,6 +1106,8 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 		}
 	}
 
+	BC_ASSERT_EQUAL(confListener->participants.size(), expectedParticipants, int, "%d");
+	BC_ASSERT_EQUAL(confListener->participantDevices.size(), expectedParticipants, int, "%d");
 }
 
 static void remove_head_participant_list_from_conference_through_call(bctbx_list_t **removed_mgrs, bctbx_list_t **participants_mgrs, bctbx_list_t *lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr) {
@@ -1154,12 +1154,19 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	BC_ASSERT_PTR_NOT_NULL(confCall);
 
 	if (pause_call) {
+
+		BC_ASSERT_TRUE(linphone_call_get_state(confCall) == LinphoneCallStreamsRunning);
+		BC_ASSERT_TRUE(linphone_call_get_state(participantCall) == LinphoneCallStreamsRunning);
 		// Conference pauses the call
 		linphone_call_pause(confCall);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(initial_conf_stats.number_of_LinphoneCallPaused + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(initial_participant_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
-	}
+	} else {
 
+		BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPausing);
+		BC_ASSERT_TRUE(linphone_call_get_state(confCall) != LinphoneCallPaused);
+		BC_ASSERT_TRUE(linphone_call_get_state(participantCall) != LinphoneCallPausedByRemote);
+	}
 
 	int participantSize = confListener->participants.size();
 	int participantDeviceSize = confListener->participantDevices.size();
@@ -1234,6 +1241,7 @@ LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bc
 
 	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file);
 	*lcs = bctbx_list_append(*lcs, mgr->lc);
+
 	add_participant_to_conference_through_call(mgrs, *lcs, confListener, conf, conf_mgr, mgr, pause_call);
 
 	return mgr;
@@ -1273,6 +1281,7 @@ void send_added_notify_through_call() {
 
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
+printf("%s - destroy manager %p rc %s - core size %0d\n", __func__, m, m->rc_path, (int)bctbx_list_size(lcs));
 		// Wait for all calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
@@ -1283,6 +1292,11 @@ void send_added_notify_through_call() {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
 		lcs = bctbx_list_remove(lcs, m->lc);
+
+	for (bctbx_list_t *it2 = lcs; it2; it2 = bctbx_list_next(it2)) {
+		LinphoneCore * c = reinterpret_cast<LinphoneCore *>(bctbx_list_get_data(it2));
+bctbx_warning("%s - searching core %p - current %p\n", __func__, m->lc, c);
+	}
 		custom_mgr_destroy(m);
 	}
 
@@ -1326,7 +1340,10 @@ void send_removed_notify_through_call() {
 
 	for (bctbx_list_t *it = removed_mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
-		linphone_call_terminate(linphone_core_get_current_call(m->lc));
+		LinphoneCall * call = linphone_core_get_current_call(m->lc);
+		if (call) {
+			linphone_call_terminate(call);
+		}
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 	}
