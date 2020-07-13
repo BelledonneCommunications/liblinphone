@@ -109,8 +109,7 @@ LINPHONE_PUBLIC void linphone_content_add_content_type_parameter (
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const uint8_t *linphone_content_get_buffer (const LinphoneContent *content);
 
 /**
- * Get the content data buffer, usually a string.
- * @date 2020-07-01.
+ * Get the content data buffer, usually a string. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
  * @return The content data buffer.
  */
@@ -126,8 +125,7 @@ LINPHONE_PUBLIC const uint8_t *linphone_content_get_utf8_buffer (const LinphoneC
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size);
 
 /**
- * Set the content data buffer, usually a string.
- * @date 2020-07-01.
+ * Set the content data buffer, usually a string. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
  * @param buffer The content data buffer in UTF8. @maybenil
  * @param size The size of the content data buffer.
@@ -143,8 +141,7 @@ LINPHONE_PUBLIC void linphone_content_set_utf8_buffer (LinphoneContent *content,
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_content_get_string_buffer (const LinphoneContent *content);
 
 /**
- * Get the string content data buffer.
- * @date 2020-07-01.
+ * Get the string content data buffer. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
  * @return The string content data buffer in UTF8.
  * @maybenil
@@ -160,8 +157,7 @@ LINPHONE_PUBLIC const char *linphone_content_get_utf8_text(const LinphoneContent
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_string_buffer (LinphoneContent *content, const char *buffer);
 
 /**
- * Get the string content data buffer.
- * @date 2020-07-01.
+ * Get the string content data buffer. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
  * @param The string content data buffer in UTF8. @maybenil
  */
