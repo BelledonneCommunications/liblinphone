@@ -212,6 +212,7 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	// - current state is not Deleted
 	// - current state is Deleted and trying to move to Instantiated state
 	if ((previousState != ConferenceInterface::State::Deleted) || ((previousState == ConferenceInterface::State::Deleted) && (state == ConferenceInterface::State::Instantiated))) {
+printf("%s Prevous state %s Next state %s\n", __func__, Utils::toString(getState()).c_str(), Utils::toString(state).c_str());
 		shared_ptr<Conference> ref = getSharedFromThis();
 		LinphonePrivate::Conference::setState(state);
 		// TODO Delete
@@ -550,7 +551,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	}
 
 	if ((getSize() == 0) && (getState() != ConferenceInterface::State::Deleted)) {
-		setState(ConferenceInterface::State::Terminated);
+		setState(ConferenceInterface::State::TerminationPending);
 	}
 	return err;
 }
@@ -966,7 +967,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 		case LinphoneCallEnd:
 			reset();
 			Conference::terminate();
-			setState(ConferenceInterface::State::Terminated);
+			setState(ConferenceInterface::State::TerminationPending);
 			break;
 		default:
 			break;
