@@ -46,28 +46,27 @@ LINPHONE_PUBLIC void linphone_headers_unref(LinphoneHeaders *obj);
 
 /**
  * Search for a given header name and return its value.
- * @param obj the #LinphoneHeaders object
- * @param name the header's name
- * @return the header's value or NULL if not found.
+ * @param headers the #LinphoneHeaders object @notnil
+ * @param name the header's name @notnil
+ * @return the header's value or NULL if not found. @maybenil
 **/
 
-LINPHONE_PUBLIC const char* linphone_headers_get_value(LinphoneHeaders *obj, const char *header_name);
-
-/**
- * Add given header name and corresponding value.
- * @param obj the #LinphoneHeaders object
- * @param name the header's name
- * @param the header's value
-**/
-LINPHONE_PUBLIC void linphone_headers_add(LinphoneHeaders *obj, const char *name, const char *value);
+LINPHONE_PUBLIC const char* linphone_headers_get_value(LinphoneHeaders *headers, const char *header_name);
 
 /**
  * Add given header name and corresponding value.
- * @param obj the #LinphoneHeaders object
- * @param name the header's name
- * @param the header's value
+ * @param headers the #LinphoneHeaders object @notnil
+ * @param name the header's name @notnil
+ * @param value the header's value @maybenil
 **/
-LINPHONE_PUBLIC void linphone_headers_remove(LinphoneHeaders *obj, const char *name);
+LINPHONE_PUBLIC void linphone_headers_add(LinphoneHeaders *headers, const char *name, const char *value);
+
+/**
+ * Add given header name and corresponding value.
+ * @param headers the #LinphoneHeaders object @notnil
+ * @param name the header's name @notnil
+**/
+LINPHONE_PUBLIC void linphone_headers_remove(LinphoneHeaders *headers, const char *name);
 
 
 /**

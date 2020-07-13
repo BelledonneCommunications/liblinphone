@@ -35,23 +35,31 @@
 
 /**
  * Constructs a #LinphoneParticipantDeviceIdentity object.
+ * @param address a #LinphoneAddress of the participant device @notnil
+ * @param name the name of the participant device @maybenil
+ * @return a new #LinphoneParticipantDeviceIdentity @maybenil
  **/
 LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (const LinphoneAddress *address, const char *name);
 
 /**
  * Clones a #LinphoneParticipantDeviceIdentity object.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @return a cloned #LinphoneParticipantDeviceIdentity object @notnil
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Increment reference count of #LinphoneParticipantDeviceIdentity object.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @return the same #LinphoneParticipantDeviceIdentity object @notnil
  **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * Decrement reference count of #LinphoneParticipantDeviceIdentity object. When dropped to zero, memory is freed.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  **/
-LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *deviceIdentity);
+LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
  * @}

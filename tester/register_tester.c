@@ -65,7 +65,6 @@ static void register_with_refresh_base_3_for_algo(
 	LinphoneRegistrationState expected_final_state,
 	const char* username
 ) {
-	char* addr;
 	LinphoneProxyConfig* proxy_cfg;
 	stats* counters;
 	LinphoneAddress *from;
@@ -84,8 +83,7 @@ static void register_with_refresh_base_3_for_algo(
 
 	from = create_linphone_address_for_algo(domain, username);
 
-	linphone_proxy_config_set_identity(proxy_cfg,addr=linphone_address_as_string(from));
-	ms_free(addr);
+	linphone_proxy_config_set_identity_address(proxy_cfg, from);
 	server_addr = linphone_address_get_domain(from);
 
 	linphone_proxy_config_enable_register(proxy_cfg,TRUE);
@@ -99,7 +97,7 @@ static void register_with_refresh_base_3_for_algo(
 	linphone_address_unref(from);
 
 	linphone_core_add_proxy_config(lc,proxy_cfg);
-	linphone_core_set_default_proxy(lc,proxy_cfg);
+	linphone_core_set_default_proxy_config(lc,proxy_cfg);
 
 	time_begin = bctbx_get_cur_time_ms();
 	while (counters->number_of_LinphoneRegistrationOk<1+(refresh!=0)
@@ -119,7 +117,7 @@ static void register_with_refresh_base_3_for_algo(
 		ms_usleep(20000);
 	}
 
-	BC_ASSERT_EQUAL(linphone_proxy_config_is_registered(proxy_cfg), expected_final_state == LinphoneRegistrationOk, int, "%d");
+	BC_ASSERT_EQUAL(linphone_proxy_config_get_state(proxy_cfg) == LinphoneRegistrationOk, expected_final_state == LinphoneRegistrationOk, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationNone,0, int, "%d");
 	BC_ASSERT_TRUE(counters->number_of_LinphoneRegistrationProgress>=1);
 	if (expected_final_state == LinphoneRegistrationOk) {
@@ -473,7 +471,6 @@ static void authenticated_register_with_provided_credentials(void){
 	LinphoneProxyConfig *cfg;
 	char route[256];
 	LinphoneAddress *from;
-	char *addr;
 	LinphoneAuthInfo *ai;
 
 	sprintf(route,"sip:%s",test_route);
@@ -484,8 +481,7 @@ static void authenticated_register_with_provided_credentials(void){
 	cfg = linphone_core_create_proxy_config(lcm->lc);
 	from = create_linphone_address(auth_domain);
 
-	linphone_proxy_config_set_identity(cfg, addr=linphone_address_as_string(from));
-	ms_free(addr);
+	linphone_proxy_config_set_identity_address(cfg, from);
 
 	linphone_proxy_config_enable_register(cfg,TRUE);
 	linphone_proxy_config_set_expires(cfg,1);
@@ -501,8 +497,8 @@ static void authenticated_register_with_provided_credentials(void){
 	BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&counters->number_of_LinphoneRegistrationOk,1));
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 
-	BC_ASSERT_PTR_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
-	BC_ASSERT_PTR_NOT_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
+	BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
 
 	linphone_proxy_config_unref(cfg);
 	linphone_core_manager_destroy(lcm);
@@ -515,10 +511,7 @@ static void authenticated_register_with_provided_credentials_and_username_with_s
 	const char *username = "test username";
 	LinphoneAddress *from = create_linphone_address_for_algo(auth_domain, username);
 
-	char *addr = linphone_address_as_string(from);
-	linphone_proxy_config_set_identity(cfg, addr);
-	ms_free(addr);
-
+	linphone_proxy_config_set_identity_address(cfg, from);
 	linphone_proxy_config_enable_register(cfg, TRUE);
 	linphone_proxy_config_set_expires(cfg, 1);
 	linphone_proxy_config_set_route(cfg, test_route);
@@ -533,8 +526,8 @@ static void authenticated_register_with_provided_credentials_and_username_with_s
 	BC_ASSERT_TRUE(wait_for(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 1));
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 0, int, "%d");
 
-	BC_ASSERT_PTR_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
-	BC_ASSERT_PTR_NOT_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
+	BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
 
 	linphone_proxy_config_unref(cfg);
 	linphone_core_manager_destroy(lcm);
@@ -1038,18 +1031,18 @@ static void tls_certificate_subject_check(void){
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc, rootcapath);
 		/*let's search for a subject that is not in the certificate, it should fail*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "cotcotcot.org");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "cotcotcot.org");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&lcm->stat.number_of_LinphoneRegistrationFailed,1));
 	
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "altname.linphone.org");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "altname.linphone.org");
 		linphone_core_refresh_registers(lcm->lc);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,1));
 		linphone_core_set_network_reachable(lc,FALSE);
 		
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,2));
 		
@@ -1190,8 +1183,8 @@ static void tls_auth_global_client_cert(void) {
 		char *key_path = bc_tester_res("certificates/client/key.pem");
 		linphone_core_manager_init(manager, "pauline_tls_client_rc", NULL);
 		lpc = linphone_core_get_config(manager->lc);
-		lp_config_set_string(lpc, "sip", "client_cert_chain", cert_path);
-		lp_config_set_string(lpc, "sip", "client_cert_key", key_path);
+		linphone_config_set_string(lpc, "sip", "client_cert_chain", cert_path);
+		linphone_config_set_string(lpc, "sip", "client_cert_key", key_path);
 		linphone_core_manager_start(manager, TRUE);
 		linphone_core_manager_destroy(manager);
 		bc_free(cert_path);
@@ -1386,7 +1379,6 @@ static void update_contact_private_ip_address(void) {
 	LinphoneProxyConfig *cfg;
 	char route[256];
 	LinphoneAddress *from;
-	char *addr;
 	LinphoneAuthInfo *ai;
 
 	sprintf(route,"sip:%s",test_route);
@@ -1402,9 +1394,7 @@ static void update_contact_private_ip_address(void) {
 	cfg = linphone_core_create_proxy_config(lcm->lc);
 	from = create_linphone_address(auth_domain);
 
-	linphone_proxy_config_set_identity(cfg, addr=linphone_address_as_string(from));
-	ms_free(addr);
-
+	linphone_proxy_config_set_identity_address(cfg, from);
 	linphone_proxy_config_enable_register(cfg, TRUE);
 	linphone_proxy_config_set_expires(cfg, 1);
 	linphone_proxy_config_set_route(cfg, test_route);
@@ -1438,8 +1428,7 @@ static void update_contact_private_ip_address(void) {
 	cfg = linphone_core_create_proxy_config(lcm->lc);
 	from = create_linphone_address(auth_domain);
 
-	linphone_proxy_config_set_identity(cfg, addr=linphone_address_as_string(from));
-	ms_free(addr);
+	linphone_proxy_config_set_identity_address(cfg, from);
 
 	linphone_proxy_config_enable_register(cfg, TRUE);
 	linphone_proxy_config_set_expires(cfg, 1);

@@ -424,7 +424,7 @@ void CallSessionPrivate::terminated () {
 
 void CallSessionPrivate::updated (bool isUpdate) {
 	L_Q();
-	deferUpdate = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "defer_update_default", FALSE);
+	deferUpdate = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "defer_update_default", FALSE);
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	switch (state) {
@@ -516,7 +516,7 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification () {
 	L_Q();
 	CallSession *replacedSession = nullptr;
-	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
+	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
 		if (op->getReplaces())
 			replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
 		if (replacedSession) {
@@ -836,7 +836,7 @@ void CallSessionPrivate::repairIfBroken () {
 	try {
 		LinphoneCore *lc = q->getCore()->getCCore();
 		LinphoneConfig *config = linphone_core_get_config(lc);
-		if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
+		if (!linphone_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
 			return;
 	} catch (const bad_weak_ptr &) {
 		return; // Cannot repair if core is destroyed.
@@ -997,7 +997,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		d->op = op;
 		d->op->setUserPointer(this);
 		op->enableCnxIpTo0000IfSendOnly(
-			!!lp_config_get_default_int(
+			!!linphone_config_get_default_int(
 				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
@@ -1339,7 +1339,7 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 const Address& CallSession::getLocalAddress () const {
 	L_D();
 	return *L_GET_CPP_PTR_FROM_C_OBJECT((d->direction == LinphoneCallIncoming)
-		? linphone_call_log_get_to(d->log) : linphone_call_log_get_from(d->log));
+		? linphone_call_log_get_to_address(d->log) : linphone_call_log_get_from_address(d->log));
 }
 
 LinphoneCallLog * CallSession::getLog () const {
@@ -1364,7 +1364,7 @@ const string &CallSession::getReferTo () const {
 const Address *CallSession::getRemoteAddress () const {
 	L_D();
 	const LinphoneAddress *address = (d->direction == LinphoneCallIncoming)
-	? linphone_call_log_get_from(d->log) : linphone_call_log_get_to(d->log);
+	? linphone_call_log_get_from_address(d->log) : linphone_call_log_get_to_address(d->log);
 	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
@@ -1420,7 +1420,7 @@ CallSession::State CallSession::getPreviousState () const {
 
 const Address& CallSession::getToAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to(d->log));
+	return *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log));
 }
 
 CallSession::State CallSession::getTransferState () const {

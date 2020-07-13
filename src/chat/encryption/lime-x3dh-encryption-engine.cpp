@@ -555,7 +555,7 @@ void LimeX3dhEncryptionEngine::update () {
 
 	LinphoneConfig *lpconfig = linphone_core_get_config(getCore()->getCCore());
 	limeManager->update(callback);
-	lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
+	linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 }
 
 bool LimeX3dhEncryptionEngine::isEncryptionEnabledForFileTransfer (const shared_ptr<AbstractChatRoom> &chatRoom) {
@@ -572,8 +572,9 @@ void LimeX3dhEncryptionEngine::generateFileTransferKey (
 ) {
 	char keyBuffer [FILE_TRANSFER_KEY_SIZE];// temporary storage of generated key: 192 bits of key + 64 bits of initial vector
 	// generate a random 192 bits key + 64 bits of initial vector and store it into the file_transfer_information->key field of the msg
-    sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
+	sal_get_random_bytes((unsigned char *)keyBuffer, FILE_TRANSFER_KEY_SIZE);
 	fileTransferContent->setFileKey(keyBuffer, FILE_TRANSFER_KEY_SIZE);
+	bctbx_clean(keyBuffer, FILE_TRANSFER_KEY_SIZE);
 }
 
 int LimeX3dhEncryptionEngine::downloadingFile (
@@ -876,7 +877,7 @@ void LimeX3dhEncryptionEngine::authenticationRejected (
 
 	// Set peer device to untrusted or unsafe depending on configuration
 	LinphoneConfig *lp_config = linphone_core_get_config(getCore()->getCCore());
-	lime::PeerDeviceStatus statusIfSASrefused = lp_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 0) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
+	lime::PeerDeviceStatus statusIfSASrefused = linphone_config_get_int(lp_config, "lime", "unsafe_if_sas_refused", 0) ? lime::PeerDeviceStatus::unsafe : lime::PeerDeviceStatus::untrusted;
 	if (statusIfSASrefused == lime::PeerDeviceStatus::unsafe) {
 		addSecurityEventInChatrooms(peerDeviceAddr, ConferenceSecurityEvent::SecurityEventType::ManInTheMiddleDetected);
 	}
@@ -1001,13 +1002,13 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		} else {
 			limeManager->set_x3dhServerUrl(localDeviceId,x3dhServerUrl);
 			// update keys if necessary
-			int limeUpdateThreshold = lp_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
+			int limeUpdateThreshold = linphone_config_get_int(lpconfig, "lime", "lime_update_threshold", 86400); // 24 hours = 86400 s
 			if (ms_time(NULL) - lastLimeUpdate > limeUpdateThreshold) {
 				update();
 				lastLimeUpdate = ms_time(NULL);
 			}
 		}
-		lp_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
+		linphone_config_set_int(lpconfig, "lime", "last_update_time", (int)lastLimeUpdate);
 	} catch (const exception &e) {
 		lError()<< "[LIME] user for id [" << localDeviceId<<"] cannot be created" << e.what();
 	}

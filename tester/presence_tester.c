@@ -139,7 +139,7 @@ static void simple_subscribe_with_early_notify(void) {
 	LinphoneFriend* marie_s_friend=linphone_core_create_friend_with_address(marie->lc,pauline_identity);
 
 	pauline_lp = linphone_core_get_config(pauline->lc);
-	lp_config_set_int(pauline_lp,"sip","notify_pending_state",1);
+	linphone_config_set_int(pauline_lp,"sip","notify_pending_state",1);
 
 	linphone_friend_edit(marie_s_friend);
 	linphone_friend_enable_subscribes(marie_s_friend,TRUE);
@@ -351,7 +351,7 @@ static void subscribe_presence_expired(void){
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline1->lc);
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 10);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "subscribe_expires", 10);
 
 	lf = linphone_core_create_friend(marie->lc);
 	linphone_friend_set_address(lf, pauline1->identity);

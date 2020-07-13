@@ -72,12 +72,12 @@ static void add_tls_client_certificate(LinphoneCore *lc, const std::string &user
 		case certProvider::config_sip:
 			if (!cert.empty()) {
 				char *cert_path = bc_tester_res(cert.data());
-				lp_config_set_string(linphone_core_get_config(lc), "sip", "client_cert_chain", cert_path);
+				linphone_config_set_string(linphone_core_get_config(lc), "sip", "client_cert_chain", cert_path);
 				bc_free(cert_path);
 			}
 			if (!key.empty()) {
 				char *key_path = bc_tester_res(key.data());
-				lp_config_set_string(linphone_core_get_config(lc), "sip", "client_cert_key", key_path);
+				linphone_config_set_string(linphone_core_get_config(lc), "sip", "client_cert_key", key_path);
 				bc_free(key_path);
 			}
 			break;

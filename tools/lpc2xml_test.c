@@ -53,19 +53,19 @@ int main(int argc, char *argv[]) {
 		return -1;
 	}
 
-	lpc = lp_config_new(argv[2]);
+	lpc = linphone_config_new(argv[2]);
 	if(strcmp("convert", argv[1]) == 0 && argc == 4) {
 		ctx = lpc2xml_context_new(cb_function, NULL);
 		lpc2xml_set_lpc(ctx, lpc);
 		lpc2xml_convert_file(ctx, argv[3]);
 		lpc2xml_context_destroy(ctx);
 	} else if (strcmp("dump", argv[1]) == 0 && argc == 3) {
-		char *dump = lp_config_dump_as_xml(lpc);
+		char *dump = linphone_config_dump_as_xml(lpc);
 		fprintf(stdout, "%s", dump);
 	} else {
 		show_usage(argc, argv);
 	}
-	lp_config_destroy(lpc);
+	linphone_config_destroy(lpc);
 	return 0;
 }
 

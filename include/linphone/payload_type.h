@@ -34,141 +34,145 @@ extern "C" {
 
 /**
  * Take a reference on a #LinphonePayloadType.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return the same #LinphonePayloadType object @notnil
  */
-LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_ref(LinphonePayloadType *pt);
+LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_ref(LinphonePayloadType *payload_type);
 
 /**
  * Release a reference on a #LinphonePayloadType.
+ * @param payload_type the #LinphonePayloadType object @notnil
  */
-LINPHONE_PUBLIC void linphone_payload_type_unref(LinphonePayloadType *pt);
+LINPHONE_PUBLIC void linphone_payload_type_unref(LinphonePayloadType *payload_type);
 
 /**
  * Get the type of a payload type.
- * @param[in] pt The payload type.
+ * @param payload_type The payload type. @notnil
  * @return The type of the payload e.g. PAYLOAD_AUDIO_CONTINUOUS or PAYLOAD_VIDEO.
  */
-LINPHONE_PUBLIC int linphone_payload_type_get_type(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC int linphone_payload_type_get_type(const LinphonePayloadType *payload_type);
 
 /**
  * Enable/disable a payload type.
- * @param[in] pt The payload type to enable/disable.
- * @param[in] enabled Set TRUE for enabling and FALSE for disabling.
+ * @param payload_type The payload type to enable/disable. @notnil
+ * @param enabled Set TRUE for enabling and FALSE for disabling.
  * @return 0 for success, -1 for failure.
  */
-LINPHONE_PUBLIC int linphone_payload_type_enable(LinphonePayloadType *pt, bool_t enabled);
+LINPHONE_PUBLIC int linphone_payload_type_enable(LinphonePayloadType *payload_type, bool_t enabled);
 
 /**
  * Check whether a palyoad type is enabled.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return TRUE if enabled, FALSE if disabled.
  */
-LINPHONE_PUBLIC bool_t linphone_payload_type_enabled(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC bool_t linphone_payload_type_enabled(const LinphonePayloadType *payload_type);
 
 /**
  * Return a string describing a payload type. The format of the string is
  * &lt;mime_type&gt;/&lt;clock_rate&gt;/&lt;channels&gt;.
- * @param[in] pt The payload type.
- * @return The description of the payload type. Must be release after use.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The description of the payload type. Must be release after use. @notnil
  */
-LINPHONE_PUBLIC char *linphone_payload_type_get_description(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC char *linphone_payload_type_get_description(const LinphonePayloadType *payload_type);
 
 /**
  * Get a description of the encoder used to provide a payload type.
- * @param[in] pt The payload type.
- * @return The description of the encoder. Can be NULL if the payload type is not supported by Mediastreamer2.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The description of the encoder. Can be NULL if the payload type is not supported by Mediastreamer2. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_payload_type_get_encoder_description(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC const char *linphone_payload_type_get_encoder_description(const LinphonePayloadType *payload_type);
 
 /**
  * Get the normal bitrate in bits/s.
- * @param[in] pt The payload type.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return The normal bitrate in bits/s or -1 if an error has occured.
  */
-LINPHONE_PUBLIC int linphone_payload_type_get_normal_bitrate(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC int linphone_payload_type_get_normal_bitrate(const LinphonePayloadType *payload_type);
 
 /**
  * Change the normal bitrate of a payload type..
- * @param[in] pt The payload type to change.
- * @param[in] bitrate The new bitrate in bits/s.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @param bitrate The new bitrate in bits/s.
  */
-LINPHONE_PUBLIC void linphone_payload_type_set_normal_bitrate(LinphonePayloadType *pt, int bitrate);
+LINPHONE_PUBLIC void linphone_payload_type_set_normal_bitrate(LinphonePayloadType *payload_type, int bitrate);
 
 /**
  * Get the mime type.
- * @param[in] pt The payload type.
- * @return The mime type.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The mime type. @notnil
  */
-LINPHONE_PUBLIC const char * linphone_payload_type_get_mime_type(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC const char * linphone_payload_type_get_mime_type(const LinphonePayloadType *payload_type);
 
 /**
  * Get the number of channels.
- * @param[in] pt The payload type.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return The number of channels.
  */
-LINPHONE_PUBLIC int linphone_payload_type_get_channels(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC int linphone_payload_type_get_channels(const LinphonePayloadType *payload_type);
 
 /**
  * Returns the payload type number assigned for this codec.
- * @param[in] pt The payload type.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return The number of the payload type.
 **/
-LINPHONE_PUBLIC int linphone_payload_type_get_number(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC int linphone_payload_type_get_number(const LinphonePayloadType *payload_type);
 
 /**
  * Force a number for a payload type. The #LinphoneCore does payload type number assignment automatically.
  * This function is mainly to be used for tests, in order to override the automatic assignment mechanism.
- * @param[in] pt The payload type.
- * @param[in] number The number to assign to the payload type.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @param number The number to assign to the payload type.
 **/
-LINPHONE_PUBLIC void linphone_payload_type_set_number(LinphonePayloadType *pt, int number);
+LINPHONE_PUBLIC void linphone_payload_type_set_number(LinphonePayloadType *payload_type, int number);
 
 /**
  * Get the format parameters for incoming streams.
- * @param[in] pt The payload type.
- * @return The format parameters as string.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The format parameters as string. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_payload_type_get_recv_fmtp(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC const char *linphone_payload_type_get_recv_fmtp(const LinphonePayloadType *payload_type);
 
 /**
  * Set the format parameters for incoming streams.
- * @param[in] pt The payload type.
- * @param[in] recv_fmtp The new format parameters as string. The string will be copied.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @param recv_fmtp The new format parameters as string. The string will be copied. @maybenil
  */
-LINPHONE_PUBLIC void linphone_payload_type_set_recv_fmtp(LinphonePayloadType *pt, const char *recv_fmtp);
+LINPHONE_PUBLIC void linphone_payload_type_set_recv_fmtp(LinphonePayloadType *payload_type, const char *recv_fmtp);
 
 /**
  * Get the format parameters for outgoing streams.
- * @param[in] pt The payload type.
- * @return The format parameters as string.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The format parameters as string. @maybenil
  */
-LINPHONE_PUBLIC const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *payload_type);
 
 /**
  * Set the format parameters for outgoing streams.
- * @param[in] pt The payload type.
- * @param[in] send_fmtp The new format parameters as string. The string will be copied.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @param send_fmtp The new format parameters as string. The string will be copied. @maybenil
  */
-LINPHONE_PUBLIC void linphone_payload_type_set_send_fmtp(LinphonePayloadType *pt, const char *send_fmtp);
+LINPHONE_PUBLIC void linphone_payload_type_set_send_fmtp(LinphonePayloadType *payload_type, const char *send_fmtp);
 
 /**
  * Get the clock rate of a payload type.
- * @param[in] pt The payload type.
- * @return[in] The clock rate in Hz.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The clock rate in Hz.
  */
-LINPHONE_PUBLIC int linphone_payload_type_get_clock_rate(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC int linphone_payload_type_get_clock_rate(const LinphonePayloadType *payload_type);
 
 /**
  * Tells whether the specified payload type represents a variable bitrate codec.
- * @param[in] pt The payload type.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return TRUE if the payload type represents a VBR codec, FALSE instead.
  */
-LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *payload_type);
 
 /**
  * Check whether the payload is usable according the bandwidth targets set in the core.
- * @param[in] pt The payload type to test.
+ * @param payload_type the #LinphonePayloadType object @notnil
  * @return TRUE if the payload type is usable.
  */
-LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *pt);
+LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type);
 
 
 #ifdef __cplusplus

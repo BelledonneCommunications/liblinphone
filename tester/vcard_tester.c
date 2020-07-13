@@ -123,7 +123,7 @@ static void linphone_vcard_import_a_lot_of_friends_test(void) {
 #endif
 
 static void linphone_vcard_update_existing_friends_test(void) {
-	LinphoneFriend *lf = linphone_friend_new_with_addr("sip:oldfriend@sip.linphone.org");
+	LinphoneFriend *lf = linphone_friend_new_with_address("sip:oldfriend@sip.linphone.org");
 
 	BC_ASSERT_PTR_NOT_NULL(lf);
 	if (linphone_core_vcard_supported()) {

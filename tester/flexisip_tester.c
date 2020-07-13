@@ -566,8 +566,8 @@ static void call_forking_with_push_notification_double_contact(void){
 	int dummy=0;
 
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "unregister_previous_contact", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
 	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
 	linphone_proxy_config_set_contact_uri_parameters(
@@ -1116,7 +1116,7 @@ static void test_subscribe_notify_with_sipp_publisher(void) {
 
 	ms_free(lf_identity);
 
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",5);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -1158,7 +1158,7 @@ static void test_subscribe_notify_with_sipp_publisher_double_publish(void) {
 	char* lf_identity=linphone_address_as_string_uri_only(marie->identity);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 	ms_free(lf_identity);
-	lp_config_set_int(pauline_lp,"sip","subscribe_expires",5);
+	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
 
 	linphone_core_add_friend(pauline->lc,lf);
 
@@ -1411,7 +1411,9 @@ static void tls_client_auth_try_register(const char *identity, LinphoneCoreAuthe
 
 	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_enable_register(cfg, TRUE);
-	linphone_proxy_config_set_identity(cfg, identity);
+	LinphoneAddress *addr = linphone_address_new(identity);
+	linphone_proxy_config_set_identity_address(cfg, addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_core_add_proxy_config(lcm->lc, cfg);
 	if (must_work){
 		BC_ASSERT_TRUE(wait_for(lcm->lc, NULL, &lcm->stat.number_of_LinphoneRegistrationOk, 1));
@@ -1486,11 +1488,11 @@ void transcoder_tester(void) {
 	disable_all_audio_codecs_except_one(pauline->lc,"pcma",-1);
 
 	/*caller uses files instead of soundcard in order to avoid mixing soundcard input with file played using call's player*/
-	linphone_core_use_files(marie->lc,TRUE);
+	linphone_core_set_use_files(marie->lc,TRUE);
 	linphone_core_set_play_file(marie->lc,NULL);
 
 	/*callee is recording and plays file*/
-	linphone_core_use_files(pauline->lc,TRUE);
+	linphone_core_set_use_files(pauline->lc,TRUE);
 	linphone_core_set_play_file(pauline->lc,NULL);
 	linphone_core_set_record_file(pauline->lc,recordpath);
 
@@ -1550,7 +1552,7 @@ static void test_removing_old_tport(void) {
 
 	LinphoneCoreManager *marie2 = linphone_core_manager_create("marie_rc");
 	const char *uuid = linphone_config_get_string(linphone_core_get_config(marie1->lc), "misc", "uuid", "0");
-	lp_config_set_string(linphone_core_get_config(marie2->lc), "misc", "uuid", uuid);
+	linphone_config_set_string(linphone_core_get_config(marie2->lc), "misc", "uuid", uuid);
 	linphone_core_manager_start(marie2, TRUE);
 	lcs = bctbx_list_append(lcs, marie2->lc);
 	linphone_core_refresh_registers(marie2->lc);
@@ -2058,7 +2060,9 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	linphone_proxy_config_set_server_addr(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_set_route(cfg, "sip:sip2.linphone.org:5063;transport=tls");
 	linphone_proxy_config_enable_register(cfg, TRUE);
-	linphone_proxy_config_set_identity(cfg, "sip:gandalf@sip.example.org");
+	LinphoneAddress *addr = linphone_address_new("sip:gandalf@sip.example.org");
+	linphone_proxy_config_set_identity_address(cfg, addr);
+	if (addr) linphone_address_unref(addr);
 	linphone_core_add_proxy_config(gandalf->lc, cfg);
 
 	BC_ASSERT_TRUE(wait_for(gandalf->lc, NULL, &gandalf->stat.number_of_LinphoneRegistrationOk, 1));

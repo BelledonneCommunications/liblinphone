@@ -78,7 +78,7 @@ int main(int argc, char *argv[]){
 	LinphoneAddress *addr=NULL;
 	LCSipTransports tp;
 	char * tmp = NULL;
-	LpConfig * lp_config = lp_config_new(NULL);
+	LpConfig * lp_config = linphone_config_new(NULL);
 	int max_call_duration=3600;
 	static const char *media_file = NULL;
 
@@ -122,9 +122,9 @@ int main(int argc, char *argv[]){
 		addr = linphone_address_new("sip:bot@0.0.0.0:5060");
 	}
 
-	lp_config_set_string(lp_config,"sip","bind_address",linphone_address_get_domain(addr));
-	lp_config_set_string(lp_config,"rtp","bind_address",linphone_address_get_domain(addr));
-	lp_config_set_int(lp_config,"misc","history_max_size",100000);
+	linphone_config_set_string(lp_config,"sip","bind_address",linphone_address_get_domain(addr));
+	linphone_config_set_string(lp_config,"rtp","bind_address",linphone_address_get_domain(addr));
+	linphone_config_set_int(lp_config,"misc","history_max_size",100000);
 
 	vtable.call_state_changed=call_state_changed;
 

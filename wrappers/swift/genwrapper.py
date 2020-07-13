@@ -412,7 +412,7 @@ class SwiftTranslator(object):
 
         methodDict['property_name'] = name
         methodDict['func_name'] = "set" + name.capitalize()
-        methodDict['has_property'] = True
+
         methodDict['has_getter'] = False
         methodDict['has_setter'] = True
         namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
@@ -454,6 +454,7 @@ class SwiftTranslator(object):
 
         methodDict['has_setter'] = True
         methodDict['has_getter'] = True
+        methodDict['has_property'] = True
         methodDict['exception'] = methodDictSet['exception']
         methodDict['setter_c_name'] = methodDictSet['setter_c_name']
         methodDict['enum_type'] = methodDictSet['enum_type']

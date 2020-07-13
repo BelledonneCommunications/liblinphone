@@ -36,7 +36,7 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneImNotifPolicy, belle_sip_object_t,
 static void load_im_notif_policy_from_config(LinphoneImNotifPolicy *policy) {
 #ifdef HAVE_ADVANCED_IM
 	bctbx_list_t *default_list = bctbx_list_append(NULL, (void *)"all");
-	bctbx_list_t *values = lp_config_get_string_list(policy->lc->config, "sip", "im_notif_policy", default_list);
+	bctbx_list_t *values = linphone_config_get_string_list(policy->lc->config, "sip", "im_notif_policy", default_list);
 	bctbx_list_t *elem;
 
 	for (elem = values; elem != NULL; elem = bctbx_list_next(elem)) {
@@ -114,7 +114,7 @@ static void save_im_notif_policy_to_config(LinphoneImNotifPolicy *policy) {
 		if (policy->recv_imdn_displayed == TRUE)
 			values = bctbx_list_append(values, (void *)"recv_imdn_displayed");
 	}
-	lp_config_set_string_list(policy->lc->config, "sip", "im_notif_policy", values);
+	linphone_config_set_string_list(policy->lc->config, "sip", "im_notif_policy", values);
 	if (values != NULL) bctbx_list_free(values);
 #endif
 }

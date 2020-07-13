@@ -39,31 +39,34 @@
 
 /**
  * Increment reference count of #LinphoneEventLog object.
+ * @param event_log A #LinphoneEventLog object @notnil
+ * @return the same #LinphoneEventLog object @notnil
  **/
 LINPHONE_PUBLIC LinphoneEventLog *linphone_event_log_ref (LinphoneEventLog *event_log);
 
 /**
  * Decrement reference count of #LinphoneEventLog object. When dropped to zero, memory is freed.
+ * @param event_log A #LinphoneEventLog object @notnil
  **/
 LINPHONE_PUBLIC void linphone_event_log_unref (LinphoneEventLog *event_log);
 
 /**
  * Returns the type of a event log.
- * @param[in] event_log A #LinphoneEventLog object
- * @return The event type
+ * @param event_log A #LinphoneEventLog object @notnil
+ * @return The #LinphoneEventLogType type
  */
 LINPHONE_PUBLIC LinphoneEventLogType linphone_event_log_get_type (const LinphoneEventLog *event_log);
 
 /**
  * Returns the creation time of a event log.
- * @param[in] event_log A #LinphoneEventLog object
+ * @param event_log A #LinphoneEventLog object @notnil
  * @return The event creation time
  */
 LINPHONE_PUBLIC time_t linphone_event_log_get_creation_time (const LinphoneEventLog *event_log);
 
 /**
  * Delete event log from database.
- * @param[in] event_log A #LinphoneEventLog object
+ * @param event_log A #LinphoneEventLog object @notnil
  */
 LINPHONE_PUBLIC void linphone_event_log_delete_from_database (LinphoneEventLog *event_log);
 
@@ -73,15 +76,15 @@ LINPHONE_PUBLIC void linphone_event_log_delete_from_database (LinphoneEventLog *
 
 /**
  * Returns the peer address of a conference event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The peer address.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The peer #LinphoneAddress. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_peer_address (const LinphoneEventLog *event_log);
 
 /**
  * Returns the local address of a conference event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The local address.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The local #LinphoneAddress. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEventLog *event_log);
 
@@ -91,7 +94,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_local_address (con
 
 /**
  * Returns the notify id of a conference notified event.
- * @param[in] event_log A #LinphoneEventLog object.
+ * @param event_log A #LinphoneEventLog object. @notnil
  * @return The conference notify id.
  */
 LINPHONE_PUBLIC unsigned int linphone_event_log_get_notify_id (const LinphoneEventLog *event_log);
@@ -102,8 +105,8 @@ LINPHONE_PUBLIC unsigned int linphone_event_log_get_notify_id (const LinphoneEve
 
 /**
  * Returns the call of a conference call event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The conference call.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The conference #LinphoneCall. @maybenil
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_event_log_get_call (const LinphoneEventLog *event_log);
 
@@ -113,8 +116,8 @@ LINPHONE_PUBLIC LinphoneCall *linphone_event_log_get_call (const LinphoneEventLo
 
 /**
  * Returns the chat message of a conference chat message event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The conference chat message.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The conference #LinphoneChatMessage. @maybenil
  */
 LINPHONE_PUBLIC LinphoneChatMessage *linphone_event_log_get_chat_message (const LinphoneEventLog *event_log);
 
@@ -124,8 +127,8 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_event_log_get_chat_message (const 
 
 /**
  * Returns the participant address of a conference participant event.
- * @param[in] event_log A ConferenceParticipantEvent object.
- * @return The conference participant address.
+ * @param event_log A ConferenceParticipantEvent object. @notnil
+ * @return The conference participant #LinphoneAddress. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_participant_address (const LinphoneEventLog *event_log);
 
@@ -135,8 +138,8 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_participant_addres
 
 /**
  * Returns the device address of a conference participant device event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The conference device address.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The conference device #LinphoneAddress. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEventLog *event_log);
 
@@ -146,15 +149,15 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_log_get_device_address (co
 
 /**
  * Returns the type of security event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The security event type.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The #LinphoneSecurityEventType type.
  */
 LINPHONE_PUBLIC LinphoneSecurityEventType linphone_event_log_get_security_event_type (const LinphoneEventLog *event_log);
 
 /**
  * Returns the faulty device address of a conference security event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The address of the faulty device.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The #LinphoneAddress of the faulty device. @maybenil
  */
 LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_device_address (const LinphoneEventLog *event_log);
 
@@ -164,8 +167,8 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_de
 
 /**
  * Returns the subject of a conference subject event.
- * @param[in] event_log A #LinphoneEventLog object.
- * @return The conference subject.
+ * @param event_log A #LinphoneEventLog object. @notnil
+ * @return The conference subject. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventLog *event_log);
 
@@ -176,7 +179,7 @@ LINPHONE_PUBLIC const char *linphone_event_log_get_subject (const LinphoneEventL
 /**
  * Returns the ephemeral message lifetime of a conference ephemeral message event.
  * Ephemeral lifetime means the time before an ephemeral message which has been viewed gets deleted.
- * @param[in] event_log A #LinphoneEventLog object.
+ * @param event_log A #LinphoneEventLog object. @notnil
  * @return The ephemeral message lifetime.
  */
 LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_message_lifetime (const LinphoneEventLog *event_log);

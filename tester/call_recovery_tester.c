@@ -253,7 +253,7 @@ static void configure_video_policies_for_network_switch(LinphoneCore *marie, Lin
 	linphone_core_enable_video_display(pauline, TRUE);
 	linphone_core_set_video_policy(marie, &policy);
 	linphone_core_set_video_policy(pauline, &policy);
-	lp_config_set_int(linphone_core_get_config(pauline), "sip", "defer_update_default", TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline), "sip", "defer_update_default", TRUE);
 }
 
 static void recovered_call_on_network_switch_during_reinvite_2(void) {
@@ -420,7 +420,7 @@ static void recovered_call_on_network_switch_in_early_media_base (bool_t callerL
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1, 1000));
 
-	if (linphone_core_inc_invite_pending(pauline->lc)) {
+	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
 		/* Send a 183 to initiate the early media */
 		linphone_call_accept_early_media(linphone_core_get_current_call(pauline->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 2000) );
@@ -499,8 +499,8 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 	if (with_socket_refresh){
-		lp_config_set_int(linphone_core_get_config(marie->lc), "net", "recreate_sockets_when_network_is_up", 1);
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "net", "recreate_sockets_when_network_is_up", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "recreate_sockets_when_network_is_up", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "net", "recreate_sockets_when_network_is_up", 1);
 	}
 	if (enable_rtt) {
 		pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
@@ -670,8 +670,8 @@ static void call_with_sip_and_rtp_independant_switches(void){
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
 	}
 	if (with_socket_refresh){
-		lp_config_set_int(linphone_core_get_config(marie->lc), "net", "recreate_sockets_when_network_is_up", 1);
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "net", "recreate_sockets_when_network_is_up", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "recreate_sockets_when_network_is_up", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "net", "recreate_sockets_when_network_is_up", 1);
 	}
 
 	linphone_core_set_media_network_reachable(marie->lc, TRUE);

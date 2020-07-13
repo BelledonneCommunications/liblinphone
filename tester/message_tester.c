@@ -242,7 +242,7 @@ static void text_message_with_utf8(void) {
 static void text_message_within_call_dialog(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	lp_config_set_int(linphone_core_get_config(pauline->lc),"sip","chat_use_call_dialogs",1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc),"sip","chat_use_call_dialogs",1);
 
 	if (BC_ASSERT_TRUE(call(marie,pauline))){
 		linphone_chat_room_send_message(linphone_core_get_chat_room(pauline->lc, marie->identity),"Bla bla bla bla");
@@ -420,7 +420,7 @@ void text_message_from_non_default_proxy_config(void) {
 	}
 	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
 	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
-	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	BC_ASSERT_TRUE(linphone_proxy_config_get_state(proxyConfig) == LinphoneRegistrationOk);
 	
 	const LinphoneAddress *localAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	const LinphoneAddress *remoteAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
@@ -457,7 +457,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	}
 	BC_ASSERT_PTR_NOT_NULL(proxyConfig);
 	BC_ASSERT_PTR_NOT_EQUAL(proxyConfig, linphone_core_get_default_proxy_config(marie->lc));
-	BC_ASSERT_TRUE(linphone_proxy_config_is_registered(proxyConfig));
+	BC_ASSERT_TRUE(linphone_proxy_config_get_state(proxyConfig) == LinphoneRegistrationOk);
 	
 	const LinphoneAddress *marieLocalAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marieLocalAddr);
@@ -701,8 +701,8 @@ void transfer_message_base(
 		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
 		if (enable_imdn) {
-			lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
-			lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+			linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+			linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
 			linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 			linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 		}
@@ -1141,8 +1141,8 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	linphone_core_enable_lime(pauline->lc, LinphoneLimeMandatory);
 
 	/* make sure to not trigger the cache migration function */
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "zrtp_cache_migration_done", TRUE);
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "zrtp_cache_migration_done", TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "zrtp_cache_migration_done", TRUE);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "zrtp_cache_migration_done", TRUE);
 
 	/* create temporary cache files: setting the database_path will create and initialise the files */
 	tmp = bc_tester_file("tmpZIDCacheMarie.sqlite");
@@ -1193,7 +1193,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
 
 	if (lime_enabled) {
 		if (enable_lime_for_message_test(marie, pauline) < 0) goto end;
@@ -1268,7 +1268,7 @@ static void _imdn_notifications(bool_t with_lime) {
 
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
 	LinphoneChatRoom *pauline_chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	LinphoneChatRoom *marie_chat_room;
 	LinphoneChatMessage *sent_cm;
@@ -1661,7 +1661,7 @@ void lime_transfer_message_base(bool_t encrypt_file,bool_t download_file_from_st
 
 	if (!encrypt_file) {
 		LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
-		lp_config_set_int(pauline_lp, "sip", "lime_for_file_sharing", 0);
+		linphone_config_set_int(pauline_lp, "sip", "lime_for_file_sharing", 0);
 	}
 	/* Globally configure an http file transfer server. */
 	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
@@ -1858,7 +1858,7 @@ static void lime_cache_migration(void) {
 		linphone_core_enable_lime(marie->lc, LinphoneLimeMandatory);
 
 		/* make sure to trigger the cache migration function */
-		lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "zrtp_cache_migration_done", FALSE);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "zrtp_cache_migration_done", FALSE);
 
 		/* set the cache path, it will trigger the migration function */
 		linphone_core_set_zrtp_secrets_file(marie->lc, xmlCache_filepath);
@@ -2076,8 +2076,8 @@ static void real_time_text(
 		linphone_core_set_chat_database_path(pauline->lc, pauline_db);
 
 		if (do_not_store_rtt_messages_in_sql_storage) {
-			lp_config_set_int(linphone_core_get_config(marie->lc), "misc", "store_rtt_messages", 0);
-			lp_config_set_int(linphone_core_get_config(pauline->lc), "misc", "store_rtt_messages", 0);
+			linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "store_rtt_messages", 0);
+			linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "store_rtt_messages", 0);
 		}
 	}
 
@@ -2674,8 +2674,8 @@ void file_transfer_with_http_proxy(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-		lp_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
-		lp_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 		linphone_core_set_http_proxy_host(marie->lc, "http-proxy.example.org");

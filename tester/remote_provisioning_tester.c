@@ -85,9 +85,9 @@ static void remote_provisioning_default_values(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_proxy_config_get_identity(lpc), "sip:?@sip.linphone.org");
 	{
 		LpConfig* lp = linphone_core_get_config(marie->lc);
-		BC_ASSERT_STRING_EQUAL(lp_config_get_string(lp,"app","toto","empty"),"titi");
+		BC_ASSERT_STRING_EQUAL(linphone_config_get_string(lp,"app","toto","empty"),"titi");
 	}
-	linphone_proxy_config_destroy(lpc);
+	linphone_proxy_config_unref(lpc);
 	linphone_core_manager_destroy(marie);
 }
 
@@ -108,7 +108,7 @@ static void remote_provisioning_file(void) {
 	{
 		char* path = bc_tester_res("rcfiles/marie_remote_localfile2_rc");
 		char* abspath = ms_strdup_printf("file://%s", path);
-		lp_config_set_string(linphone_core_get_config(marie->lc), "misc", "config-uri", abspath);
+		linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "config-uri", abspath);
 		linphone_core_manager_start(marie, 1);
 		ms_free(path);
 		ms_free(abspath);
@@ -117,7 +117,7 @@ static void remote_provisioning_file(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 
 	conf = linphone_core_get_config( marie->lc );
-	BC_ASSERT_EQUAL( lp_config_get_int(conf,"misc","tester_file_ok", 0), 1 , int, "%d");
+	BC_ASSERT_EQUAL( linphone_config_get_int(conf,"misc","tester_file_ok", 0), 1 , int, "%d");
 
 	linphone_core_manager_destroy(marie);
 }

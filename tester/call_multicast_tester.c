@@ -92,7 +92,7 @@ static void early_media_with_multicast_base(bool_t video) {
 	pauline2 = linphone_core_manager_new("pauline_tcp_rc");
 
 	marie_lp=linphone_core_get_config(marie->lc);
-	lp_config_set_int(marie_lp,"misc","real_early_media",1);
+	linphone_config_set_int(marie_lp,"misc","real_early_media",1);
 
 	if (video) {
 		linphone_core_enable_video_capture(pauline->lc, FALSE);
@@ -146,7 +146,7 @@ static void early_media_with_multicast_base(bool_t video) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,1000));
 
 
-	if (linphone_core_inc_invite_pending(pauline->lc)) {
+	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
 		/* send a 183 to initiate the early media */
 		if (video) {
 			/*check video path*/
@@ -157,7 +157,7 @@ static void early_media_with_multicast_base(bool_t video) {
 		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,2000) );
 		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,2000) );
 
-		if (linphone_core_inc_invite_pending(pauline2->lc)) {
+		if (linphone_core_is_incoming_invite_pending(pauline2->lc)) {
 				/* send a 183 to initiate the early media */
 				if (video) {
 					/*check video path*/

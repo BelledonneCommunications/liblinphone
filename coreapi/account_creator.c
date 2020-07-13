@@ -73,8 +73,10 @@ static const char* ha1_for_passwd(const char* username, const char* realm, const
 static unsigned int validate_uri(const char* username, const char* domain, const char* display_name) {
 	LinphoneAddress* addr;
 	unsigned int status = 0;
-	LinphoneProxyConfig* proxy = linphone_proxy_config_new();
-	linphone_proxy_config_set_identity(proxy, "sip:?@domain.com");
+	LinphoneProxyConfig* proxy = linphone_core_create_proxy_config(NULL);
+	addr = linphone_address_new("sip:?@domain.com");
+	linphone_proxy_config_set_identity_address(proxy, addr);
+	if (addr) linphone_address_unref(addr);
 
 	if (username) {
 		addr = linphone_proxy_config_normalize_sip_uri(proxy, username);
@@ -96,7 +98,7 @@ static unsigned int validate_uri(const char* username, const char* domain, const
 	}
 	linphone_address_unref(addr);
 end:
-	linphone_proxy_config_destroy(proxy);
+	linphone_proxy_config_unref(proxy);
 	return status;
 }
 
@@ -127,7 +129,7 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 		identity = linphone_address_as_string(addr);
 		linphone_address_unref(addr);
 		end:
-		linphone_proxy_config_destroy(proxy);
+		linphone_proxy_config_unref(proxy);
 	}
 	return identity;
 }
@@ -186,7 +188,7 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 
 	if (linphone_core_add_proxy_config(creator->core, cfg) != -1) {
 		if (creator->set_as_default) {
-			linphone_core_set_default_proxy(creator->core, cfg);
+			linphone_core_set_default_proxy_config(creator->core, cfg);
 		}
 		return cfg;
 	}
@@ -378,13 +380,13 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 
 static void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
 	if (creator->domain == NULL) {
-		const char* domain = lp_config_get_string(linphone_core_get_config(creator->core), "assistant", "domain", NULL);
+		const char* domain = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "domain", NULL);
 		if (domain) {
 			linphone_account_creator_set_domain(creator, domain);
 		}
 	}
 	if (creator->algorithm == NULL) {
-		const char* algorithm = lp_config_get_string(linphone_core_get_config(creator->core), "assistant", "algorithm", NULL);
+		const char* algorithm = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "algorithm", NULL);
 		if (algorithm) {
 			linphone_account_creator_set_algorithm(creator, algorithm);
 		}
@@ -447,10 +449,10 @@ void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, 
 }
 
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username) {
-	int min_length = lp_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_min_length", -1);
-	int max_length = lp_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_max_length", -1);
-	bool_t use_phone_number = !!lp_config_get_int(linphone_core_get_config(creator->core), "assistant", "use_phone_number", 0);
-	const char* regex = lp_config_get_string(linphone_core_get_config(creator->core), "assistant", "username_regex", 0);
+	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_min_length", -1);
+	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_max_length", -1);
+	bool_t use_phone_number = !!linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "use_phone_number", 0);
+	const char* regex = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "username_regex", 0);
 	if (!username) {
 		resetField(&creator->username);
 		return LinphoneAccountCreatorUsernameStatusOk;
@@ -531,8 +533,8 @@ const char * linphone_account_creator_get_phone_number(const LinphoneAccountCrea
 }
 
 LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_password(LinphoneAccountCreator *creator, const char *password) {
-	int min_length = lp_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_min_length", -1);
-	int max_length = lp_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_max_length", -1);
+	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_min_length", -1);
+	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_max_length", -1);
 	if (!password) {
 		resetField(&creator->password);
 		return LinphoneAccountCreatorPasswordStatusTooShort;
@@ -761,10 +763,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(Lin
 
 LinphoneAccountCreatorStatus linphone_account_creator_constructor_linphone(LinphoneAccountCreator *creator) {
 	LinphoneAddress *addr;
-	const char *identity = lp_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_identity", NULL);
-	const char *proxy = lp_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_proxy", NULL);
-	const char *route = lp_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_route", NULL);
-	const char *realm = lp_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "realm", NULL);
+	const char *identity = linphone_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_identity", NULL);
+	const char *proxy = linphone_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_proxy", NULL);
+	const char *route = linphone_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "reg_route", NULL);
+	const char *realm = linphone_config_get_default_string(linphone_core_get_config(creator->core), "proxy", "realm", NULL);
 	
 	if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
 	linphone_proxy_config_set_realm(creator->proxy_cfg, realm ? realm : "sip.linphone.org");

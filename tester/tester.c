@@ -170,9 +170,9 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 	rootcapath       = ms_strdup_printf("%s/certificates/cn/cafile.pem", path);
 
 	if (config) {
-		lp_config_set_string(config, "sound", "remote_ring", ringbackpath);
-		lp_config_set_string(config, "sound", "local_ring" , ringpath);
-		lp_config_set_string(config, "sip",   "root_ca"    , rootcapath);
+		linphone_config_set_string(config, "sound", "remote_ring", ringbackpath);
+		linphone_config_set_string(config, "sound", "local_ring" , ringpath);
+		linphone_config_set_string(config, "sip",   "root_ca"    , rootcapath);
 
 		LinphoneCoreManager *mgr = (LinphoneCoreManager *)user_data;
 		if (mgr && mgr->app_group_id) {
@@ -674,15 +674,15 @@ void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr) {
 void linphone_core_manager_reinit(LinphoneCoreManager *mgr) {
 	char *uuid = NULL;
 	if (mgr->lc) {
-		if (lp_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
-			uuid = bctbx_strdup(lp_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
+		if (linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL))
+			uuid = bctbx_strdup(linphone_config_get_string(linphone_core_get_config(mgr->lc), "misc", "uuid", NULL));
 		linphone_core_set_network_reachable(mgr->lc, FALSE); // to avoid unregister
 		linphone_core_unref(mgr->lc);
 	}
 	linphone_core_manager_configure(mgr);
 	reset_counters(&mgr->stat);
 	// Make sure gruu is preserved
-	lp_config_set_string(linphone_core_get_config(mgr->lc), "misc", "uuid", uuid);
+	linphone_config_set_string(linphone_core_get_config(mgr->lc), "misc", "uuid", uuid);
 	if (uuid)
 		bctbx_free(uuid);
 }
@@ -1128,8 +1128,8 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 
 	if (linphone_call_is_op_configured(call)) {
 		LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-		char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
-		char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+		char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
+		char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
 
 		const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
 		const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
@@ -1381,8 +1381,8 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
-	char* to=linphone_address_as_string(linphone_call_log_get_to(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to(clog));
+	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
 	stats* counters;
 	ms_message("Transferred call from [%s] to [%s], new state is [%s]",from,to,linphone_call_state_to_string(new_call_state));
 	ms_free(to);
@@ -1524,8 +1524,8 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-	char* to=linphone_address_as_string(linphone_call_log_get_to(calllog));
-	char* from=linphone_address_as_string(linphone_call_log_get_from(calllog));
+	char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
 	stats* counters;
 	ms_message(" %s call from [%s] to [%s], is now [%s]",linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 		   ,from
@@ -1896,7 +1896,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		if (linphone_call_params_get_privacy(linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc))) == LinphonePrivacyNone) {
 			/*don't check in case of p asserted id*/
-			if (!lp_config_get_int(linphone_core_get_config(callee_mgr->lc),"sip","call_logs_use_asserted_id_instead_of_from",0))
+			if (!linphone_config_get_int(linphone_core_get_config(callee_mgr->lc),"sip","call_logs_use_asserted_id_instead_of_from",0))
 				BC_ASSERT_TRUE(linphone_address_weak_equal(callee_from,linphone_call_get_remote_address(callee_call)));
 		} else {
 			BC_ASSERT_FALSE(linphone_address_weak_equal(callee_from,linphone_call_get_remote_address(linphone_core_get_current_call(callee_mgr->lc))));
@@ -1969,8 +1969,8 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	/*wait ice re-invite*/
 	if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce
 			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
-			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-			&& lp_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
+			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
+			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
@@ -2495,7 +2495,7 @@ static void dummy3_test_snd_card_detect(MSSndCardManager *m) {
 void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t tls_auth_server, bool_t req) {
 	if (curveId == 448) {
 		// Change the curve setting before the server URL
-		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
+		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c448");
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
 		if (tls_auth_server == TRUE) {
 			if (req==TRUE) {
@@ -2508,7 +2508,7 @@ void set_lime_curve_tls(const int curveId, LinphoneCoreManager *manager, bool_t 
 		}
 	} else {
 		// Change the curve setting before the server URL
-		lp_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
+		linphone_config_set_string(linphone_core_get_config(manager->lc),"lime","curve","c25519");
 		// changing the url will restart the encryption engine allowing to also use the changed curve config
 		if (tls_auth_server == TRUE) {
 			if (req == TRUE) {

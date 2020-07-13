@@ -65,17 +65,17 @@ void RegisterCommand::exec(Daemon *app, const string& args) {
 	if (!userid.empty() && (userid.compare("NULL") != 0)) cuserid = userid.c_str();
 	if (!realm.empty() && (realm.compare("NULL") != 0)) crealm = realm.c_str();
 	if (!parameter.empty()) cparameter = parameter.c_str();
-	LinphoneProxyConfig *cfg = linphone_proxy_config_new();
+	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(NULL);
+	LinphoneAddress *from = linphone_address_new(cidentity);
 	if (cpassword != NULL) {
-		LinphoneAddress *from = linphone_address_new(cidentity);
 		if (from != NULL) {
 			LinphoneAuthInfo *info = linphone_auth_info_new(linphone_address_get_username(from), cuserid, cpassword, NULL, crealm, NULL);
 			linphone_core_add_auth_info(lc, info); /* Add authentication info to LinphoneCore */
-			linphone_address_unref(from);
 			linphone_auth_info_unref(info);
 		}
 	}
-	linphone_proxy_config_set_identity(cfg, cidentity);
+	linphone_proxy_config_set_identity_address(cfg, from);
+	if (from) linphone_address_unref(from);
 	linphone_proxy_config_set_server_addr(cfg, cproxy);
 	linphone_proxy_config_enable_register(cfg, TRUE);
 	linphone_proxy_config_set_contact_parameters(cfg, cparameter);

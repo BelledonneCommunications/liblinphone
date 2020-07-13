@@ -195,7 +195,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	
 	
 	video_stream_enable_display_filter_auto_rotate(mStream,
-		!!lp_config_get_int(linphone_core_get_config(getCCore()), "video", "display_filter_auto_rotate", 0)
+		!!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "display_filter_auto_rotate", 0)
 	);
 
 	const char *displayFilter = linphone_core_get_video_display_filter(getCCore());
@@ -210,7 +210,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (getCCore()->video_conf.preview_vsize.width != 0)
 		video_stream_set_preview_size(mStream, getCCore()->video_conf.preview_vsize);
 	video_stream_set_fps(mStream, linphone_core_get_preferred_framerate(getCCore()));
-	if (lp_config_get_int(linphone_core_get_config(getCCore()), "video", "nowebcam_uses_normal_fps", 0))
+	if (linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "nowebcam_uses_normal_fps", 0))
 		mStream->staticimage_webcam_fps_optimization = false;
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(getCCore());
 	if (vdef) {
@@ -264,8 +264,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	media_stream_set_direction(&mStream->ms, dir);
 	lInfo() << "Device rotation =" << getCCore()->device_rotation;
 	video_stream_set_device_rotation(mStream, getCCore()->device_rotation);
-	video_stream_set_freeze_on_error(mStream, !!lp_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
-	video_stream_use_video_preset(mStream, lp_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
+	video_stream_set_freeze_on_error(mStream, !!linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "freeze_on_error", 1));
+	video_stream_use_video_preset(mStream, linphone_config_get_string(linphone_core_get_config(getCCore()), "video", "preset", nullptr));
 	if (getCCore()->video_conf.reuse_preview_source && source) {
 		lInfo() << "video_stream_start_with_source kept: " << source;
 		video_stream_start_with_source(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(),

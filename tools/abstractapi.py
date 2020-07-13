@@ -338,13 +338,14 @@ class Enum(DocumentableObject):
 		return False
 
 class Argument(DocumentableObject):
-	def __init__(self, name, argType, optional=False, default=None, maybenil=False):
+	def __init__(self, name, argType, optional=False, default=None, maybenil=False, notnil=False):
 		DocumentableObject.__init__(self, name)
 		self._type = argType
 		argType.parent = self
 		self.optional = optional
 		self.default = default
 		self.maybenil = maybenil
+		self.notnil = notnil
 	
 	@property
 	def type(self):
@@ -364,13 +365,14 @@ class Method(DocumentableObject):
 		Instance = 0,
 		Class = 1
 	
-	def __init__(self, name, type=Type.Instance, maybenil=False):
+	def __init__(self, name, type=Type.Instance, maybenil=False, notnil=False):
 		DocumentableObject.__init__(self, name)
 		self.type = type
 		self.isconst = False
 		self.args = []
 		self._returnType = None
 		self.maybenil = maybenil
+		self.notnil = notnil
 	
 	def add_arguments(self, arg):
 		self.args.append(arg)
@@ -857,7 +859,7 @@ class CParser(object):
 		for arg in event.arguments:
 			argName = metaname.ArgName()
 			argName.from_snake_case(arg.name)
-			argument = Argument(argName, self.parse_type(arg), maybenil=arg.maybenil)
+			argument = Argument(argName, self.parse_type(arg), maybenil=arg.maybenil, notnil=arg.notnil)
 			method.add_arguments(argument)
 		method.briefDescription = event.briefDoc
 		method.detailedDescription = event.detailedDoc
@@ -872,7 +874,7 @@ class CParser(object):
 			if self._is_blacklisted(name):
 				raise BlacklistedSymbolError(name)
 			
-			method = Method(name, type=type, maybenil=cfunction.returnArgument.maybenil)
+			method = Method(name, type=type, maybenil=cfunction.returnArgument.maybenil, notnil=cfunction.returnArgument.notnil)
 			method.briefDescription = cfunction.briefDoc
 			method.detailedDescription = cfunction.detailedDoc
 			method.deprecated = cfunction.deprecated
@@ -885,7 +887,7 @@ class CParser(object):
 					aType = self.parse_type(arg)
 					argName = metaname.ArgName()
 					argName.from_snake_case(arg.name)
-					absArg = Argument(argName, aType, maybenil=arg.maybenil)
+					absArg = Argument(argName, aType, maybenil=arg.maybenil, notnil=arg.notnil)
 					method.add_arguments(absArg)
 			
 			self.methodsIndex[cfunction.name] = method

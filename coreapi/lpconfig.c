@@ -517,10 +517,10 @@ static const char* _linphone_config_xml_convert(LpConfig *lpc, xml2lpc_context *
 		result = xml2lpc_convert(context, lpc);
 		if (result == 0) {
 			// if the remote provisioning added a proxy config and none was set before, set it
-			if (lp_config_has_section(lpc, "proxy_0") && lp_config_get_int(lpc, "sip", "default_proxy", -1) == -1){
-				lp_config_set_int(lpc, "sip", "default_proxy", 0);
+			if (linphone_config_has_section(lpc, "proxy_0") && linphone_config_get_int(lpc, "sip", "default_proxy", -1) == -1){
+				linphone_config_set_int(lpc, "sip", "default_proxy", 0);
 			}
-			lp_config_sync(lpc);
+			linphone_config_sync(lpc);
 		} else {
 			error_msg = xml_to_lpc_failed;
 		}
@@ -1178,7 +1178,7 @@ const char** linphone_config_get_sections_names(LpConfig *lpconfig) {
 	return sections_names;
 }
 
-const bctbx_list_t * linphone_config_get_sections_names_list(LpConfig *lpconfig) {
+const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpconfig) {
 	const bctbx_list_t *sections = lpconfig->sections;
 	bctbx_list_t *sections_names = NULL;
 	int i;

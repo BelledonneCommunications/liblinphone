@@ -178,6 +178,7 @@ class JavaTranslator(object):
         methodDict = {}
         methodDict['return'] = 'void'
         methodDict['return_maybenil'] = False
+        methodDict['return_notnil'] = False
         methodDict['return_native'] = 'void'
         methodDict['return_keyword'] = ''
         methodDict['convertInputClassArrayToLongArray'] = False
@@ -213,7 +214,11 @@ class JavaTranslator(object):
         namespace = _method.find_first_ancestor_by_type(AbsApi.Namespace)
 
         methodDict['return'] = _method.returnType.translate(self.langTranslator, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
-        methodDict['return_maybenil'] = _method.maybenil
+        isArray = _method.returnType.translate(self.langTranslator, jni=True, isReturn=True, namespace=namespace) == 'jobjectArray'
+        # Wrapper takes care or never returning a null array even if the doc says it can return a null list
+        methodDict['return_maybenil'] = _method.maybenil and not isArray
+        methodDict['return_notnil'] = _method.notnil or isArray
+
         methodDict['return_native'] = _method.returnType.translate(self.langTranslator, native=True, isReturn=True, namespace=namespace, exceptionEnabled=self.exceptions)
         methodDict['return_keyword'] = '' if methodDict['return'] == 'void' else 'return '
         methodDict['hasReturn'] = not methodDict['return'] == 'void'
@@ -233,7 +238,7 @@ class JavaTranslator(object):
         methodDict['enumCast'] = type(_method.returnType) is AbsApi.EnumType
         methodDict['classCast'] = type(_method.returnType) is AbsApi.ClassType
 
-        methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
+        methodDict['params'] = ', '.join(['{0}{1}'.format('@Nullable ' if arg.maybenil else '@NotNull ' if arg.notnil else '', arg.translate(self.langTranslator, namespace=namespace)) for arg in _method.args])
         methodDict['native_params'] = ', '.join(['long nativePtr'] + [arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['static_native_params'] = ', '.join([arg.translate(self.langTranslator, native=True, namespace=namespace) for arg in _method.args])
         methodDict['native_params_impl'] = ', '.join(
@@ -252,6 +257,11 @@ class JavaTranslator(object):
 
         namespace = class_.find_first_ancestor_by_type(AbsApi.Namespace)
         className = class_.name.translate(self.nameTranslator)
+
+        if _method.maybenil and _method.notnil:
+            raise Exception("Method " + _method.name.to_c() + " returned pointer can't be both maybenil and notnil !")
+        elif not _method.maybenil and not _method.notnil and _method.returnType.isref:
+            raise Exception("Method " + _method.name.to_c() + " returned pointer isn't maybenil nor notnil !")
 
         methodDict = {'notEmpty': True}
         methodDict['classCName'] = class_.name.to_c()
@@ -293,6 +303,8 @@ class JavaTranslator(object):
         methodDict['returnClassName'] = _method.returnType.translate(self.langTranslator, namespace=namespace)
         methodDict['isRealObjectArray'] = False
         methodDict['isStringObjectArray'] = False
+        methodDict['freeListWithData'] = False
+        methodDict['freeList'] = True
         methodDict['c_type_return'] = _method.returnType.translate(self.clangTranslator)
 
         if methodDict['c_name'] in jni_blacklist:
@@ -300,7 +312,9 @@ class JavaTranslator(object):
 
         if methodDict['hasListReturn']:
             if isinstance(_method.returnType, AbsApi.OnTheFlyListType):
-                methodDict['takeRefOnReturnedObject'] = "FALSE"
+                methodDict['freeListWithData'] = True
+                methodDict['freeList'] = False
+                methodDict['cPrefix'] = _method.returnType.containedTypeDesc.desc.name.to_snake_case(fullName=True)
 
             if isinstance(_method.returnType, AbsApi.BaseType) and _method.returnType.name == 'string_array':
                 methodDict['isStringObjectArray'] = True
@@ -331,6 +345,11 @@ class JavaTranslator(object):
 
             methodDict['params'] += arg.translate(self.langTranslator, jni=True, namespace=namespace)
             argname = arg.name.translate(self.nameTranslator)
+
+            if arg.maybenil and arg.notnil:
+                raise Exception("Method " + _method.name.to_c() + " argument " + argname + " pointer can't be both maybenil and notnil !")
+            elif arg.type.isref and not arg.maybenil and not arg.notnil:
+                raise Exception("Method " + _method.name.to_c() + " argument " + argname + " pointer isn't maybenil nor notnil !")
 
             if isinstance(arg.type, AbsApi.ClassType):
                 classCName = 'Linphone' + arg.type.desc.name.to_camel_case()
