@@ -25,6 +25,7 @@
  * #LinphoneConferenceState is used to indicate the current state of a conference.
  * @ingroup conferencing
  */
+
 typedef enum _LinphoneConferenceState{
 	LinphoneConferenceStateNone, /**< Initial state */
 	LinphoneConferenceStateInstantiated, /**< Chat room is now instantiated on local */

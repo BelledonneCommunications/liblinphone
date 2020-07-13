@@ -445,6 +445,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 					shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
 
+
 					// Create remote conference if no conference with the expected ID is found in the database
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
