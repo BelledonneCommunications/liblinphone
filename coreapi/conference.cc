@@ -181,21 +181,26 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 
 int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
-	if (!p)
-		return -1;
+	return removeParticipant(p);
+}
+
+bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+	if (!participant)
+		return false;
 printf("%s - iterating through devices\n", __func__);
 	// Delete all devices of a participant
-	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = p->getDevices().begin(); device != p->getDevices().end(); device++) {
+	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
 printf("%s - get devices %p\n", __func__, (*device).get());
 		const IdentityAddress & deviceAddress = (*device)->getAddress();
 		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), deviceAddress);
+		notifyParticipantDeviceRemoved(creationTime, false, participant->getAddress(), deviceAddress);
 	}
-	p->clearDevices();
-	participants.remove(p);
+	const IdentityAddress participantAddress = participant->getAddress();
+	participant->clearDevices();
+	participants.remove(participant);
 	time_t creationTime = time(nullptr);
-	notifyParticipantRemoved(creationTime, false, addr);
-	return 0;
+	notifyParticipantRemoved(creationTime, false, participantAddress);
+	return true;
 }
 
 int Conference::terminate () {
