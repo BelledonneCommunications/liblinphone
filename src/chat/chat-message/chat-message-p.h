@@ -170,8 +170,11 @@ public:
 	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 
-	const std::string &getText () const;
-	void setText (const std::string &text);
+	const std::string &getText () const;// Deprecated. Use UTF8
+	void setText (const std::string &text);// Deprecated. Use UTF8
+	
+	const std::string &getUtf8Text () const;
+	void setUtf8Text (const std::string &text);
 
 	const std::string &getFileTransferFilepath () const;
 	void setFileTransferFilepath (const std::string &path);

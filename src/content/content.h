@@ -64,14 +64,14 @@ public:
 	const std::string &getContentEncoding () const;
 	void setContentEncoding (const std::string &contentEncoding);
 
-	const std::vector<char> &getBody () const;
+	const std::vector<char> &getUtf8Body () const;
 	std::string getBodyAsString () const;
 	std::string getBodyAsUtf8String () const;
 
-	void setBody (const std::vector<char> &body);
-	void setBody (std::vector<char> &&body);
-	void setBody (const std::string &body);
-	void setBody (const void *buffer, size_t size);
+	void setBodyFromUtf8 (const std::vector<char> &body);
+	void setBodyFromUtf8 (std::vector<char> &&body);
+	void setBody (const std::string &body);// body is in Locale
+	void setBodyFromUtf8 (const void *buffer, size_t size);
 	void setBodyFromUtf8 (const std::string &body);
 
 	size_t getSize () const;

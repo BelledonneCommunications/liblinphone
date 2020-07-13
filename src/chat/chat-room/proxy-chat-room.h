@@ -67,7 +67,8 @@ public:
 	std::list<IdentityAddress> getComposingAddresses () const override;
 
 	std::shared_ptr<ChatMessage> createChatMessage () override;
-	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;
+	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;// Deprecated. Text is in System Locale
+	std::shared_ptr<ChatMessage> createChatMessageFromUtf8 (const std::string &text) override;
 
 	std::shared_ptr<ChatMessage> createFileTransferMessage (FileContent *content) override;
 	std::shared_ptr<ChatMessage> createForwardMessage (const std::shared_ptr<ChatMessage> &msg) override;

@@ -69,15 +69,16 @@ LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_empty_message (Li
 
 /**
  * Creates a message attached to the given chat room with a plain text content filled with the given message.
+ * @date 01/07/2020
  * @param chat_room the #LinphoneChatRoom object. @notnil
- * @param message text message, NULL if absent. @maybenil
+ * @param message text message in UTF8, NULL if absent. @maybenil
  * @return a new #LinphoneChatMessage @notnil
  */
-LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room, const char* message);
+LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message_from_utf8(LinphoneChatRoom *chat_room,const char* message);
 
  /**
  * Creates a message attached to the given chat room with a particular content.
- * Use #linphone_chat_room_send_message to initiate the transfer
+ * Use linphone_chat_room_send_message() to initiate the transfer
  * @param chat_room the #LinphoneChatRoom object. @notnil
  * @param initial_content #LinphoneContent initial content. @notnil
  * @return a new #LinphoneChatMessage @notnil
@@ -291,7 +292,7 @@ LINPHONE_PUBLIC int linphone_chat_room_get_unread_messages_count(LinphoneChatRoo
 LINPHONE_PUBLIC LinphoneCore* linphone_chat_room_get_core(const LinphoneChatRoom *chat_room);
 
 /**
- * When realtime text is enabled #linphone_call_params_realtime_text_enabled, #LinphoneCoreIsComposingReceivedCb is call everytime a char is received from peer.
+ * When realtime text is enabled linphone_call_params_realtime_text_enabled(), #LinphoneCoreIsComposingReceivedCb is call everytime a char is received from peer.
  * At the end of remote typing a regular #LinphoneChatMessage is received with committed data from #LinphoneCoreMessageReceivedCb.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @return  RFC 4103/T.140 char
@@ -306,7 +307,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_lime_available(LinphoneChatRoom *chat_
 
 /**
  * Gets the current call associated to this chatroom if any
- * To commit a message, use #linphone_chat_room_send_message
+ * To commit a message, use linphone_chat_room_send_message()
  * @param chat_room the #LinphoneChatRomm object @notnil
  * @return #LinphoneCall or NULL. @maybenil
  */
@@ -532,15 +533,15 @@ LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_par
  * @param chat_room the #LinphoneChatRoom object.
  * @param message text message, NULL if absent.
  * @param external_body_url the URL given in external body or NULL.
- * @param state the LinphoneChatMessage.State of the message.
+ * @param state the LinphoneChatMessage. State of the message.
  * @param time the time_t at which the message has been received/sent.
  * @param is_read TRUE if the message should be flagged as read, FALSE otherwise.
  * @param is_incoming TRUE if the message has been received, FALSE otherwise.
  * @return a new #LinphoneChatMessage
- * @deprecated 14/11/2017 Use #linphone_chat_room_chat_roomeate_message() instead.
+ * @deprecated 14/11/2017 Use #linphone_chat_room_create_message_from_utf8() instead.
  * @donotwrap
  */
-LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_message_2(LinphoneChatRoom *chat_room, const char* message, const char* external_body_url, LinphoneChatMessageState state, time_t time, bool_t is_read, bool_t is_incoming);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message_2(LinphoneChatRoom *chat_room, const char* message, const char* external_body_url, LinphoneChatMessageState state, time_t time, bool_t is_read, bool_t is_incoming);
 
 /**
  * Returns back pointer to #LinphoneCore object.
@@ -569,6 +570,23 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(Linphon
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+
+/**
+ * Creates a message attached to a dedicated chat room.
+ * @param chat_room the chat room. @notnil
+ * @param message text message, NULL if absent.
+ * @return a new #LinphoneChatMessage
+ * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8 instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
+
+/**
+ * Creates a message attached to the given chat room with a plain text content filled with the given message.
+ * @param chat_room the #LinphoneChatRoom object. @notnil
+ * @param message text message, NULL if absent. @maybenil
+ * @return a new #LinphoneChatMessage @notnil
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room, const char* message);
 
 /**
  * @}

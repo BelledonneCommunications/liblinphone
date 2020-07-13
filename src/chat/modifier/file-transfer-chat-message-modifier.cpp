@@ -275,7 +275,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			} else if (!currentFileContentToTransfer->isEmpty()) {
 				size_t buf_size = currentFileContentToTransfer->getSize();
 				uint8_t *buf = (uint8_t *)ms_malloc(buf_size);
-				memcpy(buf, currentFileContentToTransfer->getBody().data(), buf_size);
+				memcpy(buf, currentFileContentToTransfer->getUtf8Body().data(), buf_size);
 
 				EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 				if (imee) {
@@ -646,7 +646,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 	if (internalContent.getContentType() == ContentType::FileTransfer) {
 		FileTransferContent *fileTransferContent = new FileTransferContent();
 		fileTransferContent->setContentType(internalContent.getContentType());
-		fileTransferContent->setBody(internalContent.getBody());
+		fileTransferContent->setBodyFromUtf8(internalContent.getUtf8Body());
 		fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml(fileTransferContent);
 		message->addContent(fileTransferContent);
 		return ChatMessageModifier::Result::Done;
