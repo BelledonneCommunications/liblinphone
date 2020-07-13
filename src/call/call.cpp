@@ -342,16 +342,18 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 }
 
 void Call::removeFromConference(const Address & remoteContactAddress) {
-	// Check if the request was sent by the focus
-	ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+	if (!isInConference()) {
+		// Check if the request was sent by the focus
+		ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
-	// Terminate conference is found
-	if (conference != nullptr) {
-		conference->setState(ConferenceInterface::State::TerminationPending);
+		// Terminate conference is found
+		if (conference != nullptr) {
+			conference->setState(ConferenceInterface::State::TerminationPending);
+		}
+
+		setConference (nullptr);
 	}
-
-	setConference (nullptr);
 }
 
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
@@ -376,20 +378,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::PausedByRemote:
 		{
 			// If it is not in a conference, the remote conference must be terminated if it exists
-			if (!isInConference()) {
+			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
-				// Check if the request was sent by the focus
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
-
-				// Terminate conference is found
-				if (conference != nullptr) {
-					conference->setState(ConferenceInterface::State::TerminationPending);
-					setConference (nullptr);
-				}
+				removeFromConference(remoteContactAddress);
 			}
 		}
 		break;
@@ -401,14 +395,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
-				// Check if the request was sent by the focus
-				ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-				shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
-
-				// Terminate conference is found
-				if (conference != nullptr) {
-					conference->setState(ConferenceInterface::State::TerminationPending);
-				}
+				removeFromConference(remoteContactAddress);
 
 				if (linphone_core_get_calls_nb(lc) == 0) {
 					linphone_core_notify_last_call_ended(lc);
