@@ -651,6 +651,10 @@ void Sal::sendKeepAlive () {
 	}
 }
 
+void Sal::cleanUnreliableConnections(){
+	belle_sip_provider_clean_unreliable_channels(mProvider);
+}
+
 int Sal::setTunnel (void *tunnelclient) {
 #ifdef TUNNEL_ENABLED
 	mTunnelClient = tunnelclient;
