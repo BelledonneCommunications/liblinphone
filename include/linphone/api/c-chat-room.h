@@ -571,11 +571,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_message(Linphon
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
- * Creates a message attached to a dedicated chat room.
- * @param chat_room the chat room. @notnil
- * @param message text message, NULL if absent.
- * @return a new #LinphoneChatMessage
- * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8 instead.
+ * Creates a message attached to the given chat room with a plain text content filled with the given message.
+ * @param chat_room the #LinphoneChatRoom object. @notnil
+ * @param message text message, NULL if absent. @maybenil
+ * @return a new #LinphoneChatMessage @notnil
+ * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
 
