@@ -68,8 +68,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_user_data(LinphoneChatRoom *chat_roo
 LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_empty_message (LinphoneChatRoom *chat_room);
 
 /**
- * Creates a message attached to the given chat room with a plain text content filled with the given message.
- * @date 01/07/2020
+ * Creates a message attached to the given chat room with a plain text content filled with the given message. Introduced in 01/07/2020
  * @param chat_room the #LinphoneChatRoom object. @notnil
  * @param message text message in UTF8, NULL if absent. @maybenil
  * @return a new #LinphoneChatMessage @notnil

@@ -136,15 +136,13 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type (const Linpho
 LINPHONE_PUBLIC void linphone_chat_message_set_content_type (LinphoneChatMessage *message, const char *content_type);
 
 /**
- * Get text part of this message
- * @date 01/07/2020
+ * Get text part of this message. Introduced in 01/07/2020
  * @param message #LinphoneChatMessage object. @notnil
  * @return The text in UTF8 or NULL if no text. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_chat_message_get_utf8_text (const LinphoneChatMessage* message);
 
-/** Set a chat message text to be sent by linphone_chat_room_send_message()
- * @date 01/07/2020
+/** Set a chat message text to be sent by linphone_chat_room_send_message(). Introduced in 01/07/2020
  * @param message #LinphoneChatMessage @notnil
  * @param text The text in UTF8 to set. @maybenil
  * @return 0 if succeed.
@@ -377,8 +375,7 @@ LINPHONE_PUBLIC LinphoneChatMessageCbs *linphone_chat_message_get_current_callba
 LINPHONE_PUBLIC void linphone_chat_message_add_file_content (LinphoneChatMessage *message, LinphoneContent *content);
 
 /**
- * Creates a #LinphoneContent of type PlainText with the given text as body.
- * @date 01/07/2020
+ * Creates a #LinphoneContent of type PlainText with the given text as body. Introduced in 01/07/2020
  * @param message #LinphoneChatMessage object. @notnil
  * @param text The text in UTF8 to add to the message. @notnil
  */
