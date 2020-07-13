@@ -225,7 +225,7 @@ static void get_chat_rooms() {
 	if (emptyMessageRoom != nullptr) {
 		shared_ptr<ChatMessage> lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NULL(lastMessage);
-		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessage(utf8Txt);
+		shared_ptr<ChatMessage> newMessage = emptyMessageRoom->createChatMessageFromUtf8(utf8Txt);
 		newMessage->send();
 		lastMessage = emptyMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);
@@ -257,7 +257,7 @@ static void get_chat_rooms() {
 		BC_ASSERT_PTR_NOT_EQUAL(lastMessage, lastMessage2);
 
 		// Check a non empty chat room last_message_id is updated after adding a message into it
-		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessage(utf8Txt);
+		shared_ptr<ChatMessage> newMessage = multiMessageRoom->createChatMessageFromUtf8(utf8Txt);
 		newMessage->send();
 		lastMessage = multiMessageRoom->getLastChatMessageInHistory();
 		BC_ASSERT_PTR_NOT_NULL(lastMessage);

@@ -114,7 +114,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(linphone_chat_room_is_empty(room));
 	
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, text);
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -129,7 +129,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 		belle_sip_header_content_type_t *belle_sip_content_type = belle_sip_header_content_type_parse(content_type_header);
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), belle_sip_header_content_type_get_type(belle_sip_content_type));
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), belle_sip_header_content_type_get_subtype(belle_sip_content_type));
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), text);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie->stat.last_received_chat_message), text);
 		ms_free(content_type_header);
 		LinphoneChatRoom *marieCr;
 		
@@ -146,8 +146,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 			if (linphone_chat_room_get_history_size(marieCr) > 0) {
 				bctbx_list_t *history = linphone_chat_room_get_history(marieCr, 1);
 				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
-				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
-				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recv_msg), text);
 			
 				if (forward_message) {
 					LinphoneChatMessage* fmsg = linphone_chat_room_create_forward_message(marieCr, recv_msg);
@@ -164,7 +163,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 						belle_sip_header_content_type_t *belle_sip_content_type = belle_sip_header_content_type_parse(content_type_header);
 						BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), belle_sip_header_content_type_get_type(belle_sip_content_type));
 						BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), belle_sip_header_content_type_get_subtype(belle_sip_content_type));
-						BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), text);
+						BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), text);
 						ms_free(content_type_header);
 						LinphoneChatRoom *paulineCr;
 					
@@ -179,8 +178,7 @@ void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, Linphon
 					
 						if (linphone_chat_room_get_history_size(paulineCr) > 1) {
 							LinphoneChatMessage *recv_msg = linphone_chat_room_get_last_message_in_history(paulineCr);
-							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recv_msg), text);
-							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(recv_msg),text);
+							BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recv_msg), text);
 							// basic chatroom as receiver, does no have forward information
 							BC_ASSERT_FALSE(linphone_chat_message_is_forward(recv_msg));
 							linphone_chat_message_unref(recv_msg);
@@ -349,7 +347,7 @@ static void text_message_with_send_error(void) {
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 	
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 0, int, "%d");
@@ -426,7 +424,7 @@ void text_message_from_non_default_proxy_config(void) {
 	const LinphoneAddress *remoteAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
 	LinphoneChatRoom *room = linphone_core_get_chat_room_2(marie->lc, remoteAddr, localAddr);
 	
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, "Bli bli");
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(room, "Bli bli");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -462,7 +460,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	const LinphoneAddress *marieLocalAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	LinphoneChatRoom *room = linphone_core_get_chat_room(pauline->lc, marieLocalAddr);
 	
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(room, "Bli bli");
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(room, "Bli bli");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -472,7 +470,7 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
 
 	LinphoneChatRoom *remoteRoom = linphone_chat_message_get_chat_room(marie->stat.last_received_chat_message);
-	msg = linphone_chat_room_create_message(remoteRoom, "Blu blu");
+	msg = linphone_chat_room_create_message_from_utf8(remoteRoom, "Blu blu");
 	cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -987,7 +985,7 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room, NULL);
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room, NULL);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 
@@ -1047,7 +1045,7 @@ static void text_message_denied(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 
 	/*pauline doesn't want to be disturbed*/
@@ -1080,7 +1078,7 @@ void info_message_base(bool_t with_content) {
 			LinphoneContent* content = linphone_core_create_content(marie->lc);
 			linphone_content_set_type(content, "application");
 			linphone_content_set_subtype(content, "somexml");
-			linphone_content_set_buffer(content, (const uint8_t *)info_content, strlen(info_content));
+			linphone_content_set_utf8_buffer(content, (const uint8_t *)info_content, strlen(info_content));
 			linphone_info_message_set_content(info, content);
 			linphone_content_unref(content);
 		}
@@ -1100,12 +1098,12 @@ void info_message_base(bool_t with_content) {
 		if (with_content){
 			BC_ASSERT_PTR_NOT_NULL(content);
 			if (content) {
-				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_buffer(content));
+				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_utf8_buffer(content));
 				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_type(content));
 				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_subtype(content));
 				if (linphone_content_get_type(content)) BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content),"application");
 				if (linphone_content_get_subtype(content)) BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content),"somexml");
-				if (linphone_content_get_buffer(content))BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content),info_content);
+				if (linphone_content_get_utf8_buffer(content))BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content),info_content);
 				BC_ASSERT_EQUAL((int)linphone_content_get_size(content),(int)strlen(info_content), int, "%d");
 			}
 		}
@@ -1282,7 +1280,7 @@ static void _imdn_notifications(bool_t with_lime) {
 
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
-	sent_cm = linphone_chat_room_create_message(pauline_chat_room, "Tell me if you get my message");
+	sent_cm = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "Tell me if you get my message");
 	cbs = linphone_chat_message_get_callbacks(sent_cm);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(sent_cm);
@@ -1370,7 +1368,7 @@ static void _im_notification_policy(bool_t with_lime) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1));
 
 	/* Test imdn delivered */
-	msg1 = linphone_chat_room_create_message(pauline_chat_room, "Happy new year!");
+	msg1 = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "Happy new year!");
 	cbs = linphone_chat_message_get_callbacks(msg1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg1);
@@ -1378,13 +1376,13 @@ static void _im_notification_policy(bool_t with_lime) {
 	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 1500); /* Just to sleep while iterating */
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDeliveredToUser, 0, int, "%d");
 	linphone_im_notif_policy_set_recv_imdn_delivered(pauline_policy, TRUE);
-	msg2 = linphone_chat_room_create_message(pauline_chat_room, "I said: Happy new year!");
+	msg2 = linphone_chat_room_create_message_from_utf8(pauline_chat_room, "I said: Happy new year!");
 	cbs = linphone_chat_message_get_callbacks(msg2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg2);
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 2));
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDeliveredToUser, 1));
-	msg3 = linphone_chat_room_create_message(marie_chat_room, "Thank you! Happy easter to you!");
+	msg3 = linphone_chat_room_create_message_from_utf8(marie_chat_room, "Thank you! Happy easter to you!");
 	cbs = linphone_chat_message_get_callbacks(msg3);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg3);
@@ -1392,7 +1390,7 @@ static void _im_notification_policy(bool_t with_lime) {
 	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 1500); /* Just to sleep while iterating */
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageDeliveredToUser, 0, int, "%d");
 	linphone_im_notif_policy_set_send_imdn_delivered(pauline_policy, TRUE);
-	msg4 = linphone_chat_room_create_message(marie_chat_room, "Yeah, yeah, I heard that...");
+	msg4 = linphone_chat_room_create_message_from_utf8(marie_chat_room, "Yeah, yeah, I heard that...");
 	cbs = linphone_chat_message_get_callbacks(msg4);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg4);
@@ -1470,7 +1468,7 @@ static void _im_error_delivery_notification(bool_t online) {
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
 	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
 
-	msg = linphone_chat_room_create_message(chat_room, "Happy new year!");
+	msg = linphone_chat_room_create_message_from_utf8(chat_room, "Happy new year!");
 	cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(msg);
@@ -1558,7 +1556,7 @@ static void lime_text_message_to_non_lime(bool_t sender_policy_mandatory, bool_t
 	}
 
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage *sent_cm = linphone_chat_room_create_message(chat_room, "Bla bla bla bla");
+	LinphoneChatMessage *sent_cm = linphone_chat_room_create_message_from_utf8(chat_room, "Bla bla bla bla");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(sent_cm);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(sent_cm);
@@ -1989,7 +1987,7 @@ void crash_during_file_transfer(void) {
 static void text_status_after_destroying_chat_room(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(chatroom, "hello");
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(chatroom, "hello");
 	linphone_chat_message_send(msg);
 	linphone_core_delete_chat_room(marie->lc, chatroom);
 	//since message is orphan, we do not expect to be notified of state change
@@ -2146,7 +2144,7 @@ static void real_time_text(
 		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
-			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 
 
 			for (i = 0; i < strlen(message); i++) {
@@ -2241,8 +2239,8 @@ static void real_time_text_conversation(void) {
 			const char* message2_1 = "Be lle Com";
 			const char* message2_2 = "eB ell moC";
 			size_t i;
-			LinphoneChatMessage* pauline_rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			LinphoneChatMessage* marie_rtt_message = linphone_chat_room_create_message(marie_chat_room,NULL);
+			LinphoneChatMessage* pauline_rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
+			LinphoneChatMessage* marie_rtt_message = linphone_chat_room_create_message_from_utf8(marie_chat_room,NULL);
 
 			for (i = 0; i < strlen(message1_1); i++) {
 				linphone_chat_message_put_char(pauline_rtt_message, message1_1[i]);
@@ -2279,8 +2277,8 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_unref(marie_rtt_message);
 			reset_counters(&pauline->stat);
 			reset_counters(&marie->stat);
-			pauline_rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
-			marie_rtt_message = linphone_chat_room_create_message(marie_chat_room,NULL);
+			pauline_rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
+			marie_rtt_message = linphone_chat_room_create_message_from_utf8(marie_chat_room,NULL);
 
 			for (i = 0; i < strlen(message2_1); i++) {
 				linphone_chat_message_put_char(pauline_rtt_message, message2_1[i]);
@@ -2358,7 +2356,7 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
-			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 			uint32_t crlf = 0x0D0A;
 			uint32_t lf = 0x0A;
 
@@ -2414,7 +2412,7 @@ static void real_time_text_message_accented_chars(void) {
 		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
 		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 		if (pauline_chat_room && marie_chat_room) {
-			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 			uint32_t message[] = {0xe3/*ã*/, 0xe6/*æ*/, 0xe7/*ç*/, 0xe9/*é*/, 0xee/*î*/, 0xf8/*ø*/, 0xf9/*ù*/, 0xff/*ÿ*/, 0x2a7d/*⩽*/, 0x1f600/*😀*/};
 			const int message_len = sizeof(message) / sizeof(uint32_t);
 			int i;
@@ -2477,7 +2475,7 @@ static void real_time_text_and_early_media(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
 	BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
 	if (pauline_chat_room && marie_chat_room) {
-		LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+		LinphoneChatMessage* rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 		int i;
 		uint32_t message[8];
 		int message_len = 8;
@@ -2517,7 +2515,7 @@ static void real_time_text_and_early_media(void) {
 		chars_received = marie->stat.number_of_LinphoneIsComposingActiveReceived;
 		
 		/* Send RTT again once the call is established. */
-		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+		rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 		for (i = 0; i < message_len; i++) {
 			linphone_chat_message_put_char(rtt_message, message[i]);
 			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 1000));
@@ -2587,7 +2585,7 @@ static void only_real_time_text_accepted(void) {
 		chars_received = marie->stat.number_of_LinphoneIsComposingActiveReceived;
 		
 		/* Send RTT again once the call is established. */
-		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+		rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 		for (i = 0; i < message_len; i++) {
 			linphone_chat_message_put_char(rtt_message, message[i]);
 			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 1000));
@@ -2645,7 +2643,7 @@ static void real_time_text_copy_paste(void) {
 		if (pauline_chat_room && marie_chat_room) {
 			const char* message = "Be l3l";
 			size_t i;
-			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
+			LinphoneChatMessage* rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
 
 
 			for (i = 1; i <= strlen(message); i++) {
@@ -2689,7 +2687,7 @@ void chat_message_custom_headers(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage* msg = linphone_chat_room_create_message(chat_room, "Lorem Ipsum");
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room, "Lorem Ipsum");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 
 	linphone_chat_message_add_custom_header(msg, "Test1", "Value1");
@@ -2910,7 +2908,7 @@ void im_encryption_engine_b64_base(bool_t async) {
 	linphone_core_set_im_encryption_engine(pauline->lc, pauline_imee);
 
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	chat_msg = linphone_chat_room_create_message(chat_room, "Bla bla bla bla");
+	chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, "Bla bla bla bla");
 	linphone_chat_message_send(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(chat_msg), "Bla bla bla bla");

@@ -333,7 +333,7 @@ void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneC
 	fileContent->setFileSize(linphone_content_get_size(c_content));
 	fileContent->setFileName(L_C_TO_STRING(linphone_content_get_name(c_content)));
 	fileContent->setFilePath(L_C_TO_STRING(linphone_content_get_file_path(c_content)));
-	fileContent->setBody(content->getBody());
+	fileContent->setBodyFromUtf8(content->getUtf8Body());
 	fileContent->setUserData(content->getUserData());
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
 	lInfo() << "File content [" << fileContent << "] added into message [" << msg << "]";
@@ -344,6 +344,14 @@ void linphone_chat_message_add_text_content (LinphoneChatMessage *msg, const cha
 	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
 	content->setContentType(contentType);
 	content->setBody(L_C_TO_STRING(text));
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
+}
+
+void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *msg, const char *text) {
+	LinphonePrivate::Content *content = new LinphonePrivate::Content();
+	LinphonePrivate::ContentType contentType = LinphonePrivate::ContentType::PlainText;
+	content->setContentType(contentType);
+	content->setBodyFromUtf8(L_C_TO_STRING(text));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
 }
 
@@ -369,6 +377,7 @@ const char *linphone_chat_message_get_text_content (const LinphoneChatMessage *m
 	msg->cache.textContentBody = content->getBodyAsString();
 	return L_STRING_TO_C(msg->cache.textContentBody);
 }
+
 
 bool_t linphone_chat_message_is_file_transfer_in_progress (const LinphoneChatMessage *msg) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isFileTransferInProgress();
@@ -427,8 +436,17 @@ const char *linphone_chat_message_get_text (const LinphoneChatMessage *msg) {
 	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getText());
 }
 
+const char *linphone_chat_message_get_utf8_text (const LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_PRIVATE_FROM_C_OBJECT(msg)->getUtf8Text());
+}
+
 int linphone_chat_message_set_text (LinphoneChatMessage *msg, const char* text) {
 	L_GET_PRIVATE_FROM_C_OBJECT(msg)->setText(L_C_TO_STRING(text));
+	return 0;
+}
+
+int linphone_chat_message_set_utf8_text (LinphoneChatMessage *msg, const char* text) {
+	L_GET_PRIVATE_FROM_C_OBJECT(msg)->setUtf8Text(L_C_TO_STRING(text));
 	return 0;
 }
 

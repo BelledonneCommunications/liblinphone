@@ -1421,7 +1421,7 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml2");
-	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
+	linphone_content_set_utf8_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
 
 	ms_message("Subscription state [%s] from [%s]",linphone_subscription_state_to_string(state),from);
 	ms_free(from);
@@ -1472,7 +1472,7 @@ void linphone_notify_received(LinphoneCore *lc, LinphoneEvent *lev, const char *
 	if (!BC_ASSERT_PTR_NOT_NULL(content)) return;
 	if (!linphone_content_is_multipart(content) && (!ua ||  !strstr(ua, "flexisip"))) { /*disable check for full presence server support*/
 		/*hack to disable content checking for list notify */
-		BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), notify_content);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), notify_content);
 	}
 	mgr = get_manager(lc);
 	mgr->stat.number_of_NotifyReceived++;

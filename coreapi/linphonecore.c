@@ -2435,11 +2435,11 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 			LinphoneContent *part = nullptr;
 			while ((part = linphone_content_get_part(body, i))) {
 				i++;
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(part));
+				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(part));
 				linphone_content_unref(part);
 			}
 		} else
-			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_string_buffer(body));
+			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(body));
 #else
 		ms_message("Advanced IM such as group chat is disabled!");
 #endif

@@ -151,7 +151,7 @@ int main(int argc, char *argv[]){
 			LinphoneContent *content = linphone_core_create_content(lc);
 			linphone_content_set_type(content, "application");
 			linphone_content_set_subtype(content, "goodxml");
-			linphone_content_set_string_buffer(content, "really cool");
+			linphone_content_set_utf8_text(content, "really cool");
 			linphone_event_notify(data->ev, content);
 			linphone_content_unref(content);
 		}

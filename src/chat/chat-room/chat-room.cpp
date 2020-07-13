@@ -558,11 +558,21 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage () {
 	return d->createChatMessage(ChatMessage::Direction::Outgoing);
 }
 
+// Deprecated
 shared_ptr<ChatMessage> ChatRoom::createChatMessage (const string &text) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
 	Content *content = new Content();
 	content->setContentType(ContentType::PlainText);
 	content->setBody(text);
+	chatMessage->addContent(content);
+	return chatMessage;
+}
+
+shared_ptr<ChatMessage> ChatRoom::createChatMessageFromUtf8 (const string &text) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+	Content *content = new Content();
+	content->setContentType(ContentType::PlainText);
+	content->setBodyFromUtf8(text);
 	chatMessage->addContent(content);
 	return chatMessage;
 }

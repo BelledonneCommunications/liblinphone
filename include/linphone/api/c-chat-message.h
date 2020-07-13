@@ -136,6 +136,22 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_content_type (const Linpho
 LINPHONE_PUBLIC void linphone_chat_message_set_content_type (LinphoneChatMessage *message, const char *content_type);
 
 /**
+ * Get text part of this message
+ * @date 01/07/2020
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return The text in UTF8 or NULL if no text. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_chat_message_get_utf8_text (const LinphoneChatMessage* message);
+
+/** Set a chat message text to be sent by linphone_chat_room_send_message()
+ * @date 01/07/2020
+ * @param message #LinphoneChatMessage @notnil
+ * @param text The text in UTF8 to set. @maybenil
+ * @return 0 if succeed.
+*/
+LINPHONE_PUBLIC int linphone_chat_message_set_utf8_text(LinphoneChatMessage *message , const char* text);
+
+/**
  * Get the message identifier.
  * It is used to identify a message so that it can be notified as delivered and/or displayed.
  * @param message #LinphoneChatMessage object. @notnil
@@ -155,7 +171,7 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_appdata (const LinphoneCha
  * Linphone message has an app-specific field that can store a text. The application might want
  * to use it for keeping data over restarts, like thumbnail image path.
  *
- * Invoking this function will attempt to update the message storage to reflect the changeif it is
+ * Invoking this function will attempt to update the message storage to reflect the change if it is
  * enabled.
  *
  * @param message #LinphoneChatMessage object. @notnil
@@ -324,7 +340,7 @@ LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time (const Li
 
 /**
  * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
- * To commit a message, use #linphone_chat_room_send_message
+ * To commit a message, use linphone_chat_room_send_message()
  * @param message #LinphoneChatMessage object. @notnil
  * @param character T.140 char
  * @return 0 if succeed.
@@ -362,10 +378,11 @@ LINPHONE_PUBLIC void linphone_chat_message_add_file_content (LinphoneChatMessage
 
 /**
  * Creates a #LinphoneContent of type PlainText with the given text as body.
+ * @date 01/07/2020
  * @param message #LinphoneChatMessage object. @notnil
- * @param text The text to add to the message. @notnil
+ * @param text The text in UTF8 to add to the message. @notnil
  */
-LINPHONE_PUBLIC void linphone_chat_message_add_text_content (LinphoneChatMessage *message, const char *text);
+LINPHONE_PUBLIC void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *message, const char *text);
 
 /**
  * Removes a content from the ChatMessage.
@@ -387,13 +404,6 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_contents(const Lin
  * @return TRUE if it has one, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_chat_message_has_text_content (const LinphoneChatMessage *message);
-
-/**
- * Gets the text content if available as a string
- * @param message #LinphoneChatMessage object. @notnil
- * @return the #LinphoneContent buffer if available, NULL otherwise. @maybenil
- */
-LINPHONE_PUBLIC const char *linphone_chat_message_get_text_content (const LinphoneChatMessage *message);
 
 /**
  * Gets whether or not a file is currently being downloaded or uploaded
@@ -429,7 +439,7 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChat
  * Get text part of this message
  * @param message #LinphoneChatMessage object.
  * @return text or NULL if no text.
- * @deprecated 07/11/2017 use getTextContent() instead
+ * @deprecated 07/11/2017 use linphone_chat_message_get_utf8_text() instead
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_text (const LinphoneChatMessage* message);
@@ -443,21 +453,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_text (
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_file_transfer_filepath (const LinphoneChatMessage *message);
 
-/**
- * Return whether or not a chat message is a file transfer.
- * @param message #LinphoneChatMessage object @notnil
- * @return Whether or not the message is a file transfer
- * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent for which linphone_content_is_file_transfer() returns TRUE.
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_file_transfer (const LinphoneChatMessage *message);
-
-/**
- * Return whether or not a chat message is a text.
- * @param message #LinphoneChatMessage object. @notnil
- * @return Whether or not the message is a text
- * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type..
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
 
 /**
  * Start the download of the file from remote server
@@ -506,6 +501,38 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_set_file_transfer
  * @deprecated 19/02/2019
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessageCbs *linphone_chat_message_get_callbacks (const LinphoneChatMessage *message);
+
+/**
+ * Gets the text content if available as a string
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return the #LinphoneContent buffer if available in System Locale, null otherwise. @maybenil
+ * @deprecated 01/07/2020. Use linphone_chat_message_get_utf8_text() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_chat_message_get_text_content (const LinphoneChatMessage *message );
+
+/**
+ * Creates a #LinphoneContent of type PlainText with the given text as body.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @param text The text in System Locale to add to the message. @notnil
+ * @deprecated 01/07/2020. Use linphone_chat_message_add_utf8_text_content() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_message_add_text_content (LinphoneChatMessage *message, const char *text);
+
+/**
+ * Return whether or not a chat message is a file transfer.
+ * @param message #LinphoneChatMessage object @notnil
+ * @return Whether or not the message is a file transfer
+ * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent for which linphone_content_is_file_transfer() returns TRUE.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_file_transfer (const LinphoneChatMessage *message);
+
+/**
+ * Return whether or not a chat message is a text.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return Whether or not the message is a text
+ * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type..
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
 
 /**
  * @}

@@ -123,17 +123,36 @@ void linphone_content_add_content_type_parameter (LinphoneContent *content, cons
 }
 
 const uint8_t *linphone_content_get_buffer (const LinphoneContent *content) {
-	return reinterpret_cast<const uint8_t *>(linphone_content_get_string_buffer(content));
+	return reinterpret_cast<const uint8_t *>(linphone_content_get_utf8_text(content));
+}
+
+const uint8_t *linphone_content_get_utf8_buffer (const LinphoneContent *content) {
+	return reinterpret_cast<const uint8_t *>(linphone_content_get_utf8_text(content));
 }
 
 void linphone_content_set_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size) {
 	content->is_dirty = TRUE;
-	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBody(buffer, size);
+	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(buffer, size);
+}
+
+void linphone_content_set_utf8_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size) {
+	content->is_dirty = TRUE;
+	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(buffer, size);
 }
 
 const char *linphone_content_get_string_buffer (const LinphoneContent *content) {
 	content->cache.buffer = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getBodyAsUtf8String();
 	return content->cache.buffer.c_str();
+}
+
+const char *linphone_content_get_utf8_text (const LinphoneContent *content) {
+	content->cache.buffer = L_GET_CPP_PTR_FROM_C_OBJECT(content)->getBodyAsUtf8String();
+	return content->cache.buffer.c_str();
+}
+
+void linphone_content_set_utf8_text (LinphoneContent *content, const char *buffer) {
+	content->is_dirty = TRUE;
+	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(L_C_TO_STRING(buffer));
 }
 
 void linphone_content_set_string_buffer (LinphoneContent *content, const char *buffer) {
@@ -386,10 +405,10 @@ static LinphoneContent *linphone_content_new_with_body_handler (const SalBodyHan
 	if (linphone_content_is_multipart(content) && parseMultipart) {
 		belle_sip_multipart_body_handler_t *mpbh = BELLE_SIP_MULTIPART_BODY_HANDLER(bodyHandler);
 		char *body = belle_sip_object_to_string(mpbh);
-		linphone_content_set_string_buffer(content, body);
+		linphone_content_set_utf8_text(content, body);
 		belle_sip_free(body);
 	} else {
-		linphone_content_set_string_buffer(content, reinterpret_cast<char *>(sal_body_handler_get_data(bodyHandler)));
+		linphone_content_set_utf8_text(content, reinterpret_cast<char *>(sal_body_handler_get_data(bodyHandler)));
 	}
 
 	const belle_sip_list_t *headers = reinterpret_cast<const belle_sip_list_t *>(sal_body_handler_get_headers(bodyHandler));
@@ -447,7 +466,7 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 		bctbx_free(buffer);
 	} else {
 		bodyHandler = sal_body_handler_new();
-		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(linphone_content_get_string_buffer(content)));
+		sal_body_handler_set_data(bodyHandler, belle_sip_strdup(linphone_content_get_utf8_text(content)));
 	}
 
 	for (const auto &header : L_GET_CPP_PTR_FROM_C_OBJECT(content)->getHeaders()) {

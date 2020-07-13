@@ -189,11 +189,15 @@ shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage () {
 	return d->chatRoom->createChatMessage();
 }
 
+//Deprecated
 shared_ptr<ChatMessage> ProxyChatRoom::createChatMessage (const string &text) {
 	L_D();
 	return d->chatRoom->createChatMessage(text);
 }
-
+shared_ptr<ChatMessage> ProxyChatRoom::createChatMessageFromUtf8 (const string &text) {
+	L_D();
+	return d->chatRoom->createChatMessageFromUtf8(text);
+}
 shared_ptr<ChatMessage> ProxyChatRoom::createFileTransferMessage (FileContent *content) {
 	L_D();
 	return d->chatRoom->createFileTransferMessage(content);

@@ -44,7 +44,7 @@ static void subscribe_forking(void) {
 	content = linphone_core_create_content(marie->lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml");
-	linphone_content_set_buffer(content, (const uint8_t *)liblinphone_tester_get_subscribe_content(), strlen(liblinphone_tester_get_subscribe_content()));
+	linphone_content_set_utf8_buffer(content, (const uint8_t *)liblinphone_tester_get_subscribe_content(), strlen(liblinphone_tester_get_subscribe_content()));
 
 	lev=linphone_core_subscribe(marie->lc,pauline->identity,"dodo",expires,content);
 
@@ -71,7 +71,7 @@ static void message_forking(void) {
 	LinphoneCoreManager* marie2 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage* message = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
@@ -102,7 +102,7 @@ static void message_forking_with_unreachable_recipients(void) {
 	LinphoneCoreManager* marie3 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage* message = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
@@ -154,7 +154,7 @@ static void message_forking_with_all_recipients_unreachable(void) {
 	LinphoneCoreManager* marie3 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-	LinphoneChatMessage* message = linphone_chat_room_create_message(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
@@ -229,7 +229,7 @@ static void message_forking_with_unreachable_recipients_with_gruu(void) {
 	LinphoneProxyConfig *marie_proxy_config = linphone_core_get_default_proxy_config(marie->lc);
 	const LinphoneAddress *marie_address = linphone_proxy_config_get_contact(marie_proxy_config);
 	LinphoneChatRoom* chat_room_1 = linphone_core_get_chat_room(pauline->lc, marie_address);
-	LinphoneChatMessage* message_1 = linphone_chat_room_create_message(chat_room_1,"Bli bli bli \n blu");
+	LinphoneChatMessage* message_1 = linphone_chat_room_create_message_from_utf8(chat_room_1,"Bli bli bli \n blu");
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie2->lc);
@@ -1086,7 +1086,7 @@ static void dos_module_trigger(void) {
 	
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
-	chat_msg = linphone_chat_room_create_message(chat_room, passmsg);
+	chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, passmsg);
 	linphone_chat_message_send(chat_msg);
 	linphone_chat_message_unref(chat_msg);
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1));
@@ -1229,7 +1229,7 @@ static void test_list_subscribe (void) {
 
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"resource-lists+xml");
-	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
+	linphone_content_set_utf8_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
 
 	lev=linphone_core_create_subscribe(marie->lc,list_name,"presence",60);
 

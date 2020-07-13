@@ -326,7 +326,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 
 	// Send message in basic chat room
 	LinphoneChatRoom *marieBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage *basicMessage1 = linphone_chat_room_create_message(marieBasicCr, "Hello from our basic chat room");
+	LinphoneChatMessage *basicMessage1 = linphone_chat_room_create_message_from_utf8(marieBasicCr, "Hello from our basic chat room");
 	LinphoneChatMessageCbs *cbs1 = linphone_chat_message_get_callbacks(basicMessage1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs1, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(basicMessage1);
@@ -380,7 +380,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 
 	// Marie creates the basic chat room again
 	LinphoneChatRoom *marieNewBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
-	LinphoneChatMessage *basicMessage2 = linphone_chat_room_create_message(marieNewBasicCr, "Hello again from our basic chat room");
+	LinphoneChatMessage *basicMessage2 = linphone_chat_room_create_message_from_utf8(marieNewBasicCr, "Hello again from our basic chat room");
 	LinphoneChatMessageCbs *cbs2 = linphone_chat_message_get_callbacks(basicMessage2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs2, liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_send(basicMessage2);

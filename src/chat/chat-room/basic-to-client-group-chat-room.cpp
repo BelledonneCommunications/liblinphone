@@ -141,8 +141,14 @@ shared_ptr<ChatMessage> BasicToClientGroupChatRoom::createChatMessage () {
 	return msg;
 }
 
+// Deprecated
 shared_ptr<ChatMessage> BasicToClientGroupChatRoom::createChatMessage (const string &text) {
 	shared_ptr<ChatMessage> msg = ProxyChatRoom::createChatMessage(text);
+	msg->getPrivate()->setChatRoom(getSharedFromThis());
+	return msg;
+}
+shared_ptr<ChatMessage> BasicToClientGroupChatRoom::createChatMessageFromUtf8 (const string &text) {
+	shared_ptr<ChatMessage> msg = ProxyChatRoom::createChatMessageFromUtf8(text);
 	msg->getPrivate()->setChatRoom(getSharedFromThis());
 	return msg;
 }

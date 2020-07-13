@@ -97,6 +97,7 @@ const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const Linpho
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCurrentParams()->toC();
 }
 
+// Deprecated
 void linphone_chat_room_send_message (LinphoneChatRoom *cr, const char *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(msg)->send();
 }
@@ -138,6 +139,14 @@ LinphoneChatMessage *linphone_chat_room_create_empty_message (LinphoneChatRoom *
 	return object;
 }
 
+LinphoneChatMessage *linphone_chat_room_create_message_from_utf8 (LinphoneChatRoom *cr, const char *message) {
+	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessageFromUtf8(L_C_TO_STRING(message));
+	LinphoneChatMessage *object = L_INIT(ChatMessage);
+	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
+	return object;
+}
+
+// Deprecated
 LinphoneChatMessage *linphone_chat_room_create_message (LinphoneChatRoom *cr, const char *message) {
 	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(L_C_TO_STRING(message));
 	LinphoneChatMessage *object = L_INIT(ChatMessage);
@@ -151,6 +160,7 @@ LinphoneChatMessage *linphone_chat_room_create_file_transfer_message(LinphoneCha
 	return msg;
 }
 
+// Deprecated
 LinphoneChatMessage *linphone_chat_room_create_message_2 (
 	LinphoneChatRoom *cr,
 	const char *message,
