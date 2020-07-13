@@ -341,6 +341,19 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 	startReferredCall(nullptr);
 }
 
+void Call::removeFromConference(const Address & remoteContactAddress) {
+	// Check if the request was sent by the focus
+	ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+
+	// Terminate conference is found
+	if (conference != nullptr) {
+		conference->setState(ConferenceInterface::State::TerminationPending);
+	}
+
+	setConference (nullptr);
+}
+
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
@@ -421,6 +434,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					// It is expected that the core of the remote conference is the participant one
 						std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), remoteContactAddress, remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 					}
+				} else if (!isInConference()) {
+					removeFromConference(remoteContactAddress);
 				}
 			}
 
