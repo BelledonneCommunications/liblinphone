@@ -25,6 +25,7 @@
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/sipsetup.h"
+#include "conference/session/streams.h"
 
 #include "private.h"
 #include "logging-private.h"
@@ -54,6 +55,7 @@
 #include "mediastreamer2/msogl.h"
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msqrcodereader.h"
+
 
 #include "bctoolbox/charconv.h"
 
@@ -6243,6 +6245,40 @@ void linphone_core_preview_ogl_render(const LinphoneCore *lc) {
 	}
 
 	#endif
+}
+
+void linphone_core_conference_preview_ogl_render(const LinphoneCore *lc) {
+#ifdef VIDEO_ENABLED
+	if (lc->conf_ctx) {
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(lc->conf_ctx);
+		if (conf->isIn()) {// Ensure to be in conference
+			MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+			if(control) {
+				VideoStream *stream = control->getVideoStream();
+				if(stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
+					ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
+				}
+			}
+		}
+	}
+#endif
+}
+
+void linphone_core_conference_ogl_render(const LinphoneCore *lc) {
+#ifdef VIDEO_ENABLED
+	if (lc->conf_ctx) {
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(lc->conf_ctx);
+		if (conf->isIn()) {// Ensure to be in conference
+			MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+			if(control) {
+				VideoStream *stream = control->getVideoStream();
+				if(stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID) {
+					ms_filter_call_method(stream->output, MS_OGL_RENDER, NULL);
+				}
+			}
+		}
+	}
+#endif
 }
 
 void linphone_core_set_use_files(LinphoneCore *lc, bool_t yesno){
