@@ -231,8 +231,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
 
 	// Check if chatroom is encrypted or not
-	shared_ptr<ClientGroupChatRoom> cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
-	if (cgcr->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
 		lInfo() << "[LIME] this chatroom is encrypted, proceed to encrypt outgoing message";
 	} else {
 		lInfo() << "[LIME] this chatroom is not encrypted, no need to encrypt outgoing message";
