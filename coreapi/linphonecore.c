@@ -55,7 +55,6 @@
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msqrcodereader.h"
 
-
 #include "bctoolbox/charconv.h"
 
 #ifdef HAVE_ADVANCED_IM
