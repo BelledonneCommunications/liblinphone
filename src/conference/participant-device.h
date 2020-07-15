@@ -75,6 +75,7 @@ public:
 	void setConferenceSubscribeEvent (LinphoneEvent *ev);
 
 	bool isValid () const { return mGruu.isValid(); }
+	bool isInConference () const;
 
 private:
 	Participant *mParticipant = nullptr;
