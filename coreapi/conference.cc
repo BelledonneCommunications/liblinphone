@@ -110,15 +110,19 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	const Address * remoteAddress = call->getRemoteAddress();
-	std::shared_ptr<LinphonePrivate::Participant> p = Participant::create(this,*remoteAddress, call->getActiveSession());
-	participants.push_back(p);
+	const Address &remoteAddress = *call->getRemoteAddress();
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
+	// Add a new participant only if it is not in the conference
+	if (p == nullptr) {
+		p = Participant::create(this,remoteAddress, call->getActiveSession());
+		participants.push_back(p);
+	}
 
 	bool success = addParticipantDevice(call);
 
 	if (success) {
 		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, *remoteAddress);
+		notifyParticipantAdded(creationTime, false, remoteAddress);
 	}
 	return success;
 }
@@ -187,10 +191,8 @@ int Conference::removeParticipant (const IdentityAddress &addr) {
 bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	if (!participant)
 		return false;
-printf("%s - iterating through devices\n", __func__);
 	// Delete all devices of a participant
 	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
-printf("%s - get devices %p\n", __func__, (*device).get());
 		const IdentityAddress & deviceAddress = (*device)->getAddress();
 		time_t creationTime = time(nullptr);
 		notifyParticipantDeviceRemoved(creationTime, false, participant->getAddress(), deviceAddress);
@@ -227,7 +229,6 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	// - current state is not Deleted
 	// - current state is Deleted and trying to move to Instantiated state
 	if ((previousState != ConferenceInterface::State::Deleted) || ((previousState == ConferenceInterface::State::Deleted) && (state == ConferenceInterface::State::Instantiated))) {
-printf("%s Prevous state %s Next state %s\n", __func__, Utils::toString(getState()).c_str(), Utils::toString(state).c_str());
 		shared_ptr<Conference> ref = getSharedFromThis();
 		LinphonePrivate::Conference::setState(state);
 		// TODO Delete
@@ -329,6 +330,10 @@ LocalConference::LocalConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
+
+	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
+	// Remote conference sets last notify to 0 in its constructor
+	lastNotify = 1;
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
@@ -752,6 +757,12 @@ RemoteConference::RemoteConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, myAddress, listener, params){
+
+	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
+	// Local conference sets last notify to 1 in its constructor
+	lastNotify = 0;
+
+
 	m_focusAddr = nullptr;
 	m_focusContact = nullptr;
 	m_focusCall = nullptr;

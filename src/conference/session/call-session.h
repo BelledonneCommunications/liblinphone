@@ -44,6 +44,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class CorePrivate;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
+	friend class ParticipantDevice;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
