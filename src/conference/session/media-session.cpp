@@ -1742,7 +1742,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
 	if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
-		lWarning() << "Media session is in state " << Utils::toString(state) << " hence it cannot be paused";
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
 	string subject;
