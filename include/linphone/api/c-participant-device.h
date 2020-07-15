@@ -86,7 +86,7 @@ LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const Linphone
  * @param participant_device A #LinphoneParticipantDevice object @notnil
  * @return a boolean to state whether the device is in a conference
  */
-bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device);
+LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}
