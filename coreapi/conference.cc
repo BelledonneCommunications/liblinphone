@@ -112,11 +112,13 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address &remoteAddress = *call->getRemoteAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
+printf("%s - remote address %s partiicpant p %p\n", __func__, remoteAddress.asString().c_str(), p.get());
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
 		participants.push_back(p);
 	}
+printf("%s - after remote address %s partiicpant p %p\n", __func__, remoteAddress.asString().c_str(), p.get());
 
 	bool success = addParticipantDevice(call);
 

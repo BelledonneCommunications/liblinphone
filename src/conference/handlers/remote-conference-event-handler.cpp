@@ -186,6 +186,8 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		else
 			participant = conf->findParticipant(address);
 
+printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)StateType::full, (int)StateType::deleted);
+
 		if (!participant) {
 			lWarning() << "Participant " << address.asString() << " is not in the list of participants however it is trying to change the list of devices or change role!";
 		} else {
