@@ -18,6 +18,7 @@
  */
 
 #include "chat/encryption/encryption-engine.h"
+#include "conference/session/call-session-p.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -64,6 +65,14 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 		return encryptionEngine->getSecurityLevel(mGruu.asString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
+}
+
+bool ParticipantDevice::isInConference() const {
+	if (mSession) {
+		return mSession->getPrivate()->isInConference();
+	} else {
+		return false;
+	}
 }
 
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {

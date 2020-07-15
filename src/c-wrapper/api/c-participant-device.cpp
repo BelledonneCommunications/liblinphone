@@ -57,3 +57,7 @@ LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (co
 const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getName().c_str();
 }
+
+bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->isInConference();
+}
