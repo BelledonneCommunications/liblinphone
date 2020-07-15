@@ -326,7 +326,7 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
 	if (getConference() && isInConference()) {
-		lInfo() << "Removing terminated call from LinphoneConference " << getConference();
+		lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 		MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
 	}
 #if 0
