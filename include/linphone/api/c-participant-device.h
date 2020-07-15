@@ -82,6 +82,13 @@ LINPHONE_PUBLIC LinphoneChatRoomSecurityLevel linphone_participant_device_get_se
 LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Return whether the participant device is in a conference or not.
+ * @param participant_device A #LinphoneParticipantDevice object @notnil
+ * @return a boolean to state whether the device is in a conference
+ */
+bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 
