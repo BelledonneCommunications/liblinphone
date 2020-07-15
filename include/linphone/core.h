@@ -3077,6 +3077,20 @@ LINPHONE_PUBLIC float linphone_core_get_preferred_framerate(LinphoneCore *core);
 LINPHONE_PUBLIC void linphone_core_preview_ogl_render(const LinphoneCore *core);
 
 /**
+ * Call generic OpenGL render preview for a given core and the current stream conference
+ * @param core The core. @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_conference_preview_ogl_render(const LinphoneCore *core);
+
+/**
+ * Call generic OpenGL render for a given core and the current stream conference
+ * @param core The core. @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_conference_ogl_render(const LinphoneCore *core);
+
+/**
  * Controls video preview enablement.
  * @param core #LinphoneCore object @notnil
  * @param enable A boolean value telling whether the video preview is to be shown
