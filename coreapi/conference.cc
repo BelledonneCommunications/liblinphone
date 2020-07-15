@@ -333,7 +333,7 @@ LocalConference::LocalConference (
 
 	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
-	lastNotify = 1;
+//	lastNotify = 1;
 
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
@@ -380,7 +380,6 @@ void LocalConference::finalizeCreation() {
 }
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
-	shared_ptr<Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findAudioVideoConference(conferenceId);
 #ifdef HAVE_ADVANCED_IM
 	eventHandler->subscribeReceived(event, false);
 #endif // HAVE_ADVANCED_IM
@@ -760,7 +759,7 @@ RemoteConference::RemoteConference (
 
 	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
 	// Local conference sets last notify to 1 in its constructor
-	lastNotify = 0;
+//	lastNotify = 0;
 
 
 	m_focusAddr = nullptr;
