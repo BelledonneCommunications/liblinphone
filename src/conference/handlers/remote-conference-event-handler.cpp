@@ -96,7 +96,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			unsigned int notifyVersion = version.get();
 			if (getLastNotify() >= notifyVersion) {
 				lWarning() << "Ignoring conference notify for: " << getConferenceId() << ", notify version received is: "
-					<< notifyVersion << ", should be stricly more than last notify id of chat-room: " << getLastNotify();
+					<< notifyVersion << ", should be stricly more than last notify id of conference: " << getLastNotify();
 				return;
 			}
 			conf->setLastNotify(version.get());
