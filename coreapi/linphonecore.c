@@ -25,7 +25,6 @@
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
 #include "linphone/sipsetup.h"
-#include "conference/session/streams.h"
 
 #include "private.h"
 #include "logging-private.h"
@@ -55,7 +54,6 @@
 #include "mediastreamer2/msogl.h"
 #include "mediastreamer2/msvolume.h"
 #include "mediastreamer2/msqrcodereader.h"
-
 
 #include "bctoolbox/charconv.h"
 
