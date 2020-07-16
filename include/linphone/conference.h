@@ -267,7 +267,7 @@ LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *cor
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
-LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
+LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
 int linphone_conference_get_size(const LinphoneConference *obj);
 
