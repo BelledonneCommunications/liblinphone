@@ -1657,6 +1657,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	lc->sip_conf.keepalive_period = (unsigned int)linphone_config_get_int(lc->config,"sip","keepalive_period",10000);
 	lc->sip_conf.tcp_tls_keepalive = !!linphone_config_get_int(lc->config,"sip","tcp_tls_keepalive",0);
 	linphone_core_enable_keep_alive(lc, (lc->sip_conf.keepalive_period > 0));
+
 	lc->sal->useOneMatchingCodecPolicy(!!linphone_config_get_int(lc->config,"sip","only_one_codec",0));
 	lc->sal->useDates(!!linphone_config_get_int(lc->config,"sip","put_date",0));
 	lc->sal->enableSipUpdateMethod(!!linphone_config_get_int(lc->config,"sip","sip_update",1));
@@ -1664,6 +1665,7 @@ static void sip_config_read(LinphoneCore *lc) {
 	linphone_core_set_sip_transport_timeout(lc, linphone_config_get_int(lc->config, "sip", "transport_timeout", 63000));
 	lc->sal->setSupportedTags(linphone_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
 	lc->sip_conf.save_auth_info = !!linphone_config_get_int(lc->config, "sip", "save_auth_info", 1);
+	lc->sal->setUnreliableConnectionTimeout(linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
 	linphone_core_create_im_notif_policy(lc);
 

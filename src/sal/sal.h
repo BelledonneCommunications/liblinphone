@@ -208,6 +208,9 @@ public:
 
 	void setTransportTimeout (int value) { belle_sip_stack_set_transport_timeout(mStack, value); }
 	int getTransportTimeout () const { return belle_sip_stack_get_transport_timeout(mStack); }
+	
+	void setUnreliableConnectionTimeout(int value){ belle_sip_stack_set_unreliable_connection_timeout(mStack, value); }
+	int getUnreliableConnectionTimeout() const { return belle_sip_stack_get_unreliable_connection_timeout(mStack);}
 
 	void setKeepAlivePeriod (unsigned int value);
 	unsigned int getKeepAlivePeriod () const { return mKeepAlive; }
@@ -226,6 +229,7 @@ public:
 
 	void unlistenPorts ();
 	void resetTransports ();
+	void cleanUnreliableConnections();
 
 
 	// ---------------------------------------------------------------------------
