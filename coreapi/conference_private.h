@@ -165,7 +165,9 @@ protected:
 protected:
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
+	// TODO: Delete mUserData
 	void *mUserData = nullptr;
+	void *userData = nullptr;
 	bctbx_list_t *mCallbacks = nullptr;
 	LinphoneConferenceCbs *mCurrentCbs = nullptr;
 };
