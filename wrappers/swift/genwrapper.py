@@ -148,8 +148,6 @@ class SwiftTranslator(object):
                     methodDict['impl']['c_args'] += argName
                 if argType == "UnsafePointer<Int>" and not arg.type.isconst:
                     argType = "UnsafeMutablePointer<Int32>"
-                elif argType == "UnsafeMutableRawPointer":
-                    argType = "UnsafeMutableRawPointer?"
 
                 methodDict['impl']['args'] += argName + ":" + argType + "?" if arg.maybenil else argName + ":" + argType
 
@@ -419,6 +417,7 @@ class SwiftTranslator(object):
         methodDict['return'] = prop.args[0].type.translate(self.langTranslator, namespace=namespace)
         methodDict['returnCType'] = prop.args[0].type.name
         methodDict['exception'] = self.throws_exception(prop.returnType)
+        methodDict['has_property'] = not methodDict['exception']
         methodDict['setter_c_name'] = prop.name.to_c()
 
         methodDict['list_type'] = self.get_class_array_type(methodDict['return'])
