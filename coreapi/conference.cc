@@ -23,6 +23,7 @@
 #include <typeinfo>
 
 #include <mediastreamer2/msvolume.h>
+#include "mediastreamer2/msogl.h"
 
 #include "linphone/core.h"
 
@@ -35,6 +36,7 @@
 #include "conference/session/mixers.h"
 #include "conference/session/ms2-streams.h"
 #include "conference/session/media-session.h"
+
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -863,6 +865,36 @@ void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceI
 
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj){
 	return MediaConference::Conference::toCpp(obj)->getAudioStream();
+}
+
+void linphone_conference_preview_ogl_render(LinphoneConference *obj) {
+#ifdef VIDEO_ENABLED
+	MediaConference::Conference *conf = MediaConference::Conference::toCpp(obj);
+	if (conf->isIn()) {// Ensure to be in conference
+		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+		if(control) {
+			VideoStream *stream = control->getVideoStream();
+			if(stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
+				ms_filter_call_method(stream->output2, MS_OGL_RENDER, NULL);
+			}
+		}
+	}
+#endif
+}
+
+void linphone_conference_ogl_render(LinphoneConference *obj) {
+#ifdef VIDEO_ENABLED
+	MediaConference::Conference *conf = MediaConference::Conference::toCpp(obj);
+	if (conf->isIn()) {// Ensure to be in conference
+		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+		if(control) {
+			VideoStream *stream = control->getVideoStream();
+			if(stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID) {
+				ms_filter_call_method(stream->output, MS_OGL_RENDER, NULL);
+			}
+		}
+	}
+#endif
 }
 
 void linphone_conference_set_state_changed_callback (LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data) {
