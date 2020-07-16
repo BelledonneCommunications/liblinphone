@@ -7777,7 +7777,10 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 		if (strcasecmp(conf_method_name, "local") == 0) {
 			conf = linphone_local_conference_new_with_params(lc, identity, params2);
 		} else if (!serverMode && strcasecmp(conf_method_name, "remote") == 0) {
-			conf = linphone_remote_conference_new_with_params(lc, identity, params2);
+			const char *uri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
+			LinphoneAddress *factory_uri = linphone_address_new(uri);
+			conf = linphone_remote_conference_new_with_params(lc, factory_uri, identity, params2);
+			linphone_address_unref(factory_uri);
 		} else {
 			ms_error("'%s' is not a valid conference method", conf_method_name);
 			linphone_conference_params_unref(params2);
