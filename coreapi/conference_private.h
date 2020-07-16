@@ -218,6 +218,8 @@ public:
 
 	virtual void notifyFullState () override;
 
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+
 private:
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
@@ -236,7 +238,8 @@ class LINPHONE_PUBLIC RemoteConference:
 	public Conference,
 	public ConferenceListenerInterface {
 public:
-	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	RemoteConference(const std::shared_ptr<Core> &core, const IdentityAddress &focus, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
+	RemoteConference(const std::shared_ptr<Core> &core, const std::shared_ptr<LinphonePrivate::Call>& focusCall, const ConferenceId &conferenceId, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference();
 
 	virtual int inviteAddresses(const std::list<const LinphoneAddress*> &addresses, const LinphoneCallParams *params) override;
@@ -286,7 +289,6 @@ private:
 	static void callStateChangedCb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 	static void transferStateChanged(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state);
 
-	const char *m_focusAddr;
 	char *m_focusContact;
 	std::shared_ptr<LinphonePrivate::Call> m_focusCall;
 	LinphoneCoreCbs *m_coreCbs;
