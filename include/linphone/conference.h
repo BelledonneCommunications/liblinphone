@@ -243,6 +243,22 @@ LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConf
 LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *obj);
 
 /**
+ * Retrieves the user pointer that was given to linphone_conference_new()
+ * @param core #LinphoneConference object @notnil
+ * @return The user data associated with the #LinphoneConference object. @maybenil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference *core);
+
+/**
+ * Associate a user pointer to the linphone conference.
+ * @param core #LinphoneConference object @notnil
+ * @param user_data The user data to associate with the #LinphoneConference object. @maybenil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_conference_set_user_data(LinphoneConference *conference, void *user_data);
+
+/**
  * Call generic OpenGL render preview for a given conference
  * @param conf The #LinphoneConference object. @notnil
  */
