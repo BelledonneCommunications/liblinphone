@@ -167,16 +167,9 @@ LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *auth_
 
 /**
  * Remove all algorithms from the available algorithms list.
- * @param[in] info The #LinphoneAuthInfo object
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
 **/
-LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info);
-
-
-/**
- * Remove all algorithms from the available algorithms list.
- * @param[in] info The #LinphoneAuthInfo object
-**/
-LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info);
+LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *auth_info);
 
 
 /**
@@ -265,19 +258,11 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAu
 
 /**
  * Check if Authinfos are the same without taking account algorithms
- * @param info1 The first #LinphoneAuthInfo object. @notnil
- * @param info2 The second #LinphoneAuthInfo object. @maybenil
- * @return True if all fields (Username, UserId, Realm, Domain) are the same.
+ * @param auth_info_1 The first #LinphoneAuthInfo object. @maybenil
+ * @param auth_info_2 The second #LinphoneAuthInfo object. @maybenil
+ * @return TRUE if all fields (Username, UserId, Realm, Domain) are the same.
  */
-LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2);
-
-/**
- * Check if Authinfos are the same without taking account algorithms
- * @param[in] info1 The first #LinphoneAuthInfo object
- * @param[in] info2 The second #LinphoneAuthInfo object
- * @return True if all fields (Username, UserId, Realm, Domain) are the same
- */
-LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2);
+LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,const LinphoneAuthInfo *auth_info_2);
 
 /* you don't need those function*/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);

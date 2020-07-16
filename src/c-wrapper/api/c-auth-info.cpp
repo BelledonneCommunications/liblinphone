@@ -208,7 +208,7 @@ const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *info){
     return strlen(tlsKeyPath) != 0 ? tlsKeyPath : NULL;
 }
 
-bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *info1,const LinphoneAuthInfo *info2){
-    return AuthInfo::toCpp(info1)->isEqualButAlgorithms(AuthInfo::toCpp(info2));
+bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,const LinphoneAuthInfo *auth_info_2){
+    return auth_info_1 && AuthInfo::toCpp(auth_info_1)->isEqualButAlgorithms(AuthInfo::toCpp(auth_info_2));
 }
 
