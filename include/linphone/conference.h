@@ -174,6 +174,19 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
  */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 
+/**
+ * Call generic OpenGL render preview for a given conference
+ * @param conf The #LinphoneConference object. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *conf);
+
+/**
+ * Call generic OpenGL render for a given conference
+ * @param conf The #LinphoneConference object. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
+
+
 /************ */
 /* DEPRECATED */
 /* ********** */
