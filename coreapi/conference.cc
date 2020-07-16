@@ -137,6 +137,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 			if (p->findDevice(*remoteContact) == nullptr) {
 				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
+				_linphone_call_set_conf_ref(call->toC(), toC());
 				device->setSession(call->getActiveSession());
 
 				time_t creationTime = time(nullptr);
@@ -159,6 +160,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 			if (p->findDevice(*remoteContact) != nullptr) {
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
+				_linphone_call_set_conf_ref(call->toC(), nullptr);
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), *remoteContact);
@@ -318,11 +320,11 @@ void Conference::removeCallbacks (LinphoneConferenceCbs *cbs) {
 }
 
 void *Conference::getUserData () const{
-	return mUserData;
+	return userData;
 }
 
 void Conference::setUserData (void *ud) {
-	mUserData = ud;
+	userData = ud;
 }
 
 LocalConference::LocalConference (
@@ -503,7 +505,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 		if (call->toC() == linphone_core_get_current_call(getCore()->getCCore()))
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
-		_linphone_call_set_conf_ref(call->toC(), toC());
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 		Conference::addParticipant(call);
 		if (localEndpointCanBeAdded){
@@ -537,7 +538,6 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	
 	Conference::removeParticipant(call);
 	mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
-	_linphone_call_set_conf_ref(call->toC(), nullptr);
 	/* 
 	 * Handle the case where only the local participant and a unique remote participant are remaining.
 	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
@@ -777,7 +777,6 @@ RemoteConference::RemoteConference (
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
 	setConferenceId(conferenceId);
-	printf("%s - creating conference (local addres %s  peer address %s) focus %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), focus.asString().c_str());
 
 	setConferenceAddress(focus);
 }
@@ -805,7 +804,6 @@ RemoteConference::RemoteConference (
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
 	setConferenceId(conferenceId);
-	printf("%s - creating conference (local addres %s  peer address %s) focus %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), m_focusContact);
 
 	setConferenceAddress(Address(m_focusContact));
 	setState(ConferenceInterface::State::CreationPending);
@@ -848,7 +846,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	LinphoneAddress *addr;
 	LinphoneCallParams *params;
 	LinphoneCallLog *callLog;
-	printf("%s - Calling the conference focus (%s) state %s\n", __func__, getConferenceAddress().asString().c_str(), Utils::toString(state).c_str());
 	switch (state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
@@ -1004,7 +1001,6 @@ void RemoteConference::reset () {
 
 void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it;
-	printf("%s - conference (local addres %s  peer address %s) state %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), Utils::toString((CallSession::State)state).c_str());
 	switch (state) {
 		case LinphoneCallConnected:
 			m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
@@ -1124,7 +1120,6 @@ void RemoteConference::notifyReceived (const string &body) {
 }
 
 void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
-	printf("%s - conference (local addres %s  peer address %s) state %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), Utils::toString(state).c_str());
 	switch(state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
