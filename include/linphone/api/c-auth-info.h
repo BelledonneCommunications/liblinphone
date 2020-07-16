@@ -189,7 +189,7 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthI
 /**
  * Gets all available algorithms.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
- * @return A list of available algorithms. @maybenil
+ * @return \bctbx_list{const char *} A list of available algorithms. @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *auth_info);
 
