@@ -412,7 +412,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				ms_free(remoteContactAddressStr);
 
 				// Check if the request was sent by the focus
-				if (remoteContactAddress.hasParam("isfocus")) {
+				if (remoteContactAddress.hasParam("isfocus") && ((getConference() != nullptr) && linphone_conference_check_class(getConference(), LinphoneConferenceClassLocal))) {
 					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
 					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
