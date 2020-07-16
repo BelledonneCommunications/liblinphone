@@ -94,7 +94,6 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 
 	getCore()->insertAudioVideoConference(getSharedFromThis());
 
-	setState(ConferenceInterface::State::CreationPending);
 }
 
 
@@ -112,13 +111,11 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	const Address &remoteAddress = *call->getRemoteAddress();
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(remoteAddress);
-printf("%s - remote address %s partiicpant p %p\n", __func__, remoteAddress.asString().c_str(), p.get());
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
 		participants.push_back(p);
 	}
-printf("%s - after remote address %s partiicpant p %p\n", __func__, remoteAddress.asString().c_str(), p.get());
 
 	bool success = addParticipantDevice(call);
 
@@ -370,6 +367,11 @@ LocalConference::~LocalConference() {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
+}
+
+void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
+	Conference::setConferenceAddress(conferenceAddress);
+	setState(ConferenceInterface::State::CreationPending);
 }
 
 void LocalConference::finalizeCreation() {
@@ -753,22 +755,19 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 
 RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
-	const IdentityAddress &myAddress,
+	const IdentityAddress &focus,
 	const ConferenceId &conferenceId,
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
-	Conference(core, myAddress, listener, params){
+	Conference(core, conferenceId.getLocalAddress(), listener, params){
 
 	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
 	// Local conference sets last notify to 1 in its constructor
 //	lastNotify = 0;
 
-
-	m_focusAddr = nullptr;
 	m_focusContact = nullptr;
 	m_focusCall = nullptr;
 	m_coreCbs = nullptr;
-	m_focusAddr = linphone_config_get_string(getCore()->getCCore()->config, "misc", "conference_focus_addr", "");
 	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
 	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
@@ -776,7 +775,39 @@ RemoteConference::RemoteConference (
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
 	setConferenceId(conferenceId);
-	setConferenceAddress(myAddress);
+	printf("%s - creating conference (local addres %s  peer address %s) focus %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), focus.asString().c_str());
+
+	setConferenceAddress(focus);
+}
+
+RemoteConference::RemoteConference (
+	const shared_ptr<Core> &core,
+	const std::shared_ptr<LinphonePrivate::Call>& focusCall,
+	const ConferenceId &conferenceId,
+	CallSessionListener *listener,
+	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
+	Conference(core, conferenceId.getLocalAddress(), listener, params){
+
+	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
+	// Local conference sets last notify to 1 in its constructor
+//	lastNotify = 0;
+
+	m_focusContact = ms_strdup(focusCall->getRemoteContact().c_str());
+
+	m_focusCall = focusCall;
+	m_coreCbs = nullptr;
+	m_coreCbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_call_state_changed(m_coreCbs, callStateChangedCb);
+	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
+	linphone_core_cbs_set_user_data(m_coreCbs, this);
+	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
+
+	setConferenceId(conferenceId);
+	printf("%s - creating conference (local addres %s  peer address %s) focus %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), m_focusContact);
+
+	setConferenceAddress(Address(m_focusContact));
+	setState(ConferenceInterface::State::CreationPending);
+	finalizeCreation();
 }
 
 RemoteConference::~RemoteConference () {
@@ -815,13 +846,14 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	LinphoneAddress *addr;
 	LinphoneCallParams *params;
 	LinphoneCallLog *callLog;
+	printf("%s - Calling the conference focus (%s) state %s\n", __func__, getConferenceAddress().asString().c_str(), Utils::toString(state).c_str());
 	switch (state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
 			Conference::addParticipant(call);
-			ms_message("Calling the conference focus (%s)", m_focusAddr);
-			addr = linphone_address_new(m_focusAddr);
+			ms_message("Calling the conference focus (%s)", getConferenceAddress().asString().c_str());
+			addr = linphone_address_new(getConferenceAddress().asString().c_str());
 			if (!addr)
 				return false;
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
@@ -959,7 +991,6 @@ bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> c
 }
 
 void RemoteConference::reset () {
-	m_focusAddr = nullptr;
 	if(m_focusContact) {
 		ms_free(m_focusContact);
 		m_focusContact = nullptr;
@@ -971,6 +1002,7 @@ void RemoteConference::reset () {
 
 void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it;
+	printf("%s - conference (local addres %s  peer address %s) state %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), Utils::toString((CallSession::State)state).c_str());
 	switch (state) {
 		case LinphoneCallConnected:
 			m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
@@ -984,6 +1016,8 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 				} else
 					it++;
 			}
+			setConferenceId(ConferenceId(ConferenceAddress(m_focusContact), getConferenceId().getLocalAddress()));
+			finalizeCreation();
 			setState(ConferenceInterface::State::Created);
 			break;
 		case LinphoneCallError:
@@ -1088,6 +1122,7 @@ void RemoteConference::notifyReceived (const string &body) {
 }
 
 void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
+	printf("%s - conference (local addres %s  peer address %s) state %s\n", __func__, getConferenceId().getLocalAddress().asString().c_str(), getConferenceId().getPeerAddress().asString().c_str(), Utils::toString(state).c_str());
 	switch(state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
