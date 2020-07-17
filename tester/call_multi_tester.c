@@ -79,6 +79,16 @@ LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
 	return mgr;
 }
 
+void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
+	if (mgr->user_info) {
+		ms_free(mgr->user_info);
+	}
+
+	linphone_core_manager_destroy(mgr);
+}
+
+
+
 static void call_waiting_indication_with_param(bool_t enable_caller_privacy) {
 	bctbx_list_t *iterator;
 	bctbx_list_t* lcs;
@@ -511,9 +521,9 @@ static void simple_conference(void) {
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 
@@ -596,9 +606,9 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		terminate_local_conference(lcs, marie);
 	}
 	linphone_conference_unref(conf);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(marie);
 #else
 	BC_FAIL("Test temporally disabled because of crash");
 #endif
@@ -747,9 +757,9 @@ static void video_conference_by_merging_calls(void){
 	
 end:	
 	if (conf) linphone_conference_unref(conf);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -835,9 +845,9 @@ static void simple_conference_from_scratch_no_answer(void){
 
 	}
 	
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -868,9 +878,9 @@ static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 		BC_PASS("Passed");
 	}
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void simple_conference_with_ice(void) {
@@ -886,9 +896,9 @@ static void conference_hang_up_call_on_hold(void) {
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference(get_laure_rc());
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void simple_call_transfer(void) {
@@ -1377,9 +1387,9 @@ static void eject_from_3_participants_local_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void eject_from_4_participants_conference(void) {
@@ -1460,10 +1470,10 @@ printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %
 	}
 
 end:
-	linphone_core_manager_destroy(michelle);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1488,10 +1498,10 @@ void simple_remote_conference(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(marie);
 }
 
 void simple_remote_conference_shut_down_focus(void) {
@@ -1514,10 +1524,10 @@ void simple_remote_conference_shut_down_focus(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(marie);
 }
 
 void eject_from_3_participants_remote_conference(void) {
@@ -1540,10 +1550,10 @@ void eject_from_3_participants_remote_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus);
 
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(marie);
 }
 
 void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
@@ -1652,9 +1662,6 @@ void no_auto_answer_on_fake_call_with_replaces_header (void) {
 	bctbx_list_free(lcs);
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> Rename tester methods as they only target local conference
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
