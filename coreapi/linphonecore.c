@@ -1610,6 +1610,8 @@ static void sip_config_read(LinphoneCore *lc) {
 	linphone_core_set_sip_transport_timeout(lc, lp_config_get_int(lc->config, "sip", "transport_timeout", 63000));
 	lc->sal->setSupportedTags(lp_config_get_string(lc->config,"sip","supported","replaces, outbound, gruu"));
 	lc->sip_conf.save_auth_info = !!lp_config_get_int(lc->config, "sip", "save_auth_info", 1);
+	
+	lc->sal->setUnreliableConnectionTimeout(linphone_config_get_int(lc->config, "sip", "unreliable_connection_timeout", 120));
 
 	linphone_core_create_im_notif_policy(lc);
 

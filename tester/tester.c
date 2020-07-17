@@ -1699,34 +1699,42 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
  * */
 void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer){
 	FILE* file=NULL;
-	char *receive_file = NULL;
+	
 
-	// If a file path is set, we should NOT call the on_recv callback !
-	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
-	receive_file = bc_tester_file("receive_file.dump");
+	
 	if (!linphone_content_get_user_data(content)) {
+		// If a file path is set, we should NOT call the on_recv callback !
+		BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+		char receive_file_name[255];
+		char random_part[10];
+		belle_sip_random_token(random_part, sizeof(random_part)-1);
+		snprintf(receive_file_name,sizeof(receive_file_name),"receive_file-%s.dump",random_part);
+		char *receive_file = bc_tester_file(receive_file_name);
 		/*first chunk, creating file*/
 		file = fopen(receive_file,"wb");
 		linphone_content_set_user_data(content,(void*)file); /*store fd for next chunks*/
+		linphone_chat_message_set_file_transfer_filepath(msg,receive_file);
+		bc_free(receive_file);
 	}
 
 	file = (FILE*)linphone_content_get_user_data(content);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
 		struct stat st;
-
 		linphone_content_set_user_data(content, NULL);
 		fclose(file);
-		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_TRUE(stat(linphone_chat_message_get_file_transfer_filepath(msg), &st)==0);
 		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
+		
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
-	bc_free(receive_file);
+	
+	
 }
 
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {

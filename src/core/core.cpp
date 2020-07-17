@@ -566,7 +566,14 @@ bool Core::isFriendListSubscriptionEnabled () const {
 // Misc.
 // -----------------------------------------------------------------------------
 
+
+/*
+ * pushNotificationReceived() is a critical piece of code.
+ * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
+ * If not, we must start or restart them.
+ */
 void Core::pushNotificationReceived () const {
+	L_D();
 	LinphoneCore *lc = getCCore();
 	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
@@ -587,8 +594,9 @@ void Core::pushNotificationReceived () const {
 	linphone_core_iterate(lc); // First iterate to handle disconnection errors on sockets
 	linphone_core_iterate(lc); // Second iterate required by belle-sip to notify about disconnections
 	linphone_core_iterate(lc); // Third iterate required by refresher to restart a connection/registration if needed.
+	
 	/*
-	 * Finally if any of the connection is already pending a retry, the following code will request an immediate
+	 * If if any of the connections is already pending a register retry, the following code will request an immediate
 	 * attempt to connect and register.
 	 */
 	bool sendKeepAlive = false;
@@ -606,12 +614,26 @@ void Core::pushNotificationReceived () const {
 		}
 		it = bctbx_list_next(it);
 	}
+	/* Send a "\r\n" keepalive. If the socket is broken, it will generate an error. */
 	if (sendKeepAlive) {
 		lInfo() << "Sending keep-alive to ensure sockets aren't broken";
 		getCCore()->sal->sendKeepAlive();
-		linphone_core_iterate(lc);
-		linphone_core_iterate(lc);
+		linphone_core_iterate(lc); //Let the socket error be caught.
+		linphone_core_iterate(lc); // Let the socket error be notified to the refreshers, to restart a connection if needed.
 	}
+	/*
+	 * Despite all the things done so far, there can still be the case where some connections are "ready" but in fact stalled,
+	 * due to crappy firewalls not notifying reset connections. Eliminate them.
+	 */
+	if (d->calls.empty()){
+		/* We do this only if there is no running call. Indeed, breaking the connection on which the call was made is problematic, as we are going to loose
+		 * the local contact of the dialog. As of today, liblinphone doesn't trigger a reINVITE upon loss of underlying connection.
+		 * It does this only upon network manager decisions (linphone_core_set_network_reachable_internal()).
+		 * This looks an acceptable compromise, as the socket is not expected to be zombified while keepalives are regularly sent while the app is in foreground.
+		 */
+		lc->sal->cleanUnreliableConnections();
+	}
+	linphone_core_iterate(lc); // Let the disconnections be notified to the refreshers. 
 }
 
 int Core::getUnreadChatMessageCount () const {
