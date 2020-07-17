@@ -119,6 +119,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		participants.push_back(p);
 	}
 
+	_linphone_call_set_conf_ref(call->toC(), toC());
 	bool success = addParticipantDevice(call);
 
 	if (success) {
@@ -156,8 +157,13 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 	if (p) {
 		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 		if (remoteContact) {
+			std::shared_ptr<ParticipantDevice> device = p->findDevice(*remoteContact);
 			// If device is not found, then add it
-			if (p->findDevice(*remoteContact) != nullptr) {
+			if (device != nullptr) {
+				LinphoneEvent * event = device->getConferenceSubscribeEvent();
+				if (event) {
+					linphone_event_terminate(event);
+				}
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
 				_linphone_call_set_conf_ref(call->toC(), nullptr);
@@ -371,6 +377,7 @@ LocalConference::~LocalConference() {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
+	mMixerSession.reset();
 }
 
 void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
@@ -423,6 +430,7 @@ void LocalConference::addLocalEndpoint () {
 
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	for (const auto &address : addresses) {
+printf("%s - add address %s\n", __func__, linphone_address_as_string(address));
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
 		if (!call) {
 			/* Start a new call by indicating that it has to be put into the conference directly */
@@ -620,7 +628,9 @@ int LocalConference::terminate () {
 		}
 	}
 
-	if (getParticipantCount() == 0) setState(ConferenceInterface::State::TerminationPending);
+	if (getParticipantCount() == 0) {
+		setState(ConferenceInterface::State::TerminationPending);
+	}
 
 	return 0;
 }
@@ -815,6 +825,8 @@ RemoteConference::~RemoteConference () {
 #ifdef HAVE_ADVANCED_IM
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
+
+	ms_free(m_focusContact);
 
 	linphone_core_remove_callbacks(getCore()->getCCore(), m_coreCbs);
 	linphone_core_cbs_unref(m_coreCbs);
