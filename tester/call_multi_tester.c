@@ -79,6 +79,16 @@ LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
 	return mgr;
 }
 
+void destroy_mgr_in_conference(LinphoneCoreManager *mgr) {
+	if (mgr->user_info) {
+		ms_free(mgr->user_info);
+	}
+
+	linphone_core_manager_destroy(mgr);
+}
+
+
+
 static void call_waiting_indication_with_param(bool_t enable_caller_privacy) {
 	bctbx_list_t *iterator;
 	bctbx_list_t* lcs;
@@ -508,9 +518,9 @@ static void simple_conference(void) {
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 
@@ -592,9 +602,9 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		terminate_local_conference(lcs, marie);
 	}
 	linphone_conference_unref(conf);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(marie);
 }
 
 static void simple_conference_from_scratch(void){
@@ -738,9 +748,9 @@ static void video_conference_by_merging_calls(void){
 	
 end:	
 	if (conf) linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -825,9 +835,9 @@ static void simple_conference_from_scratch_no_answer(void){
 
 	}
 	
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -855,9 +865,9 @@ static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 		BC_PASS("Passed");
 	}
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void simple_conference_with_ice(void) {
@@ -873,9 +883,9 @@ static void conference_hang_up_call_on_hold(void) {
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference(get_laure_rc());
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void simple_call_transfer(void) {
@@ -1346,9 +1356,9 @@ static void eject_from_3_participants_local_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 }
 
 static void eject_from_4_participants_conference(void) {
@@ -1427,10 +1437,11 @@ printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %
 	}
 
 end:
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
-	linphone_core_manager_destroy(michelle);
-	linphone_core_manager_destroy(marie);
+
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1455,9 +1466,9 @@ void simple_remote_conference(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
 }
 
@@ -1481,9 +1492,9 @@ void simple_remote_conference_shut_down_focus(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
 }
 
@@ -1507,9 +1518,9 @@ void eject_from_3_participants_remote_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 	linphone_conference_server_destroy(focus);
 }
 
@@ -1757,9 +1768,9 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	terminate_local_conference(lcs, laure);
 
 	linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
 
 	linphone_audio_device_unref(dev0);
 	linphone_audio_device_unref(dev1);
@@ -2000,13 +2011,13 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_audio_device_unref(marie_dev0);
 	linphone_audio_device_unref(marie_dev1);
 	linphone_audio_device_unref(marie_current_dev);
-	linphone_core_manager_destroy(marie);
+	destroy_mgr_in_conference(marie);
 	linphone_audio_device_unref(pauline_dev0);
 	linphone_audio_device_unref(pauline_dev1);
 	linphone_audio_device_unref(pauline_current_dev);
-	linphone_core_manager_destroy(pauline);
+	destroy_mgr_in_conference(pauline);
 
-	linphone_core_manager_destroy(laure);
+	destroy_mgr_in_conference(laure);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);

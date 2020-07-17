@@ -376,6 +376,8 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 	linphone_config_unref(config);
+	// clean
+	if (filepath) bctbx_free(filepath);
 	return lc;
 }
 
@@ -474,6 +476,7 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	if (addr_str) {
 		//ms_message("Conference [%s] state changed: %s", addr_str, linphone_conference_state_to_string(newState));
 		ms_message("Conference [%s] state changed: %d", addr_str, newState);
+		printf("Conference [%s] state changed: %d\n", addr_str, newState);
 	}
 	switch (newState) {
 		case LinphoneConferenceStateNone:
@@ -751,6 +754,9 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 
 	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants, new_participants_initial_stats, call_paused, participants, participants_initial_stats);
 
+	ms_free(participants_initial_stats);
+	ms_free(new_participants_initial_stats);
+
 	return 0;
 }
 
@@ -840,6 +846,8 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 		}
 	}
 
+	ms_free(participants_initial_stats);
+
 	return 0;
 }
 
@@ -863,6 +871,8 @@ LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager
 	linphone_core_terminate_conference(conf_mgr->lc);
 
 	finish_terminate_local_conference(lcs);
+
+	ms_free(participants_initial_stats);
 
 	return 0;
 }
@@ -1571,6 +1581,10 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 		BC_ASSERT_PTR_NOT_NULL(remote_addr);
 
 		ms_message(" %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
+																		,from
+																		,to
+																		,linphone_call_state_to_string(cstate));
+		printf(" %s call from [%s] to [%s], new state is [%s]\n"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 																		,from
 																		,to
 																		,linphone_call_state_to_string(cstate));
