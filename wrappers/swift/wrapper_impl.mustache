@@ -42,7 +42,7 @@ public struct {{enumName}}:OptionSet
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public static let {{name}} = Linphone{{enumName}}(rawValue: {{{value}}})
+	public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
 	{{/values}}
 }
 {{/isFlag}}
@@ -109,9 +109,9 @@ func BctbxListToStringArray(list: UnsafeMutablePointer<bctbx_list_t>) -> [String
 	return sList
 }
 
-func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]) -> UnsafeMutablePointer<bctbx_list_t>? {
+func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointer<bctbx_list_t>? {
 	var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
-	for data in list {
+	for data in list ?? []{
 		cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
 	}
 	return cList
@@ -214,8 +214,8 @@ public class {{className}} : LinphoneObject
 	public var getCobject: OpaquePointer? {
 		return cPtr
 	}
-
 	{{#isLinphoneCore}}
+
 	/// Get the native window handle of the video window.
 	public var NativeVideoWindowIdString: String
 	{
@@ -474,16 +474,6 @@ public class {{className}} : LinphoneObject
 	}
 	{{/listener}}
 	{{#impl}}
-	{{#doc}}
-	{{#lines}}
-	///	{{{line}}}
-	{{/lines}}
-	{{/doc}}
-	{{#detailedDoc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/detailedDoc}}
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
