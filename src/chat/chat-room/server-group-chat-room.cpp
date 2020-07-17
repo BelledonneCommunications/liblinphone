@@ -882,7 +882,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	}
 
 	Content content;
-	content.setBody(q->getResourceLists(addressesList));
+	content.setBodyFromLocale(q->getResourceLists(addressesList));
 	content.setContentType(ContentType::ResourceLists);
 	content.setContentDisposition(ContentDisposition::RecipientListHistory);
 	if (linphone_core_content_encoding_supported(q->getCore()->getCCore(), "deflate"))

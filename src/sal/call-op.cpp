@@ -54,7 +54,7 @@ int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {
 			return -1;
 
 		mLocalBody.setContentType(ContentType::Sdp);
-		mLocalBody.setBodyFromUtf8(move(buffer));
+		mLocalBody.setBody(move(buffer));
 	} else {
 		mLocalBody = Content();
 	}
@@ -158,7 +158,7 @@ int SalCallOp::setSdp (belle_sip_message_t *msg, belle_sdp_session_description_t
 
 	Content body;
 	body.setContentType(ContentType::Sdp);
-	body.setBodyFromUtf8(move(buffer));
+	body.setBody(move(buffer));
 	setCustomBody(msg, body);
 	return 0;
 }
@@ -296,7 +296,7 @@ Content SalCallOp::extractBody (belle_sip_message_t *message) {
 	size_t length = contentLengthHeader ? belle_sip_header_content_length_get_content_length(contentLengthHeader) : 0;
 	const char *content = belle_sip_message_get_body(message);
 	if ((length > 0) && content)
-		body.setBodyFromUtf8(content, length);
+		body.setBody(content, length);
 	return body;
 }
 

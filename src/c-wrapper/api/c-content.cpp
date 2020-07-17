@@ -128,7 +128,7 @@ const uint8_t *linphone_content_get_buffer (const LinphoneContent *content) {
 
 void linphone_content_set_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size) {
 	content->is_dirty = TRUE;
-	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(buffer, size);
+	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBody(buffer, size);
 }
 
 const char *linphone_content_get_string_buffer (const LinphoneContent *content) {

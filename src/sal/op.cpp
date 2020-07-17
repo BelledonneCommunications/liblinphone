@@ -955,7 +955,7 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 	ContentType contentType = body.getContentType();
 	auto contentDisposition = body.getContentDisposition();
 	string contentEncoding = body.getContentEncoding();
-	size_t bodySize = body.getUtf8Body().size();
+	size_t bodySize = body.getBody().size();
 
 	if (bodySize > SIP_MESSAGE_BODY_LIMIT) {
 		bctbx_error("trying to add a body greater than %lukB to message [%p]", (unsigned long)SIP_MESSAGE_BODY_LIMIT/1024, msg);
@@ -979,7 +979,7 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 
 	if (bodySize > 0) {
 		char *buffer = bctbx_new(char, bodySize + 1);
-		memcpy(buffer, body.getUtf8Body().data(), bodySize);
+		memcpy(buffer, body.getBody().data(), bodySize);
 		buffer[bodySize] = '\0';
 		belle_sip_message_assign_body(msg, buffer, bodySize);
 	}

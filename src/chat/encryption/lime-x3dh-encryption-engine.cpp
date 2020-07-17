@@ -340,7 +340,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 
 				// For backward compatibility only since 4.4.0
 				Content *sipfrag = new Content();
-				sipfrag->setBody("From: <" + localDeviceId + ">");
+				sipfrag->setBodyFromLocale("From: <" + localDeviceId + ">");
 				sipfrag->setContentType(ContentType::SipFrag);
 				contents.push_back(move(sipfrag));
 
@@ -349,7 +349,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				for (const lime::RecipientData &recipient : filteredRecipients) {
 					string cipherHeaderB64 = encodeBase64(recipient.DRmessage);
 					Content *cipherHeader = new Content();
-					cipherHeader->setBody(cipherHeaderB64);
+					cipherHeader->setBodyFromLocale(cipherHeaderB64);
 					cipherHeader->setContentType(ContentType::LimeKey);
 					cipherHeader->addHeader("Content-Id", recipient.deviceId);
 					Header contentDescription("Content-Description", "Cipher key");
@@ -362,7 +362,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 				const vector<uint8_t> *binaryCipherMessage = cipherMessage.get();
 				string cipherMessageB64 = encodeBase64(*binaryCipherMessage);
 				Content *cipherMessage = new Content();
-				cipherMessage->setBody(cipherMessageB64);
+				cipherMessage->setBodyFromLocale(cipherMessageB64);
 				cipherMessage->setContentType(ContentType::OctetStream);
 				cipherMessage->addHeader("Content-Description", "Encrypted message");
 				contents.push_back(move(cipherMessage));

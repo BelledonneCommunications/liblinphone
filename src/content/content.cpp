@@ -85,7 +85,7 @@ Content &Content::operator= (Content &&other) {
 bool Content::operator== (const Content &other) const {
 	L_D();
 	return d->contentType == other.getContentType() &&
-		d->body == other.getUtf8Body() &&
+		d->body == other.getBody() &&
 		d->contentDisposition == other.getContentDisposition() &&
 		d->contentEncoding == other.getContentEncoding() &&
 		d->headers == other.getHeaders();
@@ -93,7 +93,7 @@ bool Content::operator== (const Content &other) const {
 
 void Content::copy(const Content &other) {
 	L_D();
-	d->body = other.getUtf8Body();
+	d->body = other.getBody();
 	d->contentType = other.getContentType();
 	d->contentDisposition = other.getContentDisposition();
 	d->contentEncoding = other.getContentEncoding();
@@ -130,7 +130,7 @@ void Content::setContentEncoding (const string &contentEncoding) {
 	d->contentEncoding = contentEncoding;
 }
 
-const vector<char> &Content::getUtf8Body () const {
+const vector<char> &Content::getBody () const {
 	L_D();
 	return d->body;
 }
@@ -145,23 +145,23 @@ string Content::getBodyAsUtf8String () const {
 	return string(d->body.begin(), d->body.end());
 }
 
-void Content::setBodyFromUtf8 (const vector<char> &body) {
+void Content::setBody (const vector<char> &body) {
 	L_D();
 	d->body = body;
 }
 
-void Content::setBodyFromUtf8 (vector<char> &&body) {
+void Content::setBody (vector<char> &&body) {
 	L_D();
 	d->body = move(body);
 }
 
-void Content::setBody (const string &body) {
+void Content::setBodyFromLocale (const string &body) {
 	L_D();
 	string toUtf8 = Utils::localeToUtf8(body);
 	d->body = vector<char>(toUtf8.cbegin(), toUtf8.cend());
 }
 
-void Content::setBodyFromUtf8 (const void *buffer, size_t size) {
+void Content::setBody (const void *buffer, size_t size) {
 	L_D();
 	const char *start = static_cast<const char *>(buffer);
 	if(start != nullptr)

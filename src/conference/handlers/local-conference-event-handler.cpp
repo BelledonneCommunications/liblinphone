@@ -188,7 +188,7 @@ string LocalConferenceEventHandlerPrivate::createNotifyMultipart (int notifyId) 
 		}
 		contents.emplace_back(Content());
 		contents.back().setContentType(ContentType::ConferenceInfo);
-		contents.back().setBody(body);
+		contents.back().setBodyFromLocale(body);
 	}
 
 	if (contents.empty())

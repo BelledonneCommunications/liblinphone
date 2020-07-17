@@ -1706,7 +1706,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 				content.reset(new FileContent());
 				content->setContentType(fileContentType);
 				content->setAppData("legacy", appData);
-				content->setBody(text);
+				content->setBodyFromLocale(text);
 			} else {
 				content.reset(new Content());
 				content->setContentType(contentType);
@@ -1715,7 +1715,7 @@ void MainDbPrivate::importLegacyHistory (DbSession &inDbSession) {
 						lWarning() << "Unable to import legacy message with no text.";
 						continue;
 					}
-					content->setBody(text);
+					content->setBodyFromLocale(text);
 				} else {
 					lWarning() << "Unable to import unsupported legacy content.";
 					continue;
@@ -3162,7 +3162,7 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 			if(bodyEncodingType == 1)
 				content->setBodyFromUtf8(row.get<string>(3));
 			else
-				content->setBody(row.get<string>(3));
+				content->setBodyFromLocale(row.get<string>(3));
 
 			// 1.2 - Fetch contents' app data.
 			// TODO: Do not test backend, encapsulate!!!

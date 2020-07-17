@@ -59,7 +59,7 @@ ChatMessageModifier::Result MultipartChatMessageModifier::decode (const shared_p
 				for (const Header &header : c.getHeaders()) {
 					content->addHeader(header);
 				}
-				content->setBodyFromUtf8(c.getBodyAsUtf8String());
+				content->setBody(c.getBody());
 			} else {
 				content = new Content(c);
 			}

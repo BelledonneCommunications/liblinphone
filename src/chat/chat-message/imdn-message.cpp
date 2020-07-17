@@ -67,21 +67,21 @@ ImdnMessage::ImdnMessage (const Context &context) : NotificationMessage(*new Imd
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBody(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Delivery, LinphoneReasonNone));
+		content->setBodyFromLocale(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Delivery, LinphoneReasonNone));
 		addContent(content);
 	}
 	for (const auto &message : d->context.displayedMessages) {
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBody(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Display, LinphoneReasonNone));
+		content->setBodyFromLocale(Imdn::createXml(message->getImdnMessageId(), message->getTime(), Imdn::Type::Display, LinphoneReasonNone));
 		addContent(content);
 	}
 	for (const auto &mr : d->context.nonDeliveredMessages) {
 		Content *content = new Content();
 		content->setContentDisposition(ContentDisposition::Notification);
 		content->setContentType(ContentType::Imdn);
-		content->setBody(Imdn::createXml(mr.message->getImdnMessageId(), mr.message->getTime(), Imdn::Type::Delivery, mr.reason));
+		content->setBodyFromLocale(Imdn::createXml(mr.message->getImdnMessageId(), mr.message->getTime(), Imdn::Type::Delivery, mr.reason));
 		addContent(content);
 	}
 

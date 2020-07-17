@@ -402,7 +402,7 @@ const ContentType &ChatMessagePrivate::getContentType () const {
 void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	loadContentsFromDatabase();
 	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
-		internalContent.setBodyFromUtf8(contents.front()->getUtf8Body());
+		internalContent.setBody(contents.front()->getBody());
 	}
 	internalContent.setContentType(contentType);
 
@@ -442,12 +442,12 @@ void ChatMessagePrivate::setText (const string &text) {
 	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
-	internalContent.setBody(text);
+	internalContent.setBodyFromLocale(text);
 
 	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
-			contents.front()->setBody(text);
+			contents.front()->setBodyFromLocale(text);
 	}
 }
 

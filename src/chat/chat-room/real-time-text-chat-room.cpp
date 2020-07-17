@@ -76,7 +76,7 @@ void RealTimeTextChatRoomPrivate::realtimeTextReceived (uint32_t character, cons
 		} else {
 			char *value = Utils::utf8ToChar(character);
 			auto content = pendingMessage->getContents().front();
-			content->setBody(content->getBodyAsString() + string(value));
+			content->setBodyFromLocale(content->getBodyAsString() + string(value));
 			lDebug() << "Received RTT character: " << value << " (" << character << "), pending text is " << content->getBodyAsString();
 			delete[] value;
 		}

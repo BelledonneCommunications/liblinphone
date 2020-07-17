@@ -275,7 +275,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			} else if (!currentFileContentToTransfer->isEmpty()) {
 				size_t buf_size = currentFileContentToTransfer->getSize();
 				uint8_t *buf = (uint8_t *)ms_malloc(buf_size);
-				memcpy(buf, currentFileContentToTransfer->getUtf8Body().data(), buf_size);
+				memcpy(buf, currentFileContentToTransfer->getBody().data(), buf_size);
 
 				EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
 				if (imee) {
@@ -382,7 +382,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 									char *buffer;
 									int xmlStringLength;
 									xmlDocDumpFormatMemoryEnc(xmlMessageBody, (xmlChar **)&buffer, &xmlStringLength, "UTF-8", 0);
-									currentFileTransferContent->setBody(buffer);
+									currentFileTransferContent->setBodyFromLocale(buffer);
 									break;
 								}
 								xmlFree(typeAttribute);
@@ -392,7 +392,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 					}
 					xmlFreeDoc(xmlMessageBody);
 				} else { // no encryption key, transfer in plain, just copy the msg sent by server
-					currentFileTransferContent->setBody(body);
+					currentFileTransferContent->setBodyFromLocale(body);
 				}
 
 				currentFileTransferContent->setFileContent(currentFileContentToTransfer);
@@ -646,7 +646,7 @@ ChatMessageModifier::Result FileTransferChatMessageModifier::decode (const share
 	if (internalContent.getContentType() == ContentType::FileTransfer) {
 		FileTransferContent *fileTransferContent = new FileTransferContent();
 		fileTransferContent->setContentType(internalContent.getContentType());
-		fileTransferContent->setBodyFromUtf8(internalContent.getUtf8Body());
+		fileTransferContent->setBody(internalContent.getBody());
 		fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml(fileTransferContent);
 		message->addContent(fileTransferContent);
 		return ChatMessageModifier::Result::Done;
