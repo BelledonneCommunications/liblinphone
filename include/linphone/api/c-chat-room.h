@@ -579,13 +579,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
 
-/**
- * Creates a message attached to the given chat room with a plain text content filled with the given message.
- * @param chat_room the #LinphoneChatRoom object. @notnil
- * @param message text message, NULL if absent. @maybenil
- * @return a new #LinphoneChatMessage @notnil
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room, const char* message);
 
 /**
  * @}

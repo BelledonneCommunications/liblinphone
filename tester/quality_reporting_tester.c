@@ -93,7 +93,7 @@ static void on_report_send_with_rtcp_xr_local (const LinphoneCall *call, SalStre
 #endif
 
 static void on_report_send_with_rtcp_xr_remote (const LinphoneCall *call, SalStreamType stream_type, const LinphoneContent *content) {
-	char *body = (char *)linphone_content_get_utf8_buffer(content);
+	char *body = (char *)linphone_content_get_buffer(content);
 	reporting_session_report_t *report = linphone_quality_reporting_get_reports(linphone_call_log_get_quality_reporting(linphone_call_get_call_log(call)))[stream_type];
 
 	on_report_send_mandatory(call, stream_type, content);

@@ -6070,7 +6070,7 @@ static LinphoneContent *create_content_from_java_args(JNIEnv *env, LinphoneCore 
 			ReleaseStringUTFChars(env, jencoding, tmp);
 		}
 
-		linphone_content_set_utf8_buffer(content, (const uint8_t *)data, (size_t)env->GetArrayLength(jdata));
+		linphone_content_set_buffer(content, (const uint8_t *)data, (size_t)env->GetArrayLength(jdata));
 		env->ReleaseByteArrayElements(jdata,(jbyte*)data,JNI_ABORT);
 	}
 	return content;
@@ -6282,7 +6282,7 @@ static jobject create_java_linphone_content(JNIEnv *env, const LinphoneContent *
 	jname = ((tmp = linphone_content_get_name(icontent))) ? env->NewStringUTF(tmp) : NULL;
 	jsize = (jint) linphone_content_get_size(icontent);
 
-	data = (!linphone_content_is_multipart(icontent) ? linphone_content_get_utf8_buffer(icontent) : NULL);
+	data = (!linphone_content_is_multipart(icontent) ? linphone_content_get_buffer(icontent) : NULL);
 	if (data){
 		jdata = env->NewByteArray((int)linphone_content_get_size(icontent));
 		env->SetByteArrayRegion(jdata, 0, (int)linphone_content_get_size(icontent), (jbyte*)data);

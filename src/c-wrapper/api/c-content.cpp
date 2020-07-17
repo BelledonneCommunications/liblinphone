@@ -126,16 +126,7 @@ const uint8_t *linphone_content_get_buffer (const LinphoneContent *content) {
 	return reinterpret_cast<const uint8_t *>(linphone_content_get_utf8_text(content));
 }
 
-const uint8_t *linphone_content_get_utf8_buffer (const LinphoneContent *content) {
-	return reinterpret_cast<const uint8_t *>(linphone_content_get_utf8_text(content));
-}
-
 void linphone_content_set_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size) {
-	content->is_dirty = TRUE;
-	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(buffer, size);
-}
-
-void linphone_content_set_utf8_buffer (LinphoneContent *content, const uint8_t *buffer, size_t size) {
 	content->is_dirty = TRUE;
 	L_GET_CPP_PTR_FROM_C_OBJECT(content)->setBodyFromUtf8(buffer, size);
 }

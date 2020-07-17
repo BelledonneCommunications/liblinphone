@@ -258,7 +258,7 @@ static void fill_content_buffer(LinphoneContent *content, const char *sendFilePa
 	size_t read = fread(buf, sizeof(uint8_t), file_size, file_to_send);
 
 	BC_ASSERT_EQUAL(read, file_size, int, "%d");
-	linphone_content_set_utf8_buffer(content, buf, file_size);
+	linphone_content_set_buffer(content, buf, file_size);
 	linphone_content_set_size(content, file_size); /*total size to be transfered*/
 	fclose(file_to_send);
 }

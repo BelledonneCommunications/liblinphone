@@ -1078,7 +1078,7 @@ void info_message_base(bool_t with_content) {
 			LinphoneContent* content = linphone_core_create_content(marie->lc);
 			linphone_content_set_type(content, "application");
 			linphone_content_set_subtype(content, "somexml");
-			linphone_content_set_utf8_buffer(content, (const uint8_t *)info_content, strlen(info_content));
+			linphone_content_set_buffer(content, (const uint8_t *)info_content, strlen(info_content));
 			linphone_info_message_set_content(info, content);
 			linphone_content_unref(content);
 		}
@@ -1098,12 +1098,12 @@ void info_message_base(bool_t with_content) {
 		if (with_content){
 			BC_ASSERT_PTR_NOT_NULL(content);
 			if (content) {
-				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_utf8_buffer(content));
+				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_buffer(content));
 				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_type(content));
 				BC_ASSERT_PTR_NOT_NULL(linphone_content_get_subtype(content));
 				if (linphone_content_get_type(content)) BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content),"application");
 				if (linphone_content_get_subtype(content)) BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content),"somexml");
-				if (linphone_content_get_utf8_buffer(content))BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content),info_content);
+				if (linphone_content_get_buffer(content))BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content),info_content);
 				BC_ASSERT_EQUAL((int)linphone_content_get_size(content),(int)strlen(info_content), int, "%d");
 			}
 		}

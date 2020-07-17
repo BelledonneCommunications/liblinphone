@@ -361,7 +361,7 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	}
 #endif
 
-	linphone_content_set_utf8_buffer(content, (uint8_t *)buffer, strlen(buffer));
+	linphone_content_set_buffer(content, (uint8_t *)buffer, strlen(buffer));
 	ms_free(buffer);
 
 	if (linphone_call_get_call_log(call)->reporting.on_report_sent != NULL) {

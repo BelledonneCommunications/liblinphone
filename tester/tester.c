@@ -1421,7 +1421,7 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml2");
-	linphone_content_set_utf8_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
+	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
 
 	ms_message("Subscription state [%s] from [%s]",linphone_subscription_state_to_string(state),from);
 	ms_free(from);
