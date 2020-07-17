@@ -1229,14 +1229,6 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 }
 
-void custom_mgr_destroy(LinphoneCoreManager *mgr) {
-	if (mgr->user_info) {
-		delete static_cast<int*>(mgr->user_info);
-	}
-
-	linphone_core_manager_destroy(mgr);
-}
-
 LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> confListener, shared_ptr<MediaConference::LocalConference> conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
 
 	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file);
@@ -1297,7 +1289,7 @@ printf("%s - destroy manager %p rc %s - core size %0d\n", __func__, m, m->rc_pat
 		LinphoneCore * c = reinterpret_cast<LinphoneCore *>(bctbx_list_get_data(it2));
 bctbx_warning("%s - searching core %p - current %p\n", __func__, m->lc, c);
 	}
-		custom_mgr_destroy(m);
+		destroy_mgr_in_conference(m);
 	}
 
 	bctbx_list_free(lcs);
@@ -1361,9 +1353,9 @@ void send_removed_notify_through_call() {
 
 	}
 
-	custom_mgr_destroy(marie);
-	custom_mgr_destroy(laure);
-	custom_mgr_destroy(pauline);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(pauline);
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants_mgrs);
 	bctbx_list_free(removed_mgrs);
