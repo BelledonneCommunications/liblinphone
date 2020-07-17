@@ -558,6 +558,7 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 
 // Add internal callback for subscriptions and notifications
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file);
+void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
 LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
