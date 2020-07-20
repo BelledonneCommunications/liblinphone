@@ -91,94 +91,94 @@ LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *co
 	return conf->toC();
 }
 
-LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *obj) {
-	return (LinphoneConferenceState)MediaConference::Conference::toCpp(obj)->getState();
+LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *conference) {
+	return (LinphoneConferenceState)MediaConference::Conference::toCpp(conference)->getState();
 }
 
-const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *obj){
-	return MediaConference::Conference::toCpp(obj)->getCurrentParams().toC();
+const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conference){
+	return MediaConference::Conference::toCpp(conference)->getCurrentParams().toC();
 }
 
-LinphoneStatus linphone_conference_add_participant (LinphoneConference *obj, LinphoneCall *call) {
-	return MediaConference::Conference::toCpp(obj)->addParticipant(Call::toCpp(call)->getSharedFromThis());
+LinphoneStatus linphone_conference_add_participant (LinphoneConference *conference, LinphoneCall *call) {
+	return MediaConference::Conference::toCpp(conference)->addParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
-LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *obj, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(obj)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri) {
+	return MediaConference::Conference::toCpp(conference)->addParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
 }
 
-LinphoneStatus linphone_conference_remove_participant (LinphoneConference *obj, const LinphoneAddress * uri) {
-	LinphoneParticipant * participant = linphone_conference_find_participant (obj, uri);
-	return linphone_conference_remove_participant_2 (obj, participant);
+LinphoneStatus linphone_conference_remove_participant (LinphoneConference *conference, const LinphoneAddress * uri) {
+	LinphoneParticipant * participant = linphone_conference_find_participant (conference, uri);
+	return linphone_conference_remove_participant_2 (conference, participant);
 }
 
-LinphoneStatus linphone_conference_remove_participant_2 (LinphoneConference *obj, LinphoneParticipant *participant) {
-	return MediaConference::Conference::toCpp(obj)->removeParticipant(Participant::toCpp(participant)->getSharedFromThis());
+LinphoneStatus linphone_conference_remove_participant_2 (LinphoneConference *conference, LinphoneParticipant *participant) {
+	return MediaConference::Conference::toCpp(conference)->removeParticipant(Participant::toCpp(participant)->getSharedFromThis());
 }
 
-LinphoneStatus linphone_conference_remove_participant_3 (LinphoneConference *obj, LinphoneCall *call) {
-	return MediaConference::Conference::toCpp(obj)->removeParticipant(Call::toCpp(call)->getSharedFromThis());
+LinphoneStatus linphone_conference_remove_participant_3 (LinphoneConference *conference, LinphoneCall *call) {
+	return MediaConference::Conference::toCpp(conference)->removeParticipant(Call::toCpp(call)->getSharedFromThis());
 }
 
-LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *obj, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(obj)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
+LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *conference, const LinphoneAddress *uri) {
+	return MediaConference::Conference::toCpp(conference)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
 }
 
-int linphone_conference_update_params(LinphoneConference *obj, const LinphoneConferenceParams *params){
-	return MediaConference::Conference::toCpp(obj)->update(*ConferenceParams::toCpp(params));
+int linphone_conference_update_params(LinphoneConference *conference, const LinphoneConferenceParams *params){
+	return MediaConference::Conference::toCpp(conference)->update(*ConferenceParams::toCpp(params));
 }
 
-int linphone_conference_terminate (LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->terminate();
+int linphone_conference_terminate (LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->terminate();
 }
 
-int linphone_conference_enter (LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->enter();
+int linphone_conference_enter (LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->enter();
 }
 
-int linphone_conference_leave (LinphoneConference *obj) {
-	MediaConference::Conference::toCpp(obj)->leave();
+int linphone_conference_leave (LinphoneConference *conference) {
+	MediaConference::Conference::toCpp(conference)->leave();
 	return 0;
 }
 
-bool_t linphone_conference_is_in (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->isIn();
+bool_t linphone_conference_is_in (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->isIn();
 }
 
-int linphone_conference_mute_microphone (LinphoneConference *obj, bool_t val) {
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(obj)->getAudioControlInterface();
+int linphone_conference_mute_microphone (LinphoneConference *conference, bool_t val) {
+	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return -1;
 	aci->enableMic(!val);
 	return 0;
 }
 
-bool_t linphone_conference_microphone_is_muted (const LinphoneConference *obj) {
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(obj)->getAudioControlInterface();
+bool_t linphone_conference_microphone_is_muted (const LinphoneConference *conference) {
+	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return FALSE;
 	return aci->micEnabled() ? FALSE : TRUE;
 }
 
-float linphone_conference_get_input_volume (const LinphoneConference *obj) {
-	AudioControlInterface *aci = MediaConference::Conference::toCpp(obj)->getAudioControlInterface();
+float linphone_conference_get_input_volume (const LinphoneConference *conference) {
+	AudioControlInterface *aci = MediaConference::Conference::toCpp(conference)->getAudioControlInterface();
 	if (!aci) return 0.0;
 	return aci->getRecordVolume();
 }
 
-/*ConferenceId linphone_conference_get_conference_id(const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getConferenceId();
+/*ConferenceId linphone_conference_get_conference_id(const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getConferenceId();
 }
 */
 
-int linphone_conference_get_participant_count (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getParticipantCount();
+int linphone_conference_get_participant_count (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getParticipantCount();
 }
 
-int linphone_conference_get_size (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getSize();
+int linphone_conference_get_size (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getSize();
 }
 
-bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *obj) {
-	bctbx_list_t * participants = linphone_conference_get_participant_list (obj);
+bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *conference) {
+	bctbx_list_t * participants = linphone_conference_get_participant_list (conference);
 	bctbx_list_t * participant_addresses = NULL;
 	for (bctbx_list_t * iterator = participants; iterator; iterator = bctbx_list_next(iterator)) {
 		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(iterator);
@@ -189,8 +189,8 @@ bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *ob
 	return participant_addresses;
 }
 
-bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference *obj) {
-	const list<std::shared_ptr<LinphonePrivate::Participant>> &participants = MediaConference::Conference::toCpp(obj)->getParticipants();
+bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference *conference) {
+	const list<std::shared_ptr<LinphonePrivate::Participant>> &participants = MediaConference::Conference::toCpp(conference)->getParticipants();
 	bctbx_list_t *participants_list = nullptr;
 	for (auto it = participants.begin(); it != participants.end(); it++) {
 		const std::shared_ptr<LinphonePrivate::Participant> participant((*it));
@@ -201,51 +201,55 @@ bctbx_list_t *linphone_conference_get_participant_list (const LinphoneConference
 	return participants_list;
 }
 
-int linphone_conference_start_recording (LinphoneConference *obj, const char *path) {
-	return MediaConference::Conference::toCpp(obj)->startRecording(path);
+int linphone_conference_start_recording (LinphoneConference *conference, const char *path) {
+	return MediaConference::Conference::toCpp(conference)->startRecording(path);
 }
 
-int linphone_conference_stop_recording (LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->stopRecording();
+int linphone_conference_stop_recording (LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->stopRecording();
 }
 
-bool_t linphone_conference_check_class (LinphoneConference *obj, LinphoneConferenceClass _class) {
+bool_t linphone_conference_check_class (LinphoneConference *conference, LinphoneConferenceClass _class) {
 	switch(_class) {
 		case LinphoneConferenceClassLocal:
-		return typeid(MediaConference::Conference::toCpp(obj)) ==
+		return typeid(MediaConference::Conference::toCpp(conference)) ==
 			   typeid(LinphonePrivate::MediaConference::LocalConference);
 		case LinphoneConferenceClassRemote:
-			return typeid(MediaConference::Conference::toCpp(obj)) ==
+			return typeid(MediaConference::Conference::toCpp(conference)) ==
 				   typeid(LinphonePrivate::MediaConference::RemoteConference);
 		default:
 			return FALSE;
 	}
 }
 
-LinphoneStatus linphone_conference_invite_participants (LinphoneConference *obj, const bctbx_list_t *addresses, const LinphoneCallParams *params){
-	return MediaConference::Conference::toCpp(obj)->inviteAddresses(toStd<const LinphoneAddress*>(addresses), params);
+LinphoneStatus linphone_conference_invite_participants (LinphoneConference *conference, const bctbx_list_t *addresses, const LinphoneCallParams *params){
+	return MediaConference::Conference::toCpp(conference)->inviteAddresses(toStd<const LinphoneAddress*>(addresses), params);
 }
 
-const char *linphone_conference_get_subject (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getSubject().c_str();
+LinphoneParticipant *linphone_conference_get_me (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getMe()->toC();
 }
 
-void linphone_conference_set_subject(LinphoneConference *obj, const char *subject) {
-	MediaConference::Conference::toCpp(obj)->setSubject(subject);
+const char *linphone_conference_get_subject (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getSubject().c_str();
 }
 
-AudioStream *linphone_conference_get_audio_stream(LinphoneConference *obj){
-	return MediaConference::Conference::toCpp(obj)->getAudioStream();
+void linphone_conference_set_subject(LinphoneConference *conference, const char *subject) {
+	MediaConference::Conference::toCpp(conference)->setSubject(subject);
 }
 
-void linphone_conference_set_state_changed_callback (LinphoneConference *obj, LinphoneConferenceStateChangedCb cb, void *user_data) {
-	MediaConference::Conference::toCpp(obj)->setStateChangedCallback(cb, user_data);
+AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
+	return MediaConference::Conference::toCpp(conference)->getAudioStream();
+}
+
+void linphone_conference_set_state_changed_callback (LinphoneConference *conference, LinphoneConferenceStateChangedCb cb, void *user_data) {
+	MediaConference::Conference::toCpp(conference)->setStateChangedCallback(cb, user_data);
 }
 
 
 LinphoneConferenceParams *linphone_conference_params_new (const LinphoneCore *core) {
-	LinphoneConferenceParams *obj = ConferenceParams::createCObject(core);
-	return obj;
+	LinphoneConferenceParams *conference = ConferenceParams::createCObject(core);
+	return conference;
 }
 
 LinphoneConferenceParams *linphone_conference_params_ref (LinphoneConferenceParams *params) {
