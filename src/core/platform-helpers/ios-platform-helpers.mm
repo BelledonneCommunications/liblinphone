@@ -94,7 +94,6 @@ public:
 	void onNetworkChanged(bool reachable, bool force);
 	void createAppDelegate() override;
 	void destroyAppDelegate() override;
-	void dummyConfigAudioSession() override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -158,16 +157,6 @@ void IosPlatformHelpers::createAppDelegate() {
 
 void IosPlatformHelpers::destroyAppDelegate() {
 	[mAppDelegate dealloc];
-}
-
-void IosPlatformHelpers::dummyConfigAudioSession() {
-	NSError *err = nil;
-	AVAudioSession *audioSession = [AVAudioSession sharedInstance];
-	[audioSession   setCategory:AVAudioSessionCategoryPlayAndRecord
-	withOptions:AVAudioSessionCategoryOptionAllowBluetooth| AVAudioSessionCategoryOptionAllowBluetoothA2DP
-		  error:&err];
-	double sampleRate = 48000; /*let's target the highest sample rate*/
-	[audioSession setPreferredSampleRate:sampleRate error:&err];
 }
 
 //Safely get an UTF-8 string from the given CFStringRef

@@ -206,7 +206,4 @@ void GenericPlatformHelpers::createAppDelegate() {
 void GenericPlatformHelpers::destroyAppDelegate() {
 }
 
-void GenericPlatformHelpers::dummyConfigAudioSession() {
-}
-
 LINPHONE_END_NAMESPACE

@@ -88,7 +88,6 @@ public:
 	
 	virtual void createAppDelegate () = 0;
 	virtual void destroyAppDelegate () = 0;
-	virtual void dummyConfigAudioSession () = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -145,7 +144,6 @@ public:
 	
 	void createAppDelegate () override;
 	void destroyAppDelegate () override;
-	void dummyConfigAudioSession () override;
 
 protected:
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;
