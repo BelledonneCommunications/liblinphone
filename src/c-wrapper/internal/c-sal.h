@@ -407,6 +407,7 @@ typedef enum SalReason{
 	SalReasonNotFound,
 	SalReasonDoNotDisturb,
 	SalReasonUnsupportedContent,
+	SalReasonBadEvent,
 	SalReasonForbidden,
 	SalReasonUnknown,
 	SalReasonServiceUnavailable,

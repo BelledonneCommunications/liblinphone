@@ -563,7 +563,7 @@ void ChatMessagePrivate::notifyReceiving () {
 	// Legacy.
 	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
 	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
-	
+
 	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
 }
 
@@ -958,7 +958,7 @@ void ChatMessagePrivate::send () {
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
-	
+
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
 	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
 		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
@@ -1306,30 +1306,6 @@ const Content &ChatMessage::getInternalContent () const {
 void ChatMessage::setInternalContent (const Content &content) {
 	L_D();
 	d->internalContent = content;
-}
-
-string ChatMessage::getCustomHeaderValue (const string &headerName) const {
-	L_D();
-	try {
-		return d->customHeaders.at(headerName);
-	} catch (const exception &) {
-		// Key doesn't exist.
-	}
-	return nullptr;
-}
-
-void ChatMessage::addCustomHeader (const string &headerName, const string &headerValue) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders[headerName] = headerValue;
-}
-
-void ChatMessage::removeCustomHeader (const string &headerName) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders.erase(headerName);
 }
 
 void ChatMessage::send () {
