@@ -93,7 +93,7 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 /**
  * Get the timestamp the device joined a conference.
  * @param participant A #LinphoneParticipantDevice object @notnil
- * @return time of joining a conference
+ * @return time of joining a conference as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
