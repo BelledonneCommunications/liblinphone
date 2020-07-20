@@ -85,6 +85,22 @@ void linphone_conference_cbs_set_participant_removed (LinphoneConferenceCbs *cbs
 	cbs->participantRemovedCb = cb;
 }
 
+LinphoneConferenceCbsParticipantDeviceAddedCb linphone_conference_cbs_get_participant_device_added (const LinphoneConferenceCbs *cbs) {
+	return cbs->participantDeviceAddedCb;
+}
+
+void linphone_conference_cbs_set_participant_device_added (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAddedCb cb) {
+	cbs->participantDeviceAddedCb = cb;
+}
+
+LinphoneConferenceCbsParticipantDeviceRemovedCb linphone_conference_cbs_get_participant_device_removed (const LinphoneConferenceCbs *cbs) {
+	return cbs->participantDeviceRemovedCb;
+}
+
+void linphone_conference_cbs_set_participant_device_removed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceRemovedCb cb) {
+	cbs->participantDeviceRemovedCb = cb;
+}
+
 LinphoneConferenceCbsParticipantAdminStatusChangedCb linphone_conference_cbs_get_participant_admin_status_changed (const LinphoneConferenceCbs *cbs) {
 	return cbs->participantAdminStatusChangedCb;
 }
