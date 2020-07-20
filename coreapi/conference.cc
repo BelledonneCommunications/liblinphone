@@ -105,7 +105,9 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	if (success == true) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, participantAddress);
+		setState(ConferenceInterface::State::Created);
 	}
+
 	return 0;
 }
 
@@ -126,6 +128,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (success) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, remoteAddress);
+		setState(ConferenceInterface::State::Created);
 	}
 	return success;
 }
@@ -392,7 +395,6 @@ void LocalConference::finalizeCreation() {
 #ifdef HAVE_ADVANCED_IM
 		eventHandler->setConference(this);
 #endif // HAVE_ADVANCED_IM
-		setState(ConferenceInterface::State::Created);
 	}
 }
 
@@ -470,7 +472,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	}
 
 	// Add participant only if creation is successful
-	if (getState() == ConferenceInterface::State::Created) {
+	bool canAddParticipant = (getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created);
+	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
 		switch(state){
@@ -845,7 +848,6 @@ void RemoteConference::finalizeCreation() {
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 	#endif // HAVE_ADVANCED_IM
 
-		setState(ConferenceInterface::State::Created);
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
 	}
@@ -1030,7 +1032,6 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 			}
 			setConferenceId(ConferenceId(ConferenceAddress(m_focusContact), getConferenceId().getLocalAddress()));
 			finalizeCreation();
-			setState(ConferenceInterface::State::Created);
 			break;
 		case LinphoneCallError:
 			reset();
