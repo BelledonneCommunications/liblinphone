@@ -480,6 +480,13 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 		ms_message("Conference [%s] state changed: %d", addr_str, newState);
 		printf("Conference [%s] state changed: %d\n", addr_str, newState);
 	}
+
+	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) && (newState != LinphoneConferenceStateCreationPending)) {
+			LinphoneParticipant *me = linphone_conference_get_me(conference);
+			BC_ASSERT_PTR_NOT_NULL(me);
+			BC_ASSERT_TRUE(linphone_participant_is_focus(me));
+	}
+
 	switch (newState) {
 		case LinphoneConferenceStateNone:
 			break;
@@ -638,6 +645,13 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning + no_new_participants,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + no_new_participants),1000));
+
+	//  Check that me has focus attribute set to true
+	LinphoneConference *conference = linphone_core_get_conference(conf_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+	LinphoneParticipant *me = linphone_conference_get_me(conference);
+	BC_ASSERT_PTR_NOT_NULL(me);
+	BC_ASSERT_TRUE(linphone_participant_is_focus(me));
 
 	int * notifyExpected = NULL;
 	for (int idx = 0; idx < no_participants; idx++) {
