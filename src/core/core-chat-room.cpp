@@ -68,8 +68,8 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 			proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
 			linphone_address_unref(cPeerAddress);
 		}
-	} 
-	
+	}
+
 	if (!proxy)
 		proxy =	linphone_core_get_default_proxy_config(cCore);
 
@@ -87,7 +87,7 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 
 //
 static string getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
-	Address	addr(localAddress);
+	Address addr(localAddress);
 	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
 
 	if (!proxy) {
@@ -211,7 +211,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 		}else{
 			capabilities.unset(ChatRoom::Capabilities::Migratable);
 		}
-		
+
 #ifdef HAVE_ADVANCED_IM
 		if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
 			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
@@ -297,13 +297,13 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		return nullptr;
 	}
 	if (!linphone_factory_is_chatroom_backend_available(
-			linphone_factory_get(), 
+			linphone_factory_get(),
 			static_cast<LinphoneChatRoomBackend>(params->getChatRoomBackend()))
 	) {
 		lWarning() << "Tying to create chat room with unavailable backend";
 		return nullptr;
 	}
-	
+
 	shared_ptr<AbstractChatRoom> chatRoom;
 	if (params->getChatRoomBackend() == ChatRoomParams::ChatRoomBackend::FlexisipChat) {
 #ifdef HAVE_ADVANCED_IM
@@ -320,12 +320,12 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 						     ChatRoomParams::toCapabilities(params),
 						     params,
 						     false);
-		
+
 		if (!chatRoom) {
 			lWarning() << "Cannot create createClientGroupChatRoom with subject [" << params->getSubject() <<"]";
 			return nullptr;
 		}
-			
+
 		if (!chatRoom->addParticipants(participants, nullptr, false)) {
 			lWarning() << "Couldn't add participants to newly created chat room, aborting";
 			return nullptr;
@@ -340,7 +340,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			return nullptr;
 		}
 		ChatRoom::CapabilitiesMask capabilities = ChatRoomParams::toCapabilities(params);
-		
+
 		chatRoom = createBasicChatRoom(ConferenceId(IdentityAddress(participants.front()), localAddr),
 					       capabilities,
 					       params);
