@@ -31,6 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 Participant::Participant (Conference *conference, const IdentityAddress &address) {
 	configure(conference, address);
+	creationTime = time(nullptr);
 }
 
 Participant::Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession) : Participant(conference, address) {
@@ -148,6 +149,14 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
 
 bool Participant::isAdmin () const {
 	return isThisAdmin;
+}
+
+bool Participant::isFocus () const {
+	return isThisFocus;
+}
+
+time_t Participant::getCreationTime () const {
+	return creationTime;
 }
 
 LINPHONE_END_NAMESPACE
