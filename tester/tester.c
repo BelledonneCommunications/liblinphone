@@ -1598,10 +1598,6 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 																		,from
 																		,to
 																		,linphone_call_state_to_string(cstate));
-		printf(" %s call from [%s] to [%s], new state is [%s]\n"	,linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
-																		,from
-																		,to
-																		,linphone_call_state_to_string(cstate));
 		ms_free(to);
 		ms_free(from);
 	}
