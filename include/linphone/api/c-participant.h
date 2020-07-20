@@ -107,7 +107,7 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (con
 /**
  * Get the timestamp of the creation of the participant.
  * @param participant A #LinphoneParticipant object @notnil
- * @return time of creation of the participant
+ * @return time of creation of the participant as returned by time(nullptr). For UNIX based systems it is the number of seconds since 00:00hours of the 1st of January 1970
  */
 LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
 
