@@ -429,6 +429,10 @@ void *linphone_event_get_user_data(const LinphoneEvent *ev){
 	return ev->userdata;
 }
 
+void linphone_event_remove_custom_header(LinphoneEvent *ev, const char *name){
+	ev->send_custom_headers=sal_custom_header_remove(ev->send_custom_headers, name);
+}
+
 void linphone_event_add_custom_header(LinphoneEvent *ev, const char *name, const char *value){
 	ev->send_custom_headers=sal_custom_header_append(ev->send_custom_headers, name, value);
 }
@@ -536,6 +540,10 @@ static const LinphoneAddress *_linphone_event_cache_remote_contact (const Linpho
 	return lev->remote_contact_address;
 }
 
+const LinphoneAddress *linphone_event_get_to (const LinphoneEvent *lev) {
+	return _linphone_event_cache_to(lev);
+}
+
 const LinphoneAddress *linphone_event_get_from (const LinphoneEvent *lev) {
 	if (lev->is_out_of_dialog_op && lev->dir == LinphoneSubscriptionOutgoing)
 		return _linphone_event_cache_to(lev);
@@ -570,7 +578,7 @@ void _linphone_event_notify_notify_response(LinphoneEvent *lev) {
 	LinphoneEventCbsNotifyResponseCb cb = linphone_event_cbs_get_notify_response(lev->callbacks);
 	if (cb)
 		cb(lev);
-	
+
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_event_get_callbacks_list(lev));
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) {
 		linphone_event_set_current_callbacks(lev, reinterpret_cast<LinphoneEventCbs *>(bctbx_list_get_data(it)));
