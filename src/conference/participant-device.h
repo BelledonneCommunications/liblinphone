@@ -21,6 +21,7 @@
 #define _L_PARTICIPANT_DEVICE_H_
 
 #include <string>
+#include <ctime>
 
 #include <belle-sip/object++.hh>
 
@@ -77,6 +78,8 @@ public:
 	bool isValid () const { return mGruu.isValid(); }
 	bool isInConference () const;
 
+	time_t getTimeOfJoining() const;
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
@@ -84,6 +87,7 @@ private:
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
+	time_t mTimeOfJoining;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

@@ -21,6 +21,7 @@
 #define _L_PARTICIPANT_H_
 
 #include <list>
+#include <ctime>
 
 #include <belle-sip/object++.hh>
 
@@ -86,13 +87,18 @@ public:
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
-	bool isAdmin () const;
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu) const;
 	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);
 
 	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
+	bool isAdmin () const;
+
+	inline void setFocus (bool isFocus) { this->isThisFocus = isFocus; }
+	bool isFocus () const;
+
+	time_t getCreationTime() const;
 
 protected:
 	std::shared_ptr<Core> getCore () const { return mConference ? mConference->getCore() : nullptr; }
@@ -117,8 +123,10 @@ private:
 	Conference *mConference = nullptr;
 	IdentityAddress addr;
 	bool isThisAdmin = false;
+	bool isThisFocus = false;
 	std::shared_ptr<CallSession> session;
 	std::list<std::shared_ptr<ParticipantDevice>> devices;
+	time_t creationTime;
 
 	L_DISABLE_COPY(Participant);
 };
