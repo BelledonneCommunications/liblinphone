@@ -317,6 +317,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
 	static_pointer_cast<RemoteConference>(getConference())->focus = Participant::create(getConference().get(),peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
+	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
 	getConference()->participants = move(newParticipants);
 
 	getConference()->setConferenceId(conferenceId);
