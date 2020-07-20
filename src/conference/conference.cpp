@@ -80,6 +80,7 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	participant = Participant::create(this,participantAddress);
 	// TODO: Use conference parameters to fill args
 	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
+	participant->setFocus(participantAddress == getConferenceAddress());
 	participants.push_back(participant);
 	if (!activeParticipant)
 		activeParticipant = participant;
