@@ -212,26 +212,29 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(Linphon
 
 /**
  * Get the conference subject
- * @param conference the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference subject - @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *conference);
 
 /**
  * Set the conference subject
- * @param conference the conference
+ * @param conference The #LinphoneConference object. @notnil
  * @param subject conference subject
  */
 LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *conference, const char *subject);
 
 /**
  * Get number of participants
- * @param conference the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the number of participants in a #LinphoneConference
  */
 LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
 
 /**
  * Get participant hosting the conference
- * @param conference the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @return a #LinphoneParticipant . @notnil
  */
 LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneConference *conference);
 
@@ -243,18 +246,18 @@ LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneCo
 
 /**
  * Terlnate conferenceGet the conference id
- * @param conference the conference
+ * @param conference The #LinphoneConference object. @notnil
  * @return 0 if the termination is successful, -1 otherwise.
  */
 LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *conference);
 
 /**
  * Retrieves the user pointer that was given to linphone_conference_new()
- * @param core #LinphoneConference object @notnil
+ * @param conference #LinphoneConference object @notnil
  * @return The user data associated with the #LinphoneConference object. @maybenil
  * @ingroup initializing
 **/
-LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference *core);
+LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference *conference);
 
 /**
  * Associate a user pointer to the linphone conference.

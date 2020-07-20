@@ -114,6 +114,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
+		p->setFocus(remoteAddress == getConferenceAddress());
 		participants.push_back(p);
 	}
 

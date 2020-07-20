@@ -55,6 +55,10 @@ bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
 	return LinphonePrivate::Participant::toCpp(participant)->isAdmin();
 }
 
+bool_t linphone_participant_is_focus (const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->isFocus();
+}
+
 LinphoneChatRoomSecurityLevel linphone_participant_get_security_level (const LinphoneParticipant *participant) {
 	return (LinphoneChatRoomSecurityLevel)LinphonePrivate::Participant::toCpp(participant)->getSecurityLevel();
 }
@@ -68,4 +72,8 @@ LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParti
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
 	return linphone_participant_device_ref (LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress)->toC());
+}
+
+time_t linphone_participant_get_creation_time (const LinphoneParticipant *participant) {
+	return LinphonePrivate::Participant::toCpp(participant)->getCreationTime();
 }

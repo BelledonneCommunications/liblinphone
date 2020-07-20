@@ -20,6 +20,8 @@
 #ifndef _L_C_PARTICIPANT_DEVICE_H_
 #define _L_C_PARTICIPANT_DEVICE_H_
 
+#include "time.h"
+
 #include "linphone/api/c-types.h"
 
 // =============================================================================
@@ -87,6 +89,13 @@ LINPHONE_PUBLIC const char *linphone_participant_device_get_name (const Linphone
  * @return a boolean to state whether the device is in a conference
  */
 LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Get the timestamp the device joined a conference.
+ * @param participant A #LinphoneParticipantDevice object @notnil
+ * @return time of joining a conference
+ */
+LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

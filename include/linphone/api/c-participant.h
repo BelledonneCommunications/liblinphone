@@ -20,6 +20,7 @@
 #ifndef _L_C_PARTICIPANT_H_
 #define _L_C_PARTICIPANT_H_
 
+#include "time.h"
 #include "linphone/api/c-types.h"
 
 // =============================================================================
@@ -75,6 +76,13 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_participant_get_address (const 
 LINPHONE_PUBLIC bool_t linphone_participant_is_admin (const LinphoneParticipant *participant);
 
 /**
+ * Tells whether a conference participant is the focus of the conference.
+ * @param participant A #LinphoneParticipant object
+ * @return A boolean value telling whether the participant is a focus of a conference
+ */
+LINPHONE_PUBLIC bool_t linphone_participant_is_focus (const LinphoneParticipant *participant);
+
+/**
  * Get the security level of a participant.
  * @param participant A #LinphoneParticipant object @notnil
  * @return The #LinphoneChatRoomSecurityLevel of the participant
@@ -95,6 +103,13 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_participant_get_devices (const LinphonePa
  * @return a #LinphoneParticipantDevice or NULL if not found. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address);
+
+/**
+ * Get the timestamp of the creation of the participant.
+ * @param participant A #LinphoneParticipant object @notnil
+ * @return time of creation of the participant
+ */
+LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
 
 /**
  * @}
