@@ -35,10 +35,14 @@ class Core;
 
 // =============================================================================
 
-ParticipantDevice::ParticipantDevice () {}
+ParticipantDevice::ParticipantDevice () {
+	mTimeOfJoining = time(nullptr);
+}
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
-	:  mParticipant(participant), mGruu(gruu), mName(name) {}
+	: mParticipant(participant), mGruu(gruu), mName(name) {
+	mTimeOfJoining = time(nullptr);
+}
 
 ParticipantDevice::~ParticipantDevice () {
 	if (mConferenceSubscribeEvent)
@@ -65,6 +69,10 @@ AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 		return encryptionEngine->getSecurityLevel(mGruu.asString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
+}
+
+time_t ParticipantDevice::getTimeOfJoining () const {
+	return mTimeOfJoining;
 }
 
 bool ParticipantDevice::isInConference() const {
