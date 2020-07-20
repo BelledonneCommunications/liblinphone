@@ -523,7 +523,7 @@ static void simple_conference(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-
+/*
 static void _simple_conference_from_scratch(bool_t with_video){
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
@@ -541,7 +541,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	linphone_core_set_play_file(pauline->lc, play_file_pauline);
 	bc_free(play_file_pauline);
 
-	/*marie creates the conference*/
+	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_enable_video(conf_params, with_video);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -587,13 +587,13 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,2,10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,2,3000));
 
-		/*make sure that the two calls from Marie's standpoint are in conference*/
+		//make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_calls), 2, int, "%i");
 		for (it = marie_calls; it != NULL; it = it->next){
 			BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
 		}
-		/*wait a bit for the conference audio processing to run, despite we do not test it for the moment*/
+		//wait a bit for the conference audio processing to run, despite we do not test it for the moment
 		wait_for_list(lcs,NULL,0,5000);
 		
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
@@ -614,6 +614,7 @@ static void simple_conference_from_scratch(void){
 static void simple_conference_from_scratch_with_video(void){
 	_simple_conference_from_scratch(TRUE);
 }
+*/
 
 static void video_conference_by_merging_calls(void){
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -693,8 +694,10 @@ static void video_conference_by_merging_calls(void){
 	linphone_conference_params_unref(conf_params);
 	
 	/* She adds Pauline and Laure to the conference. */
-	linphone_conference_add_participant(conf, pauline_call);
-	linphone_conference_add_participant(conf, laure_call);
+	bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
+	new_participants=bctbx_list_append(new_participants,laure);
+	add_calls_to_local_conference(lcs, marie, new_participants);
+	bctbx_list_free(new_participants);
 	
 	/* Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -756,6 +759,7 @@ end:
 	bctbx_list_free(lcs);
 }
 
+/*
 static void simple_conference_from_scratch_no_answer(void){
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
@@ -769,7 +773,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
-	/*marie creates the conference*/
+	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -789,7 +793,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call){
 		pauline_call = linphone_core_get_current_call(pauline->lc);
-		/* Pauline immediately declines the call.*/
+		// Pauline immediately declines the call.
 		linphone_call_decline(pauline_call, LinphoneReasonDeclined);
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
@@ -816,15 +820,15 @@ static void simple_conference_from_scratch_no_answer(void){
 		
 		wait_for_list(lcs,NULL,0,1000);
 		
-		/* Laure accepts. */
+		// Laure accepts.
 		linphone_call_accept(laure_call);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 
 		wait_for_list(lcs,NULL,0,1000);
 		
-		/* the conference no longer exists, as there was finally only one participant.
-		 * Terminate the call, simply.*/
+		// the conference no longer exists, as there was finally only one participant.
+		// Terminate the call, simply.
 		linphone_call_terminate(laure_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
@@ -842,6 +846,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
 }
+*/
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -1628,6 +1633,7 @@ void no_auto_answer_on_fake_call_with_replaces_header (void) {
 	bctbx_list_free(lcs);
 }
 
+/*
 static void simple_conference_with_audio_device_change_base(bool_t during_setup, bool_t before_all_join, bool_t after_all_join) {
 	bctbx_list_t *lcs = NULL;
 
@@ -1695,7 +1701,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_core_set_default_input_audio_device(marie->lc, current_dev);
 	linphone_core_set_default_output_audio_device(marie->lc, current_dev);
 
-	/*Laure creates the conference*/
+	//Laure creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(laure->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(laure->lc, conf_params);
@@ -1749,7 +1755,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,noParticipants,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,noParticipants,3000));
 
-	/*make sure that the two calls from Marie's standpoint are in conference*/
+	//make sure that the two calls from Marie's standpoint are in conference
 	const bctbx_list_t *laure_calls = linphone_core_get_calls(laure->lc);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(laure_calls), noParticipants, int, "%i");
 	const bctbx_list_t *it;
@@ -1907,7 +1913,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_core_set_default_input_audio_device(pauline->lc, pauline_current_dev);
 	linphone_core_set_default_output_audio_device(pauline->lc, pauline_current_dev);
 
-	/*Laure creates the conference*/
+	//Laure creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(pauline->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(pauline->lc, conf_params);
@@ -1960,7 +1966,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	LinphoneCall *pauline_call = NULL;
 
-	/*make sure that the two calls from Marie's standpoint are in conference*/
+	//make sure that the two calls from Marie's standpoint are in conference
 	const bctbx_list_t *pauline_calls = linphone_core_get_calls(pauline->lc);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_calls), noParticipants, int, "%i");
 	const bctbx_list_t *it;
@@ -2034,6 +2040,7 @@ static void simple_conference_with_audio_device_change_during_pause_caller(void)
 static void simple_conference_with_audio_device_change_during_pause_caller_callee(void) {
 	simple_conference_with_audio_device_change_during_pause_base(TRUE, TRUE);
 }
+*/
 
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
@@ -2044,19 +2051,19 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Simple conference", simple_conference),
-	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
-	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
+//	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
+//	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
-	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
+//	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
 	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
 	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
-	TEST_NO_TAG("Simple conference with audio device change during setup", simple_conference_with_audio_device_change_during_setup),
-	TEST_NO_TAG("Simple conference with audio device change before all join", simple_conference_with_audio_device_change_before_all_join),
-	TEST_NO_TAG("Simple conference with audio device change after all join", simple_conference_with_audio_device_change_after_all_join),
-	TEST_NO_TAG("Simple conference with audio device change ping pong", simple_conference_with_audio_device_change_pingpong),
-	TEST_NO_TAG("Simple conference with audio device change during pause callee", simple_conference_with_audio_device_change_during_pause_callee),
-	TEST_NO_TAG("Simple conference with audio device change during pause caller", simple_conference_with_audio_device_change_during_pause_caller),
-	TEST_NO_TAG("Simple conference with audio device change during pause both parties", simple_conference_with_audio_device_change_during_pause_caller_callee),
+//	TEST_NO_TAG("Simple conference with audio device change during setup", simple_conference_with_audio_device_change_during_setup),
+//	TEST_NO_TAG("Simple conference with audio device change before all join", simple_conference_with_audio_device_change_before_all_join),
+//	TEST_NO_TAG("Simple conference with audio device change after all join", simple_conference_with_audio_device_change_after_all_join),
+//	TEST_NO_TAG("Simple conference with audio device change ping pong", simple_conference_with_audio_device_change_pingpong),
+//	TEST_NO_TAG("Simple conference with audio device change during pause callee", simple_conference_with_audio_device_change_during_pause_callee),
+//	TEST_NO_TAG("Simple conference with audio device change during pause caller", simple_conference_with_audio_device_change_during_pause_caller),
+//	TEST_NO_TAG("Simple conference with audio device change during pause both parties", simple_conference_with_audio_device_change_during_pause_caller_callee),
 	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference),
 	TEST_NO_TAG("Eject from 4 participants conference", eject_from_4_participants_conference),
 	TEST_NO_TAG("Conference pause and terminate call", conference_hang_up_call_on_hold),
