@@ -90,6 +90,34 @@ LINPHONE_PUBLIC LinphoneConferenceCbsParticipantRemovedCb linphone_conference_cb
 LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_removed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantRemovedCb cb);
 
 /**
+ * Get the participant device added callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device added callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceAddedCb linphone_conference_cbs_get_participant_device_added (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device added callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device added callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_added (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceAddedCb cb);
+
+/**
+ * Get the participant device removed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @return The current participant device removed callback.
+ */
+LINPHONE_PUBLIC LinphoneConferenceCbsParticipantDeviceRemovedCb linphone_conference_cbs_get_participant_device_removed (const LinphoneConferenceCbs *cbs);
+
+/**
+ * Set the participant device removed callback.
+ * @param[in] cbs #LinphoneConferenceCbs object.
+ * @param[in] cb The participant device removed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_conference_cbs_set_participant_device_removed (LinphoneConferenceCbs *cbs, LinphoneConferenceCbsParticipantDeviceRemovedCb cb);
+
+/**
  * Get the participant admin status changed callback.
  * @param[in] cbs #LinphoneConferenceCbs object.
  * @return The current participant admin status changed callback.
