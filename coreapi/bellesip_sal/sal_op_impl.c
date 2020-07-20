@@ -57,6 +57,8 @@ SalReason _sal_reason_from_sip_code(int code) {
 		return SalReasonNone;
 	case 488:
 		return SalReasonNotAcceptable;
+	case 489:
+		return SalReasonBadEvent;
 	case 491:
 		return SalReasonRequestPending;
 	case 500:

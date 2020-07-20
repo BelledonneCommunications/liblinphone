@@ -353,6 +353,8 @@ SalReason linphone_reason_to_sal(LinphoneReason reason){
 			return SalReasonUnauthorized;
 		case LinphoneReasonUnsupportedContent:
 			return SalReasonUnsupportedContent;
+		case LinphoneReasonBadEvent:
+			return SalReasonBadEvent;
 		case LinphoneReasonNoMatch:
 			return SalReasonNoMatch;
 		case LinphoneReasonMovedPermanently:
@@ -423,6 +425,9 @@ LinphoneReason linphone_reason_from_sal(SalReason r){
 			break;
 		case SalReasonUnsupportedContent:
 			ret=LinphoneReasonUnsupportedContent;
+		break;
+		case SalReasonBadEvent:
+			ret=LinphoneReasonBadEvent;
 		break;
 		case SalReasonNoMatch:
 			ret=LinphoneReasonNoMatch;

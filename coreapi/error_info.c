@@ -95,6 +95,8 @@ const char *linphone_reason_to_string(LinphoneReason err){
 			return "Moved permanently";
 		case LinphoneReasonGone:
 			return "Gone";
+		case LinphoneReasonBadEvent:
+			return "Bad event";
 		case LinphoneReasonTemporarilyUnavailable:
 			return "Temporarily unavailable";
 		case LinphoneReasonAddressIncomplete:
@@ -130,6 +132,7 @@ static const error_code_reason_map_t error_code_reason_map[] = {
 	{ 484, LinphoneReasonAddressIncomplete },
 	{ 486, LinphoneReasonBusy },
 	{ 488, LinphoneReasonNotAcceptable },
+	{ 489, LinphoneReasonBadEvent },
 	{ 501, LinphoneReasonNotImplemented },
 	{ 502, LinphoneReasonBadGateway },
 	{ 503, LinphoneReasonIOError },

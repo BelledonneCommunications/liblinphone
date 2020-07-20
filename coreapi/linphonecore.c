@@ -5735,7 +5735,7 @@ int linphone_core_get_device_rotation(LinphoneCore *lc ) {
 
 void linphone_core_set_device_rotation(LinphoneCore *lc, int rotation) {
 	if (rotation == lc->device_rotation) return;
-	
+
 	ms_message("%s : rotation=%d\n", __FUNCTION__, rotation);
 	lc->device_rotation = rotation;
 #ifdef VIDEO_ENABLED
@@ -6069,7 +6069,7 @@ static MSFilter *get_audio_resource(LinphoneCore *lc, LinphoneAudioResourceType 
 
 		if (ringcard == NULL)
 			return NULL;
-		
+
 		if (!create) return NULL;
 
 		ringstream=lc->ringstream=ring_start(lc->factory, NULL,0,ringcard);
@@ -6633,7 +6633,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	if (lc->state != LinphoneGlobalOff) {
 		_linphone_core_stop(lc);
 	}
-	
+
 	lp_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
@@ -6643,7 +6643,7 @@ void _linphone_core_uninit(LinphoneCore *lc)
 	}
 #endif
 	lc->system_context = NULL;
-	
+
 	linphone_core_deactivate_log_serialization_if_needed();
 	bctbx_list_free_with_data(lc->vtable_refs,(void (*)(void *))v_table_reference_destroy);
 	bctbx_uninit_logger();
@@ -6989,7 +6989,7 @@ void linphone_core_set_zrtp_secrets_file(LinphoneCore *lc, const char* file){
 		linphone_core_zrtp_cache_close(lc);
 		lc->zrtp_secrets_cache = NULL;
 	}
-	
+
 	if (file) {
 		lc->zrtp_secrets_cache = ms_strdup(file);
 		linphone_core_zrtp_cache_db_init(lc, file);
@@ -7608,6 +7608,7 @@ bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const Linp
 	// Do not compare ports
 	linphone_address_set_port(factoryAddr, 0);
 	LinphoneAddress *testedAddr = linphone_address_clone(addr);
+
 	linphone_address_set_port(testedAddr, 0);
 	bool_t result = linphone_address_weak_equal(factoryAddr, testedAddr);
 	linphone_address_unref(factoryAddr);

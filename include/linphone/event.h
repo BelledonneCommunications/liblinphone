@@ -149,6 +149,13 @@ LINPHONE_PUBLIC void *linphone_event_get_user_data(const LinphoneEvent *ev);
 LINPHONE_PUBLIC void linphone_event_add_custom_header(LinphoneEvent *ev, const char *name, const char *value);
 
 /**
+ * Remove custom header to an outgoing susbscription or publish.
+ * @param ev the #LinphoneEvent
+ * @param name header's name
+**/
+LINPHONE_PUBLIC void linphone_event_remove_custom_header(LinphoneEvent *ev, const char *name);
+
+/**
  * Obtain the value of a given header for an incoming subscription.
  * @param ev the #LinphoneEvent
  * @param name header's name
@@ -187,6 +194,11 @@ LINPHONE_PUBLIC const char *linphone_event_get_name(const LinphoneEvent *lev);
  * Get the "from" address of the subscription.
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEvent *lev);
+
+/**
+ * Get the "to" address of the subscription.
+**/
+LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev);
 
 /**
  * Get the resource address of the subscription or publish.
