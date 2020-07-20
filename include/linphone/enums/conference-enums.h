@@ -28,14 +28,14 @@
 
 typedef enum _LinphoneConferenceState{
 	LinphoneConferenceStateNone, /**< Initial state */
-	LinphoneConferenceStateInstantiated, /**< Chat room is now instantiated on local */
+	LinphoneConferenceStateInstantiated, /**< Conference is now instantiated on local */
 	LinphoneConferenceStateCreationPending, /**< One creation request was sent to the server */
-	LinphoneConferenceStateCreated, /**< Chat room was created on the server */
-	LinphoneConferenceStateCreationFailed, /**< Chat room creation failed */
-	LinphoneConferenceStateTerminationPending, /**< Wait for chat room termination */
-	LinphoneConferenceStateTerminated, /**< Chat room exists on server but not in local */
-	LinphoneConferenceStateTerminationFailed, /**< The chat room termination failed */
-	LinphoneConferenceStateDeleted /**< Chat room was deleted on the server */
+	LinphoneConferenceStateCreated, /**< Conference was created on the server */
+	LinphoneConferenceStateCreationFailed, /**< Conference creation failed */
+	LinphoneConferenceStateTerminationPending, /**< Wait for conference termination */
+	LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local */
+	LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
+	LinphoneConferenceStateDeleted /**< Conference was deleted on the server */
 } LinphoneConferenceState;
 
 #endif // ifndef _L_CONFERENCE_ENUMS_H_
