@@ -97,7 +97,7 @@ public:
 
 	bool getToBeStored () const;
 	virtual void setToBeStored (bool value);
-	
+
 
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
 
@@ -107,11 +107,6 @@ public:
 
 	const Content &getInternalContent () const;
 	void setInternalContent (const Content &content);
-
-	// TODO: to replace salCustomheaders
-	std::string getCustomHeaderValue (const std::string &headerName) const;
-	void addCustomHeader (const std::string &headerName, const std::string &headerValue);
-	void removeCustomHeader (const std::string &headerName);
 
 	bool downloadFile (FileTransferContent *content);
 	bool isFileTransferInProgress () const;

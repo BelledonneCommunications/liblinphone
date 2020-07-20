@@ -458,7 +458,7 @@ if(CMAKE_COMPILER_IS_GNUCC)
 		set_property(SOURCE
 			xml/conference-info.cpp
 			xml/resource-lists.cpp
-			xml/rlmi.cpp 
+			xml/rlmi.cpp
 			APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-error=deprecated-copy"
 		)
 	endif()
@@ -499,9 +499,9 @@ if(ENABLE_SHARED)
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
 	) # Keep it relative to current dir to allow CMakeList inclusion
-	
+
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-	
+
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
@@ -513,8 +513,8 @@ if(ENABLE_SHARED)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
-		
-		
+
+
 		set_target_properties(linphone PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER org.linphone.linphone
@@ -571,7 +571,7 @@ if(ENABLE_SHARED)
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
-	
+
 endif()
 
 if(ICONV_FOUND)

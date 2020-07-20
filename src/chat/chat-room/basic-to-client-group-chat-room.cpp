@@ -86,10 +86,17 @@ public:
 		IdentityAddress localAddress(tmp);
 		bctbx_free(tmp);
 		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(
-		       //make sure to have a one2one chatroom
-		       chatRoom->getCore()->getPrivate()->createChatRoom(
-			   ChatRoomParams::create(chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat), localAddress, chatRoom->getSubject(), {Address(chatRoom->getPeerAddress())}
-		       )
+			//make sure to have a one2one chatroom
+			chatRoom->getCore()->getPrivate()->createChatRoom(
+				ChatRoomParams::create(
+					chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted,
+					false,
+					ChatRoomParams::ChatRoomBackend::FlexisipChat
+				),
+				localAddress,
+				chatRoom->getSubject(),
+				{Address(chatRoom->getPeerAddress())}
+			)
 		);
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);

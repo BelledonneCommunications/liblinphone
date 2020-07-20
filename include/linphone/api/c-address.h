@@ -252,6 +252,11 @@ LINPHONE_PUBLIC const char *linphone_address_get_uri_param (const LinphoneAddres
  */
 LINPHONE_PUBLIC void linphone_address_set_uri_param (LinphoneAddress *address, const char *uri_param_name, const char *uri_param_value);
 
+/**
+ * Set the value of the parameters of the URI of the address
+ * @param[in] address #LinphoneAddress object
+ * @param[in] params The parameters string
+ */
 LINPHONE_PUBLIC void linphone_address_set_uri_params (LinphoneAddress *address, const char *params);
 
 /**

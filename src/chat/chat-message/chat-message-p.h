@@ -80,7 +80,7 @@ public:
 	bool isMarkedAsRead () const;
 
 	void setImdnMessageId (const std::string &imdnMessageId);
-	
+
 	void setForwardInfo (const std::string &fInfo);
 
 	void setAuthenticatedFromAddress (const IdentityAddress &authenticatedFromAddress) {
@@ -223,9 +223,6 @@ private:
 	bool markedAsRead = false;
 	Content internalContent;
 	bool isAutoDownloadAttachedFilesHappened = false;
-
-	// TODO: to replace salCustomheaders
-	std::unordered_map<std::string, std::string> customHeaders;
 
 	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;

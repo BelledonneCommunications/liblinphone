@@ -864,6 +864,8 @@ int toSipCode (SalReason reason) {
 			return 488; // Or maybe 606 Not Acceptable?
 		case SalReasonNoMatch:
 			return 481;
+		case SalReasonBadEvent:
+			return 489;
 		case SalReasonRequestTimeout:
 			return 408;
 		case SalReasonMovedPermanently:
