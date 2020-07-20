@@ -161,6 +161,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 				LinphoneEvent * event = device->getConferenceSubscribeEvent();
 				if (event) {
 					linphone_event_terminate(event);
+					device->setConferenceSubscribeEvent(nullptr);
 				}
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
