@@ -523,7 +523,7 @@ static void simple_conference(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-
+/*
 static void _simple_conference_from_scratch(bool_t with_video){
 #if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -542,7 +542,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	linphone_core_set_play_file(pauline->lc, play_file_pauline);
 	bc_free(play_file_pauline);
 
-	/*marie creates the conference*/
+	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_enable_video(conf_params, with_video);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -588,13 +588,13 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallConnected,2,10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,2,3000));
 
-		/*make sure that the two calls from Marie's standpoint are in conference*/
+		//make sure that the two calls from Marie's standpoint are in conference
 		marie_calls = linphone_core_get_calls(marie->lc);
 		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_calls), 2, int, "%i");
 		for (it = marie_calls; it != NULL; it = it->next){
 			BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
 		}
-		/*wait a bit for the conference audio processing to run, despite we do not test it for the moment*/
+		//wait a bit for the conference audio processing to run, despite we do not test it for the moment
 		wait_for_list(lcs,NULL,0,5000);
 		
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
@@ -618,6 +618,7 @@ static void simple_conference_from_scratch(void){
 static void simple_conference_from_scratch_with_video(void){
 	_simple_conference_from_scratch(TRUE);
 }
+*/
 
 static void video_conference_by_merging_calls(void){
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -697,8 +698,10 @@ static void video_conference_by_merging_calls(void){
 	linphone_conference_params_unref(conf_params);
 	
 	/* She adds Pauline and Laure to the conference. */
-	linphone_conference_add_participant(conf, pauline_call);
-	linphone_conference_add_participant(conf, laure_call);
+	bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
+	new_participants=bctbx_list_append(new_participants,laure);
+	add_calls_to_local_conference(lcs, marie, new_participants);
+	bctbx_list_free(new_participants);
 	
 	/* Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -760,6 +763,7 @@ end:
 	bctbx_list_free(lcs);
 }
 
+/*
 static void simple_conference_from_scratch_no_answer(void){
 #if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -774,7 +778,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 
-	/*marie creates the conference*/
+	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
@@ -794,7 +798,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
 	if (pauline_call){
 		pauline_call = linphone_core_get_current_call(pauline->lc);
-		/* Pauline immediately declines the call.*/
+		// Pauline immediately declines the call.
 		linphone_call_decline(pauline_call, LinphoneReasonDeclined);
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
@@ -821,15 +825,15 @@ static void simple_conference_from_scratch_no_answer(void){
 		
 		wait_for_list(lcs,NULL,0,1000);
 		
-		/* Laure accepts. */
+		// Laure accepts.
 		linphone_call_accept(laure_call);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 
 		wait_for_list(lcs,NULL,0,1000);
 		
-		/* the conference no longer exists, as there was finally only one participant.
-		 * Terminate the call, simply.*/
+		// the conference no longer exists, as there was finally only one participant.
+		// Terminate the call, simply.
 		linphone_call_terminate(laure_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,1,10000));
@@ -850,6 +854,7 @@ static void simple_conference_from_scratch_no_answer(void){
 	BC_FAIL("Test temporally disabled as, call.update is performed in stage outgoinginit");
 #endif
 }
+*/
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
