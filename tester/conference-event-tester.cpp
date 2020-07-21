@@ -1176,7 +1176,6 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 	*mgrs = bctbx_list_prepend(*mgrs, participant_mgr);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneConferenceStateCreationPending, initial_participant_stats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneConferenceStateCreated, initial_participant_stats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	// Stream due to call and stream due to the addition to the conference
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(initial_conf_stats.number_of_LinphoneCallStreamsRunning + 1),5000));
@@ -1256,7 +1255,6 @@ void send_added_notify_through_call() {
 	localConf->ref();
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1267,6 +1265,7 @@ void send_added_notify_through_call() {
 
 	// call paused
 	create_core_and_add_to_conference((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp", &mgrs, &lcs, confListener, localConf, pauline, TRUE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	localConf->terminate();
 	localConf->unref();
@@ -1316,7 +1315,6 @@ void send_removed_notify_through_call() {
 	localConf->ref();
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	std::shared_ptr<ConferenceListenerInterfaceTester> confListener = std::make_shared<ConferenceListenerInterfaceTester>();
 	localConf->addListener(confListener);
@@ -1324,6 +1322,7 @@ void send_removed_notify_through_call() {
 	// Add participants
 	LinphoneCoreManager * marie = create_core_and_add_to_conference("marie_rc", &participants_mgrs, &lcs, confListener, localConf, pauline, FALSE);
 	LinphoneCoreManager * laure = create_core_and_add_to_conference((liblinphone_tester_ipv6_available()) ? "laure_tcp_rc" : "laure_rc_udp", &participants_mgrs, &lcs, confListener, localConf, pauline, TRUE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
 	remove_head_participant_list_from_conference_through_call(&removed_mgrs, &participants_mgrs, lcs, confListener, localConf, pauline);
 
