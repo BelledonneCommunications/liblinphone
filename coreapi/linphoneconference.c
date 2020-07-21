@@ -24,6 +24,7 @@
 
 #include <belle-sip/object++.hh>
 #include "bctoolbox/list.h"
+#include "mediastreamer2/msogl.h"
 
 #include "core/core.h"
 #include "c-wrapper/c-wrapper.h"
@@ -32,6 +33,7 @@
 
 #include "conference/participant.h"
 #include "conference/session/streams.h"
+#include "conference/session/ms2-streams.h"
 #include "conference_private.h"
 
 using namespace std;
