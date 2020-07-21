@@ -397,11 +397,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 				removeFromConference(remoteContactAddress);
 
-				if (linphone_core_get_calls_nb(lc) == 0) {
-					linphone_core_notify_last_call_ended(lc);
-				}
 			}
 			setConference (nullptr);
+
+			if (linphone_core_get_calls_nb(lc) == 0) {
+				linphone_core_notify_last_call_ended(lc);
+			}
 		}
 		break;
 		case CallSession::State::UpdatedByRemote:
