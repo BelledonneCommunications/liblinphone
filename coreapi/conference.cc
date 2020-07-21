@@ -23,7 +23,6 @@
 #include <typeinfo>
 
 #include <mediastreamer2/msvolume.h>
-#include "mediastreamer2/msogl.h"
 
 #include "linphone/core.h"
 
