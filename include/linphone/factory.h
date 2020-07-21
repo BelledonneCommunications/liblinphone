@@ -699,10 +699,10 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
 #define LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256 0x0002
 /**
  * Select encryption module and set secret material to encrypt the files
- * @param[in]	factory			the #LinphoneFactory
+ * @param[in]	factory			the #LinphoneFactory @notnil
  * @param[in]	encryptionModule	One of the available encryption module for VFS, pick in the LINPHONE_VFS_ENCRYPTION_* list
  * 					if set to _UNSET, default bctoolbox VFS is switch to Standard one
- * @param[in]	secret			the secret material used to encrypt the files
+ * @param[in]	secret			the secret material used to encrypt the files, can be NULL for the _PLAIN module @maybenil
  * @param[in]	secretSize		size of the secret
  */
 LINPHONE_PUBLIC void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
