@@ -298,10 +298,6 @@ void Conference::join (const IdentityAddress &participantAddress) {
 	
 }
 
-std::shared_ptr<LinphonePrivate::Participant> Conference::getMe () const {
-	return nullptr;
-}
-
 bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) {
 	bool soFarSoGood = true;
 	for (const auto &p : participants)
