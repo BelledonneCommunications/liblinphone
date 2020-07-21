@@ -230,10 +230,8 @@ LinphoneChatRoom *linphone_core_find_chat_room(
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)),
-		LinphonePrivate::ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(local_addr))
-	)));
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
+	return result;
 }
 
 //Deprecated see linphone_core_search_chat_room
