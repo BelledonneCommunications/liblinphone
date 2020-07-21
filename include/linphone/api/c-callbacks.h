@@ -380,9 +380,9 @@ typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *c
 /**
  * Callback used to notify a chat room that the admin status of a participant has been changed.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] participant #LinphoneParticipant whose admin status has changed
  */
-typedef void (*LinphoneConferenceCbsParticipantAdminStatusChangedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsParticipantAdminStatusChangedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room state has changed.
