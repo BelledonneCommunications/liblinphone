@@ -144,8 +144,6 @@ public:
 	using LinphonePrivate::ConferenceInterface::join;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
-	virtual std::shared_ptr<LinphonePrivate::Participant> getMe () const override;
-
 	bctbx_list_t *getCallbacksList () const;
 	LinphoneConferenceCbs *getCurrentCbs () const;
 	void setCurrentCbs (LinphoneConferenceCbs *cbs);
