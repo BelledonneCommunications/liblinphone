@@ -316,7 +316,7 @@ void _linphone_conference_notify_participant_added(LinphoneConference *conferenc
 void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneEventLog *event_log);
 void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneEventLog *event_log);
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneEventLog *event_log);
-void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneEventLog *event_log);
+void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const LinphoneEventLog *event_log);
 
