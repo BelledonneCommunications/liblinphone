@@ -363,7 +363,7 @@ class PythonTranslator(object):
 			methodDict['return_c_type'] = _method.returnType.containedTypeDesc.name
 
 		if isinstance(_method.returnType.parent, AbsApi.Method) and len(_method.returnType.parent.name.words) >= 1:
-			if _method.returnType.parent.name.words == ['new'] or _method.returnType.parent.name.words[0] == 'create':
+			if _method.returnAllocatedObject:
 				methodDict['constructor'] = True
 
 		methodDict['params'] = []
