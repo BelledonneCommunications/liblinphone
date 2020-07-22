@@ -1082,7 +1082,7 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr, ConferenceParams::create(core->getCCore()))) {
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(core, IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
 	getConference()->setSubject(op->getSubject());
@@ -1110,7 +1110,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(getCore(), peerAddress, nullptr, ConferenceParams::create(core->getCCore()))) {
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	getConference()->participants = move(participants);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
