@@ -115,7 +115,7 @@ class CsharpTranslator(object):
 			methodDict['is_generic'] = self.is_generic(methodDict)
 			methodDict['takeRef'] = 'true'
 			if isinstance(method.returnType.parent, AbsApi.Method) and len(method.returnType.parent.name.words) >=1:
-				if method.returnType.parent.name.words == ['new'] or method.returnType.parent.name.words[0] == 'create':
+				if method.returnAllocatedObject:
 					methodDict['takeRef'] = 'false'
 
 			methodDict['impl']['args'] = ''
