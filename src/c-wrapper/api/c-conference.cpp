@@ -53,28 +53,28 @@ for (bctbx_list_t *it = MediaConference::Conference::toCpp(conference)->getCallb
 		cb(__VA_ARGS__); \
 }
 
-void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneEventLog *event_log) {
-	NOTIFY_IF_EXIST(ParticipantAdded, participant_added, conference, event_log)
+void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant) {
+	NOTIFY_IF_EXIST(ParticipantAdded, participant_added, conference, participant)
 }
 
-void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneEventLog *event_log) {
-	NOTIFY_IF_EXIST(ParticipantRemoved, participant_removed, conference, event_log)
+void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant) {
+	NOTIFY_IF_EXIST(ParticipantRemoved, participant_removed, conference, participant)
 }
 
-void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneEventLog *event_log) {
-	NOTIFY_IF_EXIST(ParticipantDeviceAdded, participant_device_added, conference, event_log)
+void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	NOTIFY_IF_EXIST(ParticipantDeviceAdded, participant_device_added, conference, participant_device)
 }
 
-void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneEventLog *event_log) {
-	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_added, conference, event_log)
+void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
+	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_added, conference, participant_device)
 }
 
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
 	NOTIFY_IF_EXIST(ParticipantAdminStatusChanged, participant_admin_status_changed, conference, participant)
 }
 
-void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const LinphoneEventLog *event_log) {
-	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, conference, event_log)
+void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject) {
+	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, conference, subject)
 }
 
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState) {
