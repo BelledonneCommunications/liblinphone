@@ -172,7 +172,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 				}
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
-				_linphone_call_set_conf_ref(call->toC(), nullptr);
+				call->removeFromConference(*remoteContact);
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), *remoteContact);
