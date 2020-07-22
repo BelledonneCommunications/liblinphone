@@ -95,6 +95,7 @@ public:
 
 	ConferenceAddress &operator= (const ConferenceAddress &other);
 	ConferenceAddress &operator= (const IdentityAddress &other){
+		mConfId = "";
 		return dynamic_cast<ConferenceAddress&>(IdentityAddress::operator=(other));
 	} ;
 

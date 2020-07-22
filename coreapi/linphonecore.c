@@ -2511,7 +2511,7 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
 		RemoteConferenceEventHandler *thiz = static_cast<RemoteConferenceEventHandler *>(linphone_event_get_user_data(lev));
-		if (state == LinphoneSubscriptionError)
+		if (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)
 			thiz->invalidateSubscription();
 			return;
 		}

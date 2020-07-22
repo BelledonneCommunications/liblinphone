@@ -91,7 +91,7 @@ public:
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}
 
-	void forceFromAddress (const IdentityAddress &fromAddress) {
+	void forceFromAddress (const ConferenceAddress &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
 
@@ -255,11 +255,11 @@ private:
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
 	ConferenceId conferenceId;
-	IdentityAddress fromAddress;
+	ConferenceAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;
 	bool unencryptedContentWarning = false;
-	IdentityAddress toAddress;
+	ConferenceAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;

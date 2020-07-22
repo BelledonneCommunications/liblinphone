@@ -45,8 +45,8 @@ public:
 
 	bool operator< (const ConferenceId &other) const;
 
-	const IdentityAddress &getPeerAddress () const;
-	const IdentityAddress &getLocalAddress () const;
+	const ConferenceAddress &getPeerAddress () const;
+	const ConferenceAddress &getLocalAddress () const;
 
 	bool isValid () const;
 
