@@ -998,7 +998,7 @@ static void _login_account_confirmation_key_cb_custom(LinphoneXmlRpcRequest *req
 		}
 	} else if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
 		status = LinphoneAccountCreatorStatusRequestOk;
-		const bctbx_map_t *resp = linphone_xml_rpc_request_get_string_struct_response(request);
+		/*const bctbx_map_t *resp = linphone_xml_rpc_request_get_string_struct_response(request);
 		const auto &it = bctbx_map_cchar_find_key(resp, "password");
 		if (!bctbx_iterator_equals(it, bctbx_map_cchar_end(resp))) {
 			const char *ha1 = (const char *)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it));
@@ -1007,6 +1007,26 @@ static void _login_account_confirmation_key_cb_custom(LinphoneXmlRpcRequest *req
 		const auto &it2 = bctbx_map_cchar_find_key(resp, "algorithm");
 		if (!bctbx_iterator_equals(it2, bctbx_map_cchar_end(resp))) {
 			const char *algo = (const char *)bctbx_pair_cchar_get_second(bctbx_iterator_cchar_get_pair(it2));
+			if (algo) {
+				if (creator->algorithm) {
+					if (strcmp(algo, creator->algorithm) != 0) {
+						ms_warning("Asked for password hashed using %s, got algorithm %s", creator->algorithm, algo);
+					} else {
+						ms_debug("Got password hashed using %s that we requested", algo);
+					}
+				} else {
+					ms_debug("Account creator wasn't configured for a specific alogithm, got %s", algo);
+				}
+				set_string(&creator->algorithm, algo, FALSE);
+			} else {
+				ms_error("Couldn't get algorithm from struct response !");
+			}
+		}*/
+		const bctbx_list_t *list = linphone_xml_rpc_request_get_list_response(request);
+		const char *ha1 = (char *)bctbx_list_get_data(list);
+		set_string(&creator->ha1, ha1, FALSE);
+		if (bctbx_list_size(list) > 1) {
+			const char *algo = (char *)bctbx_list_get_data(bctbx_list_next(list));
 			if (algo) {
 				if (creator->algorithm) {
 					if (strcmp(algo, creator->algorithm) != 0) {

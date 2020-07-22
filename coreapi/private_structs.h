@@ -521,6 +521,7 @@ struct _LinphoneXmlRpcArg {
 		int i;
 		char *s;
 		bctbx_map_t *m;
+		bctbx_list_t *l;
 	} data;
 };
 
