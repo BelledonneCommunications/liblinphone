@@ -963,6 +963,17 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 			unSubscribeRegistrationForParticipant(participant->getAddress());
 		}
 	}
+	
+	//device left, we no longuer need to receive subscription info from it
+	if (device->isSubscribedToConferenceEventPackage()) {
+		lError() << q << " still subscription pending for [" << device << "], terminating in emergency";
+		//try to terminate subscription if any, but do not wait for anser.
+		LinphoneEventCbs *cbs = linphone_event_get_callbacks(device->getConferenceSubscribeEvent());
+		linphone_event_cbs_set_user_data(cbs, nullptr);
+		linphone_event_cbs_set_notify_response(cbs, nullptr);
+		linphone_event_terminate(device->getConferenceSubscribeEvent());
+	}
+	
 	/* if all devices of participants are left we'll delete the chatroom*/
 	bool allLeft = true;
 	for (const auto &participant : q->getConference()->getParticipants()){
@@ -1071,7 +1082,7 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(getCore(), IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr, ConferenceParams::create(core->getCCore()))) {
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(core, IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
 	getConference()->setSubject(op->getSubject());
@@ -1099,7 +1110,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	const string &subject,
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
-) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(getCore(), peerAddress, nullptr, ConferenceParams::create(core->getCCore()))) {
+) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	getConference()->participants = move(participants);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));

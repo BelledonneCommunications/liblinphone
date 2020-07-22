@@ -28,8 +28,10 @@
 #include "core/core-accessor.h"
 
 #include "conference/conference-interface.h"
+#include "conference/conference-listener.h"
 #include "conference/conference-id.h"
 #include "xml/conference-info.h"
+#include <memory>
 
 // =============================================================================
 
@@ -49,7 +51,7 @@ friend class LocalConferenceListEventHandler;
 	friend class Tester;
 #endif
 public:
-	LocalConferenceEventHandler (Conference *conference);
+	LocalConferenceEventHandler (Conference *conference, ConferenceListener* listener = nullptr);
 
 	void subscribeReceived (LinphoneEvent *lev, bool oneToOne = false);
 	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
@@ -126,6 +128,7 @@ public:
 protected:
 
 	Conference *conf = nullptr;
+	ConferenceListener *confListener ;
 
 private:
 

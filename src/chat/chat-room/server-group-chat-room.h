@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp;
 class ServerGroupChatRoomPrivate;
 
-class ServerGroupChatRoom : public ChatRoom {
+class ServerGroupChatRoom : public ChatRoom , public ConferenceListener {
 public:
 	// TODO: Make me private!
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
@@ -85,7 +85,7 @@ public:
 	void leave () override;
 
 	/* ConferenceListener */
-	void onFirstNotifyReceived (const IdentityAddress &addr);
+	virtual void onFirstNotifyReceived (const IdentityAddress &addr) override;
 
 	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 

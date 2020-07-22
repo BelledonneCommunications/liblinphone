@@ -48,8 +48,7 @@ using namespace Xsd::ConferenceInfo;
 
 // =============================================================================
 
-LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference) {
-	conf = conference;
+LocalConferenceEventHandler::LocalConferenceEventHandler (Conference *conference, ConferenceListener *listener): conf(conference), confListener(listener) {
 }
 
 // -----------------------------------------------------------------------------
@@ -358,11 +357,14 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 		}
 */
 
-		for (const auto &p : handler->conf->getParticipants()) {
-			for (const auto &d : p->getDevices()) {
-				if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
-					handler->conf->onFirstNotifyReceived(d->getAddress());
-					return;
+		if (handler->confListener) {
+			for (const auto &p : handler->conf->getParticipants()) {
+				for (const auto &d : p->getDevices()) {
+					if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
+						//fixme confListener should be removed in the futur. On only relevant for server grou chatroom
+						handler->confListener->onFirstNotifyReceived(d->getAddress());
+						return;
+					}
 				}
 			}
 		}
