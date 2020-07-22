@@ -665,7 +665,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 		// Remote conference creation
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreationPending + 1, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 
 		// Check subscriptions
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(new_participant_initial_stats[idx].number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
@@ -1598,6 +1597,7 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 																		,from
 																		,to
 																		,linphone_call_state_to_string(cstate));
+
 		ms_free(to);
 		ms_free(from);
 	}
