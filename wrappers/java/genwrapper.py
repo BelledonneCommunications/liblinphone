@@ -297,7 +297,7 @@ class JavaTranslator(object):
         else:
             methodDict['c_name'] = _method.name.to_c()
 
-        methodDict['takeRefOnReturnedObject'] = "FALSE" if 'create' in _method.name.to_c() else "TRUE"
+        methodDict['takeRefOnReturnedObject'] = not _method.returnAllocatedObject
 
         methodDict['returnObject'] = methodDict['hasReturn'] and type(_method.returnType) is AbsApi.ClassType
         methodDict['returnClassName'] = _method.returnType.translate(self.langTranslator, namespace=namespace)

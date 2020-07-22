@@ -107,7 +107,7 @@ class SwiftTranslator(object):
             methodDict['is_generic'] = self.is_generic(methodDict)
             methodDict['isNotConst'] = not method.returnType.isconst
 
-            methodDict['impl']['create_method'] = 'create' in method.name.to_word_list()
+            methodDict['impl']['create_method'] = method.returnAllocatedObject
             if (methodDict['is_class'] and not methodDict['impl']['create_method']):
                 methodDict['return_default'] = "?"
             methodDict['throw_default'] = " throws" if methodDict['impl']['exception'] or methodDict['impl']['create_method'] else ""
