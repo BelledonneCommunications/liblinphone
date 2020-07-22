@@ -342,7 +342,7 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 }
 
 void Call::removeFromConference(const Address & remoteContactAddress) {
-	if (!isInConference()) {
+	if (!isInConference() && getConference()) {
 		// Check if the request was sent by the focus
 		ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
