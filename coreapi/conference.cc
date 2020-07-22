@@ -104,6 +104,7 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	if (success == true) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, participantAddress);
+		_linphone_conference_notify_participant_added(toC(), findParticipant(participantAddress)->toC());
 		setState(ConferenceInterface::State::Created);
 	}
 
@@ -127,6 +128,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (success) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, remoteAddress);
+		_linphone_conference_notify_participant_added(toC(), p->toC());
 		setState(ConferenceInterface::State::Created);
 	}
 	return success;
@@ -146,6 +148,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceAdded(creationTime, false, p->getAddress(), *remoteContact, "");
+				_linphone_conference_notify_participant_device_added(toC(), device->toC());
 
 				return true;
 			}
@@ -174,6 +177,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), *remoteContact);
+				_linphone_conference_notify_participant_device_removed(toC(), device->toC());
 
 				return 0;
 			}
@@ -192,6 +196,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 		participants.remove(p);
 		time_t creationTime = time(nullptr);
 		notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
+		_linphone_conference_notify_participant_removed(toC(), p->toC());
 	}
 	return 0;
 }
@@ -215,6 +220,7 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	participants.remove(participant);
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, participantAddress);
+	_linphone_conference_notify_participant_removed(toC(), participant->toC());
 	return true;
 }
 
@@ -609,6 +615,7 @@ void LocalConference::setSubject (const std::string &subject) {
 	Conference::setSubject(subject);
 	time_t creationTime = time(nullptr);
 	notifySubjectChanged(creationTime, false, subject);
+	_linphone_conference_notify_subject_changed(toC(), subject.c_str());
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
