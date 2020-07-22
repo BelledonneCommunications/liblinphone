@@ -2358,6 +2358,38 @@ static void server_recover_phone_account_exists(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void create_push_account_request_response_cb(LinphoneXmlRpcRequest *request) {
+	LinphoneCoreManager *marie = (LinphoneCoreManager *)linphone_xml_rpc_request_get_user_data(request);
+	BC_ASSERT_EQUAL(linphone_xml_rpc_request_get_status(request), LinphoneXmlRpcStatusOk, int , "%d");
+
+	const bctbx_list_t *list_response = linphone_xml_rpc_request_get_list_response(request);
+	BC_ASSERT_PTR_NOT_NULL(list_response);
+	BC_ASSERT_EQUAL(bctbx_list_size(list_response), 4, int, "%d");
+
+	marie->stat.number_of_LinphoneXmlRequestResponseReceived += 1;
+}
+
+static void server_push_account(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCore *core = marie->lc;
+	//LinphoneConfig *config = linphone_core_get_config(core);
+	const char *url = "https://sip7.linphone.org:444/wizard.php";//linphone_config_get_string(config, "assistant", "xmlrpc_url", NULL);
+	linphone_core_verify_server_certificates(core, FALSE);
+
+	BC_ASSERT_PTR_NOT_NULL(url);
+	LinphoneXmlRpcSession *session = linphone_xml_rpc_session_new(core, url);
+	LinphoneXmlRpcRequest *request = linphone_xml_rpc_session_create_request(session, LinphoneXmlRpcArgStringStruct, "create_push_account");
+	linphone_xml_rpc_request_set_user_data(request, marie);
+	linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), create_push_account_request_response_cb);
+	linphone_xml_rpc_session_send_request(session, request);
+
+	wait_for_until(core, NULL, &marie->stat.number_of_LinphoneXmlRequestResponseReceived, 1, TIMEOUT_REQUEST);
+
+	linphone_xml_rpc_request_unref(request);
+	linphone_xml_rpc_session_release(session);
+	linphone_core_manager_destroy(marie);
+}
+
 /****************** End Update Account ************************/
 
 test_t account_creator_tests[] = {
@@ -2633,6 +2665,10 @@ test_t account_creator_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Recover account password and algorithm from confirmation key",
 		server_recover_phone_account_exists,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Push accont",
+		server_push_account,
 		"Server"),
 };
 
