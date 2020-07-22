@@ -32,8 +32,6 @@ class Conference;
 
 }
 
-
-
 class LINPHONE_PUBLIC LocalAudioVideoConferenceEventHandler : public LocalConferenceEventHandler {
 friend class LocalConferenceListEventHandler;
 #ifdef LINPHONE_TESTER
