@@ -366,16 +366,16 @@ typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* message, 
 /**
  * Callback used to notify a chat room that a participant has been added.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] participant #LinphoneParticipant that has been added to the conference
  */
-typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room that a participant has been removed.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] participant #LinphoneParticipant that has been removed to the conference
  */
-typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room that the admin status of a participant has been changed.
@@ -394,23 +394,23 @@ typedef void (*LinphoneConferenceCbsStateChangedCb) (LinphoneConference *confere
 /**
  * Callback used to notify that the subject of a chat room has changed.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] subject subject of the conference
  */
-typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *conference, const char *subject);
 
 /**
  * Callback used to notify a chat room that a participant has been added.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference
  */
-typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify a chat room that a participant has been removed.
  * @param[in] conference #LinphoneConference object
- * @param[in] event_log #LinphoneEventLog The event to be notified
+ * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference
  */
-typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneEventLog *event_log);
+typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}
