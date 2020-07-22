@@ -146,7 +146,14 @@ LINPHONE_PUBLIC const char * linphone_xml_rpc_request_get_raw_response(const Lin
 * @return The struct response to the XML-RPC request.
 * @donotwrap
 **/
-const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request);
+//const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request);
+
+/**
+* Get the response to an XML-RPC request sent with linphone_xml_rpc_session_send_request() and returning a string response.
+* @param request LinphoneXmlRpcRequest object. @notnil
+* @return \bctbx_list{const char *} A list of all string responses in the XML-RPC request. @maybenil
+**/
+LINPHONE_PUBLIC const bctbx_list_t *linphone_xml_rpc_request_get_list_response(const LinphoneXmlRpcRequest *request);
 
 /**
  * Create a new #LinphoneXmlRpcSession object.
