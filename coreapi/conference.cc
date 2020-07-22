@@ -33,6 +33,7 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "conference/params/media-session-params-p.h"
 #include "core/core-p.h"
+#include "conference/notify-conference-listener.h"
 #include "conference/conference.h"
 #include "conference/participant.h"
 #include "conference/session/mixers.h"
@@ -64,6 +65,7 @@ Conference::Conference(
 	LinphonePrivate::Conference(core, myAddress, listener, params)
 	{
 
+	addListener(std::make_shared<NotifyConferenceListener>(this));
 	setState(ConferenceInterface::State::Instantiated);
 
 	// Video is already enable in the conference params constructor
@@ -104,7 +106,6 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	if (success == true) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, participantAddress);
-		_linphone_conference_notify_participant_added(toC(), findParticipant(participantAddress)->toC());
 		setState(ConferenceInterface::State::Created);
 	}
 
@@ -128,7 +129,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (success) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, remoteAddress);
-		_linphone_conference_notify_participant_added(toC(), p->toC());
 		setState(ConferenceInterface::State::Created);
 	}
 	return success;
@@ -148,7 +148,6 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceAdded(creationTime, false, p->getAddress(), *remoteContact, "");
-				_linphone_conference_notify_participant_device_added(toC(), device->toC());
 
 				return true;
 			}
@@ -177,7 +176,6 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), *remoteContact);
-				_linphone_conference_notify_participant_device_removed(toC(), device->toC());
 
 				return 0;
 			}
@@ -196,7 +194,6 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 		participants.remove(p);
 		time_t creationTime = time(nullptr);
 		notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
-		_linphone_conference_notify_participant_removed(toC(), p->toC());
 	}
 	return 0;
 }
@@ -220,7 +217,6 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	participants.remove(participant);
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, participantAddress);
-	_linphone_conference_notify_participant_removed(toC(), participant->toC());
 	return true;
 }
 
@@ -263,8 +259,6 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 	// Call callbacks before calling listeners because listeners may change state
 	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
-	_linphone_conference_notify_state_changed(toC(), (LinphoneConferenceState)getState());
-
 	// Call listeners
 	LinphonePrivate::Conference::notifyStateChanged(state);
 }
@@ -615,7 +609,6 @@ void LocalConference::setSubject (const std::string &subject) {
 	Conference::setSubject(subject);
 	time_t creationTime = time(nullptr);
 	notifySubjectChanged(creationTime, false, subject);
-	_linphone_conference_notify_subject_changed(toC(), subject.c_str());
 }
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {

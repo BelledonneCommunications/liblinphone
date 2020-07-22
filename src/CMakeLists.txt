@@ -156,6 +156,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-id.h
 	conference/conference-listener.h
+	conference/notify-conference-listener.h
 	conference/conference.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
@@ -339,6 +340,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	conference/conference-id.cpp
 	conference/conference.cpp
 	conference/conference-interface.cpp
+	conference/notify-conference-listener.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
