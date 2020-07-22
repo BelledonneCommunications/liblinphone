@@ -1447,6 +1447,7 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 					// TODO : Get LocalConfEventHandler and call handler->subscribeReceived(lev)
 				} else {
 					linphone_event_notify(lev,content);
+					linphone_event_unref(lev);
 				}
 			}
 		break;
