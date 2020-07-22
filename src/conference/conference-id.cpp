@@ -59,11 +59,11 @@ bool ConferenceId::operator< (const ConferenceId &other) const {
 		|| (peerAddress == other.peerAddress && localAddress < other.localAddress);
 }
 
-const IdentityAddress &ConferenceId::getPeerAddress () const {
+const ConferenceAddress &ConferenceId::getPeerAddress () const {
 	return peerAddress;
 }
 
-const IdentityAddress &ConferenceId::getLocalAddress () const {
+const ConferenceAddress &ConferenceId::getLocalAddress () const {
 	return localAddress;
 }
 
