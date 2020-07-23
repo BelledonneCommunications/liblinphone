@@ -848,7 +848,6 @@ static void simple_conference_from_scratch_no_answer(void){
 }
 */
 
-/*
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
@@ -881,7 +880,6 @@ static void simple_conference_with_ice(void) {
 static void simple_zrtp_conference_with_ice(void) {
 	simple_encrypted_conference_with_ice(LinphoneMediaEncryptionZRTP);
 }
-*/
 
 static void conference_hang_up_call_on_hold(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
@@ -893,7 +891,6 @@ static void conference_hang_up_call_on_hold(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-/*
 static void simple_call_transfer(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -1233,7 +1230,6 @@ end:
 	linphone_core_manager_destroy(pauline);
 	bctbx_list_free(lcs);
 }
-*/
 
 static void eject_from_3_participants_conference(LinphoneCoreManager *marie, LinphoneCoreManager *pauline, LinphoneCoreManager *laure, LinphoneCoreManager *focus) {
 	stats initial_marie_stat;
@@ -2057,8 +2053,8 @@ test_t multi_call_tests[] = {
 //	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
 //	TEST_NO_TAG("Simple conference established from scratch, but attendees do not answer", simple_conference_from_scratch_no_answer),
-//	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
-//	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
+	TEST_ONE_TAG("Simple conference with ICE", simple_conference_with_ice, "ICE"),
+	TEST_ONE_TAG("Simple ZRTP conference with ICE", simple_zrtp_conference_with_ice, "ICE"),
 //	TEST_NO_TAG("Simple conference with audio device change during setup", simple_conference_with_audio_device_change_during_setup),
 //	TEST_NO_TAG("Simple conference with audio device change before all join", simple_conference_with_audio_device_change_before_all_join),
 //	TEST_NO_TAG("Simple conference with audio device change after all join", simple_conference_with_audio_device_change_after_all_join),
@@ -2069,13 +2065,13 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Eject from 3 participants conference", eject_from_3_participants_local_conference),
 	TEST_NO_TAG("Eject from 4 participants conference", eject_from_4_participants_conference),
 	TEST_NO_TAG("Conference pause and terminate call", conference_hang_up_call_on_hold),
-//	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
-//	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
-//	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
-//	TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),
-//	TEST_NO_TAG("Call transfer existing outgoing call without auto answer of replacing call", call_transfer_existing_call_outgoing_call_no_auto_answer),
-//	TEST_NO_TAG("Call transfer existing incoming call", call_transfer_existing_call_incoming_call),
-//	TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
+	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
+	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
+	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
+	TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),
+	TEST_NO_TAG("Call transfer existing outgoing call without auto answer of replacing call", call_transfer_existing_call_outgoing_call_no_auto_answer),
+	TEST_NO_TAG("Call transfer existing incoming call", call_transfer_existing_call_incoming_call),
+	TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
