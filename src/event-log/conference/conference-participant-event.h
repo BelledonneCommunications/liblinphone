@@ -29,6 +29,7 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceParticipantEventPrivate;
 class IdentityAddress;
 class Conference;
+class Participant;
 
 class LINPHONE_PUBLIC ConferenceParticipantEvent : public ConferenceNotifiedEvent {
 	friend class RemoteConferenceEventHandler;
@@ -39,10 +40,11 @@ public:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const IdentityAddress &participantAddress
+		const std::shared_ptr<Participant> &participant
 	);
 
 	const IdentityAddress &getParticipantAddress () const;
+	const std::shared_ptr<Participant> &getParticipant () const;
 
 protected:
 	ConferenceParticipantEvent (
@@ -50,7 +52,7 @@ protected:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const IdentityAddress &participantAddress
+		const std::shared_ptr<Participant> &participant
 	);
 
 private:

@@ -105,7 +105,8 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 
 	if (success == true) {
 		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, participantAddress);
+		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(participantAddress);
+		notifyParticipantAdded(creationTime, false, p);
 		setState(ConferenceInterface::State::Created);
 	}
 
@@ -128,7 +129,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 
 	if (success) {
 		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, remoteAddress);
+		notifyParticipantAdded(creationTime, false, p);
 		setState(ConferenceInterface::State::Created);
 	}
 	return success;
@@ -147,7 +148,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 				device->setSession(call->getActiveSession());
 
 				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceAdded(creationTime, false, p->getAddress(), *remoteContact, "");
+				notifyParticipantDeviceAdded(creationTime, false, p, device, "");
 
 				return true;
 			}
@@ -175,7 +176,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 				call->removeFromConference(*remoteContact);
 
 				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceRemoved(creationTime, false, p->getAddress(), *remoteContact);
+				notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
 				return 0;
 			}
@@ -193,7 +194,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	if (p->getDevices().empty()) {
 		participants.remove(p);
 		time_t creationTime = time(nullptr);
-		notifyParticipantRemoved(creationTime, false, *call->getRemoteAddress());
+		notifyParticipantRemoved(creationTime, false, p);
 	}
 	return 0;
 }
@@ -208,15 +209,13 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 		return false;
 	// Delete all devices of a participant
 	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
-		const IdentityAddress & deviceAddress = (*device)->getAddress();
 		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceRemoved(creationTime, false, participant->getAddress(), deviceAddress);
+		notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
 	}
-	const IdentityAddress participantAddress = participant->getAddress();
 	participant->clearDevices();
 	participants.remove(participant);
 	time_t creationTime = time(nullptr);
-	notifyParticipantRemoved(creationTime, false, participantAddress);
+	notifyParticipantRemoved(creationTime, false, participant);
 	return true;
 }
 
@@ -729,22 +728,22 @@ void LocalConference::notifyFullState () {
 	Conference::notifyFullState();
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantAdded (creationTime,  isFullState, addr);
+	return Conference::notifyParticipantAdded (creationTime,  isFullState, participant);
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantRemoved (creationTime,  isFullState, addr);
+	return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
 }
 
-shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, addr, isAdmin);
+	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, participant, isAdmin);
 }
 
 shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
@@ -753,16 +752,16 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t
 	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice, const std::string name) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, addr, gruu, name);
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, participant, participantDevice, name);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, addr, gruu);
+	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 }
 
 RemoteConference::RemoteConference (

@@ -282,12 +282,12 @@ void Conference::notifyFullState () {
 	}
 }
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const Address &addr) {
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantAdded,
 		creationTime,
 		conferenceId,
-		addr
+		participant
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
@@ -298,12 +298,12 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_
 	return event;
 }
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const Address &addr) {
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		EventLog::Type::ConferenceParticipantRemoved,
 		creationTime,
 		conferenceId,
-		addr
+		participant
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
@@ -314,12 +314,12 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (tim
 	return event;
 }
 
-shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const Address &addr, bool isAdmin) {
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
 	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		creationTime,
 		conferenceId,
-		addr
+		participant
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
@@ -345,13 +345,13 @@ shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t crea
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu, const std::string name) {
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice, const std::string name) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		creationTime,
 		conferenceId,
-		addr,
-		gruu,
+		participant,
+		participantDevice,
 		name
 	);
 	event->setFullState(isFullState);
@@ -363,13 +363,13 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const Address &addr, const Address &gruu) {
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		creationTime,
 		conferenceId,
-		addr,
-		gruu
+		participant,
+		participantDevice
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);

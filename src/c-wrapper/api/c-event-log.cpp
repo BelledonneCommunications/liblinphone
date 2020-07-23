@@ -23,6 +23,8 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
+#include "conference/participant.h"
+#include "conference/participant-device.h"
 #include "event-log/events.h"
 
 // =============================================================================
@@ -39,7 +41,9 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
 	mutable LinphoneAddress *peerAddressCache;
 	mutable LinphoneAddress *localAddressCache;
 	mutable LinphoneAddress *participantAddressCache;
+	mutable LinphoneParticipant *participantCache;
 	mutable LinphoneAddress *deviceAddressCache;
+	mutable LinphoneParticipantDevice *deviceCache;
 );
 
 void _linphone_event_log_constructor (LinphoneEventLog *) {}
@@ -51,8 +55,12 @@ void _linphone_event_log_destructor (LinphoneEventLog *event_log) {
 		linphone_address_unref(event_log->localAddressCache);
 	if (event_log->participantAddressCache)
 		linphone_address_unref(event_log->participantAddressCache);
+	if (event_log->participantCache)
+		linphone_participant_unref(event_log->participantCache);
 	if (event_log->deviceAddressCache)
 		linphone_address_unref(event_log->deviceAddressCache);
+	if (event_log->deviceCache)
+		linphone_participant_device_unref(event_log->deviceCache);
 }
 
 // -----------------------------------------------------------------------------
@@ -306,6 +314,18 @@ const LinphoneAddress *linphone_event_log_get_participant_address (const Linphon
 	return event_log->participantAddressCache;
 }
 
+const LinphoneParticipant *linphone_event_log_get_participant (const LinphoneEventLog *event_log) {
+	if (!isConferenceParticipantType(linphone_event_log_get_type(event_log)))
+		return nullptr;
+
+	if (!event_log->participantCache)
+		event_log->participantCache = static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getParticipant()->toC();
+
+	return event_log->participantCache;
+}
+
 // -----------------------------------------------------------------------------
 // ConferenceParticipantDeviceEvent.
 // -----------------------------------------------------------------------------
@@ -322,6 +342,18 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 		);
 
 	return event_log->deviceAddressCache;
+}
+
+const LinphoneParticipantDevice *linphone_event_log_get_participant_device (const LinphoneEventLog *event_log) {
+	if (!isConferenceParticipantDeviceType(linphone_event_log_get_type(event_log)))
+		return nullptr;
+
+	if (!event_log->deviceCache)
+		event_log->deviceCache = static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getDevice()->toC();
+
+	return event_log->deviceCache;
 }
 
 // -----------------------------------------------------------------------------
