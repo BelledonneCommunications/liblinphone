@@ -66,7 +66,7 @@ public:
 
 	
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
-	void removeParticipant (const std::shared_ptr<const Participant> &participant);
+	void removeParticipant (const std::shared_ptr<Participant> &participant);
 
 	std::shared_ptr<Participant> findAuthorizedParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
