@@ -19,6 +19,7 @@
 
 #include "conference-participant-device-event.h"
 #include "conference-participant-event-p.h"
+#include "conference/participant-device.h"
 
 // =============================================================================
 
@@ -30,7 +31,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantDeviceEventPrivate : public ConferenceParticipantEventPrivate {
 public:
-	IdentityAddress deviceAddress;
+	std::shared_ptr<ParticipantDevice>  device;
 	string deviceName;
 };
 
@@ -40,28 +41,33 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	const IdentityAddress &participantAddress,
-	const IdentityAddress &deviceAddress,
+	const std::shared_ptr<Participant> &participant,
+	const std::shared_ptr<ParticipantDevice> &device,
 	const string &name
 ) : ConferenceParticipantEvent(
 	*new ConferenceParticipantDeviceEventPrivate,
 	type,
 	creationTime,
 	conferenceId,
-	participantAddress
+	participant
 ) {
 	L_D();
 	L_ASSERT(
 		type == Type::ConferenceParticipantDeviceAdded ||
 		type == Type::ConferenceParticipantDeviceRemoved
 	);
-	d->deviceAddress = deviceAddress;
+	d->device = device;
 	d->deviceName = name;
+}
+
+const std::shared_ptr<ParticipantDevice> &ConferenceParticipantDeviceEvent::getDevice () const {
+	L_D();
+	return d->device;
 }
 
 const IdentityAddress &ConferenceParticipantDeviceEvent::getDeviceAddress () const {
 	L_D();
-	return d->deviceAddress;
+	return d->device->getAddress();
 }
 
 const string &ConferenceParticipantDeviceEvent::getDeviceName () const {

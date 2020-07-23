@@ -268,6 +268,13 @@ shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ConferenceId &co
 	return chatRoom;
 }
 
+shared_ptr<MediaConference::Conference> MainDbPrivate::findAudioVideoConference (const ConferenceId &conferenceId) const {
+	L_Q();
+	shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(conferenceId);
+	if (!conference)
+		lError() << "Unable to find chat room: " << conferenceId << ".";
+	return conference;
+}
 // -----------------------------------------------------------------------------
 // Low level API.
 // -----------------------------------------------------------------------------
@@ -782,11 +789,24 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
+
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
+	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
+	shared_ptr<Participant> participant = nullptr;
+
+	if (chatRoom) {
+		shared_ptr<Participant> me = chatRoom->getMe();
+		if (participantAddress == me->getAddress()) {
+			participant = me;
+		} else {
+			participant = chatRoom->findParticipant(participantAddress);
+		}
+	}
 	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		IdentityAddress(row.get<string>(12))
+		participant
 	);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
 	return event;
@@ -797,12 +817,27 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
+	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
+	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
+	shared_ptr<Participant> participant = nullptr;
+
+	if (chatRoom) {
+		shared_ptr<Participant> me = chatRoom->getMe();
+		if (participantAddress == me->getAddress()) {
+			participant = me;
+		} else {
+			participant = chatRoom->findParticipant(participantAddress);
+		}
+	}
+	IdentityAddress deviceAddress(IdentityAddress(row.get<string>(11)));
+	shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(deviceAddress);
+
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		IdentityAddress(row.get<string>(12)),
-		IdentityAddress(row.get<string>(11))
+		participant,
+		participantDevice
 	);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
 	return event;

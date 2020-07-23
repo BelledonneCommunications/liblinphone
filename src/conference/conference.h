@@ -161,12 +161,12 @@ public:
 
 	void subscribeReceived (LinphoneEvent *event);
 
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime, const bool isFullState, const Address &addr);
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime, const bool isFullState, const Address &addr);
-	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime, const bool isFullState, const Address &addr, bool isAdmin);
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant);
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant);
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin);
 	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const Address &addr, const Address &gruu, const std::string name = "");
-	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const Address &addr, const Address &gruu);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice, const std::string name = "");
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
