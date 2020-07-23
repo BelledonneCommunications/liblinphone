@@ -36,7 +36,7 @@
 
 // =============================================================================
 
-class LocalAudioVideoConferenceTester;
+class LocalConferenceTester;
 
 namespace LinphoneTest {
 	class LocalConferenceTester;
@@ -74,7 +74,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class ServerGroupChatRoomPrivate;
 
 	friend class LinphoneTest::LocalConferenceTester;
-	friend class ::LocalAudioVideoConferenceTester;
+	friend class ::LocalConferenceTester;
 public:
 	explicit Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession);
 	explicit Participant (Conference *conference, const IdentityAddress &address);

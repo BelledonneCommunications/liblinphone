@@ -544,12 +544,15 @@ public:
 	using LinphonePrivate::Conference::addParticipant;
 	bool addParticipant (const IdentityAddress &addr) override {
 		bool status = LocalConference::addParticipant(addr);
+		std::shared_ptr<Participant> p =  findParticipant(addr);;
+		p->addDevice(addr);
 		if (status) {
-			notifyParticipantAdded(time(nullptr), false, findParticipant(addr));
+			notifyParticipantAdded(time(nullptr), false, p);
 		}
 		return status;
 	}
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override  {
+		participant->clearDevices();
 		bool status = LocalConference::removeParticipant(participant);
 		if (status) {
 			notifyParticipantRemoved(time(nullptr), false, participant);
