@@ -55,13 +55,13 @@ static void enable_encryption(const uint16_t encryptionModule, const bool encryp
 
 	// For testing purpose and usage demo: directly access the evfs open callback to filter some files
 	// The previous call to linphone_factory_set_vfs_encryption set a callback but we can still modify it
-	auto currentVfsCb = bctoolbox::VfsEncryption::openCallback_get();
-	bctoolbox::VfsEncryption::openCallback_set([currentVfsCb, encryptDbJournal](bctoolbox::VfsEncryption &settings){
+	auto currentVfsCb = bctoolbox::VfsEncryption::openCallbackGet();
+	bctoolbox::VfsEncryption::openCallbackSet([currentVfsCb, encryptDbJournal](bctoolbox::VfsEncryption &settings){
 			// prevent the encryption of any file with filename ending with -journal
-			auto filename = settings.filename_get();
+			auto filename = settings.filenameGet();
 			if (encryptDbJournal == false && (filename.size() > 8) && ( filename.compare (filename.size()-8, 8, std::string{"-journal"}) == 0)) { // This is a plain transfered file
 				BCTBX_SLOGD<<"Encryption test: skip encryption for -journal file";
-				settings.encryptionSuite_set(bctoolbox::EncryptionSuite::plain);
+				settings.encryptionSuiteSet(bctoolbox::EncryptionSuite::plain);
 			} else { // just call the registered cb (the one registered by the linphone_factory_set_vfs_encryption call)
 				currentVfsCb(settings);
 			}
