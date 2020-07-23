@@ -24,6 +24,7 @@
 
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
+#include "remote-conference-event-handler-base.h"
 
 // =============================================================================
 
@@ -32,8 +33,9 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceId;
 class Conference;
 class ConferenceListener;
+class RemoteConferenceEventHandlerBase;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener, public RemoteConferenceEventHandlerBase {
 	friend class ClientGroupChatRoom;
 
 public:
@@ -43,16 +45,16 @@ public:
 	void subscribe (const ConferenceId &conferenceId);
 	void notifyReceived (const std::string &xmlBody);
 	void multipartNotifyReceived (const std::string &xmlBody);
-	void unsubscribe ();
+	void unsubscribe () override;
 
-	void invalidateSubscription ();
+	void invalidateSubscription () override;
 
 	const ConferenceId &getConferenceId() const;
 	unsigned int getLastNotify () const;
 
 protected:
 	void simpleNotifyReceived (const std::string &xmlBody);
-	void subscribe ();
+	void subscribe () override;
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
