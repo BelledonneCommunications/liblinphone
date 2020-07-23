@@ -28,6 +28,7 @@ install(FILES rootca.pem
 set(GRAMMAR_FILES
 	cpim_grammar
 	identity_grammar
+	vcard_grammar
 )
 
 install(FILES ${GRAMMAR_FILES}
