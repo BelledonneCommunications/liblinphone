@@ -99,13 +99,11 @@ void RemoteConference::onFullStateReceived() {
 
 	// Loop through the participants
 	for (const auto &p : getParticipants()) {
-		const IdentityAddress &pAddress = p->getAddress();
-
 		shared_ptr<ConferenceParticipantEvent> pEvent = make_shared<ConferenceParticipantEvent>(
 			EventLog::Type::ConferenceParticipantAdded,
 			creationTime,
 			conferenceId,
-			pAddress
+			p
 		);
 		pEvent->setFullState(true);
 		pEvent->setNotifyId(lastNotify);
@@ -117,7 +115,7 @@ void RemoteConference::onFullStateReceived() {
 			p->isAdmin() ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 			creationTime,
 			conferenceId,
-			pAddress
+			p
 		);
 		aEvent->setFullState(true);
 		aEvent->setNotifyId(lastNotify);
@@ -131,8 +129,8 @@ void RemoteConference::onFullStateReceived() {
 				EventLog::Type::ConferenceParticipantDeviceAdded,
 				creationTime,
 				conferenceId,
-				pAddress,
-				d->getAddress(),
+				p,
+				d,
 				d->getName()
 			);
 			dEvent->setFullState(true);
