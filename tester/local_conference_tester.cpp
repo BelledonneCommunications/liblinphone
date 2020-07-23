@@ -57,7 +57,7 @@ public:
 			for (const std::function<void ()> iterate:mIterateFuncs) {
 				iterate();
 			}
-			usleep(100);
+			ms_usleep(100);
 		}
 		return result;
 	}
