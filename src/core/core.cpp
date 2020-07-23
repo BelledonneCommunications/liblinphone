@@ -214,8 +214,8 @@ void CorePrivate::uninit() {
 	}
 
 #ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler = nullptr;
-	localListEventHandler = nullptr;
+	remoteListEventHandler.reset();
+	localListEventHandler.reset();
 #endif
 
 	Address::clearSipAddressesCache();
