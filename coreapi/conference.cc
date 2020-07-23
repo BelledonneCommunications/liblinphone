@@ -860,7 +860,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
-			Conference::addParticipant(call);
 			ms_message("Calling the conference focus (%s)", getConferenceAddress().asString().c_str());
 			addr = linphone_address_new(getConferenceAddress().asString().c_str());
 			if (!addr)
@@ -874,6 +873,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
 			setState(ConferenceInterface::State::CreationPending);
+			//Adding a participant moves the conference to state Created, hence it done after the fcus call has been established
+			Conference::addParticipant(call);
 			return true;
 		case ConferenceInterface::State::CreationPending:
 			Conference::addParticipant(call);
@@ -1047,9 +1048,12 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallStreamsRunning:
 		case LinphoneCallPaused:
 			if (state == ConferenceInterface::State::Created) {
-				m_pendingCalls.remove(call);
-				m_transferingCalls.push_back(call);
-				call->transfer(m_focusContact);
+				// Transfer call only if focus call remote contact address is available (i.e. the call has been correctly established and passed through state StreamsRunning)
+				if (m_focusCall && (m_focusCall->getRemoteContact().empty() == 0)) {
+					m_pendingCalls.remove(call);
+					m_transferingCalls.push_back(call);
+					call->transfer(m_focusCall->getRemoteContact());
+				}
 			}
 			break;
 		case LinphoneCallError:
