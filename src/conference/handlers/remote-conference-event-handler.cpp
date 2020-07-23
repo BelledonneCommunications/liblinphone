@@ -153,7 +153,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 					conf->notifyParticipantRemoved(
 						creationTime,
 						isFullState,
-						address
+						participant
 					);
 				}
 
@@ -174,7 +174,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 					conf->notifyParticipantAdded(
 						creationTime,
 						isFullState,
-						address
+						participant
 					);
 				}
 			}
@@ -208,7 +208,7 @@ printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)State
 						conf->notifyParticipantSetAdmin(
 							creationTime,
 							isFullState,
-							address,
+							participant,
 							isAdmin
 						);
 					}
@@ -224,14 +224,15 @@ printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)State
 
 				if (state == StateType::deleted) {
 
+					shared_ptr<ParticipantDevice> device = participant->findDevice(gruu);
 					participant->removeDevice(gruu);
 
 					if (!isFullState) {
 					conf->notifyParticipantDeviceRemoved(
 						creationTime,
 						isFullState,
-						address,
-						gruu
+						participant,
+						device
 					);
 					}
 				} else if (state == StateType::full) {
@@ -247,8 +248,8 @@ printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)State
 						conf->notifyParticipantDeviceAdded(
 							creationTime,
 							isFullState,
-							address,
-							gruu,
+							participant,
+							device,
 							name
 						);
 					}
