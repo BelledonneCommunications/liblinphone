@@ -29,6 +29,7 @@
 #include "conference/conference-id.h"
 #include "core/core-accessor.h"
 #include "core/core-listener.h"
+#include "remote-conference-event-handler-base.h"
 
 // =============================================================================
 
@@ -38,13 +39,14 @@ class Address;
 class Content;
 class RemoteConferenceEventHandler;
 
-class RemoteConferenceListEventHandler : public CoreAccessor , public CoreListener {
+class RemoteConferenceListEventHandler : public CoreAccessor , public CoreListener, public RemoteConferenceEventHandlerBase {
 public:
 	RemoteConferenceListEventHandler (const std::shared_ptr<Core> &core);
 	~RemoteConferenceListEventHandler ();
 
-	void subscribe ();
-	void unsubscribe ();
+	void subscribe () override;
+	void unsubscribe () override;
+	void invalidateSubscription () override;
 	void notifyReceived (const Content *notifyContent);
 	void addHandler (RemoteConferenceEventHandler *handler);
 	void removeHandler (RemoteConferenceEventHandler *handler);

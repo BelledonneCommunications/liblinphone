@@ -262,6 +262,7 @@ if(ENABLE_ADVANCED_IM)
 		conference/handlers/local-audio-video-conference-event-handler.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
+		conference/handlers/remote-conference-event-handler-base.h
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h

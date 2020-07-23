@@ -62,11 +62,7 @@ RemoteConferenceListEventHandler::~RemoteConferenceListEventHandler () {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::subscribe () {
-	if (lev) {
-		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
-		lev = nullptr;
-	}
+	unsubscribe();
 
 	if (handlers.empty())
 		return;
@@ -129,15 +125,20 @@ void RemoteConferenceListEventHandler::subscribe () {
 	}
 	linphone_event_set_user_data(lev, this);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
+	linphone_event_ref(lev);
 	linphone_event_send_subscribe(lev, cContent);
 }
 
 void RemoteConferenceListEventHandler::unsubscribe () {
 	if (lev) {
 		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
+//		linphone_event_unref(lev);
 		lev = nullptr;
 	}
+}
+
+void RemoteConferenceListEventHandler::invalidateSubscription () {
+	lev = nullptr;
 }
 
 void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyContent) {
