@@ -725,8 +725,14 @@ static void subscribe_response(SalOp *op, SalSubscribeStatus status, int will_re
 	}else{
 		if (will_retry && linphone_core_get_global_state(lc) != LinphoneGlobalShutdown ){
 			linphone_event_set_state(lev,LinphoneSubscriptionOutgoingProgress);
+		} else {
+			// If it is in GlobalShutDown state, the remote conference event handler may be destroyed by the time this event reaches the state changed callback
+			// Subscriptipn are terminated by destructors
+			if (linphone_core_get_global_state(lc) == LinphoneGlobalShutdown ){
+				linphone_event_set_user_data(lev, NULL);
+			}
+			linphone_event_set_state(lev,LinphoneSubscriptionError);
 		}
-		else linphone_event_set_state(lev,LinphoneSubscriptionError);
 	}
 }
 
