@@ -47,6 +47,8 @@ private:
 	// ---------------------------------------------------------------------------
 
 	std::shared_ptr<AbstractChatRoom> findChatRoom (const ConferenceId &conferenceId) const;
+	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId) const;
+
 
 	// ---------------------------------------------------------------------------
 	// Low level API.
