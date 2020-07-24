@@ -927,7 +927,7 @@ int RemoteConference::terminate () {
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			if (m_focusCall) {
-				m_focusCall->terminate();
+				m_focusCall = nullptr;
 			}
 			setState(ConferenceInterface::State::Terminated);
 			break;

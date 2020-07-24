@@ -105,6 +105,7 @@ public:
 	const std::string &getParamValue (const std::string &paramName) const;
 	bool setParam (const std::string &paramName, const std::string &paramValue = "");
 	bool setParams (const std::string &params);
+	bool removeParam (const std::string &paramName);
 
 	bool hasUriParam (const std::string &uriParamName) const;
 	const std::string &getUriParamValue (const std::string &uriParamName) const;
