@@ -347,18 +347,21 @@ void Call::removeFromConference(const Address & remoteContactAddress) {
 		ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
+//printf("%s - searching conference (peer address %s local address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), conference.get());
+
 		// Terminate conference is found
 		if (conference != nullptr) {
 			conference->setState(ConferenceInterface::State::TerminationPending);
+			setConference (nullptr);
 		}
-
-		setConference (nullptr);
 	}
 }
 
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
+
+//printf("%s - call state %s (remote address %s local address %s): is in conference %0d get conference %p\n", __func__, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
 
 	switch(state) {
 		case CallSession::State::OutgoingInit:
@@ -378,7 +381,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::PausedByRemote:
 		{
 			// If it is not in a conference, the remote conference must be terminated if it exists
-			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
@@ -407,7 +410,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
-			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
@@ -421,6 +424,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
 						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+						setConference(remoteConf->toC());
 					}
 				} else if (!isInConference()) {
 					removeFromConference(remoteContactAddress);
@@ -437,7 +441,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
 			}
 
-			if (session->getPrivate()->getOp()->getRemoteContactAddress()) {
+			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
@@ -452,7 +456,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					// Create remote conference if no conference with the expected ID is found in the database
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
-						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+						setConference(remoteConf->toC());
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
