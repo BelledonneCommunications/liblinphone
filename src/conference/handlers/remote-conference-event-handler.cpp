@@ -325,7 +325,6 @@ void RemoteConferenceEventHandler::onEnteringForeground () {
 }
 
 void RemoteConferenceEventHandler::invalidateSubscription () {
-	linphone_event_unref(lev);
 	lev = nullptr;
 }
 
