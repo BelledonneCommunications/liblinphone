@@ -110,7 +110,6 @@ void RemoteConferenceListEventHandler::subscribe () {
 	LinphoneAddress *rlsAddr = linphone_address_new(factoryUri);
 
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
-	linphone_event_ref(lev);
 	char *from = linphone_address_as_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
 	lev->op->setFrom(from);
 	bctbx_free(from);
@@ -125,7 +124,6 @@ void RemoteConferenceListEventHandler::subscribe () {
 	}
 	linphone_event_set_user_data(lev, this);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
-	linphone_event_ref(lev);
 	linphone_event_send_subscribe(lev, cContent);
 }
 
@@ -137,7 +135,6 @@ void RemoteConferenceListEventHandler::unsubscribe () {
 }
 
 void RemoteConferenceListEventHandler::invalidateSubscription () {
-	linphone_event_unref(lev);
 	lev = nullptr;
 }
 
