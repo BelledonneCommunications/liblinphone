@@ -202,6 +202,11 @@ bool_t sal_address_has_param(const SalAddress *addr, const char *name){
 	return !!belle_sip_parameters_has_parameter(parameters, name);
 }
 
+void sal_address_remove_param(const SalAddress *addr, const char *name) {
+	belle_sip_parameters_t* parameters = BELLE_SIP_PARAMETERS(addr);
+	belle_sip_parameters_remove_parameter(parameters, name);
+}
+
 const char * sal_address_get_param(const SalAddress *addr, const char *name) {
 	belle_sip_parameters_t* parameters = BELLE_SIP_PARAMETERS(addr);
 	return belle_sip_parameters_get_parameter(parameters, name);
