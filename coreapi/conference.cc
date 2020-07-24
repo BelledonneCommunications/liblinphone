@@ -540,6 +540,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		/* Kick the call out of the conference by moving to the Paused state. */
 		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 				L_GET_PRIVATE(call->getParams()))->setInConference(false);
+
 		err = call->pause();
 	}
 	
