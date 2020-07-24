@@ -375,6 +375,14 @@ bool Address::setParams (const string &params) {
 	return true;
 }
 
+bool Address::removeParam (const string &uriParamName) {
+	if (!internalAddress)
+		return false;
+
+	sal_address_remove_param(internalAddress, L_STRING_TO_C(uriParamName));
+	return true;
+}
+
 bool Address::hasUriParam (const string &uriParamName) const {
 	return internalAddress && !!sal_address_has_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
 }
