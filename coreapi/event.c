@@ -452,10 +452,14 @@ void linphone_event_terminate(LinphoneEvent *lev){
 	lev->terminating=TRUE;
 	if (lev->dir==LinphoneSubscriptionIncoming){
 		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
-		op->closeNotify();
+		if (op) {
+			op->closeNotify();
+		}
 	}else if (lev->dir==LinphoneSubscriptionOutgoing){
 		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
-		op->unsubscribe();
+		if (op) {
+			op->unsubscribe();
+		}
 	}
 
 	if (lev->publish_state!=LinphonePublishNone){
