@@ -33,7 +33,7 @@ static bool is_encrypted(const char *filepath) {
 	bool ret = false;
 	auto fp = bctbx_file_open(&bctoolbox::bcEncryptedVfs, filepath, "r");
 	if (fp != NULL) {
-		ret = (bctbx_file_isEncrypted(fp)==TRUE);
+		ret = (bctbx_file_is_encrypted(fp)==TRUE);
 		bctbx_file_close(fp);
 	}
 	return ret;

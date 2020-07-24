@@ -136,7 +136,7 @@ bool FileContent::isEncrypted () const {
 		return false;
 	}
 
-	auto ret = bctbx_file_isEncrypted(fp);
+	auto ret = bctbx_file_is_encrypted(fp);
 	bctbx_file_close(fp);
 
 	return (ret==TRUE);
