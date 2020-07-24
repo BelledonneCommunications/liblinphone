@@ -383,6 +383,7 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
 		ms_message("Switching conference [%p] into state '%s'", this, Utils::toString(state).c_str());
+printf("%s - moving conference %s (peer address %s local address %s) to state (%s)\n", __func__, ((getConferenceAddress().asString().empty() == false) ? getConferenceAddress().asString().c_str() : "Unknown"), ((getConferenceId().getPeerAddress().asString().empty() == false) ? getConferenceId().getPeerAddress().asString().c_str() : "Unknown"), ((getConferenceId().getLocalAddress().asString().empty() == false) ? getConferenceId().getLocalAddress().asString().c_str() : "Unknown"), Utils::toString(state).c_str());
 		this->state = state;
 		notifyStateChanged(state);
 	}
