@@ -293,7 +293,6 @@ void RemoteConferenceEventHandler::subscribe () {
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
 	linphone_event_set_user_data(lev, this);
-	linphone_event_ref(lev);
 	lInfo() << "Subscribing to chat room or conference: " << peerAddress << "with last notify: " << lastNotifyStr;
 	linphone_event_send_subscribe(lev, nullptr);
 }
@@ -326,7 +325,6 @@ void RemoteConferenceEventHandler::onEnteringForeground () {
 }
 
 void RemoteConferenceEventHandler::invalidateSubscription () {
-	linphone_event_unref(lev);
 	lev = nullptr;
 }
 
