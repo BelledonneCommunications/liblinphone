@@ -347,7 +347,7 @@ void Call::removeFromConference(const Address & remoteContactAddress) {
 		ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
-//printf("%s - searching conference (peer address %s local address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), conference.get());
+printf("%s - searching conference (peer address %s local address %s remote contact address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), (remoteContactAddress.asString().empty() ? "Unknown" : remoteContactAddress.asString().c_str()), conference.get());
 
 		// Terminate conference is found
 		if (conference != nullptr) {
@@ -361,7 +361,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
-//printf("%s - call state %s (remote address %s local address %s): is in conference %0d get conference %p\n", __func__, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
+printf("%s - call state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d get conference %p\n", __func__, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
 
 	switch(state) {
 		case CallSession::State::OutgoingInit:
@@ -385,6 +385,10 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
+
+				if (!remoteContactAddress.hasParam("isfocus")) {
+					remoteContactAddress.setParam("isfocus");
+				}
 
 				removeFromConference(remoteContactAddress);
 			}
@@ -427,6 +431,11 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						setConference(remoteConf->toC());
 					}
 				} else if (!isInConference()) {
+					if (!remoteContactAddress.hasParam("isfocus")) {
+						remoteContactAddress.setParam("isfocus");
+					}
+
+
 					removeFromConference(remoteContactAddress);
 				}
 			}
