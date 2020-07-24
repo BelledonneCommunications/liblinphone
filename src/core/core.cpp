@@ -1029,6 +1029,8 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	L_ASSERT(audioVideoConference);
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+
+printf("%s - insert conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.get());
 	auto conf = findAudioVideoConference (conferenceId);
 
 
