@@ -476,7 +476,6 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	if (addr_str) {
 		//ms_message("Conference [%s] state changed: %s", addr_str, linphone_conference_state_to_string(newState));
 		ms_message("Conference [%s] state changed: %d", addr_str, newState);
-		printf("Conference [%s] state changed: %d\n", addr_str, newState);
 	}
 
 	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) && (newState != LinphoneConferenceStateCreationPending)) {
