@@ -307,6 +307,7 @@ void MediaSessionPrivate::pausedByRemote () {
 	MediaSessionParams newParams(*getParams());
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
+
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 
 }
@@ -2365,11 +2366,7 @@ LinphoneStatus MediaSession::resume () {
 	}
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
-	// If in conference and contact address doesn't have isfocus
-	if ((d->getParams()->getPrivate()->getInConference()) && (!contactAddress.hasParam("isfocus"))) {
-		// Add isFocus if call is in a conference
-		contactAddress.setParam("isfocus");
-	}
+	updateContactAddress (contactAddress);
 	d->op->setContactAddress(contactAddress.getInternalAddress());
 
 	if (d->op->update(subject.c_str(), false) != 0)
