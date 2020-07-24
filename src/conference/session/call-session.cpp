@@ -474,6 +474,7 @@ void CallSessionPrivate::updated (bool isUpdate) {
 
 void CallSessionPrivate::updatedByRemote () {
 	L_Q();
+
 	setState(CallSession::State::UpdatedByRemote,"Call updated by remote");
 	if (deferUpdate || deferUpdateInternal) {
 		if (state == CallSession::State::UpdatedByRemote && !deferUpdateInternal){
@@ -666,7 +667,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 	string newSubject(subject);
 	if (newSubject.empty()) {
-		if (q->getParams()->getPrivate()->getInConference())
+		if (isInConference())
 			newSubject = "Conference";
 		else if (q->getParams()->getPrivate()->getInternalCallUpdate())
 			newSubject = "ICE processing concluded";
@@ -681,9 +682,8 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		if (q->getParams()->getPrivate()->getInConference()) {
-			contactAddress.setParam("isfocus");
-		}
+		q->updateContactAddress(contactAddress);
+
 		op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
@@ -1485,6 +1485,17 @@ CallSessionParams * CallSession::getCurrentParams () const {
 const CallSessionParams * CallSession::getParams () const {
 	L_D();
 	return d->params;
+}
+
+void CallSession::updateContactAddress (Address & contactAddress) const {
+	L_D();
+	if ((d->isInConference()) && (!contactAddress.hasParam("isfocus"))) {
+		// If in conference and contact address doesn't have isfocus
+		contactAddress.setParam("isfocus");
+	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
+		// If not in conference and contact address has isfocus
+		contactAddress.removeParam("isfocus");
+	}
 }
 
 // -----------------------------------------------------------------------------
