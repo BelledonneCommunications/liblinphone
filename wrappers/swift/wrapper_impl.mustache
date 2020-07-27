@@ -177,6 +177,9 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 	/// {{{line}}}
 	{{/lines}}
 	{{/detailedDoc}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
 	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
@@ -296,6 +299,9 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/detailedDoc}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
 	{{#has_property}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
