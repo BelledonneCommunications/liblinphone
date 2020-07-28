@@ -619,6 +619,7 @@ struct _LinphonePlayer{
 	int (*get_position)(LinphonePlayer *player);
 	void (*close)(LinphonePlayer* player);
 	void (*destroy)(LinphonePlayer *player);
+	void (*set_window_id)(LinphonePlayer *player, void* window_id);
 	void *impl;
 	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
 	LinphoneCore *core;
