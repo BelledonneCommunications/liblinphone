@@ -753,6 +753,7 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 
@@ -774,7 +775,7 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 	return 0;
 }
 
-LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
+LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr, bool_t through_call_pause) {
 
 	stats conf_initial_stats = conf_mgr->stat;
 	stats participant_initial_stats = conf_mgr->stat;
@@ -800,12 +801,14 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	}
 
 	LinphoneCall * participant_call = linphone_core_get_current_call(participant_mgr->lc);
-//	const LinphoneAddress *c_participant_address = linphone_call_get_to_address(participant_call);
-//	const char * participant_uri = L_GET_CPP_PTR_FROM_C_OBJECT(c_participant_address)->asStringUriOnly().c_str();
 	const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
 	LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
 
-	linphone_core_remove_from_conference(conf_mgr->lc, conf_call);
+	if (through_call_pause == TRUE) {
+		linphone_core_pause_call(conf_mgr->lc, conf_call);
+	} else {
+		linphone_core_remove_from_conference(conf_mgr->lc, conf_call);
+	}
 
 	// Calls are paused when removing a participant 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausing,(conf_initial_stats.number_of_LinphoneCallPausing + 1),5000));
@@ -834,25 +837,31 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 		int idx = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
+
 			// If removing last participant, then its call is kicked out of conference
 			// - Remote conference is deleted
 			// - parameters are updated
 			if (participant_size == 2) {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,(conf_initial_stats.number_of_LinphoneCallUpdating + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(conf_initial_stats.number_of_LinphoneCallStreamsRunning + 1), 5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
 
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminationPending,(participants_initial_stats[idx].number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminated,(participants_initial_stats[idx].number_of_LinphoneConferenceStateTerminated + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateDeleted,(participants_initial_stats[idx].number_of_LinphoneConferenceStateDeleted + 1),5000));
 
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,conf_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,3000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(conf_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
+
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,conf_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,participants_initial_stats[idx].number_of_LinphoneSubscriptionTerminated + 1,3000));
 			} else {
-				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallStreamsRunning,participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning, int, "%0d");
-
 				// Wait for notify of participant device deleted and participant deleted
-
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(participants_initial_stats[idx].number_of_NotifyReceived + 2),3000));
+
+				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallStreamsRunning,participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning, int, "%0d");
 			}
 			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallEnd,participants_initial_stats[idx].number_of_LinphoneCallEnd, int, "%0d");
 			BC_ASSERT_EQUAL(m->stat.number_of_LinphoneCallReleased,participants_initial_stats[idx].number_of_LinphoneCallReleased, int, "%0d");
