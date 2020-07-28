@@ -378,6 +378,25 @@ printf("%s - call state %s\n - remote address %s\n - remote contact address %s \
 			getPlatformHelpers(lc)->releaseMcastLock();
 			getPlatformHelpers(lc)->releaseCpuLock();
 			break;
+		case CallSession::State::Paused:
+			// If a call is in pause, it is always kicked out of a conference
+			if (getConference() && isInConference()) {
+				linphone_conference_remove_participant_3 (getConference(), toC());
+
+				if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
+					char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+					Address remoteContactAddress(remoteContactAddressStr);
+					ms_free(remoteContactAddressStr);
+
+					if (remoteContactAddress.hasParam("isfocus")) {
+						removeFromConference(remoteContactAddress);
+						// If not in conference and contact address has isfocus
+						remoteContactAddress.removeParam("isfocus");
+					}
+					session->getPrivate()->getOp()->setRemoteContact(remoteContactAddress.asString());
+				}
+			}
+			break;
 		case CallSession::State::PausedByRemote:
 		{
 			// If it is not in a conference, the remote conference must be terminated if it exists
