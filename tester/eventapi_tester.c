@@ -296,6 +296,67 @@ static void subscribe_loosing_dialog(void) {
 #endif
 }
 
+/* This test has LeaksMemory attribute due to the brutal disconnection of pauline, followed by core destruction.
+ * TODO: fix it.
+ */
+static void subscribe_loosing_dialog_2(void) {
+#ifdef WIN32
+	/*Unfortunately this test doesn't work on windows due to the way closed TCP ports behave.
+	 * Unlike linux and macOS, released TCP port don't send an ICMP error (or maybe at least for a period of time.
+	 * This prevents this test from working, see comments below*/
+	ms_warning("subscribe_loosing_dialog() skipped on windows.");
+#else
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneContent* content;
+	LinphoneEvent *lev;
+	int expires= 4;
+	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
+
+	lcs=bctbx_list_append(lcs,pauline->lc);
+
+	content = linphone_core_create_content(marie->lc);
+	linphone_content_set_type(content,"application");
+	linphone_content_set_subtype(content,"somexml");
+	linphone_content_set_buffer(content,(const uint8_t *)subscribe_content,strlen(subscribe_content));
+
+	lev=linphone_core_create_subscribe(marie->lc,pauline->identity,"dodo",expires);
+	linphone_event_add_custom_header(lev,"My-Header","pouet");
+	linphone_event_add_custom_header(lev,"My-Header2","pimpon");
+	linphone_event_send_subscribe(lev,content);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionOutgoingProgress,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionIncomingReceived,1,3000));
+
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionActive,1,5000));
+
+	/*make sure marie receives first notification before terminating*/
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,1,5000));
+
+	
+	/* now marie looses internet connection and reboots */
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	lcs = bctbx_list_remove(lcs, marie->lc);
+	linphone_core_manager_destroy(marie);
+	marie = linphone_core_manager_new( "pauline_tcp_rc");
+	lcs = bctbx_list_append(lcs, marie->lc);
+	
+	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,2000));
+	//now try a terminate the dialog
+	linphone_event_terminate(pauline->lev);
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
+	/*let expire the incoming subscribe received by pauline */
+	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,3000));
+
+	linphone_content_unref(content);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
+#endif
+}
+
 static void subscribe_with_io_error(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -489,6 +550,7 @@ test_t event_tests[] = {
 	TEST_ONE_TAG("Subscribe with custom headers", subscribe_test_with_custom_header, "presence"),
 	TEST_ONE_TAG("Subscribe refreshed", subscribe_test_refreshed, "presence"),
 	TEST_TWO_TAGS("Subscribe loosing dialog", subscribe_loosing_dialog, "presence", "LeaksMemory"),
+	TEST_ONE_TAG("Server try to terminate a lost dialog", subscribe_loosing_dialog_2, "presence"),
 	TEST_ONE_TAG("Subscribe with io error", subscribe_with_io_error, "presence"),
 	TEST_ONE_TAG("Subscribe manually refreshed", subscribe_test_manually_refreshed, "presence"),
 	TEST_ONE_TAG("Subscribe terminated by notifier", subscribe_test_terminated_by_notifier, "presence"),
@@ -497,6 +559,7 @@ test_t event_tests[] = {
 	TEST_ONE_TAG("Publish without expires", publish_without_expires, "presence"),
 	TEST_ONE_TAG("Publish without automatic refresh",publish_no_auto_test, "presence"),
 	TEST_ONE_TAG("Out of dialog notify", out_of_dialog_notify, "presence")
+	
 };
 
 test_suite_t event_test_suite = {"Event", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
