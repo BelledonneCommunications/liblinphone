@@ -2416,7 +2416,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
-		CoreListener *parent = static_cast<CoreListener *>(linphone_event_get_user_data(lev));
+		ObjectPrivate *parent = static_cast<ObjectPrivate *>(linphone_event_get_user_data(lev));
 		RemoteConferenceEventHandlerPrivate *thiz = dynamic_cast<RemoteConferenceEventHandlerPrivate *>(parent);
 		if (thiz && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
 			thiz->invalidateSubscription();
