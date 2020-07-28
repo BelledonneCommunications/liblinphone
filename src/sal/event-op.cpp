@@ -203,8 +203,9 @@ void SalSubscribeOp::subscribeProcessDialogTerminatedCb (void *userCtx, const be
 	auto op = static_cast<SalSubscribeOp *>(userCtx);
 	if (!op->mDialog)
 		return;
-
-	if (belle_sip_dialog_terminated_event_is_expired(event)) {
+	if (op->mState == SalOp::State::Terminated) {
+		lInfo() << "Op [" << op << "] is terminated, nothing to do with this dialog terminated";
+	} else if (belle_sip_dialog_terminated_event_is_expired(event)) {
 		auto dialog = belle_sip_dialog_terminated_event_get_dialog(event);
 		if (belle_sip_dialog_is_server(dialog)) {
 			op->mRoot->mCallbacks.incoming_subscribe_closed(op);
