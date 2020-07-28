@@ -464,7 +464,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			/* Since Laure has been removed, the conference will automatically disapear to let
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
-			remove_participant_from_local_conference(lcs, marie, pauline, TRUE);
+			remove_participant_from_local_conference(lcs, marie, laure, TRUE);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 			BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1313,8 +1313,8 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
+	ms_message("Removing pauline from conference.");
 	if(!is_remote_conf) {
-		ms_message("Removing pauline from conference.");
 		remove_participant_from_local_conference(lcs, marie, pauline, FALSE);
 	} else {
 		LinphoneConference *conference = linphone_core_get_conference(marie->lc);
