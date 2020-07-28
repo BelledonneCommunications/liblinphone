@@ -168,6 +168,10 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 			if (device != nullptr) {
 				LinphoneEvent * event = device->getConferenceSubscribeEvent();
 				if (event) {
+					//try to terminate subscription if any, but do not wait for anser.
+					LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
+					linphone_event_cbs_set_user_data(cbs, nullptr);
+					linphone_event_cbs_set_notify_response(cbs, nullptr);
 					linphone_event_terminate(event);
 					device->setConferenceSubscribeEvent(nullptr);
 				}
