@@ -282,6 +282,7 @@ protected:
 	bool mOpReleased = false;
 
 	friend class Sal;
+	friend class Call;
 	friend class SalMessageOpInterface;
 };
 
