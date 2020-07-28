@@ -163,9 +163,9 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 		if (state == StateType::full) {
 			if (conf->isMe(address)) {
-				lWarning() << "Participant " << participant << " is the conference itself!";
+				lWarning() << "Participant " << address.asString() << " is the conference itself!";
 			} else if (participant) {
-				lWarning() << "Participant " << participant << " added but already in the list of participants!";
+				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {
 				participant = Participant::create(conf,address);
 				conf->participants.push_back(participant);
