@@ -460,14 +460,11 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	}
 
 	if (pause_and_hangup) {
-		linphone_core_pause_call(marie->lc, marie_call_laure);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused,2,10000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausedByRemote,1,10000));
 		if (!is_remote_conf){
 			/* Since Laure has been removed, the conference will automatically disapear to let
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
-			remove_participant_from_local_conference(lcs, marie, laure);
+			remove_participant_from_local_conference(lcs, marie, pauline, TRUE);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 			BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -475,7 +472,9 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 			linphone_call_terminate(marie_call_pauline);
 		} else {
-			linphone_core_remove_from_conference(marie->lc, marie_call_laure);
+			linphone_core_pause_call(marie->lc, marie_call_laure);
+			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused,2,10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausedByRemote,1,10000));
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 		}
@@ -515,6 +514,7 @@ end:
 
 static void simple_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
@@ -850,6 +850,7 @@ static void simple_conference_from_scratch_no_answer(void){
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 
@@ -883,6 +884,7 @@ static void simple_zrtp_conference_with_ice(void) {
 
 static void conference_hang_up_call_on_hold(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference(get_laure_rc());
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
@@ -1310,7 +1312,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) {
 		ms_message("Removing pauline from conference.");
-		remove_participant_from_local_conference(lcs, marie, pauline);
+		remove_participant_from_local_conference(lcs, marie, pauline, FALSE);
 	} else {
 		LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 		const LinphoneAddress *uri = linphone_call_get_remote_address(marie_call_pauline);
@@ -1354,6 +1356,7 @@ end:
 
 static void eject_from_3_participants_local_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 
@@ -1366,6 +1369,7 @@ static void eject_from_3_participants_local_conference(void) {
 
 static void eject_from_4_participants_conference(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
@@ -1416,7 +1420,7 @@ static void eject_from_4_participants_conference(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
-	remove_participant_from_local_conference(lcs, marie, pauline);
+	remove_participant_from_local_conference(lcs, marie, pauline, FALSE);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
