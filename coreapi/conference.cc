@@ -898,6 +898,18 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	}
 }
 
+int RemoteConference::removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+	if (p) {
+		return removeParticipant(p);
+	}
+	return -1;
+}
+
+bool RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+	return removeParticipant(participant->getAddress());
+}
+
 int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 	Address refer_to_addr;
 	int res;
@@ -932,8 +944,14 @@ int RemoteConference::terminate () {
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			if (m_focusCall) {
+				// Do not terminate focus call when terminating the remote conference
+				// This is required because the local conference creates a remote conference for every participant and the call from the participant to the local conference is the focus call
 				m_focusCall = nullptr;
 			}
+			for (auto p : participants) {
+				removeParticipant(p);
+			}
+			Conference::terminate();
 			setState(ConferenceInterface::State::Terminated);
 			break;
 		default:
