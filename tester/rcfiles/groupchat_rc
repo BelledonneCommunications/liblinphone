@@ -8,3 +8,5 @@ composing_idle_timeout=1
 
 [net]
 
+[tester]
+test_env=1
