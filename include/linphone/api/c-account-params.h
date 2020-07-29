@@ -130,7 +130,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_identity_address(Linp
  * 
  * @warning This function cannot be used if linphone_account_params_is_outbound_proxy_enabled is TRUE.
  * @param params The #LinphoneAccountParams object. @notnil
- * @param routes A \bctbx_list{LinphoneAddress} of routes. @maybenil
+ * @param routes A list of routes. \bctbx_list{LinphoneAddress} @maybenil
  * @return -1 if routes are invalid, 0 otherwise.
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_account_params_set_routes_addresses(LinphoneAccountParams *params, const bctbx_list_t *routes);
@@ -197,14 +197,14 @@ LINPHONE_PUBLIC void linphone_account_params_set_use_international_prefix_for_ca
  /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
  * @param params The #LinphoneAccountParams object. @notnil
- * @param enable True to store quality statistics and send them to the collector, false to disable it.
+ * @param enable TRUE to store quality statistics and send them to the collector, FALSE to disable it.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_quality_reporting_enabled(LinphoneAccountParams *params, bool_t enable);
 
 /**
  * Indicates whether quality statistics during call should be stored and sent to a collector according to RFC 6035.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return True if quality repotring is enabled, false otherwise.
+ * @return TRUE if quality repotring is enabled, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_get_quality_reporting_enabled(const LinphoneAccountParams *params);
 
@@ -270,7 +270,7 @@ LINPHONE_PUBLIC void linphone_account_params_set_realm(LinphoneAccountParams *pa
  * 
  * @warning If linphone_account_params_is_outbound_proxy_enabled is TRUE then it will only return the proxy address.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return \bctbx_list{LinphoneAddress} The list of routes. @maybenil
+ * @return The list of routes. \bctbx_list{LinphoneAddress} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t* linphone_account_params_get_routes_addresses(const LinphoneAccountParams *params);
 
@@ -376,7 +376,7 @@ LINPHONE_PUBLIC	const char * linphone_account_params_get_international_prefix(co
 /**
  * Return whether or not the international prefix will automaticaly be used for calls and chats.
  * @param params The #LinphoneAccountParams object. @notnil
- * @return Whether we should use international prefix automaticaly for calls.
+ * @return Whether we should use international prefix automatically for calls.
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_get_use_international_prefix_for_calls_and_chats(const LinphoneAccountParams *params);
 
@@ -526,18 +526,53 @@ LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const 
 LINPHONE_PUBLIC const char* linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP push notification.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param allow TRUE to allow push notification information, FALSE otherwise.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP push notification.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return TRUE if push notification informations should be added, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_get_push_notification_allowed(const LinphoneAccountParams *params);
+
+/**
+ * Indicates whether to add to the contact parameters the push notification information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param allow TRUE to allow remote push notification information, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_remote_push_notification_allowed(LinphoneAccountParams *params, bool_t allow);
+
+/**
+ * Indicates whether to add to the contact parameters the push notification information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if remote push notification informations should be added, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_get_remote_push_notification_allowed(const LinphoneAccountParams *params);
+
+/**
+* Gets whether push notifications are available or not (Android & iOS only).
+* @param params The #LinphoneAccountParams object. @notnil
+* @return TRUE if push notifications are available, FALSE otherwise
+*/
+LINPHONE_PUBLIC bool_t linphone_account_params_is_push_notification_available(const LinphoneAccountParams *params);
+
+/**
+ * Sets the push notification configuration.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param config The #LinphonePushNotificationConfig object. @notnil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params, LinphonePushNotificationConfig *config);
+
+/**
+ * Returns the push notification configuration.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The #LinphonePushNotificationConfig object. @notnil
+ */
+LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params);
 
 /**
  * Sets the transport type of the server address.

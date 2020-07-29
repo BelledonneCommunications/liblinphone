@@ -69,7 +69,9 @@
 
 BELLE_SIP_DECLARE_TYPES_BEGIN(linphone, 10000)
 L_REGISTER_TYPES(L_REGISTER_ID)
+BELLE_SIP_TYPE_ID(LinphoneAccount),
 BELLE_SIP_TYPE_ID(LinphoneAccountCbs),
+BELLE_SIP_TYPE_ID(LinphoneAccountParams),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
@@ -117,6 +119,7 @@ BELLE_SIP_TYPE_ID(LinphonePresencePerson),
 BELLE_SIP_TYPE_ID(LinphonePresenceService),
 BELLE_SIP_TYPE_ID(LinphoneProxyConfig),
 BELLE_SIP_TYPE_ID(LinphonePushNotificationMessage),
+BELLE_SIP_TYPE_ID(LinphonePushNotificationConfig),
 BELLE_SIP_TYPE_ID(LinphoneRange),
 BELLE_SIP_TYPE_ID(LinphoneTransports),
 BELLE_SIP_TYPE_ID(LinphoneTunnel),

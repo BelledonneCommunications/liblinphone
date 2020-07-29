@@ -50,3 +50,6 @@ stun_server=stun.example.org
 uri=null
 call_logs_db_uri=null
 zrtp_secrets_db_uri=null
+
+[tester]
+test_env=1

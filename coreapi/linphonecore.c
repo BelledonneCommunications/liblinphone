@@ -2673,110 +2673,48 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-static void update_proxy_config_push_params(LinphoneCore *core) {
-	char *computedPushParams = NULL;
-	if (core->push_notification_enabled) {
-		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
-	}
-
-	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
-	for (; proxies != NULL; proxies = proxies->next) {
-		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
-		bool_t pushAllowed = linphone_proxy_config_is_push_notification_allowed(proxy);
-		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(proxy);
-
-		if (pushAllowed) {
-			// Do not alter contact uri params for proxy config without push notification allowed
-			if (computedPushParams && core->push_notification_enabled) {
-				if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, proxy);
-				}
-			} else {
-				if (contactUriParams) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information removed from proxy config [%p]", proxy);
-				}
-			}
-		}
-	}
-
-	if (computedPushParams) {
-		ms_free(computedPushParams);
+void linphone_core_update_account_push_params(LinphoneCore *core) {
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		Account::toCpp(account)->updatePushNotificationParameters();
 	}
 }
 
 bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
-	return core->push_notification_param != NULL && core->push_notification_prid != NULL;
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		if (!linphone_account_params_is_push_notification_available(linphone_account_get_params(account))) return FALSE;
+	}
+	return TRUE;
 }
 
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
-	if (core->push_notification_param) {
-		ms_free(core->push_notification_param);
-		core->push_notification_param = NULL;
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		linphone_push_notification_config_set_param(push_cfg, param);
+		linphone_push_notification_config_set_prid(push_cfg, prid);
+		Account::toCpp(account)->updatePushNotificationParameters();
 	}
-	if (core->push_notification_prid) {
-		ms_free(core->push_notification_prid);
-		core->push_notification_prid = NULL;
-	}
-
-	if (param && prid) {
-		core->push_notification_param = ms_strdup(param);
-		core->push_notification_prid = ms_strdup(prid);
-		ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
-	}
-
-	update_proxy_config_push_params(core);
-}
-
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
-	if (!core->push_notification_enabled) return NULL;
-	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
-
-	bool_t use_legacy_params = !!linphone_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
-	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
-	if (use_legacy_params) {
-		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
-	}
-
-	const char *provider = NULL;
-	// Can this be improved ?
-	bool_t tester_env = !!linphone_config_get_int(core->config, "tester", "test_env", FALSE);
-	if (tester_env) provider = "liblinphone_tester";
-	// End of improvement zone
-
-	const char *params = core->push_notification_param;
-	const char *prid = core->push_notification_prid;
-
-#ifdef __ANDROID__
-	if (use_legacy_params)
-		provider = "firebase";
-	else
-		provider = "fcm";
-#elif TARGET_OS_IPHONE
-	provider = "apple";
-#endif
-	if (provider == NULL) return NULL;
-
-	char contactUriParams[512];
-	memset(contactUriParams, 0, sizeof(contactUriParams));
-	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
-	return ms_strdup(contactUriParams);
+	ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "net", "push_notification", enable);
 	core->push_notification_enabled = enable;
 
-	update_proxy_config_push_params(core);
+	linphone_core_update_account_push_params(core);
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
 	return core->push_notification_enabled;
+}
+
+void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token) {
+	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
