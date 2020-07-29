@@ -2538,110 +2538,38 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-static void update_proxy_config_push_params(LinphoneCore *core) {
-	char *computedPushParams = NULL;
-	if (core->push_notification_enabled) {
-		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
-	}
-	
+void linphone_core_update_proxy_config_push_params(LinphoneCore *core) {
 	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
 	for (; proxies != NULL; proxies = proxies->next) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
-		bool_t pushAllowed = linphone_proxy_config_is_push_notification_allowed(proxy);
-		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(proxy);
-
-		if (pushAllowed) {
-			// Do not alter contact uri params for proxy config without push notification allowed
-			if (computedPushParams && core->push_notification_enabled) {
-				if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, proxy);
-				}
-			} else {
-				if (contactUriParams) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information removed from proxy config [%p]", proxy);
-				}
-			}
-		}
+		linphone_proxy_config_update_push_notification_parameters(proxy);
 	}
-
-	if (computedPushParams) {
-		ms_free(computedPushParams);
-	}
-}
-
-bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
-	return core->push_notification_param != NULL && core->push_notification_prid != NULL;
 }
 
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
-	if (core->push_notification_param) {
-		ms_free(core->push_notification_param);
-		core->push_notification_param = NULL;
-	}
-	if (core->push_notification_prid) {
-		ms_free(core->push_notification_prid);
-		core->push_notification_prid = NULL;
-	}
-
-	if (param && prid) {
-		core->push_notification_param = ms_strdup(param);
-		core->push_notification_prid = ms_strdup(prid);
-		ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
-	}
-
-	update_proxy_config_push_params(core);
-}
-
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
-	if (!core->push_notification_enabled) return NULL;
-	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
-	
-	bool_t use_legacy_params = !!linphone_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
-	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
-	if (use_legacy_params) {
-		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
-	}
-
-	const char *provider = NULL;
-	// Can this be improved ?
-	bool_t tester_env = !!linphone_config_get_int(core->config, "tester", "test_env", FALSE);
-	if (tester_env) provider = "liblinphone_tester";
-	// End of improvement zone
-
-	const char *params = core->push_notification_param;
-	const char *prid = core->push_notification_prid;
-
-#ifdef __ANDROID__
-	if (use_legacy_params)
-		provider = "firebase";
-	else
-		provider = "fcm";
-#elif TARGET_OS_IPHONE
-	provider = "apple";
-#endif
-	if (provider == NULL) return NULL;
-
-	char contactUriParams[512];
-	memset(contactUriParams, 0, sizeof(contactUriParams));
-	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
-	return ms_strdup(contactUriParams);
+	linphone_push_notification_config_set_param(core->push_cfg, param);
+	linphone_push_notification_config_set_prid(core->push_cfg, prid);
+	ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
+	linphone_core_update_proxy_config_push_params(core);
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "net", "push_notification", enable);
 	core->push_notification_enabled = enable;
 
-	update_proxy_config_push_params(core);
+	linphone_core_update_proxy_config_push_params(core);
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
 	return core->push_notification_enabled;
+}
+
+LinphonePushNotificationConfig *linphone_core_get_push_notification_config(const LinphoneCore *core) {
+	return core->push_cfg;
+}
+
+void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token) {
+	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
@@ -2686,6 +2614,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #endif
 	lc->push_notification_enabled = !!linphone_config_get_int(lc->config, "net", "push_notification", push_notification_default);
 	lc->auto_iterate_enabled = !!linphone_config_get_int(lc->config, "misc", "auto_iterate", auto_iterate_default);
+	lc->push_cfg = linphone_push_notification_config_new();
 
 #ifdef __ANDROID__
 	if (system_context) {
@@ -2872,6 +2801,10 @@ LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct
 	// allow ios app extension to mark msg as read without being registered
 	core->send_imdn_if_unregistered = !main_core;
 	getPlatformHelpers(core)->getSharedCoreHelpers()->registerSharedCoreMsgCallback();
+	if (main_core) {
+		// allow ios push notifications, auto ietrate and enterBackground.
+		getPlatformHelpers(core)->createAppDelegate();
+	}
 	return core;
 }
 
@@ -2909,6 +2842,8 @@ LinphoneCore *linphone_core_ref(LinphoneCore *lc) {
 }
 
 void linphone_core_unref(LinphoneCore *lc) {
+	if (lc->push_cfg)
+		linphone_push_notification_config_unref(lc->push_cfg);
 	belle_sip_object_unref(BELLE_SIP_OBJECT(lc));
 }
 

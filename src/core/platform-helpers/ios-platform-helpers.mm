@@ -28,6 +28,7 @@
 #include <CoreLocation/CoreLocation.h>
 #include <notify_keys.h>
 #include <belr/grammarbuilder.h>
+#include <AVFoundation/AVAudioSession.h>
 
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
@@ -45,13 +46,12 @@
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+static IosAppDelegate *AppDelegate;
 
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	~IosPlatformHelpers (){
-		[mAppDelegate dealloc];
-	}
+	~IosPlatformHelpers () = default;
 
 	void acquireWifiLock () override {}
 	void releaseWifiLock () override {}
@@ -92,6 +92,9 @@ public:
 	bool isReachable(SCNetworkReachabilityFlags flags);
 	void networkChangeCallback(void);
 	void onNetworkChanged(bool reachable, bool force);
+	void createAppDelegate() override;
+	void destroyAppDelegate() override;
+	void didRegisterForRemotePush(void *token) override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -109,7 +112,6 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
-	IosAppDelegate *mAppDelegate;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -123,9 +125,6 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
-
-	mAppDelegate = [[IosAppDelegate alloc] init];
-	[mAppDelegate setCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -149,6 +148,20 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
 	ms_message("IosPlatformHelpers is fully initialised");
+}
+
+void IosPlatformHelpers::createAppDelegate() {
+	AppDelegate = [[IosAppDelegate alloc] init];
+	[AppDelegate setCore:getCore()];
+	[AppDelegate registerForPush];
+}
+
+void IosPlatformHelpers::destroyAppDelegate() {
+	[AppDelegate dealloc];
+}
+
+void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
+	[AppDelegate didRegisterForRemotePush:(NSData *)token];
 }
 
 //Safely get an UTF-8 string from the given CFStringRef
@@ -262,14 +275,14 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 	mNetworkMonitoringEnabled = monitoringEnabled;
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
-		[mAppDelegate onLinphoneCoreStart];
+		[AppDelegate onLinphoneCoreStart];
 	}
 }
 
 void IosPlatformHelpers::onLinphoneCoreStop() {
 	if (mNetworkMonitoringEnabled) {
 		stopNetworkMonitoring();
-		[mAppDelegate onLinphoneCoreStop];
+		[AppDelegate onLinphoneCoreStop];
 	}
 
 	getSharedCoreHelpers()->onLinphoneCoreStop();

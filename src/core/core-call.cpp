@@ -255,6 +255,13 @@ void Core::soundcardEnableCallkit (bool enabled) {
 	}
 }
 
+void Core::soundcardConfigure () {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_configure(card);
+	}
+}
+
 LinphoneStatus Core::terminateAllCalls () {
 	L_D();
 	auto calls = d->calls;

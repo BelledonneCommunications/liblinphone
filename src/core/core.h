@@ -110,6 +110,7 @@ public:
 	void soundcardHintCheck ();
 	void soundcardActivateAudioSession (bool active);
 	void soundcardEnableCallkit (bool enabled);
+	void soundcardConfigure ();
 	LinphoneStatus terminateAllCalls ();
 
 	// ---------------------------------------------------------------------------

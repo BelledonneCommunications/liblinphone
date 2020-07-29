@@ -139,7 +139,8 @@ struct _LinphoneProxyConfig
 	char *idkey; /* NULL or referenced by another proxy_config->depends_on */
 	char *conference_factory_uri;
 
-	bool_t push_notification_allowed;
+	bool_t push_notification_allowed; /* voip push notification for ios or push notification for android */
+	bool_t remote_push_notification_allowed;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
@@ -861,9 +862,10 @@ namespace LinphonePrivate {
 	void *system_context; \
 	bool_t is_unreffing; \
 	bool_t push_notification_enabled; \
-	char * push_notification_param; \
-	char * push_notification_prid; \
 	bool_t auto_iterate_enabled; \
-	bool_t native_ringing_enabled;
+	bool_t native_ringing_enabled;\
+	LinphonePushNotificationConfig *push_cfg;
+
+
 
 #endif /* _PRIVATE_STRUCTS_H_ */

@@ -147,6 +147,10 @@ void _linphone_proxy_config_release(LinphoneProxyConfig *cfg);
 void _linphone_proxy_config_unpublish(LinphoneProxyConfig *obj);
 void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg, LinphonePublishState state);
 LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires);
+LINPHONE_PUBLIC char *linphone_proxy_config_get_computed_push_notification_parameters(const LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg);
+
 /*
  * returns service route as defined in as defined by rfc3608, might be a list instead of just one.
  * Can be NULL
@@ -523,7 +527,7 @@ bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
+LINPHONE_PUBLIC void linphone_core_update_proxy_config_push_params(LinphoneCore *core);
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);

@@ -5184,12 +5184,20 @@ LINPHONE_PUBLIC void linphone_core_set_push_notification_enabled(LinphoneCore *c
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core);
 
 /**
- * Gets whether push notifications are available or not (Android & iOS only).
- * @param core The #LinphoneCore @notnil
- * @return TRUE if push notifications are available, FALSE otherwise
- * @ingroup misc
- */
-LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore *core);
+* Gets the push notification config, used for contact uri parameter (Android & iOS only).
+* @param core The #LinphoneCore @notnil
+* @return #LinphonePushNotificationConfig
+* @ingroup misc
+*/
+LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_core_get_push_notification_config(const LinphoneCore *core);
+
+/**
+* Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
+* @param core The #LinphoneCore @notnil
+* @param device_token, format (NSData *).
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token);
 
 /**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
