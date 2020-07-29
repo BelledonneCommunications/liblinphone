@@ -125,7 +125,7 @@ LINPHONE_PUBLIC const char* linphone_account_get_custom_header(LinphoneAccount *
  *
  * This mecanism must be enabled before the account is added to the core
  *
- * @param accout The #LinphoneAccount object. @notnil
+ * @param account The #LinphoneAccount object. @notnil
  * @param depends_on The #LinphoneAccount this one shall be depending on. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_account_set_dependency(LinphoneAccount *account, LinphoneAccount *depends_on);
@@ -193,7 +193,7 @@ LINPHONE_PUBLIC LinphoneReason linphone_account_get_error(LinphoneAccount *accou
 /**
  * Get the transport from either service route, route or addr.
  * @param account The #LinphoneAccount object. @notnil
- * @return The transport as a string (I.E udp, tcp, tls, dtls). @notnil
+ * @return The transport as a string (I.E udp, tcp, tls, dtls).
  * @deprecated 01/03/2021 Use Linphone_account_params_get_transport() instead.
 **/
 LINPHONE_PUBLIC LinphoneTransportType linphone_account_get_transport(LinphoneAccount *account);
@@ -201,7 +201,7 @@ LINPHONE_PUBLIC LinphoneTransportType linphone_account_get_transport(LinphoneAcc
 /**
  * Indicates whether AVPF/SAVPF is being used for calls using this account.
  * @param account The #LinphoneAccount object. @notnil
- * @return True if AVPF/SAVPF is enabled, false otherwise.
+ * @return TRUE if AVPF/SAVPF is enabled, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_account_is_avpf_enabled(LinphoneAccount *account);
 

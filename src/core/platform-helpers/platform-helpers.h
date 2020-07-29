@@ -86,6 +86,10 @@ public:
 	virtual std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() = 0;
 	virtual void startAudioForEchoTestOrCalibration () = 0;
 	virtual void stopAudioForEchoTestOrCalibration () = 0;
+	virtual void start (std::shared_ptr<LinphonePrivate::Core> core) = 0;
+	virtual void stop (void) = 0;
+
+	virtual void didRegisterForRemotePush(void *token) = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -140,6 +144,11 @@ public:
 	std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() override;
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
+	
+	void start (std::shared_ptr<LinphonePrivate::Core> core) override {};
+	void stop (void) override {};
+
+	void didRegisterForRemotePush(void *token) override {};
 
 protected:
 	bool checkIpAddressChanged();

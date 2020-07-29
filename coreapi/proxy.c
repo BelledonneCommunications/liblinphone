@@ -74,7 +74,7 @@ LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(c
 			return LinphoneProxyConfigAddressDifferent;
 	}
 	return LinphoneProxyConfigAddressDifferent; /*either username, domain or port ar not equals*/
-} // FIXME: remove me when no longer needed
+}
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* cfg) {
 	return (LinphoneProxyConfigAddressComparisonResult) Account::toCpp(cfg->account)->isServerConfigChanged();
@@ -421,8 +421,8 @@ char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy, c
 	return result;
 }
 
-static LinphoneAddress* _destroy_addr_if_not_sip(LinphoneAddress* addr) {
-	if (linphone_address_is_sip(addr)) {
+static LinphoneAddress* _linphone_core_destroy_addr_if_not_sip( LinphoneAddress* addr ){
+	if( linphone_address_is_sip(addr) ) {
 		return addr;
 	} else {
 		linphone_address_unref(addr);
@@ -448,7 +448,7 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 		tmpurl=enumres->sip_address[0];
 		uri=linphone_address_new(tmpurl);
 		enum_lookup_res_free(enumres);
-		return _destroy_addr_if_not_sip(uri);
+		return _linphone_core_destroy_addr_if_not_sip(uri);
 	}
 	/* check if we have a "sip:" or a "sips:" */
 	if ( (strstr(username,"sip:")==NULL) && (strstr(username,"sips:")==NULL) ){
@@ -459,7 +459,7 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 			uri=linphone_address_new(tmpurl);
 			ms_free(tmpurl);
 			if (uri){
-				return _destroy_addr_if_not_sip(uri);
+				return _linphone_core_destroy_addr_if_not_sip(uri);
 			}
 		}
 
@@ -475,7 +475,7 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
 				linphone_address_set_username(uri,unescaped_username);
 				belle_sip_free(unescaped_username);
-				return _destroy_addr_if_not_sip(uri);
+				return _linphone_core_destroy_addr_if_not_sip(uri);
 			}
 		} else {
 			return NULL;
@@ -483,7 +483,7 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 	}
 	uri=linphone_address_new(username);
 	if (uri!=NULL){
-		return _destroy_addr_if_not_sip(uri);
+		return _linphone_core_destroy_addr_if_not_sip(uri);
 	}
 
 	return NULL;
@@ -808,7 +808,7 @@ LinphoneStatus linphone_core_add_account(LinphoneCore *lc, LinphoneAccount *acco
 	return 0;
 }
 
-void linphone_core_clear_account(LinphoneCore *core) {
+void linphone_core_clear_accounts(LinphoneCore *core) {
 	bctbx_list_t* list=bctbx_list_copy(linphone_core_get_account_list((const LinphoneCore*)core));
 	bctbx_list_t* copy=list;
 	for(;list!=NULL;list=list->next){
@@ -1131,6 +1131,37 @@ void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cf
 	}
 
 	linphone_account_params_set_push_notification_allowed(cfg->edit, is_allowed);
+}
+
+bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_remote_push_notification_allowed(params);
+}
+
+void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_remote_push_notification_allowed(cfg->edit, allow);
+}
+
+bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_is_push_notification_available(params);
+}
+
+void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg, LinphonePushNotificationConfig *push_cfg) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_push_notification_config(cfg->edit, push_cfg);
+}
+
+LinphonePushNotificationConfig *linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_push_notification_config(params);
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {
