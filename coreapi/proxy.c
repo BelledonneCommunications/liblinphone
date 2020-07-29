@@ -167,10 +167,15 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->publish = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
 
 	bool_t push_allowed_default = FALSE;
+	bool_t remote_push_allowed_default = FALSE;
 #if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
 	push_allowed_default = TRUE;
 #endif
+#if defined(TARGET_OS_IPHONE)
+	remote_push_allowed_default = TRUE;
+#endif
 	cfg->push_notification_allowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", push_allowed_default) : push_allowed_default;
+	cfg->remote_push_notification_allowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remote_push_allowed_default) : remote_push_allowed_default;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
 	if (nat_policy_ref) {
 		LinphoneNatPolicy *policy = linphone_config_create_nat_policy_from_section(lc->config,nat_policy_ref);
@@ -1832,22 +1837,148 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+}
 
-	if (is_allowed) {
-		char *computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(cfg->lc);
+bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg) {
+	return cfg->remote_push_notification_allowed;
+}
+
+void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow) {
+	cfg->remote_push_notification_allowed = allow;
+}
+
+bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg) {
+	LinphonePushNotificationConfig *push_cfg = cfg->lc->push_cfg;
+	const char *prid = linphone_push_notification_config_get_prid(push_cfg);
+	const char *basicToken = linphone_push_notification_config_get_voip_token(push_cfg);
+	const char *remoteToken = linphone_push_notification_config_get_remote_token(push_cfg);
+	bool_t basicPushAllowed = linphone_proxy_config_is_push_notification_allowed(cfg);
+	bool_t remotePushAllowed = linphone_proxy_config_is_remote_push_notification_allowed(cfg);
+	// Proxy configuration can support multiple types of push. Push notification is ready when all supported push's tokens to set
+	if (prid && STRING_IS_NULL(prid))
+		return TRUE;
+	if ((basicPushAllowed && STRING_IS_NULL(basicToken)) || (remotePushAllowed && STRING_IS_NULL(remoteToken)))
+		return FALSE;
+
+	return TRUE;
+}
+
+void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConfig *cfg) {
+	bool_t pushReady = linphone_proxy_config_is_all_push_notification_ready(cfg);
+	// Do not alter contact uri params if push notification not ready
+	if (pushReady) {
+		bool_t basicPushAllowed = linphone_proxy_config_is_push_notification_allowed(cfg);
+		bool_t remotePushAllowed = linphone_proxy_config_is_remote_push_notification_allowed(cfg);
+		char *computedPushParams = linphone_proxy_config_get_computed_push_notification_parameters(cfg);
+		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(cfg);
+
+		// Do not alter contact uri params for proxy config without push notification allowed
+		if (computedPushParams && cfg->lc->push_notification_enabled && (basicPushAllowed || remotePushAllowed)) {
+			if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
+				linphone_proxy_config_edit(cfg);
+				linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
+				linphone_proxy_config_done(cfg);
+				ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, cfg);
+			}
+		} else {
+			if (contactUriParams) {
+				linphone_proxy_config_edit(cfg);
+				linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
+				linphone_proxy_config_done(cfg);
+				ms_message("Push notification information removed from proxy config [%p]", cfg);
+			}
+		}
+
 		if (computedPushParams) {
-			linphone_proxy_config_edit(cfg);
-			linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
-			linphone_proxy_config_done(cfg);
-			ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, cfg);
 			ms_free(computedPushParams);
 		}
-	} else {
-		linphone_proxy_config_edit(cfg);
-		linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
-		linphone_proxy_config_done(cfg);
-		ms_message("Push notification information removed from proxy config [%p]", cfg);
 	}
+}
+
+char *linphone_proxy_config_get_computed_push_notification_parameters(const LinphoneProxyConfig *cfg) {
+	LinphonePushNotificationConfig *push_cfg = cfg->lc->push_cfg;
+	const char *provider = linphone_push_notification_config_get_provider(push_cfg);
+	bool_t use_legacy_params = !!linphone_config_get_int(cfg->lc->config, "net", "use_legacy_push_notification_params", FALSE);
+	if (STRING_IS_NULL(provider)) {
+		// Can this be improved ?
+		bool_t tester_env = !!linphone_config_get_int(cfg->lc->config, "tester", "test_env", FALSE);
+		if (tester_env) provider = "liblinphone_tester";
+		// End of improvement zone
+	#ifdef __ANDROID__
+			if (use_legacy_params)
+				provider = "firebase";
+			else
+				provider = "fcm";
+	#elif TARGET_OS_IPHONE
+			provider = "apns";
+	#endif
+	}
+	if (STRING_IS_NULL(provider)) return NULL;
+
+	bool_t basicPushAllowed = linphone_proxy_config_is_push_notification_allowed(cfg);
+	bool_t remotePushAllowed = linphone_proxy_config_is_remote_push_notification_allowed(cfg);
+	const char *voipToken = linphone_push_notification_config_get_voip_token(push_cfg);
+	const char *remoteToken = linphone_push_notification_config_get_remote_token(push_cfg);
+	const char *param = linphone_push_notification_config_get_param(push_cfg);
+	if (STRING_IS_NULL(param)) {
+		const char *param_format = "%s.%s.%s";
+		const char *team_id = linphone_push_notification_config_get_team_id(push_cfg);
+		const char *bundle_identifer = linphone_push_notification_config_get_bundle_identifier(push_cfg);
+		char services[100];
+		memset(services, 0, sizeof(services));
+		if (basicPushAllowed) {
+			strcat(services, "voip");
+			if (remotePushAllowed) {
+				strcat(services, "&");
+				}
+		}
+		if (remotePushAllowed) {
+			strcat(services, "remote");
+		}
+		char pn_param[50];
+		memset(pn_param, 0, sizeof(pn_param));
+		snprintf(pn_param, sizeof(pn_param), param_format, team_id, bundle_identifer, services);
+		param = pn_param;
+	}
+
+	const char *prid = linphone_push_notification_config_get_prid(push_cfg);
+	if (STRING_IS_NULL(prid)) {
+		char pn_prid[300];
+		memset(pn_prid, 0, sizeof(pn_prid));
+		if (basicPushAllowed) {
+			strcat(pn_prid, voipToken);
+			if (remotePushAllowed) {
+				strcat(pn_prid, "&");
+			}
+		}
+		if (remotePushAllowed) {
+			strcat(pn_prid, remoteToken);
+		}
+		prid = pn_prid;
+	}
+
+	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
+	if (use_legacy_params) {
+		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
+	}
+	char computedPushParams[512];
+	memset(computedPushParams, 0, sizeof(computedPushParams));
+	snprintf(computedPushParams, sizeof(computedPushParams), format, provider, param, prid);
+			
+	if (remotePushAllowed) {
+		const char *remoteFormat = ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s";
+		const char *msg_str = linphone_push_notification_config_get_msg_str(push_cfg);
+		const char *call_str = linphone_push_notification_config_get_call_str(push_cfg);
+		const char *groupchat_str = linphone_push_notification_config_get_group_chat_str(push_cfg);
+		const char *call_snd = linphone_push_notification_config_get_call_snd(push_cfg);
+		const char *msg_snd = linphone_push_notification_config_get_msg_str(push_cfg);
+
+		char remoteSpecificParams[512];
+		memset(remoteSpecificParams, 0, sizeof(remoteSpecificParams));
+		snprintf(remoteSpecificParams, sizeof(remoteSpecificParams), remoteFormat, msg_str, call_str, groupchat_str, call_snd, msg_snd);
+		strcat(computedPushParams, remoteSpecificParams);
+	}
+	return ms_strdup(computedPushParams);
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {

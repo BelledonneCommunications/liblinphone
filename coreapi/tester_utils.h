@@ -271,6 +271,7 @@ LINPHONE_PUBLIC void *sal_get_user_pointer(Sal *sal);
 LINPHONE_PUBLIC void sal_set_call_refer_callback(Sal *sal, void (*OnReferCb)(SalOp *op, const SalAddress *referto));
 
 LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg);
 
 LINPHONE_PUBLIC void linphone_call_start_basic_incoming_notification(LinphoneCall *call);
 LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall *call);
