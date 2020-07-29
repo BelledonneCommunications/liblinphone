@@ -479,7 +479,11 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 		}
 	}else{
-		terminate_local_conference(lcs, marie);
+		if (is_remote_conf){
+			linphone_core_terminate_conference(marie->lc);
+		} else {
+			terminate_local_conference(lcs, marie);
+		}
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,is_remote_conf?3:2,10000));
