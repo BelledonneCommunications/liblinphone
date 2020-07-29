@@ -95,10 +95,12 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 	LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
 	lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
 
-	getCore()->insertAudioVideoConference(getSharedFromThis());
-
 }
 
+void Conference::setConferenceId (const ConferenceId &conferenceId) {
+	LinphonePrivate::Conference::setConferenceId(conferenceId);
+	getCore()->insertAudioVideoConference(getSharedFromThis());
+}
 
 bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	bool success = LinphonePrivate::Conference::addParticipant(participantAddress);
@@ -107,7 +109,6 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 		time_t creationTime = time(nullptr);
 		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(participantAddress);
 		notifyParticipantAdded(creationTime, false, p);
-		setState(ConferenceInterface::State::Created);
 	}
 
 	return 0;
@@ -130,7 +131,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	if (success) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, p);
-		setState(ConferenceInterface::State::Created);
 	}
 	return success;
 }
@@ -518,6 +518,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 		Conference::addParticipant(call);
+		setState(ConferenceInterface::State::Created);
 		if (localEndpointCanBeAdded){
 			/*
 			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
@@ -531,6 +532,12 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	ms_error("Unable to add participant to conference %p because it is in state %s",
 	this, linphone_conference_state_to_string((LinphoneConferenceState)getState()));
 	return false;
+}
+
+bool LocalConference::addParticipant (const IdentityAddress &participantAddress) {
+	bool success = Conference::addParticipant(participantAddress);
+	setState(ConferenceInterface::State::Created);
+	return success;
 }
 
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
@@ -846,7 +853,7 @@ void RemoteConference::finalizeCreation() {
 
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 	#endif // HAVE_ADVANCED_IM
-
+		setState(ConferenceInterface::State::Created);
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
 	}
@@ -878,7 +885,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
 			setState(ConferenceInterface::State::CreationPending);
-			//Adding a participant moves the conference to state Created, hence it done after the fcus call has been established
 			Conference::addParticipant(call);
 			return true;
 		case ConferenceInterface::State::CreationPending:
