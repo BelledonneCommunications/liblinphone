@@ -50,3 +50,6 @@ echocancellation=0 #to not overload cpu in case of VG
 mime=H264
 rate=90000
 enabled=1
+
+[tester]
+test_env=1

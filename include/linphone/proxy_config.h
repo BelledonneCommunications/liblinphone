@@ -22,6 +22,7 @@
 
 #include "linphone/types.h"
 #include "linphone/sipsetup.h"
+#include "linphone/api/c-push-notification-config.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -613,18 +614,39 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_conference_factory_uri(LinphonePr
 LINPHONE_PUBLIC const char * linphone_proxy_config_get_conference_factory_uri(const LinphoneProxyConfig *proxy_config);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP pus notification.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param allow TRUE to allow push notification information, FALSE otherwise.
  */
 LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *proxy_config, bool_t allow);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates to VOIP pus notification.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return TRUE if push notification informations should be added, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyConfig *proxy_config);
+
+/**
+* Indicates whether to add to the contact parameters the remote push notification information (IOS only). Default value is FALSE.
+* @param proxy_config #LinphoneProxyConfig object. @notnil
+* @return TRUE if remote push notification informations should be added, FALSE otherwise.
+*/
+LINPHONE_PUBLIC bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg);
+
+/**
+* Indicates whether to add to the contact parameters the  remote push notification information (IOS only).
+* @param proxy_config #LinphoneProxyConfig object. @notnil
+* @param allow TRUE to allow remote push notification information, FALSE otherwise.
+*/
+LINPHONE_PUBLIC void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow);
+
+/**
+* Gets whether push notifications are available or not (Android & iOS only).
+* @param proxy_config #LinphoneProxyConfig object. @notnil
+* @return TRUE if push notifications are available, FALSE otherwise
+*/
+LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg);
 
 /**
  * Return the unread chat message count for a given proxy config.
@@ -632,6 +654,20 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const 
  * @return The unread chat message count.
  */
 LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *proxy_config);
+
+/**
+ * Sets the push notification configuration.
+ * @param cfg #LinphoneProxyConfig object. @notnil
+ * @param push_cfg #LinphonePushNotificationConfig to set. @notnil
+ */
+LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg, LinphonePushNotificationConfig *push_cfg);
+
+/**
+ * Retrieves the push notification configuration.
+ * @param cfg #LinphoneProxyConfig object. @notnil
+ * @return The #LinphonePushNotificationConfig. @notnil
+ */
+LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg);
 
 /************ */
 /* DEPRECATED */

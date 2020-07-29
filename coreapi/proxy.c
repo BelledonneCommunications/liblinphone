@@ -1133,6 +1133,37 @@ void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cf
 	linphone_account_params_set_push_notification_allowed(cfg->edit, is_allowed);
 }
 
+bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_remote_push_notification_allowed(params);
+}
+
+void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_remote_push_notification_allowed(cfg->edit, allow);
+}
+
+bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_is_push_notification_available(params);
+}
+
+void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg, LinphonePushNotificationConfig *push_cfg) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_push_notification_config(cfg->edit, push_cfg);
+}
+
+LinphonePushNotificationConfig *linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_push_notification_config(params);
+}
+
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {
 	return linphone_account_get_unread_chat_message_count(cfg->account);
 }

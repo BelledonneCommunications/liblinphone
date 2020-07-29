@@ -52,3 +52,6 @@ stun_server=stun.example.org
 
 [tunnel]
 verifyCert=1
+
+[tester]
+test_env=1

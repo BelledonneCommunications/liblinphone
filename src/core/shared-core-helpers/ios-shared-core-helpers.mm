@@ -845,7 +845,9 @@ shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (shared_ptr<LinphonePri
 }
 
 void uninitSharedCore(LinphoneCore *lc) {
-	IosSharedCoreHelpers::uninitSharedCore(lc);
+	if (getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared()) {
+		IosSharedCoreHelpers::uninitSharedCore(lc);
+	}
 }
 
 LINPHONE_END_NAMESPACE
