@@ -439,7 +439,7 @@ printf("%s - call state %s\n - remote address %s\n - remote contact address %s \
 				ms_free(remoteContactAddressStr);
 
 				// Check if the request was sent by the focus
-				if (remoteContactAddress.hasParam("isfocus") && ((getConference() != nullptr) && linphone_conference_check_class(getConference(), LinphoneConferenceClassLocal))) {
+				if (remoteContactAddress.hasParam("isfocus")) {
 					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
 					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
@@ -453,8 +453,6 @@ printf("%s - call state %s\n - remote address %s\n - remote contact address %s \
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						remoteContactAddress.setParam("isfocus");
 					}
-
-
 					removeFromConference(remoteContactAddress);
 				}
 			}
