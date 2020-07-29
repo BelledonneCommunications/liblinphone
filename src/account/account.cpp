@@ -27,6 +27,7 @@
 #include "linphone/core.h"
 #include "private.h"
 #include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
 
 // =============================================================================
 
@@ -139,7 +140,7 @@ LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::share
 	end:
 	if (oldProxy) linphone_address_unref(oldProxy);
 	if (newProxy) linphone_address_unref(newProxy);
-	ms_message("linphoneAccountIsServerConfigChanged : %i", result);
+	lInfo() << "linphoneAccountIsServerConfigChanged : " << result;
 
 	return result;
 }
@@ -169,8 +170,10 @@ std::shared_ptr<const AccountParams> Account::getAccountParams () const {
 }
 
 void Account::applyParamsChanges () {
-	if (mOldParams == nullptr || mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed)
-		onPushNotificationAllowedChanged(mParams->mPushNotificationAllowed);
+	if (mOldParams == nullptr
+		|| mOldParams->mPushNotificationAllowed != mParams->mPushNotificationAllowed
+		|| mOldParams->mRemotePushNotificationAllowed != mParams->mRemotePushNotificationAllowed)
+		onPushNotificationAllowedChanged(false);
 
 	if (mOldParams == nullptr || mOldParams->mInternationalPrefix != mParams->mInternationalPrefix)
 		onInternationalPrefixChanged();
@@ -281,12 +284,13 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 	for (;it;it = it->next) {
 		LinphoneAccount *tmp = reinterpret_cast<LinphoneAccount *>(it->data);
 		auto params = Account::toCpp(tmp)->mParams;
-		ms_message("updateDependentAccount(): %p is registered, checking for [%p] ->dependency=%p", this, tmp, linphone_account_get_dependency(tmp));
+		lInfo() << "updateDependentAccount(): " << this << " is registered, checking for [" << tmp
+			<< "] ->dependency=" << linphone_account_get_dependency(tmp);
 		
 		if (tmp != this->toC() && linphone_account_get_dependency(tmp) == this->toC()) {
 			auto tmpCpp = Account::toCpp(tmp);
 			if (!params->mRegisterEnabled) {
-				ms_message("Dependant account [%p] has registration disabled, so it will not register.", tmp);
+				lInfo() << "Dependant account [" << tmp << "] has registration disabled, so it will not register.";
 				continue;
 			}
 			auto copyParams = params->clone()->toSharedPtr();
@@ -317,13 +321,10 @@ void Account::updateDependentAccount(LinphoneRegistrationState state, const std:
 void Account::setState (LinphoneRegistrationState state, const std::string& message) {
 	if (mState != state || state == LinphoneRegistrationOk) { /*allow multiple notification of LinphoneRegistrationOk for refreshing*/
 		const char *identity = mParams ? mParams->mIdentity.c_str() : "";
-		if (!mParams) ms_warning("AccountParams not set for Account [%p]", this->toC());
-		ms_message("Account [%p] for identity [%s] moving from state [%s] to [%s] on core [%p]"	,
-					this,
-					identity,
-					linphone_registration_state_to_string(mState),
-					linphone_registration_state_to_string(state),
-					mCore);
+		if (!mParams) lWarning() << "AccountParams not set for Account [" << this->toC() << "]";
+		lInfo() << "Account [" << this << "] for identity [" << identity << "] moving from state ["
+			<< linphone_registration_state_to_string(mState) << "] to ["
+			<< linphone_registration_state_to_string(state) << "] on core [" << mCore << "]";
 
 		if (state == LinphoneRegistrationOk) {
 			const SalAddress *salAddr = mOp->getContactAddress();
@@ -331,7 +332,7 @@ void Account::setState (LinphoneRegistrationState state, const std::string& mess
 		}
 
 		if (linphone_core_should_subscribe_friends_only_when_registered(mCore) && mState != state && state == LinphoneRegistrationOk) {
-			ms_message("Updating friends for identity [%s] on core [%p]", identity, mCore);
+			lInfo() << "Updating friends for identity [" << identity << "] on core [" << mCore << "]";
 			/* state must be updated before calling linphone_core_update_friends_subscriptions*/
 			mState = state;
 			linphone_core_update_friends_subscriptions(mCore);
@@ -370,7 +371,7 @@ void Account::setPresencePublishEvent (LinphoneEvent *presencePublishEvent) {
 
 void Account::setDependency (std::shared_ptr<Account> dependency) {
 	if (!mParams) {
-		ms_warning("setDependency is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "setDependency is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return;
 	}
 
@@ -497,7 +498,7 @@ void Account::registerAccount () {
 		LinphoneAddress* proxy = linphone_address_new(mParams->mProxy.c_str());
 		char *proxy_string;
 		char *from = linphone_address_as_string(mParams->mIdentityAddress);
-		ms_message("LinphoneAccount [%p] about to register (LinphoneCore version: %s)", this, linphone_core_get_version());
+		lInfo() << "LinphoneAccount [" << this << "] about to register (LinphoneCore version: " << linphone_core_get_version() << ")";
 		proxy_string=linphone_address_as_string_uri_only(proxy);
 		linphone_address_unref(proxy);
 		if (mOp)
@@ -543,7 +544,7 @@ void Account::registerAccount () {
 
 void Account::refreshRegister () {
 	if (!mParams) {
-		ms_warning("refreshRegister is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "refreshRegister is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return;
 	}
 
@@ -665,7 +666,7 @@ LinphoneTransportType Account::getTransport () {
 	} else if (mParams && !mParams->getServerAddressAsString().empty()) {
 		addr = mParams->getServerAddressAsString();
 	} else {
-		ms_error("Cannot guess transport for account with identity [%p]", this->toC());
+		lError() << "Cannot guess transport for account with identity [" << this->toC() << "]";
 		return ret;
 	}
 
@@ -685,7 +686,7 @@ LinphoneTransportType Account::getTransport () {
 
 bool Account::isAvpfEnabled () const {
 	if (!mParams) {
-		ms_warning("isAvpfEnabled is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "isAvpfEnabled is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return false;
 	}
 
@@ -698,7 +699,7 @@ bool Account::isAvpfEnabled () const {
 
 const LinphoneAuthInfo* Account::findAuthInfo () const {
 	if (!mParams) {
-		ms_warning("findAuthInfo is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "findAuthInfo is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return nullptr;
 	}
 
@@ -709,7 +710,7 @@ const LinphoneAuthInfo* Account::findAuthInfo () const {
 
 int Account::getUnreadChatMessageCount () const {
 	if (!mParams) {
-		ms_warning("getUnreadMessageCount is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "getUnreadMessageCount is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return -1;
 	}
 
@@ -720,7 +721,7 @@ int Account::getUnreadChatMessageCount () const {
 
 void Account::writeToConfigFile (int index) {
 	if (!mParams) {
-		ms_warning("writeToConfigFile is called but no AccountParams is set on Account [%p]", this->toC());
+		lWarning() << "writeToConfigFile is called but no AccountParams is set on Account [" << this->toC() << "]";
 		return;
 	}
 
@@ -771,14 +772,14 @@ int Account::done () {
 	}
 
 	if (computePublishParamsHash()) {
-		ms_message("Publish params have changed on account [%p]", this->toC());
+		lInfo() << "Publish params have changed on account [" << this->toC() << "]";
 		if (mPresencePublishEvent) {
 			/*publish is terminated*/
 			linphone_event_terminate(mPresencePublishEvent);
 		}
 		if (mParams->mPublishEnabled) mSendPublish = true;
 	} else {
-		ms_message("Publish params have not changed on account [%p]", this->toC());
+		lInfo() << "Publish params have not changed on account [" << this->toC() << "]";
 	}
 
 	if (mCore) {
@@ -801,12 +802,109 @@ void Account::update () {
 	}
 }
 
+string Account::getComputedPushNotificationParameters () {
+	if (!mCore
+		|| !mCore->push_notification_enabled
+		|| !mParams->isPushNotificationAvailable()
+	) {
+		return string("");
+	}
+
+	string provider = L_C_TO_STRING(linphone_push_notification_config_get_provider(mParams->mPushNotificationConfig));
+	bool_t use_legacy_params = !!linphone_config_get_int(mCore->config, "net", "use_legacy_push_notification_params", FALSE);
+	if (provider.empty()) {
+		// Can this be improved ?
+		bool tester_env = !!linphone_config_get_int(mCore->config, "tester", "test_env", FALSE);
+		if (tester_env) provider = "liblinphone_tester";
+		// End of improvement zone
+	#ifdef __ANDROID__
+			if (use_legacy_params)
+				provider = "firebase";
+			else
+				provider = "fcm";
+	#elif TARGET_OS_IPHONE
+			provider = tester_env ? "apns.dev" : "apns";
+	#endif
+	}
+	if (provider.empty()) return NULL;
+
+	bool basicPushAllowed = mParams->mPushNotificationAllowed;
+	bool remotePushAllowed = mParams->mRemotePushNotificationAllowed;
+	string voipToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mParams->mPushNotificationConfig));
+	string remoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mParams->mPushNotificationConfig));
+	string param = L_C_TO_STRING(linphone_push_notification_config_get_param(mParams->mPushNotificationConfig));
+	if (param.empty()) {
+		string param_format = "%s.%s.%s";
+		string team_id = linphone_push_notification_config_get_team_id(mParams->mPushNotificationConfig);
+		string bundle_identifer = linphone_push_notification_config_get_bundle_identifier(mParams->mPushNotificationConfig);
+		char services[100];
+		memset(services, 0, sizeof(services));
+		if (basicPushAllowed) {
+			strcat(services, "voip");
+			if (remotePushAllowed) {
+				strcat(services, "&");
+			}
+		}
+		if (remotePushAllowed) {
+			strcat(services, "remote");
+		}
+		char pn_param[200];
+		memset(pn_param, 0, sizeof(pn_param));
+		snprintf(pn_param, sizeof(pn_param), param_format.c_str(), team_id.c_str(), bundle_identifer.c_str(), services);
+		param = pn_param;
+	}
+
+	string prid = L_C_TO_STRING(linphone_push_notification_config_get_prid(mParams->mPushNotificationConfig));
+	if (prid.empty()) {
+		char pn_prid[300];
+		memset(pn_prid, 0, sizeof(pn_prid));
+		if (basicPushAllowed) {
+			strcat(pn_prid, voipToken.c_str());
+			if (remotePushAllowed && !remoteToken.empty()) {
+				strcat(pn_prid, "&");
+			}
+		}
+		if (remotePushAllowed) {
+			strcat(pn_prid, remoteToken.c_str());
+		}
+		prid = pn_prid;
+	}
+
+	string format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
+	if (use_legacy_params) {
+		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
+	}
+	char computedPushParams[512];
+	memset(computedPushParams, 0, sizeof(computedPushParams));
+	snprintf(computedPushParams, sizeof(computedPushParams), format.c_str(), provider.c_str(), param.c_str(), prid.c_str());
+
+	if (remotePushAllowed) {
+		string remoteFormat = ";pn-msg-str=%s;pn-call-str=%s;pn-groupchat-str=%s;pn-call-snd=%s;pn-msg-snd=%s";
+		string msg_str = L_C_TO_STRING(linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig));
+		string call_str = L_C_TO_STRING(linphone_push_notification_config_get_call_str(mParams->mPushNotificationConfig));
+		string groupchat_str = L_C_TO_STRING(linphone_push_notification_config_get_group_chat_str(mParams->mPushNotificationConfig));
+		string call_snd = L_C_TO_STRING(linphone_push_notification_config_get_call_snd(mParams->mPushNotificationConfig));
+		string msg_snd = L_C_TO_STRING(linphone_push_notification_config_get_msg_str(mParams->mPushNotificationConfig));
+
+		char remoteSpecificParams[512];
+		memset(remoteSpecificParams, 0, sizeof(remoteSpecificParams));
+		snprintf(remoteSpecificParams, sizeof(remoteSpecificParams), remoteFormat.c_str(), msg_str.c_str(), call_str.c_str(), groupchat_str.c_str(), call_snd.c_str(), msg_snd.c_str());
+		strcat(computedPushParams, remoteSpecificParams);
+	}
+
+	return string(computedPushParams);
+}
+
+void Account::updatePushNotificationParameters () {
+	onPushNotificationAllowedChanged(true);
+}
+
 void Account::apply (LinphoneCore *lc) {
 	mOldParams = nullptr; // remove old params to make sure we will register since we only call apply when adding accounts to core
 	mCore = lc;
 
 	if (mDependency != nullptr) {
-		//disable register if master cfg is not yet registered
+		//disable register if master account is not yet registered
 		if (mDependency->mState != LinphoneRegistrationOk) {
 			if (mParams->mRegisterEnabled != FALSE) {
 				mRegisterChanged = TRUE;
@@ -821,7 +919,7 @@ void Account::apply (LinphoneCore *lc) {
 
 LinphoneEvent *Account::createPublish (const char *event, int expires) {
 	if (!mCore){
-		ms_error("Cannot create publish from account [%p] not attached to any core", this->toC());
+		lError() << "Cannot create publish from account [" << this->toC() << "] not attached to any core";
 		return nullptr;
 	}
 	return _linphone_core_create_publish(mCore, this->toC(), NULL, event, expires);
@@ -841,12 +939,12 @@ int Account::sendPublish (LinphonePresenceModel *presence) {
 		mPresencePublishEvent->internal = TRUE;
 
 		if (linphone_presence_model_get_presentity(presence) == NULL) {
-			ms_message("No presentity set for model [%p], using identity from account [%p]", presence, this->toC());
+			lInfo() << "No presentity set for model [" << presence << "], using identity from account [" << this->toC() << "]";
 			linphone_presence_model_set_presentity(presence, mParams->getIdentityAddress());
 		}
 
 		if (!linphone_address_equal(linphone_presence_model_get_presentity(presence), mParams->getIdentityAddress())) {
-			ms_message("Presentity for model [%p] differ account [%p], using account", presence, this->toC());
+			lInfo() << "Presentity for model [" << presence << "] differ account [" << this->toC() << "], using account";
 			presentity_address = linphone_address_clone(linphone_presence_model_get_presentity(presence)); /*saved, just in case*/
 			if (linphone_presence_model_get_contact(presence)) {
 				contact = bctbx_strdup(linphone_presence_model_get_contact(presence));
@@ -856,7 +954,7 @@ int Account::sendPublish (LinphonePresenceModel *presence) {
 
 		}
 		if (!(presence_body = linphone_presence_model_to_xml(presence))) {
-			ms_error("Cannot publish presence model [%p] for account [%p] because of xml serialization error", presence, this->toC());
+			lError() << "Cannot publish presence model [" << presence << "] for account [" << this->toC() << "] because of xml serialization error";
 			return -1;
 		}
 
@@ -922,24 +1020,23 @@ void Account::resolveDependencies () {
 		if (dependency != NULL && !dependsOn.empty()) {
 			LinphoneAccount *master_account = linphone_core_get_account_by_idkey(mCore, dependsOn.c_str());
 			if (master_account != NULL && master_account != dependency) {
-				ms_error("LinphoneAccount has a dependency but idkeys do not match: [%s] != [%s], breaking dependency now."
-				, dependsOn.c_str()
-				, linphone_account_params_get_idkey(linphone_account_get_params(dependency)));
+				lError() << "LinphoneAccount has a dependency but idkeys do not match: [" << dependsOn << "] != ["
+					<< linphone_account_params_get_idkey(linphone_account_get_params(dependency)) << "], breaking dependency now.";
 				linphone_account_unref(dependency);
 				linphone_account_set_dependency(account, NULL);
 				return;
 			}else if (master_account == NULL){
-				ms_warning("LinphoneAccount [%p] depends on account [%p], which is not currently in the list.", account, dependency);
+				lWarning() << "LinphoneAccount [" << account << "] depends on account [" << dependency << "], which is not currently in the list.";
 			}
 		}
 		if (!dependsOn.empty() && dependency == NULL) {
 			LinphoneAccount *dependency_acc = linphone_core_get_account_by_idkey(mCore, dependsOn.c_str());
 
 			if (dependency_acc == NULL) {
-				ms_warning("LinphoneAccount marked as dependent but no account found for idkey [%s]", dependsOn.c_str());
+				lWarning() << "LinphoneAccount marked as dependent but no account found for idkey [" << dependsOn << "]";
 				return;
 			} else {
-				ms_message("LinphoneAccount [%p] now depends on master LinphoneAccount [%p]", account, dependency_acc);
+				lInfo() << "LinphoneAccount [" << account << "] now depends on master LinphoneAccount [" << dependency_acc << "]";
 				linphone_account_set_dependency(account, dependency_acc);
 			}
 		}
@@ -970,25 +1067,35 @@ const bctbx_list_t* Account::getCallbacksList () const {
 
 // -----------------------------------------------------------------------------
 
-void Account::onPushNotificationAllowedChanged (bool allow) {
-	if (allow) {
-		if (mCore) {
-			char *computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(mCore);
-			if (computedPushParams) {
-				mParams->setContactUriParameters(computedPushParams);
-				// linphone_proxy_config_edit(cfg);
-				// linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
-				// linphone_proxy_config_done(cfg);
-				ms_message("Push notification information [%s] added to account [%p]", computedPushParams, this->toC());
-				ms_free(computedPushParams);
+void Account::onPushNotificationAllowedChanged (bool callDone) {
+	string computedPushParams = getComputedPushNotificationParameters();
+	string contactUriParams = mParams->mContactUriParameters;
+
+	// Do not alter contact uri params for account without push notification allowed
+	if (!computedPushParams.empty() && mCore && mCore->push_notification_enabled && (mParams->mPushNotificationAllowed || mParams->mRemotePushNotificationAllowed)) {
+		if (contactUriParams.empty() || contactUriParams != computedPushParams) {
+			mParams->setContactUriParameters(computedPushParams);
+
+			// If callDone is false then this is called from setAccountParams and there is no need to call done()
+			if (callDone) {
+				mNeedToRegister = true;
+				done();
 			}
+
+			lInfo() << "Push notification information [" << computedPushParams << "] added to account [" << this->toC() << "]";
 		}
 	} else {
-		mParams->setContactUriParameters("");
-		// linphone_proxy_config_edit(cfg);
-		// linphone_proxy_config_set_contact_uri_parameters(cfg, NULL);
-		// linphone_proxy_config_done(cfg);
-		ms_message("Push notification information removed from account [%p]", this->toC());
+		if (!contactUriParams.empty()) {
+			mParams->setContactUriParameters("");
+
+			// If callDone is false then this is called from setAccountParams and there is no need to call done()
+			if (callDone) {
+				mNeedToRegister = true;
+				done();
+			}
+
+			lInfo() << "Push notification information removed from account [" << this->toC() << "]";
+		}
 	}
 }
 

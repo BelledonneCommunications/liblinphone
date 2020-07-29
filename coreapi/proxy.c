@@ -74,7 +74,7 @@ LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(c
 			return LinphoneProxyConfigAddressDifferent;
 	}
 	return LinphoneProxyConfigAddressDifferent; /*either username, domain or port ar not equals*/
-} // FIXME: remove me when no longer needed
+}
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* cfg) {
 	return (LinphoneProxyConfigAddressComparisonResult) Account::toCpp(cfg->account)->isServerConfigChanged();
@@ -324,169 +324,105 @@ bool_t linphone_proxy_config_normalize_number(LinphoneProxyConfig *proxy, const 
 	return output != username;
 } // TODO: not used but blacklisted in wrapper
 
-static char *linphone_account_flatten_phone_number(const char *number) {
-	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number);
-	char *result = reinterpret_cast<char *>(ms_malloc0(strlen(unescaped_phone_number) + 1));
-	char *w = result;
-	const char *r;
+// static char *linphone_account_flatten_phone_number(const char *number) {
+// 	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number);
+// 	char *result = reinterpret_cast<char *>(ms_malloc0(strlen(unescaped_phone_number) + 1));
+// 	char *w = result;
+// 	const char *r;
 
-	for (r = unescaped_phone_number; *r != '\0'; ++r) {
-		if (*r == '+' || isdigit(*r)) {
-			*w++ = *r;
-		}
-	}
+// 	for (r = unescaped_phone_number; *r != '\0'; ++r) {
+// 		if (*r == '+' || isdigit(*r)) {
+// 			*w++ = *r;
+// 		}
+// 	}
 	
-	*w++ = '\0';
-	belle_sip_free(unescaped_phone_number);
-	return result;
-}
+// 	*w++ = '\0';
+// 	belle_sip_free(unescaped_phone_number);
+// 	return result;
+// }
 
-static char* replace_icp_with_plus(char *phone, const char *icp){
-	return (strstr(phone, icp) == phone) ?  ms_strdup_printf("+%s", phone+strlen(icp)) : ms_strdup(phone);
-}
+// static char* replace_icp_with_plus(char *phone, const char *icp){
+// 	return (strstr(phone, icp) == phone) ?  ms_strdup_printf("+%s", phone+strlen(icp)) : ms_strdup(phone);
+// }
 
 char* linphone_proxy_config_normalize_phone_number(LinphoneProxyConfig *proxy, const char *username) {
-	//return linphone_account_normalize_phone_number(proxy ? proxy->account : NULL, username);
-	LinphoneProxyConfig *tmpproxy = proxy ? proxy : linphone_core_create_proxy_config(NULL);
-	char* result = NULL;
-	std::shared_ptr<DialPlan> dialplan;
-	char * nationnal_significant_number = NULL;
-	int ccc = -1;
+	return linphone_account_normalize_phone_number(proxy ? proxy->account : NULL, username);
+	// LinphoneProxyConfig *tmpproxy = proxy ? proxy : linphone_core_create_proxy_config(NULL);
+	// char* result = NULL;
+	// std::shared_ptr<DialPlan> dialplan;
+	// char * nationnal_significant_number = NULL;
+	// int ccc = -1;
 
-	if (linphone_account_is_phone_number(NULL, username)){
-		char * flatten = linphone_account_flatten_phone_number(username);
-		ms_debug("Flattened number is '%s' for '%s'",flatten, username);
+	// if (linphone_account_is_phone_number(NULL, username)){
+	// 	char * flatten = linphone_account_flatten_phone_number(username);
+	// 	ms_debug("Flattened number is '%s' for '%s'",flatten, username);
 
-		ccc = DialPlan::lookupCccFromE164(flatten);
-		if (ccc>-1) { /*e164 like phone number*/
-			dialplan = DialPlan::findByCcc(ccc);
-			nationnal_significant_number = strstr(flatten, dialplan->getCountryCallingCode().c_str());
-			if (nationnal_significant_number) {
-				nationnal_significant_number +=strlen(dialplan->getCountryCallingCode().c_str());
-			}
-		} else if (flatten[0] =='+') {
-			ms_message ("Unknown ccc for e164 like number [%s]", flatten);
-			goto end;
-		} else {
-			if (linphone_proxy_config_get_dial_prefix(tmpproxy)) {
-				dialplan = DialPlan::findByCcc(linphone_proxy_config_get_dial_prefix(tmpproxy)); //copy dial plan;
-			} else {
-				dialplan = DialPlan::MostCommon;
-			}
-			if (linphone_proxy_config_get_dial_prefix(tmpproxy)){
-				if (strcmp(linphone_proxy_config_get_dial_prefix(tmpproxy),dialplan->getCountryCallingCode().c_str()) != 0){
-					//probably generic dialplan, preserving proxy dial prefix
-					dialplan->setCountryCallingCode(linphone_proxy_config_get_dial_prefix(tmpproxy));
-				}
+	// 	ccc = DialPlan::lookupCccFromE164(flatten);
+	// 	if (ccc>-1) { /*e164 like phone number*/
+	// 		dialplan = DialPlan::findByCcc(ccc);
+	// 		nationnal_significant_number = strstr(flatten, dialplan->getCountryCallingCode().c_str());
+	// 		if (nationnal_significant_number) {
+	// 			nationnal_significant_number +=strlen(dialplan->getCountryCallingCode().c_str());
+	// 		}
+	// 	} else if (flatten[0] =='+') {
+	// 		ms_message ("Unknown ccc for e164 like number [%s]", flatten);
+	// 		goto end;
+	// 	} else {
+	// 		if (linphone_proxy_config_get_dial_prefix(tmpproxy)) {
+	// 			dialplan = DialPlan::findByCcc(linphone_proxy_config_get_dial_prefix(tmpproxy)); //copy dial plan;
+	// 		} else {
+	// 			dialplan = DialPlan::MostCommon;
+	// 		}
+	// 		if (linphone_proxy_config_get_dial_prefix(tmpproxy)){
+	// 			if (strcmp(linphone_proxy_config_get_dial_prefix(tmpproxy),dialplan->getCountryCallingCode().c_str()) != 0){
+	// 				//probably generic dialplan, preserving proxy dial prefix
+	// 				dialplan->setCountryCallingCode(linphone_proxy_config_get_dial_prefix(tmpproxy));
+	// 			}
 
-				/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E tmpproxy->dial_prefix==NULL)*/
-				if (strstr(flatten, dialplan->getInternationalCallPrefix().c_str()) == flatten) {
-					char *e164 = replace_icp_with_plus(flatten, dialplan->getInternationalCallPrefix().c_str());
-					result = linphone_proxy_config_normalize_phone_number(tmpproxy, e164);
-					ms_free(e164);
-					goto end;
-				}
-			}
-			nationnal_significant_number=flatten;
-		}
-		ms_debug("Using dial plan '%s'",dialplan->getCountry().c_str());
+	// 			/*it does not make sens to try replace icp with + if we are not sure from the country we are (I.E tmpproxy->dial_prefix==NULL)*/
+	// 			if (strstr(flatten, dialplan->getInternationalCallPrefix().c_str()) == flatten) {
+	// 				char *e164 = replace_icp_with_plus(flatten, dialplan->getInternationalCallPrefix().c_str());
+	// 				result = linphone_proxy_config_normalize_phone_number(tmpproxy, e164);
+	// 				ms_free(e164);
+	// 				goto end;
+	// 			}
+	// 		}
+	// 		nationnal_significant_number=flatten;
+	// 	}
+	// 	ms_debug("Using dial plan '%s'",dialplan->getCountry().c_str());
 
-		/*if proxy has a dial prefix, modify phonenumber accordingly*/
-		if (dialplan->getCountryCallingCode().c_str()[0]!='\0') {
-			/* the number already starts with + or international prefix*/
-			/*0. keep at most national number significant digits */
-			char* nationnal_significant_number_start = nationnal_significant_number
-														+ MAX(0, (int)strlen(nationnal_significant_number)
-														- (int)dialplan->getNationalNumberLength());
-			ms_debug("Prefix not present. Keeping at most %d digits: %s", dialplan->getNationalNumberLength(), nationnal_significant_number_start);
+	// 	/*if proxy has a dial prefix, modify phonenumber accordingly*/
+	// 	if (dialplan->getCountryCallingCode().c_str()[0]!='\0') {
+	// 		/* the number already starts with + or international prefix*/
+	// 		/*0. keep at most national number significant digits */
+	// 		char* nationnal_significant_number_start = nationnal_significant_number
+	// 													+ MAX(0, (int)strlen(nationnal_significant_number)
+	// 													- (int)dialplan->getNationalNumberLength());
+	// 		ms_debug("Prefix not present. Keeping at most %d digits: %s", dialplan->getNationalNumberLength(), nationnal_significant_number_start);
 
-			/*1. First prepend international calling prefix or +*/
-			/*2. Second add prefix*/
-			/*3. Finally add user digits */
-			result = ms_strdup_printf("%s%s%s"
-										, linphone_proxy_config_get_dial_escape_plus(tmpproxy) ? dialplan->getInternationalCallPrefix().c_str() : "+"
-										, dialplan->getCountryCallingCode().c_str()
-										, nationnal_significant_number_start);
-			ms_debug("Prepended prefix resulted in %s", result);
-		}
+	// 		/*1. First prepend international calling prefix or +*/
+	// 		/*2. Second add prefix*/
+	// 		/*3. Finally add user digits */
+	// 		result = ms_strdup_printf("%s%s%s"
+	// 									, linphone_proxy_config_get_dial_escape_plus(tmpproxy) ? dialplan->getInternationalCallPrefix().c_str() : "+"
+	// 									, dialplan->getCountryCallingCode().c_str()
+	// 									, nationnal_significant_number_start);
+	// 		ms_debug("Prepended prefix resulted in %s", result);
+	// 	}
 
-	end:
-		if (result==NULL) {
-			result = flatten;
-		} else {
-			ms_free(flatten);
-		}
-	}
-	if (proxy==NULL) linphone_proxy_config_unref(tmpproxy);
-	return result;
-}
-
-static LinphoneAddress* _destroy_addr_if_not_sip(LinphoneAddress* addr) {
-	if (linphone_address_is_sip(addr)) {
-		return addr;
-	} else {
-		linphone_address_unref(addr);
-		return NULL;
-	}
+	// end:
+	// 	if (result==NULL) {
+	// 		result = flatten;
+	// 	} else {
+	// 		ms_free(flatten);
+	// 	}
+	// }
+	// if (proxy==NULL) linphone_proxy_config_unref(tmpproxy);
+	// return result;
 }
 
 LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *proxy, const char *username) {
-	//return linphone_account_normalize_sip_uri(proxy ? proxy->account : NULL, username);
-	enum_lookup_res_t *enumres=NULL;
-	char *enum_domain=NULL;
-	char *tmpurl;
-	LinphoneAddress *uri;
-
-	if (!username || *username=='\0') return NULL;
-
-	if (is_enum(username,&enum_domain)){
-		if (enum_lookup(enum_domain,&enumres)<0){
-			ms_free(enum_domain);
-			return NULL;
-		}
-		ms_free(enum_domain);
-		tmpurl=enumres->sip_address[0];
-		uri=linphone_address_new(tmpurl);
-		enum_lookup_res_free(enumres);
-		return _destroy_addr_if_not_sip(uri);
-	}
-	/* check if we have a "sip:" or a "sips:" */
-	if ( (strstr(username,"sip:")==NULL) && (strstr(username,"sips:")==NULL) ){
-		/* this doesn't look like a true sip uri */
-		if (strchr(username,'@')!=NULL){
-			/* seems like sip: is missing !*/
-			tmpurl=ms_strdup_printf("sip:%s",username);
-			uri=linphone_address_new(tmpurl);
-			ms_free(tmpurl);
-			if (uri){
-				return _destroy_addr_if_not_sip(uri);
-			}
-		}
-
-		if (proxy!=NULL && linphone_proxy_config_get_identity_address(proxy)!=NULL){
-			/* append the proxy domain suffix but remove any custom parameters/headers */
-			LinphoneAddress *uri=linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
-			if (uri==NULL){
-				return NULL;
-			} else {
-				linphone_address_clean(uri);
-				linphone_address_set_display_name(uri,NULL);
-				// Unescape character if possible
-				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
-				linphone_address_set_username(uri,unescaped_username);
-				belle_sip_free(unescaped_username);
-				return _destroy_addr_if_not_sip(uri);
-			}
-		} else {
-			return NULL;
-		}
-	}
-	uri=linphone_address_new(username);
-	if (uri!=NULL){
-		return _destroy_addr_if_not_sip(uri);
-	}
-
-	return NULL;
+	return linphone_account_normalize_sip_uri(proxy ? proxy->account : NULL, username);
 }
 
 void linphone_proxy_config_set_etag(LinphoneProxyConfig *cfg,const char* sip_etag) {
@@ -808,7 +744,7 @@ LinphoneStatus linphone_core_add_account(LinphoneCore *lc, LinphoneAccount *acco
 	return 0;
 }
 
-void linphone_core_clear_account(LinphoneCore *core) {
+void linphone_core_clear_accounts(LinphoneCore *core) {
 	bctbx_list_t* list=bctbx_list_copy(linphone_core_get_account_list((const LinphoneCore*)core));
 	bctbx_list_t* copy=list;
 	for(;list!=NULL;list=list->next){
@@ -1131,6 +1067,37 @@ void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cf
 	}
 
 	linphone_account_params_set_push_notification_allowed(cfg->edit, is_allowed);
+}
+
+bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_remote_push_notification_allowed(params);
+}
+
+void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_remote_push_notification_allowed(cfg->edit, allow);
+}
+
+bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_is_push_notification_available(params);
+}
+
+void linphone_proxy_config_set_push_notification_config(LinphoneProxyConfig *cfg, LinphonePushNotificationConfig *push_cfg) {
+	if (!cfg->edit) {
+		linphone_proxy_config_edit(cfg);
+	}
+
+	linphone_account_params_set_push_notification_config(cfg->edit, push_cfg);
+}
+
+LinphonePushNotificationConfig *linphone_proxy_config_get_push_notification_config(const LinphoneProxyConfig *cfg) {
+	const LinphoneAccountParams *params = cfg->edit ? cfg->edit : linphone_account_get_params(cfg->account);
+	return linphone_account_params_get_push_notification_config(params);
 }
 
 int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *cfg) {

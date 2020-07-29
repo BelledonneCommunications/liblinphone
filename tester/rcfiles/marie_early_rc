@@ -47,3 +47,5 @@ device=StaticImage: Static picture
 [net]
 stun_server=stun.example.org
 
+[tester]
+test_env=1
