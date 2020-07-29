@@ -280,6 +280,26 @@ bool_t linphone_account_params_get_push_notification_allowed(const LinphoneAccou
 	return AccountParams::toCpp(params)->getPushNotificationAllowed();
 }
 
+void linphone_account_params_set_remote_push_notification_allowed(LinphoneAccountParams *params, bool_t allow) {
+	AccountParams::toCpp(params)->setRemotePushNotificationAllowed(allow);
+}
+
+bool_t linphone_account_params_get_remote_push_notification_allowed(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getRemotePushNotificationAllowed();
+}
+
+bool_t linphone_account_params_is_push_notification_available(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->isPushNotificationAvailable();
+}
+
+void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params, LinphonePushNotificationConfig *config) {
+	AccountParams::toCpp(params)->setPushNotificationConfig(config);
+}
+
+LinphonePushNotificationConfig *linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params) {
+	return AccountParams::toCpp(params)->getPushNotificationConfig();
+}
+
 void linphone_account_params_set_outbound_proxy_enabled(LinphoneAccountParams *params, bool_t enable) {
 	AccountParams::toCpp(params)->setOutboundProxyEnabled(enable);
 }

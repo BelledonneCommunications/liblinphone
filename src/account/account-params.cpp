@@ -20,6 +20,7 @@
  */
 
 #include "account-params.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "linphone/api/c-address.h"
 #include "linphone/nat_policy.h"
 #include "linphone/types.h"
@@ -63,10 +64,12 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	mPublishEnabled = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", false) : false;
 
 	bool pushAllowedDefault = false;
-#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+	bool remotePushAllowedDefault = false;
+#if defined(__ANDROID__) || TARGET_OS_IPHONE
 	pushAllowedDefault = true;
 #endif
 	mPushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", pushAllowedDefault) : pushAllowedDefault;
+	mRemotePushNotificationAllowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remotePushAllowedDefault) : remotePushAllowedDefault;
 	mRefKey = lc ? linphone_config_get_default_string(lc->config, "proxy", "refkey", "") : "";
 	string natPolicyRef = lc ? linphone_config_get_default_string(lc->config, "proxy", "nat_policy_ref", "") : "";
 	if (!natPolicyRef.empty()) {
@@ -75,7 +78,7 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 		if (policy) {
 			linphone_nat_policy_unref(policy);
 		} else {
-			ms_error("Cannot create default nat policy with ref [%s] for account [%p]", natPolicyRef.c_str(), this);
+			lError() << "Cannot create default nat policy with ref [" << natPolicyRef << "] for account [" << this << "]";
 		}
 	}
 	mDependsOn = lc ? linphone_config_get_default_string(lc->config, "proxy", "depends_on", "") : "";
@@ -87,6 +90,8 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	}
 	string conferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
 	setConferenceFactoryUri(conferenceFactoryUri);
+
+	mPushNotificationConfig = linphone_push_notification_config_new();
 }
 
 AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
@@ -121,6 +126,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mRegisterEnabled = !!linphone_config_get_int(config, key, "reg_sendregister", mRegisterEnabled);
 	mPublishEnabled = !!linphone_config_get_int(config, key, "publish", mPublishEnabled);
 	setPushNotificationAllowed(!!linphone_config_get_int(config, key, "push_notification_allowed", mPushNotificationAllowed));
+	setRemotePushNotificationAllowed(!!linphone_config_get_int(config, key, "remote_push_notification_allowed", mRemotePushNotificationAllowed));
 	mAvpfMode = static_cast<LinphoneAVPFMode>(linphone_config_get_int(config, key, "avpf", static_cast<int>(mAvpfMode)));
 	mAvpfRrInterval = (uint8_t) linphone_config_get_int(config, key, "avpf_rr_interval", (int) mAvpfRrInterval);
 	mDialEscapePlusEnabled = !!linphone_config_get_int(config, key, "dial_escape_plus", mDialEscapePlusEnabled);
@@ -133,7 +139,7 @@ AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {
 	mIdKey = linphone_config_get_string(config, key, "idkey", mRefKey.c_str());
 	if (mIdKey.empty()) {
 		mIdKey = generate_account_id();
-		ms_warning("generated proxyconfig idkey = [%s]", mIdKey.c_str());
+		lWarning() << "generated proxyconfig idkey = [" << mIdKey << "]";
 	}
 	mDependsOn = linphone_config_get_string(config, key, "depends_on", mDependsOn.c_str());
 
@@ -159,6 +165,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mQualityReportingEnabled = other.mQualityReportingEnabled;
 	mPublishEnabled = other.mPublishEnabled;
 	mPushNotificationAllowed = other.mPushNotificationAllowed;
+	mRemotePushNotificationAllowed = other.mRemotePushNotificationAllowed;
 	mUseInternationalPrefixForCallsAndChats = other.mUseInternationalPrefixForCallsAndChats;
 
 	mUserData = other.mUserData;
@@ -168,7 +175,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mRealm = other.mRealm;
 	mQualityReportingCollector = other.mQualityReportingCollector;
 	mContactParameters = other.mContactParameters;
-	mContactUriParameters = other.mContactParameters;
+	mContactUriParameters = other.mContactUriParameters;
 	mRefKey = other.mRefKey;
 	mDependsOn = other.mDependsOn;
 	mIdKey = other.mIdKey;
@@ -187,6 +194,7 @@ AccountParams::AccountParams (const AccountParams &other) : HybridObject(other) 
 	mAvpfMode = other.mAvpfMode;
 
 	setNatPolicy(other.mNatPolicy);
+	setPushNotificationConfig(other.mPushNotificationConfig);
 }
 
 AccountParams::~AccountParams () {
@@ -195,6 +203,7 @@ AccountParams::~AccountParams () {
 	if (mRoutes) bctbx_list_free_with_data(mRoutes, (bctbx_list_free_func)linphone_address_unref);
 	if (mRoutesString)  bctbx_list_free_with_data(mRoutesString, (bctbx_list_free_func)bctbx_free);
 	if (mNatPolicy) linphone_nat_policy_unref(mNatPolicy);
+	if (mPushNotificationConfig) linphone_push_notification_config_unref(mPushNotificationConfig);
 }
 
 AccountParams* AccountParams::clone () const {
@@ -260,6 +269,10 @@ void AccountParams::setPushNotificationAllowed (bool allow) {
 	mPushNotificationAllowed = allow;
 }
 
+void AccountParams::setRemotePushNotificationAllowed (bool allow) {
+	mRemotePushNotificationAllowed = allow;
+}
+
 void AccountParams::setUseInternationalPrefixForCallsAndChats (bool enable) {
 	mUseInternationalPrefixForCallsAndChats = enable;
 }
@@ -285,7 +298,7 @@ void AccountParams::setQualityReportingCollector (const std::string &qualityRepo
 		LinphoneAddress *addr = linphone_address_new(qualityReportingCollector.c_str());
 
 		if (!addr) {
-			ms_error("Invalid SIP collector URI: %s. Quality reporting will be DISABLED.", qualityReportingCollector.c_str());
+			lError() << "Invalid SIP collector URI: " << qualityReportingCollector << ". Quality reporting will be DISABLED.";
 		} else {
 			mQualityReportingCollector = qualityReportingCollector;
 		}
@@ -392,7 +405,7 @@ void AccountParams::setPrivacy (LinphonePrivacyMask privacy) {
 LinphoneStatus AccountParams::setIdentityAddress (const LinphoneAddress* identityAddress) {
 	if (!identityAddress || linphone_address_get_username(identityAddress) == nullptr) {
 		char* as_string = identityAddress ? linphone_address_as_string(identityAddress) : ms_strdup("NULL");
-		ms_warning("Invalid sip identity: %s", as_string);
+		lWarning() << "Invalid sip identity: " << as_string;
 		ms_free(as_string);
 		return -1;
 	}
@@ -419,6 +432,12 @@ void AccountParams::setNatPolicy (LinphoneNatPolicy *natPolicy) {
 	}
 	if (mNatPolicy != nullptr) linphone_nat_policy_unref(mNatPolicy);
 	mNatPolicy = natPolicy;
+}
+
+void AccountParams::setPushNotificationConfig (LinphonePushNotificationConfig *pushNotificationConfig) {
+	if (mPushNotificationConfig != nullptr) linphone_push_notification_config_unref(mPushNotificationConfig);
+
+	mPushNotificationConfig = linphone_push_notification_config_clone(pushNotificationConfig);
 }
 
 // -----------------------------------------------------------------------------
@@ -465,8 +484,26 @@ bool AccountParams::getPushNotificationAllowed () const {
 	return mPushNotificationAllowed;
 }
 
+bool AccountParams::getRemotePushNotificationAllowed () const {
+	return mRemotePushNotificationAllowed;
+}
+
 bool AccountParams::getUseInternationalPrefixForCallsAndChats () const {
 	return mUseInternationalPrefixForCallsAndChats;
+}
+
+bool AccountParams::isPushNotificationAvailable () const {
+	string prid = L_C_TO_STRING(linphone_push_notification_config_get_prid(mPushNotificationConfig));
+	string param = L_C_TO_STRING(linphone_push_notification_config_get_param(mPushNotificationConfig));
+	string basicToken = L_C_TO_STRING(linphone_push_notification_config_get_voip_token(mPushNotificationConfig));
+	string remoteToken = L_C_TO_STRING(linphone_push_notification_config_get_remote_token(mPushNotificationConfig));
+	string bundle = L_C_TO_STRING(linphone_push_notification_config_get_bundle_identifier(mPushNotificationConfig));
+	// Accounts can support multiple types of push. Push notification is ready when all supported push's tokens to set
+
+	bool paramAvailable = !param.empty() || !bundle.empty();
+	bool pridAvailable = !prid.empty() || !((mPushNotificationAllowed && basicToken.empty()) || (mRemotePushNotificationAllowed && remoteToken.empty()));
+	return paramAvailable && pridAvailable;
+
 }
 
 void* AccountParams::getUserData () const {
@@ -549,11 +586,16 @@ LinphoneNatPolicy* AccountParams::getNatPolicy () const {
 	return mNatPolicy;
 }
 
+LinphonePushNotificationConfig *AccountParams::getPushNotificationConfig () const {
+	return mPushNotificationConfig;
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneStatus AccountParams::setServerAddress (const LinphoneAddress *serverAddr) {
 	bool outboundProxyEnabled = getOutboundProxyEnabled();
 
+	if (mProxyAddress) linphone_address_unref(mProxyAddress);
 	mProxyAddress = linphone_address_clone(serverAddr);
 
 	char *tmpProxy = linphone_address_as_string(serverAddr);
@@ -586,6 +628,7 @@ LinphoneStatus AccountParams::setServerAddressAsString (const std::string &serve
 		if (addr) {
 			bool outboundProxyEnabled = getOutboundProxyEnabled();
 
+			if (mProxyAddress) linphone_address_unref(mProxyAddress);
 			mProxyAddress = linphone_address_clone(addr);
 
 			char *tmpProxy = linphone_address_as_string(addr);
@@ -599,7 +642,7 @@ LinphoneStatus AccountParams::setServerAddressAsString (const std::string &serve
 
 			linphone_address_unref(addr);
 		} else {
-			ms_warning("Could not parse %s", serverAddr.c_str());
+			lWarning() << "Could not parse " << serverAddr;
 			return -1;
 		}
 	}
@@ -666,6 +709,7 @@ void AccountParams::writeToConfigFile (LinphoneConfig *config, int index) {
 	linphone_config_set_int(config, key, "use_dial_prefix_for_calls_and_chats", mUseInternationalPrefixForCallsAndChats);
 	linphone_config_set_int(config, key, "privacy", (int)mPrivacy);
 	linphone_config_set_int(config, key, "push_notification_allowed", (int)mPushNotificationAllowed);
+	linphone_config_set_int(config, key, "remote_push_notification_allowed", (int)mRemotePushNotificationAllowed);
 	if (!mRefKey.empty()) linphone_config_set_string(config, key, "refkey", mRefKey.c_str());
 	if (!mDependsOn.empty()) linphone_config_set_string(config, key, "depends_on", mDependsOn.c_str());
 	if (!mIdKey.empty()) linphone_config_set_string(config, key, "idkey", mIdKey.c_str());

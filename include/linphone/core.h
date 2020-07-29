@@ -1830,8 +1830,6 @@ LINPHONE_PUBLIC void linphone_core_remove_proxy_config(LinphoneCore *core, Linph
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const LinphoneCore *core);
 
-LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
-
 /**
  * Search for a #LinphoneProxyConfig by it's idkey.
  * @param core the #LinphoneCore object @notnil
@@ -1880,7 +1878,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_add_account(LinphoneCore *core, Lin
  * Erase all account from config.
  * @param core #LinphoneCore object @notnil
 **/
-LINPHONE_PUBLIC void linphone_core_clear_account(LinphoneCore *core);
+LINPHONE_PUBLIC void linphone_core_clear_accounts(LinphoneCore *core);
 
 /**
  * Removes an account.
@@ -1899,12 +1897,10 @@ LINPHONE_PUBLIC void linphone_core_remove_account(LinphoneCore *core, LinphoneAc
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_account_list(const LinphoneCore *core);
 
-LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core, int index);
-
 /**
  * Search for a #LinphoneAccount by it's idkey.
  * @param core the #LinphoneCore object @notnil
- * @param idkey An arbitrary idkey string associated to an account
+ * @param idkey An arbitrary idkey string associated to an account. @maybenil
  * @return the #LinphoneAccount object for the given idkey value, or NULL if none found @maybenil
  **/
 LINPHONE_PUBLIC LinphoneAccount *linphone_core_get_account_by_idkey(LinphoneCore *core, const char *idkey);
@@ -5461,6 +5457,14 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
  * @ingroup misc
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore *core);
+
+/**
+* Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
+* @param core The #LinphoneCore @notnil
+* @param device_token, format (NSData *). @maybenil
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *core, void *device_token);
 
 /**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
