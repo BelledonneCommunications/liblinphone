@@ -95,6 +95,7 @@ set(C_API_HEADER_FILES
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
 	c-push-notification-message.h
+	c-push-notification-config.h
 	c-search-result.h
 	c-types.h
 )

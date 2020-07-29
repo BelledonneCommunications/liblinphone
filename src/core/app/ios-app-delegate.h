@@ -18,15 +18,20 @@
 */
 
 #include <UIKit/UIKit.h>
+#import <PushKit/PushKit.h>
 #include "private.h"
 
-@interface IosAppDelegate : NSObject {
+@interface IosAppDelegate : NSObject <PKPushRegistryDelegate> {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
 	NSTimer* mIterateTimer;
+	PKPushRegistry* voipRegistry;
 }
 
 - (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)onLinphoneCoreStart;
 - (void)onLinphoneCoreStop;
+
+- (void)registerForPush;
+- (void)didRegisterForRemotePush:(NSData *)token;
 
 @end
