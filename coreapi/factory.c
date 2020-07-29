@@ -64,6 +64,9 @@ struct _LinphoneFactory {
 	char *cached_ring_resources_dir;
 	char *cached_image_resources_dir;
 	char *cached_msplugins_dir;
+	char *cached_config_dir;
+	char *cached_data_dir;
+	char *cached_download_dir;
 	LinphoneErrorInfo* ei;
 
 	/* the EVFS encryption key */
@@ -86,6 +89,10 @@ static void linphone_factory_uninit(LinphoneFactory *obj){
 	STRING_RESET(obj->cached_ring_resources_dir);
 	STRING_RESET(obj->cached_image_resources_dir);
 	STRING_RESET(obj->cached_msplugins_dir);
+
+	STRING_RESET(obj->cached_config_dir);
+	STRING_RESET(obj->cached_data_dir);
+	STRING_RESET(obj->cached_download_dir);
 
 	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
 	sqlite3_bctbx_vfs_unregister();
@@ -579,18 +586,18 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
-	return path.c_str();
+	STRING_SET(factory->cached_config_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context).c_str());
+	return factory->cached_config_dir;
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
-	return path.c_str();
+	STRING_SET(factory->cached_data_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context).c_str());
+	return factory->cached_data_dir;
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
-	return path.c_str();
+	STRING_SET(factory->cached_download_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context).c_str());
+	return factory->cached_download_dir;
 }
 
 void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
