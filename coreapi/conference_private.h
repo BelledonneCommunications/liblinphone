@@ -159,6 +159,7 @@ public:
 
 protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
+	void setConferenceId (const ConferenceId &conferenceId);
 
 protected:
 
@@ -184,6 +185,7 @@ public:
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::ConferenceInterface::addParticipant;
 	virtual bool addParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
+	virtual bool addParticipant(const IdentityAddress &participantAddress) override;
 
 	// Addressing compilation error -Werror=overloaded-virtual
 	using LinphonePrivate::Conference::removeParticipant;
