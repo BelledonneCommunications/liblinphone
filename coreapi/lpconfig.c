@@ -272,6 +272,21 @@ LpItem *lp_section_find_item(const LpSection *sec, const char *name){
 	return NULL;
 }
 
+bctbx_list_t *lp_section_get_items(const LpSection *sec){
+	bctbx_list_t *items = NULL;
+	bctbx_list_t *elem;
+	LpItem *item;
+	/*printf("Looking for item %s\n",name);*/
+	for (elem=sec->items;elem!=NULL;elem=bctbx_list_next(elem)){
+		item=(LpItem*)elem->data;
+		if (!item->is_comment) {
+			/*printf("Item %s found\n",name);*/
+			items = bctbx_list_append(items, item);
+		}
+	}
+	return items;
+}
+
 static LpSection* linphone_config_parse_line(LpConfig* lpconfig, char* line, LpSection* cur) {
 	LpSectionParam *params = NULL;
 	char *pos1,*pos2;
@@ -1189,6 +1204,20 @@ const bctbx_list_t * linphone_config_get_sections_names_list(LinphoneConfig *lpc
 	}
 
 	return sections_names;
+}
+
+const bctbx_list_t * linphone_config_get_keys_names_list(LinphoneConfig *lpconfig, const char *section ) {
+	LpSection *sec;
+	bctbx_list_t *keys_names = NULL, *items;
+	sec=linphone_config_find_section(lpconfig,section);
+	if (sec!=NULL){
+		items = lp_section_get_items(sec);
+		for(; items != NULL ; items = items->next) {
+			LpItem *item = (LpItem *)items->data;
+			keys_names = bctbx_list_append(keys_names, item->key);
+		}
+	}
+	return keys_names;
 }
 
 char* linphone_config_dump_as_xml(const LpConfig *lpconfig) {
