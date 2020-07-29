@@ -1,3 +1,5 @@
 [misc]
 config-uri=file://./Assets/rcfiles/marie_remote_localfile2_rc
 
+[tester]
+test_env=1

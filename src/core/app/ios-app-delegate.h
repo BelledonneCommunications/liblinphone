@@ -18,17 +18,20 @@
 */
 
 #include <UIKit/UIKit.h>
+#import <PushKit/PushKit.h>
 #include "private.h"
 #import <UserNotifications/UserNotifications.h>
 
-@interface IosAppDelegate : NSObject {
+@interface IosAppDelegate : NSObject <PKPushRegistryDelegate> {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
-	NSTimer* mIterateTimer;
+	PKPushRegistry* voipRegistry;
 }
 
 - (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)onLinphoneCoreStart;
 - (void)onLinphoneCoreStop;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
+- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (void)didRegisterForRemotePush:(NSData *)token;
 
 @end
