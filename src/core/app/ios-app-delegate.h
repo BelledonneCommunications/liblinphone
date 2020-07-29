@@ -18,17 +18,26 @@
 */
 
 #include <UIKit/UIKit.h>
+#import <PushKit/PushKit.h>
 #include "private.h"
 #import <UserNotifications/UserNotifications.h>
 
-@interface IosAppDelegate : NSObject {
-	std::shared_ptr<LinphonePrivate::Core> pcore;
-	NSTimer* mIterateTimer;
+@interface IosObject : NSObject {
+	std::weak_ptr<LinphonePrivate::Core> pcore;
 }
 
-- (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-- (void)onLinphoneCoreStart;
-- (void)onLinphoneCoreStop;
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (std::shared_ptr<LinphonePrivate::Core>)getCore;
+
+@end
+
+@interface IosAppDelegate : IosObject <PKPushRegistryDelegate> {
+	PKPushRegistry* voipRegistry;
+}
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
+- (void)didRegisterForRemotePush:(NSData *)token;
+- (void)registerForPush;
 
 @end

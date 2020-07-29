@@ -22,6 +22,7 @@
 
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
+#include "linphone/api/c-push-notification-config.h"
 #include "linphone/types.h"
 
 // =============================================================================
@@ -50,6 +51,7 @@ public:
 	void setPublishEnabled (bool enable);
 	void setOutboundProxyEnabled (bool enable);
 	void setPushNotificationAllowed (bool allow);
+	void setRemotePushNotificationAllowed (bool allow);
 	void setUseInternationalPrefixForCallsAndChats (bool enable);
 	void setUserData (void *userData);
 	void setInternationalPrefix (const std::string &internationalPrefix);
@@ -66,6 +68,7 @@ public:
 	void setPrivacy (LinphonePrivacyMask privacy);
 	void setAvpfMode (LinphoneAVPFMode avpfMode);
 	void setNatPolicy (LinphoneNatPolicy *natPolicy);
+	void setPushNotificationConfig (LinphonePushNotificationConfig *pushNotificationConfig);
 	LinphoneStatus setIdentityAddress (const LinphoneAddress* identityAddress);
 	LinphoneStatus setRoutes (const bctbx_list_t *routes);
 	LinphoneStatus setRoutesFromStringList (const bctbx_list_t *routes);
@@ -81,7 +84,9 @@ public:
 	bool getPublishEnabled () const;
 	bool getOutboundProxyEnabled () const;
 	bool getPushNotificationAllowed () const;
+	bool getRemotePushNotificationAllowed () const;
 	bool getUseInternationalPrefixForCallsAndChats () const;
+	bool isPushNotificationAvailable () const;
 	void* getUserData () const;
 	const std::string& getInternationalPrefix () const;
 	const std::string& getProxy () const;
@@ -102,6 +107,7 @@ public:
 	LinphoneAddress* getIdentityAddress () const;
 	LinphoneAVPFMode getAvpfMode () const;
 	LinphoneNatPolicy* getNatPolicy () const;
+	LinphonePushNotificationConfig *getPushNotificationConfig () const;
 
 	// Other
 	LinphoneStatus setServerAddress (const LinphoneAddress *serverAddr);
@@ -127,6 +133,7 @@ private:
 	bool mQualityReportingEnabled;
 	bool mPublishEnabled;
 	bool mPushNotificationAllowed;
+	bool mRemotePushNotificationAllowed;
 	bool mUseInternationalPrefixForCallsAndChats;
 
 	void *mUserData;
@@ -155,6 +162,8 @@ private:
 	LinphoneAVPFMode mAvpfMode;
 
 	LinphoneNatPolicy *mNatPolicy = nullptr;
+
+	LinphonePushNotificationConfig *mPushNotificationConfig = nullptr;
 };
 
 LINPHONE_END_NAMESPACE

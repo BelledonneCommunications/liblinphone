@@ -5397,6 +5397,14 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore *core);
 
 /**
+* Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
+* @param core The #LinphoneCore @notnil
+* @param device_token, format (NSData *). @maybenil
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token);
+
+/**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.
  * If enabled, #linphone_core_iterate() will be called on the main thread every 20ms automatically.
  * If disabled, it is the application that must do this job.

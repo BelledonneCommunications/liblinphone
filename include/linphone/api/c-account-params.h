@@ -526,18 +526,53 @@ LINPHONE_PUBLIC bool_t linphone_account_params_get_outbound_proxy_enabled(const 
 LINPHONE_PUBLIC const char* linphone_account_params_get_conference_factory_uri(const LinphoneAccountParams *params);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP push notification.
  * @param params The #LinphoneAccountParams object. @notnil
  * @param allow TRUE to allow push notification information, FALSE otherwise.
  */
 LINPHONE_PUBLIC void linphone_account_params_set_push_notification_allowed(LinphoneAccountParams *params, bool_t allow);
 
 /**
- * Indicates whether to add to the contact parameters the push notification information.
+ * Indicates whether to add to the contact parameters the push notification information. For IOS, it indicates for VOIP push notification.
  * @param params The #LinphoneAccountParams object. @notnil
  * @return TRUE if push notification informations should be added, FALSE otherwise.
  */
 LINPHONE_PUBLIC bool_t linphone_account_params_get_push_notification_allowed(const LinphoneAccountParams *params);
+
+/**
+ * Indicates whether to add to the contact parameters the push notification information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param allow TRUE to allow remote push notification information, FALSE otherwise.
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_remote_push_notification_allowed(LinphoneAccountParams *params, bool_t allow);
+
+/**
+ * Indicates whether to add to the contact parameters the push notification information.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return TRUE if remote push notification informations should be added, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_account_params_get_remote_push_notification_allowed(const LinphoneAccountParams *params);
+
+/**
+* Gets whether push notifications are available or not (Android & iOS only).
+* @param params The #LinphoneAccountParams object. @notnil
+* @return TRUE if push notifications are available, FALSE otherwise
+*/
+LINPHONE_PUBLIC bool_t linphone_account_params_is_push_notification_available(const LinphoneAccountParams *params);
+
+/**
+ * Sets the push notification configuration.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @param config The #LinphonePushNotificationConfig object. @notnil
+ */
+LINPHONE_PUBLIC void linphone_account_params_set_push_notification_config(LinphoneAccountParams *params, LinphonePushNotificationConfig *config);
+
+/**
+ * Returns the push notification configuration.
+ * @param params The #LinphoneAccountParams object. @notnil
+ * @return The #LinphonePushNotificationConfig object. @notnil
+ */
+LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_account_params_get_push_notification_config(const LinphoneAccountParams *params);
 
 /**
  * Sets the transport type of the server address.
