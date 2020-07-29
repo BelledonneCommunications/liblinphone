@@ -153,6 +153,7 @@ void _linphone_proxy_config_release(LinphoneProxyConfig *cfg);
 void _linphone_proxy_config_unpublish(LinphoneProxyConfig *obj);
 void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg, LinphonePublishState state);
 LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires);
+
 /*
  * returns service route as defined in as defined by rfc3608, might be a list instead of just one.
  * Can be NULL
@@ -545,7 +546,7 @@ bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
+LINPHONE_PUBLIC void linphone_core_update_account_push_params(LinphoneCore *core);
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
@@ -642,7 +643,9 @@ MSWebCam *get_nowebcam_device(MSFactory *f);
 
 LinphoneLimeState linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc);
 
+LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
 int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core, int index);
 int linphone_core_get_default_account_index(LinphoneCore *lc);
 
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;

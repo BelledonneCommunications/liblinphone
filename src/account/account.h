@@ -91,25 +91,26 @@ public:
 	std::shared_ptr<Account> getDependency ();
 
 	// Other
-	void refreshRegister ();
+	bool check ();
+	bool isAvpfEnabled () const;
+	int getUnreadChatMessageCount () const;
+	int sendPublish (LinphonePresenceModel *presence);
+	void apply (LinphoneCore *lc);
+	void notifyPublishStateChanged (LinphonePublishState state);
 	void pauseRegister ();
-	void stopRefreshing ();
+	void refreshRegister ();
 	void registerAccount ();
+	void releaseOps ();
+	void stopRefreshing ();
+	void unpublish ();
 	void unregister ();
+	void update ();
+	void updatePushNotificationParameters ();
+	void writeToConfigFile (int index);
+	const LinphoneAuthInfo* findAuthInfo () const;
+	LinphoneEvent *createPublish (const char *event, int expires);
 	LinphoneReason getError ();
 	LinphoneTransportType getTransport ();
-	bool isAvpfEnabled () const;
-	const LinphoneAuthInfo* findAuthInfo () const;
-	int getUnreadChatMessageCount () const;
-	void writeToConfigFile (int index);
-	void update ();
-	void apply (LinphoneCore *lc);
-	LinphoneEvent *createPublish (const char *event, int expires);
-	int sendPublish (LinphonePresenceModel *presence);
-	void unpublish ();
-	void notifyPublishStateChanged (LinphonePublishState state);
-	bool check ();
-	void releaseOps ();
 
 	// Callbacks
 	void addCallbacks (LinphoneAccountCbs *callbacks);
@@ -119,26 +120,27 @@ public:
 
 	const bctbx_list_t* getCallbacksList () const;
 
-	// Listener
-	void onPushNotificationAllowedChanged (bool allow);
-	void onInternationalPrefixChanged ();
-	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
-	void onNatPolicyChanged (LinphoneNatPolicy *policy);
-
 	// To be removed when not using proxy config anymore
 	LinphoneProxyConfig *getConfig () const;
 	void setConfig (LinphoneProxyConfig *config);
 	LinphoneAccountAddressComparisonResult isServerConfigChanged ();
 
 private:
-	bool computePublishParamsHash();
-	LinphoneAccountAddressComparisonResult isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams);
 	bool canRegister ();
-	LinphoneAddress *guessContactForRegister ();
-	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
+	bool computePublishParamsHash();
 	int done ();
-	void resolveDependencies ();
 	void applyParamsChanges ();
+	void resolveDependencies ();
+	void updateDependentAccount(LinphoneRegistrationState state, const std::string &message);
+	std::string getComputedPushNotificationParameters ();
+	LinphoneAccountAddressComparisonResult isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams);
+	LinphoneAddress *guessContactForRegister ();
+
+	void onPushNotificationAllowedChanged (bool callDone);
+	void onInternationalPrefixChanged ();
+	void onConferenceFactoryUriChanged (const std::string &conferenceFactoryUri);
+	void onNatPolicyChanged (LinphoneNatPolicy *policy);
+
 
 	std::shared_ptr<AccountParams> mParams;
 

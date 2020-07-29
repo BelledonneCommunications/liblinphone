@@ -2659,110 +2659,48 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	linphone_core_set_account_creator_service(lc, service);
 }
 
-static void update_proxy_config_push_params(LinphoneCore *core) {
-	char *computedPushParams = NULL;
-	if (core->push_notification_enabled) {
-		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
-	}
-
-	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
-	for (; proxies != NULL; proxies = proxies->next) {
-		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
-		bool_t pushAllowed = linphone_proxy_config_is_push_notification_allowed(proxy);
-		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(proxy);
-
-		if (pushAllowed) {
-			// Do not alter contact uri params for proxy config without push notification allowed
-			if (computedPushParams && core->push_notification_enabled) {
-				if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, computedPushParams);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information [%s] added to proxy config [%p]", computedPushParams, proxy);
-				}
-			} else {
-				if (contactUriParams) {
-					linphone_proxy_config_edit(proxy);
-					linphone_proxy_config_set_contact_uri_parameters(proxy, NULL);
-					linphone_proxy_config_done(proxy);
-					ms_message("Push notification information removed from proxy config [%p]", proxy);
-				}
-			}
-		}
-	}
-
-	if (computedPushParams) {
-		ms_free(computedPushParams);
+void linphone_core_update_account_push_params(LinphoneCore *core) {
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		Account::toCpp(account)->updatePushNotificationParameters();
 	}
 }
 
 bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
-	return core->push_notification_param != NULL && core->push_notification_prid != NULL;
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		if (!linphone_account_params_is_push_notification_available(linphone_account_get_params(account))) return FALSE;
+	}
+	return TRUE;
 }
 
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
-	if (core->push_notification_param) {
-		ms_free(core->push_notification_param);
-		core->push_notification_param = NULL;
+	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
+	for (; accounts != NULL; accounts = accounts->next) {
+		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
+		LinphonePushNotificationConfig *push_cfg = linphone_account_params_get_push_notification_config(linphone_account_get_params(account));
+		linphone_push_notification_config_set_param(push_cfg, param);
+		linphone_push_notification_config_set_prid(push_cfg, prid);
+		Account::toCpp(account)->updatePushNotificationParameters();
 	}
-	if (core->push_notification_prid) {
-		ms_free(core->push_notification_prid);
-		core->push_notification_prid = NULL;
-	}
-
-	if (param && prid) {
-		core->push_notification_param = ms_strdup(param);
-		core->push_notification_prid = ms_strdup(prid);
-		ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
-	}
-
-	update_proxy_config_push_params(core);
-}
-
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
-	if (!core->push_notification_enabled) return NULL;
-	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
-
-	bool_t use_legacy_params = !!linphone_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
-	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
-	if (use_legacy_params) {
-		format = "pn-type=%s;app-id=%s;pn-tok=%s;pn-timeout=0;pn-silent=1";
-	}
-
-	const char *provider = NULL;
-	// Can this be improved ?
-	bool_t tester_env = !!linphone_config_get_int(core->config, "tester", "test_env", FALSE);
-	if (tester_env) provider = "liblinphone_tester";
-	// End of improvement zone
-
-	const char *params = core->push_notification_param;
-	const char *prid = core->push_notification_prid;
-
-#ifdef __ANDROID__
-	if (use_legacy_params)
-		provider = "firebase";
-	else
-		provider = "fcm";
-#elif TARGET_OS_IPHONE
-	provider = "apple";
-#endif
-	if (provider == NULL) return NULL;
-
-	char contactUriParams[512];
-	memset(contactUriParams, 0, sizeof(contactUriParams));
-	snprintf(contactUriParams, sizeof(contactUriParams), format, provider, params, prid);
-	return ms_strdup(contactUriParams);
+	ms_message("Push notification information updated: param [%s], prid [%s]", param, prid);
 }
 
 void linphone_core_set_push_notification_enabled(LinphoneCore *core, bool_t enable) {
 	linphone_config_set_int(core->config, "net", "push_notification", enable);
 	core->push_notification_enabled = enable;
 
-	update_proxy_config_push_params(core);
+	linphone_core_update_account_push_params(core);
 }
 
 bool_t linphone_core_is_push_notification_enabled(LinphoneCore *core) {
 	return core->push_notification_enabled;
+}
+
+void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token) {
+	getPlatformHelpers(lc)->didRegisterForRemotePush(device_token);
 }
 
 void linphone_core_set_auto_iterate_enabled(LinphoneCore *core, bool_t enable) {
@@ -2825,7 +2763,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (system_context) {
 		lc->system_context = system_context;
 	}
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
+	if (lc->platform_helper == NULL) {
+		lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
+	getPlatformHelpers(lc)->start(lc->cppPtr);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
@@ -2981,18 +2922,22 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 	}
 }
 
-LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {
+LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, bool_t main_core) {
 	LinphoneCore *core = L_INIT(Core);
 	Core::create(core);
+	core->is_main_core = main_core;
 	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
 	return core;
+}
+
+LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {
+	return _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start, TRUE);
 }
 
 LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core) {
 	bctbx_message("[SHARED] Creating %s Shared Core", main_core ? "Main" : "Executor");
 	linphone_config_set_string(config, "shared_core", "app_group_id", app_group_id);
-	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start);
-	core->is_main_core = main_core;
+	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start, main_core);
 	// allow ios app extension to mark msg as read without being registered
 	core->send_imdn_if_unregistered = !main_core;
 	getPlatformHelpers(core)->getSharedCoreHelpers()->registerSharedCoreMsgCallback();
@@ -7102,16 +7047,15 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	lc->factory = NULL;
 
 #if TARGET_OS_IPHONE
-	bool_t is_shared_core = getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared();
-#endif
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
-	lc->platform_helper = NULL;
-
-#if TARGET_OS_IPHONE
+	// keep pushkit delegate
+	getPlatformHelpers(lc)->stop();
 	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
 	We need to unlock them at the very end of the stopping process otherwise two Cores will
 	process at the same time until this one is finally stopped */
-	if (is_shared_core) LinphonePrivate::uninitSharedCore(lc);
+	LinphonePrivate::uninitSharedCore(lc);
+#else
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
 #endif
 
 	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");

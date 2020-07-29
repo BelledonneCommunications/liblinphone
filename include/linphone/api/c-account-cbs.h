@@ -43,7 +43,7 @@ LinphoneAccountCbs *linphone_account_cbs_new (void);
 /**
  * Acquire a reference to the account callbacks object.
  * @param cbs The #LinphoneAccountCbs object. @notnil
- * @return The same account callbacks object.
+ * @return The same account callbacks object. @notnil
 **/
 LINPHONE_PUBLIC LinphoneAccountCbs * linphone_account_cbs_ref (LinphoneAccountCbs *cbs);
 
