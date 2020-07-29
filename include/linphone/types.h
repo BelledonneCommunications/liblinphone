@@ -1244,6 +1244,12 @@ typedef struct _LinphoneHeaders LinphoneHeaders;
 typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
 
 /**
+ * Object holding push notification config for contact uri parameter
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
+
+/**
  * Object holding audio device information.
  * @ingroup audio
 **/
