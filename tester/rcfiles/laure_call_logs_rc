@@ -153,3 +153,6 @@ duration=0
 quality=-1.000000
 video_enabled=0
 call_id=jk39dfZP0L
+
+[tester]
+test_env=1

@@ -18,3 +18,6 @@ zrtp_cache_migration_done=1
 [net]
 
 stun_server=stun.example.org
+
+[tester]
+test_env=1

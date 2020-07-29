@@ -51,3 +51,5 @@ echocancellation=0 #to not overload cpu in case of VG
 
 [net]
 
+[tester]
+test_env=1
