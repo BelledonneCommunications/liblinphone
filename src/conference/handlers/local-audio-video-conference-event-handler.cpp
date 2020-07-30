@@ -52,10 +52,10 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 			getMediaConference()->finalizeCreation();
 			break;
 		case ConferenceInterface::State::TerminationPending:
-			getMediaConference()->resetLastNotify();
-			getMediaConference()->setState(ConferenceInterface::State::Terminated);
+			if (getMediaConference()->getParticipantCount() == 0) getMediaConference()->setState(ConferenceInterface::State::Terminated);
 			break;
 		case ConferenceInterface::State::Terminated:
+			getMediaConference()->resetLastNotify();
 			getMediaConference()->onConferenceTerminated(getMediaConference()->getConferenceAddress());
 			break;
 		case ConferenceInterface::State::Deleted:
