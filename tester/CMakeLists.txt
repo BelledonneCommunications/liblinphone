@@ -100,11 +100,14 @@ set(RC_FILES
 	rcfiles/account_creator_rc
 	rcfiles/assistant_create.rc
 	rcfiles/carddav_rc
+	rcfiles/claire_sips_rc
 	rcfiles/chloe_lime_x3dh_rc
 	rcfiles/chloe_rc
 	rcfiles/conference_focus_rc
 	rcfiles/empty_rc
 	rcfiles/friends_rc
+	rcfiles/groupchat_lime_x3dh_rc
+	rcfiles/groupchat_rc
 	rcfiles/invalid_friends_rc
 	rcfiles/invalid_friends_xml
 	rcfiles/laure_call_logs_rc
@@ -112,18 +115,18 @@ set(RC_FILES
 	rcfiles/laure_rc_udp
 	rcfiles/laure_tcp_rc
 	rcfiles/lime_x3dh_xml_rc
+	rcfiles/marie2_rc
+	rcfiles/marie_bodyless_rc
+	rcfiles/marie_dependent_proxy_rc
+	rcfiles/marie_dual_proxy_2_rc
+	rcfiles/marie_dual_proxy_rc
 	rcfiles/marie_early_rc
 	rcfiles/marie_h264_rc
-	rcfiles/marie_lime_x3dh_rc
 	rcfiles/marie_lime_x3dh_no_server_rc
+	rcfiles/marie_lime_x3dh_rc
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
-	rcfiles/marie_dual_proxy_rc
-	rcfiles/marie_dual_proxy_2_rc
-	rcfiles/marie_dependent_proxy_rc
-	rcfiles/marie_session_timers_rc
-	rcfiles/marie2_rc
 	rcfiles/marie_rc_rtcp_xr
 	rcfiles/marie_remote_404_rc
 	rcfiles/marie_remote_default_values_rc
@@ -135,24 +138,25 @@ set(RC_FILES
 	rcfiles/marie_remote_localfile_rc
 	rcfiles/marie_remote_localfile_win10_rc
 	rcfiles/marie_remote_rc
+	rcfiles/marie_session_timers_rc
 	rcfiles/marie_sips_rc
 	rcfiles/marie_transient_remote_rc
 	rcfiles/marie_v4proxy_rc
 	rcfiles/marie_well_known_port_rc
 	rcfiles/marie_zrtp_aes256_rc
 	rcfiles/marie_zrtp_b256_rc
-	rcfiles/marie_zrtp_srtpsuite_aes256_rc
 	rcfiles/marie_zrtp_ecdh255_rc
 	rcfiles/marie_zrtp_ecdh448_rc
+	rcfiles/marie_zrtp_srtpsuite_aes256_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
 	rcfiles/pauline_alt_rc
 	rcfiles/pauline_as_friend_rc
+	rcfiles/pauline_external_rc
 	rcfiles/pauline_h264_rc
 	rcfiles/pauline_lime_x3dh_rc
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
-	rcfiles/pauline_external_rc
 	rcfiles/pauline_rc_rtcp_xr
 	rcfiles/pauline_sips_rc
 	rcfiles/pauline_tcp_rc
@@ -163,15 +167,12 @@ set(RC_FILES
 	rcfiles/pauline_wild_rc
 	rcfiles/pauline_zrtp_aes256_rc
 	rcfiles/pauline_zrtp_b256_rc
-	rcfiles/pauline_zrtp_srtpsuite_aes256_rc
 	rcfiles/pauline_zrtp_ecdh255_rc
 	rcfiles/pauline_zrtp_ecdh448_rc
+	rcfiles/pauline_zrtp_srtpsuite_aes256_rc
 	rcfiles/remote_zero_length_params_rc
 	rcfiles/stun_rc
 	rcfiles/zero_length_params_rc
-	rcfiles/marie_bodyless_rc
-	rcfiles/groupchat_rc
-	rcfiles/groupchat_lime_x3dh_rc
 )
 
 set(IMAGE_FILES
@@ -204,26 +205,26 @@ set(IOS_RESOURCES_FILES
 )
 
 set(SOURCE_FILES_C
-	tester.c
-	accountmanager.c
 	account_creator_tester.c
+	accountmanager.c
 	audio_bypass_tester.c
+	call_ice_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
-	call_single_tester.c
 	call_push_incoming_tester.c
-	call_video_tester.c
 	call_recovery_tester.c
-	call_ice_tester.c
 	call_secure_tester.c
-	complex_sip_case_tester.c
+	call_single_tester.c
+	call_video_tester.c
 	call_with_rtp_bundle_tester.c
+	complex_sip_case_tester.c
 	dtmf_tester.c
 	eventapi_tester.c
+	external_domain_tester.c
 	flexisip_tester.c
-	group_chat_tester.c
-	group_chat_secure_tester.c
 	group_chat_ephemeral_tester.c
+	group_chat_secure_tester.c
+	group_chat_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
@@ -237,12 +238,13 @@ set(SOURCE_FILES_C
 	remote_provisioning_tester.c
 	session_timers_tester.c
 	setup_tester.c
+	shared_core_tester.c
 	stun_tester.c
+	tester.c
 	tunnel_tester.c
 	vcard_tester.c
-	video_tester.c
 	video_quality_tester.c
-	shared_core_tester.c
+	video_tester.c
 )
 
 set(SOURCE_FILES_CXX
