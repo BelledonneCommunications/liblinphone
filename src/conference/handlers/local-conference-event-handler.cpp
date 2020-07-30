@@ -348,8 +348,8 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 		}
 
 		// TODO: Implement getState in conference
-/*		if (allCallEnded && (handler->conf->getState() != LinphoneConferenceStopped)) {
-			handler->conf->setState(LinphoneConferenceTerminated);
+/*		if ((handler->conf->getParticipantCount() == 1) && (handler->conf->getState() != ConferenceInterface::State::Deleted)) {
+			handler->conf->setState(ConferenceInterface::State::TerminationPending);
 			return;
 		}
 */
@@ -513,22 +513,42 @@ void LocalConferenceEventHandler::onFullStateReceived () {
 
 void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {
 	const std::shared_ptr<Participant> participant = event->getParticipant();
-	notifyAllExcept(createNotifyParticipantAdded(participant), participant);
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAllExcept(createNotifyParticipantAdded(participant), participant);
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant << " being added because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {
 	const std::shared_ptr<Participant> participant = event->getParticipant();
-	notifyAllExcept(createNotifyParticipantRemoved(participant), participant);
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAllExcept(createNotifyParticipantRemoved(participant), participant);
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant << " being removed because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {
 	const std::shared_ptr<Participant> participant = event->getParticipant();
 	const bool isAdmin = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
-	notifyAll(createNotifyParticipantAdminStatusChanged(participant, isAdmin));
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyParticipantAdminStatusChanged(participant, isAdmin));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant " << *participant << " admin status changed because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) {
-	notifyAll(createNotifySubjectChanged());
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifySubjectChanged());
+	} else {
+		lWarning() << __func__ << ": Not sending notification of conference subject change because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr<ConferenceAvailableMediaEvent> &event) {
@@ -536,12 +556,22 @@ void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr
 
 void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	const std::shared_ptr<ParticipantDevice> participantDevice = event->getDevice();
-	notifyAll(createNotifyParticipantDeviceAdded(participantDevice));
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyParticipantDeviceAdded(participantDevice));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant device " << *participantDevice->getParticipant() << " being added because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
 	const std::shared_ptr<ParticipantDevice> participantDevice = event->getDevice();
-	notifyAll(createNotifyParticipantDeviceRemoved(participantDevice));
+	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
+	if (conf) {
+		notifyAll(createNotifyParticipantDeviceRemoved(participantDevice));
+	} else {
+		lWarning() << __func__ << ": Not sending notification of participant device " << *participantDevice->getParticipant() << " being removed because pointer to conference is null";
+	}
 }
 
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
