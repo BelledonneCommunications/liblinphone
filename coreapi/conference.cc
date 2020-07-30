@@ -547,16 +547,20 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		lError() << "Call " << call->toC() << " is not part of conference " << this->toC();
 		return -1;
 	}
-	if (getParticipantCount() >= 2){
-		/* Kick the call out of the conference by moving to the Paused state. */
-		const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-				L_GET_PRIVATE(call->getParams()))->setInConference(false);
+	if (getParticipantCount() >= 2) {
+		if (getState() != ConferenceInterface::State::TerminationPending) {
+			/* Kick the call out of the conference by moving to the Paused state. */
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+					L_GET_PRIVATE(call->getParams()))->setInConference(false);
 
-		err = call->pause();
-	}
+			err = call->pause();
+		}
 	
-	Conference::removeParticipant(call);
-	mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
+		Conference::removeParticipant(call);
+		mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
+
+	}
+
 	/* 
 	 * Handle the case where only the local participant and a unique remote participant are remaining.
 	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
@@ -568,20 +572,25 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			 * but it should contains all participants ideally.*/
 			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = *participants.begin();
 			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
+			if (getState() != ConferenceInterface::State::TerminationPending) {
 
-			const MediaSessionParams * params = session->getMediaParams();
-			MediaSessionParams *currentParams = params->clone();
-			lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
-				" is our last call in our conference, we will reconnect directly to it.";
+				const MediaSessionParams * params = session->getMediaParams();
+				MediaSessionParams *currentParams = params->clone();
+				lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
+					" is our last call in our conference, we will reconnect directly to it.";
 
-			currentParams->getPrivate()->setInConference(FALSE);
+				currentParams->getPrivate()->setInConference(FALSE);
+				ms_message("Updating call to notify of conference removal.");
+				err = session->update(currentParams);
+				setState(ConferenceInterface::State::TerminationPending);
+			}
+
 			leave();
-			ms_message("Updating call to notify of conference removal.");
-			err = session->update(currentParams);
+
 			/* invoke removeParticipant() recursively to remove this last participant. */
 			bool success = Conference::removeParticipant(remaining_participant->getAddress());
 			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
-			setState(ConferenceInterface::State::TerminationPending);
+			setState(ConferenceInterface::State::Terminated);
 			return success;
 		} else if (getParticipantCount() == 0){
 			// We should never enter here
@@ -595,7 +604,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	}
 
 	if ((getSize() == 0) && (getState() != ConferenceInterface::State::Deleted)) {
-		setState(ConferenceInterface::State::TerminationPending);
+		setState(ConferenceInterface::State::Terminated);
 	}
 	return err;
 }
@@ -629,6 +638,7 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 }
 
 int LocalConference::terminate () {
+	setState(ConferenceInterface::State::TerminationPending);
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
 	for (auto it = calls.begin(); it != calls.end(); it++) {
@@ -637,10 +647,6 @@ int LocalConference::terminate () {
 		if (linphone_call_get_conference(cCall) == this->toC()) {
 			call->terminate();
 		}
-	}
-
-	if (getParticipantCount() == 0) {
-		setState(ConferenceInterface::State::TerminationPending);
 	}
 
 	return 0;
