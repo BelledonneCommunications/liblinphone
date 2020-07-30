@@ -3276,8 +3276,8 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 		soci::rowset<soci::row> rows = (session->prepare << query);
 		for (const auto &row : rows) {
 			ConferenceId conferenceId = ConferenceId(
-				IdentityAddress(row.get<string>(1)),
-				IdentityAddress(row.get<string>(2))
+				ConferenceAddress(row.get<string>(1)),
+				ConferenceAddress(row.get<string>(2))
 			);
 			
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);

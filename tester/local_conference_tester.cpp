@@ -86,10 +86,10 @@ public:
 		mMgr->user_info = this;
 	}
 
-	CoreManager(std::string rc,const std::function<void ()> &preStart) {
+	CoreManager(std::string rc,const std::function<void ()> &preStart):mPreStart(preStart) {
 		mMgr = linphone_core_manager_create(rc.c_str());
 		mMgr->user_info = this;
-		preStart();
+		mPreStart();
 		linphone_core_manager_start(mMgr,TRUE);
 	}
 
@@ -113,10 +113,16 @@ public:
 	LinphoneCoreManager * getCMgr() {
 		return mMgr;
 	}
+	void reStart() {
+		linphone_core_manager_reinit(mMgr);
+		mPreStart();
+		linphone_core_manager_start(mMgr, TRUE);
+	}
 protected:
 	LinphoneCoreManager * mMgr;
 private:
 	CoreManager(const CoreManager&) {};
+	const std::function<void ()> mPreStart = []{return;};
 };
 
 
@@ -207,6 +213,7 @@ public:
 		;
 	}
 	~ClientConference() = default;
+	
 };
 
 static void group_chat_room_creation_server (void) {
@@ -326,12 +333,95 @@ static void group_chat_room_server_deletion (void) {
 	bctbx_list_free(coresList);
 
 }
+static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
+	Focus focus("chloe_rc");
+	ClientConference marie("marie_rc", focus.getIdentity());
+	ClientConference pauline("pauline_rc", focus.getIdentity());
+
+	focus.registerAsParticipantDevice(marie);
+	focus.registerAsParticipantDevice(pauline);
+
+	bctbx_list_t * coresList = bctbx_list_append(NULL, focus.getLc());
+	coresList = bctbx_list_append(coresList, marie.getLc());
+	coresList = bctbx_list_append(coresList, pauline.getLc());
+	Address paulineAddr(pauline.getIdentity());
+	bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
+
+	stats initialMarieStats = marie.getStats();
+	stats initialPaulineStats = pauline.getStats();
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	/*BC_ASSERT_TRUE(*/CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
+		for (auto chatRoom :focus.getCore().getChatRooms()) {
+			for (auto participant: chatRoom->getParticipants()) {
+				for (auto device: participant->getDevices())
+					if (device->getState() != ParticipantDevice::State::Present) {
+						return false;
+					}
+			}
+		}
+		return true;
+	})/*)*/;
+	
+	
+	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "message blabla");
+	linphone_chat_message_send(msg);
+	BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([msg] {
+		return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+	}));
+	BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
+		return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+	}));
+
+	
+	//now with simulate foregound/backgroud switch to get a remote event handler list instead of a simple remote event handler
+	linphone_core_enter_background(pauline.getLc());
+	linphone_config_set_bool(linphone_core_get_config(pauline.getLc()), "misc", "conference_event_package_force_full_state",TRUE);
+	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
+	pauline.reStart();
+	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
+	
+	CoreManagerAssert({focus,marie}).waitUntil(std::chrono::seconds(2),[ ]{return false;});
+	
+	for (auto chatRoom :focus.getCore().getChatRooms()) {
+		for (auto participant: chatRoom->getParticipants()) {
+		//  force deletion by removing devices
+			bctbx_list_t *empty = bctbx_list_new(NULL);
+			Address participantAddress(participant->getAddress());
+			linphone_chat_room_set_participant_devices(  L_GET_C_BACK_PTR(chatRoom)
+													   , L_GET_C_BACK_PTR(&participantAddress)
+													   , NULL);
+			bctbx_list_free(empty);
+		}
+	}
+	
+	//wait until chatroom is deleted server side
+	BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
+		return focus.getCore().getChatRooms().size() == 0;
+	}));
+
+	//wait bit more to detect side effect if any
+	CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
+		return false;
+	});
+
+	bctbx_list_free(coresList);
+
+}
 
 }
 
 static test_t local_conference_tests[] = {
 	TEST_NO_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server),
-	TEST_ONE_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion,"LeaksMemory") /* leak because of call session not freed client side*/
+	TEST_ONE_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion,"LeaksMemory"), /* leak because of call session not freed client side*/
+	TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler", LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,"LeaksMemory") /* leak because of call session not freed client side*/
 };
 
 test_suite_t local_conference_test_suite = {
