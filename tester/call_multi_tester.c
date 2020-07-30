@@ -451,6 +451,7 @@ static void simple_conference(void) {
 
 
 static void _simple_conference_from_scratch(bool_t with_video){
+#if 0
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
@@ -542,6 +543,8 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+#endif
+	BC_FAIL("Test temporaly disabled because of crash");
 }
 
 static void simple_conference_from_scratch(void){
