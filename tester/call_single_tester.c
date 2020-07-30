@@ -156,7 +156,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 
 static const char *info_content = "<somexml>blabla</somexml>";
 
-void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
+void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
 	const LinphoneAddress *from;
@@ -167,8 +167,10 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 		ms_snd_card_manager_bypass_soundcard_detection(TRUE);
 	}
 
-	marie = linphone_core_manager_new("marie_rc");
-	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	marie = linphone_core_manager_new(caller_rc ? caller_rc : "marie_rc");
+	pauline = linphone_core_manager_new(
+		callee_rc ? callee_rc : (transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc")
+	);
 
 	/* with the account manager, we might lose the identity */
 	marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
@@ -261,6 +263,10 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 	if (disable_soundcard) {
 		ms_snd_card_manager_bypass_soundcard_detection(FALSE);
 	}
+}
+
+void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcard, bool_t use_multipart_invite_body) {
+	simple_call_base_with_rcs(NULL, NULL, enable_multicast_recv_side, disable_soundcard, use_multipart_invite_body);
 }
 
 static void simple_call(void) {
