@@ -770,6 +770,11 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 		lev=linphone_event_new_with_op(lc,op,LinphoneSubscriptionIncoming,eventname);
 		linphone_event_set_state(lev,LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
+		Address to(op->getTo());
+		LinphoneProxyConfig *proxy = linphone_core_lookup_known_proxy(lc, L_GET_C_BACK_PTR(&to));
+		if (proxy && linphone_proxy_config_get_realm(proxy)) {
+			op->setRealm(linphone_proxy_config_get_realm(proxy));
+		}
 		linphone_core_notify_subscribe_received(lc,lev,eventname,ct);
 		if (ct)
 			linphone_content_unref(ct);
