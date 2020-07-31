@@ -454,7 +454,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	BC_ASSERT_PTR_NOT_NULL(conference = linphone_core_get_conference(marie->lc));
 	if(conference) {
-		bctbx_list_t *participants = linphone_conference_get_participants(conference);
+		bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
 		bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 	}

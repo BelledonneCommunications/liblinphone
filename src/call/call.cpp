@@ -348,12 +348,7 @@ void Call::removeFromConference(const Address & remoteContactAddress) {
 		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
 printf("%s - searching conference (peer address %s local address %s remote contact address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), (remoteContactAddress.asString().empty() ? "Unknown" : remoteContactAddress.asString().c_str()), conference.get());
-
-		// Terminate conference is found
-		if (conference != nullptr) {
-			conference->setState(ConferenceInterface::State::TerminationPending);
-			setConference (nullptr);
-		}
+		setConference (nullptr);
 	}
 }
 
