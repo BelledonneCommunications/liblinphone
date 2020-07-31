@@ -304,7 +304,14 @@ void RemoteConferenceEventHandler::subscribe () {
 void RemoteConferenceEventHandler::unsubscribePrivate () {
 	if (lev) {
 		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
+		// FIXME: Quite ugly workaround.
+		// Linphone event terminate may call linphone_event_release which:
+		// - unrefs the event
+		// - free the memory allocated for it
+		// - sets it to NULL
+		if (lev) {
+			linphone_event_unref(lev);
+		}
 		lev = nullptr;
 	}
 }
