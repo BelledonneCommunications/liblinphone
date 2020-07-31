@@ -286,8 +286,6 @@ void RemoteConferenceEventHandler::subscribe () {
 	}
 
 	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
-	// FIXME: Workaround because linphone_event_release unrefs the event therefore lev could become a dangling pointer
-	lev = linphone_event_ref(lev);
 	lev->op->setFrom(localAddress);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
@@ -304,14 +302,6 @@ void RemoteConferenceEventHandler::subscribe () {
 void RemoteConferenceEventHandler::unsubscribePrivate () {
 	if (lev) {
 		linphone_event_terminate(lev);
-		// FIXME: Quite ugly workaround.
-		// Linphone event terminate may call linphone_event_release which:
-		// - unrefs the event
-		// - free the memory allocated for it
-		// - sets it to NULL
-		if (lev) {
-			linphone_event_unref(lev);
-		}
 		lev = nullptr;
 	}
 }
