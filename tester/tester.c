@@ -774,7 +774,7 @@ printf("%s - call paused %0d\n", __func__, is_call_paused);
 	ms_free(call_paused);
 	ms_free(participants_initial_stats);
 	ms_free(new_participants_initial_stats);
-	bctbx_free(participants);
+	bctbx_list_free(participants);
 
 	return 0;
 }
