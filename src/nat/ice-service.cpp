@@ -137,6 +137,14 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		}
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)index);
 		if (!cl && streamActive) {
+			if (params.localIsOfferer && params.localMediaDescription->hold) {
+				LinphoneCallStats *stats = stream->getStats();
+				if(stats && linphone_call_stats_get_ice_state(stats) == LinphoneIceStateNotActivated) {
+					lInfo() << "Not created new ICE check list as holding call without ice activated.";
+					deleteSession();
+					return;
+				}
+			}
 			cl = ice_check_list_new();
 			ice_session_add_check_list(mIceSession, cl, static_cast<unsigned int>(index));
 			lInfo() << "Created new ICE check list " << cl << " for stream #" << index;

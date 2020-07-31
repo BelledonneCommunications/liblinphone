@@ -328,6 +328,7 @@ typedef struct SalMediaDescription{
 	bool_t set_nortpproxy;
 	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 	bool_t pad[1];
+	bool_t hold; /* Set to True if linphone_call_pause() is called */
 } SalMediaDescription;
 
 typedef struct SalMessage{
