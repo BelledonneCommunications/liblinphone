@@ -1135,6 +1135,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
+	md->hold = oldMd ? oldMd->hold : false;
 
 	md->accept_bundles = getParams()->rtpBundleEnabled() ||
 		linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_bundle", TRUE);
@@ -1281,6 +1282,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	ctx.localIsOfferer = localIsOfferer;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
+	// set to default value
+	md->hold = false;
+	localDesc = md;
 	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainAudioStreamIndex);
 	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainVideoStreamIndex);
 	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainTextStreamIndex);
@@ -1750,6 +1754,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
+	localDesc->hold = true;
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
 	if (listener)
