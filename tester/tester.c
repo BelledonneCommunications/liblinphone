@@ -708,6 +708,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,linphone_conference_get_participant_count(linphone_core_get_conference(conf_mgr->lc)),3000));
 
+	ms_free(notifyExpected);
+
 }
 
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
@@ -751,7 +753,9 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		stats initial_stats = m->stat;
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
 		const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
+		char * participant_uri_str = linphone_address_as_string(participant_uri);
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_uri_str);
+		free(participant_uri_str);
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
 printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
@@ -769,8 +773,10 @@ printf("%s - call paused %0d\n", __func__, is_call_paused);
 
 	check_participant_added_to_conference(lcs, conf_mgr, conf_initial_stats, new_participants, new_participants_initial_stats, call_paused, participants, participants_initial_stats);
 
+	ms_free(call_paused);
 	ms_free(participants_initial_stats);
 	ms_free(new_participants_initial_stats);
+	bctbx_free(participants);
 
 	return 0;
 }

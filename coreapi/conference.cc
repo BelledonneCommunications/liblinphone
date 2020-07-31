@@ -166,6 +166,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 			std::shared_ptr<ParticipantDevice> device = p->findDevice(*remoteContact);
 			// If device is not found, then add it
 			if (device != nullptr) {
+
 				LinphoneEvent * event = device->getConferenceSubscribeEvent();
 				if (event) {
 					//try to terminate subscription if any, but do not wait for anser.
@@ -191,8 +192,8 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 }
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	removeParticipantDevice(call);
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+	removeParticipantDevice(call);
 	if (!p)
 		return -1;
 	if (p->getDevices().empty()) {
@@ -432,7 +433,6 @@ void LocalConference::addLocalEndpoint () {
 
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	for (const auto &address : addresses) {
-printf("%s - add address %s\n", __func__, linphone_address_as_string(address));
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
 		if (!call) {
 			/* Start a new call by indicating that it has to be put into the conference directly */
@@ -570,7 +570,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		if (getParticipantCount() == 1){
 			/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
 			 * but it should contains all participants ideally.*/
-			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = *participants.begin();
+			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
 			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 			if (getState() != ConferenceInterface::State::TerminationPending) {
 
@@ -617,7 +617,6 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	if (!mediaSession)
 		return -1;
 
-	mediaSession->terminate();
 	bool ret = Conference::removeParticipant(addr);
 	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
 	if (getSize() == 0) setState(ConferenceInterface::State::TerminationPending);
@@ -641,10 +640,8 @@ int LocalConference::terminate () {
 	setState(ConferenceInterface::State::TerminationPending);
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
-	for (auto it = calls.begin(); it != calls.end(); it++) {
-		shared_ptr<LinphonePrivate::Call> call(*it);
-		LinphoneCall *cCall = call->toC();
-		if (linphone_call_get_conference(cCall) == this->toC()) {
+	for (auto & call : calls) {
+		if (linphone_call_get_conference(call->toC()) == this->toC()) {
 			call->terminate();
 		}
 	}
