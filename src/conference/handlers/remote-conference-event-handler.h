@@ -35,7 +35,7 @@ class Conference;
 class ConferenceListener;
 class RemoteConferenceEventHandlerBase;
 
-class LINPHONE_PUBLIC RemoteConferenceEventHandler : public CoreListener, public RemoteConferenceEventHandlerBase {
+class LINPHONE_PUBLIC RemoteConferenceEventHandler : public RemoteConferenceEventHandlerBase, public CoreListener {
 	friend class ClientGroupChatRoom;
 
 public:
