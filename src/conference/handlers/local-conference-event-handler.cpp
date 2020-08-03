@@ -83,7 +83,13 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	confInfo.setUsers(users);
 	confInfo.setConferenceDescription((const ConferenceDescriptionType) confDescr);
 
-	for (const auto &participant : conf->getParticipants()) {
+	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
+	std::shared_ptr<Participant> me = conf->getMe();
+	if (me) {
+		participants.push_front(me);
+	}
+
+	for (const auto &participant : participants) {
 		UserType user = UserType();
 		UserRolesType roles;
 		UserType::EndpointSequence endpoints;
