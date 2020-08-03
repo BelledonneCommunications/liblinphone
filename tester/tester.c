@@ -372,14 +372,13 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
 	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
-	bctbx_free(filepath);
+	// clean
+	if (filepath) bctbx_free(filepath);
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 	linphone_config_unref(config);
-	// clean
-	if (filepath) bctbx_free(filepath);
 	return lc;
 }
 
@@ -1228,7 +1227,6 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	linphone_core_manager_uninit2(mgr, TRUE);
 }
 
-
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
 	if ((nat_policy != NULL) && (linphone_nat_policy_get_stun_server(nat_policy) != NULL) &&
@@ -1238,11 +1236,8 @@ void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 		BC_ASSERT_TRUE(wait_for_stun_resolution(mgr));
 	}
 }
-void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
-	linphone_core_manager_uninit2(mgr);
-	ms_free(mgr);
-}
-void linphone_core_manager_uninit2(LinphoneCoreManager* mgr) {
+
+void linphone_core_manager_uninit3(LinphoneCoreManager* mgr) {
 	if (mgr->lc && linphone_core_get_global_state(mgr->lc) != LinphoneGlobalOff && !linphone_core_is_network_reachable(mgr->lc)) {
 		int previousNbRegistrationOk = mgr->stat.number_of_LinphoneRegistrationOk;
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
@@ -1250,6 +1245,11 @@ void linphone_core_manager_uninit2(LinphoneCoreManager* mgr) {
 	}
 	linphone_core_manager_stop(mgr);
 	linphone_core_manager_uninit(mgr);
+}
+
+void linphone_core_manager_destroy(LinphoneCoreManager* mgr) {
+	linphone_core_manager_uninit3(mgr);
+	ms_free(mgr);
 }
 
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr) {
