@@ -524,7 +524,7 @@ public class {{className}} : LinphoneObject
 		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
 		while (cList != nil) {
 			swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
-			cList = cList!.pointee.next
+			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList!.pointee.next)
 		}
 		return swiftList
 		{{/is_string_list}}
