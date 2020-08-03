@@ -39,7 +39,7 @@ class Address;
 class Content;
 class RemoteConferenceEventHandler;
 
-class RemoteConferenceListEventHandler : public CoreAccessor , public CoreListener, public RemoteConferenceEventHandlerBase {
+class RemoteConferenceListEventHandler : public RemoteConferenceEventHandlerBase, public CoreAccessor, public CoreListener {
 public:
 	RemoteConferenceListEventHandler (const std::shared_ptr<Core> &core);
 	~RemoteConferenceListEventHandler ();
