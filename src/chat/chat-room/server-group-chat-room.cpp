@@ -972,6 +972,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 		linphone_event_cbs_set_user_data(cbs, nullptr);
 		linphone_event_cbs_set_notify_response(cbs, nullptr);
 		linphone_event_terminate(device->getConferenceSubscribeEvent());
+		device->setConferenceSubscribeEvent(nullptr);
 	}
 	
 	/* if all devices of participants are left we'll delete the chatroom*/
