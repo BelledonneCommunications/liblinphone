@@ -869,7 +869,6 @@ void RemoteConference::finalizeCreation() {
 
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 	#endif // HAVE_ADVANCED_IM
-		setState(ConferenceInterface::State::Created);
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
 	}
