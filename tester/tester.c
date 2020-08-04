@@ -767,6 +767,10 @@ printf("%s - call paused %0d\n", __func__, is_call_paused);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
 		}
+
+		BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
+		BC_ASSERT_TRUE(linphone_call_is_in_conference(participant_call));
+
 		counter++;
 	}
 
