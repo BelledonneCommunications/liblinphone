@@ -879,6 +879,31 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	return 0;
 }
 
+static void finish_terminate_local_conference(bctbx_list_t *lcs) {
+
+	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+		LinphoneCoreManager * m = get_manager(c);
+
+		stats initial_stats = m->stat;
+
+		int no_calls = (int)bctbx_list_size(linphone_core_get_calls(c));
+		linphone_core_terminate_all_calls(c);
+
+		// Wait for all calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, initial_stats.number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, initial_stats.number_of_LinphoneCallReleased + no_calls, 10000));
+
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,m->stat.number_of_LinphoneSubscriptionActive,10000));
+	}
+
+}
+
 LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr) {
 
 	stats* participants_initial_stats = NULL;
@@ -905,33 +930,6 @@ LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager
 	return 0;
 }
 
-void finish_terminate_local_conference(bctbx_list_t *lcs) {
-
-	int idx = 0;
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-
-		stats initial_stats = m->stat;
-
-		int no_calls = (int)bctbx_list_size(linphone_core_get_calls(c));
-		linphone_core_terminate_all_calls(c);
-
-		// Wait for all calls to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, initial_stats.number_of_LinphoneCallEnd + no_calls, 10000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, initial_stats.number_of_LinphoneCallReleased + no_calls, 10000));
-
-		// Wait for all conferences to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
-
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,m->stat.number_of_LinphoneSubscriptionActive,10000));
-
-		idx++;
-	}
-
-}
 
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)
 #pragma GCC diagnostic push
