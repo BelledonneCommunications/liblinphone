@@ -134,10 +134,6 @@ void linphone_tunnel_config_unref(LinphoneTunnelConfig *cfg){
 	belle_sip_object_unref(cfg);
 }
 
-void linphone_tunnel_config_destroy(LinphoneTunnelConfig *tunnel){
-	linphone_tunnel_config_unref(tunnel);
-}
-
 void linphone_tunnel_config_set_user_data(LinphoneTunnelConfig *cfg, void *ud){
 	cfg->user_data = ud;
 }
