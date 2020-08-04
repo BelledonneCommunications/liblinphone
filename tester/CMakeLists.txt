@@ -301,7 +301,7 @@ if(NOT IOS OR NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 endif()
 
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
-if(ANDROID OR IOS OR UNIX)
+if(ANDROID OR IOS)
 	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
 	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
