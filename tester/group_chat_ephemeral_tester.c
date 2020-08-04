@@ -148,7 +148,8 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 
 	if (remained) {
 		// To simulate dialog removal
-		LinphoneAddress *paulineAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
+		LinphoneAddress *localAddr = linphone_address_clone(linphone_chat_room_get_local_address(paulineCr));
+		LinphoneAddress *peerAddr = linphone_address_clone(linphone_chat_room_get_peer_address(paulineCr));
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 		coresList = bctbx_list_remove(coresList, pauline->lc);
 		linphone_core_manager_reinit(pauline);
@@ -161,10 +162,11 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 			wait_for_list(coresList, NULL, 0, 60000);
 
 		linphone_core_manager_start(pauline, TRUE);
-		paulineCr = linphone_core_get_chat_room(pauline->lc, paulineAddr);
+		paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, localAddr, peerAddr, NULL);
 		bctbx_list_t *history = linphone_chat_room_get_history(paulineCr, 0);
 		set_ephemeral_cbs(history);
-		linphone_address_unref(paulineAddr);
+		linphone_address_unref(localAddr);
+		linphone_address_unref(peerAddr);
 
 		wait_for_list(coresList, NULL, 1, 60000);
 
@@ -478,7 +480,8 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 
 	{
 		// To simulate dialog removal
-		LinphoneAddress *marieAddr = linphone_address_clone(linphone_chat_room_get_peer_address(marieCr));
+		LinphoneAddress *localAddr = linphone_address_clone(linphone_chat_room_get_local_address(marieCr));
+		LinphoneAddress *peerAddr = linphone_address_clone(linphone_chat_room_get_peer_address(marieCr));
 		linphone_core_set_network_reachable(marie->lc, FALSE);
 		coresList = bctbx_list_remove(coresList, marie->lc);
 		linphone_core_manager_reinit(marie);
@@ -489,8 +492,9 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 
 		linphone_core_manager_start(marie, TRUE);
-		marieCr = linphone_core_get_chat_room(marie->lc, marieAddr);
-		linphone_address_unref(marieAddr);
+		marieCr = linphone_core_search_chat_room(marie->lc, NULL, localAddr, peerAddr, NULL);
+		linphone_address_unref(localAddr);
+		linphone_address_unref(peerAddr);
 	}
 
 	BC_ASSERT_TRUE(linphone_chat_room_ephemeral_enabled(marieCr));
