@@ -37,6 +37,7 @@ namespace MediaConference {
 }
 
 class MediaSessionParams : public CallSessionParams {
+	friend class Call;
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
 	friend class MS2Stream;
