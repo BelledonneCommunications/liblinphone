@@ -183,7 +183,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 				// Send notify only if:
 				// - there are more than two participants in the conference
 				// - there are two participants and the list of devices of the current participant is not empty
-				if ((getParticipantCount() > 2) || ((getParticipantCount() == 2) && (p->getDevices().empty() == false))) {
+				if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 2) || ((getParticipantCount() == 2) && (p->getDevices().empty() == false)))) {
 					time_t creationTime = time(nullptr);
 					notifyParticipantDeviceRemoved(creationTime, false, p, device);
 				}
@@ -204,7 +204,7 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	if (p->getDevices().empty()) {
 		participants.remove(p);
 		// Do not send notify if only 1 participant is left as the conference is going to be destroyed
-		if (getParticipantCount() > 1) {
+		if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
 			time_t creationTime = time(nullptr);
 			notifyParticipantRemoved(creationTime, false, p);
 		}
@@ -222,7 +222,7 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 		return false;
 	// Delete all devices of a participant
 	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
-		if (getParticipantCount() > 2) {
+		if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 2)) {
 			time_t creationTime = time(nullptr);
 			notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
 		}
@@ -230,7 +230,7 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	participant->clearDevices();
 	participants.remove(participant);
 	// Do not send notify if only 1 participant is left as the conference is going to be destroyed
-	if (getParticipantCount() > 1) {
+	if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
 		time_t creationTime = time(nullptr);
 		notifyParticipantRemoved(creationTime, false, participant);
 	}
