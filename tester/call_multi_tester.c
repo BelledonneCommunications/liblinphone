@@ -1436,11 +1436,7 @@ static void eject_from_4_participants_conference(void) {
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
-	linphone_core_terminate_all_calls(laure->lc);
-	linphone_core_terminate_all_calls(pauline->lc);
-	linphone_core_terminate_all_calls(michelle->lc);
-
-	finish_terminate_local_conference(lcs);
+	terminate_local_conference(lcs, marie);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 
