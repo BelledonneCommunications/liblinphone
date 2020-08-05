@@ -454,8 +454,10 @@ ms_message("%s - call state %s removing conference from map\n", __func__, Utils:
 						// It is expected that the core of the remote conference is the participant one
 						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
+						// Call is in conference if pointer to conference is not null
+						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
 					}
-				} else if (!isInConference()) {
+				} else if (isInConference()) {
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						remoteContactAddress.setParam("isfocus");
 					}
@@ -490,6 +492,8 @@ ms_message("%s - call state %s removing conference from map\n", __func__, Utils:
 						// It is expected that the core of the remote conference is the participant one
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
+						// Call is in conference if pointer to conference is not null
+						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
@@ -1118,8 +1122,6 @@ LinphoneConference *Call::getConference () const{
 }
 
 void Call::setConference (LinphoneConference *ref) {
-	// Call is in conference if pointer to conference is not null
-//	const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference((ref != nullptr));
 	mConfRef = ref;
 }
 
