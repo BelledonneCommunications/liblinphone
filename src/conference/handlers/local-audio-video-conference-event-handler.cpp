@@ -68,4 +68,21 @@ void LocalAudioVideoConferenceEventHandler::setConference(Conference *conference
 	conf = conference;
 }
 
+void LocalAudioVideoConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state) {
+
+	LocalConferenceEventHandler::subscriptionStateChanged (lev, state);
+
+/*	if (state == LinphoneSubscriptionTerminated) {
+		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
+		char *addrStr = linphone_address_as_string(lAddr);
+		shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));
+		bctbx_free(addrStr);
+		if (!participant)
+			return;
+
+		getMediaConference()->removeParticipantFromList(participant);
+	}
+*/
+}
+
 LINPHONE_END_NAMESPACE

@@ -180,13 +180,8 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 				p->removeDevice(*remoteContact);
 				call->removeFromConference(*remoteContact);
 
-				// Send notify only if:
-				// - there are more than two participants in the conference
-				// - there are two participants and the list of devices of the current participant is not empty
-				if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 2) || ((getParticipantCount() == 2) && (p->getDevices().empty() == false)))) {
-					time_t creationTime = time(nullptr);
-					notifyParticipantDeviceRemoved(creationTime, false, p, device);
-				}
+				time_t creationTime = time(nullptr);
+				notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
 				return 0;
 			}
@@ -196,45 +191,53 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 	return -1;
 }
 
-int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
+int Conference::removeParticipantFromList (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	removeParticipantDevice(call);
 	if (!p)
 		return -1;
 	if (p->getDevices().empty()) {
 		participants.remove(p);
-		// Do not send notify if only 1 participant is left as the conference is going to be destroyed
-		if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
-			time_t creationTime = time(nullptr);
-			notifyParticipantRemoved(creationTime, false, p);
-		}
+		time_t creationTime = time(nullptr);
+		notifyParticipantRemoved(creationTime, false, p);
 	}
+
+	checkIfTerminated();
+
 	return 0;
 }
 
-int Conference::removeParticipant (const IdentityAddress &addr) {
+int Conference::removeParticipantFromList (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	return removeParticipant(p);
 }
 
-bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+bool Conference::removeParticipantFromList (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	if (!participant)
 		return false;
 	// Delete all devices of a participant
 	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
-		if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 2)) {
-			time_t creationTime = time(nullptr);
-			notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
-		}
+		time_t creationTime = time(nullptr);
+		notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
 	}
 	participant->clearDevices();
 	participants.remove(participant);
-	// Do not send notify if only 1 participant is left as the conference is going to be destroyed
-	if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
-		time_t creationTime = time(nullptr);
-		notifyParticipantRemoved(creationTime, false, participant);
-	}
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, participant);
+
+	checkIfTerminated();
+
 	return true;
+}
+
+void Conference::checkIfTerminated() {
+	if (getParticipantCount() == 0) {
+		if (getState() == ConferenceInterface::State::TerminationPending) {
+			setState(ConferenceInterface::State::Terminated);
+		} else {
+			setState(ConferenceInterface::State::TerminationPending);
+		}
+	}
 }
 
 int Conference::terminate () {
@@ -569,7 +572,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			err = call->pause();
 		}
 	
-		Conference::removeParticipant(call);
+		removeParticipantFromList(call);
 		mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 
 	}
@@ -580,9 +583,14 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 	 */
 	if (isIn()){
+		//if (getParticipantCount() == 2){
 		if (getParticipantCount() == 1){
-			/* Obtain the last LinphoneCall from the list: FIXME: for the moment this list only contains remote participants so it works
-			 * but it should contains all participants ideally.*/
+			// Find first participant whose sesison is not the one in the call
+		/*	auto remaining_participant_it = std::find_if_not(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
+		return (p->getSession() == call->getActiveSession());
+	});
+			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = *remaining_participant_it;
+*/
 			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
 			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 			if (getState() != ConferenceInterface::State::TerminationPending) {
@@ -601,9 +609,8 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			leave();
 
 			/* invoke removeParticipant() recursively to remove this last participant. */
-			bool success = Conference::removeParticipant(remaining_participant->getAddress());
+			bool success = removeParticipantFromList(remaining_participant);
 			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
-			setState(ConferenceInterface::State::Terminated);
 			return success;
 		} else if (getParticipantCount() == 0){
 			// We should never enter here
@@ -626,13 +633,24 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 	const std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(addr);
 	if (!participant)
 		return -1;
-	std::shared_ptr<LinphonePrivate::MediaSession> mediaSession = static_pointer_cast<LinphonePrivate::MediaSession>(participant->getSession());
-	if (!mediaSession)
+	return removeParticipant(participant);
+}
+
+bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
+	if (!callSession)
 		return -1;
 
-	bool ret = Conference::removeParticipant(addr);
-	mMixerSession->unjoinStreamsGroup(mediaSession->getStreamsGroup());
-	if (getSize() == 0) setState(ConferenceInterface::State::TerminationPending);
+	// Search call that matches participant session
+	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
+	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&] (const std::shared_ptr<Call> & c) {
+		return (c->getActiveSession() == callSession);
+	});
+	bool ret = -1;
+	if (callIt != coreCalls.cend()) {
+		std::shared_ptr<Call> call = *callIt;
+		removeParticipant(call);
+	}
 	return ret;
 }
 
@@ -763,9 +781,14 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
-	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
-	return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
+	if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
+		// Increment last notify before notifying participants so that the delta can be calculated correctly
+		++lastNotify;
+		// Do not send notify if only 1 participant is left as the conference is going to be destroyed
+		return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
+	}
+
+	return nullptr;
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
@@ -788,8 +811,14 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	++lastNotify;
-	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
+	if (((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 2)) || ((getParticipantCount() == 2) && (participant->getDevices().empty() == false))) {
+		++lastNotify;
+		// Send notify only if:
+		// - there are more than two participants in the conference and it is in state TerminationPending
+		// - there are two participants and the list of devices of the current participant is not empty
+		return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
+	}
+	return nullptr;
 }
 
 RemoteConference::RemoteConference (
@@ -946,7 +975,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
 			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)
-				return Conference::removeParticipant(addr);
+				return removeParticipantFromList(addr);
 			else {
 				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
 				return -1;
@@ -1104,7 +1133,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallError:
 		case LinphoneCallEnd:
 			m_pendingCalls.remove(call);
-			Conference::removeParticipant(call);
+			removeParticipantFromList(call);
 			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
@@ -1121,7 +1150,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 			break;
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
-			Conference::removeParticipant(transfered);
+			removeParticipantFromList(transfered);
 			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;

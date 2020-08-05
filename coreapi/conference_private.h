@@ -110,7 +110,10 @@ public:
 	virtual int removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call);
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 	virtual int removeParticipant(const IdentityAddress &addr) = 0;
-	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
+//	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
+	int removeParticipantFromList(std::shared_ptr<LinphonePrivate::Call> call);
+	int removeParticipantFromList(const IdentityAddress &addr);
+	bool removeParticipantFromList(const std::shared_ptr<LinphonePrivate::Participant> &participant);
 
 //	virtual int removeParticipantFromConference(std::shared_ptr<LinphonePrivate::Call> call) = 0;
 //	virtual int removeParticipantFromConference(const IdentityAddress &addr) = 0;
@@ -160,6 +163,7 @@ public:
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
+	void checkIfTerminated();
 
 protected:
 	std::shared_ptr<LinphonePrivate::Participant> findParticipant(const std::shared_ptr<LinphonePrivate::Call> call) const;
@@ -195,6 +199,7 @@ public:
 	using LinphonePrivate::Conference::removeParticipant;
 	virtual int removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) override;
 	virtual int removeParticipant(const IdentityAddress &addr) override;
+	virtual bool removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
 	virtual int terminate() override;
 	virtual void finalizeCreation() override;
