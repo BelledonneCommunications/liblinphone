@@ -191,7 +191,7 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 	return -1;
 }
 
-int Conference::removeParticipantFromList (std::shared_ptr<LinphonePrivate::Call> call) {
+int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
 	removeParticipantDevice(call);
 	if (!p)
@@ -207,12 +207,12 @@ int Conference::removeParticipantFromList (std::shared_ptr<LinphonePrivate::Call
 	return 0;
 }
 
-int Conference::removeParticipantFromList (const IdentityAddress &addr) {
+int Conference::removeParticipant (const IdentityAddress &addr) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(addr);
 	return removeParticipant(p);
 }
 
-bool Conference::removeParticipantFromList (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
+bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	if (!participant)
 		return false;
 	// Delete all devices of a participant
@@ -572,7 +572,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			err = call->pause();
 		}
 	
-		removeParticipantFromList(call);
+		Conference::removeParticipant(call);
 		mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 
 	}
@@ -583,14 +583,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 	 */
 	if (isIn()){
-		//if (getParticipantCount() == 2){
 		if (getParticipantCount() == 1){
-			// Find first participant whose sesison is not the one in the call
-		/*	auto remaining_participant_it = std::find_if_not(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
-		return (p->getSession() == call->getActiveSession());
-	});
-			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = *remaining_participant_it;
-*/
 			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
 			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 			if (getState() != ConferenceInterface::State::TerminationPending) {
@@ -609,7 +602,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			leave();
 
 			/* invoke removeParticipant() recursively to remove this last participant. */
-			bool success = removeParticipantFromList(remaining_participant);
+			bool success = Conference::removeParticipant(remaining_participant);
 			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
 			return success;
 		} else if (getParticipantCount() == 0){
@@ -975,7 +968,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
 			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)
-				return removeParticipantFromList(addr);
+				return Conference::removeParticipant(addr);
 			else {
 				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
 				return -1;
@@ -1133,7 +1126,7 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallError:
 		case LinphoneCallEnd:
 			m_pendingCalls.remove(call);
-			removeParticipantFromList(call);
+			Conference::removeParticipant(call);
 			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
@@ -1150,7 +1143,7 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 			break;
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
-			removeParticipantFromList(transfered);
+			Conference::removeParticipant(transfered);
 			if ((participants.size() + m_pendingCalls.size() + m_transferingCalls.size()) == 0)
 				terminate();
 			break;
