@@ -596,6 +596,10 @@ static void call_with_network_switch_in_paused_state(void) {
 	_call_with_network_switch(FALSE, FALSE, FALSE, FALSE, TRUE);
 }
 
+static void call_with_network_switch_in_paused_state_and_ice(void) {
+	_call_with_network_switch(TRUE, FALSE, FALSE, FALSE, TRUE);
+}
+
 static void call_with_network_switch_in_paused_by_remote_state(void) {
 	_call_with_network_switch(FALSE, FALSE, FALSE, TRUE, FALSE);
 }
@@ -750,6 +754,7 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early media 1", recovered_call_on_network_switch_in_early_media_1, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early media 2", recovered_call_on_network_switch_in_early_media_2, "CallRecovery"),
 	TEST_ONE_TAG("Call with network switch in paused state", call_with_network_switch_in_paused_state, "CallRecovery"),
+	TEST_ONE_TAG("Call with network switch in paused state, ICE enabled",call_with_network_switch_in_paused_state_and_ice, "ICE"),
 	TEST_ONE_TAG("Call with network switch in paused by remote state", call_with_network_switch_in_paused_by_remote_state, "CallRecovery"),
 	TEST_ONE_TAG("Call with network switch and ICE", call_with_network_switch_and_ice, "ICE"),
 	TEST_ONE_TAG("Call with network switch, ICE and RTT", call_with_network_switch_ice_and_rtt, "ICE"),
