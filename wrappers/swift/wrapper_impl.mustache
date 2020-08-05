@@ -117,10 +117,6 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 	return cList
 }
 
-protocol LinphoneObjectDelegate {
-	var cPtr: OpaquePointer {get set}
-}
-
 enum LinphoneError: Error {
 	case exception(result: String)
 }
@@ -128,12 +124,45 @@ enum LinphoneError: Error {
 {{#interfaces}}
 {{#interface}}
 
-open class {{interfaceName}} : LinphoneObjectDelegate
+public protocol {{interfaceName}} : AnyObject {
+	{{#methods}}
+	{{#delegate}}
+	{{#doc}}
+	{{#lines}}
+	///	{{{line}}}
+	{{/lines}}
+	{{/doc}}
+	{{#detailedDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
+	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}?{{/return_class}}
+	{{/delegate}}
+	{{/methods}}
+}
+
+public extension {{interfaceName}} {
+	{{#methods}}
+	{{#delegate}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
+	func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
+	{{/delegate}}
+	{{/methods}}
+}
+
+open class {{interfaceName}}Manager
 {
 	var cPtr: OpaquePointer
+	public weak var delegate: {{interfaceName}}?
 
 	public init() {
-		self.cPtr = {{create_user_data_name}}(linphone_factory_get())
+		cPtr = {{create_user_data_name}}(linphone_factory_get())
 		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(self).toOpaque()), nil)
 		{{#methods}}
 		{{#delegate}}
@@ -141,7 +170,7 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 		{{c_name_setter}}(cPtr, { ({{{params_private}}}) -> {{return}} in
 			if ({{first_param}} != nil) {
 				let sObject = {{interfaceClassName}}.getSwiftObject(cObject: {{first_param}}!)
-				let delegate = sObject.currentCallbacks
+				let delegate = sObject.currentDelegateManager?.delegate
 				{{#classLists}}
 				var {{argName}}sList = [{{classType}}]()
 				var {{argName}}cList = {{argName}}
@@ -164,25 +193,6 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 		belle_sip_object_data_set(UnsafeMutablePointer(cPtr), "swiftRef",  nil, nil)
 		belle_sip_object_unref(UnsafeMutableRawPointer(cPtr))
 	}
-
-	{{#methods}}
-	{{#delegate}}
-	{{#doc}}
-	{{#lines}}
-	///	{{{line}}}
-	{{/lines}}
-	{{/doc}}
-	{{#detailedDoc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/detailedDoc}}
-	{{#isDeprecated}}
-	@available(*, deprecated)
-	{{/isDeprecated}}
-	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
-	{{/delegate}}
-	{{/methods}}
 }
 {{/interface}}
 {{/interfaces}}
@@ -461,21 +471,13 @@ public class {{className}} : LinphoneObject
 	{{/exception}}
 	{{/has_setter}}
 	{{#listener}}
-	public func {{name}}({{#args}}delegate: {{className}}Delegate{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
+	public func {{name}}({{#args}}delegateManager: {{className}}DelegateManager{{/args}}){{#property_return}} -> {{className}}Delegate?{{/property_return}}
 	{
-		{{#getListener}}
-		let cObject = {{c_name}}(cPtr)
-		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
-		if (result != nil) {
-			return Unmanaged<{{className}}Delegate>.fromOpaque(result!).takeUnretainedValue()
-			}
-		return nil
-		{{/getListener}}
 		{{#addListener}}
-		{{c_name}}(cPtr, delegate.cPtr)
+		{{c_name}}(cPtr, delegateManager.cPtr)
 		{{/addListener}}
 		{{#removeListener}}
-		{{c_name}}(cPtr, delegate.cPtr)
+		{{c_name}}(cPtr, delegateManager.cPtr)
 		{{/removeListener}}
 	}
 	{{/listener}}

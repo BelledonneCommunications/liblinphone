@@ -229,10 +229,10 @@ class SwiftTranslator(object):
         c_name = _class.name.to_snake_case(fullName=True) + '_add_callbacks'
 
         methodDict['listener'] = True
-        methodDict['name'] = 'addDelegate'
+        methodDict['name'] = 'addDelegateManager'
 
         methodDict['c_name'] = c_name
-        methodDict['args'] = 'delegate: ' + classname + 'Delegate'
+        methodDict['args'] = 'delegate: ' + classname + 'DelegateManager'
         methodDict['addListener'] = True
         methodDict['removeListener'] = False
 
@@ -243,10 +243,10 @@ class SwiftTranslator(object):
         c_name = _class.name.to_snake_case(fullName=True) + '_remove_callbacks'
 
         methodDict['listener'] = True
-        methodDict['name'] = 'removeDelegate'
+        methodDict['name'] = 'removeDelegateManager'
 
         methodDict['c_name'] = c_name
-        methodDict['args'] = 'delegate: ' + classname + 'Delegate'
+        methodDict['args'] = 'delegate: ' + classname + 'DelegateManager'
         methodDict['removeListener'] = True
         methodDict['addListener'] = False
 
@@ -366,6 +366,11 @@ class SwiftTranslator(object):
         methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
         if methodDict['return'].endswith('Delegate'):
             methodDict['is_callbacks'] = True
+            methodDict['return'] += 'Manager'
+            if methodDict['property_name'] == 'currentCallbacks':
+                methodDict['property_name'] = 'currentDelegateManager'
+
+
         methodDict['exception'] = self.throws_exception(prop.returnType)
         methodDict['getter_c_name'] = prop.name.to_c()
 
