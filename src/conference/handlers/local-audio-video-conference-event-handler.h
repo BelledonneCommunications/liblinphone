@@ -48,7 +48,6 @@ public:
 	void setConference (Conference *conference);
 
 	MediaConference::Conference *getMediaConference() const;
-	void subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state);
 private:
 
 	L_DISABLE_COPY(LocalAudioVideoConferenceEventHandler);
