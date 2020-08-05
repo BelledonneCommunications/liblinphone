@@ -145,8 +145,7 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 bool Core::areSoundResourcesLocked () const {
 	L_D();
 	for (const auto &call : d->calls) {
-		if (call->mediaInProgress())
-			return true;
+		
 		switch (call->getState()) {
 			case CallSession::State::OutgoingInit:
 			case CallSession::State::OutgoingProgress:
@@ -158,6 +157,10 @@ bool Core::areSoundResourcesLocked () const {
 			case CallSession::State::Updating:
 				lInfo() << "Call " << call << " is locking sound resources";
 				return true;
+			case CallSession::State::StreamsRunning:
+				if (call->mediaInProgress())
+					return true;
+			break;
 			default:
 				break;
 		}
