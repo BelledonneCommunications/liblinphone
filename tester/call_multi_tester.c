@@ -464,7 +464,8 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			/* Since Laure has been removed, the conference will automatically disapear to let
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
-			remove_participant_from_local_conference(lcs, marie, laure, "conference pause");
+			linphone_core_pause_call(marie->lc, marie_call_pauline);
+			remove_participant_from_local_conference(lcs, marie, laure);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
 			BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1319,7 +1320,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	ms_message("Removing pauline from conference.");
 	if(!is_remote_conf) {
-		remove_participant_from_local_conference(lcs, marie, pauline, "conference remove");
+		remove_participant_from_local_conference(lcs, marie, pauline);
 	} else {
 		LinphoneConference *conference = linphone_core_get_conference(marie->lc);
 		const LinphoneAddress *uri = linphone_call_get_remote_address(marie_call_pauline);
@@ -1427,7 +1428,7 @@ static void eject_from_4_participants_conference(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
-	remove_participant_from_local_conference(lcs, marie, pauline, "conference remove");
+	remove_participant_from_local_conference(lcs, marie, pauline);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1509,9 +1510,16 @@ static void participant_exits_conference_by_pausing(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
-	remove_participant_from_local_conference(lcs, marie, laure, "participant pause");
+	LinphoneCall * laure_call_marie = linphone_core_get_current_call(laure->lc);
+	linphone_core_pause_call(laure->lc, laure_call_marie);
+
+	LinphoneCall * pauline_call_marie = linphone_core_get_current_call(pauline->lc);
+	linphone_core_pause_call(laure->lc, pauline_call_marie);
+
+	remove_participant_from_local_conference(lcs, marie, laure);
 	lcs=bctbx_list_remove(lcs,laure->lc);
-	remove_participant_from_local_conference(lcs, marie, pauline, "participant pause");
+
+	remove_participant_from_local_conference(lcs, marie, pauline);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
