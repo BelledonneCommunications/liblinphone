@@ -60,6 +60,9 @@
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
+#include "conference/session/media-session-p.h"
+#include "call/call-p.h"
+
 void linphone_core_update_allocated_audio_bandwidth(LinphoneCore *lc){
 	const bctbx_list_t *elem;
 	int maxbw=LinphonePrivate::PayloadTypeHandler::getMinBandwidth(linphone_core_get_download_bandwidth(lc),
@@ -804,7 +807,21 @@ bool_t linphone_core_symmetric_rtp_enabled(LinphoneCore*lc){
 LinphoneStatus linphone_core_set_network_simulator_params(LinphoneCore *lc, const OrtpNetworkSimulatorParams *params){
 	if (params!=&lc->net_conf.netsim_params)
 		lc->net_conf.netsim_params=*params;
-	/*TODO: should we make some sanity checks on the parameters here*/
+	
+	/* update all running streams. */
+	const bctbx_list_t *calls = linphone_core_get_calls(lc);
+	for (const bctbx_list_t *elem = calls; elem != NULL; elem = elem->next){
+		LinphoneCall *call = (LinphoneCall*) elem->data;
+		std::shared_ptr<LinphonePrivate::MediaSession> ms = std::dynamic_pointer_cast<LinphonePrivate::MediaSession>(L_GET_PRIVATE_FROM_C_OBJECT(call)->getActiveSession());
+		if (ms){
+			L_GET_PRIVATE(ms)->getStreamsGroup().forEach<LinphonePrivate::MS2Stream>([params](LinphonePrivate::MS2Stream* ms2s){
+			MediaStream *stream = ms2s->getMediaStream();
+			if (stream && stream->sessions.rtp_session){
+				rtp_session_enable_network_simulation(stream->sessions.rtp_session, params);
+			}
+			});
+		}
+	}
 	return 0;
 }
 
