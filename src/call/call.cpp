@@ -347,6 +347,7 @@ void Call::removeFromConference(const Address & remoteContactAddress) {
 		ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 		shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 
+printf("%s - searching conference (peer address %s local address %s remote contact address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), (remoteContactAddress.asString().empty() ? "Unknown" : remoteContactAddress.asString().c_str()), conference.get());
 ms_message("%s - searching conference (peer address %s local address %s remote contact address %s): %p\n", __func__, ((remoteConferenceId.getPeerAddress().asString().empty() == false) ? remoteConferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((remoteConferenceId.getLocalAddress().asString().empty() == false) ? remoteConferenceId.getLocalAddress().asString().c_str() : "Unknown"), (remoteContactAddress.asString().empty() ? "Unknown" : remoteContactAddress.asString().c_str()), conference.get());
 		// If conference is found, start termination
 		// In the case of a local conference, the following lines wil trigger the deletion of the remote conference created for every call added to the local conference
@@ -361,6 +362,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
+printf("%s - call %p state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d get conference %p\n", __func__, this, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
 ms_message("%s - call state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d get conference %p\n", __func__, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
 
 	switch(state) {
@@ -1117,7 +1119,7 @@ LinphoneConference *Call::getConference () const{
 
 void Call::setConference (LinphoneConference *ref) {
 	// Call is in conference if pointer to conference is not null
-	const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference((ref != nullptr));
+//	const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference((ref != nullptr));
 	mConfRef = ref;
 }
 
