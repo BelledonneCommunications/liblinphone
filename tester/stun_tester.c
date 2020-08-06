@@ -305,6 +305,10 @@ static void relayed_ice_turn_to_ice_stun_call(void) {
 	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
 }
 
+static void relayed_ice_turn_call_with_srtp(void) {
+	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionSRTP);
+}
+
 static void relayed_ice_turn_tls_with_srtp(void) {
 	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
 }
@@ -326,6 +330,7 @@ test_t stun_tests[] = {
 	TEST_TWO_TAGS("Relayed ICE+TURN call with TLS", relayed_ice_turn_call_with_tls, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call with rtcp-mux", relayed_ice_turn_call_with_rtcp_mux, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN to ICE+STUN call", relayed_ice_turn_to_ice_stun_call, "ICE", "TURN"),
+	TEST_TWO_TAGS("Relayed ICE+TURN call with SRTP", relayed_ice_turn_call_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call with SRTP", relayed_ice_turn_tls_with_srtp, "ICE", "TURN"),
 };
 
