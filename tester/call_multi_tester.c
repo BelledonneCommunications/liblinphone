@@ -1726,6 +1726,20 @@ end:
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_with_participant_with_no_event_log(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_log_enabled",FALSE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
+
+	simple_conference_base(marie,pauline,laure, NULL, FALSE);
+
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(marie);
+}
+
 void simple_remote_conference(void) {
 	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
 	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
@@ -2327,6 +2341,7 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple 4 participant conference", simple_4_participants_conference),
+	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 //	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 //	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
 	TEST_NO_TAG("Video conference by merging calls", video_conference_by_merging_calls),
