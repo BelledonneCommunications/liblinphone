@@ -365,8 +365,11 @@ LocalConference::LocalConference (
 //	lastNotify = 1;
 
 #ifdef HAVE_ADVANCED_IM
-	eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
-	addListener(eventHandler);
+	bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+	if (eventLogEnabled) {
+		eventHandler = std::make_shared<LocalAudioVideoConferenceEventHandler>(this);
+		addListener(eventHandler);
+	}
 #endif // HAVE_ADVANCED_IM
 
 	setState(ConferenceInterface::State::Instantiated);
@@ -408,20 +411,26 @@ void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceA
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
 #ifdef HAVE_ADVANCED_IM
-		eventHandler->setConference(this);
+		if (eventHandler) {
+			eventHandler->setConference(this);
+		}
 #endif // HAVE_ADVANCED_IM
 	}
 }
 
 void LocalConference::subscribeReceived (LinphoneEvent *event) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->subscribeReceived(event, false);
+	if (eventHandler) {
+		eventHandler->subscribeReceived(event, false);
+	}
 #endif // HAVE_ADVANCED_IM
 }
 
 void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->setConference(nullptr);
+	if (eventHandler) {
+		eventHandler->setConference(nullptr);
+	}
 #endif // HAVE_ADVANCED_IM
 	Conference::onConferenceTerminated(addr);
 }
@@ -656,7 +665,9 @@ void LocalConference::setSubject (const std::string &subject) {
 
 void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->subscriptionStateChanged(event, state);
+	if (eventHandler) {
+		eventHandler->subscriptionStateChanged(event, state);
+	}
 #endif // HAVE_ADVANCED_IM
 }
 
@@ -886,10 +897,13 @@ void RemoteConference::finalizeCreation() {
 
 		addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 	#ifdef HAVE_ADVANCED_IM
-		eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
-		eventHandler->subscribe(getConferenceId());
+		bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+		if (eventLogEnabled) {
+			eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
+			eventHandler->subscribe(getConferenceId());
 
-		getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
+			getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
+		}
 	#endif // HAVE_ADVANCED_IM
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
@@ -1193,9 +1207,11 @@ AudioStream *RemoteConference::getAudioStream(){
 
 void RemoteConference::notifyReceived (const string &body) {
 #ifdef HAVE_ADVANCED_IM
-	eventHandler->notifyReceived(body);
+	if (eventHandler) {
+		eventHandler->notifyReceived(body);
+	}
 #else
-	ms_message("Advanced IM such as group chat is disabled!");
+	ms_message("Advanced IM such as conferencing events is disabled!");
 #endif // HAVE_ADVANCED_IM
 }
 
