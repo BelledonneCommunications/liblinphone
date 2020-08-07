@@ -484,7 +484,7 @@ void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool on
 }
 
 void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, LinphoneSubscriptionState state) {
-	if (state == LinphoneSubscriptionTerminated) {
+	if (state == LinphoneSubscriptionTerminated && conf) {
 		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 		char *addrStr = linphone_address_as_string(lAddr);
 		shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));

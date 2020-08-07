@@ -166,7 +166,7 @@ public:
 
 	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
 
-	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = false) const;
+	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
 
 	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
 

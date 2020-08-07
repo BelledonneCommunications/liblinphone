@@ -730,6 +730,49 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 }
 
+LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
+
+	stats conf_initial_stats = conf_mgr->stat;
+	stats focus_initial_stats = focus_mgr->stat;
+
+	int counter = 1;
+	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
+		stats initial_stats = m->stat;
+
+		const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
+		char * participant_uri_str = linphone_address_as_string(participant_uri);
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_uri_str);
+		free(participant_uri_str);
+		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(focus_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + counter),1000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,initial_stats.number_of_LinphoneSubscriptionActive + 1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneSubscriptionActive,(focus_initial_stats.number_of_LinphoneSubscriptionActive + counter),1000));
+
+		BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
+		BC_ASSERT_TRUE(linphone_call_is_in_conference(participant_call));
+
+		counter++;
+	}
+
+	int no_new_participants = (int)bctbx_list_size(new_participants);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneCallStreamsRunning,focus_initial_stats.number_of_LinphoneCallStreamsRunning+no_new_participants,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,conf_initial_stats.number_of_LinphoneCallStreamsRunning+no_new_participants,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneTransferCallConnected,conf_initial_stats.number_of_LinphoneTransferCallConnected+no_new_participants,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallEnd,conf_initial_stats.number_of_LinphoneCallEnd+no_new_participants,5000));
+
+	return 0;
+
+}
+
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants) {
 
 	stats conf_initial_stats = conf_mgr->stat;
@@ -777,6 +820,7 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
 printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
+		call_paused[counter - 1] = is_call_paused;
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 
 		if (is_call_paused) {
@@ -2668,11 +2712,24 @@ static void linphone_conference_server_registration_state_changed(
 	}
 }
 
+static void linphone_subscribe_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content) {
+	int *subscription_received = (int*)(((LinphoneCoreManager *)linphone_core_get_user_data(lc))->user_info);
+	*subscription_received += 1;
+}
+
+static void linphone_notify_received_internal(LinphoneCore *lc, LinphoneEvent *lev, const char *eventname, const LinphoneContent *content){
+	LinphoneCoreManager *mgr = get_manager(lc);
+	mgr->stat.number_of_NotifyReceived++;
+}
+
 LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration) {
 	LinphoneConferenceServer *conf_srv = (LinphoneConferenceServer *)ms_new0(LinphoneConferenceServer, 1);
 	LinphoneCoreManager *lm = (LinphoneCoreManager *)conf_srv;
 	LinphoneProxyConfig *proxy;
 	conf_srv->cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+	linphone_core_cbs_set_subscription_state_changed(conf_srv->cbs, linphone_subscription_state_change);
+	linphone_core_cbs_set_subscribe_received(conf_srv->cbs, linphone_subscribe_received_internal);
+	linphone_core_cbs_set_notify_received(conf_srv->cbs, linphone_notify_received_internal);
 	linphone_core_cbs_set_call_state_changed(conf_srv->cbs, linphone_conference_server_call_state_changed);
 	linphone_core_cbs_set_refer_received(conf_srv->cbs, linphone_conference_server_refer_received);
 	linphone_core_cbs_set_registration_state_changed(conf_srv->cbs, linphone_conference_server_registration_state_changed);
@@ -2689,6 +2746,33 @@ LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bo
 	linphone_core_manager_start(lm, do_registration);
 	return conf_srv;
 }
+
+static void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, LinphoneCoreCbs *cbs) {
+	_linphone_core_add_callbacks(lcm->lc, cbs, TRUE);
+	linphone_core_set_user_data(lcm->lc, lcm);
+}
+
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+
+	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	// Add subscribe and notify received here as when a participant is added, we must wait for its notify is the call goes to StreamRunning
+	linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
+	linphone_core_cbs_set_subscribe_received(cbs, linphone_subscribe_received_internal);
+	linphone_core_cbs_set_notify_received(cbs, linphone_notify_received_internal);
+	configure_core_for_conference_callbacks(mgr, cbs);
+	linphone_core_cbs_unref(cbs);
+
+	linphone_core_set_user_data(mgr->lc, mgr);
+
+	int* subscription_received = (int *)ms_new0(int, 1);
+	*subscription_received = 0;
+	mgr->user_info = subscription_received;
+
+	return mgr;
+}
+
 
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv) {
 	linphone_core_cbs_unref(conf_srv->cbs);
