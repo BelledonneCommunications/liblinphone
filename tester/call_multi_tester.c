@@ -2313,7 +2313,6 @@ static void simple_conference_with_audio_device_change_during_pause_caller_calle
 }
 */
 
-/*
 static void initiate_call(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
 
 	stats initial_caller_stat = caller->stat;
@@ -2360,14 +2359,81 @@ static void take_call(bctbx_list_t* lcs, LinphoneCoreManager* caller, LinphoneCo
 			}
 			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, initial_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
 		} else {
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausing, 1, 5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPaused, 1, 5000));
+printf("%s - manager %s\n", __func__, m->rc_path);
+			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausedByRemote, 1, 5000));
 		}
 	}
 
+	// Number of calls paused is number of cores - 2 (i.e. caller and callee)
+	unsigned int no_paused = (unsigned int)bctbx_list_size(lcs) - 2;
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPausing, no_paused, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, no_paused, 5000));
+
 }
 
-static void conference_with_calls_queued(void) {
+static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_list_t* participants) {
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,local_conf->lc);
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		initiate_call(m, local_conf);
+	}
+
+	//Let ring calls for a little while
+	wait_for_list(lcs,NULL,0,1000);
+
+	BC_ASSERT_EQUAL(local_conf->stat.number_of_LinphoneCallStreamsRunning, 0, int, "%d");
+	BC_ASSERT_EQUAL(local_conf->stat.number_of_LinphoneCallPausing, 0, int, "%d");
+	BC_ASSERT_EQUAL(local_conf->stat.number_of_LinphoneCallPaused, 0, int, "%d");
+	BC_ASSERT_EQUAL(local_conf->stat.number_of_LinphoneCallPausedByRemote, 0, int, "%d");
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs=bctbx_list_append(lcs,c);
+		take_call(lcs, m, local_conf);
+	}
+
+	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(local_conf->lc));
+
+	add_calls_to_local_conference(lcs, local_conf, participants);
+
+	terminate_local_conference(lcs, local_conf);
+
+	bctbx_list_free(lcs);
+}
+
+static void conference_with_calls_queued_without_ice(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	linphone_core_set_inc_timeout(michelle->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+	participants=bctbx_list_append(participants,laure);
+
+	conference_with_calls_queued(marie, participants);
+
+	bctbx_list_free(participants);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+}
+
+static void conference_with_calls_queued_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -2395,43 +2461,20 @@ static void conference_with_calls_queued(void) {
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
-	bctbx_list_t* lcs = NULL;
-	lcs=bctbx_list_append(lcs,marie->lc);
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+	participants=bctbx_list_append(participants,laure);
 
-	initiate_call(pauline, marie);
-	initiate_call(laure, marie);
-	initiate_call(michelle, marie);
+	conference_with_calls_queued(marie, participants);
 
-	//Let ring calls for a little while
-	wait_for_list(lcs,NULL,0,1000);
-
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, 0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, 0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, 0, int, "%d");
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, 0, int, "%d");
-
-	take_call(lcs, pauline, marie);
-	take_call(lcs, laure, marie);
-	take_call(lcs, michelle, marie);
-
-	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
-
-	bctbx_list_t* new_participants=NULL;
-	new_participants=bctbx_list_append(new_participants,michelle);
-	new_participants=bctbx_list_append(new_participants,pauline);
-	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
-	bctbx_list_free(new_participants);
-
-	terminate_local_conference(lcs, marie);
+	bctbx_list_free(participants);
 
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-	bctbx_list_free(lcs);
 }
-*/
 
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
@@ -2463,7 +2506,8 @@ test_t multi_call_tests[] = {
 //	TEST_NO_TAG("Participants exit conference after pausing", participants_exit_conference_after_pausing),
 	TEST_NO_TAG("Add participant after conference started", add_participant_after_conference_started),
 	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
-//	TEST_NO_TAG("Conference with calls queued", conference_with_calls_queued),
+	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
+	TEST_NO_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice),
 	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
 	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
 	TEST_NO_TAG("Call transfer existing outgoing call", call_transfer_existing_call_outgoing_call),
