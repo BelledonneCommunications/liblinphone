@@ -261,6 +261,7 @@ printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)State
 	if (isFullState) {
 		confListener->onFirstNotifyReceived(getConferenceId().getPeerAddress());
 		conf->notifyFullState();
+		// Move to Created state when the list of participants is received
 		conf->setState(ConferenceInterface::State::Created);
 	}
 }
