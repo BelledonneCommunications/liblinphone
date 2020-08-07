@@ -930,6 +930,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
 			linphone_call_params_enable_video(params, confParams->videoEnabled());
 			m_focusCall = Call::toCpp(linphone_core_invite_address_with_params(getCore()->getCCore(), addr, params))->getSharedFromThis();
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+				L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			m_pendingCalls.push_back(call);
 			callLog = m_focusCall->getLog();
 			callLog->was_conference = TRUE;
@@ -939,6 +941,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			Conference::addParticipant(call);
 			return true;
 		case ConferenceInterface::State::CreationPending:
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+				L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			Conference::addParticipant(call);
 			if(focusIsReady())
 				transferToFocus(call);
@@ -946,6 +950,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				m_pendingCalls.push_back(call);
 			return true;
 		case ConferenceInterface::State::Created:
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+				L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			Conference::addParticipant(call);
 			transferToFocus(call);
 			return true;
