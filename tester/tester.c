@@ -708,13 +708,16 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		idx++;
 	}
 
-	int expected_subscriptions = linphone_conference_get_participant_count(linphone_core_get_conference(conf_mgr->lc));
-	for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
-		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
-		// If events logs are not enabled, subscribes are not sent
-		if (!event_log_enabled) {
-			expected_subscriptions--;
+	int expected_subscriptions = 0;
+	if (conference) {
+		expected_subscriptions = linphone_conference_get_participant_count(conference);
+		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
+			bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+			// If events logs are not enabled, subscribes are not sent
+			if (!event_log_enabled) {
+				expected_subscriptions--;
+			}
 		}
 	}
 
@@ -738,13 +741,10 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 	int counter = 1;
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
 		stats initial_stats = m->stat;
-
-		const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
-		char * participant_uri_str = linphone_address_as_string(participant_uri);
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_uri_str);
-		free(participant_uri_str);
+		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
+		const LinphoneAddress *participant_uri = m->identity;
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
@@ -813,10 +813,8 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		stats initial_stats = m->stat;
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
-		const LinphoneAddress *participant_uri = linphone_call_get_to_address(participant_call);
-		char * participant_uri_str = linphone_address_as_string(participant_uri);
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_uri_str);
-		free(participant_uri_str);
+		const LinphoneAddress *participant_uri = m->identity;
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
 printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));

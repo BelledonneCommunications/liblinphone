@@ -897,7 +897,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_core_set_default_input_audio_device(marie->lc, current_dev);
 	linphone_core_set_default_output_audio_device(marie->lc, current_dev);
 
-	/*Laure creates the conference*/
+	//Laure creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(laure->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(laure->lc, conf_params);
@@ -951,7 +951,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,noParticipants,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,noParticipants,3000));
 
-	/*make sure that the two calls from Marie's standpoint are in conference*/
+	//make sure that the two calls from Marie's standpoint are in conference
 	const bctbx_list_t *laure_calls = linphone_core_get_calls(laure->lc);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(laure_calls), noParticipants, int, "%i");
 	const bctbx_list_t *it;
@@ -1109,7 +1109,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_core_set_default_input_audio_device(pauline->lc, pauline_current_dev);
 	linphone_core_set_default_output_audio_device(pauline->lc, pauline_current_dev);
 
-	/*Laure creates the conference*/
+	//Laure creates the conference
 	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(pauline->lc);
 	linphone_conference_params_enable_video(conf_params, FALSE);
 	LinphoneConference *conf = linphone_core_create_conference_with_params(pauline->lc, conf_params);
@@ -1162,7 +1162,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	LinphoneCall *pauline_call = NULL;
 
-	/*make sure that the two calls from Marie's standpoint are in conference*/
+	//make sure that the two calls from Marie's standpoint are in conference
 	const bctbx_list_t *pauline_calls = linphone_core_get_calls(pauline->lc);
 	BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_calls), noParticipants, int, "%i");
 	const bctbx_list_t *it;
