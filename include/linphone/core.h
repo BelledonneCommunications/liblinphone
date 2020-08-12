@@ -1176,6 +1176,7 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
  * created by linphone_core_interpret_url().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
+ * The caller proxy is automatically selected by finding what is the best to reach the destination of the call.
  * @param core #LinphoneCore object @notnil
  * @param addr The destination of the call (sip address). @notnil
  * @param params Call parameters @notnil
@@ -1183,6 +1184,22 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
  * @ingroup call_control
 **/
 LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *core, const LinphoneAddress *addr, const LinphoneCallParams *params);
+
+/**
+ * Initiates an outgoing call given a destination #LinphoneAddress
+ * The #LinphoneAddress can be constructed directly using linphone_address_new(), or
+ * created by linphone_core_interpret_url().
+ * The application doesn't own a reference to the returned #LinphoneCall object.
+ * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
+ * The caller proxy is automatically selected by finding what is the best to reach the uri. If it is not specified then the default proxy is used.
+ * @param core #LinphoneCore object @notnil
+ * @param uri The address of the best proxy to use for the call (sip address). NULL for the default proxy. @maybenil
+ * @param addr The destination of the call (sip address). @notnil
+ * @param params Call parameters @notnil
+ * @return A #LinphoneCall object or NULL in case of failure. @maybenil
+ * @ingroup call_control
+**/
+LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_address_with_params_and_proxy(LinphoneCore *lc, const LinphoneAddress *uri, const LinphoneAddress *addr, const LinphoneCallParams *params);
 
 /**
  * @brief Start a new call as a consequence of a transfer request received from a call.

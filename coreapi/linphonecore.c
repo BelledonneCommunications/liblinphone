@@ -4159,6 +4159,74 @@ void linphone_configure_op_2(LinphoneCore *lc, SalOp *op, const LinphoneAddress 
 	linphone_configure_op_with_proxy(lc, op, dest, headers, with_contact, linphone_core_lookup_proxy_by_identity(lc, local));
 }
 
+LinphoneCall * linphone_core_invite_address_with_params_and_proxy(LinphoneCore *lc, const LinphoneAddress *uri, const LinphoneAddress *addr, const LinphoneCallParams *params){
+	const char *from=NULL;
+	LinphoneProxyConfig *proxy=NULL;
+	LinphoneAddress *parsed_url2=NULL;
+	LinphoneCall *call;
+	LinphoneCallParams *cp;
+
+	if (!addr) {
+		ms_error("Can't invite a NULL address");
+		return NULL;
+	}
+
+	if (!(!linphone_call_params_audio_enabled(params) ||
+		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
+		linphone_call_params_get_local_conference_mode(params) == TRUE
+		)
+		&& linphone_core_preempt_sound_resources(lc) == -1) {
+		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. Call attempt is rejected.");
+		return NULL;
+	}
+
+	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
+		return NULL;
+
+	cp = linphone_call_params_copy(params);
+	if( uri)
+		proxy=linphone_core_lookup_known_proxy(lc,uri);
+	else
+		proxy = lc->default_proxy;
+	if (proxy!=NULL) {
+		from=linphone_proxy_config_get_identity(proxy);
+		linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
+		linphone_call_params_set_avpf_rr_interval(cp, (uint16_t)(linphone_proxy_config_get_avpf_rr_interval(proxy) * 1000));
+	}else{
+		linphone_call_params_enable_avpf(cp, linphone_core_get_avpf_mode(lc)==LinphoneAVPFEnabled);
+		if (linphone_call_params_avpf_enabled(cp))
+			linphone_call_params_set_avpf_rr_interval(cp, (uint16_t)(linphone_core_get_avpf_rr_interval(lc) * 1000));
+	}
+
+	/* if no proxy or no identity defined for this proxy, default to primary contact*/
+	if (from==NULL) from=linphone_core_get_primary_contact(lc);
+
+	parsed_url2=linphone_address_new(from);
+	call=linphone_call_new_outgoing(lc,parsed_url2,addr,cp,proxy);
+	linphone_address_unref(parsed_url2);
+
+	if (L_GET_PRIVATE_FROM_C_OBJECT(lc)->addCall(Call::toCpp(call)->getSharedFromThis()) != 0) {
+		ms_warning("we had a problem in adding the call into the invite ... weird");
+		linphone_call_unref(call);
+		linphone_call_params_unref(cp);
+		return NULL;
+	}
+
+	/* Unless this call is for a conference, it becomes now the current one*/
+	if (linphone_call_params_get_local_conference_mode(params) ==  FALSE)
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->setCurrentCall(Call::toCpp(call)->getSharedFromThis());
+	bool defer = Call::toCpp(call)->initiateOutgoing();
+	if (!defer) {
+		if (Call::toCpp(call)->startInvite(nullptr) != 0) {
+			/* The call has already gone to error and released state, so do not return it */
+			call = nullptr;
+		}
+	}
+
+	linphone_call_params_unref(cp);
+	return call;
+}
+
 LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params){
 	const char *from=NULL;
 	LinphoneProxyConfig *proxy=NULL;
