@@ -127,16 +127,17 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled, bool_t t
 }
 
 static void check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnContext *turn_context2, bool_t forced_relay) {
-	BC_ASSERT_TRUE(turn_context1->stats.nb_successful_allocate > 1);
-	if (turn_context2) BC_ASSERT_TRUE(turn_context2->stats.nb_successful_allocate > 1);
+	BC_ASSERT_TRUE(turn_context1->stats.nb_successful_allocate > 0);
+	if (turn_context2) BC_ASSERT_TRUE(turn_context2->stats.nb_successful_allocate > 0);
 	if (forced_relay == TRUE) {
 		BC_ASSERT_TRUE(turn_context1->stats.nb_send_indication > 0 || (turn_context2 && turn_context2->stats.nb_send_indication > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_data_indication > 0 || (turn_context2 && turn_context2->stats.nb_data_indication > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_received_channel_msg > 0 || (turn_context2 && turn_context2->stats.nb_received_channel_msg > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_sent_channel_msg > 0 || (turn_context2 && turn_context2->stats.nb_sent_channel_msg > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_refresh > 0 || (turn_context2 && turn_context2->stats.nb_successful_refresh > 0));
-		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_create_permission > 1 || (turn_context2 && turn_context2->stats.nb_successful_create_permission > 1));
-		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_channel_bind > 1 || (turn_context2 && turn_context2->stats.nb_successful_channel_bind > 1));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_create_permission > 0 || (turn_context2 && turn_context2->stats.nb_successful_create_permission > 0));
+		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_channel_bind > 0 || (turn_context2 && turn_context2->stats.nb_successful_channel_bind > 0));
+		
 	}
 }
 
@@ -211,7 +212,9 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 	BC_ASSERT_TRUE(check_ice(pauline, marie, expected_ice_state));
 	check_nb_media_starts(AUDIO_START, pauline, marie, 1, 1);
+	ms_message("Checking marie's streams");
 	check_media_direction(marie, linphone_core_get_current_call(marie->lc), lcs, LinphoneMediaDirectionSendRecv, expected_video_dir);
+	ms_message("Checking pauline's streams");
 	check_media_direction(pauline, linphone_core_get_current_call(pauline->lc), lcs, LinphoneMediaDirectionSendRecv, expected_video_dir);
 	liblinphone_tester_check_rtcp(marie, pauline);
 	lcall = linphone_core_get_current_call(marie->lc);
@@ -243,7 +246,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	 */
 	if (cl1 && cl2) {
 		check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, forced_relay);
-		if (!rtcp_mux_enabled) check_turn_context_statistics(cl1->rtp_turn_context, cl2->rtp_turn_context, forced_relay);
+		if (!rtcp_mux_enabled) check_turn_context_statistics(cl1->rtcp_turn_context, cl2->rtcp_turn_context, forced_relay);
 	}
 
 	end_call(marie, pauline);
@@ -298,7 +301,7 @@ static void relayed_video_ice_turn_call(void) {
 #endif
 
 static void relayed_ice_turn_call_with_rtcp_mux(void) {
-	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
+	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionNone);
 }
 
 static void relayed_ice_turn_to_ice_stun_call(void) {
@@ -311,6 +314,10 @@ static void relayed_ice_turn_call_with_srtp(void) {
 
 static void relayed_ice_turn_tls_with_srtp(void) {
 	ice_turn_call_base(FALSE, TRUE, TRUE, TRUE, FALSE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
+}
+
+static void relayed_ice_turn_tls_to_ice_with_srtp(void){
+	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
 }
 
 
@@ -332,6 +339,7 @@ test_t stun_tests[] = {
 	TEST_TWO_TAGS("Relayed ICE+TURN to ICE+STUN call", relayed_ice_turn_to_ice_stun_call, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call with SRTP", relayed_ice_turn_call_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call with SRTP", relayed_ice_turn_tls_with_srtp, "ICE", "TURN"),
+	TEST_TWO_TAGS("Relayed ICE+TURN TLS call to ICE with SRTP", relayed_ice_turn_tls_to_ice_with_srtp, "ICE", "TURN")
 };
 
 test_suite_t stun_test_suite = {"Stun", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
