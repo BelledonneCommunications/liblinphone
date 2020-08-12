@@ -2390,9 +2390,28 @@ static void initiate_call(LinphoneCoreManager* caller, LinphoneCoreManager* call
 static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, LinphoneCoreManager* callee) {
 
 	LinphoneCall * current_call = linphone_core_get_current_call(callee->lc);
+	LinphoneCall * current_call_caller = NULL;
 	bool_t pausing_current_call = FALSE;
 	if (current_call) {
-		pausing_current_call = ((linphone_call_get_state(current_call) == LinphoneCallStreamsRunning) || (linphone_call_get_state(current_call) == LinphoneCallPausedByRemote));
+		pausing_current_call = ((linphone_call_get_state(current_call) == LinphoneCallStreamsRunning) || (linphone_call_get_state(current_call) == LinphoneCallPaused));
+		char* remote_address_string = linphone_call_get_remote_address_as_string(current_call);
+printf("%s - remote address of current call %s\n", __func__, linphone_call_get_remote_address_as_string(current_call));
+		// Search core that matches the remote address 
+
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			LinphoneCoreManager * m = get_manager(c);
+			char * identity_string = linphone_address_as_string(m->identity);
+			bool_t manager_found = (strcmp(remote_address_string, identity_string) == 0);
+printf("%s - remote address of current call %s identity %s compare %0d\n", __func__, remote_address_string, identity_string, manager_found);
+			ms_free(identity_string);
+			if (manager_found == TRUE) {
+				current_call_caller = linphone_core_get_current_call(c);
+				break;
+			}
+		}
+
+		ms_free(remote_address_string);
 	}
 	stats initial_callee_stat = callee->stat;
 
@@ -2407,26 +2426,39 @@ printf("%s - manager caller %s callee %s - call %p\n", __func__, caller_mgr->rc_
 		linphone_call_accept(callee_call);
 	}
 
+	unsigned int no_callers = (unsigned int)bctbx_list_size(caller);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + no_callers, 5000));
+	// Last call is not paused
+	// If core had a running call, it will be paused
+	unsigned int no_call_paused = no_callers - 1 + ((pausing_current_call) ? 1 : 0);
+printf("%s - manager %s call paused %0d caller size %0d callee first call %0d\n", __func__, callee->rc_path, no_call_paused, (unsigned int)bctbx_list_size(caller), pausing_current_call);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPausing, initial_callee_stat.number_of_LinphoneCallPausing + no_call_paused, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
+
+	int no_paused_by_remote = 0;
+	int updated_by_remote_count = 0;
+	bool_t callee_uses_ice = (linphone_core_get_firewall_policy(callee->lc) == LinphonePolicyUseIce);
 	// Wait that all calls but the last one are paused
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-		if (m == callee) {
-			unsigned int no_callers = (unsigned int)bctbx_list_size(caller);
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + no_callers, 5000));
-			// Last call is not paused
-			// If core had a running call, it will be paused
-			unsigned int no_call_paused = no_callers - 1 + ((pausing_current_call) ? 1 : 0);
-printf("%s - manager %s call paused %0d caller size %0d callee first call %0d\n", __func__, m->rc_path, no_call_paused, (unsigned int)bctbx_list_size(caller), pausing_current_call);
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausing, initial_callee_stat.number_of_LinphoneCallPausing + no_call_paused, 5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
-		} else {
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
-			if (bctbx_list_next(it) != NULL) {
-				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausedByRemote, 1, 5000));
-			}
+	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
+		if (callee_uses_ice && linphone_core_get_firewall_policy(m->lc) == LinphonePolicyUseIce) {
+			updated_by_remote_count++;
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,1,5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallUpdatedByRemote, initial_callee_stat.number_of_LinphoneCallUpdatedByRemote + updated_by_remote_count, 5000));
+			BC_ASSERT_TRUE(check_ice(m,callee,LinphoneIceStateHostConnection));
+			BC_ASSERT_TRUE(check_ice(callee,m,LinphoneIceStateHostConnection));
 		}
+printf("%s - manager %s call paused by remote %0d caller size %0d callee first call %0d\n", __func__, m->rc_path, m->stat.number_of_LinphoneCallPausedByRemote, (unsigned int)bctbx_list_size(caller), pausing_current_call);
+		// Calls can be paused in an order different from the one they are accepted For example if ICE is enabled, it may take longer to reach this state
+		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
 	}
+	if (pausing_current_call && current_call_caller) {
+		no_paused_by_remote += (linphone_call_get_state(current_call_caller) == LinphoneCallPausedByRemote) ? 1 : 0;
+	}
+
+	BC_ASSERT_EQUAL(no_paused_by_remote,no_call_paused, int, "%d");
 }
 
 static void take_call_to_callee(bctbx_list_t* lcs, LinphoneCoreManager* caller, LinphoneCoreManager* callee) {

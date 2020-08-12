@@ -28,6 +28,8 @@
 #include "core/core-p.h"
 #include "conference_private.h"
 
+#include <bctoolbox/defs.h>
+
 LINPHONE_BEGIN_NAMESPACE
 
 ToneManager::ToneManager(std::shared_ptr<Core> core) : CoreAccessor(core) {
@@ -142,14 +144,17 @@ void ToneManager::removeSession(const std::shared_ptr<CallSession> &session) {
  * This code can't be called juste after the doStopRingtone because the first call needs to change its context (deletion or start a call)
  */
 void ToneManager::update(const std::shared_ptr<CallSession> &session) {
+	std::shared_ptr<CallSession> toneSession = nullptr;
 	switch(session->getState()) {
 		case CallSession::State::UpdatedByRemote:
 		case CallSession::State::Updating:
+			toneSession = session;
+			BCTBX_NO_BREAK; /* no break - pass session to doStartRingtone in order for it to be used to get sound cards */
 		case CallSession::State::Released:
 			printDebugInfo(session);
 			if (isAnotherSessionInState(session, State::Ringtone)) {
 				lInfo() << "[ToneManager] start again ringtone";
-				doStartRingtone(nullptr);
+				doStartRingtone(toneSession);
 				mStats->number_of_startRingtone++;
 			}
 			return;
@@ -627,12 +632,14 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 void ToneManager::playTone(const std::shared_ptr<CallSession> &session, MSDtmfGenCustomTone tone) {
     LinphoneCore *lc = getCore()->getCCore();
 
-	std::shared_ptr<LinphonePrivate::Call> call = getCore()->getCurrentCall();
-	AudioDevice * audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentOutputAudioDevice();
 	MSSndCard * card = NULL;
 
-	if (audioDevice) {
-		card = audioDevice->getSoundCard();
+	// FIXME: Properly handle case where session is nullptr
+	if (session) {
+		AudioDevice * audioDevice = std::dynamic_pointer_cast<MediaSession>(session)->getPrivate()->getCurrentOutputAudioDevice();
+		if (audioDevice) {
+			card = audioDevice->getSoundCard();
+		}
 	}
 
 	// If card is null, use the default playcard
