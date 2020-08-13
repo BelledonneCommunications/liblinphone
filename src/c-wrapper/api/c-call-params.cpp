@@ -327,6 +327,14 @@ void linphone_call_params_set_video_direction (LinphoneCallParams *params, Linph
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setVideoDirection(dir);
 }
 
+void linphone_call_params_set_proxy_config (LinphoneCallParams *params, LinphoneProxyConfig *proxy_config) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(params)->setProxyConfig(proxy_config);
+}
+
+LinphoneProxyConfig *linphone_call_params_get_proxy_config (const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->getProxyConfig();
+}
+
 void linphone_call_params_enable_audio_multicast (LinphoneCallParams *params, bool_t yesno) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableAudioMulticast(!!yesno);
 }

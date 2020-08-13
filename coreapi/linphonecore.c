@@ -4159,7 +4159,7 @@ void linphone_configure_op_2(LinphoneCore *lc, SalOp *op, const LinphoneAddress 
 	linphone_configure_op_with_proxy(lc, op, dest, headers, with_contact, linphone_core_lookup_proxy_by_identity(lc, local));
 }
 
-LinphoneCall * linphone_core_invite_address_with_params_and_proxy(LinphoneCore *lc, const LinphoneAddress *uri, const LinphoneAddress *addr, const LinphoneCallParams *params){
+LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params){
 	const char *from=NULL;
 	LinphoneProxyConfig *proxy=NULL;
 	LinphoneAddress *parsed_url2=NULL;
@@ -4183,11 +4183,10 @@ LinphoneCall * linphone_core_invite_address_with_params_and_proxy(LinphoneCore *
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
 		return NULL;
 
+	proxy = linphone_call_params_get_proxy_config(params);
+	if( proxy == NULL)
+		proxy=linphone_core_lookup_known_proxy(lc,addr);
 	cp = linphone_call_params_copy(params);
-	if( uri)
-		proxy=linphone_core_lookup_known_proxy(lc,uri);
-	else
-		proxy = lc->default_proxy;
 	if (proxy!=NULL) {
 		from=linphone_proxy_config_get_identity(proxy);
 		linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
@@ -4225,10 +4224,6 @@ LinphoneCall * linphone_core_invite_address_with_params_and_proxy(LinphoneCore *
 
 	linphone_call_params_unref(cp);
 	return call;
-}
-
-LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const LinphoneAddress *addr, const LinphoneCallParams *params){
-	return linphone_core_invite_address_with_params_and_proxy(lc, addr, addr, params);
 }
 
 LinphoneStatus linphone_core_transfer_call(LinphoneCore *lc, LinphoneCall *call, const char *url) {

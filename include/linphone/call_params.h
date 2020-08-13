@@ -291,6 +291,23 @@ LINPHONE_PUBLIC void linphone_call_params_set_audio_direction(LinphoneCallParams
 **/
 LINPHONE_PUBLIC void linphone_call_params_set_video_direction(LinphoneCallParams *call_params, LinphoneMediaDirection direction);
 
+/**
+ * Set the #LinphoneProxyConfig to use for the call
+ *
+ * @param params the #LinphoneCallParams @notnil
+ * @param proxy_config The #LinphoneProxyConfig to use, or NULL if no one has been selected. The #LinphoneCallParams keep a reference on it and remove the older if it exists. @maybenil
+ **/
+LINPHONE_PUBLIC void linphone_call_params_set_proxy_config(LinphoneCallParams *params, LinphoneProxyConfig *proxy_config);
+
+/**
+ * Get the #LinphoneProxyConfig that is used for the call
+ *
+ * @param params the #LinphoneCallParams @notnil
+ * @return The selected #LinphoneProxyConfig for the call, or NULL if no one has been selected. @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneProxyConfig *linphone_call_params_get_proxy_config(const LinphoneCallParams *params);
+
+
 
 int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *params);
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);
