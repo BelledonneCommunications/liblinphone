@@ -55,6 +55,7 @@ public:
 	std::string sessionName;
 
 	LinphonePrivacyMask privacy = LinphonePrivacyNone;
+	LinphoneProxyConfig * proxyConfig = NULL;
 
 private:
 	bool inConference = false;

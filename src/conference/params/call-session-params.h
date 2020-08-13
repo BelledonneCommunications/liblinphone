@@ -70,6 +70,9 @@ public:
 	void addCustomContent (const Content& content);
 	const std::list<Content>& getCustomContents () const;
 
+	LinphoneProxyConfig *getProxyConfig() const;
+	void setProxyConfig(LinphoneProxyConfig *proxyConfig);
+
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);
 
