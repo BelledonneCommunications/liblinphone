@@ -1477,6 +1477,7 @@ static bool_t can_register(LinphoneProxyConfig *cfg){
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg){
 	LinphoneCore *lc=cfg->lc;
 	if (cfg->commit){
+        linphone_proxy_config_update_push_notification_parameters(cfg);
 		if (cfg->type && cfg->ssctx==NULL){
 			linphone_proxy_config_activate_sip_setup(cfg);
 		}
@@ -1935,7 +1936,7 @@ char *linphone_proxy_config_get_computed_push_notification_parameters(const Linp
 		if (remotePushAllowed) {
 			strcat(services, "remote");
 		}
-		char pn_param[50];
+		char pn_param[100];
 		memset(pn_param, 0, sizeof(pn_param));
 		snprintf(pn_param, sizeof(pn_param), param_format, team_id, bundle_identifer, services);
 		param = pn_param;
@@ -1947,7 +1948,7 @@ char *linphone_proxy_config_get_computed_push_notification_parameters(const Linp
 		memset(pn_prid, 0, sizeof(pn_prid));
 		if (basicPushAllowed) {
 			strcat(pn_prid, voipToken);
-			if (remotePushAllowed) {
+			if (remotePushAllowed && !STRING_IS_NULL(remoteToken)) {
 				strcat(pn_prid, "&");
 			}
 		}
