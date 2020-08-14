@@ -244,21 +244,31 @@ bool MS2AudioMixer::echoCancellationEnabled()const{
 }
 
 void MS2AudioMixer::setInputDevice(AudioDevice *audioDevice) {
-	audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+	if (mLocalParticipantStream) {
+		audio_stream_set_input_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+	}
 }
 
 void MS2AudioMixer::setOutputDevice(AudioDevice *audioDevice) {
-	audio_stream_set_output_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+	if (mLocalParticipantStream) {
+		audio_stream_set_output_ms_snd_card(mLocalParticipantStream, audioDevice->getSoundCard());
+	}
 }
 
 AudioDevice* MS2AudioMixer::getInputDevice() const {
-	MSSndCard *card = audio_stream_get_input_ms_snd_card(mLocalParticipantStream);
-	return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+	if (mLocalParticipantStream) {
+		MSSndCard *card = audio_stream_get_input_ms_snd_card(mLocalParticipantStream);
+		return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+	}
+	return nullptr;
 }
 
 AudioDevice* MS2AudioMixer::getOutputDevice() const {
-	MSSndCard *card = audio_stream_get_output_ms_snd_card(mLocalParticipantStream);
-	return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+	if (mLocalParticipantStream) {
+		MSSndCard *card = audio_stream_get_output_ms_snd_card(mLocalParticipantStream);
+		return getSession().getCore().findAudioDeviceMatchingMsSoundCard(card);
+	}
+	return nullptr;
 }
 
 AudioStream * MS2AudioMixer::getAudioStream(){
