@@ -217,7 +217,7 @@ void MediaSessionPrivate::ackReceived (LinphoneHeaders *headers) {
 		switch (state) {
 			case CallSession::State::StreamsRunning:
 			case CallSession::State::PausedByRemote:
-				setState(CallSession::State::UpdatedByRemote, "UpdatedByRemote");
+				setState(CallSession::State::UpdatedByRemote, "Updated by remote");
 				break;
 			default:
 				break;
@@ -1014,7 +1014,17 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *
 	L_Q();
 	for (int i = 0; i < md->nb_streams; i++) {
 		SalStreamDescription *sd = &md->streams[i];
-		switch (state) {
+		CallSession::State stateToConsider = state;
+		
+		switch (stateToConsider){
+			case CallSession::State::UpdatedByRemote:
+				stateToConsider = prevState;
+			break;
+			default:
+			break;
+		}
+		
+		switch (stateToConsider) {
 			case CallSession::State::Pausing:
 			case CallSession::State::Paused:
 				if (sd->dir != SalStreamInactive) {
@@ -1486,34 +1496,23 @@ void MediaSessionPrivate::freeResources () {
 	getStreamsGroup().finish();
 }
 
+
+void MediaSessionPrivate::queueIceCompletionTask(const std::function<void()> &lambda){
+	iceDeferedTasks.push(lambda);
+}
+
+void MediaSessionPrivate::runIceCompletionTasks(){
+	while(!iceDeferedTasks.empty()){
+		iceDeferedTasks.front()();
+		iceDeferedTasks.pop();
+	}
+}
+
 /*
  * IceServiceListener implementation
  */
 void MediaSessionPrivate::onGatheringFinished(IceService &service){
-	L_Q();
-	updateLocalMediaDescriptionFromIce(localIsOfferer);
-	switch (state) {
-		case CallSession::State::IncomingReceived:
-		case CallSession::State::PushIncomingReceived:
-		case CallSession::State::IncomingEarlyMedia:
-			if (callAcceptanceDefered) startAccept();
-			break;
-		case CallSession::State::Updating:
-			startUpdate();
-			break;
-		case CallSession::State::UpdatedByRemote:
-			startAcceptUpdate(prevState, Utils::toString(prevState));
-			break;
-		case CallSession::State::OutgoingInit:
-			q->startInvite(nullptr, "");
-			break;
-		case CallSession::State::Idle:
-			deferIncomingNotification = false;
-			startIncomingNotification();
-			break;
-		default:
-			break;
-	}
+	runIceCompletionTasks();
 }
 
 void MediaSessionPrivate::onIceCompleted(IceService &service){
@@ -1521,12 +1520,19 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
 	if (getStreamsGroup().getIceService().isControlling() && getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-		if (state == CallSession::State::StreamsRunning){
-			MediaSessionParams newParams(*getParams());
-			newParams.getPrivate()->setInternalCallUpdate(true);
-			q->update(&newParams);
-		}else{
-			lWarning() << "Cannot send reINVITE for ICE during state " << state;
+		switch (state){
+			case CallSession::State::StreamsRunning:
+			case CallSession::State::Paused:
+			case CallSession::State::PausedByRemote:
+			{
+				MediaSessionParams newParams(*getParams());
+				newParams.getPrivate()->setInternalCallUpdate(true);
+				q->update(&newParams);
+			}
+			break;
+			default:
+				lWarning() << "Cannot send reINVITE for ICE during state " << state;
+			break;
 		}
 	}
 	startDtlsOnAllStreams();
@@ -1948,7 +1954,6 @@ void MediaSessionPrivate::startAccept(){
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
 	} else
 		expectMediaInAck = true;
-	if (callAcceptanceDefered) callAcceptanceDefered = false;
 }
 
 void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
@@ -1962,14 +1967,15 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	updateRemoteSessionIdAndVer();
 
-
-	if (getStreamsGroup().prepare()){
-		callAcceptanceDefered = true;
-		return; /* Deferred until completion of ICE gathering */
-	} else {
+	auto acceptCompletionTask = [this](){
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+		startAccept();
+	};
+	if (getStreamsGroup().prepare()){
+		queueIceCompletionTask(acceptCompletionTask);
+		return; /* Deferred until completion of ICE gathering */
 	}
-	startAccept();
+	acceptCompletionTask();
 }
 
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
@@ -2007,11 +2013,17 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 
-	if (getStreamsGroup().prepare())
+	auto acceptCompletionTask = [this, nextState, stateInfo](){
+		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+		startAcceptUpdate(nextState, stateInfo);
+	};
+	
+	if (getStreamsGroup().prepare()){
+		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
+		queueIceCompletionTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
-	updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
-	startAcceptUpdate(nextState, stateInfo);
-
+	}
+	acceptCompletionTask();
 	return 0;
 }
 
@@ -2284,7 +2296,16 @@ void MediaSession::initiateIncoming () {
 			 * If ICE gathering is done, we can update the local media description immediately.
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 			 */
-			if (!d->deferIncomingNotification) d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			if (d->deferIncomingNotification) {
+				auto incomingNotificationTask = [this, d](){
+					d->deferIncomingNotification = false;
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					startIncomingNotification();
+				};
+				d->queueIceCompletionTask(incomingNotificationTask);
+			}else{
+				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			}
 		}
 	}
 }
@@ -2304,6 +2325,12 @@ bool MediaSession::initiateOutgoing () {
 				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			}else{
+				d->queueIceCompletionTask([this]() {
+					L_D();
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					startInvite(nullptr, "");
+				});
 			}
 			defer |= ice_needs_defer;
 		}
@@ -2343,7 +2370,7 @@ LinphoneStatus MediaSession::resume () {
 	 * prevents the participants to hear it while the 200OK comes back. */
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
-	d->setState(CallSession::State::Resuming,"Resuming");
+	d->setState(CallSession::State::Resuming, "Resuming");
 	d->makeLocalMediaDescription(true);
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
@@ -2487,15 +2514,23 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription(true);
 
+		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
+			L_D();
+			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			LinphoneStatus res = d->startUpdate(subject);
+			if (res && (d->state != initialState)) {
+				/* Restore initial state */
+				d->setState(initialState, "Restore initial state");
+			}
+			return res;
+		};
+		
 		if (d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
+			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}
-		result = d->startUpdate(subject);
-		if (result && (d->state != initialState)) {
-			/* Restore initial state */
-			d->setState(initialState, "Restore initial state");
-		}
+		result = updateCompletionTask();
 	} else if (d->state == CallSession::State::StreamsRunning) {
 		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
 		const MSSndCard *captureCard = soundConfig.capt_sndcard;
