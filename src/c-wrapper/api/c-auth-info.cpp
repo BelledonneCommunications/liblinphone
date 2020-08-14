@@ -124,6 +124,10 @@ void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info, const char *tls
     AuthInfo::toCpp(info)->setTlsKeyPath(L_C_TO_STRING(tls_key_path));
 }
 
+void linphone_auth_info_set_tls_key_password(LinphoneAuthInfo *info, const char *tls_key_password){
+    AuthInfo::toCpp(info)->setTlsKeyPassword(L_C_TO_STRING(tls_key_password));
+}
+
 const char *linphone_auth_info_get_username(const LinphoneAuthInfo *info){
     const char *username = AuthInfo::toCpp(info)->getUsername().c_str();
     return strlen(username) != 0 ? username : NULL;
@@ -181,4 +185,9 @@ const char *linphone_auth_info_get_tls_cert_path(const LinphoneAuthInfo *info){
 const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *info){
     const char *tlsKeyPath = AuthInfo::toCpp(info)->getTlsKeyPath().c_str();
     return strlen(tlsKeyPath) != 0 ? tlsKeyPath : NULL;
+}
+
+const char *linphone_auth_info_get_tls_key_password(const LinphoneAuthInfo *info){
+    const char *tlsKeyPassword = AuthInfo::toCpp(info)->getTlsKeyPassword().c_str();
+    return strlen(tlsKeyPassword) != 0 ? tlsKeyPassword : NULL;
 }

@@ -46,6 +46,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     void setTlsKey(const std::string &tlsKey);
     void setTlsCertPath(const std::string &tlsCertPath);
     void setTlsKeyPath(const std::string &tlsKeyPath);
+    void setTlsKeyPassword(const std::string &tlsKeyPassword);
 
     void writeConfig(LpConfig *config, int pos);
 
@@ -60,6 +61,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     const std::string& getTlsKey() const;
     const std::string& getTlsCertPath() const;
     const std::string& getTlsKeyPath() const;
+    const std::string& getTlsKeyPassword() const;
     
     std::string toString() const override;
 
@@ -75,6 +77,7 @@ class AuthInfo : public bellesip::HybridObject<LinphoneAuthInfo, AuthInfo> {
     std::string mTlsKey;
     std::string mTlsCertPath;
     std::string mTlsKeyPath;
+    std::string mTlsKeyPassword;
     bool_t mNeedToRenewHa1;
         
     void setNeedToRenewHa1(const bool_t &needToRenewHa1);

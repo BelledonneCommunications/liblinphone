@@ -191,6 +191,7 @@ void TunnelManager::setKey(bctbx_signing_key_t *key) {
 
 int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, unsigned char *dn, size_t dn_length) {
 	TunnelManager *zis = static_cast<TunnelManager*>(data);
+	int error;
 
 	if (!zis->getCertificate() || !zis->getKey()) {
 		const LinphoneAuthInfo *authInfo = _linphone_core_find_indexed_tls_auth_info(zis->getLinphoneCore(), zis->getUsername().c_str(), zis->getDomain().c_str());
@@ -203,9 +204,23 @@ int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t 
 			bctbx_x509_certificate_t *cert = bctbx_x509_certificate_new();
 			if (linphone_auth_info_get_tls_cert(authInfo)) {
 				const char *cert_buffer = linphone_auth_info_get_tls_cert(authInfo);
-				bctbx_x509_certificate_parse(cert, cert_buffer, strlen(cert_buffer));
+				if ((error = bctbx_x509_certificate_parse(cert, cert_buffer, strlen(cert_buffer) + 1)) < 0) {
+					char tmp[128];
+					bctbx_strerror(error, tmp, sizeof(tmp));
+
+					ms_error("TunnelManager: Cannot parse certificate for user '%s' : %s", zis->getUsername().c_str(), tmp);
+					bctbx_x509_certificate_free(cert);
+					return -1;
+				}
 			} else if (linphone_auth_info_get_tls_cert_path(authInfo)) {
-				bctbx_x509_certificate_parse_file(cert, linphone_auth_info_get_tls_cert_path(authInfo));
+				if ((error = bctbx_x509_certificate_parse_file(cert, linphone_auth_info_get_tls_cert_path(authInfo))) < 0) {
+					char tmp[128];
+					bctbx_strerror(error, tmp, sizeof(tmp));
+
+					ms_error("TunnelManager: Cannot parse certificate file for user '%s' : %s", zis->getUsername().c_str(), tmp);
+					bctbx_x509_certificate_free(cert);
+					return -1;
+				}
 			} else {
 				ms_error("TunnelManager: Cannot find TLS cert in auth info for user '%s'", zis->getUsername().c_str());
 				bctbx_x509_certificate_free(cert);
@@ -219,10 +234,24 @@ int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t 
 			bctbx_signing_key_t *key = bctbx_signing_key_new();
 			if (linphone_auth_info_get_tls_key(authInfo)) {
 				const char *key_buffer = linphone_auth_info_get_tls_key(authInfo);
-				const char *passwd = linphone_auth_info_get_password(authInfo);
-				bctbx_signing_key_parse(key, key_buffer, strlen(key_buffer), (const unsigned char *)passwd, passwd ? strlen(passwd) : 0);
+				const char *passwd = linphone_auth_info_get_tls_key_password(authInfo);
+				if ((error = bctbx_signing_key_parse(key, key_buffer, strlen(key_buffer) + 1, (const unsigned char *)passwd, passwd ? strlen(passwd) : 0)) < 0) {
+					char tmp[128];
+					bctbx_strerror(error, tmp, sizeof(tmp));
+
+					ms_error("TunnelManager: Cannot parse TLS key for user '%s' : %s", zis->getUsername().c_str(), tmp);
+					bctbx_signing_key_free(key);
+					return -1;
+				}
 			} else if (linphone_auth_info_get_tls_key_path(authInfo)) {
-				bctbx_signing_key_parse_file(key, linphone_auth_info_get_tls_key_path(authInfo), linphone_auth_info_get_password(authInfo));
+				if ((error = bctbx_signing_key_parse_file(key, linphone_auth_info_get_tls_key_path(authInfo), linphone_auth_info_get_tls_key_password(authInfo))) < 0) {
+					char tmp[128];
+					bctbx_strerror(error, tmp, sizeof(tmp));
+
+					ms_error("TunnelManager: Cannot parse TLS key file for user '%s' : %s", zis->getUsername().c_str(), tmp);
+					bctbx_signing_key_free(key);
+					return -1;
+				}
 			} else {
 				ms_error("TunnelManager: Cannot find TLS key in auth info for user '%s'", zis->getUsername().c_str());
 				bctbx_signing_key_free(key);
