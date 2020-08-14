@@ -845,14 +845,17 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 	if (!username || *username=='\0') return NULL;
 
 	if (is_enum(username,&enum_domain)){
+		ms_message("Is enum : %s", username);
 		if (enum_lookup(enum_domain,&enumres)<0){
+			ms_message("Lookup < 0");
 			ms_free(enum_domain);
 			return NULL;
-		}
+		}		
 		ms_free(enum_domain);
 		tmpurl=enumres->sip_address[0];
 		uri=linphone_address_new(tmpurl);
-		enum_lookup_res_free(enumres);
+		enum_lookup_res_free(enumres);		
+		ms_message("Lookup > 0 : %s", linphone_address_as_string(uri));
 		return _linphone_core_destroy_addr_if_not_sip(uri);
 	}
 	/* check if we have a "sip:" or a "sips:" */
@@ -864,6 +867,7 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 			uri=linphone_address_new(tmpurl);
 			ms_free(tmpurl);
 			if (uri){
+				ms_message("Not sip with @ : %s", linphone_address_as_string(uri));
 				return _linphone_core_destroy_addr_if_not_sip(uri);
 			}
 		}
@@ -872,22 +876,29 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 			/* append the proxy domain suffix but remove any custom parameters/headers */
 			LinphoneAddress *uri=linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
 			if (uri==NULL){
+				ms_message("Not sip without @ and cannot clone from linphone_proxy_config_get_identity_address");
 				return NULL;
 			} else {
 				linphone_address_clean(uri);
 				linphone_address_set_display_name(uri,NULL);
 				linphone_address_set_username(uri,username);
+				ms_message("linphone_proxy_config_get_identity_address works : %s", linphone_address_as_string(uri));
 				return _linphone_core_destroy_addr_if_not_sip(uri);
 			}
 		} else {
+			if( proxy == NULL)
+				ms_message("No proxy");
+			else
+				ms_message("linphone_proxy_config_get_identity_address is NULL");
 			return NULL;
 		}
 	}
 	uri=linphone_address_new(username);
 	if (uri!=NULL){
+		ms_message("_linphone_core_destroy_addr_if_not_sip : %s", linphone_address_as_string(uri));
 		return _linphone_core_destroy_addr_if_not_sip(uri);
 	}
-
+	ms_message("Cannot create URI");
 	return NULL;
 }
 
