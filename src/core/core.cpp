@@ -373,6 +373,7 @@ void CorePrivate::stopEphemeralMessageTimer () {
 }
 
 bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_Q();
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
@@ -386,10 +387,17 @@ bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 		}
 	}
 
+	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
+		for (const auto audioVideoConference : q->audioVideoConferenceById) {
+			audioVideoConference.second->getAudioControlInterface()->setInputDevice(audioDevice);
+		}
+	}
+
 	return applied;
 }
 
 bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_Q();
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return false;
@@ -398,8 +406,15 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 	bool applied = false;
 	if (static_cast<unsigned int>(calls.size()) > 0) {
 		for (const auto &call : calls) {
+lInfo() << "[CONFERENCE DEBUG] " << __func__ << " Changing audio device of call to " << call->getRemoteAddress()->asString() << " to " << audioDevice->getDeviceName();
 			call->setOutputAudioDevice(audioDevice);
 			applied = true;
+		}
+	}
+
+	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
+		for (const auto audioVideoConference : q->audioVideoConferenceById) {
+			audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
 		}
 	}
 
@@ -1072,7 +1087,13 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 }
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
-	auto it = audioVideoConferenceById.find(conferenceId);
+	Address peerAddress = conferenceId.getPeerAddress();
+	peerAddress.removeUriParam("conf-id");
+	Address localAddress = conferenceId.getLocalAddress();
+	localAddress.removeUriParam("conf-id");
+	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	auto it = audioVideoConferenceById.find(prunedConferenceId);
 	if (it != audioVideoConferenceById.cend()) {
 		lInfo() << "Found audio video conference in RAM for conference ID " << conferenceId << ".";
 		return it->second;
