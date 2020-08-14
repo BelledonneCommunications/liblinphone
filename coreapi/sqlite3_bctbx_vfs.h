@@ -34,6 +34,7 @@
 ** The maximum pathname length supported by this VFS.
 */
 #define MAXPATHNAME 512
+#define BCTBX_SQLITE3_VFS "sqlite3bctbx_vfs"
 
 
 /**

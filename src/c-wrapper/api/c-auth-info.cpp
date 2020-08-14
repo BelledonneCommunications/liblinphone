@@ -137,6 +137,10 @@ void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *info, const char *tls
     AuthInfo::toCpp(info)->setTlsKeyPath(L_C_TO_STRING(tls_key_path));
 }
 
+void linphone_auth_info_set_tls_key_password(LinphoneAuthInfo *info, const char *tls_key_password){
+    AuthInfo::toCpp(info)->setTlsKeyPassword(L_C_TO_STRING(tls_key_password));
+}
+
 void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *info){
     AuthInfo::toCpp(info)->clearAvailableAlgorithms();
 }
@@ -212,3 +216,7 @@ bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_i
     return auth_info_1 && AuthInfo::toCpp(auth_info_1)->isEqualButAlgorithms(AuthInfo::toCpp(auth_info_2));
 }
 
+const char *linphone_auth_info_get_tls_key_password(const LinphoneAuthInfo *info){
+    const char *tlsKeyPassword = AuthInfo::toCpp(info)->getTlsKeyPassword().c_str();
+    return strlen(tlsKeyPassword) != 0 ? tlsKeyPassword : NULL;
+}

@@ -316,13 +316,11 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 	if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageReceivedWithFile, receiverStats->number_of_LinphoneMessageReceivedWithFile + 1, 10000))) {
 		LinphoneChatMessageCbs *cbs;
 		LinphoneChatMessage *msg = lcm->stat.last_received_chat_message;
-		char *downloaded_file;
-		if (use_buffer) {
-			downloaded_file = bc_tester_file("receive_file.dump");
-		} else {
-			downloaded_file = ms_strdup(receive_filepath);
+		const char *downloaded_file = NULL;
+		if (!use_buffer) {
+			downloaded_file = receive_filepath;
 		}
-
+		
 		if (text) {
 			BC_ASSERT_TRUE(linphone_chat_message_has_text_content(msg));
 			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(msg), text);
@@ -343,6 +341,11 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 		if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,receiverStats->number_of_LinphoneMessageFileTransferDone + 1, 20000))) {
+			if (use_buffer) {
+				//file_transfer_received function store file name into file_transfer_filepath
+				downloaded_file = bctbx_strdup(linphone_chat_message_get_file_transfer_filepath(msg));
+			}
+
 			compare_files(sendFilepath, downloaded_file);
 		}
 
@@ -357,10 +360,13 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 			BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
 			if (BC_ASSERT_TRUE(wait_for_list(coresList, &lcm->stat.number_of_LinphoneMessageFileTransferDone,receiverStats->number_of_LinphoneMessageFileTransferDone + 2, 20000))) {
+				if (use_buffer) {
+					//file_transfer_received function store file name into file_transfer_filepath
+					downloaded_file = bctbx_strdup(linphone_chat_message_get_file_transfer_filepath(msg));
+				}
 				compare_files(sendFilepath2, downloaded_file);
 			}
 		}
-		bc_free(downloaded_file);
 	}
 }
 

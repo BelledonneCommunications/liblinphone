@@ -4202,8 +4202,8 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			}
 		}
 	}
-
 }
+
 static void call_state_changed_callback_to_start_record(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *message){
 	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected){
 		ms_message("call_recording(): start early recording into %s",linphone_call_params_get_record_file(linphone_call_get_params(call)));

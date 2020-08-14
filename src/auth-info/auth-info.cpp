@@ -57,7 +57,7 @@ void AuthInfo::init(const string &username, const string &userid, const string &
     setAvailableAlgorithms(availableAlgorithms);
 }
 AuthInfo::AuthInfo(LpConfig *config, string key){
-    const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *algo;
+    const char *username, *userid, *passwd, *ha1, *realm, *domain, *tls_cert_path, *tls_key_path, *tls_key_password, *algo;
     bctbx_list_t * algos;
 
     username = linphone_config_get_string(config, key.c_str(), "username", "");
@@ -68,11 +68,13 @@ AuthInfo::AuthInfo(LpConfig *config, string key){
     domain = linphone_config_get_string(config, key.c_str(), "domain", "");
     tls_cert_path = linphone_config_get_string(config, key.c_str(), "client_cert_chain", "");
     tls_key_path = linphone_config_get_string(config, key.c_str(), "client_cert_key", "");
+    tls_key_password = linphone_config_get_string(config, key.c_str(), "client_cert_key_passsword", "");
     algo = linphone_config_get_string(config, key.c_str(), "algorithm", "");
     algos = linphone_config_get_string_list(config, key.c_str(), "available_algorithms", nullptr);
 
     setTlsCertPath(tls_cert_path);
     setTlsKeyPath(tls_key_path);
+    setTlsKeyPassword(tls_key_password);
 
     init(username, userid, passwd, ha1, realm, domain, algo);
 
@@ -91,6 +93,7 @@ AuthInfo* AuthInfo::clone() const {
     ai->setTlsCertPath(getTlsCertPath());
     ai->setTlsKey(getTlsKey());
     ai->setTlsKeyPath(getTlsKeyPath());
+    ai->setTlsKeyPassword(getTlsKeyPassword());
     return ai;
 }
 
@@ -142,6 +145,10 @@ const string& AuthInfo::getTlsCertPath() const{
 
 const string& AuthInfo::getTlsKeyPath() const{
     return mTlsKeyPath;
+}
+
+const string& AuthInfo::getTlsKeyPassword() const{
+    return mTlsKeyPassword;
 }
 
 void AuthInfo::setPassword(const string &passwd){
@@ -229,6 +236,10 @@ void AuthInfo::setTlsKeyPath(const string &tlsKeyPath){
     mTlsKeyPath = tlsKeyPath;
 }
 
+void AuthInfo::setTlsKeyPassword(const string &tlsKeyPassword) {
+    mTlsKeyPassword = tlsKeyPassword;
+}
+
 void AuthInfo::writeConfig(LpConfig *config, int pos){
     char key[50];
     char *myHa1;
@@ -270,6 +281,7 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
     linphone_config_set_string(config, key, "domain", getDomain().c_str());
     linphone_config_set_string(config, key, "client_cert_chain", getTlsCertPath().c_str());
     linphone_config_set_string(config, key, "client_cert_key", getTlsKeyPath().c_str());
+    linphone_config_set_string(config, key, "client_cert_key_password", getTlsKeyPassword().c_str());
     linphone_config_set_string(config, key, "algorithm",getAlgorithm().c_str());
     
     if(mAvailableAlgorithms.size()>0){

@@ -451,6 +451,7 @@ static void simple_conference(void) {
 
 
 static void _simple_conference_from_scratch(bool_t with_video){
+#if 0
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
@@ -542,6 +543,9 @@ static void _simple_conference_from_scratch(bool_t with_video){
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+#else
+	BC_FAIL("Test temporally disabled because of crash");
+#endif
 }
 
 static void simple_conference_from_scratch(void){
@@ -701,6 +705,7 @@ end:
 }
 
 static void simple_conference_from_scratch_no_answer(void){
+#if 0
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
@@ -777,6 +782,9 @@ static void simple_conference_from_scratch_no_answer(void){
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+#else
+	BC_FAIL("Test temporally disabled as, call.update is performed in stage outgoinginit");
+#endif
 }
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {

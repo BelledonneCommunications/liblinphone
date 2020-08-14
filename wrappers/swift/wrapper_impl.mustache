@@ -42,7 +42,7 @@ public struct {{enumName}}:OptionSet
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public static let {{name}} = Linphone{{enumName}}(rawValue: {{{value}}})
+	public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
 	{{/values}}
 }
 {{/isFlag}}
@@ -109,9 +109,9 @@ func BctbxListToStringArray(list: UnsafeMutablePointer<bctbx_list_t>) -> [String
 	return sList
 }
 
-func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]) -> UnsafeMutablePointer<bctbx_list_t>? {
+func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointer<bctbx_list_t>? {
 	var cList: UnsafeMutablePointer<bctbx_list_t>? = nil
-	for data in list {
+	for data in list ?? []{
 		cList = bctbx_list_append(cList, UnsafeMutableRawPointer(data.cPtr))
 	}
 	return cList
@@ -177,6 +177,9 @@ open class {{interfaceName}} : LinphoneObjectDelegate
 	/// {{{line}}}
 	{{/lines}}
 	{{/detailedDoc}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
 	open func {{cb_name}}({{{params_public}}}){{#return_class}} -> {{type}}? {return nil}{{/return_class}}{{^return_class}} {}{{/return_class}}
 	{{/delegate}}
 	{{/methods}}
@@ -214,8 +217,8 @@ public class {{className}} : LinphoneObject
 	public var getCobject: OpaquePointer? {
 		return cPtr
 	}
-
 	{{#isLinphoneCore}}
+
 	/// Get the native window handle of the video window.
 	public var NativeVideoWindowIdString: String
 	{
@@ -296,6 +299,9 @@ public class {{className}} : LinphoneObject
 	/// {{{line}}}
 	{{/lines}}
 	{{/detailedDoc}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
 	{{#has_property}}
 	{{static}}public var {{property_name}}: {{{return}}}{{{return_default}}}
 	{
@@ -474,16 +480,6 @@ public class {{className}} : LinphoneObject
 	}
 	{{/listener}}
 	{{#impl}}
-	{{#doc}}
-	{{#lines}}
-	///	{{{line}}}
-	{{/lines}}
-	{{/doc}}
-	{{#detailedDoc}}
-	{{#lines}}
-	/// {{{line}}}
-	{{/lines}}
-	{{/detailedDoc}}
 	{{static}}public func {{name}}({{{args}}}){{throw_default}} {{#return}}-> {{{type}}}{{return_default}}{{/return}}
 	{
 		{{#is_string}}
@@ -528,7 +524,7 @@ public class {{className}} : LinphoneObject
 		var cList = {{c_name}}({{cPtr}}{{{c_args}}})
 		while (cList != nil) {
 			swiftList.append(String(cString: unsafeBitCast(cList!.pointee.data, to: UnsafePointer<CChar>.self)))
-			cList = cList!.pointee.next
+			cList = Unsafe{{#isNotConst}}Mutable{{/isNotConst}}Pointer<bctbx_list_t>(cList!.pointee.next)
 		}
 		return swiftList
 		{{/is_string_list}}

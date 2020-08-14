@@ -32,6 +32,7 @@
 #include "lime-x3dh-encryption-engine.h"
 #include "private.h"
 #include "bctoolbox/exception.hh"
+#include "sqlite3_bctbx_vfs.h"
 
 using namespace std;
 
@@ -202,8 +203,9 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 		curve = lime::CurveId::c25519;
 	}
 	_dbAccess = dbAccess;
+	std::string dbAccessWithParam = std::string("db=").append(dbAccess).append(" vfs=").append(BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	x3dhServerUrl = serverUrl;
-	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
+	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccessWithParam, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	if (x3dhServerUrl.empty())
 		lError() << "[LIME] server URL unavailable for encryption engine";

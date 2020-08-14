@@ -171,6 +171,13 @@ LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_path(LinphoneAuthInfo *auth_
 **/
 LINPHONE_PUBLIC void linphone_auth_info_clear_available_algorithms(LinphoneAuthInfo *auth_info);
 
+/*
+ * Sets the TLS key password, this is only usefull is the TLS key is encrypted.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @param tls_key_password The TLS key password. @maybenil
+**/
+LINPHONE_PUBLIC void linphone_auth_info_set_tls_key_password(LinphoneAuthInfo *auth_info, const char *tls_key_password);
+
 
 /**
  * Gets the username.
@@ -255,6 +262,13 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_cert_path(const LinphoneA
  * @return The TLS key path. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_path(const LinphoneAuthInfo *auth_info);
+	
+/*
+ * Gets the TLS key password.
+ * @param auth_info The #LinphoneAuthInfo object. @notnil
+ * @return The TLS key password. @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_password(const LinphoneAuthInfo *auth_info);
 
 /**
  * Check if Authinfos are the same without taking account algorithms

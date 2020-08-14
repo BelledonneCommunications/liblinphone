@@ -251,7 +251,8 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 				} else {
 					xmlXPathObjectPtr responses = linphone_get_xml_xpath_object_for_node_list(xml_ctx, "/methodResponse/params/param/value/struct/member");
 					if (responses != NULL && responses->nodesetval != NULL) {
-						request->response.data.m = bctbx_mmap_cchar_new();
+						//request->response.data.m = bctbx_mmap_cchar_new();
+						request->response.data.l = NULL;
 						request->status = LinphoneXmlRpcStatusOk;
 
 						xmlNodeSetPtr responses_nodes = responses->nodesetval;
@@ -263,9 +264,11 @@ static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const c
 								{
 									char *name = linphone_get_xml_text_content(xml_ctx, "name");
 									char *value =  linphone_get_xml_text_content(xml_ctx, "value/string");
+									ms_message("Found pair with key=[%s] and value=[%s]", name, value);
+									request->response.data.l = bctbx_list_append(request->response.data.l, bctbx_strdup(value));
 
-									const bctbx_pair_cchar_t *pair = bctbx_pair_cchar_new(bctbx_strdup(name), (void *)bctbx_strdup(value));
-									bctbx_map_cchar_insert(request->response.data.m, (const bctbx_pair_t *)pair);
+									/*bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, (void *)bctbx_strdup(value));
+									bctbx_map_cchar_insert_and_delete(request->response.data.m, pair);*/
 
 									linphone_free_xml_text_content(name);
 									linphone_free_xml_text_content(value);
@@ -347,8 +350,16 @@ static void _linphone_xml_rpc_request_destroy(LinphoneXmlRpcRequest *request) {
 	if ((request->response.type == LinphoneXmlRpcArgString) && (request->response.data.s != NULL)) {
 		belle_sip_free(request->response.data.s);
 	} else if (request->response.type == LinphoneXmlRpcArgStringStruct) {
-		if (request->status == LinphoneXmlRpcStatusOk && request->response.data.m != NULL) {
-			bctbx_mmap_cchar_delete_with_data(request->response.data.m, bctbx_free);
+		if (request->status == LinphoneXmlRpcStatusOk) {
+			/*if (request->response.data.m != NULL) {
+				bctbx_mmap_cchar_delete_with_data(request->response.data.m, bctbx_free);
+				request->response.data.m = NULL;
+			}*/
+			
+			if (request->response.data.l) {
+				bctbx_list_free_with_data(request->response.data.l, bctbx_free);
+				request->response.data.l = NULL;
+			}
 		} else if (request->status == LinphoneXmlRpcStatusFailed && request->response.data.s != NULL) {
 			belle_sip_free(request->response.data.s);
 		}
@@ -464,7 +475,12 @@ const char * linphone_xml_rpc_request_get_raw_response(const LinphoneXmlRpcReque
 }
 
 const bctbx_map_t* linphone_xml_rpc_request_get_string_struct_response(const LinphoneXmlRpcRequest *request) {
-	return request->response.data.m;
+	return NULL;
+	//return request->response.data.m;
+}
+
+const bctbx_list_t *linphone_xml_rpc_request_get_list_response(const LinphoneXmlRpcRequest *request) {
+	return request->response.data.l;
 }
 
 LinphoneXmlRpcSession * linphone_xml_rpc_session_new(LinphoneCore *core, const char *url) {

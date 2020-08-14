@@ -50,6 +50,5 @@
 #cmakedefine HAVE_ADVANCED_IM
 #cmakedefine HAVE_DB_STORAGE
 #cmakedefine ENABLE_UPDATE_CHECK 1
-#cmakedefine ENABLE_MICROSOFT_STORE_APP
 #cmakedefine HAVE_GETIFADDRS
 

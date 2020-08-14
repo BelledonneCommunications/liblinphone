@@ -520,7 +520,8 @@ struct _LinphoneXmlRpcArg {
 	union {
 		int i;
 		char *s;
-		bctbx_map_t *m;
+		//bctbx_map_t *m;
+		bctbx_list_t *l;
 	} data;
 };
 
@@ -618,6 +619,8 @@ struct _LinphonePlayer{
 	int (*get_position)(LinphonePlayer *player);
 	void (*close)(LinphonePlayer* player);
 	void (*destroy)(LinphonePlayer *player);
+	void (*set_window_id)(LinphonePlayer *player, void* window_id);
+	bool_t (*is_video_available)(LinphonePlayer *player);
 	void *impl;
 	LinphonePlayerCbs *callbacks; // Deprecated, use a list of Cbs instead
 	LinphoneCore *core;

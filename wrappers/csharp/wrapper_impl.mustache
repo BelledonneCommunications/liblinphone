@@ -35,6 +35,8 @@ namespace Linphone
 		public const string VERSION = "{{version}}";
 #if __IOS__
 		public const string LIB_NAME = "linphone.framework/linphone";
+#elif WINDOWS_UWP
+		public const string LIB_NAME = "liblinphone"; // With this, it automatically finds liblinphone.dll
 #else
 		public const string LIB_NAME = "linphone"; // With this, it automatically finds liblinphone.so
 #endif
@@ -448,9 +450,11 @@ namespace Linphone
 			}
 			set
 			{
+				IntPtr string_ptr_to_remove = linphone_call_get_native_video_window_id(nativePtr);
 				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
 				linphone_call_set_native_video_window_id(nativePtr, string_ptr);
-				Marshal.FreeHGlobal(string_ptr);
+				if(string_ptr_to_remove != IntPtr.Zero)
+					Marshal.FreeHGlobal(string_ptr_to_remove);
 			}
 		}
 		{{/isLinphoneCall}}
@@ -477,9 +481,11 @@ namespace Linphone
 			}
 			set
 			{
+				IntPtr string_ptr_to_remove = linphone_core_get_native_video_window_id(nativePtr);
+				if(string_ptr_to_remove != IntPtr.Zero)
+					Marshal.FreeHGlobal(string_ptr_to_remove);
 				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
 				linphone_core_set_native_video_window_id(nativePtr, string_ptr);
-				Marshal.FreeHGlobal(string_ptr);
 			}
 		}
 
@@ -492,9 +498,11 @@ namespace Linphone
 			}
 			set
 			{
+				IntPtr string_ptr_to_remove = linphone_core_get_native_preview_window_id(nativePtr);
+				if(string_ptr_to_remove != IntPtr.Zero)
+					Marshal.FreeHGlobal(string_ptr_to_remove);
 				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
 				linphone_core_set_native_preview_window_id(nativePtr, string_ptr);
-				Marshal.FreeHGlobal(string_ptr);
 			}
 		}
 		{{/isLinphoneCore}}

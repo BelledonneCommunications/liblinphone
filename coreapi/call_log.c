@@ -738,13 +738,24 @@ LinphoneCallLog * linphone_core_get_last_outgoing_call_log(LinphoneCore *lc) {
 	return result;
 }
 
+static int find_matching_callid(LinphoneCallLog *clg, const char *cid) {
+	return strcmp(clg->call_id, cid);
+}
+
 LinphoneCallLog * linphone_core_find_call_log_from_call_id(LinphoneCore *lc, const char *call_id) {
 	char *buf;
 	uint64_t begin,end;
 	CallLogStorageResult clsres;
 	LinphoneCallLog* result = NULL;
 
-	if (!lc || lc->logs_db == NULL) return NULL;
+	if (!lc) return NULL;
+	if (!lc->logs_db) {
+		bctbx_list_t *local_result = bctbx_list_find_custom(lc->call_logs, (int (*)(const void*, const void*))find_matching_callid, call_id);
+		if (local_result) {
+			return (LinphoneCallLog *)bctbx_list_get_data(local_result);
+		}
+		return NULL;
+	}
 
 	/*since we want to append query parameters depending on arguments given, we use malloc instead of sqlite3_mprintf*/
 	buf = sqlite3_mprintf("SELECT * FROM call_history WHERE call_id = '%q' ORDER BY id DESC LIMIT 1", call_id);
