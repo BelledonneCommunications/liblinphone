@@ -388,7 +388,6 @@ ms_message("%s - call state %s\n - remote address %s\n - remote contact address 
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
-				remoteContactAddress.removeUriParam("conf-id");
 				ms_free(remoteContactAddressStr);
 
 				if (!remoteContactAddress.hasParam("isfocus")) {
@@ -422,7 +421,6 @@ ms_message("%s - call state %s\n - remote address %s\n - remote contact address 
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
-				remoteContactAddress.removeUriParam("conf-id");
 				ms_free(remoteContactAddressStr);
 
 				// Check if the request was sent by the focus
@@ -459,7 +457,6 @@ ms_message("%s - call state %s\n - remote address %s\n - remote contact address 
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
-				remoteContactAddress.removeUriParam("conf-id");
 				ms_free(remoteContactAddressStr);
 
 				// Check if the request was sent by the focus
