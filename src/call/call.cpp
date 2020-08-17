@@ -353,8 +353,8 @@ ms_message("%s - searching conference (peer address %s local address %s remote c
 		// In the case of a local conference, the following lines wil trigger the deletion of the remote conference created for every call added to the local conference
 		if (conference) {
 			conference->setState(ConferenceInterface::State::TerminationPending);
+			setConference(nullptr);
 		}
-		setConference (nullptr);
 	}
 }
 
