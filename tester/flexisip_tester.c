@@ -1001,7 +1001,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		linphone_content_set_name(content,"nowebcamCIF.jpg");
 		linphone_content_set_user_data(content,file_to_send);
 		message = linphone_chat_room_create_file_transfer_message(chat_room, content);
-		cbs = linphone_chat_message_get_callbacks(message);
+		cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 		{
 			int dummy=0;
 			wait_for_until(marie->lc,pauline->lc,&dummy,1,100); /*just to have time to purge message stored in the server*/
@@ -1009,7 +1009,9 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 			reset_counters(&pauline->stat);
 		}
 		linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
-		linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+		linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
+		linphone_chat_message_add_callbacks(message, cbs);
+		linphone_chat_message_cbs_unref(cbs);
 		linphone_chat_message_send(message);
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1));
 

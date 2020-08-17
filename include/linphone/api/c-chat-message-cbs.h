@@ -95,15 +95,31 @@ LINPHONE_PUBLIC void linphone_chat_message_cbs_set_file_transfer_recv (LinphoneC
   * Get the file transfer send callback.
   * @param[in] cbs LinphoneChatMessageCbs object.
   * @return The current file transfer send callback.
+  * @deprecated 17/08/2020 Use #linphone_chat_message_cbs_get_file_transfer_send_chunk instead.
   */
 LINPHONE_PUBLIC LinphoneChatMessageCbsFileTransferSendCb linphone_chat_message_cbs_get_file_transfer_send (const LinphoneChatMessageCbs *cbs);
 
 /**
  * Set the file transfer send callback.
- * @param[in] cbs LinphoneChatMessageCbs object.
- * @param[in] cb The file transfer send callback to be used.
+ * @param cbs LinphoneChatMessageCbs object.
+ * @param cb The file transfer send callback to be used.
+ * @deprecated 17/08/2020 Use #linphone_chat_message_cbs_set_file_transfer_send_chunk instead.
  */
 LINPHONE_PUBLIC void linphone_chat_message_cbs_set_file_transfer_send (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsFileTransferSendCb cb);
+
+/**
+  * Get the file transfer send callback.
+  * @param cbs LinphoneChatMessageCbs object.
+  * @return The current file transfer send callback.
+  */
+LINPHONE_PUBLIC LinphoneChatMessageCbsFileTransferSendChunkCb linphone_chat_message_cbs_get_file_transfer_send_chunk (const LinphoneChatMessageCbs *cbs);
+
+/**
+ * Set the file transfer send callback.
+ * @param cbs LinphoneChatMessageCbs object.
+ * @param cb The file transfer send callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_message_cbs_set_file_transfer_send_chunk (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsFileTransferSendChunkCb cb);
 
 /**
  * Get the file transfer progress indication callback.

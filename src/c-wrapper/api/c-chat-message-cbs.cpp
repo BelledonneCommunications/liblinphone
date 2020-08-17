@@ -33,6 +33,7 @@ struct _LinphoneChatMessageCbs {
 	LinphoneChatMessageCbsParticipantImdnStateChangedCb participant_imdn_state_changed;
 	LinphoneChatMessageCbsEphemeralMessageTimerStartedCb ephemeral_message_timer_started;
 	LinphoneChatMessageCbsEphemeralMessageDeletedCb ephemeral_message_deleted;
+	LinphoneChatMessageCbsFileTransferSendChunkCb file_transfer_send_chunk;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatMessageCbs);
@@ -106,6 +107,19 @@ void linphone_chat_message_cbs_set_file_transfer_send (
 	LinphoneChatMessageCbsFileTransferSendCb cb
 ) {
 	cbs->file_transfer_send = cb;
+}
+
+LinphoneChatMessageCbsFileTransferSendChunkCb linphone_chat_message_cbs_get_file_transfer_send_chunk (
+	const LinphoneChatMessageCbs *cbs
+) {
+	return cbs->file_transfer_send_chunk;
+}
+
+void linphone_chat_message_cbs_set_file_transfer_send_chunk (
+	LinphoneChatMessageCbs *cbs,
+	LinphoneChatMessageCbsFileTransferSendChunkCb cb
+) {
+	cbs->file_transfer_send_chunk = cb;
 }
 
 LinphoneChatMessageCbsFileTransferProgressIndicationCb linphone_chat_message_cbs_get_file_transfer_progress_indication (
