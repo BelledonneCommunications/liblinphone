@@ -339,7 +339,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	initial_marie_stat=marie->stat;
 	initial_pauline_stat=pauline->stat;
 	initial_laure_stat=laure->stat;
-	if (focus) initial_focus_stat=focus->stat;
+	if (focus_is_up) initial_focus_stat=focus->stat;
 
 	marie_call_laure=linphone_core_get_current_call(marie->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
