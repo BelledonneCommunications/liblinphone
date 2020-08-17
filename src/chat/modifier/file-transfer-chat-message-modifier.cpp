@@ -177,7 +177,15 @@ int FileTransferChatMessageModifier::onSendBody (
 			// Legacy
 			linphone_core_notify_file_transfer_send(message->getCore()->getCCore(), msg, content, (char *)buffer, size);
 		}
+
+		// Deprecated, use _linphone_chat_message_notify_file_transfer_send_2 instead
 		_linphone_chat_message_notify_file_transfer_send(msg, content, offset, *size);
+
+		LinphoneBuffer *lb = linphone_buffer_new();
+		_linphone_chat_message_notify_file_transfer_send_2(msg, content, offset, *size, lb);
+		*size = linphone_buffer_get_size(lb);
+		memcpy(buffer, linphone_buffer_get_content(lb), *size);
+		linphone_buffer_unref(lb);
 	}
 
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();

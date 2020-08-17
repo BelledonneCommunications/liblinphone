@@ -1755,6 +1755,35 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, LinphoneCon
 	return lb;
 }
 
+void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *lb){
+	size_t file_size;
+	size_t size_to_send;
+	uint8_t *buf;
+	FILE *file_to_send = linphone_content_get_user_data(content);
+
+	// If a file path is set, we should NOT call the on_send callback !
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
+
+	BC_ASSERT_PTR_NOT_NULL(file_to_send);
+	if (file_to_send == NULL){
+		return;
+	}
+	
+	fseek(file_to_send, 0, SEEK_END);
+	file_size = ftell(file_to_send);
+	fseek(file_to_send, (long)offset, SEEK_SET);
+	size_to_send = MIN(size, file_size - offset);
+	buf = ms_malloc(size_to_send);
+	if (fread(buf, sizeof(uint8_t), size_to_send, file_to_send) != size_to_send){
+		// reaching end of file, close it
+		fclose(file_to_send);
+		linphone_content_set_user_data(content, NULL);
+	}
+	linphone_buffer_set_content(lb, buf, size_to_send);
+	ms_free(buf);
+}
+
 /**
  * function invoked to report file transfer progress.
  * */
