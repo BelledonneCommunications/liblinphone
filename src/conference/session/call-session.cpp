@@ -1489,7 +1489,8 @@ const CallSessionParams * CallSession::getParams () const {
 
 void CallSession::updateContactAddress (Address & contactAddress) const {
 	L_D();
-	if ((d->isInConference()) && (!contactAddress.hasParam("isfocus"))) {
+
+	if ((d->isInConference() && !d->currentParams->getPrivate()->getInConference()) && (!contactAddress.hasParam("isfocus"))) {
 		// If in conference and contact address doesn't have isfocus
 		contactAddress.setParam("isfocus");
 	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
