@@ -362,8 +362,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
-printf("%s - call %p state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d get conference %p\n", __func__, this, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
-ms_message("%s - call state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d get conference %p\n", __func__, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), getConference());
+printf("%s - call %p state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d current params is in conference %0d get conference %p\n", __func__, this, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->getInConference(), getConference());
+ms_message("%s - call %p state %s\n - remote address %s\n - remote contact address %s \n - local address %s\n - is in conference %0d current params is in conference %0d get conference %p\n", __func__, this, Utils::toString(state).c_str(), ((getRemoteAddress()->asString().empty() == false) ? getRemoteAddress()->asString().c_str() : "Unknown"), ((session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) ? sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress()) : "Unknown"), ((getLocalAddress().asString().empty() == false) ? getLocalAddress().asString().c_str() : "Unknown"), isInConference(), const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->getInConference(), getConference());
 
 	switch(state) {
 		case CallSession::State::OutgoingInit:
@@ -435,6 +435,7 @@ ms_message("%s - call state %s\n - remote address %s\n - remote contact address 
 						setConference(remoteConf->toC());
 						// Call is in conference if pointer to conference is not null
 						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
+						const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->setInConference(true);
 					}
 				} else if (isInConference()) {
 					if (!remoteContactAddress.hasParam("isfocus")) {
@@ -473,6 +474,7 @@ ms_message("%s - call state %s\n - remote address %s\n - remote contact address 
 						setConference(remoteConf->toC());
 						// Call is in conference if pointer to conference is not null
 						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
+						const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->setInConference(true);
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
