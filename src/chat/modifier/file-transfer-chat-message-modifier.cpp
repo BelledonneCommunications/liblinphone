@@ -177,7 +177,15 @@ int FileTransferChatMessageModifier::onSendBody (
 			// Legacy
 			linphone_core_notify_file_transfer_send(message->getCore()->getCCore(), msg, content, (char *)buffer, size);
 		}
+
+		// Deprecated, use _linphone_chat_message_notify_file_transfer_send_chunk instead
 		_linphone_chat_message_notify_file_transfer_send(msg, content, offset, *size);
+
+		LinphoneBuffer *lb = linphone_buffer_new();
+		_linphone_chat_message_notify_file_transfer_send_chunk(msg, content, offset, *size, lb);
+		*size = linphone_buffer_get_size(lb);
+		memcpy(buffer, linphone_buffer_get_content(lb), *size);
+		linphone_buffer_unref(lb);
 	}
 
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
@@ -195,7 +203,7 @@ int FileTransferChatMessageModifier::onSendBody (
 		ms_free(encrypted_buffer);
 	}
 
-	return retval <= 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
+	return retval <= 0 && *size != 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
 }
 
 static void _chat_message_on_send_end (belle_sip_user_body_handler_t *bh, void *data) {
