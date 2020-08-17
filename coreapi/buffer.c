@@ -41,6 +41,8 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneBuffer, belle_sip_object_t,
 LinphoneBuffer * linphone_buffer_new(void) {
 	LinphoneBuffer *buffer = belle_sip_object_new(LinphoneBuffer);
 	belle_sip_object_ref(buffer);
+	buffer->size = 0;
+	buffer->content = NULL;
 	return buffer;
 }
 

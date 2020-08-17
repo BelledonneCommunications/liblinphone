@@ -167,9 +167,20 @@ typedef void (*LinphoneChatMessageCbsFileTransferRecvCb)(LinphoneChatMessage *me
  * @param content #LinphoneContent outgoing content @notnil
  * @param offset the offset in the file from where to get the data to be sent
  * @param size the number of bytes expected by the framework
- * @return A #LinphoneBuffer object holding the data written by the application. An empty buffer means end of file.
+ * @return A #LinphoneBuffer object holding the data written by the application. An empty buffer means end of file. @warning The returned value isn't used, hence the deprecation!
+ * @deprecated 17/0/2020 Use #LinphoneChatMessageCbsFileTransferSendChunkCb instead.
  */
 typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
+
+/**
+ * File transfer send callback prototype. This function is called by the core when an outgoing file transfer is started. This function is called until size is set to 0.
+ * @param message #LinphoneChatMessage message from which the body is received. @notnil
+ * @param content #LinphoneContent outgoing content @notnil
+ * @param offset the offset in the file from where to get the data to be sent
+ * @param size the number of bytes expected by the framework
+ * @param buffer A #LinphoneBuffer to be filled. Leave it empty when end of file has been reached. @notnil
+ */
+typedef void (*LinphoneChatMessageCbsFileTransferSendChunkCb)(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer);
 
 /**
  * File transfer progress indication callback prototype.

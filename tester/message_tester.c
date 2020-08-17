@@ -68,11 +68,13 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	linphone_content_set_user_data(content,file_to_send);
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
-	cbs = linphone_chat_message_get_callbacks(msg);
-	linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+	linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
 	BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
+	linphone_chat_message_add_callbacks(msg, cbs);
+	linphone_chat_message_cbs_unref(cbs);
 
 	linphone_content_unref(content);
 	bc_free(send_filepath);
@@ -100,10 +102,12 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	linphone_content_set_size(content,file_size); /*total size to be transfered*/
 
 	msg = linphone_chat_room_create_file_transfer_message(chat_room, content);
-	cbs = linphone_chat_message_get_callbacks(msg);
-	linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+	linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
 	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	linphone_chat_message_add_callbacks(msg, cbs);
+	linphone_chat_message_cbs_unref(cbs);
 
 	linphone_content_unref(content);
 	bc_free(send_filepath);
@@ -787,6 +791,9 @@ static void transfer_message_upload_error(bool_t cancel) {
 			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
 		}
 
+		// When C pointer is unreffed first, callbacks will be removed, 
+		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody
+		// while the CPP shared ptr is still held by the chat room...
 		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
@@ -819,8 +826,10 @@ static void transfer_message_download_cancelled(void) {
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000));
 
 	if (marie->stat.last_received_chat_message ) { /* get last msg and use it to download file */
-		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(marie->stat.last_received_chat_message);
+		LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+		linphone_chat_message_add_callbacks(marie->stat.last_received_chat_message, cbs);
+		linphone_chat_message_cbs_unref(cbs);
 		linphone_chat_message_start_file_download(marie->stat.last_received_chat_message, liblinphone_tester_chat_message_state_change, marie->lc);
 		/* wait for file to be 50% downloaded */
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.progress_of_LinphoneFileTransfer, 50));
@@ -1947,10 +1956,10 @@ void crash_during_file_transfer(void) {
 		LinphoneChatMessage *sent_msg = (LinphoneChatMessage *)bctbx_list_get_data(msg_list);
 		BC_ASSERT_EQUAL((int)linphone_chat_message_get_state(sent_msg), (int)LinphoneChatMessageStateNotDelivered, int, "%d");
 		//resend
-		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(sent_msg);
-		linphone_chat_message_cbs_set_file_transfer_send(cbs, tester_file_transfer_send);
+		/*LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(sent_msg);
+		linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 		linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
-		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);*/
 		linphone_chat_message_send(sent_msg);
 		if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile,1, 60000))) {
 			linphone_core_manager_stop(marie);
@@ -1960,10 +1969,10 @@ void crash_during_file_transfer(void) {
 			bctbx_list_t *msg_list_2 = linphone_chat_room_get_history(marie_room,1);
 			if (BC_ASSERT_PTR_NOT_NULL(msg_list_2)){
 				LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)msg_list_2->data;
-				LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
+				/*LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(recv_msg);
 				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);*/
 				linphone_chat_message_download_file(recv_msg);
 				/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
 				if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,1,55000))) {
