@@ -171,9 +171,6 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 #if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
 	push_allowed_default = TRUE;
 #endif
-#if defined(TARGET_OS_IPHONE)
-	remote_push_allowed_default = TRUE;
-#endif
 	cfg->push_notification_allowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", push_allowed_default) : push_allowed_default;
 	cfg->remote_push_notification_allowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "remote_push_notification_allowed", remote_push_allowed_default) : remote_push_allowed_default;
 	cfg->refkey = refkey ? ms_strdup(refkey) : NULL;
@@ -1838,6 +1835,7 @@ bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyCon
 
 void linphone_proxy_config_set_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t is_allowed) {
 	cfg->push_notification_allowed = is_allowed;
+	linphone_proxy_config_update_push_notification_parameters(cfg);
 }
 
 bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneProxyConfig *cfg) {
@@ -1846,6 +1844,7 @@ bool_t linphone_proxy_config_is_remote_push_notification_allowed(const LinphoneP
 
 void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow) {
 	cfg->remote_push_notification_allowed = allow;
+	linphone_proxy_config_update_push_notification_parameters(cfg);
 }
 
 bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg) {
@@ -1853,28 +1852,19 @@ bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyC
 	const char *prid = linphone_push_notification_config_get_prid(push_cfg);
 	const char *basicToken = linphone_push_notification_config_get_voip_token(push_cfg);
 	const char *remoteToken = linphone_push_notification_config_get_remote_token(push_cfg);
-	bool_t basicPushAllowed = linphone_proxy_config_is_push_notification_allowed(cfg);
-	bool_t remotePushAllowed = linphone_proxy_config_is_remote_push_notification_allowed(cfg);
 	// Proxy configuration can support multiple types of push. Push notification is ready when all supported push's tokens to set
-	if (prid && STRING_IS_NULL(prid))
-		return TRUE;
-	if ((basicPushAllowed && STRING_IS_NULL(basicToken)) || (remotePushAllowed && STRING_IS_NULL(remoteToken)))
-		return FALSE;
-
-	return TRUE;
+	return !STRING_IS_NULL(prid) || !((cfg->push_notification_allowed && STRING_IS_NULL(basicToken)) || (cfg->remote_push_notification_allowed && STRING_IS_NULL(remoteToken)));
 }
 
 void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConfig *cfg) {
 	bool_t pushReady = linphone_proxy_config_is_all_push_notification_ready(cfg);
 	// Do not alter contact uri params if push notification not ready
 	if (pushReady) {
-		bool_t basicPushAllowed = linphone_proxy_config_is_push_notification_allowed(cfg);
-		bool_t remotePushAllowed = linphone_proxy_config_is_remote_push_notification_allowed(cfg);
 		char *computedPushParams = linphone_proxy_config_get_computed_push_notification_parameters(cfg);
 		const char *contactUriParams = linphone_proxy_config_get_contact_uri_parameters(cfg);
 
 		// Do not alter contact uri params for proxy config without push notification allowed
-		if (computedPushParams && cfg->lc->push_notification_enabled && (basicPushAllowed || remotePushAllowed)) {
+		if (computedPushParams && cfg->lc->push_notification_enabled && (cfg->push_notification_allowed || cfg->remote_push_notification_allowed)) {
 			if (!contactUriParams || strcmp(contactUriParams, computedPushParams) != 0) {
 				linphone_proxy_config_edit(cfg);
 				linphone_proxy_config_set_contact_uri_parameters(cfg, computedPushParams);
@@ -1893,6 +1883,8 @@ void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConf
 		if (computedPushParams) {
 			ms_free(computedPushParams);
 		}
+	} else {
+		ms_message("Push notification information push parameters not ready");
 	}
 }
 

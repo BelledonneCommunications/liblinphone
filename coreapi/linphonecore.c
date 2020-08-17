@@ -2792,25 +2792,34 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 	}
 }
 
-LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {
+LinphoneCore *_linphone_core_new_with_config_and_app_delegate(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, bool_t use_app_delegate) {
 	LinphoneCore *core = L_INIT(Core);
 	Core::create(core);
-	linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
+	if (use_app_delegate) {
+		linphone_core_init(core, cbs, config, userdata, system_context, FALSE);
+		// allow ios push notifications, auto ietrate and enterBackground.
+		getPlatformHelpers(core)->createAppDelegate();
+		if (automatically_start) {
+			linphone_core_start(core);
+		}
+	} else {
+		linphone_core_init(core, cbs, config, userdata, system_context, automatically_start);
+	}
 	return core;
+}
+
+LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start) {
+	return _linphone_core_new_with_config_and_app_delegate(cbs, config, userdata, system_context, automatically_start, TRUE);
 }
 
 LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core) {
 	bctbx_message("[SHARED] Creating %s Shared Core", main_core ? "Main" : "Executor");
 	linphone_config_set_string(config, "shared_core", "app_group_id", app_group_id);
-	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start);
+	LinphoneCore *core = _linphone_core_new_with_config_and_app_delegate(cbs, config, userdata, system_context, automatically_start, main_core);
 	core->is_main_core = main_core;
 	// allow ios app extension to mark msg as read without being registered
 	core->send_imdn_if_unregistered = !main_core;
 	getPlatformHelpers(core)->getSharedCoreHelpers()->registerSharedCoreMsgCallback();
-	if (main_core) {
-		// allow ios push notifications, auto ietrate and enterBackground.
-		getPlatformHelpers(core)->createAppDelegate();
-	}
 	return core;
 }
 

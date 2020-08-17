@@ -635,7 +635,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_push_notification_allowed(Linphon
 LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const LinphoneProxyConfig *proxy_config);
 
 /**
-* Indicates whether to add to the contact parameters the remote push notification information (IOS only).
+* Indicates whether to add to the contact parameters the remote push notification information (IOS only). Default value is FALSE.
 * @param proxy_config #LinphoneProxyConfig object. @notnil
 * @return TRUE if remote push notification informations should be added, FALSE otherwise.
 */
