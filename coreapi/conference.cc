@@ -641,17 +641,17 @@ int LocalConference::removeParticipant (const IdentityAddress &addr) {
 bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
 	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
 	if (!callSession)
-		return -1;
+		return false;
 
 	// Search call that matches participant session
 	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
 	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&] (const std::shared_ptr<Call> & c) {
 		return (c->getActiveSession() == callSession);
 	});
-	bool ret = -1;
+	bool ret = false;
 	if (callIt != coreCalls.cend()) {
 		std::shared_ptr<Call> call = *callIt;
-		removeParticipant(call);
+		ret = (bool)removeParticipant(call);
 	}
 	return ret;
 }
