@@ -1297,42 +1297,85 @@ static void direct_call_well_known_port_ipv6(void){
 }
 
 static void call_outbound_with_multiple_proxy(void) {
-	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_rc", FALSE);// Caller
+	LinphoneCoreManager* laure   = linphone_core_manager_new2( "laure_tcp_rc", FALSE);// Caller
+	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
 
 	LinphoneProxyConfig* lpc = NULL;
-	LinphoneProxyConfig* registered_lpc = linphone_core_create_proxy_config(marie->lc);
-
+	LinphoneProxyConfig * registered_lpc[] = {NULL, linphone_core_create_proxy_config(marie->lc), linphone_core_create_proxy_config(marie->lc)};
+	int proxyCount = sizeof(registered_lpc)/sizeof(LinphoneProxyConfig*);
+	
+	
 	lpc = linphone_core_get_default_proxy_config(marie->lc);
-	linphone_core_set_default_proxy_config(marie->lc,NULL);
-
-	if (!BC_ASSERT_PTR_NOT_NULL(lpc) || !BC_ASSERT_PTR_NOT_NULL(registered_lpc)) return;
+	if (!BC_ASSERT_PTR_NOT_NULL(lpc)) {
+		linphone_core_manager_destroy(marie);
+		linphone_core_manager_destroy(laure);
+		linphone_core_manager_destroy(pauline);
+		return;
+	}
+	for(int i = 1 ; i < proxyCount ; ++i)
+		if (!BC_ASSERT_PTR_NOT_NULL(registered_lpc[i])) {
+			linphone_core_manager_destroy(marie);
+			linphone_core_manager_destroy(laure);
+			linphone_core_manager_destroy(pauline);
+			return;
+		}
 
 	// create new LPC that will successfully register
-	linphone_proxy_config_set_identity_address(registered_lpc, linphone_proxy_config_get_identity_address(lpc));
-	linphone_proxy_config_set_server_addr(registered_lpc, linphone_proxy_config_get_addr(lpc));
-	linphone_proxy_config_set_route(registered_lpc, linphone_proxy_config_get_route(lpc));
-	linphone_proxy_config_enable_register(registered_lpc, TRUE);
+	linphone_proxy_config_set_identity_address(registered_lpc[1], linphone_proxy_config_get_identity_address(lpc));
+	linphone_proxy_config_set_server_addr(registered_lpc[1], linphone_proxy_config_get_server_addr(lpc));
+	linphone_proxy_config_set_route(registered_lpc[1], linphone_proxy_config_get_route(lpc));
+	linphone_proxy_config_enable_register(registered_lpc[1], TRUE);
 
-	linphone_core_add_proxy_config(marie->lc, registered_lpc);
-	linphone_proxy_config_unref(registered_lpc);
-
+	linphone_core_add_proxy_config(marie->lc, registered_lpc[1]);
+	
 	// set first LPC to unreacheable proxy addr
 	linphone_proxy_config_edit(lpc);
 	linphone_proxy_config_set_server_addr(lpc,"sip:linphone.org:9016;transport=udp");
 	linphone_proxy_config_set_route(lpc, "sip:linphone.org:9016;transport=udp;lr");
 	linphone_proxy_config_done(lpc);
+	
+	lpc = linphone_core_get_default_proxy_config(laure->lc);
+	// create a second new LPC that will successfully register
+	linphone_proxy_config_set_identity_address(registered_lpc[2], linphone_proxy_config_get_identity_address(lpc));
+	linphone_proxy_config_set_server_addr(registered_lpc[2], linphone_proxy_config_get_server_addr(lpc));
+	linphone_proxy_config_set_route(registered_lpc[2], linphone_proxy_config_get_route(lpc));
+	linphone_proxy_config_enable_register(registered_lpc[2], TRUE);
+
+	linphone_core_add_proxy_config(marie->lc, registered_lpc[2]);// Add Laure proxy to marie core
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 10000));
 
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationProgress, 2, 200));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 1, 10000));
-
-	// calling marie should go through the second proxy config
-	BC_ASSERT_TRUE(call(marie, pauline));
-
-	end_call(marie, pauline);
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationProgress, proxyCount, 200));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxyCount-1, 10000));
+	
+	for(int i = 0 ; i < proxyCount; ++i) {
+		// Set the proxy to be used in call
+		linphone_core_set_default_proxy_config(marie->lc, registered_lpc[i]);
+		// calling marie should go through the second proxy config
+		bool_t callStatus = call(marie, pauline);
+		BC_ASSERT_TRUE(callStatus);
+	// Test proxies while calling
+		if( callStatus && registered_lpc[i] ) {// proxy have been set
+			LinphoneCall * call = linphone_core_get_current_call(pauline->lc);
+			BC_ASSERT_PTR_NOT_NULL(call);
+			if(call){
+				const LinphoneCallParams * paulineCallParameters = linphone_call_get_current_params(call);
+				BC_ASSERT_PTR_NOT_NULL(paulineCallParameters);
+				if( paulineCallParameters) {
+					LinphoneProxyConfig * paulineCallProxy = linphone_call_params_get_proxy_config(paulineCallParameters);
+					BC_ASSERT_PTR_NOT_NULL(paulineCallProxy);
+					BC_ASSERT_TRUE(linphone_address_equal(linphone_proxy_config_get_identity_address(paulineCallProxy), linphone_proxy_config_get_identity_address(registered_lpc[i])));
+				}
+			}
+		}
+		end_call(marie, pauline);
+		
+	}
+	for(int i = 1 ; i < proxyCount ; ++i)
+		linphone_proxy_config_unref(registered_lpc[i]);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
 }
 

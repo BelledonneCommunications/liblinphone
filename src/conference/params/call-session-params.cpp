@@ -192,10 +192,10 @@ LinphoneProxyConfig *CallSessionParams::getProxyConfig() const {
 
 void CallSessionParams::setProxyConfig(LinphoneProxyConfig *proxyConfig) {
 	L_D();
-	if( d->proxyConfig )
-		linphone_proxy_config_unref(d->proxyConfig);
 	if( proxyConfig )
 		linphone_proxy_config_ref(proxyConfig);
+	if( d->proxyConfig )
+		linphone_proxy_config_unref(d->proxyConfig);
 	d->proxyConfig = proxyConfig;
 }
 
