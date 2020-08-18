@@ -2297,10 +2297,10 @@ void MediaSession::initiateIncoming () {
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 			 */
 			if (d->deferIncomingNotification) {
-				auto incomingNotificationTask = [this, d](){
+				auto incomingNotificationTask = [d](){
 					d->deferIncomingNotification = false;
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					startIncomingNotification();
+					d->startIncomingNotification();
 				};
 				d->queueIceCompletionTask(incomingNotificationTask);
 			}else{
