@@ -47,6 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+    mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
@@ -77,6 +78,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 			ms_free(peerUri);
 		if (selfUri)
 			ms_free(selfUri);
+        
 	}
 	initializeSessions((MediaStream*)mStream);
 }
@@ -472,7 +474,7 @@ void MS2AudioStream::stop(){
 	}
 	audio_stream_stop(mStream);
 
-	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
@@ -554,6 +556,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 		audio_stream_set_mic_gain(as, 0);
 	else
 		audio_stream_set_mic_gain_db(as, micGain);
+    
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
 		if (as->volrecv)
@@ -643,7 +646,6 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 
 void MS2AudioStream::enableMic(bool value){
 	mMicMuted = !value;
-
 	if (mMicMuted)
 		audio_stream_set_mic_gain(mStream, 0);
 	else

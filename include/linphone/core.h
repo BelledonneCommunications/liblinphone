@@ -2429,6 +2429,29 @@ LINPHONE_PUBLIC void linphone_core_set_mic_gain_db(LinphoneCore *core, float lev
 LINPHONE_PUBLIC float linphone_core_get_mic_gain_db(LinphoneCore *core);
 
 /**
+ * IOS Only.
+ * Calling this method with disable=true will cause the microhone to be completely deactivated when muted,
+ * But will briefly interrupt the playback sound while the audio is reconfigured.
+ * On IOS 14, it will also disable Apple's microphone recording indicator when microphone is muted.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @param disable True if you wish to entirely stop the audio recording when muting the microphone.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_disable_record_on_mute(LinphoneCore *core, bool_t disable);
+
+/**
+ * IOS Only.
+ * Get wether the microhone will be completely deactivated when muted, although this will cause muting to briefly interrupt playback
+ * On IOS 14, it will also disable Apple's microphone recording indicator when microphone is muted.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return  disable True if you wish to entirely stop the audio recording when muting the microphone.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_disable_record_on_mute(LinphoneCore *core);
+
+/**
  * Allow to control play level before entering sound card:  gain in db
  * @param core #LinphoneCore object @notnil
  * @param level The new play level
