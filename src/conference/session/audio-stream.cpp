@@ -473,7 +473,7 @@ void MS2AudioStream::stop(){
 	}
 	audio_stream_stop(mStream);
 
-	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
