@@ -1753,6 +1753,8 @@ static void send_update_during_conference(void) {
 	if (pauline_called_by_marie) {
 		stats initial_marie_stat = marie->stat;
 		stats initial_pauline_stat = pauline->stat;
+		stats initial_laure_stat = laure->stat;
+		stats initial_michelle_stat = michelle->stat;
 		linphone_core_terminate_call(marie->lc, pauline_called_by_marie);
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallEnd,1));
@@ -1767,6 +1769,8 @@ static void send_update_during_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,initial_pauline_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 
+		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(initial_laure_stat.number_of_NotifyReceived + 2),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(initial_michelle_stat.number_of_NotifyReceived + 2),5000));
 	}
 
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -2953,7 +2957,7 @@ static void conference_with_simple_audio_device_change(void) {
 	linphone_audio_device_ref(laure_current_dev);
 
 	// Unref cards
-	bctbx_list_free_with_data(marie_audio_devices, (void (*)(void *))linphone_audio_device_unref);
+	bctbx_list_free_with_data(laure_audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
 	lcs=bctbx_list_append(lcs,laure->lc);
 
