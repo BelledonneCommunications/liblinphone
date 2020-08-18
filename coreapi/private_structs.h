@@ -292,26 +292,27 @@ struct net_state
 
 struct sound_config
 {
-	struct _MSSndCard * ring_sndcard;	/* the playback sndcard currently used */
-	struct _MSSndCard * play_sndcard;	/* the playback sndcard currently used */
-	struct _MSSndCard * capt_sndcard; 	/* the capture sndcard currently used */
-	struct _MSSndCard * media_sndcard; 	/* the media sndcard currently used */
-	struct _MSSndCard * lsd_card; /* dummy playback card for Linphone Sound Daemon extension */
-	const char **cards;
-	int latency;	/* latency in samples of the current used sound device */
-	float soft_play_lev; /*playback gain in db.*/
-	float soft_mic_lev; /*mic gain in db.*/
-	char rec_lev;
-	char play_lev;
-	char ring_lev;
-	char media_lev;
-	char source;
-	char *local_ring;
-	char *remote_ring;
-	char *ringback_tone;
-	bool_t ec;
-	bool_t ea;
-	bool_t agc;
+    struct _MSSndCard * ring_sndcard;	/* the playback sndcard currently used */
+    struct _MSSndCard * play_sndcard;	/* the playback sndcard currently used */
+    struct _MSSndCard * capt_sndcard; 	/* the capture sndcard currently used */
+    struct _MSSndCard * media_sndcard; 	/* the media sndcard currently used */
+    struct _MSSndCard * lsd_card; /* dummy playback card for Linphone Sound Daemon extension */
+    const char **cards;
+    int latency;	/* latency in samples of the current used sound device */
+    float soft_play_lev; /*playback gain in db.*/
+    float soft_mic_lev; /*mic gain in db.*/
+    char rec_lev;
+    char play_lev;
+    char ring_lev;
+    char media_lev;
+    char source;
+    char *local_ring;
+    char *remote_ring;
+    char *ringback_tone;
+    bool_t ec;
+    bool_t ea;
+    bool_t agc;
+    bool_t disable_record_on_mute;
 };
 
 struct codecs_config

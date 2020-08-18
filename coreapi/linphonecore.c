@@ -1401,7 +1401,7 @@ static void sound_config_read(LinphoneCore *lc) {
 
 	linphone_core_set_playback_gain_db (lc,linphone_config_get_float(lc->config,"sound","playback_gain_db",0));
 	linphone_core_set_mic_gain_db (lc,linphone_config_get_float(lc->config,"sound","mic_gain_db",0));
-
+	linphone_core_set_disable_record_on_mute(lc, linphone_config_get_bool(lc->config,"sound","disable_record_on_mute", FALSE));
 	linphone_core_set_remote_ringback_tone (lc,linphone_config_get_string(lc->config,"sound","ringback_tone",NULL));
 
 	/*just parse requested stream feature once at start to print out eventual errors*/
@@ -4691,6 +4691,18 @@ void linphone_core_set_mic_gain_db (LinphoneCore *lc, float gaindb){
 	audio_stream_set_mic_gain_db(st,gain);
 }
 
+bool_t linphone_core_get_disable_record_on_mute(LinphoneCore *lc) {
+	return lc->sound_conf.disable_record_on_mute;
+}
+
+void linphone_core_set_disable_record_on_mute(LinphoneCore *lc, bool_t disable) {
+	lc->sound_conf.disable_record_on_mute = disable;
+	
+	if (linphone_core_ready(lc)){
+		linphone_config_set_bool(lc->config,"sound","disable_record_on_mute",lc->sound_conf.disable_record_on_mute);
+	}
+}
+
 float linphone_core_get_mic_gain_db(LinphoneCore *lc) {
 	return lc->sound_conf.soft_mic_lev;
 }
@@ -6525,13 +6537,14 @@ static void sound_config_uninit(LinphoneCore *lc)
 	linphone_config_set_string(lc->config,"sound","remote_ring",config->remote_ring);
 	linphone_config_set_float(lc->config,"sound","playback_gain_db",config->soft_play_lev);
 	linphone_config_set_float(lc->config,"sound","mic_gain_db",config->soft_mic_lev);
-
+	linphone_config_set_bool(lc->config,"sound","disable_record_on_mute",config->disable_record_on_mute);
+	
 	if (config->local_ring) ms_free(config->local_ring);
 	if (config->remote_ring) ms_free(config->remote_ring);
 	lc->tones=bctbx_list_free_with_data(lc->tones, (void (*)(void*))linphone_tone_description_destroy);
 	lc->sound_conf = {0};
 }
-
+    
 static void video_config_uninit(LinphoneCore *lc)
 {
 	const LinphoneVideoDefinition *vdef = linphone_core_get_preferred_video_definition(lc);
