@@ -312,6 +312,7 @@ struct sound_config
 	bool_t ec;
 	bool_t ea;
 	bool_t agc;
+    bool_t disable_record_on_mute;
 };
 
 struct codecs_config
