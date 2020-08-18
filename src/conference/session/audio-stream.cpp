@@ -47,7 +47,8 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-
+	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
+	
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
 		LinphoneCallLog *log = getMediaSession().getLog();
@@ -549,11 +550,8 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 }
 
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
-	float micGain = lc->sound_conf.soft_mic_lev;
-	if (muted)
-		audio_stream_set_mic_gain(as, 0);
-	else
-		audio_stream_set_mic_gain_db(as, micGain);
+	audio_stream_enable_mic(as, !muted);
+	
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
 		if (as->volrecv)
@@ -590,6 +588,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	}
 	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
+		float micGain = lc->sound_conf.soft_mic_lev;
 		float floorGain = (float)(1 / pow(10, micGain / 10));
 		int spkAgc = linphone_config_get_int(config, "sound", "speaker_agc_enabled", 0);
 		MSFilter *f = as->volrecv;
@@ -643,11 +642,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 
 void MS2AudioStream::enableMic(bool value){
 	mMicMuted = !value;
-
-	if (mMicMuted)
-		audio_stream_set_mic_gain(mStream, 0);
-	else
-		audio_stream_set_mic_gain_db(mStream, getCCore()->sound_conf.soft_mic_lev);
+	audio_stream_enable_mic(mStream, value);
 }
 
 bool MS2AudioStream::micEnabled()const{
