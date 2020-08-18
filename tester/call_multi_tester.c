@@ -2601,7 +2601,6 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, no_callers, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, no_callers, 5000));
 
-
 	LinphoneCoreManager * phead = (LinphoneCoreManager *)bctbx_list_get_data(participants);
 
 	if (update_from_callee) {
@@ -2611,7 +2610,6 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallPausedByRemote, 1, 5000));
-
 
 	if (update_from_callee) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, no_callers, 5000));
@@ -2931,6 +2929,9 @@ static void conference_with_simple_audio_device_change(void) {
 	LinphoneAudioDevice *laure_current_dev = laure_dev0;
 	BC_ASSERT_PTR_NOT_NULL(laure_current_dev);
 	linphone_audio_device_ref(laure_current_dev);
+
+	// Unref cards
+	bctbx_list_free_with_data(marie_audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
 	lcs=bctbx_list_append(lcs,laure->lc);
 
