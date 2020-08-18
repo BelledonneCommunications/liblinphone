@@ -101,6 +101,7 @@ extern test_suite_t vfs_encryption_test_suite;
 #endif
 
 extern test_suite_t audio_bypass_suite;
+extern test_suite_t audio_routes_test_suite;
 #if HAVE_SIPP
 	extern test_suite_t complex_sip_call_test_suite;
 #endif
