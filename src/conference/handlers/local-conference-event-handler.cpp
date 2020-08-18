@@ -336,37 +336,16 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 		return;
 
 	if (handler->conf) {
-		bool allCallEnded = true;
-		for (const auto &p : handler->conf->getParticipants()) {
-			// Search as long as one device whose session is not in released state is found
-			if (allCallEnded == true) {
-				// Find the 1st device whose call session is not in Released state
-				// If find_if returns the end of the list, it means that no device has been found
-				allCallEnded = (std::find_if(p->getDevices().cbegin(), p->getDevices().cend(), [](const std::shared_ptr<ParticipantDevice> d) { 
-					if (d->getSession()) {
-						//return (d->getSession()->getState() != CallSession::State::Released);
-						return (d->getSession()->getState() != CallSession::State::End);
-					} else {
-						return true;
-					}
-				 }) == p->getDevices().cend());
-			}
-		}
-
-		// TODO: Implement getState in conference
-/*		if ((handler->conf->getParticipantCount() == 1) && (handler->conf->getState() != ConferenceInterface::State::Deleted)) {
-			handler->conf->setState(ConferenceInterface::State::TerminationPending);
-			return;
-		}
-*/
-
-		if (handler->confListener) {
-			for (const auto &p : handler->conf->getParticipants()) {
-				for (const auto &d : p->getDevices()) {
-					if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
-						//fixme confListener should be removed in the futur. On only relevant for server grou chatroom
-						handler->confListener->onFirstNotifyReceived(d->getAddress());
-						return;
+		LinphonePrivate::ConferenceInterface::State confState = handler->conf->getState();
+		if ((confState != ConferenceInterface::State::Deleted) && (confState != ConferenceInterface::State::Terminated)) {
+			if (handler->confListener) {
+				for (const auto &p : handler->conf->getParticipants()) {
+					for (const auto &d : p->getDevices()) {
+						if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
+							//fixme confListener should be removed in the futur. On only relevant for server grou chatroom
+							handler->confListener->onFirstNotifyReceived(d->getAddress());
+							return;
+						}
 					}
 				}
 			}
