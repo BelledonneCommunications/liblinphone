@@ -208,6 +208,7 @@ set(SOURCE_FILES_C
 	accountmanager.c
 	account_creator_tester.c
 	audio_bypass_tester.c
+	audio_routes_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_single_tester.c
