@@ -595,10 +595,8 @@ int MediaSessionPrivate::sendDtmf (void *data, unsigned int revents) {
 
 // -----------------------------------------------------------------------------
 
-Participant* MediaSessionPrivate::getMe () const {
-//shared_ptr<Participant> MediaSessionPrivate::getMe () const {
-//	shared_ptr<Participant> participant = me.lock();
-	Participant * participant = me;
+shared_ptr<Participant> MediaSessionPrivate::getMe () const {
+	shared_ptr<Participant> participant = me.lock();
 	if (!participant) {
 		lWarning() << "Unable to get valid Participant instance";
 		throw std::bad_weak_ptr();
@@ -2141,8 +2139,7 @@ IceSession *MediaSessionPrivate::getIceSession()const{
 MediaSession::MediaSession (const shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener)
 	: CallSession(*new MediaSessionPrivate, core) {
 	L_D();
-	// FIXME use shared ptr for participant - unable to do so due to a bug in the HybridObject
-	d->me = me.get();
+	d->me = me;
 	d->listener = listener;
 
 	if (params)
