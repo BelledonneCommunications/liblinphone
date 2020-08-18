@@ -541,15 +541,44 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 2));
 
 	if (use_ice){
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
-		/*now comes the ICE reINVITE*/
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4));
-		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
+		if (caller_pause) {
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 2));
+			
+			/* There should be a ICE reINVITE: */
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 3));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 3));
+			
+			linphone_call_resume(pauline_call);
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		}else if (callee_pause){
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausing, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 2));
+			/* There should be a ICE reINVITE: */
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausing, 3));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 3));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 3));
+			
+			linphone_call_resume(marie_call);
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		}else{
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+			/*now comes the ICE reINVITE*/
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 4));
+			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
+		}
 	}else{
 		if (caller_pause) {
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
@@ -594,6 +623,14 @@ static void call_with_network_switch(void){
 
 static void call_with_network_switch_in_paused_state(void) {
 	_call_with_network_switch(FALSE, FALSE, FALSE, FALSE, TRUE);
+}
+
+static void call_with_network_switch_in_paused_state_and_ice(void) {
+	_call_with_network_switch(TRUE, FALSE, FALSE, FALSE, TRUE);
+}
+
+static void call_with_network_switch_in_paused_by_remote_state_and_ice(void){
+	_call_with_network_switch(TRUE, FALSE, FALSE, TRUE, FALSE);
 }
 
 static void call_with_network_switch_in_paused_by_remote_state(void) {
@@ -750,6 +787,8 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early media 1", recovered_call_on_network_switch_in_early_media_1, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early media 2", recovered_call_on_network_switch_in_early_media_2, "CallRecovery"),
 	TEST_ONE_TAG("Call with network switch in paused state", call_with_network_switch_in_paused_state, "CallRecovery"),
+	TEST_ONE_TAG("Call with network switch in paused state, ICE enabled",call_with_network_switch_in_paused_state_and_ice, "ICE"),
+	TEST_ONE_TAG("Call with network switch in paused by remote state, ICE enabled",call_with_network_switch_in_paused_by_remote_state_and_ice, "ICE"),
 	TEST_ONE_TAG("Call with network switch in paused by remote state", call_with_network_switch_in_paused_by_remote_state, "CallRecovery"),
 	TEST_ONE_TAG("Call with network switch and ICE", call_with_network_switch_and_ice, "ICE"),
 	TEST_ONE_TAG("Call with network switch, ICE and RTT", call_with_network_switch_ice_and_rtt, "ICE"),

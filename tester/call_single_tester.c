@@ -2931,7 +2931,7 @@ static void call_paused_by_both(void) {
 
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 	/*pauline must stay in paused state*/
-	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPaused, 1, int, "%i");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallPaused, 2, int, "%i");
 	check_media_direction(pauline, call_pauline, lcs, LinphoneMediaDirectionInactive, LinphoneMediaDirectionInvalid);
 	check_media_direction(marie, call_marie, lcs, LinphoneMediaDirectionInactive, LinphoneMediaDirectionInvalid);
 
@@ -2941,7 +2941,7 @@ static void call_paused_by_both(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallPausedByRemote,1));
 	/*Marie must stay in paused state*/
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
-	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, 1, int, "%i");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, 2, int, "%i");
 
 	/*now marie wants to resume also*/
 	linphone_call_resume(call_marie);
@@ -4202,8 +4202,8 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 			}
 		}
 	}
-
 }
+
 static void call_state_changed_callback_to_start_record(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState state, const char *message){
 	if (state == /*LinphoneCallStreamsRunning*/ LinphoneCallConnected){
 		ms_message("call_recording(): start early recording into %s",linphone_call_params_get_record_file(linphone_call_get_params(call)));

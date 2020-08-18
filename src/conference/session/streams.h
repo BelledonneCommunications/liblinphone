@@ -257,6 +257,12 @@ public:
 	virtual ~RtpInterface() = default;
 };
 
+
+/* 
+ * Base class for a service shared between several streams of a StreamsGroup.
+ * A SharedStream may be inserted into the StreamsGroup at any time by a Stream, and used by other
+ * streams. Each type of SharedService is unique within the StreamsGroup.
+ */
 class SharedService{
 friend class StreamsGroup;
 public:
@@ -317,8 +323,8 @@ public:
 	virtual void fillLocalMediaDescription(OfferAnswerContext & ctx) override;
 	/*
 	 * Request the streams to prepare (configuration steps, ice gathering.
-	 * Returns false if ready, true if prepare() requires more time, in which case 
-	 * ICE events will be submitted to the MediaSession to inform when ready to proceed.
+	 * Returns false if ready, true if prepare() requires more time due to ICE gathering.
+	 * In that case, ICE will notify the gathering completion through the IceServiceListener.
 	 */
 	virtual bool prepare() override;
 	/**
@@ -351,7 +357,13 @@ public:
 	Stream * getStream(int index){
 		return getStream((size_t) index);
 	}
+	/**
+	 * Lookup the main stream for a given stream type.
+	 */
 	Stream * lookupMainStream(SalStreamType type);
+	/* 
+	 *Lookup a main stream for a given stream type, and casts it to the requested interface, passed in the template arguments.
+	 */
 	template <typename _interface>
 	_interface * lookupMainStreamInterface(SalStreamType type){
 		Stream *s = lookupMainStream(type);
@@ -419,7 +431,7 @@ public:
 		}
 	}
 	/*
-	 * Obtain a shared service given its key.
+	 * Obtain a shared service given its type.
 	 */
 	template <typename _sharedServiceT>
 	_sharedServiceT *getSharedService() const{

@@ -26,6 +26,14 @@
 static void authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
 	linphone_auth_info_set_passwd(auth_info, test_password);
 	linphone_core_add_auth_info(lc, auth_info); /*add authentication info to LinphoneCore*/
+	const char * algo = linphone_auth_info_get_algorithm(auth_info);
+	BC_ASSERT_STRING_NOT_EQUAL(algo, "");// Must have an algorithm
+	bctbx_list_t * algos = linphone_auth_info_get_available_algorithms(auth_info);
+	bool_t have_algo = FALSE;
+	for(bctbx_list_t * elem = algos ; !have_algo && elem != NULL ; elem = algos->next)
+		have_algo = (strcmp((char*)elem->data,algo)==0);
+	BC_ASSERT(have_algo);// Must have algorithm in list of available algorithms
+	bctbx_list_free_with_data(algos, (bctbx_list_free_func)bctbx_free);
 }
 
 static LinphoneCoreManager* create_lcm_with_auth(unsigned int with_auth) {
