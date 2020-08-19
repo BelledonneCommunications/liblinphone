@@ -719,7 +719,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 				MediaSessionParams *currentParams = params->clone();
 
 				if ((!!currentParams->videoEnabled()) != newConfParams.videoEnabled()){
-					lInfo() << "Re-INVITing participant to start/stop video.";
+					lInfo() << "Re-INVITing participant to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
 					session->update(currentParams);
 				}
