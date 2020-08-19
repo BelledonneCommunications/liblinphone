@@ -2784,8 +2784,7 @@ static void configure_core_for_conference_callbacks(LinphoneCoreManager *lcm, Li
 	linphone_core_set_user_data(lcm->lc, lcm);
 }
 
-LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
 
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
@@ -2802,8 +2801,16 @@ LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
 	*subscription_received = 0;
 	mgr->user_info = subscription_received;
 
+}
+
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+
+	setup_mgr_for_conference(mgr);
+
 	return mgr;
 }
+
 
 
 void linphone_conference_server_destroy(LinphoneConferenceServer *conf_srv) {
