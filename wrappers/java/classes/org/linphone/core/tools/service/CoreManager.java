@@ -307,7 +307,7 @@ public class CoreManager {
             sb.append(plugin).append(", ");
         }
         Log.i(sb.substring(0, sb.length() - 2));
-        Log.i("PACKAGE=", org.linphone.core.BuildConfig.APPLICATION_ID);
+        Log.i("PACKAGE=", org.linphone.core.BuildConfig.LIBRARY_PACKAGE_NAME);
         Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
     }
 }

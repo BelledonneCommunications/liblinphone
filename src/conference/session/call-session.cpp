@@ -1174,6 +1174,10 @@ void CallSession::startIncomingNotification (bool notifyRinging) {
 	if (d->state != CallSession::State::PushIncomingReceived) {
 		startBasicIncomingNotification(notifyRinging);
 	}
+	if (d->deferIncomingNotification) {
+		lInfo() << "Defer incoming notification";
+		return;
+	}
 	d->startIncomingNotification();
 }
 
@@ -1186,10 +1190,6 @@ void CallSession::startBasicIncomingNotification (bool notifyRinging) {
 	}
 	/* Prevent the CallSession from being destroyed while we are notifying, if the user declines within the state callback */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (d->deferIncomingNotification) {
-		lInfo() << "Defer incoming notification";
-		return;
-	}
 }
 
 void CallSession::startPushIncomingNotification () {
