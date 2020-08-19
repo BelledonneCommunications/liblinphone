@@ -1336,7 +1336,7 @@ static void call_outbound_with_multiple_proxy(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void calls_outbound_using_multiple_proxy(void) {
+static void call_outbound_using_different_proxies(void) {
 	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_dual_proxy_rc", FALSE);// Caller
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
 	
@@ -6047,7 +6047,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call IPv6 to IPv4 without relay", v6_to_v4_call_without_relay),
 	TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
-	TEST_NO_TAG("Outbound calls using multiple proxy", calls_outbound_using_multiple_proxy),
+	TEST_NO_TAG("Outbound call using different proxies", call_outbound_using_different_proxies),
 	TEST_NO_TAG("Audio call recording", audio_call_recording_test),
 #if 0 /* not yet activated because not implemented */
 	TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),
