@@ -320,7 +320,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		if (!use_buffer) {
 			downloaded_file = receive_filepath;
 		}
-		
+
 		if (text) {
 			BC_ASSERT_TRUE(linphone_chat_message_has_text_content(msg));
 			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(msg), text);
@@ -376,7 +376,11 @@ void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *rec
 
 // Configure list of core manager for conference and add the listener
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
-	LinphoneAddress *factoryAddr = linphone_address_new(sFactoryUri);
+	return init_core_for_conference_with_factori_uri(coreManagerList, sFactoryUri);
+}
+
+bctbx_list_t * init_core_for_conference_with_factori_uri(bctbx_list_t *coreManagerList, const char *factoryUri) {
+	LinphoneAddress *factoryAddr = linphone_address_new(factoryUri);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))_configure_core_for_conference, (void *) factoryAddr);
 	linphone_address_unref(factoryAddr);
 
