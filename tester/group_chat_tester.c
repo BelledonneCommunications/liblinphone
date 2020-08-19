@@ -323,7 +323,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		if (!use_buffer) {
 			downloaded_file = receive_filepath;
 		}
-		
+
 		if (text) {
 			BC_ASSERT_TRUE(linphone_chat_message_has_text_content(msg));
 			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(msg), text);

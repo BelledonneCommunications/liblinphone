@@ -2584,11 +2584,11 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
  * */
 void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer){
 	FILE* file=NULL;
-	
+
 
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
-	
+
 	if (!linphone_content_get_user_data(content)) {
 		// If a file path is set, we should NOT call the on_recv callback !
 		BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
@@ -2612,14 +2612,14 @@ void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, 
 		fclose(file);
 		BC_ASSERT_TRUE(stat(linphone_chat_message_get_file_transfer_filepath(msg), &st)==0);
 		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
-		
+
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
-	
-	
+
+
 }
 
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {
@@ -3182,7 +3182,7 @@ static void dummy_snd_write_init(MSFilter *obj){
 	octx->samplerate = 44100;
 	ms_flow_controlled_bufferizer_init(&octx->buffer, obj, octx->samplerate, 1);
 	ms_mutex_init(&octx->mutex,NULL);
-	
+
 	octx->nchannels = 1;
 
 	obj->data = octx;
@@ -3247,7 +3247,7 @@ static void dummy_snd_read_init(MSFilter *obj){
 	ms_flow_controlled_bufferizer_init(&ictx->buffer, obj, ictx->samplerate, 1);
 	ms_mutex_init(&ictx->mutex,NULL);
 	qinit(&ictx->q);
-	
+
 	ictx->nchannels = 1;
 
 	obj->data = ictx;

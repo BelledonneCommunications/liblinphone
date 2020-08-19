@@ -428,6 +428,7 @@ void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
 void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneChatRoom *cr, bctbx_list_t *coresList);
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
+bctbx_list_t * init_core_for_conference_with_factori_uri(bctbx_list_t *coreManagerList, const char *factoryUri);
 void start_core_for_conference(bctbx_list_t *coreManagerList);
 bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri);
 
@@ -467,7 +468,7 @@ void first_call_started(LinphoneCore *lc);
 void last_call_ended(LinphoneCore *lc);
 void audio_device_changed(LinphoneCore *lc, LinphoneAudioDevice *device);
 void audio_devices_list_updated(LinphoneCore *lc);
-	
+
 LinphoneAddress * create_linphone_address(const char * domain);
 LinphoneAddress * create_linphone_address_for_algo(const char * domain, const char * username);
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
