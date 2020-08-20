@@ -338,6 +338,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_video_test_suite);
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
+	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
