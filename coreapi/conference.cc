@@ -372,6 +372,8 @@ LocalConference::LocalConference (
 	}
 #endif // HAVE_ADVANCED_IM
 
+	this->confParams->enableLocalParticipant(true);
+
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
@@ -845,6 +847,8 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_transfer_state_changed(m_coreCbs, transferStateChanged);
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
+
+	this->confParams->enableLocalParticipant(false);
 
 	setConferenceId(conferenceId);
 
