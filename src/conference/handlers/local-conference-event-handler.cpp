@@ -84,9 +84,14 @@ string LocalConferenceEventHandler::createNotifyFullState (bool oneToOne) {
 	confInfo.setConferenceDescription((const ConferenceDescriptionType) confDescr);
 
 	std::list<std::shared_ptr<Participant>> participants(conf->getParticipants());
-	std::shared_ptr<Participant> me = conf->getMe();
-	if (me) {
-		participants.push_front(me);
+
+	// Add local participant only if it is enabled
+	const ConferenceParams & confParams = conf->getCurrentParams();
+	if (confParams.localParticipantEnabled()) {
+		std::shared_ptr<Participant> me = conf->getMe();
+		if (me) {
+			participants.push_front(me);
+		}
 	}
 
 	for (const auto &participant : participants) {
