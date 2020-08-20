@@ -51,6 +51,9 @@ LocalConference::LocalConference (
 	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
 	// Remote conference sets last notify to 0 in its constructor
 	lastNotify = 1;
+
+	this->confParams->enableLocalParticipant(false);
+
 #ifdef HAVE_ADVANCED_IM
 	eventHandler = std::make_shared<LocalConferenceEventHandler>(this, confListener);
 	addListener(eventHandler);
