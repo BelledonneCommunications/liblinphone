@@ -968,6 +968,11 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,m->stat.number_of_LinphoneSubscriptionActive,10000));
+
+		LinphoneConference *conference = linphone_core_get_conference(c);
+		BC_ASSERT_PTR_NULL(conference);
+
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
 	}
 
 }
