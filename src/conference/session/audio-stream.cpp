@@ -78,7 +78,6 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 			ms_free(peerUri);
 		if (selfUri)
 			ms_free(selfUri);
-        
 	}
 	initializeSessions((MediaStream*)mStream);
 }
@@ -589,7 +588,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	}
 	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
-        float micGain = lc->sound_conf.soft_mic_lev;
+		float micGain = lc->sound_conf.soft_mic_lev;
 		float floorGain = (float)(1 / pow(10, micGain / 10));
 		int spkAgc = linphone_config_get_int(config, "sound", "speaker_agc_enabled", 0);
 		MSFilter *f = as->volrecv;
