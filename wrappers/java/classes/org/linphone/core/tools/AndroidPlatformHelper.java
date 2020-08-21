@@ -49,6 +49,7 @@ import org.linphone.core.tools.network.NetworkManagerAbove26;
 import org.linphone.core.tools.network.NetworkManagerInterface;
 import org.linphone.core.tools.receiver.DozeReceiver;
 import org.linphone.core.tools.receiver.InteractivityReceiver;
+import org.linphone.core.tools.receiver.ShutdownReceiver;
 import org.linphone.mediastream.MediastreamerAndroidContext;
 import org.linphone.mediastream.video.capture.CaptureTextureView;
 
@@ -80,6 +81,7 @@ public class AndroidPlatformHelper {
     private boolean mMonitoringEnabled;
     private InteractivityReceiver mInteractivityReceiver;
     private String[] mDnsServers;
+    private ShutdownReceiver mShutdownReceiver;
 
     private static int mTempCountWifi = 0;
     private static int mTempCountMCast = 0;
@@ -139,6 +141,13 @@ public class AndroidPlatformHelper {
         // Update DNS servers lists
         NetworkManagerInterface nm = createNetworkManager();
         nm.updateDnsServers();
+
+        IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
+        // Without that the broadcast timeout might be reached before we were called
+        shutdownIntentFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
+        mShutdownReceiver = new ShutdownReceiver();
+        Log.i("[Platform Helper] Registering shutdown receiver");
+        mContext.registerReceiver(mShutdownReceiver, shutdownIntentFilter);
     }
 
     public synchronized void onLinphoneCoreStart(boolean monitoringEnabled) {
@@ -155,8 +164,7 @@ public class AndroidPlatformHelper {
         setVideoPreviewView(null);
         setVideoRenderingView(null);
 
-        //cleaning manually the wakelocks in case of unreleased ones (linphone_core_destroy for instance)
-
+        // Cleaning manually the wakelocks in case of unreleased ones (linphone_core_destroy for instance)
         while (mWakeLock.isHeld()) {
             mWakeLock.release();
         }
@@ -165,6 +173,12 @@ public class AndroidPlatformHelper {
         }
         while (mMcastLock.isHeld()) {
             mMcastLock.release();
+        }
+
+        if (mShutdownReceiver != null) {
+            Log.i("[Platform Helper] Unregistering shutdown receiver");
+            mContext.unregisterReceiver(mShutdownReceiver);
+            mShutdownReceiver = null;
         }
 
         mNativePtr = 0;

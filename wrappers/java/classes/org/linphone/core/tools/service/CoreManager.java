@@ -187,6 +187,11 @@ public class CoreManager {
         }
     }
 
+    public void stop() {
+        Log.i("[Core Manager] Stopping");
+        mCore.stop();
+    }
+
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
 
