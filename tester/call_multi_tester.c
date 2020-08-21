@@ -1720,8 +1720,8 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		LinphoneConference *pconference = linphone_call_get_conference(participant_call);
 		BC_ASSERT_PTR_NOT_NULL(pconference);
 		if (pconference) {
-			// number of participants is incremented by 1 because Marie is in
-			BC_ASSERT_EQUAL(linphone_conference_get_size(pconference),no_participants+1, int, "%d");
+			bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
+			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), no_participants, unsigned int, "%u");
 		}
 
 		if (enable_video) {
@@ -1869,8 +1869,8 @@ static void update_conf_params_during_conference(void) {
 		LinphoneConference *pconference = linphone_call_get_conference(participant_call);
 		BC_ASSERT_PTR_NOT_NULL(pconference);
 		if (pconference) {
-			// number of participants is incremented by 1 because Marie is in
-			BC_ASSERT_EQUAL(linphone_conference_get_size(pconference),no_participants+1, int, "%d");
+			bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
+			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), no_participants, unsigned int, "%u");
 		}
 	}
 
