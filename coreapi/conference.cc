@@ -443,7 +443,7 @@ void LocalConference::addLocalEndpoint () {
 	
 	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
 	if (mixer) mixer->enableLocalParticipant(true);
-	
+
 	if (confParams->videoEnabled()){
 		mixer = mMixerSession->getMixerByType(SalVideo);
 		if (mixer){
@@ -710,6 +710,8 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 	const LinphonePrivate::ConferenceParams &newConfParams = static_cast<const ConferenceParams&>(newParameters);
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = confParams->videoEnabled();
+	bool previousAudioEnablement = confParams->audioEnabled();
+	// Update media conference parameter here in order to properly
 	if (newConfParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::update(): checking participants...";
 		for (auto participant : participants){
@@ -727,11 +729,15 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 				}
 			}
 		}
+	}
+	bool ret = MediaConference::Conference::update(newParameters);
+	// Update endpoints only if audio or video settings have changed
+	if ((newConfParams.videoEnabled() != previousVideoEnablement) || (newConfParams.audioEnabled() != previousAudioEnablement)){
 		/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
 		removeLocalEndpoint();
 		addLocalEndpoint();
 	}
-	return MediaConference::Conference::update(newParameters);
+	return ret;
 }
 
 int LocalConference::startRecording (const char *path) {
