@@ -515,7 +515,6 @@ static void simple_conference(void) {
 	destroy_mgr_in_conference(laure);
 }
 
-/*
 static void _simple_conference_from_scratch(bool_t with_video){
 #if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -610,7 +609,6 @@ static void simple_conference_from_scratch(void){
 static void simple_conference_from_scratch_with_video(void){
 	_simple_conference_from_scratch(TRUE);
 }
-*/
 
 static void video_conference_by_merging_calls(void){
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -757,7 +755,6 @@ end:
 	bctbx_list_free(lcs);
 }
 
-/*
 static void simple_conference_from_scratch_no_answer(void){
 #if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -848,7 +845,6 @@ static void simple_conference_from_scratch_no_answer(void){
 	BC_FAIL("Test temporally disabled as, call.update is performed in stage outgoinginit");
 #endif
 }
-*/
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -2845,8 +2841,6 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-	bctbx_list_free(lcs);
-#else
 }
 
 static void back_to_back_conferences(void) {
@@ -3398,7 +3392,6 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one),
 	TEST_NO_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee),
 	TEST_NO_TAG("Simple conference", simple_conference),
-	TEST_NO_TAG("Participant exits conference by pausing", participant_exits_conference_by_pausing),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
