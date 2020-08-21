@@ -827,10 +827,8 @@ static void simple_call_with_audio_devices_reload(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-#else
-	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
-#endif
 static void simple_conference_with_audio_device_change_base(bool_t during_setup, bool_t before_all_join, bool_t after_all_join) {
+#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -889,7 +887,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -979,6 +977,10 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_audio_device_unref(current_dev);
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+#else
+	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
+#endif
+
 }
 
 static void simple_conference_with_audio_device_change_during_setup(void) {
@@ -998,6 +1000,7 @@ static void simple_conference_with_audio_device_change_pingpong(void) {
 }
 
 static void simple_conference_with_audio_device_change_during_pause_base(bool_t callee, bool_t caller) {
+#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -1099,7 +1102,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( get_laure_rc());
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -1223,6 +1226,10 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
+#else
+	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
+#endif
+
 }
 
 static void simple_conference_with_audio_device_change_during_pause_callee(void) {
