@@ -1708,6 +1708,9 @@ static void focus_takes_call_after_conference_started(void) {
 	laure_call_marie=linphone_core_get_current_call(laure->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_call_marie)) goto end;
 
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
+
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	// Local participant is expectdf to have left as it joined another call
 	BC_ASSERT_EQUAL(linphone_conference_get_size(conference),2, int, "%d");
@@ -1717,6 +1720,8 @@ static void focus_takes_call_after_conference_started(void) {
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
 	stats marie_stat = marie->stat;
 	stats laure_stat = laure->stat;
@@ -1727,6 +1732,8 @@ static void focus_takes_call_after_conference_started(void) {
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
@@ -2033,6 +2040,7 @@ static void update_conf_params_during_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(initial_michelle_stat.number_of_NotifyReceived + 2),5000));
 	}
 
+	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	unsigned int no_participants = (unsigned int)bctbx_list_size(new_participants);
 	// number of participants is incremented by 1 because Marie is in
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_participants+1, int, "%d");
@@ -2187,6 +2195,7 @@ static void try_to_update_call_params_during_conference(void) {
 		stats initial_laure_stat = laure->stat;
 		stats initial_michelle_stat = michelle->stat;
 		linphone_core_terminate_call(marie->lc, pauline_called_by_marie);
+		new_participants=bctbx_list_remove(new_participants,pauline);
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallEnd,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
