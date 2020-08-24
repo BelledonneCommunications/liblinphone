@@ -951,6 +951,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 		LinphoneCoreManager * m = get_manager(c);
 
 printf("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path);
+ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path);
 
 		unsigned int no_calls = 0;
 		if (m == conf_mgr) {
@@ -986,7 +987,7 @@ LinphoneStatus terminate_local_conference(bctbx_list_t *participants, LinphoneCo
 	stats* lcm_stats = NULL;
 
 	int counter = 1;
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
 		// Allocate memory
