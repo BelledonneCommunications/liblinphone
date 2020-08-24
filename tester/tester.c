@@ -942,20 +942,26 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	return 0;
 }
 
-static void finish_terminate_local_conference(bctbx_list_t *lcs) {
+static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stats, LinphoneCoreManager * conf_mgr, unsigned int no_participants) {
+
+	int idx = 0;
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneCoreManager * m = get_manager(c);
 
-		stats initial_stats = m->stat;
+printf("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path);
 
-		int no_calls = (int)bctbx_list_size(linphone_core_get_calls(c));
-		linphone_core_terminate_all_calls(c);
+		unsigned int no_calls = 0;
+		if (m == conf_mgr) {
+			no_calls = no_participants;
+		} else {
+			no_calls = 1;
+		}
 
-		// Wait for all calls to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, initial_stats.number_of_LinphoneCallEnd + no_calls, 10000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, initial_stats.number_of_LinphoneCallReleased + no_calls, 10000));
+		// Wait for calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
 
 		// Wait for all conferences to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
@@ -968,32 +974,43 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs) {
 		BC_ASSERT_PTR_NULL(conference);
 
 		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
+		idx++;
 	}
 
 }
 
-LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr) {
+LinphoneStatus terminate_local_conference(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr) {
 
-	stats* participants_initial_stats = NULL;
+	bctbx_list_t* lcs=NULL;
+	stats* lcm_stats = NULL;
+
 	int counter = 1;
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-		if (m != conf_mgr) {
-			// Allocate memory
-			participants_initial_stats = (stats*)realloc(participants_initial_stats, counter * sizeof(stats));
-			// Append element
-			participants_initial_stats[counter - 1] = m->stat;
-			// Increment counter
-			counter++;
-		}
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		// Allocate memory
+		lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+
+		// Append element
+		lcm_stats[counter - 1] = m->stat;
+
+		// Increment counter
+		counter++;
+
+		lcs=bctbx_list_append(lcs,m->lc);
 	}
+
+	LinphoneConference *conference = linphone_core_get_conference(conf_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+	unsigned int no_participants = linphone_conference_get_participant_count(conference);
 
 	linphone_core_terminate_conference(conf_mgr->lc);
 
-	finish_terminate_local_conference(lcs);
+	finish_terminate_local_conference(lcs, lcm_stats, conf_mgr, no_participants);
 
-	ms_free(participants_initial_stats);
+	ms_free(lcm_stats);
+	bctbx_free(lcs);
 
 	return 0;
 }
