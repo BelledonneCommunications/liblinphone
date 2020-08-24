@@ -2037,6 +2037,67 @@ static void video_call_with_no_audio_and_no_video_codec(void){
 	linphone_core_manager_destroy(caller);
 }
 
+static void video_call_with_auto_video_accept_disabled_on_one_end(void){
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneVideoPolicy marie_policy, pauline_policy;
+
+
+	marie_policy.automatically_initiate=FALSE;
+	marie_policy.automatically_accept=TRUE;
+	pauline_policy.automatically_initiate=FALSE;
+	pauline_policy.automatically_accept=FALSE;
+
+	linphone_core_set_video_policy(marie->lc,&marie_policy);
+	linphone_core_set_video_policy(pauline->lc,&pauline_policy);
+
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+
+	// Marie calls Pauline
+	BC_ASSERT_TRUE(call(marie, pauline));
+
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+	if (pauline_call && marie_call) {
+		LinphoneCallParams * pauline_call_params=linphone_core_create_call_params(pauline->lc, NULL);
+		linphone_call_params_enable_video(pauline_call_params,TRUE);
+		linphone_call_update(pauline_call,pauline_call_params);
+
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
+
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+
+		const LinphoneCallParams * updated_pauline_call_params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(updated_pauline_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(updated_pauline_call_params) == linphone_call_params_video_enabled(pauline_call_params));
+
+		const LinphoneCallParams * marie_call_params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(marie_call_params);
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_call_params) == linphone_call_params_video_enabled(pauline_call_params));
+
+		linphone_call_params_unref(pauline_call_params);
+	}
+
+	end_call(marie, pauline);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void call_with_early_media_and_no_sdp_in_200_with_video(void){
 	early_media_without_sdp_in_200_base(TRUE, FALSE);
 }
@@ -2175,6 +2236,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
+	TEST_NO_TAG("Video call with automatic video acceptance disabled on one end only", video_call_with_auto_video_accept_disabled_on_one_end),
 	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 };
