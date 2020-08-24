@@ -372,7 +372,7 @@ LocalConference::LocalConference (
 	}
 #endif // HAVE_ADVANCED_IM
 
-	this->confParams->enableLocalParticipant(true);
+	confParams->enableLocalParticipant(true);
 
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
@@ -499,6 +499,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	// Add participant only if creation is successful
 	bool canAddParticipant = (getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created);
 	if (canAddParticipant) {
+		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
 		switch(state){
@@ -562,6 +563,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 }
 
 bool LocalConference::addParticipant (const IdentityAddress &participantAddress) {
+	confParams->enableLocalParticipant(true);
 	bool success = Conference::addParticipant(participantAddress);
 	setState(ConferenceInterface::State::Created);
 	return success;
@@ -570,8 +572,8 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	int err = 0;
 
-	if (linphone_call_get_conference(call->toC()) != this->toC()){
-		lError() << "Call " << call->toC() << " is not part of conference " << this->toC();
+	if (linphone_call_get_conference(call->toC()) != toC()){
+		lError() << "Call " << call->toC() << " is not part of conference " << toC();
 		return -1;
 	}
 	if (getParticipantCount() >= 2) {
@@ -678,7 +680,7 @@ int LocalConference::terminate () {
 	/*FIXME: very inefficient server side because it iterates on the global call list. */
 	list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
 	for (auto & call : calls) {
-		if (linphone_call_get_conference(call->toC()) == this->toC()) {
+		if (linphone_call_get_conference(call->toC()) == toC()) {
 			call->terminate();
 		}
 	}
@@ -692,6 +694,7 @@ int LocalConference::enter () {
 	if (linphone_core_get_current_call(getCore()->getCCore()))
 		linphone_call_pause(linphone_core_get_current_call(getCore()->getCCore()));
 
+	confParams->enableLocalParticipant(true);
 	addLocalEndpoint();
 	return 0;
 }
@@ -702,8 +705,10 @@ void LocalConference::removeLocalEndpoint () {
 }
 
 void LocalConference::leave () {
-	if (isIn())
+	if (isIn()) {
+		confParams->enableLocalParticipant(false);
 		removeLocalEndpoint();
+	}
 }
 
 bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
@@ -854,7 +859,7 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
-	this->confParams->enableLocalParticipant(false);
+	confParams->enableLocalParticipant(false);
 
 	setConferenceId(conferenceId);
 
