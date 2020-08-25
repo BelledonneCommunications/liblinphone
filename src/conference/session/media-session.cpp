@@ -1764,7 +1764,9 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
 
-	if (listener)
+	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
+	// Reset current session if we are pausing the current call
+	if (listener && (!currentCall || (currentCall->getActiveSession() == q->getSharedFromThis())))
 		listener->onResetCurrentSession(q->getSharedFromThis());
 
 	stopStreams();
@@ -2008,6 +2010,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 			getParams()->enableVideoMulticast(false);
 		}
 	}
+	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 	if (getParams()->videoEnabled() && !linphone_core_video_enabled(q->getCore()->getCCore())) {
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
