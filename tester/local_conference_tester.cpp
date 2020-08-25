@@ -329,12 +329,18 @@ static void group_chat_room_server_deletion (void) {
 	CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
 		return false;
 	});
-
+	
+	// Clean db from chat room
+	linphone_chat_message_unref(msg);
+	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
+	
 	bctbx_list_free(coresList);
 
 }
 static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 	Focus focus("chloe_rc");
+
 	ClientConference marie("marie_rc", focus.getIdentity());
 	ClientConference pauline("pauline_rc", focus.getIdentity());
 
@@ -358,7 +364,7 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 
-	/*BC_ASSERT_TRUE(*/CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
+	BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([&focus] {
 		for (auto chatRoom :focus.getCore().getChatRooms()) {
 			for (auto participant: chatRoom->getParticipants()) {
 				for (auto device: participant->getDevices())
@@ -368,7 +374,7 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 			}
 		}
 		return true;
-	})/*)*/;
+	}));
 	
 	
 	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "message blabla");
@@ -385,7 +391,10 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 	linphone_core_enter_background(pauline.getLc());
 	linphone_config_set_bool(linphone_core_get_config(pauline.getLc()), "misc", "conference_event_package_force_full_state",TRUE);
 	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
+	coresList = bctbx_list_remove(coresList, pauline.getLc());
 	pauline.reStart();
+	coresList = bctbx_list_append(coresList, pauline.getLc());
+
 	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
 	
 	CoreManagerAssert({focus,marie}).waitUntil(std::chrono::seconds(2),[ ]{return false;});
@@ -411,17 +420,125 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 	CoreManagerAssert({focus,marie,pauline}).waitUntil(chrono::seconds(2),[] {
 		return false;
 	});
+	
+	linphone_chat_message_unref(msg);
+	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
 
 	bctbx_list_free(coresList);
 
 }
+static void multidomain_group_chat_room (void) {
+	Focus focusExampleDotOrg("chloe_rc");
+	ClientConference marie("marie_rc", focusExampleDotOrg.getIdentity());
+	ClientConference pauline("pauline_rc", focusExampleDotOrg.getIdentity());
+
+	focusExampleDotOrg.registerAsParticipantDevice(marie);
+	focusExampleDotOrg.registerAsParticipantDevice(pauline);
+
+	bctbx_list_t * coresList = bctbx_list_append(NULL, focusExampleDotOrg.getLc());
+	coresList = bctbx_list_append(coresList, marie.getLc());
+	coresList = bctbx_list_append(coresList, pauline.getLc());
+	Address paulineAddr(pauline.getIdentity());
+	bctbx_list_t *participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
+
+	stats initialMarieStats = marie.getStats();
+	stats initialPaulineStats = pauline.getStats();
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	BC_ASSERT_TRUE(CoreManagerAssert({focusExampleDotOrg,marie,pauline}).wait([&focusExampleDotOrg] {
+		for (auto chatRoom :focusExampleDotOrg.getCore().getChatRooms()) {
+			for (auto participant: chatRoom->getParticipants()) {
+				for (auto device: participant->getDevices())
+					if (device->getState() != ParticipantDevice::State::Present) {
+						return false;
+					}
+			}
+		}
+		return true;
+	}));
+	
+		
+	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "message blabla");
+	linphone_chat_message_send(msg);
+	BC_ASSERT_TRUE(CoreManagerAssert({focusExampleDotOrg,marie,pauline}).wait([msg] {
+		return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+	}));
+	BC_ASSERT_TRUE(CoreManagerAssert({focusExampleDotOrg,marie,pauline}).wait([paulineCr] {
+		return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+	}));
+	linphone_chat_message_unref(msg);
+	
+
+	// now change focus in order to get conference with multiple domain.
+	Focus focusAuth1DotExampleDotOrg("arthur_rc");
+	
+	focusAuth1DotExampleDotOrg.registerAsParticipantDevice(marie);
+	focusAuth1DotExampleDotOrg.registerAsParticipantDevice(pauline);
+
+	//change conference factory uri
+	Address focusAuth1DotExampleDotOrgFactoryAddress = focusAuth1DotExampleDotOrg.getIdentity();
+	_configure_core_for_conference(marie.getCMgr(),L_GET_C_BACK_PTR(&focusAuth1DotExampleDotOrgFactoryAddress));
+	_configure_core_for_conference(pauline.getCMgr(),L_GET_C_BACK_PTR(&focusAuth1DotExampleDotOrgFactoryAddress));
+	
+	coresList = bctbx_list_append(coresList, focusAuth1DotExampleDotOrg.getLc());
+	initialMarieStats = marie.getStats();
+	participantsAddresses = bctbx_list_append(NULL, linphone_address_ref(L_GET_C_BACK_PTR(&paulineAddr)));
+	LinphoneChatRoom *marieCrfocusAuth1DotExampleDotOrg = create_chat_room_client_side(coresList, marie.getCMgr(), &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	BC_ASSERT_TRUE(CoreManagerAssert({focusAuth1DotExampleDotOrg,marie,pauline}).wait([&focusAuth1DotExampleDotOrg] {
+		for (auto chatRoom :focusAuth1DotExampleDotOrg.getCore().getChatRooms()) {
+			for (auto participant: chatRoom->getParticipants()) {
+				for (auto device: participant->getDevices())
+					if (device->getState() != ParticipantDevice::State::Present) {
+						return false;
+					}
+			}
+		}
+		return true;
+	}));
+
+	msg = linphone_chat_room_create_message(marieCrfocusAuth1DotExampleDotOrg, "message blabla");
+	   linphone_chat_message_send(msg);
+	   BC_ASSERT_TRUE(CoreManagerAssert({focusAuth1DotExampleDotOrg,marie,pauline}).wait([msg] {
+		   return (linphone_chat_message_get_state(msg) == LinphoneChatMessageStateDelivered);
+	   }));
+	
+	
+	//great, now I want to see what happened if marie restart.
+	
+	coresList = bctbx_list_remove(coresList, marie.getLc());
+	marie.reStart();
+	coresList = bctbx_list_append(coresList, marie.getLc());
+	
+	CoreManagerAssert({focusExampleDotOrg,marie,pauline}).waitUntil(chrono::seconds(2),[] {
+		return false;
+	});
+	
+	BC_FAIL("TODO: 	1- check that one subscribe per domain is sent. 2- Add a participant on each chatroom and check if notify is properly sent");
+	
+	linphone_chat_message_unref(msg);
+	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
+
+	
+	bctbx_list_free(coresList);
+
+}
+
 
 }
 
 static test_t local_conference_tests[] = {
 	TEST_NO_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server),
-	TEST_ONE_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion,"LeaksMemory"), /* leak because of call session not freed client side*/
-	TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler", LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,"LeaksMemory") /* leak because of call session not freed client side*/
+	TEST_NO_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion),
+	TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler", LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,"LeaksMemory"), /* beacause of coreMgr restart*/
+	TEST_ONE_TAG("Multi domain chatroom", LinphoneTest::multidomain_group_chat_room,"LeaksMemory"), /* beacause of coreMgr restart*/
 };
 
 test_suite_t local_conference_test_suite = {
