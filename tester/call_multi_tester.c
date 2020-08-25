@@ -1819,7 +1819,6 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
 	new_participants = terminate_participant_call(new_participants, marie, michelle);
-	new_participants = terminate_participant_call(new_participants, marie, pauline);
 	bctbx_list_free(new_participants);
 
 	unsigned int marie_call_no = (unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc));
@@ -1827,8 +1826,12 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),0, int, "%d");
-	BC_ASSERT_EQUAL(marie_call_no, 1, unsigned int, "%u");
-	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
+	// Marie has 2 active calls:
+	// - one to Laure that is ongoing
+	// - one to Pauline that is paused
+	BC_ASSERT_EQUAL(marie_call_no, 2, unsigned int, "%u");
+	// Call to Marie is still active
+	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
@@ -1842,13 +1845,18 @@ printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %
 
 	stats marie_stat = marie->stat;
 	stats laure_stat = laure->stat;
+	stats pauline_stat = pauline->stat;
 	unsigned int laure_call_no = (unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc));
 	BC_ASSERT_EQUAL(laure_call_no, 1, unsigned int, "%u");
+	unsigned int pauline_call_no = (unsigned int)bctbx_list_size(linphone_core_get_calls(pauline->lc));
+	BC_ASSERT_EQUAL(pauline_call_no, 1, unsigned int, "%u");
 	linphone_core_terminate_all_calls(marie->lc);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd, marie_stat.number_of_LinphoneCallEnd+marie_call_no,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd, laure_stat.number_of_LinphoneCallEnd+1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd, pauline_stat.number_of_LinphoneCallEnd+1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased, marie_stat.number_of_LinphoneCallReleased+marie_call_no,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased, laure_stat.number_of_LinphoneCallReleased+1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased, pauline_stat.number_of_LinphoneCallReleased+1,10000));
 
 end:
 
