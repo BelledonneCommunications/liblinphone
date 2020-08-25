@@ -482,10 +482,10 @@ namespace Linphone
 			set
 			{
 				IntPtr string_ptr_to_remove = linphone_core_get_native_video_window_id(nativePtr);
-				if(string_ptr_to_remove != IntPtr.Zero)
-					Marshal.FreeHGlobal(string_ptr_to_remove);
 				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
 				linphone_core_set_native_video_window_id(nativePtr, string_ptr);
+				if(string_ptr_to_remove != IntPtr.Zero)
+					Marshal.FreeHGlobal(string_ptr_to_remove);
 			}
 		}
 
@@ -499,10 +499,10 @@ namespace Linphone
 			set
 			{
 				IntPtr string_ptr_to_remove = linphone_core_get_native_preview_window_id(nativePtr);
-				if(string_ptr_to_remove != IntPtr.Zero)
-					Marshal.FreeHGlobal(string_ptr_to_remove);
 				IntPtr string_ptr = Marshal.StringToHGlobalUni(value);
 				linphone_core_set_native_preview_window_id(nativePtr, string_ptr);
+				if(string_ptr_to_remove != IntPtr.Zero)
+					Marshal.FreeHGlobal(string_ptr_to_remove);
 			}
 		}
 		{{/isLinphoneCore}}
