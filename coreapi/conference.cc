@@ -595,40 +595,48 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
 	 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 	 */
-	if (isIn()){
-		if (getParticipantCount() == 1){
-			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
-			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
-			if (getState() != ConferenceInterface::State::TerminationPending) {
+	if (getParticipantCount() == 1){
+		std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
+		std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
+		if (getState() != ConferenceInterface::State::TerminationPending) {
 
+			lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
+				" is our last call in our conference, we will reconnect directly to it.";
+
+			// If only one participant is in the conference, the conference is destroyed.
+			if (isIn()){
 				const MediaSessionParams * params = session->getMediaParams();
 				MediaSessionParams *currentParams = params->clone();
-				lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
-					" is our last call in our conference, we will reconnect directly to it.";
-
+				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
 				currentParams->getPrivate()->setInConference(FALSE);
 				ms_message("Updating call to notify of conference removal.");
 				err = session->update(currentParams);
-				setState(ConferenceInterface::State::TerminationPending);
+			} else {
+				// If the local participant is not in, the call is paused as the local participant is busy
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+						L_GET_PRIVATE(session->getMediaParams()))->setInConference(false);
+
+				err = session->pause();
 			}
 
-			leave();
-
-			/* invoke removeParticipant() recursively to remove this last participant. */
-			bool success = Conference::removeParticipant(remaining_participant);
-			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
-			return success;
-		} else if (getParticipantCount() == 0){
-			// We should never enter here
-			ms_error("Conference %p has still endpoints and no participants... Trying to end conference. %s will return an error", this, __func__);
-			leave();
 			setState(ConferenceInterface::State::TerminationPending);
-
-			return -1;
 		}
-		
-	}
 
+		leave();
+
+		/* invoke removeParticipant() recursively to remove this last participant. */
+		bool success = Conference::removeParticipant(remaining_participant);
+		mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
+		return success;
+	} else if (getParticipantCount() == 0){
+		// We should never enter here
+		ms_error("Conference %p has still endpoints and no participants... Trying to end conference. %s will return an error", this, __func__);
+		leave();
+		setState(ConferenceInterface::State::TerminationPending);
+
+		return -1;
+	}
+	
 	if ((getSize() == 0) && (getState() != ConferenceInterface::State::Deleted)) {
 		setState(ConferenceInterface::State::Terminated);
 	}
