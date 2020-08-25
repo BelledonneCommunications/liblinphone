@@ -75,7 +75,14 @@ void Sal::processRequestEventCb (void *userCtx, const belle_sip_request_event_t 
 		}
 		if (!op || (op->mState == SalOp::State::Terminated)) {
 			lWarning() << "Receiving request for null or terminated op [" << op << "], ignored";
-			return;
+			if (method == "BYE") {
+				//does not make sens to not answer to a BYE request
+				auto response = belle_sip_response_create_from_request(request, 200);
+				belle_sip_provider_send_response(sal->mProvider, response);
+			} else {
+				// maybe answering "service unavailable"
+				return;
+			}
 		}
 	} else {
 		// Handle the case where we are receiving a request with to tag but it is not belonging to any dialog
