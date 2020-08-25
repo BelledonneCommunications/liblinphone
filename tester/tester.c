@@ -854,13 +854,18 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,conf_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionTerminated,participant_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,3000));
 
+	LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
 	int expected_no_participants = 0;
 	if (participant_size == 2) {
 		expected_no_participants = 0;
+
+		BC_ASSERT_PTR_NULL(conference);
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(conf_mgr->lc));
+		BC_ASSERT_EQUAL(linphone_core_get_conference_size(conf_mgr->lc),0, int, "%d");
+
 	} else {
 		expected_no_participants = (participant_size - 1);
 
-		LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
 		BC_ASSERT_EQUAL(linphone_conference_is_in(conference), local_participant_is_in, int, "%d");
