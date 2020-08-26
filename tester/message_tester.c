@@ -865,8 +865,19 @@ static void transfer_message_auto_download_aborted(void) {
 
 	/* wait for marie to receive pauline's msg */
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
-
 	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+
+	char *dl_path = linphone_core_get_download_path(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(dl_path);
+	char * path = bctbx_strdup_printf("%s/sintel_trailer_opus_h264.mkv", dl_path);
+	BC_ASSERT_EQUAL(ortp_file_exist(path), 0, int, "%d");
+
+	linphone_core_manager_stop(marie);
+	
+	BC_ASSERT_EQUAL(ortp_file_exist(path), -1, int, "%d");
+	if (path) bctbx_free(path);
+	if (dl_path) bctbx_free(dl_path);
+
 	linphone_core_manager_restart(marie, TRUE);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
