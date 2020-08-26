@@ -325,6 +325,7 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	}
 	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
+	// Remove participant to local conference
 	if (getConference() && isInConference()) {
 		lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 		MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
@@ -433,11 +434,8 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 						// It is expected that the core of the remote conference is the participant one
 						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
-						// Call is in conference if pointer to conference is not null
-						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
-						const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->setInConference(true);
 					}
-				} else if (isInConference()) {
+				} else if (getConference()) {
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						remoteContactAddress.setParam("isfocus");
 					}
@@ -450,7 +448,7 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 		case CallSession::State::StreamsRunning:
 		{
 
-			// Try to add device
+			// Try to add device to local conference
 			if (getConference() && isInConference()) {
 				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
 			}
@@ -472,9 +470,6 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 						// It is expected that the core of the remote conference is the participant one
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
-						// Call is in conference if pointer to conference is not null
-						const_cast<LinphonePrivate::MediaSessionParams *>(getParams())->getPrivate()->setInConference(true);
-						const_cast<LinphonePrivate::MediaSessionParams *>(getCurrentParams())->getPrivate()->setInConference(true);
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
@@ -1012,6 +1007,7 @@ LinphoneCallStats *Call::getVideoStats () const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->getVideoStats();
 }
 
+// Boolean to state whether it is the focus of a local conference
 bool Call::isInConference () const {
 	return getActiveSession()->getPrivate()->isInConference();
 }
