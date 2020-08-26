@@ -72,6 +72,7 @@ extern test_suite_t message_test_suite;
 extern test_suite_t session_timers_test_suite;
 extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
+extern test_suite_t audio_video_conference_test_suite;
 extern test_suite_t multipart_test_suite;
 extern test_suite_t offeranswer_test_suite;
 extern test_suite_t player_test_suite;
