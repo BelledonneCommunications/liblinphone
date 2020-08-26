@@ -603,9 +603,9 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
 				" is our last call in our conference, we will reconnect directly to it.";
 
+			const MediaSessionParams * params = session->getMediaParams();
 			// If only one participant is in the conference, the conference is destroyed.
 			if (isIn()){
-				const MediaSessionParams * params = session->getMediaParams();
 				MediaSessionParams *currentParams = params->clone();
 				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
 				currentParams->getPrivate()->setInConference(FALSE);
@@ -614,7 +614,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			} else {
 				// If the local participant is not in, the call is paused as the local participant is busy
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-						L_GET_PRIVATE(session->getMediaParams()))->setInConference(false);
+						L_GET_PRIVATE(params))->setInConference(false);
 
 				err = session->pause();
 			}
