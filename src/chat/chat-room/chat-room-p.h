@@ -63,6 +63,7 @@ public:
 
 	void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
 	void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) override;
+	std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () override;
 
 	void setIsEmpty (const bool empty) override;
 
