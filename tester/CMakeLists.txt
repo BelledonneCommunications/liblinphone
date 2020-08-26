@@ -172,6 +172,7 @@ set(RC_FILES
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
 	rcfiles/groupchat_lime_x3dh_rc
+	rcfiles/arthur_rc 
 )
 
 set(IMAGE_FILES
