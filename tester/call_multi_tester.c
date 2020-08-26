@@ -621,6 +621,7 @@ static void video_conference_by_merging_calls(void){
 	LinphoneCallParams *params;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
+	bctbx_list_t* new_participants = NULL;
 	char *play_file_pauline = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	bctbx_list_t *lcs = NULL;
 
@@ -689,7 +690,7 @@ static void video_conference_by_merging_calls(void){
 	linphone_conference_params_unref(conf_params);
 	
 	// She adds Pauline and Laure to the conference. */
-	bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
+	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
 	add_calls_to_local_conference(lcs, marie, new_participants);
 
