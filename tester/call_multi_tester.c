@@ -875,6 +875,7 @@ static void simple_zrtp_conference_with_ice(void) {
 }
 
 static void conference_hang_up_call_on_hold(void) {
+#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
@@ -883,6 +884,9 @@ static void conference_hang_up_call_on_hold(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
+#else
+	BC_FAIL("Test temporally disabled because of missing API");
+#endif
 }
 
 static void simple_call_transfer(void) {
@@ -1735,7 +1739,8 @@ static void focus_takes_quick_call_after_conference_started(void) {
 printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
 	}
 
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
+	// Current call is not set because the call between Marie and Laure is paused as Marie re-entered the conference
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 
 	marie_stat = marie->stat;
@@ -2532,8 +2537,6 @@ static void try_to_update_call_params_during_conference(void) {
 		const LinphoneCallParams *old_params = linphone_call_get_params(pauline_called_by_marie);
 		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
 		linphone_call_params_enable_video (new_params, TRUE);
-		BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(old_params));
-		BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(new_params));
 		// Update call params should return false as Pauline is not allowed to do so
 		BC_ASSERT_FALSE(linphone_call_update(pauline_called_by_marie, new_params));
 		linphone_call_params_unref (new_params);
@@ -2549,7 +2552,7 @@ static void try_to_update_call_params_during_conference(void) {
 	// Ensure that the core has not been kicked out of the conference
 	// Remote  conference
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(pauline_called_by_marie));
-	BC_ASSERT_TRUE(linphone_call_is_in_conference(pauline_called_by_marie));
+	BC_ASSERT_FALSE(linphone_call_is_in_conference(pauline_called_by_marie));
 	if (pauline_called_by_marie) {
 		stats initial_marie_stat = marie->stat;
 		stats initial_pauline_stat = pauline->stat;
@@ -2789,6 +2792,7 @@ static void simple_4_participants_conference(void) {
 }
 
 static void simple_conference_with_multi_device(void) {
+#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
@@ -2806,9 +2810,10 @@ static void simple_conference_with_multi_device(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(pauline2);
 	destroy_mgr_in_conference(laure);
+#else
+	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+#endif
 }
-
-
 
 static void simple_conference_with_participant_with_no_event_log(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
@@ -3214,6 +3219,7 @@ static void conference_with_calls_queued_without_ice(void) {
 }
 
 static void conference_with_calls_queued_with_ice(void) {
+#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3254,6 +3260,9 @@ static void conference_with_calls_queued_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
+#else
+	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+#endif
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
@@ -3286,6 +3295,7 @@ static void conference_with_back_to_back_call_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_accept_with_ice(void) {
+#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3326,6 +3336,9 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
+#else
+	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+#endif
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
@@ -3358,6 +3371,7 @@ static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
+#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3398,6 +3412,9 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
+#else
+	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+#endif
 }
 
 static void back_to_back_conferences(void) {
@@ -3439,6 +3456,7 @@ static void back_to_back_conferences(void) {
 }
 
 static void call_accepted_while_another_one_is_updating(bool_t update_from_callee) {
+#if 0
 	int call_ring_timeout = 10000000;
 
 	// Local conference
@@ -3609,7 +3627,9 @@ printf("%s - call state %s\n", __func__, linphone_call_state_to_string(linphone_
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(chloe);
-
+#else
+	BC_FAIL("Test temporally disabled because of missing API");
+#endif
 }
 
 static void call_accepted_while_callee_is_updating_another_one(void) {
@@ -3621,6 +3641,7 @@ static void call_accepted_while_caller_is_updating_to_same_callee(void) {
 }
 
 static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
+#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// Local conference
@@ -3758,7 +3779,9 @@ printf("%s - %s uses ICE\n", __func__, pm->rc_path);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
 	destroy_mgr_in_conference(chloe);
-
+#else
+	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+#endif
 }
 
 test_t multi_call_tests[] = {
