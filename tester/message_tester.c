@@ -867,6 +867,7 @@ static void transfer_message_auto_download_aborted(void) {
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
 
 	BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	linphone_core_manager_stop(marie);
 	linphone_core_manager_restart(marie, TRUE);
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
