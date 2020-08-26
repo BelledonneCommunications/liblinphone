@@ -924,8 +924,6 @@ void RemoteConference::finalizeCreation() {
 		if (eventLogEnabled) {
 			eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 			eventHandler->subscribe(getConferenceId());
-
-			getCore()->getPrivate()->remoteListEventHandler->addHandler(eventHandler.get());
 		}
 	#endif // HAVE_ADVANCED_IM
 	} else {
