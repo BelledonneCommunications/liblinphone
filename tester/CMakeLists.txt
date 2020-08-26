@@ -210,6 +210,7 @@ set(SOURCE_FILES_C
 	account_creator_tester.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
+	audio_video_conference_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_single_tester.c
