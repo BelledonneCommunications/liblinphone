@@ -984,6 +984,7 @@ void CallSession::accepting () {
 
 LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	L_D();
+lInfo() << "Call session " << __func__ << " Call is in state " << Utils::toString(d->state) << " csp " << csp;
 	if (d->state != CallSession::State::UpdatedByRemote) {
 		lError() << "CallSession::acceptUpdate(): invalid state " << Utils::toString(d->state) << " to call this method";
 		return -1;
@@ -1491,7 +1492,7 @@ const CallSessionParams * CallSession::getParams () const {
 void CallSession::updateContactAddress (Address & contactAddress) const {
 	L_D();
 
-	if ((d->isInConference() && !d->currentParams->getPrivate()->getInConference()) && (!contactAddress.hasParam("isfocus"))) {
+	if (d->isInConference() && (!contactAddress.hasParam("isfocus"))) {
 		// If in conference and contact address doesn't have isfocus
 		contactAddress.setParam("isfocus");
 	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
