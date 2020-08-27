@@ -228,12 +228,12 @@ printf("%s - state %0d full %0d deleted %0d\n", __func__, (int)state, (int)State
 					participant->removeDevice(gruu);
 
 					if (!isFullState) {
-					conf->notifyParticipantDeviceRemoved(
-						creationTime,
-						isFullState,
-						participant,
-						device
-					);
+						conf->notifyParticipantDeviceRemoved(
+							creationTime,
+							isFullState,
+							participant,
+							device
+						);
 					}
 				} else if (state == StateType::full) {
 
