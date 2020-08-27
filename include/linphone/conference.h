@@ -283,9 +283,9 @@ LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
 /* DEPRECATED */
 /* ********** */
 
-int linphone_conference_enter(LinphoneConference *conference);
+LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 int linphone_conference_leave(LinphoneConference *conference);
-bool_t linphone_conference_is_in(const LinphoneConference *conference);
+LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
 
 LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
 
