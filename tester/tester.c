@@ -743,8 +743,9 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		stats initial_stats = m->stat;
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
-		const LinphoneAddress *participant_uri = m->identity;
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
+		char * participant_identity = linphone_address_as_string(m->identity);
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_identity);
+		ms_free(participant_identity);
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, 1, 5000));
@@ -817,8 +818,9 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		stats initial_stats = m->stat;
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
-		const LinphoneAddress *participant_uri = m->identity;
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
+		char * participant_identity = linphone_address_as_string(m->identity);
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_identity);
+		ms_free(participant_identity);
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
 printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
@@ -885,9 +887,10 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
 
-			const LinphoneAddress *participant_uri = m->identity;
-			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
-			BC_ASSERT_PTR_NOT_NULL(participant_call);
+			char * participant_identity = linphone_address_as_string(m->identity);
+			LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_identity);
+			ms_free(participant_identity);
+			BC_ASSERT_PTR_NOT_NULL(conf_call);
 
 			// If removing last participant, then its call is kicked out of conference
 			// - Remote conference is deleted
@@ -966,7 +969,9 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 			// Append element
 			participants_initial_stats[counter - 1] = m->stat;
 
-			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(m->lc, linphone_address_as_string(conf_mgr->identity));
+			char * conf_identity = linphone_address_as_string(conf_mgr->identity);
+			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(m->lc, conf_identity);
+			ms_free(conf_identity);
 			BC_ASSERT_PTR_NOT_NULL(participant_call);
 			participants_initial_state[counter - 1] = linphone_call_get_state(participant_call);
 
@@ -976,8 +981,9 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 		}
 	}
 
-	const LinphoneAddress *participant_uri = participant_mgr->identity;
-	LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, linphone_address_as_string(participant_uri));
+	char * participant_identity = linphone_address_as_string(participant_mgr->identity);
+	LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, participant_identity);
+	ms_free(participant_identity);
 	BC_ASSERT_PTR_NOT_NULL(conf_call);
 
 	linphone_core_remove_from_conference(conf_mgr->lc, conf_call);
@@ -1036,7 +1042,9 @@ ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __f
 
 bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr) {
 
-	LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(participant_mgr->lc, linphone_address_as_string(conf_mgr->identity));
+	char * conf_identity = linphone_address_as_string(conf_mgr->identity);
+	LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(participant_mgr->lc, conf_identity);
+	ms_free(conf_identity);
 	BC_ASSERT_PTR_NOT_NULL(participant_call);
 
 	if (participant_call) {
@@ -1061,7 +1069,9 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 				// Append element
 				initial_other_participants_stats[counter - 1] = m->stat;
 
-				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(m->lc, linphone_address_as_string(conf_mgr->identity));
+				char * conf_identity = linphone_address_as_string(conf_mgr->identity);
+				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(m->lc, conf_identity);
+				ms_free(conf_identity);
 				BC_ASSERT_PTR_NOT_NULL(participant_call);
 				initial_other_participants_state[counter - 1] = linphone_call_get_state(participant_call);
 
