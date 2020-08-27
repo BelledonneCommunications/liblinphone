@@ -428,6 +428,7 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
 	SalMediaDescription *rmd = op->getRemoteMediaDescription();
+ms_message("%s - entering is update %0d\n", __func__, isUpdate); 
 	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
@@ -689,6 +690,8 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 	L_Q();
 	if (!rmd) return;
 
+ms_message("%s - entering rmd %p fromOffer %0d\n", __func__, rmd, fromOffer); 
+
 	updateBiggestDesc(rmd);
 	/* Why disabling implicit_rtcp_fb ? It is a local policy choice actually. It doesn't disturb to propose it again and again
 		* even if the other end apparently doesn't support it.
@@ -699,7 +702,9 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 		*/
 	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
+ms_message("%s - remote params %p\n", __func__, rcp); 
 	if (rcp) {
+ms_message("%s - start video enabled local %0d remote %0d\n", __func__, getParams()->videoEnabled(), rcp->videoEnabled()); 
 		if (!fromOffer){
 			/*
 			 * This is to avoid to re-propose again some streams that have just been declined.
@@ -721,11 +726,30 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 		if (!getParams()->realtimeTextEnabled() && rcp->realtimeTextEnabled())
 			getParams()->enableRealtimeText(true);
 
-		if (rcp->videoEnabled() && q->getCore()->getCCore()->video_policy.automatically_accept && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
-			lInfo() << "CallSession [" << q << "]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept";
-			getParams()->enableVideo(true);
+		bool isInLocalConference = getParams()->getPrivate()->getInConference();
+
+		if (isInLocalConference) {
+			// If the call is in a local conference, then check conference capabilities to know whether the video must be enabled or not
+			bool isConferenceVideoCapabilityOn = false;
+			LinphoneConference * conference = nullptr;
+			if (listener) {
+				conference = listener->getCallSessionConference(q->getSharedFromThis());
+				if (conference) {
+					const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
+					isConferenceVideoCapabilityOn = linphone_conference_params_video_enabled(params);
+					if (rcp->videoEnabled() && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+						getParams()->enableVideo(isConferenceVideoCapabilityOn);
+					}
+				}
+			}
+		} else {
+			if (rcp->videoEnabled() && q->getCore()->getCCore()->video_policy.automatically_accept && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+				lInfo() << "CallSession [" << q << "]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept";
+				getParams()->enableVideo(true);
+			}
 		}
 
+ms_message("%s - end video enabled local %0d remote %0d\n", __func__, getParams()->videoEnabled(), rcp->videoEnabled()); 
 	}
 }
 
@@ -1132,6 +1156,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
+ms_message("%s - entering is update %0d\n", __func__, localIsOfferer); 
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;

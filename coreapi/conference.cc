@@ -724,6 +724,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 	/* Only adding or removing video is supported. */
 	bool previousVideoEnablement = confParams->videoEnabled();
 	bool previousAudioEnablement = confParams->audioEnabled();
+	bool ret = MediaConference::Conference::update(newParameters);
 	// Update media conference parameter here in order to properly
 	if (newConfParams.videoEnabled() != previousVideoEnablement){
 		lInfo() << "LocalConference::update(): checking participants...";
@@ -743,7 +744,6 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 			}
 		}
 	}
-	bool ret = MediaConference::Conference::update(newParameters);
 	// Update endpoints only if audio or video settings have changed
 	if ((newConfParams.videoEnabled() != previousVideoEnablement) || (newConfParams.audioEnabled() != previousAudioEnablement)){
 		/* Don't forget the local participant. For simplicity, a removeLocalEndpoint()/addLocalEndpoint() does the job. */
