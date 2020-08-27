@@ -617,6 +617,10 @@ bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
 	return mPlayingRingbackTone;
 }
 
+LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSession> &session) {
+	return getConference();
+}
+
 void Call::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
 	shared_ptr<RealTimeTextChatRoom> cr = getChatRoom();
 	if (cr) cr->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
