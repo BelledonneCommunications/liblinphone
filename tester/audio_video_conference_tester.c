@@ -1113,9 +1113,11 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
+	// Local participant is expected to have left as it joined another call
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
-	// Local participant is expectdf to have left as it joined another call
-	BC_ASSERT_EQUAL(linphone_conference_get_size(conference),2, int, "%d");
+	
+	bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
 
 	conf_params = linphone_conference_get_current_params(conference);
 	BC_ASSERT_FALSE(linphone_conference_params_local_participant_enabled(conf_params));
@@ -2097,9 +2099,11 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(michelle->lc));
 
+	// Local participant is expected to have left as it joined another call
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
-	// Local participant is expectdf to have left as it joined another call
-	BC_ASSERT_EQUAL(linphone_conference_get_size(conference),2, int, "%d");
+
+	bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
+	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
 
 	conf_params = linphone_conference_get_current_params(conference);
 	BC_ASSERT_FALSE(linphone_conference_params_local_participant_enabled(conf_params));
