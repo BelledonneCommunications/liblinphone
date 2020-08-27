@@ -298,7 +298,7 @@ static void call_accepted(SalOp *op) {
 static void call_refreshed(SalOp *op) {
 	LinphonePrivate::CallSession *session = reinterpret_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	if (!session) {
-		ms_warning("call_updating: CallSession no longer exists");
+		ms_warning("call_refreshed: CallSession no longer exists");
 		return;
 	}
 	auto sessionRef = session->getSharedFromThis();
@@ -311,7 +311,7 @@ static void call_refreshed(SalOp *op) {
 static void call_refreshing(SalOp *op) {
 	LinphonePrivate::CallSession *session = reinterpret_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
 	if (!session) {
-		ms_warning("call_updating: CallSession no longer exists");
+		ms_warning("call_refreshing: CallSession no longer exists");
 		return;
 	}
 	auto sessionRef = session->getSharedFromThis();
