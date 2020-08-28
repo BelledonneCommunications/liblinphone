@@ -135,6 +135,12 @@ LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore* lc, bool
 LINPHONE_PUBLIC void linphone_core_enable_callkit (LinphoneCore* lc, bool_t enabled);
 
 /**
+ * @ingroup IOS
+ * Special function to indicate if the audio route is changed. Must be called in the callback of AVAudioSessionRouteChangeNotification.
+*/
+LINPHONE_PUBLIC void linphone_core_change_audio_route (LinphoneCore *lc);
+
+/**
  *  @ingroup IOS
  * Special function to check if the callkit is enabled, False by default.
 */

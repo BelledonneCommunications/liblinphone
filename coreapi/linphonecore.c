@@ -6724,6 +6724,10 @@ void linphone_core_enable_callkit (LinphoneCore *lc, bool_t enabled) {
 	lp_config_set_int(lc->config, "app", "use_callkit", (int)enabled);
 }
 
+void linphone_core_change_audio_route (LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardChangeAudioRoute();
+}
+
 bool_t linphone_core_callkit_enabled (const LinphoneCore *lc) {
 	return (bool_t)lp_config_get_int(lc->config, "app", "use_callkit", 0);
 }
