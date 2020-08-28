@@ -188,7 +188,7 @@ bctbx_list_t *linphone_conference_get_participants (const LinphoneConference *co
 
 		participant_addresses = bctbx_list_append(participant_addresses, a);
 	}
-	bctbx_free(participants);
+	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
 	return participant_addresses;
 }
 
