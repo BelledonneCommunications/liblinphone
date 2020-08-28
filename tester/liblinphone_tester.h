@@ -141,7 +141,8 @@ void liblinphone_tester_disable_leak_detector(int disabled);
  */
 extern void liblinphone_tester_clear_accounts(void);
 
-
+extern const char* flexisip_tester_dns_server;
+extern bctbx_list_t *flexisip_tester_dns_ip_addresses;
 extern const char* test_domain;
 extern const char* auth_domain;
 extern const char* test_username;

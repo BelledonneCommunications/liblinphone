@@ -49,6 +49,8 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,2000};
 
+const char* flexisip_tester_dns_server = "fs-test.linphone.org";
+bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
 const char* test_username="liblinphone_tester";
@@ -138,12 +140,14 @@ void reset_counters( stats* counters) {
 }
 
 static void setup_dns(LinphoneCore *lc, const char *path){
-	if (strcmp(userhostsfile, "none") != 0) {
+	if (flexisip_tester_dns_ip_addresses){
+		linphone_core_set_dns_servers(lc, flexisip_tester_dns_ip_addresses);
+	}else if (strcmp(userhostsfile, "none") != 0) {
 		char *dnsuserhostspath = strchr(userhostsfile, '/') ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 		sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
 		ms_free(dnsuserhostspath);
-	} else {
-		bctbx_message("no dns-hosts file used");
+	} else{
+		bctbx_warning("No dns-hosts file and no flexisip-tester dns server used.");
 	}
 }
 
