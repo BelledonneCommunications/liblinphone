@@ -10,6 +10,8 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [Unreleased]
 
+### Added
+- New method linphone_core_audio_route_changed(), to fix audio issues when switching audio to some low sample rate Bluetooth devices.
 
 ## [4.4.0] 2020-06-16
     
