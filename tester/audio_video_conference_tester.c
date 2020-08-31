@@ -1115,7 +1115,7 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 
 	// Local participant is expected to have left as it joined another call
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
-	
+
 	bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
 	bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
@@ -1224,12 +1224,18 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
 
+	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
+
 	BC_ASSERT_TRUE(call(chloe,laure));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausing,(laure_initial_stats.number_of_LinphoneCallPausing + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
 
+	// As Marie is in a conference, the named tone should not be played even though the call is paused
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
+	
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
 
@@ -1329,11 +1335,17 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
 
+	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
+
 	BC_ASSERT_TRUE(call(chloe,laure));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausing,(laure_initial_stats.number_of_LinphoneCallPausing + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
+
+	// As Marie is in a conference, the named tone should not be played even though the call is paused
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
 
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
@@ -1453,11 +1465,17 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
 
+	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
+	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
+
 	BC_ASSERT_TRUE(call(chloe,laure));
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausing,(laure_initial_stats.number_of_LinphoneCallPausing + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
+
+	// As Marie is in a conference, the named tone should not be played even though the call is paused
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
 
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
