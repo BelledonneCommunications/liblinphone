@@ -1373,6 +1373,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		stats initial_marie_stat = marie->stat;
 		stats initial_laure_stat = laure->stat;
 		stats initial_chloe_stat = chloe->stat;
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 		linphone_core_terminate_call(laure->lc, laure_called_by_chloe);
 		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,initial_laure_stat.number_of_LinphoneCallEnd + 1));
 		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallEnd,initial_chloe_stat.number_of_LinphoneCallEnd + 1));
@@ -1382,6 +1383,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 1, unsigned int, "%u");
 
 		linphone_call_resume(laure_calls_marie);
 
@@ -1511,6 +1513,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		stats initial_marie_stat = marie->stat;
 		stats initial_laure_stat = laure->stat;
 		stats initial_chloe_stat = chloe->stat;
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 		linphone_core_terminate_call(laure->lc, laure_called_by_chloe);
 		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&laure->stat.number_of_LinphoneCallEnd,initial_laure_stat.number_of_LinphoneCallEnd + 1));
 		BC_ASSERT_TRUE(wait_for(chloe->lc,laure->lc,&chloe->stat.number_of_LinphoneCallEnd,initial_chloe_stat.number_of_LinphoneCallEnd + 1));
@@ -1520,6 +1523,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		// Remote  conference
 		BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_calls_marie));
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(laure_calls_marie));
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 1, unsigned int, "%u");
 
 		linphone_call_resume(laure_calls_marie);
 
