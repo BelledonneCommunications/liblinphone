@@ -20,3 +20,5 @@ reg_sendregister=1
 publish=0
 dial_escape_plus=0
 
+[tester]
+test_env=1

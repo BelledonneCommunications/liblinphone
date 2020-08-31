@@ -18,3 +18,6 @@ reg_identity=sip:user@sip.accounttest.org
 sip_port=-1
 sip_tcp_port=-1
 sip_tls_port=-1
+
+[tester]
+test_env=1

@@ -49,3 +49,5 @@ stun_server=stun.example.org
 #try to connect to the same default sqlite3 database.
 uri=null
 
+[tester]
+test_env=1

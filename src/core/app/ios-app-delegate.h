@@ -23,15 +23,12 @@
 
 @interface IosAppDelegate : NSObject <PKPushRegistryDelegate> {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
-	NSTimer* mIterateTimer;
 	PKPushRegistry* voipRegistry;
+	BOOL useSharedCore;
 }
 
-- (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-- (void)onLinphoneCoreStart;
-- (void)onLinphoneCoreStop;
+- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core useSharedCore:(BOOL)share;
 
-- (void)registerForPush;
 - (void)didRegisterForRemotePush:(NSData *)token;
 
 @end

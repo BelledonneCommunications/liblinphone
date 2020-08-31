@@ -1,3 +1,5 @@
 [misc]
 config-uri=/tmp/lol
 
+[tester]
+test_env=1
