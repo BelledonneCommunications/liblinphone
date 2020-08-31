@@ -17,6 +17,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Handling push notifications, activity monitor and Core iterate automatically in Core for Android.
 - Auto acquire and release of audio focus for Android.
 - Added API to play user's ringtone instead of default ringtone for Android.
+- New method linphone_core_audio_route_changed(), to fix audio issues when switching audio to some low sample rate Bluetooth devices.
 
 ### Changed
 - Improved Android network manager.
