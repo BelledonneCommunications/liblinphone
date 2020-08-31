@@ -1633,7 +1633,8 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 	ctx.resultMediaDescription = resultDesc;
 	getStreamsGroup().render(ctx, targetState);
 
-	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1)) {
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1) && !isInLocalConference) {
 		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
 	}
 
