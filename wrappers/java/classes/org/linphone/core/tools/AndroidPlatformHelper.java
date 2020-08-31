@@ -39,6 +39,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.WindowManager;
 
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.network.NetworkManager;
@@ -552,7 +553,9 @@ public class AndroidPlatformHelper {
     public synchronized void rotateVideoPreview() {
         if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
             Log.i("[Platform Helper] Found CaptureTextureView, rotating...");
-            ((CaptureTextureView) mPreviewTextureView).rotateToMatchDisplayOrientation();
+            WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+            int rotation = windowManager.getDefaultDisplay().getRotation() * 90;
+            ((CaptureTextureView) mPreviewTextureView).rotateToMatchDisplayOrientation(rotation);
         } else if (mPreviewTextureView != null) {
             Log.w("[Platform Helper] It seems you are using a TextureView instead of our CaptureTextureView, we strongly advise you to use ours to benefit from correct rotation & ratio");
         }
