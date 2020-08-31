@@ -630,7 +630,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 		return success;
 	} else if (getParticipantCount() == 0){
 		// We should never enter here
-		ms_error("Conference %p has still endpoints and no participants... Trying to end conference. %s will return an error", this, __func__);
+		ms_error("Conference %p has no participants... Trying to end conference. %s will return an error", this, __func__);
 		leave();
 		setState(ConferenceInterface::State::TerminationPending);
 
