@@ -325,11 +325,6 @@ void Call::onCallSessionSetTerminated (const shared_ptr<CallSession> &session) {
 	}
 	if (getCore()->getPrivate()->removeCall(getSharedFromThis()) != 0)
 		lError() << "Could not remove the call from the list!!!";
-	// Remove participant to local conference
-	if (getConference() && isInConference()) {
-		lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-		MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
-	}
 #if 0
 	if (mChatRoom)
 		linphone_chat_room_set_call(mChatRoom, nullptr);
@@ -380,6 +375,27 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 			getPlatformHelpers(lc)->releaseWifiLock();
 			getPlatformHelpers(lc)->releaseMcastLock();
 			getPlatformHelpers(lc)->releaseCpuLock();
+
+			if (isInConference()) {
+				// Remove participant from local conference
+				if (getConference()) {
+					lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
+					MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
+				}
+			} else {
+				// Searching remote conference to terminate it
+				if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
+					char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+					Address remoteContactAddress(remoteContactAddressStr);
+					ms_free(remoteContactAddressStr);
+
+					removeFromConference(remoteContactAddress);
+
+				}
+			}
+
+			setConference (nullptr);
+
 			break;
 		case CallSession::State::Paused:
 			break;
@@ -402,16 +418,6 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 		case CallSession::State::End:
 		case CallSession::State::Error:
 		{
-			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
-
-				removeFromConference(remoteContactAddress);
-
-			}
-			setConference (nullptr);
-
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
