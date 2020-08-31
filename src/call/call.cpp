@@ -30,6 +30,8 @@
 
 #include "conference_private.h"
 
+#include <bctoolbox/defs.h>
+
 // =============================================================================
 
 using namespace std;
@@ -354,6 +356,26 @@ ms_message("%s - searching conference (peer address %s local address %s remote c
 	}
 }
 
+void Call::exitFromConference (const shared_ptr<CallSession> &session) {
+	if (isInConference()) {
+		// Remove participant from local conference
+		if (getConference()) {
+			lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
+				MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
+		}
+	} else {
+		// Searching remote conference to terminate it
+		if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
+			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+			Address remoteContactAddress(remoteContactAddressStr);
+			ms_free(remoteContactAddressStr);
+
+			removeFromConference(remoteContactAddress);
+		}
+	}
+	setConference (nullptr);
+}
+
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
@@ -376,25 +398,8 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 			getPlatformHelpers(lc)->releaseMcastLock();
 			getPlatformHelpers(lc)->releaseCpuLock();
 
-			if (isInConference()) {
-				// Remove participant from local conference
-				if (getConference()) {
-					lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-					MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
-				}
-			} else {
-				// Searching remote conference to terminate it
-				if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-					char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-					Address remoteContactAddress(remoteContactAddressStr);
-					ms_free(remoteContactAddressStr);
-
-					removeFromConference(remoteContactAddress);
-
-				}
-			}
-
-			setConference (nullptr);
+			// Terminating or removing participant from conference after receiving the 200 OK of the BYE
+			exitFromConference(session);
 
 			break;
 		case CallSession::State::Paused:
@@ -415,13 +420,14 @@ ms_message("%s - call %p state %s\n - remote address %s\n - remote contact addre
 			}
 		}
 		break;
-		case CallSession::State::End:
 		case CallSession::State::Error:
-		{
+			// Exit call from conference if an error occurred
+			exitFromConference(session);
+		BCTBX_NO_BREAK; // No break because a notification of last call ended may also be issued if the last remainign call errors out
+		case CallSession::State::End:
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
-		}
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{

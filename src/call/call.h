@@ -259,6 +259,7 @@ public:
 
 	LinphoneConference *getConference () const;
 	void setConference (LinphoneConference *ref);
+	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bctbx_list_t *getCallbacksList () const;
