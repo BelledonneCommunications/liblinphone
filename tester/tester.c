@@ -1131,6 +1131,10 @@ LinphoneStatus terminate_local_conference(bctbx_list_t *participants, LinphoneCo
 		lcs=bctbx_list_append(lcs,m->lc);
 	}
 
+	lcs=bctbx_list_append(lcs,conf_mgr->lc);
+	lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+	lcm_stats[counter - 1] = conf_mgr->stat;
+
 	LinphoneConference *conference = linphone_core_get_conference(conf_mgr->lc);
 	BC_ASSERT_PTR_NOT_NULL(conference);
 	unsigned int no_participants = linphone_conference_get_participant_count(conference);
