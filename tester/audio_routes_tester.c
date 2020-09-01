@@ -1402,7 +1402,7 @@ static void conference_with_simple_audio_device_change(void) {
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
 	laure_current_dev = change_device(TRUE, laure, laure_current_dev, laure_dev0, laure_dev1);
 
-	terminate_local_conference(lcs, laure);
+	terminate_local_conference(participants, laure);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);
