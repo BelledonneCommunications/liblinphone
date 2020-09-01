@@ -2298,9 +2298,17 @@ static void try_to_update_call_params_during_conference(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning, 6, 10000));
 	
+
+	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
+	const LinphoneConferenceParams * marie_conf_params = linphone_conference_get_current_params(marie_conference);
+	bool_t orig_marie_video_enabled = linphone_conference_params_video_enabled(marie_conf_params);
+
 	// Remote  conference
-	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(pauline_called_by_marie));
+	LinphoneConference * pauline_conference = linphone_call_get_conference(pauline_called_by_marie);
+	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(pauline_called_by_marie));
+	const LinphoneConferenceParams * pauline_conf_params = linphone_conference_get_current_params(pauline_conference);
+	bool_t orig_pauline_video_enabled = linphone_conference_params_video_enabled(pauline_conf_params);
 
 	if (pauline_called_by_marie) {
 		stats initial_marie_stat = marie->stat;
@@ -2314,6 +2322,14 @@ static void try_to_update_call_params_during_conference(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallUpdating, initial_pauline_stat.number_of_LinphoneCallUpdating + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, initial_pauline_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+
+		// Test that update to call params of a participant didn't affect conference params
+		const LinphoneConferenceParams * pauline_conf_params = linphone_conference_get_current_params(pauline_conference);
+		BC_ASSERT_TRUE(linphone_conference_params_video_enabled(pauline_conf_params) == orig_pauline_video_enabled);
+
+		const LinphoneConferenceParams * marie_conf_params = linphone_conference_get_current_params(marie_conference);
+		BC_ASSERT_TRUE(linphone_conference_params_video_enabled(marie_conf_params) == orig_marie_video_enabled);
+
 	}
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
