@@ -118,6 +118,7 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 	return cList
 }
 
+#if (arch(arm64) || arch(x86_64))
 /// Add this object in your SwiftUI while giving him the callback necessary to link its view to the Core (using Core.nativeVideoWindowId for example).
 public struct LinphoneVideoViewHolder: UIViewRepresentable {
 	private let _view = UIView()
@@ -135,7 +136,7 @@ public struct LinphoneVideoViewHolder: UIViewRepresentable {
 
 	public func updateUIView(_ uiView: UIView, context: Context) {}
 }
-
+#endif
 
 protocol LinphoneObjectDelegate {
 	var cPtr: OpaquePointer {get set}
