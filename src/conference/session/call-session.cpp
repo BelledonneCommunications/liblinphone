@@ -1356,8 +1356,10 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 
 const Address& CallSession::getLocalAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT((d->direction == LinphoneCallIncoming)
-		? linphone_call_log_get_to_address(d->log) : linphone_call_log_get_from_address(d->log));
+	return (d->direction == LinphoneCallIncoming)
+		? 
+			(linphone_call_log_get_to_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log)) : d->emptyAddress) :
+			(linphone_call_log_get_from_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_from_address(d->log)) : d->emptyAddress);
 }
 
 LinphoneCallLog * CallSession::getLog () const {
