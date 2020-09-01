@@ -401,7 +401,6 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 	bool applied = false;
 	if (static_cast<unsigned int>(calls.size()) > 0) {
 		for (const auto &call : calls) {
-lInfo() << "[CONFERENCE DEBUG] " << __func__ << " Changing audio device of call to " << call->getRemoteAddress()->asString() << " to " << audioDevice->getDeviceName();
 			call->setOutputAudioDevice(audioDevice);
 			applied = true;
 		}
