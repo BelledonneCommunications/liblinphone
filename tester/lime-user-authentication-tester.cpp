@@ -38,7 +38,7 @@ enum class certProvider {
 };
 
 // Helper to loop on all certificate providing methods availables
-static std::array<certProvider, 3> availCertProv{certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path};
+static std::array<certProvider, 3> availCertProv{{certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path}};
 
 static const int x3dhServer_creationTimeout = 5000;
 // This function will add proxy and auth info to the core config. The proxy is set as the default one
