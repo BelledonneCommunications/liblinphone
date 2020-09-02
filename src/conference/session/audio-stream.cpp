@@ -136,23 +136,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	// try to get playcard from the stream if it was already set
-	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
-	MSSndCard * playcard = NULL;
-
-	if (audioDevice) {
-		playcard = audioDevice->getSoundCard();
-	}
-
-	// If stream doesn't have a playcard associated with it, then use the default values
-	if (!playcard)
-		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
-
-	if (playcard) {
-		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
-		// otherwise too slow to start.
-		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
-	}
+	
 	
 	if (linphone_core_echo_limiter_enabled(getCCore())) {
 		string type = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
