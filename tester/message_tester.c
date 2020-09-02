@@ -865,7 +865,7 @@ static void transfer_message_upload_finished_during_stop(void) {
 		// while the CPP shared ptr is still held by the chat room...
 		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
+		BC_ASSERT_TRUE(wait_for_until(NULL,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
 		linphone_core_manager_destroy(marie);
 	}
 }
