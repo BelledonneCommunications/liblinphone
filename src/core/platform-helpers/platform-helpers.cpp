@@ -135,7 +135,7 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 			"monitor network timeout"
 		);
 	} else {
-		belle_sip_source_set_timeout(mMonitorTimer, DefaultMonitorTimeout * 1000);
+		belle_sip_source_set_timeout_int64(mMonitorTimer, (int64_t) DefaultMonitorTimeout * 1000);
 	}
 
 	// Get ip right now to avoid waiting for 5s

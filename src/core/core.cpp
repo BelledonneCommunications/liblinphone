@@ -345,7 +345,7 @@ void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
 	if (!timer) {
 		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	} else {
-		belle_sip_source_set_timeout(timer, timeoutValueMs);
+		belle_sip_source_set_timeout_int64(timer, (int64_t)timeoutValueMs);
 	}
 }
 

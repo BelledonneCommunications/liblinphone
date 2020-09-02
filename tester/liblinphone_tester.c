@@ -50,6 +50,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
 	
 	err = getaddrinfo(name, NULL, &hints, &ai);
 	if (err != 0){
@@ -57,7 +58,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	}
 	for(ai_it = ai; ai_it != NULL ; ai_it = ai_it->ai_next){
 		char ipaddress[NI_MAXHOST] = { 0 };
-		err = getnameinfo(ai_it->ai_addr, ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, 0);
+		err = getnameinfo(ai_it->ai_addr, ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
 		if (err != 0){
 			ms_error("liblinphone_tester_resolve_name_to_ip_address(): getnameinfo() error : %s", gai_strerror(err));
 			continue;
@@ -65,6 +66,20 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 		ret = bctbx_list_append(ret, bctbx_strdup(ipaddress));
 	}
 	return ret;
+}
+
+static bctbx_list_t * remove_v6_addr(bctbx_list_t *l){
+	bctbx_list_t *it;
+	for (it = l ; it != NULL; ){
+		char *ip = (char*)l->data;
+		printf("seeing %s \n", ip);
+		if (strchr(ip, ':')){
+			l = bctbx_list_erase_link(l, it);
+			bctbx_free(ip);
+			it = l;
+		}else it = it->next;
+	}
+	return l;
 }
 
 static int liblinphone_tester_start(int argc, char *argv[]) {
@@ -123,7 +138,10 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 	}
 
 	if (flexisip_tester_dns_server != NULL){
-		flexisip_tester_dns_ip_addresses = liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server);
+		/*
+		 * We have to remove ipv6 addresses because flexisip-tester internally uses a dnsmasq configuration that does not listen on ipv6.
+		 */
+		flexisip_tester_dns_ip_addresses = remove_v6_addr(liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server));
 		if (flexisip_tester_dns_ip_addresses == NULL){
 			ms_error("Cannot resolve the flexisip-tester's dns server name '%s'.", flexisip_tester_dns_server);
 			return -1;

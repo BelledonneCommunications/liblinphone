@@ -552,13 +552,23 @@ static void dtls_srtp_audio_call_with_rtcp_mux(void) {
 	
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
-	linphone_core_enable_rtp_bundle(marie->lc, TRUE);
 	
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
 	
 	setup_dtls_srtp(marie, pauline);
+	{
+		/*enable ICE on both ends*/
+		LinphoneNatPolicy *pol;
+		pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, pol);
+		pol = linphone_core_get_nat_policy(pauline->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(pauline->lc, pol);
+	}
 	
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_call = linphone_core_get_current_call(pauline->lc);
