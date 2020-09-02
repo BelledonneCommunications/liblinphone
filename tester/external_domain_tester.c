@@ -21,13 +21,13 @@
 static const int x3dhServer_creationTimeout = 5000;
 
 static void simple_call(void) {
-	simple_call_base_with_rcs("claire_sips_rc", "pauline_sips_rc", FALSE, FALSE, FALSE);
+	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE);
 };
 
 static void group_chat (bool_t encryption) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
-	LinphoneCoreManager *claire = linphone_core_manager_create("claire_sips_rc"); // External
+	LinphoneCoreManager *claire = linphone_core_manager_create("claire_rc"); // External
 
 	bctbx_list_t *externalCoresManagerList = NULL;
 	externalCoresManagerList = bctbx_list_append(externalCoresManagerList, claire);
