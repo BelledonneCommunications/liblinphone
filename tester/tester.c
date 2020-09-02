@@ -1010,12 +1010,11 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 
 	int idx = 0;
 
+	char * conf_identity = linphone_address_as_string(conf_mgr->identity);
+
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneCoreManager * m = get_manager(c);
-
-printf("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path);
-ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path);
 
 		unsigned int no_calls = 0;
 		if (m == conf_mgr) {
@@ -1023,6 +1022,10 @@ ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __f
 		} else {
 			no_calls = 1;
 		}
+
+
+printf("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s) - call released init %0d stats init %0d incremnet %0d\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path, m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased, no_calls);
+ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s) - call released init %0d stats init %0d incremnet %0d\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path, m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased, no_calls);
 
 		// Wait for calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
@@ -1037,11 +1040,21 @@ ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s)\n",  __f
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 		BC_ASSERT_PTR_NULL(conference);
-
 		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
+		if (m != conf_mgr) {
+			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address(m->lc, conf_identity);
+			BC_ASSERT_PTR_NULL(participant_call);
+			char * m_identity = linphone_address_as_string(m->identity);
+			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address(conf_mgr->lc, m_identity);
+			BC_ASSERT_PTR_NULL(conference_call);
+
+			ms_free(m_identity);
+		}
 
 		idx++;
 	}
+	ms_free(conf_identity);
 
 }
 

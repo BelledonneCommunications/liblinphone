@@ -584,21 +584,26 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 
 			err = call->pause();
 		}
+	}
 	
+	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
+	if (getParticipantCount() >= 2 || getState() == ConferenceInterface::State::TerminationPending) {
 		Conference::removeParticipant(call);
 		mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 
 	}
 
-	/* 
-	 * Handle the case where only the local participant and a unique remote participant are remaining.
-	 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
-	 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
-	 */
-	if (getParticipantCount() == 1){
-		std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
-		std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
-		if (getState() != ConferenceInterface::State::TerminationPending) {
+	// If conference is in termination pending state, terminate method is already taking care of state kicking participants out of the conference
+	// No need to kick out last remainign participant as it will be done soon
+	if (getState() != ConferenceInterface::State::TerminationPending) {
+		/*
+		 * Handle the case where only the local participant and a unique remote participant are remaining.
+		 * In this case, we kill the conference and let these two participants to connect directly thanks to a simple call.
+		 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
+		 */
+		if (getParticipantCount() == 1){
+			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
+			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 
 			lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
 				" is our last call in our conference, we will reconnect directly to it.";
@@ -620,26 +625,27 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			}
 
 			setState(ConferenceInterface::State::TerminationPending);
+
+			leave();
+
+			/* invoke removeParticipant() recursively to remove this last participant. */
+			bool success = Conference::removeParticipant(remaining_participant);
+			mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
+			return success;
+		} else if (getParticipantCount() == 0){
+			// We should never enter here
+			leave();
+			if (getState() == ConferenceInterface::State::TerminationPending) {
+				setState(ConferenceInterface::State::Terminated);
+			} else {
+				ms_error("Conference %p in state %s has no participants... Trying to end conference. %s will return an error", this, Utils::toString(getState()).c_str(), __func__);
+				setState(ConferenceInterface::State::TerminationPending);
+			}
+
+			return -1;
 		}
-
-		leave();
-
-		/* invoke removeParticipant() recursively to remove this last participant. */
-		bool success = Conference::removeParticipant(remaining_participant);
-		mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
-		return success;
-	} else if (getParticipantCount() == 0){
-		// We should never enter here
-		ms_error("Conference %p has no participants... Trying to end conference. %s will return an error", this, __func__);
-		leave();
-		setState(ConferenceInterface::State::TerminationPending);
-
-		return -1;
 	}
 	
-	if ((getSize() == 0) && (getState() != ConferenceInterface::State::Deleted)) {
-		setState(ConferenceInterface::State::Terminated);
-	}
 	return err;
 }
 
