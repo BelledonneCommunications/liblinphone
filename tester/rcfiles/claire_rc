@@ -16,7 +16,7 @@ realm=sip.external-domain.org
 realm=sip.external-domain.org
 reg_proxy=sip:sip.external-domain.org;transport=tls
 reg_route=sip:sip.external-domain.org;transport=tls
-reg_identity="Claire" <sips:claire@sip.external-domain.org>
+reg_identity="Claire" <sip:claire@sip.external-domain.org>
 reg_expires=3600
 reg_sendregister=1
 publish=0

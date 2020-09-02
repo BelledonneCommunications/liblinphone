@@ -100,6 +100,7 @@ set(RC_FILES
 	rcfiles/account_creator_rc
 	rcfiles/assistant_create.rc
 	rcfiles/carddav_rc
+	rcfiles/claire_rc
 	rcfiles/claire_sips_rc
 	rcfiles/chloe_lime_x3dh_rc
 	rcfiles/chloe_rc
