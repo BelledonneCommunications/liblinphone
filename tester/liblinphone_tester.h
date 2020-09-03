@@ -571,7 +571,7 @@ LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreMa
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
 LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
-LinphoneStatus terminate_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr);
+LinphoneStatus terminate_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * focus_mgr);
 bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneConferenceServer* linphone_conference_server_new(const char *rc_file, bool_t do_registration);
 void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee);
