@@ -3452,6 +3452,22 @@ void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
 #endif
 }
 
+void MainDb::updateChatRoomConferenceId (ConferenceId oldConferenceId, const ConferenceId &newConferenceId) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
+
+		const long long &dbChatRoomId = d->selectChatRoomId(oldConferenceId);
+		*d->dbSession.getBackendSession() << "UPDATE chat_room"
+			" SET peer_sip_address_id = :peerSipAddressId"
+			" WHERE id = :chatRoomId", soci::use(peerSipAddressId), soci::use(dbChatRoomId);
+		tr.commit();
+	};
+#endif
+}
+
 void MainDb::migrateBasicToClientGroupChatRoom (
 	const shared_ptr<AbstractChatRoom> &basicChatRoom,
 	const shared_ptr<AbstractChatRoom> &clientGroupChatRoom
