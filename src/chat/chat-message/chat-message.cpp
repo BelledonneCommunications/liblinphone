@@ -169,6 +169,12 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 			salOp = nullptr;
 		}
 	}
+	
+	if (direction == ChatMessage::Direction::Outgoing) {
+		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
+			q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+		}
+	}
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
 	if (linphone_chat_message_get_message_state_changed_cb(msg))
@@ -947,11 +953,15 @@ void ChatMessagePrivate::send () {
 	}
 
 	restoreFileTransferContentAsFileContent();
-	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
+
+	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
+	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
+		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+	}
 
 	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
@@ -1354,7 +1364,13 @@ void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
 		if (d->state == State::FileTransferInProgress) {
-			d->setState(State::NotDelivered);
+			// For auto download messages, set the state back to Delivered
+			if (d->isAutoFileTransferDownloadHappened()) {
+				d->setState(State::Delivered);
+				getChatRoom()->getPrivate()->removeTransientChatMessage(getSharedFromThis());
+			} else {
+				d->setState(State::NotDelivered);
+			}
 		}
 		d->fileTransferChatMessageModifier.cancelFileTransfer();
 	} else {

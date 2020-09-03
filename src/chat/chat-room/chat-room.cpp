@@ -136,6 +136,10 @@ void ChatRoomPrivate::removeTransientChatMessage (const shared_ptr<ChatMessage> 
 		transientMessages.erase(it);
 }
 
+std::list<std::shared_ptr<ChatMessage>> ChatRoomPrivate::getTransientChatMessages() {
+	return transientMessages;
+}
+
 void ChatRoomPrivate::setIsEmpty (const bool empty) {
 	isEmpty = empty;
 }

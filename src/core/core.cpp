@@ -131,11 +131,10 @@ bool CorePrivate::isShutdownDone() {
 		}
 	}
 
-	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
-	shared_ptr<ChatRoom> cr;
-	for (const auto &chatRoom : chatRooms) {
-		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
-		if (cr && cr->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
+	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
+		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(it->second);
+		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage() 
+				|| !chatRoom->getPrivate()->getTransientChatMessages().empty())) {
 			return false;
 		}
 	}
