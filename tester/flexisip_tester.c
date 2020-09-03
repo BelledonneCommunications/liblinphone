@@ -1261,6 +1261,7 @@ static void test_list_subscribe (void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,initial_number_of_notify + 2,5000));
 
 	linphone_event_terminate(lev);
+	linphone_event_unref(lev);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 

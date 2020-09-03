@@ -443,6 +443,7 @@ bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList);
 bctbx_list_t * init_core_for_conference_with_factori_uri(bctbx_list_t *coreManagerList, const char *factoryUri);
 void start_core_for_conference(bctbx_list_t *coreManagerList);
 bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri);
+bctbx_list_t * init_core_for_conference_with_groupchat_version(bctbx_list_t *coreManagerList, const char *groupchat_version);
 
 void reset_counters(stats* counters);
 

@@ -102,7 +102,7 @@ MediaStream *Call::getMediaStream (LinphoneStreamType type) const {
 		break;
 	}
 	if (!s){
-		lError() << "CallPrivate::getMediaStream() : no stream with type " << type;
+		//lError() << "CallPrivate::getMediaStream() : no stream with type " << type;
 		return nullptr;
 	}
 	return s->getMediaStream();

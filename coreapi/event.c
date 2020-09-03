@@ -189,6 +189,7 @@ void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState s
 			linphone_publish_state_to_string(state)
 		);
 		lev->publish_state=state;
+		linphone_event_ref(lev);
 		linphone_core_notify_publish_state_changed(lev->lc,lev,state);
 		switch(state){
 			case LinphonePublishNone: /*this state is probably trigered by a network state change to DOWN, we should release the op*/
@@ -206,6 +207,7 @@ void linphone_event_set_publish_state(LinphoneEvent *lev, LinphonePublishState s
 				/*nothing special to do*/
 				break;
 		}
+		linphone_event_unref(lev);
 
 	}
 }
@@ -366,6 +368,8 @@ LinphoneEvent *linphone_core_create_publish(LinphoneCore *lc, const LinphoneAddr
 LinphoneEvent *linphone_core_create_one_shot_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event){
 	LinphoneEvent *lev = linphone_core_create_publish(lc, resource, event, -1);
 	lev->oneshot = TRUE;
+	lev->unref_when_terminated = TRUE;
+	linphone_event_ref(lev);
 	return lev;
 }
 

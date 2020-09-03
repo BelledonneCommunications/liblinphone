@@ -687,7 +687,16 @@ void Core::addSpec (const std::string &spec) {
 
 void Core::removeSpec(const std::string &pSpec) {
 	L_D();
-	d->specs.remove_if([&pSpec](const std::string &spec) { return spec.compare(pSpec) == 0; });
+	d->specs.remove_if([&pSpec](const std::string &spec) {
+		if (spec.compare(pSpec) == 0) return true;
+		/* Check also ignoring the version number after the slash */
+		istringstream istr(spec);
+		string specWithoutVersion;
+		if (std::getline(istr, specWithoutVersion, '/')){
+			if (specWithoutVersion == pSpec) return true;
+		}
+		return false;
+	});
 	setSpecsList(d->specs);
 }
 
