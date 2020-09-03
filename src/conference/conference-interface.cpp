@@ -36,6 +36,7 @@ std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e) {
 		case ConferenceInterface::State::Terminated: lhs << "Terminated"; break;
 		case ConferenceInterface::State::TerminationFailed: lhs << "TerminationFailed"; break;
 		case ConferenceInterface::State::Deleted: lhs << "Deleted"; break;
+		case ConferenceInterface::State::ExhumePending: lhs << "ExhumePending"; break;
 	}
 	return lhs;
 }
