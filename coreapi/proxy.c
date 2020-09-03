@@ -1798,7 +1798,7 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 	if (uri && strlen(uri) > 0) {
 		cfg->conference_factory_uri = bctbx_strdup(uri);
 		if (cfg->lc) {
-			linphone_core_add_linphone_spec(cfg->lc, "groupchat");
+			linphone_core_add_linphone_spec(cfg->lc, "groupchat/1.1");
 			linphone_core_add_linphone_spec(cfg->lc, "ephemeral");
 		}
 	} else if (cfg->lc) {
@@ -1815,7 +1815,7 @@ void linphone_proxy_config_set_conference_factory_uri(LinphoneProxyConfig *cfg, 
 			}
 		}
 		if (remove) {
-			linphone_core_remove_linphone_spec(cfg->lc, "groupchat");
+			linphone_core_remove_linphone_spec(cfg->lc, "groupchat/1.1");
 			linphone_core_remove_linphone_spec(cfg->lc, "ephemeral");
 		}
 	}

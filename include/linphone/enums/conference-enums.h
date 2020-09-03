@@ -35,7 +35,7 @@ typedef enum _LinphoneConferenceState{
 	LinphoneConferenceStateTerminationPending, /**< Wait for conference termination */
 	LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local */
 	LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
-	LinphoneConferenceStateDeleted /**< Conference was deleted on the server */
+	LinphoneConferenceStateDeleted, /**< Conference was deleted on the server */
 } LinphoneConferenceState;
 
 #endif // ifndef _L_CONFERENCE_ENUMS_H_
