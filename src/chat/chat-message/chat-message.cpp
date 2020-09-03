@@ -761,6 +761,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 
 	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	setAutoFileTransferDownloadInProgress(false);
+	setState(ChatMessage::State::Delivered);
 	q->getChatRoom()->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 	return;
 }

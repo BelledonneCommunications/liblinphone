@@ -856,12 +856,10 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				currentFileTransferContent = nullptr;
 			}
 
+			releaseHttpRequest();
+			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
 			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
-				releaseHttpRequest();
 				message->getPrivate()->handleAutoDownload();
-			} else {
-				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
-				releaseHttpRequest();
 			}
 		}
 	} else {
