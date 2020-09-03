@@ -154,6 +154,20 @@ static void call_received(SalCallOp *h) {
 				h->release();
 			}
 		} else {
+			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
+			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
+			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
+				shared_ptr<AbstractChatRoom> chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(
+					IdentityAddress(h->getTo()), 
+					IdentityAddress(h->getFrom()), 
+					endToEndEncrypted == "true");
+					if (chatRoom) {
+						lInfo() << "Found exhumable chat room [" << chatRoom << "]";
+						static_pointer_cast<ClientGroupChatRoom>(chatRoom)->onConferenceExhumed(IdentityAddress(h->getRemoteContact()));
+						return;
+					}
+			}
+
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 				ConferenceId(ConferenceAddress(Address(h->getFrom())), ConferenceAddress(Address(h->getTo())))
 			);
@@ -163,7 +177,6 @@ static void call_received(SalCallOp *h) {
 				chatRoom.reset();
 			}
 			if (!chatRoom) {
-				string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
 				chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createClientGroupChatRoom(
 					h->getSubject(),
 					ConferenceId(ConferenceAddress(Address(h->getRemoteContact())), ConferenceAddress(Address(h->getTo()))),
@@ -172,7 +185,6 @@ static void call_received(SalCallOp *h) {
 				);
 			}
 
-			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0))
 				L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->addOneToOneCapability();
 			L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->confirmJoining(h);

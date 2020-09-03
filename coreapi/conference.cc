@@ -1365,6 +1365,8 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			break;
 		case ConferenceInterface::State::Deleted:
 			break;
+		case ConferenceInterface::State::ExhumePending:
+			break;
 	}
 
 }

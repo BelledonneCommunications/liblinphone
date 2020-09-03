@@ -115,6 +115,9 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 		case LinphoneChatRoomStateDeleted:
 			manager->stat.number_of_LinphoneConferenceStateDeleted++;
 			break;
+		case LinphoneChatRoomStateExhumePending:
+			manager->stat.number_of_LinphoneConferenceStateExhumePending++;
+			break;
 		default:
 			ms_error("Invalid ChatRoom state for Chatroom [%s] EndOfEnum is used ONLY as a guard", linphone_address_as_string(addr));
 			break;
@@ -4167,6 +4170,128 @@ end:
 	linphone_core_manager_destroy(chloe);
 }
 
+static void exhume_one_to_one_chat_room_1(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
+	LinphoneAddress *confAddr = NULL, *exhumedConfAddr = NULL;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, FALSE);
+
+	if (marieOneToOneCr) {
+		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000);
+		BC_ASSERT_EQUAL(linphone_chat_room_get_state(paulineOneToOneCr), LinphoneChatRoomStateTerminated, int, "%d");
+
+		bctbx_list_t *participants = linphone_chat_room_get_participants(paulineOneToOneCr);
+		BC_ASSERT_EQUAL(bctbx_list_size(participants), 1, int , "%d");
+		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
+
+		linphone_chat_room_compose(paulineOneToOneCr);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateExhumePending, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
+
+		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
+		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
+		if (exhumedConfAddr) {
+			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+			marieOneToOneCr = check_creation_chat_room_client_side(coresList, marie, &initialMarieStats, exhumedConfAddr, "one to one", 1, FALSE);
+			if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+		}
+	}
+
+end:
+	if (confAddr) linphone_address_unref(confAddr);
+	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
+	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void exhume_one_to_one_chat_room_2(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
+	LinphoneAddress *confAddr = NULL, *exhumedConfAddr = NULL;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, FALSE);
+
+	if (marieOneToOneCr) {
+		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateDeleted, 1, 5000);
+		BC_ASSERT_EQUAL(linphone_chat_room_get_state(paulineOneToOneCr), LinphoneChatRoomStateTerminated, int, "%d");
+
+		participantsAddresses = NULL;
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000);
+		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+
+		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
+		if (exhumedConfAddr) {
+			BC_ASSERT_FALSE(linphone_address_weak_equal(confAddr, exhumedConfAddr));
+
+			paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, exhumedConfAddr, "one to one", 1, FALSE);
+			BC_ASSERT_PTR_NOT_NULL(paulineOneToOneCr);
+
+			linphone_chat_room_compose(marieOneToOneCr);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
+		}
+	}
+
+end:
+	if (confAddr) linphone_address_unref(confAddr);
+	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
+	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void group_chat_room_new_device_after_creation (void) {
 	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
@@ -6000,12 +6125,14 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("New unique one-to-one chatroom after both participants left", group_chat_room_new_unique_one_to_one_chat_room_after_both_participants_left),
 	TEST_NO_TAG("Unique one-to-one chatroom re-created from the party that deleted it, with inactive devices", group_chat_room_unique_one_to_one_chat_room_recreated_from_message_2),
 	TEST_ONE_TAG("Group chat room notify participant devices name", group_chat_room_participant_devices_name, "LeaksMemory"/* Core restarts */),
-	TEST_NO_TAG("Add device in one to one chat room where other participant left", add_device_one_to_one_chat_room_other_left),
+	TEST_NO_TAG("Add device in one-to-one chat room where other participant left", add_device_one_to_one_chat_room_other_left),
 	TEST_NO_TAG("IMDN for group chat room", imdn_for_group_chat_room),
 	TEST_NO_TAG("Aggregated IMDN for group chat room", aggregated_imdn_for_group_chat_room),
 	TEST_NO_TAG("Aggregated IMDN for group chat room read while offline", aggregated_imdn_for_group_chat_room_read_while_offline),
 	TEST_ONE_TAG("IMDN sent from DB state", imdn_sent_from_db_state, "LeaksMemory"),
-	TEST_NO_TAG("Find one to one chat room", find_one_to_one_chat_room),
+	TEST_NO_TAG("Find one-to-one chat room", find_one_to_one_chat_room),
+	TEST_NO_TAG("Exhumed one-to-one chat room 1", exhume_one_to_one_chat_room_1),
+	TEST_NO_TAG("Exhumed one-to-one chat room 2", exhume_one_to_one_chat_room_2),
 	TEST_NO_TAG("New device after group chat room creation", group_chat_room_new_device_after_creation),
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
