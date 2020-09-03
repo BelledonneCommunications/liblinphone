@@ -6525,8 +6525,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *core, const LinphoneAddress *participant);
 
 /**
- * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
+ * Get a chat room whose peer is the supplied address. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
@@ -6536,8 +6537,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *core, const LinphoneAddress *addr);
 
 /**
- * Get a basic chat room. If it does not exist yet, it will be created.
+ * Get a chat room. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param peer_addr a linphone address. @notnil
  * @param local_addr a linphone address. @notnil
@@ -6552,8 +6554,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
 );
 
 /**
- * Get a basic chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created.
+ * Get a chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core A #LinphoneCore object @notnil
  * @param to The destination address for messages. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
