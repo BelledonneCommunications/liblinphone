@@ -216,6 +216,7 @@ typedef struct _stats {
 	int number_of_LinphoneConferenceStateTerminated;
 	int number_of_LinphoneConferenceStateTerminationFailed;
 	int number_of_LinphoneConferenceStateDeleted;
+	int number_of_LinphoneConferenceStateExhumePending;
 
 	int number_of_LinphoneTransferCallOutgoingInit;
 	int number_of_LinphoneTransferCallOutgoingProgress;

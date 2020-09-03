@@ -55,6 +55,8 @@ public:
 	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
 
 	void onChatRoomCreated (const Address &remoteContact);
+	void onChatRoomExhumed (const Address &remoteContact);
+	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 private:
 	void acceptSession (const std::shared_ptr<CallSession> &session);
@@ -67,6 +69,8 @@ private:
 
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400;  //24 hours = 86400s
+
+	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
 	
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
 };
