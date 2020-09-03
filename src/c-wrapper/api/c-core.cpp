@@ -228,3 +228,7 @@ const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const L
 VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
 	return lc->previewstream;
 }
+
+const char *linphone_core_get_groupchat_version(void){
+	return "1.1"; //FIXME use CorePrivate::groupChatversion
+}

@@ -32,6 +32,7 @@ AbstractChatRoom::AbstractChatRoom (
 	const shared_ptr<Core> &core
 ) : Object(p), CoreAccessor(core) {}
 
+
 std::ostream& operator<<(std::ostream& lhs, AbstractChatRoom::Capabilities e) {
 	switch(e) {
 		case AbstractChatRoom::Capabilities::None: lhs << "None"; break;

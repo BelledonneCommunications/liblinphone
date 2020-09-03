@@ -68,7 +68,7 @@ public:
 		TerminationPending = LinphoneConferenceStateTerminationPending, /**< Wait for Conference termination */
 		Terminated = LinphoneConferenceStateTerminated, /**< Conference exists on server but not in local //fixme jehan creuser ce point */
 		TerminationFailed = LinphoneConferenceStateTerminationFailed, /**< Conference termination failed */
-		Deleted /**< Conference is deleted on the server //fixme jehan creuser ce point  */
+		Deleted = LinphoneConferenceStateDeleted, /**< Conference is deleted on the server //fixme jehan creuser ce point  */
 	};
 
 	//casting to int to get rid of the enum compare warning.
