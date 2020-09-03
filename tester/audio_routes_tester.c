@@ -965,7 +965,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	// wait a bit before endign the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_local_conference(lcs, laure);
+	terminate_conference(lcs, laure, NULL);
 
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(marie);
@@ -1209,7 +1209,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_local_conference(lcs, pauline);
+	terminate_conference(lcs, pauline, NULL);
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card
@@ -1402,7 +1402,7 @@ static void conference_with_simple_audio_device_change(void) {
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
 	laure_current_dev = change_device(TRUE, laure, laure_current_dev, laure_dev0, laure_dev1);
 
-	terminate_local_conference(participants, laure);
+	terminate_conference(participants, laure, NULL);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);
