@@ -1375,12 +1375,12 @@ static void conference_with_simple_audio_device_change(void) {
 
 		if (prev_mgr != NULL) {
 			LinphoneCall *m_called_by_laure=linphone_core_get_current_call(prev_mgr->lc);
-			LinphoneCall *laure_call_m = linphone_core_get_call_by_remote_address(laure->lc, linphone_address_as_string(prev_mgr->identity));
+			LinphoneCall *laure_call_m = linphone_core_get_call_by_remote_address2(laure->lc, prev_mgr->identity);
 			BC_ASSERT_TRUE(pause_call_1(laure,laure_call_m,prev_mgr,m_called_by_laure));
 		}
 
 		const LinphoneAddress *caller_uri = m->identity;
-		LinphoneCall * laure_call = linphone_core_get_call_by_remote_address(laure->lc, linphone_address_as_string(caller_uri));
+		LinphoneCall * laure_call = linphone_core_get_call_by_remote_address2(laure->lc, caller_uri);
 		BC_ASSERT_PTR_NOT_NULL(laure_call);
 
 		// Take call - ringing ends
