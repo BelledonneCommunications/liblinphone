@@ -1062,7 +1062,7 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
-	marie_call_pauline = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(pauline->identity));
+	marie_call_pauline = linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
@@ -1179,14 +1179,14 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
-	marie_call_pauline = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(pauline->identity));
+	marie_call_pauline = linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
 		goto end;
 
 	michelle_called_by_marie=linphone_core_get_current_call(michelle->lc);
-	marie_call_michelle = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(michelle->identity));
+	marie_call_michelle = linphone_core_get_call_by_remote_address2(marie->lc, michelle->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_michelle,michelle,michelle_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,laure)))
@@ -1219,7 +1219,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
 
-	laure_called_by_chloe = linphone_core_get_call_by_remote_address(laure->lc, linphone_address_as_string(chloe->identity));
+	laure_called_by_chloe = linphone_core_get_call_by_remote_address2(laure->lc, chloe->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_called_by_chloe)) goto end;
 
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(chloe_call_laure));
@@ -1290,14 +1290,14 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
-	marie_call_pauline = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(pauline->identity));
+	marie_call_pauline = linphone_core_get_call_by_remote_address2(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
 		goto end;
 
 	michelle_called_by_marie=linphone_core_get_current_call(michelle->lc);
-	marie_call_michelle = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(michelle->identity));
+	marie_call_michelle = linphone_core_get_call_by_remote_address2(marie->lc, michelle->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_michelle,michelle,michelle_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,laure)))
@@ -1330,7 +1330,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
 
-	laure_called_by_chloe = linphone_core_get_call_by_remote_address(laure->lc, linphone_address_as_string(chloe->identity));
+	laure_called_by_chloe = linphone_core_get_call_by_remote_address2(laure->lc, chloe->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_called_by_chloe)) goto end;
 
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(chloe_call_laure));
@@ -1342,7 +1342,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	LinphoneCall * laure_calls_marie = linphone_core_get_call_by_remote_address(laure->lc, linphone_address_as_string(marie->identity));
+	LinphoneCall * laure_calls_marie = linphone_core_get_call_by_remote_address2(laure->lc, marie->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_calls_marie)) goto end;
 	// Remote  conference
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(laure_calls_marie));
@@ -1428,9 +1428,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 		goto end;
 
 	michelle_called_by_marie=linphone_core_get_current_call(michelle->lc);
-	char * michelle_identity = linphone_address_as_string(michelle->identity);
-	marie_call_michelle = linphone_core_get_call_by_remote_address(marie->lc, michelle_identity);
-	ms_free(michelle_identity);
+	marie_call_michelle = linphone_core_get_call_by_remote_address2(marie->lc, michelle->identity);
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_michelle,michelle,michelle_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,laure)))
@@ -1462,9 +1460,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	chloe_call_laure=linphone_core_get_current_call(chloe->lc);
 	if (!BC_ASSERT_PTR_NOT_NULL(chloe_call_laure)) goto end;
 	
-	char * chloe_identity = linphone_address_as_string(chloe->identity);
-	laure_called_by_chloe = linphone_core_get_call_by_remote_address(laure->lc, chloe_identity);
-	ms_free(chloe_identity);
+	laure_called_by_chloe = linphone_core_get_call_by_remote_address2(laure->lc, chloe->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_called_by_chloe)) goto end;
 
 	BC_ASSERT_FALSE(linphone_call_is_in_conference(chloe_call_laure));
@@ -1480,9 +1476,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	char * marie_identity = linphone_address_as_string(marie->identity);
-	LinphoneCall * laure_calls_marie = linphone_core_get_call_by_remote_address(laure->lc, marie_identity);
-	ms_free(marie_identity);
+	LinphoneCall * laure_calls_marie = linphone_core_get_call_by_remote_address2(laure->lc, marie->identity);
 	if (!BC_ASSERT_PTR_NOT_NULL(laure_calls_marie)) goto end;
 	// Remote  conference
 	BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_calls_marie));
@@ -1619,8 +1613,7 @@ ms_message("%s - conf %s participant %s\n", __func__, conf->rc_path, m->rc_path)
 		const LinphoneCallParams * participant_call_params = linphone_call_get_current_params(participant_call);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(participant_call_params) == enable_video);
 
-		char * participant_identity = linphone_address_as_string(m->identity);
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(conf->lc, participant_identity);
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(conf_call);
 		const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(conf_call_params) == enable_video);
@@ -1664,15 +1657,11 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 		expected_m2_video_capability = linphone_conference_params_video_enabled(params);
 	}
 
-	char * m2_identity = linphone_address_as_string(m2->identity);
-	LinphoneCall * m1_calls_m2 = linphone_core_get_call_by_remote_address(m1->lc, m2_identity);
+	LinphoneCall * m1_calls_m2 = linphone_core_get_call_by_remote_address2(m1->lc, m2->identity);
 	BC_ASSERT_PTR_NOT_NULL(m1_calls_m2);
-	ms_free(m2_identity);
 
-	char * m1_identity = linphone_address_as_string(m1->identity);
-	LinphoneCall * m2_calls_m1 = linphone_core_get_call_by_remote_address(m2->lc, m1_identity);
+	LinphoneCall * m2_calls_m1 = linphone_core_get_call_by_remote_address2(m2->lc, m1->identity);
 	BC_ASSERT_PTR_NOT_NULL(m2_calls_m1);
-	ms_free(m1_identity);
 
 	if (m1_calls_m2) {
 		stats initial_m2_stat = m2->stat;
@@ -2009,7 +1998,7 @@ static void update_conf_params_during_conference(void) {
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(participant_call_params) == video_enabled);
 
 		const LinphoneAddress *participant_uri = m->identity;
-		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(participant_uri));
+		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, participant_uri);
 		BC_ASSERT_PTR_NOT_NULL(conf_call);
 		const LinphoneCallParams * conf_call_params = linphone_call_get_current_params(conf_call);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(conf_call_params) == video_enabled);
@@ -2822,7 +2811,7 @@ printf("%s - remote address of current call %s identity %s compare %0d\n", __fun
 
 		// Decremement here no_paused_by_remote because past history has to be discarded for checks. Here, it is imprtant only the delta between before and after taking the call. As below no_paused_by_remote is incremented by the stats, a corrective factor (i.e. value before taking the call) is applied here
 		no_paused_by_remote -= caller_mgr->stat.number_of_LinphoneCallPausedByRemote;
-		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address(callee->lc, linphone_address_as_string(caller_uri));
+		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, caller_uri);
 printf("%s - manager caller %s callee %s - call %p\n", __func__, caller_mgr->rc_path, callee->rc_path, callee_call);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
@@ -3254,7 +3243,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 		LinphoneCore * c = m->lc;
 		lcs=bctbx_list_append(lcs,c);
 		const LinphoneAddress *caller_uri = m->identity;
-		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
+		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
 		BC_ASSERT_PTR_NOT_NULL(marie_call);
 
 		// Take call - ringing ends
