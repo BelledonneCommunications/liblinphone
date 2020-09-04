@@ -854,7 +854,6 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
-printf("%s - call paused %0d\n", __func__, is_call_paused);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
 		call_paused[counter - 1] = is_call_paused;
 		linphone_core_add_to_conference(conf_mgr->lc,conf_call);
@@ -1042,9 +1041,6 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 			no_calls = 1;
 		}
 
-printf("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s) - call released init %0d stats init %0d incremnet %0d\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path, m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased, no_calls);
-ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s) - call released init %0d stats init %0d incremnet %0d\n",  __func__, m, m->rc_path, no_participants, conf_mgr, conf_mgr->rc_path, m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased, no_calls);
-
 		// Wait for calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
@@ -1065,7 +1061,6 @@ ms_message("%s - manager %p (rc %s) - conf size %0u conf mgr %p (rc %s) - call r
 			BC_ASSERT_PTR_NULL(participant_call);
 			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 			BC_ASSERT_PTR_NULL(conference_call);
-
 		}
 
 		idx++;
