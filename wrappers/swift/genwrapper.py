@@ -366,6 +366,10 @@ class SwiftTranslator(object):
         methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
         if methodDict['return'].endswith('Delegate'):
             methodDict['is_callbacks'] = True
+            if methodDict['property_name'] == 'currentCallbacks':
+                methodDict['property_name'] = 'currentDelegate'
+
+
         methodDict['exception'] = self.throws_exception(prop.returnType)
         methodDict['getter_c_name'] = prop.name.to_c()
 
