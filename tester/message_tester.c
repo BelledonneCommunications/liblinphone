@@ -858,14 +858,16 @@ static void transfer_message_upload_finished_during_stop(void) {
 		linphone_chat_message_send(msg);
 
 		/*wait for file to be 25% uploaded and cancel the transfer */
-		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 60000));
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 30000));
 		
+		linphone_core_stop_async(pauline->lc);
+		
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
 		// When C pointer is unreffed first, callbacks will be removed, 
 		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody
 		// while the CPP shared ptr is still held by the chat room...
 		linphone_chat_message_unref(msg);
 		linphone_core_manager_destroy(pauline);
-		BC_ASSERT_TRUE(wait_for_until(NULL,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
 		linphone_core_manager_destroy(marie);
 	}
 }
@@ -931,6 +933,7 @@ static void transfer_message_auto_download_aborted(void) {
 
 	char *dl_path = linphone_core_get_download_path(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(dl_path);
+	
 	char * path = bctbx_strdup_printf("%s/sintel_trailer_opus_h264.mkv", dl_path);
 	BC_ASSERT_EQUAL(ortp_file_exist(path), 0, int, "%d");
 
@@ -3219,6 +3222,28 @@ test_t message_tests[] = {
 
 static int message_tester_before_suite(void) {
 	//liblinphone_tester_keep_uuid = TRUE;
+	
+	/*
+	 * FIXME: liblinphone does not automatically creates the data directory into which it can write databases, logs etc.
+	 * Today it is done by applications (like linphone-desktop) or by the system (ios, android).
+	 * This must be solved.
+	 * Until this is done, this hack will simply create the directory, for linux only.
+	 */
+#if defined(__linux__) && !defined(__ANDROID__)
+	const char *home = getenv("HOME");
+	char *command;
+	int err;
+	
+	if (!home) home = ".";
+	command = bctbx_strdup_printf("mkdir -p %s/.local/share/linphone", home); 
+	err = system(command);
+	if (err != -1 && WIFEXITED(err) && WEXITSTATUS(err) == 0){
+		bctbx_message("%s done succesfully.", command);
+	}else{
+		bctbx_error("%s failed. Some tests may fail.", command);
+	}
+	bctbx_free(command);
+#endif
 	return 0;
 }
 
