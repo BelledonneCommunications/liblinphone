@@ -830,12 +830,6 @@ static void eject_from_4_participants_conference(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(pauline);
@@ -944,7 +938,6 @@ static void participants_exit_conference_after_pausing(void) {
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
 	}
 
 end:
@@ -1029,12 +1022,6 @@ static void add_participant_after_conference_started(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
 
 end:
 
@@ -1123,12 +1110,6 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	// Call to Marie is still active
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
@@ -1242,12 +1223,6 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
 
 	stats initial_laure_stat = laure->stat;
 	stats initial_chloe_stat = chloe->stat;
@@ -1392,12 +1367,6 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(pauline);
@@ -1526,12 +1495,6 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(laure);
@@ -1580,8 +1543,6 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneCore * c = m->lc;
 
-printf("%s - conf %s participant %s\n", __func__, conf->rc_path, m->rc_path);
-ms_message("%s - conf %s participant %s\n", __func__, conf->rc_path, m->rc_path);
 		LinphoneCall * participant_call = linphone_core_get_current_call(c);
 		BC_ASSERT_PTR_NOT_NULL(participant_call);
 
@@ -1681,8 +1642,6 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 			linphone_call_accept_update(m2_calls_m1, m2_params);
 			linphone_call_params_unref(m2_params);
 		}
-printf("%s - m1 %s m2 %s\n", __func__, m1->rc_path, m2->rc_path);
-ms_message("%s - m1 %s m2 %s\n", __func__, m1->rc_path, m2->rc_path);
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallUpdating, initial_m1_stat.number_of_LinphoneCallUpdating + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m2->stat.number_of_LinphoneCallStreamsRunning, initial_m2_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(m1->lc, m2->lc, &m1->stat.number_of_LinphoneCallStreamsRunning, initial_m1_stat.number_of_LinphoneCallStreamsRunning + 1));
@@ -1864,12 +1823,6 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(laure);
@@ -2024,12 +1977,6 @@ static void update_conf_params_during_conference(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(pauline);
@@ -2162,12 +2109,6 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 	BC_ASSERT_EQUAL(marie_call_no, 1, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
 
 	// Current call is not set because the call between Marie and Laure is paused as Marie re-entered the conference
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
@@ -2345,12 +2286,6 @@ static void try_to_update_call_params_during_conference(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
 
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 end:
 
 	destroy_mgr_in_conference(pauline);
@@ -2453,12 +2388,6 @@ static void register_again_during_conference(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(michelle->lc));
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
 
 end:
 
@@ -2565,13 +2494,6 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(local_conf->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(local_conf->lc),0, int, "%d");
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(local_conf->lc)), 0, unsigned int, "%u");
-
-	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
-		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
-		LinphoneCoreManager * m = get_manager(c);
-printf("%s - manager %p (rc %s) - notify %0d - subscribe outgoing %0d incoming %0d active %0d terminated %0d\n", __func__, m, m->rc_path, m->stat.number_of_NotifyReceived, m->stat.number_of_LinphoneSubscriptionOutgoingProgress, m->stat.number_of_LinphoneSubscriptionIncomingReceived, m->stat.number_of_LinphoneSubscriptionActive, m->stat.number_of_LinphoneSubscriptionTerminated);
-	}
-
 }
 
 static void simple_4_participants_conference_ended_by_terminating_conference(void) {
@@ -2783,7 +2705,6 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 	if (current_call) {
 		pausing_current_call = ((linphone_call_get_state(current_call) == LinphoneCallStreamsRunning) || (linphone_call_get_state(current_call) == LinphoneCallPaused));
 		char* remote_address_string = linphone_call_get_remote_address_as_string(current_call);
-printf("%s - remote address of current call %s\n", __func__, linphone_call_get_remote_address_as_string(current_call));
 		// Search core that matches the remote address 
 
 		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
@@ -2791,7 +2712,6 @@ printf("%s - remote address of current call %s\n", __func__, linphone_call_get_r
 			LinphoneCoreManager * m = get_manager(c);
 			char * identity_string = linphone_address_as_string(m->identity);
 			bool_t manager_found = (strcmp(remote_address_string, identity_string) == 0);
-printf("%s - remote address of current call %s identity %s compare %0d\n", __func__, remote_address_string, identity_string, manager_found);
 			ms_free(identity_string);
 			if (manager_found == TRUE) {
 				current_call_caller = linphone_core_get_current_call(c);
@@ -2812,7 +2732,6 @@ printf("%s - remote address of current call %s identity %s compare %0d\n", __fun
 		// Decremement here no_paused_by_remote because past history has to be discarded for checks. Here, it is imprtant only the delta between before and after taking the call. As below no_paused_by_remote is incremented by the stats, a corrective factor (i.e. value before taking the call) is applied here
 		no_paused_by_remote -= caller_mgr->stat.number_of_LinphoneCallPausedByRemote;
 		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, caller_uri);
-printf("%s - manager caller %s callee %s - call %p\n", __func__, caller_mgr->rc_path, callee->rc_path, callee_call);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
 		// Take call - ringing ends
@@ -2824,7 +2743,6 @@ printf("%s - manager caller %s callee %s - call %p\n", __func__, caller_mgr->rc_
 	// Last call is not paused
 	// If core had a running call, it will be paused
 	unsigned int no_call_paused = no_callers - 1 + ((pausing_current_call) ? 1 : 0);
-printf("%s - manager %s call paused %0d caller size %0d callee first call %0d\n", __func__, callee->rc_path, no_call_paused, (unsigned int)bctbx_list_size(caller), pausing_current_call);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPausing, initial_callee_stat.number_of_LinphoneCallPausing + no_call_paused, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
 
@@ -2842,7 +2760,6 @@ printf("%s - manager %s call paused %0d caller size %0d callee first call %0d\n"
 			BC_ASSERT_TRUE(check_ice(m,callee,LinphoneIceStateHostConnection));
 			BC_ASSERT_TRUE(check_ice(callee,m,LinphoneIceStateHostConnection));
 		}
-printf("%s - manager %s call paused by remote %0d caller size %0d callee first call %0d\n", __func__, m->rc_path, m->stat.number_of_LinphoneCallPausedByRemote, (unsigned int)bctbx_list_size(caller), pausing_current_call);
 		// Calls can be paused in an order different from the one they are accepted For example if ICE is enabled, it may take longer to reach this state
 		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
 	}
@@ -3250,7 +3167,6 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 		linphone_call_accept(marie_call);
 
 		if (pm && callee_uses_ice && linphone_core_get_firewall_policy(pm->lc) == LinphonePolicyUseIce) {
-printf("%s - %s uses ICE\n", __func__, pm->rc_path);
 			BC_ASSERT_TRUE(wait_for_until(pm->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, no_calls_paused_by_remote, 5000));
 		}
 
