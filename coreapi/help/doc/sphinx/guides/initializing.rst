@@ -1,4 +1,0 @@
-Initializing liblinphone
-========================
-
-
