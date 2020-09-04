@@ -183,8 +183,11 @@ int FileTransferChatMessageModifier::onSendBody (
 
 		LinphoneBuffer *lb = linphone_buffer_new();
 		_linphone_chat_message_notify_file_transfer_send_chunk(msg, content, offset, *size, lb);
-		*size = linphone_buffer_get_size(lb);
-		memcpy(buffer, linphone_buffer_get_content(lb), *size);
+		size_t lb_size = linphone_buffer_get_size(lb);
+		if (lb_size != 0) {
+			memcpy(buffer, linphone_buffer_get_content(lb), lb_size);
+			*size = lb_size;
+		}
 		linphone_buffer_unref(lb);
 	}
 
