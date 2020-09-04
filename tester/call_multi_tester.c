@@ -850,7 +850,6 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		LinphoneCall * call = linphone_core_get_current_call(m->lc);
 		BC_ASSERT_PTR_NOT_NULL(call);
 		if (call) {
-printf("%s - call state %s\n", __func__, linphone_call_state_to_string(linphone_call_get_state(call)));
 			no_paused_by_remote += (linphone_call_get_state(call) == LinphoneCallPausedByRemote) ? 1 : 0;
 			if (linphone_call_get_state(call) == LinphoneCallStreamsRunning) { 
 				pcall = call;
@@ -874,7 +873,6 @@ printf("%s - call state %s\n", __func__, linphone_call_state_to_string(linphone_
 				no_active_calls_stream_running += 1;
 				hcall = call;
 			}
-printf("%s - call state %s\n", __func__, linphone_call_state_to_string(linphone_call_get_state(call)));
 		}
 	}
 	bctbx_list_free(calls);
