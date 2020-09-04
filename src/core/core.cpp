@@ -133,6 +133,7 @@ bool CorePrivate::isShutdownDone() {
 
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(it->second);
+		lError() << "### Chat room transient count : " << chatRoom->getPrivate()->getTransientChatMessages().size();
 		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage() 
 				|| !chatRoom->getPrivate()->getTransientChatMessages().empty())) {
 			return false;

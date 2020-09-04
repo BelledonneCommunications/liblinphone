@@ -172,6 +172,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	
 	if (direction == ChatMessage::Direction::Outgoing) {
 		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
+			lError() << "### Outgoing message has been " << state;
 			q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 		}
 	}
@@ -760,6 +761,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 	}
 
 	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+	lError() << "### Auto download finished";
 	setAutoFileTransferDownloadHappened(false);
 	q->getChatRoom()->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 	return;
@@ -797,6 +799,7 @@ void ChatMessagePrivate::send () {
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
+	lError() << "### Transient added";
 	//imdnId.clear(); //moved into  ChatRoomPrivate::sendChatMessage
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None)) {
@@ -905,6 +908,7 @@ void ChatMessagePrivate::send () {
 					currentSendStep = ChatMessagePrivate::Step::None;
 					restoreFileTransferContentAsFileContent();
 					setState(ChatMessage::State::NotDelivered); // Do it after the restore to have the correct message in db
+					lError() << "### Encryption failed";
 					q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 					return;
 				} else if (result == ChatMessageModifier::Result::Suspended) {
@@ -960,6 +964,7 @@ void ChatMessagePrivate::send () {
 
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
 	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
+		lError() << "### Outgoing message is a " << getContentType().asString();
 		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 	}
 
@@ -1045,11 +1050,13 @@ void ChatMessagePrivate::updateInDb () {
 	if (direction == ChatMessage::Direction::Incoming) {
 		if (!hasFileTransferContent()) {
 			// Incoming message doesn't have any download waiting anymore, we can remove it's event from the transients
+			lError() << "### Incoming message has been " << state;
 			q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
 		}
 	} else {
 		if (state == ChatMessage::State::Delivered || state == ChatMessage::State::NotDelivered) {
 			// Once message has reached this state it won't change anymore so we can remove the event from the transients
+			lError() << "### Message has been " << state;
 			q->getChatRoom()->getPrivate()->removeTransientEvent(eventLog);
 		}
 	}
@@ -1367,6 +1374,7 @@ void ChatMessage::cancelFileTransfer () {
 			// For auto download messages, set the state back to Delivered
 			if (d->isAutoFileTransferDownloadHappened()) {
 				d->setState(State::Delivered);
+				lError() << "### Canceling auto download file transfer";
 				getChatRoom()->getPrivate()->removeTransientChatMessage(getSharedFromThis());
 			} else {
 				d->setState(State::NotDelivered);
