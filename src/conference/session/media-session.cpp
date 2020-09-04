@@ -2148,7 +2148,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->streamsGroup->getIceService().setListener(d);
 
-	lInfo() << "New MediaSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
+	lInfo() << "New MediaSession [" << this << "] initialized (liblinphone version: " << linphone_core_get_version() << ")";
 }
 
 MediaSession::~MediaSession () {
