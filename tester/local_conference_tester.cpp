@@ -391,9 +391,20 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 	linphone_core_enter_background(pauline.getLc());
 	linphone_config_set_bool(linphone_core_get_config(pauline.getLc()), "misc", "conference_event_package_force_full_state",TRUE);
 	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
+
+	unsigned int paulineCrNo = (unsigned int)bctbx_list_size(linphone_core_get_chat_rooms (pauline.getLc()));
 	coresList = bctbx_list_remove(coresList, pauline.getLc());
 	pauline.reStart();
 	coresList = bctbx_list_append(coresList, pauline.getLc());
+
+	// Wait for chat rooms to be recovered from the main DB
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateCreated, paulineCrNo, 5000));
+	char *paulineDeviceIdentity = linphone_core_get_device_identity(pauline.getLc());
+	LinphoneAddress *paulineLocalAddr = linphone_address_new(paulineDeviceIdentity);
+	bctbx_free(paulineDeviceIdentity);
+	paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineLocalAddr, confAddr, NULL);
+	linphone_address_unref(paulineLocalAddr);
+	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 
 	CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
 	
