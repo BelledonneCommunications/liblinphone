@@ -105,3 +105,36 @@ install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxVersion.cmake"
 	DESTINATION "${CMAKE_INSTALL_DATADIR}/LinphoneCxx/cmake"
 )
+
+if(ENABLE_DOC OR ENABLE_CXX_WRAPPER)
+	find_package(Doxygen REQUIRED)
+	if(DOXYGEN_FOUND)
+		set(top_srcdir "${PROJECT_SOURCE_DIR}")
+
+		file(GLOB GENERATED_CPP_HEADERS
+			"${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/*.hh"
+		)
+		set(DOXYGEN_INPUT "")
+		foreach (HEADER_FILE ${GENERATED_CPP_HEADERS})
+			string(CONCAT DOXYGEN_INPUT ${DOXYGEN_INPUT} " \"${HEADER_FILE}\"")
+		endforeach ()
+		string(CONCAT DOXYGEN_INPUT ${DOXYGEN_INPUT} " \"${CMAKE_CURRENT_SOURCE_DIR}/doxygen.dox\"")
+
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+		set(DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+			${CMAKE_CURRENT_SOURCE_DIR}/doxygen.dox
+			${GENERATED_CPP_HEADERS}
+		)
+
+		set(CPP_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpp")
+		set(LINPHONE_DOXYGEN_CPP_HTML_DIR ${CPP_HTML_DIR} PARENT_SCOPE)
+		add_custom_command(OUTPUT "${CPP_HTML_DIR}/index.html"
+			COMMAND ${CMAKE_COMMAND} -E remove -f cpp/*
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+			DEPENDS ${DOC_INPUT_FILES}
+		)
+		add_custom_target(linphone-cpp-html-doc ALL DEPENDS "${CPP_HTML_DIR}/index.html")
+		install(DIRECTORY "${CPP_HTML_DIR}"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+	endif()
+endif()

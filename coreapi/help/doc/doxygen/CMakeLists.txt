@@ -43,6 +43,17 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAP
 			DEPENDS ${DOC_INPUT_FILES}
 		)
 		add_custom_target(linphone-doc ALL DEPENDS "${XML_DIR}/index.xml")
+
+		set(C_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/c")
+		set(LINPHONE_DOXYGEN_C_HTML_DIR ${C_HTML_DIR} PARENT_SCOPE)
+		add_custom_command(OUTPUT "${C_HTML_DIR}/index.html"
+			COMMAND ${CMAKE_COMMAND} -E remove -f c/*
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+			DEPENDS ${DOC_INPUT_FILES}
+		)
+		add_custom_target(linphone-c-html-doc ALL DEPENDS "${C_HTML_DIR}/index.html")
+		install(DIRECTORY "${C_HTML_DIR}"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
 	endif()
 endif()
 
