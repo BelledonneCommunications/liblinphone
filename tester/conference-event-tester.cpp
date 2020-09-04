@@ -1277,7 +1277,6 @@ void send_added_notify_through_call() {
 
 	for (bctbx_list_t *it = mgrs; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = reinterpret_cast<LinphoneCoreManager *>(bctbx_list_get_data(it));
-printf("%s - destroy manager %p rc %s - core size %0d\n", __func__, m, m->rc_path, (int)bctbx_list_size(lcs));
 		// Wait for all calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, bctbx_list_size(linphone_core_get_calls(m->lc)), 5000));
@@ -1289,10 +1288,6 @@ printf("%s - destroy manager %p rc %s - core size %0d\n", __func__, m, m->rc_pat
 
 		lcs = bctbx_list_remove(lcs, m->lc);
 
-	for (bctbx_list_t *it2 = lcs; it2; it2 = bctbx_list_next(it2)) {
-		LinphoneCore * c = reinterpret_cast<LinphoneCore *>(bctbx_list_get_data(it2));
-bctbx_warning("%s - searching core %p - current %p\n", __func__, m->lc, c);
-	}
 		destroy_mgr_in_conference(m);
 	}
 

@@ -417,15 +417,6 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 
 	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
 		for (const auto audioVideoConference : q->audioVideoConferenceById) {
-	const ConferenceId &conferenceId = audioVideoConference.second->getConferenceId();
-printf("%s - CONFERENCE DEBUG insert conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.second.get());
-ms_message("%s - CONFERENCE DEBUG insert conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.second.get());
-		}
-	}
-	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
-		for (const auto audioVideoConference : q->audioVideoConferenceById) {
-printf("%s - CONFERENCE DEBUG conference: %p\n", __func__, audioVideoConference.second.get());
-ms_message("%s - CONFERENCE DEBUG conference: %p\n", __func__, audioVideoConference.second.get());
 			audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
 		}
 	}
@@ -1122,8 +1113,6 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	localAddress.removeUriParam("conf-id");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
-printf("%s - CONFERENCE DEBUG insert conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.get());
-ms_message("%s - CONFERENCE DEBUG insert conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.get());
 	auto conf = findAudioVideoConference (conferenceId);
 
 	// Conference does not exist or yes but with the same pointer!
@@ -1143,8 +1132,6 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
 	if (it != audioVideoConferenceById.cend()) {
-printf("%s - CONFERENCE DEBUG delete conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.get());
-ms_message("%s - CONFERENCE DEBUG delete conference (peer address %s local address %s): %p\n", __func__, ((conferenceId.getPeerAddress().asString().empty() == false) ? conferenceId.getPeerAddress().asString().c_str() : "Unknown"), ((conferenceId.getLocalAddress().asString().empty() == false) ? conferenceId.getLocalAddress().asString().c_str() : "Unknown"), audioVideoConference.get());
 		audioVideoConferenceById.erase(it);
 	}
 
