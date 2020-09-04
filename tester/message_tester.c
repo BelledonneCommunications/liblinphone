@@ -983,7 +983,7 @@ static void transfer_message_core_stopped_async(bool_t remote_available) {
 	if (!remote_available) {
 		linphone_core_set_network_reachable_internal(marie->lc, TRUE);
 	}
-	BC_ASSERT_TRUE(wait_for_until(NULL, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_until(NULL, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 10000));
 	linphone_core_manager_destroy(marie);
 }
 
@@ -3218,6 +3218,28 @@ test_t message_tests[] = {
 
 static int message_tester_before_suite(void) {
 	//liblinphone_tester_keep_uuid = TRUE;
+	
+	/*
+	 * FIXME: liblinphone does not automatically creates the data directory into which it can write databases, logs etc.
+	 * Today it is done by applications (like linphone-desktop) or by the system (ios, android).
+	 * This must be solved.
+	 * Until this is done, this hack will simply create the directory, for linux only.
+	 */
+#if defined(__linux__) && !defined(__ANDROID__)
+	const char *home = getenv("HOME");
+	char *command;
+	int err;
+	
+	if (!home) home = ".";
+	command = bctbx_strdup_printf("mkdir -p %s/.local/share/linphone", home); 
+	err = system(command);
+	if (err != -1 && WIFEXITED(err) && WEXITSTATUS(err) == 0){
+		bctbx_message("%s done succesfully.", command);
+	}else{
+		bctbx_error("%s failed. Some tests may fail.", command);
+	}
+	bctbx_free(command);
+#endif
 	return 0;
 }
 
