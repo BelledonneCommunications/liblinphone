@@ -162,6 +162,9 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (!isValidStateTransition(state, newState))
 		return;
 
+	// Keep a pointer to the message in order to prevent the destructor from being called when removing it from the transient messages
+	shared_ptr<ChatMessage> msgPtr = q->getSharedFromThis();
+
 	// 2. Update state and notify changes.
 	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
