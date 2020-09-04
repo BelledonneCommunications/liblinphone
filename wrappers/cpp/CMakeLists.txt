@@ -20,7 +20,7 @@
 #
 ############################################################################
 
-add_custom_command(OUTPUT include/linphone++/linphone.hh src/linphone++.cc
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linphone.hh" "${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc"
 	COMMAND ${CMAKE_COMMAND} -E remove_directory include
 	COMMAND ${CMAKE_COMMAND} -E remove_directory src
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
@@ -36,6 +36,7 @@ add_custom_command(OUTPUT include/linphone++/linphone.hh src/linphone++.cc
 	${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml/index.xml
 	linphone-doc
 )
+add_custom_target(linphone-cxx-wrapper ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/include/linphone++/linphone.hh" "${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc")
 
 add_library(linphone++ SHARED
 	object.cc
@@ -105,3 +106,40 @@ install(FILES
 	"${CMAKE_CURRENT_BINARY_DIR}/LinphoneCxxVersion.cmake"
 	DESTINATION "${CMAKE_INSTALL_DATADIR}/LinphoneCxx/cmake"
 )
+
+if(ENABLE_DOC OR ENABLE_CXX_WRAPPER)
+	find_package(Doxygen REQUIRED)
+	if(DOXYGEN_FOUND)
+		set(top_srcdir "${PROJECT_SOURCE_DIR}")
+
+		# Check git describe to see if we are on a release or not
+		set(LINPHONE_STATE "snapshots")
+		execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
+		if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
+			set(LINPHONE_STATE "releases")
+		endif()
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/doxygen.dox.in ${CMAKE_CURRENT_BINARY_DIR}/doxygen.dox)
+
+		set(DOXYGEN_INPUT "")
+		string(CONCAT DOXYGEN_INPUT ${DOXYGEN_INPUT} " \"${CMAKE_CURRENT_BINARY_DIR}/include/linphone++\"")
+		string(CONCAT DOXYGEN_INPUT ${DOXYGEN_INPUT} " \"${CMAKE_CURRENT_BINARY_DIR}/doxygen.dox\"")
+
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile)
+		set(DOC_INPUT_FILES ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+			${CMAKE_CURRENT_BINARY_DIR}/doxygen.dox
+		)
+
+		set(CPP_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/cpp")
+		set(LINPHONE_DOXYGEN_CPP_HTML_DIR ${CPP_HTML_DIR} PARENT_SCOPE)
+		add_custom_command(OUTPUT "${CPP_HTML_DIR}/index.html"
+			COMMAND ${CMAKE_COMMAND} -E remove -f cpp/*
+			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
+			DEPENDS ${DOC_INPUT_FILES}
+			linphone-cxx-wrapper
+		)
+		add_custom_target(linphone-cpp-html-doc ALL DEPENDS "${CPP_HTML_DIR}/index.html")
+
+		install(DIRECTORY "${CPP_HTML_DIR}"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
+	endif()
+endif()
