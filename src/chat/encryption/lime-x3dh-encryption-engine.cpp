@@ -119,23 +119,15 @@ void LimeManager::processAuthRequested (void *data, belle_sip_auth_event_t *even
 				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse(cert_chain, strlen(cert_chain), BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
 				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse(key, strlen(key), nullptr);
 				if (bs_cert_chain && bs_key) {
-					belle_sip_object_ref((belle_sip_object_t *)bs_cert_chain);
-					belle_sip_object_ref((belle_sip_object_t *)bs_key);
 					belle_sip_auth_event_set_signing_key(event,  bs_key);
 					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
-					belle_sip_object_unref((belle_sip_object_t *)bs_cert_chain);
-					belle_sip_object_unref((belle_sip_object_t *)bs_key);
 				}
 			} else if (cert_chain_path != nullptr && key_path != nullptr) {
 				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse_file(cert_chain_path, BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
 				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse_file(key_path, nullptr);
 				if (bs_cert_chain && bs_key) {
-					belle_sip_object_ref((belle_sip_object_t *)bs_cert_chain);
-					belle_sip_object_ref((belle_sip_object_t *)bs_key);
 					belle_sip_auth_event_set_signing_key(event,  bs_key);
 					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
-					belle_sip_object_unref((belle_sip_object_t *)bs_cert_chain);
-					belle_sip_object_unref((belle_sip_object_t *)bs_key);
 				}
 			} else {
 				lInfo() << "Lime encryption engine could not retrieve any client certificate upon server's request";
