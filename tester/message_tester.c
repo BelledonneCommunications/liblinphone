@@ -989,6 +989,45 @@ static void transfer_message_auto_download_aborted(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void transfer_message_core_stopped_async(bool_t remote_available) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	/* Globally configure an http file transfer server. */
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+	/* create a chatroom on pauline's side */
+	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatMessage* msg = create_message_from_sintel_trailer(chat_room);
+
+	if (!remote_available) {
+		linphone_core_set_network_reachable_internal(marie->lc, FALSE);
+	}
+	
+	linphone_chat_message_send(msg);
+	linphone_core_stop_async(pauline->lc);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDelivered, 1, 10000));
+	linphone_chat_message_unref(msg);
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneGlobalOff, 1, 5000));
+	linphone_core_manager_destroy_after_stop_async(pauline);
+
+	if (!remote_available) {
+		linphone_core_set_network_reachable_internal(marie->lc, TRUE);
+	}
+	BC_ASSERT_TRUE(wait_for_until(NULL, marie->lc, &marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 1000));
+	linphone_core_manager_destroy(marie);
+}
+
+static void transfer_message_core_stopped_async_1(void) {
+	transfer_message_core_stopped_async(TRUE);
+}
+
+static void transfer_message_core_stopped_async_2(void) {
+	transfer_message_core_stopped_async(FALSE);
+}
+
 static void file_transfer_2_messages_simultaneously(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
@@ -3151,6 +3190,8 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message upload finished during stop", transfer_message_upload_finished_during_stop),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
 	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
+	TEST_NO_TAG("Transfer message core stopped async 1", transfer_message_core_stopped_async_1),
+	TEST_NO_TAG("Transfer message core stopped async 2", transfer_message_core_stopped_async_2),
 	TEST_NO_TAG("Transfer 2 messages simultaneously", file_transfer_2_messages_simultaneously),
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
