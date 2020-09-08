@@ -19,7 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 import Foundation
 import linphone
+#if canImport(SwiftUI)
 import SwiftUI
+#endif
 
 {{#enums}}
 {{#enum}}
@@ -118,7 +120,10 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 	return cList
 }
 
-#if (arch(arm64) || arch(x86_64))
+#if canImport(SwiftUI) && (arch(arm64) || arch(x86_64))
+@available(iOS 13.0, tvOS 13.0, *)
+@available(OSX, unavailable)
+@available(watchOS, unavailable)
 /// Add this object in your SwiftUI while giving him the callback necessary to link its view to the Core (using Core.nativeVideoWindowId for example).
 public struct LinphoneVideoViewHolder: UIViewRepresentable {
 	private let _view = UIView()
