@@ -22,6 +22,8 @@
 
 #include "private_functions.h"
 
+#include <algorithm>
+
 using namespace::std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -38,9 +40,13 @@ AuthStack::~AuthStack(){
 }
 
 void AuthStack::pushAuthRequested(const std::shared_ptr<AuthInfo> &ai){
-	if (mAuthBeingRequested) return;
+	if (mAuthBeingRequested || !ai) return;
 	lInfo() << "AuthRequested pushed";
-	mAuthQueue.push_back(ai);
+	auto authIndex = std::find_if(mAuthQueue.begin(), mAuthQueue.end(), [&ai](std::shared_ptr<AuthInfo> auth){return ai->isEqualButAlgorithms(&(*auth));});
+	if(authIndex == mAuthQueue.end())
+		mAuthQueue.push_back(ai);
+	else// Get the ai algorithm and add it to the list of the Authinfo that match identities
+		(*authIndex)->addAvailableAlgorithm(ai->getAlgorithm());
 	if (!mTimer){
 		mTimer = mCore.getSal()->createTimer(&onTimeout, this, 0, "authentication requests");
 	}

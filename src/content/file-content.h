@@ -55,6 +55,14 @@ public:
 	bool isFile () const override;
 	bool isFileTransfer () const override;
 
+	bool isEncrypted () const;
+	/**
+	 * Return the path to a file's plain version.
+	 * This shall be a temporary copy
+	 * Caller is then responsible to delete it when no more needed
+	 */
+	const std::string getPlainFilePath () const;
+
 private:
 	L_DECLARE_PRIVATE(FileContent);
 };

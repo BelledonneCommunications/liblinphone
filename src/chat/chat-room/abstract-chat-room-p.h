@@ -58,6 +58,7 @@ public:
 
 	virtual void addTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
 	virtual void removeTransientChatMessage (const std::shared_ptr<ChatMessage> &message) = 0;
+	virtual std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () = 0;
 
 	virtual void setIsEmpty (const bool empty) = 0;
 };

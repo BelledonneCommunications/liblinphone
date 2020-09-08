@@ -22,6 +22,7 @@
 
 #include <vector>
 #include <functional>
+#include <queue>
 
 #include "call-session-p.h"
 #include "ms2-streams.h"
@@ -223,6 +224,8 @@ private:
 	SalMediaProto getAudioProto();
 	SalMediaProto getAudioProto(SalMediaDescription *remote_md);
 	bool hasAvpf(SalMediaDescription *md)const;
+	void queueIceCompletionTask(const std::function<void()> &lambda);
+	void runIceCompletionTasks();
 private:
 	static const std::string ecStateStore;
 	static const int ecStateMaxLen;
@@ -238,7 +241,7 @@ private:
 	LinphoneNatPolicy *natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
 
-	std::vector<std::function<void()>> postProcessHooks;
+	std::queue<std::function<void()>> iceDeferedTasks;
 
 	// The address family to prefer for RTP path, guessed from signaling path.
 	int af;
@@ -267,7 +270,6 @@ private:
 	bool automaticallyPaused = false;
 	bool pausedByApp = false;
 	bool incomingIceReinvitePending = false;
-	bool callAcceptanceDefered = false;
 
 	AudioDevice * currentOutputAudioDevice = nullptr;
 

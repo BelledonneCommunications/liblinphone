@@ -47,7 +47,8 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-
+	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
+	
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
 		LinphoneCallLog *log = getMediaSession().getLog();
@@ -135,23 +136,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	// try to get playcard from the stream if it was already set
-	AudioDevice * audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
-	MSSndCard * playcard = NULL;
-
-	if (audioDevice) {
-		playcard = audioDevice->getSoundCard();
-	}
-
-	// If stream doesn't have a playcard associated with it, then use the default values
-	if (!playcard)
-		playcard = getCCore()->sound_conf.lsd_card ? getCCore()->sound_conf.lsd_card : getCCore()->sound_conf.play_sndcard;
-
-	if (playcard) {
-		// Set the stream type immediately, as on iOS AudioUnit is instanciated very early because it is 
-		// otherwise too slow to start.
-		ms_snd_card_set_stream_type(playcard, MS_SND_CARD_STREAM_VOICE);
-	}
+	
 	
 	if (linphone_core_echo_limiter_enabled(getCCore())) {
 		string type = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
@@ -472,7 +457,7 @@ void MS2AudioStream::stop(){
 	}
 	audio_stream_stop(mStream);
 
-	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the 
+	/* In mediastreamer2, stop actually stops and destroys. We immediately need to recreate the stream object for later use, keeping the
 	 * sessions (for RTP, SRTP, ZRTP etc) that were setup at the beginning. */
 	mStream = audio_stream_new_with_sessions(getCCore()->factory, &mSessions);
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(nullptr);
@@ -549,11 +534,8 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 }
 
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
-	float micGain = lc->sound_conf.soft_mic_lev;
-	if (muted)
-		audio_stream_set_mic_gain(as, 0);
-	else
-		audio_stream_set_mic_gain_db(as, micGain);
+	audio_stream_enable_mic(as, !muted);
+	
 	float recvGain = lc->sound_conf.soft_play_lev;
 	if (static_cast<int>(recvGain)){
 		if (as->volrecv)
@@ -590,6 +572,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 	}
 	if (as->volrecv) {
 		/* Parameters for a limited noise-gate effect, using echo limiter threshold */
+		float micGain = lc->sound_conf.soft_mic_lev;
 		float floorGain = (float)(1 / pow(10, micGain / 10));
 		int spkAgc = linphone_config_get_int(config, "sound", "speaker_agc_enabled", 0);
 		MSFilter *f = as->volrecv;
@@ -643,11 +626,7 @@ void MS2AudioStream::handleEvent(const OrtpEvent *ev){
 
 void MS2AudioStream::enableMic(bool value){
 	mMicMuted = !value;
-
-	if (mMicMuted)
-		audio_stream_set_mic_gain(mStream, 0);
-	else
-		audio_stream_set_mic_gain_db(mStream, getCCore()->sound_conf.soft_mic_lev);
+	audio_stream_enable_mic(mStream, value);
 }
 
 bool MS2AudioStream::micEnabled()const{

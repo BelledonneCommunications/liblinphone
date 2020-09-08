@@ -323,7 +323,7 @@ void linphone_tunnel_clean_servers(LinphoneTunnel *tunnel){
 	bcTunnel(tunnel)->cleanServers();
 
 	/* Free the list */
-	bctbx_list_free_with_data(tunnel->config_list, (void (*)(void *))linphone_tunnel_config_destroy);
+	bctbx_list_free_with_data(tunnel->config_list, (void (*)(void *))linphone_tunnel_config_unref);
 	tunnel->config_list = NULL;
 
 	linphone_tunnel_save_config(tunnel);

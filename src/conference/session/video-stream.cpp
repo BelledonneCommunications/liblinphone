@@ -60,9 +60,13 @@ void MS2VideoStream::videoStreamEventCb (const MSFilter *f, const unsigned int e
 	switch (eventId) {
 		case MS_VIDEO_DECODER_DECODING_ERRORS:
 			lWarning() << "MS_VIDEO_DECODER_DECODING_ERRORS";
-			if (mStream && video_stream_is_decoding_error_to_be_reported(mStream, 5000)) {
-				video_stream_decoding_error_reported(mStream);
-				sendVfu();
+			if (!media_stream_avpf_enabled(&mStream->ms)){
+				if (mStream && video_stream_is_decoding_error_to_be_reported(mStream, 5000)) {
+					video_stream_decoding_error_reported(mStream);
+					getMediaSession().sendVfuRequest();
+				}
+			}else{
+				/* Decoders are not expected to throw MS_VIDEO_DECODER_DECODING_ERRORS if AVPF is enabled */
 			}
 			break;
 		case MS_VIDEO_DECODER_RECOVERED_FROM_ERRORS:

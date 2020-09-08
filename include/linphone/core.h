@@ -2429,6 +2429,28 @@ LINPHONE_PUBLIC void linphone_core_set_mic_gain_db(LinphoneCore *core, float lev
 LINPHONE_PUBLIC float linphone_core_get_mic_gain_db(LinphoneCore *core);
 
 /**
+ * Calling this method with disable=true will cause the microhone to be completely deactivated when muted,
+ * when given possible by the implementation on the platform on which liblinphone is running.
+ * Otherwise, sound recording remains active but silence is sent instead of recorded audio.
+ * Playback sound will be briefly interrupted while the audio is reconfigured.
+ * Currently only implemented for IOS, it will also disable Apple's microphone recording indicator when microphone is muted.
+ *
+ * @param core #LinphoneCore object @notnil
+ * @param disable True if you wish to entirely stop the audio recording when muting the microphone.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_disable_record_on_mute(LinphoneCore *core, bool_t disable);
+
+/**
+ * Get whether the microphone will be completely deactivated when muted. Please refer to linphone_core_set_disable_record_on_mute().
+ *
+ * @param core #LinphoneCore object @notnil
+ * @return  True if you wish to entirely stop the audio recording when muting the microphone.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_get_disable_record_on_mute(LinphoneCore *core);
+
+/**
  * Allow to control play level before entering sound card:  gain in db
  * @param core #LinphoneCore object @notnil
  * @param level The new play level
@@ -6503,8 +6525,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_room_5(LinphoneCore *core, const LinphoneAddress *participant);
 
 /**
- * Get a basic chat room whose peer is the supplied address. If it does not exist yet, it will be created.
+ * Get a chat room whose peer is the supplied address. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param addr a linphone address. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil
@@ -6514,8 +6537,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_create_chat_
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_room(LinphoneCore *core, const LinphoneAddress *addr);
 
 /**
- * Get a basic chat room. If it does not exist yet, it will be created.
+ * Get a chat room. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core the linphone core @notnil
  * @param peer_addr a linphone address. @notnil
  * @param local_addr a linphone address. @notnil
@@ -6530,8 +6554,9 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatRoom *linphone_core_get_chat_roo
 );
 
 /**
- * Get a basic chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created.
+ * Get a chat room for messaging from a sip uri like sip:joe@sip.linphone.org. If it does not exist yet, it will be created as a basic chat room.
  * No reference is transfered to the application. The #LinphoneCore keeps a reference on the chat room.
+ * @warning This method is prone to errors, use linphone_core_search_chat_room() instead
  * @param core A #LinphoneCore object @notnil
  * @param to The destination address for messages. @notnil
  * @return #LinphoneChatRoom where messaging can take place. @maybenil

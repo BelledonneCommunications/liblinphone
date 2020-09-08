@@ -135,11 +135,10 @@ bool CorePrivate::isShutdownDone() {
 		}
 	}
 
-	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
-	shared_ptr<ChatRoom> cr;
-	for (const auto &chatRoom : chatRooms) {
-		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
-		if (cr && cr->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage()) {
+	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
+		const auto &chatRoom = dynamic_pointer_cast<ChatRoom>(it->second);
+		if (chatRoom && (chatRoom->getPrivate()->getImdnHandler()->hasUndeliveredImdnMessage() 
+			|| !chatRoom->getPrivate()->getTransientChatMessages().empty())) {
 			return false;
 		}
 	}
@@ -172,6 +171,19 @@ void CorePrivate::shutdown() {
 
 	stopEphemeralMessageTimer();
 	ephemeralMessages.clear();
+
+	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
+		const auto &chatRoom = it->second;
+		const auto &chatRoomPrivate = chatRoom->getPrivate();
+		for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
+			if (chatMessage->getState() == ChatMessage::State::FileTransferInProgress) {
+				// Abort auto download file transfers
+				if (chatMessage->getDirection() == ChatMessage::Direction::Incoming) {
+					chatMessage->cancelFileTransfer();
+				}
+			}
+		}
+	}
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
@@ -333,7 +345,7 @@ void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
 	if (!timer) {
 		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	} else {
-		belle_sip_source_set_timeout(timer, timeoutValueMs);
+		belle_sip_source_set_timeout_int64(timer, (int64_t)timeoutValueMs);
 	}
 }
 

@@ -167,6 +167,10 @@ void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg, 
 	NOTIFY_IF_EXIST(FileTransferSend, file_transfer_send, msg, content, offset, size)
 }
 
+void _linphone_chat_message_notify_file_transfer_send_chunk(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer) {
+	NOTIFY_IF_EXIST(FileTransferSendChunk, file_transfer_send_chunk, msg, content, offset, size, buffer)
+}
+
 void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
 	NOTIFY_IF_EXIST(FileTransferProgressIndication, file_transfer_progress_indication, msg, content, offset, total)
 }

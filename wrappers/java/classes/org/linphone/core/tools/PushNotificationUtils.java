@@ -36,7 +36,10 @@ public class PushNotificationUtils {
     public static void init(Context context) {
         mHelper = null;
 
-        if (!isFirebaseAvailable()) return;
+        if (!isFirebaseAvailable()) {
+            Log.w("[Push Utils] Firebase isn't available");
+            return;
+        }
         FirebaseApp.initializeApp(context);
 
         String className = "org.linphone.core.tools.firebase.FirebasePushHelper";

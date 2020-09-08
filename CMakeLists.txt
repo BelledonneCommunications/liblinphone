@@ -188,9 +188,6 @@ if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_
 	check_python_module(pystache)
 	check_python_module(six)
 	if(ENABLE_DOC)
-		check_python_module(sphinx)
-		check_python_module(javasphinx)
-		check_python_module(sphinx_csharp)
 		#check_python_module(swift_domain)
 	endif()
 endif()
@@ -231,6 +228,7 @@ set(LINPHONE_INCLUDE_DIRS
  	${MEDIASTREAMER2_INCLUDE_DIRS}
  	${BCTOOLBOX_CORE_INCLUDE_DIRS}
  	${BELR_INCLUDE_DIRS}
+	${LIBXSD_INCLUDE_DIRS}
 )
 
 if(ANDROID)

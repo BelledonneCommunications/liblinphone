@@ -159,7 +159,7 @@ void CallSessionPrivate::startIncomingNotification () {
 	if (listener && state != CallSession::State::PushIncomingReceived)
 		listener->onIncomingCallSessionStarted(q->getSharedFromThis());
 
-	setState(CallSession::State::IncomingReceived, "Incoming CallSession");
+	setState(CallSession::State::IncomingReceived, "Incoming call received");
 
 	// From now on, the application is aware of the call and supposed to take background task or already submitted
 	// notification to the user. We can then drop our background task.
@@ -447,7 +447,8 @@ void CallSessionPrivate::updated (bool isUpdate) {
 			break;
 		case CallSession::State::Paused:
 			/* We'll remain in pause state but accept the offer anyway according to default parameters */
-			acceptUpdate(nullptr, state, Utils::toString(state));
+			setState(CallSession::State::UpdatedByRemote, "Call updated by remote (while in Paused)");
+			acceptUpdate(nullptr, CallSession::State::Paused, "Paused");
 			break;
 		case CallSession::State::Updating:
 		case CallSession::State::Pausing:
@@ -655,7 +656,7 @@ void CallSessionPrivate::setTerminated() {
 		listener->onCallSessionSetTerminated(q->getSharedFromThis());
 }
 
-LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo) {
+LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
 	op->accept();
 	setState(nextState, stateInfo);
 	return 0;
@@ -1168,6 +1169,10 @@ void CallSession::startIncomingNotification (bool notifyRinging) {
 	if (d->state != CallSession::State::PushIncomingReceived) {
 		startBasicIncomingNotification(notifyRinging);
 	}
+	if (d->deferIncomingNotification) {
+		lInfo() << "Defer incoming notification";
+		return;
+	}
 	d->startIncomingNotification();
 }
 
@@ -1180,10 +1185,6 @@ void CallSession::startBasicIncomingNotification (bool notifyRinging) {
 	}
 	/* Prevent the CallSession from being destroyed while we are notifying, if the user declines within the state callback */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (d->deferIncomingNotification) {
-		lInfo() << "Defer incoming notification";
-		return;
-	}
 }
 
 void CallSession::startPushIncomingNotification () {
@@ -1191,7 +1192,7 @@ void CallSession::startPushIncomingNotification () {
 	if (d->listener)
 		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
 
-	d->setState(CallSession::State::PushIncomingReceived, "PushIncoming CallSession");
+	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");
 }
 
 

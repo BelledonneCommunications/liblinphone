@@ -24,6 +24,7 @@
 #include "logging-private.h"
 #include "liblinphone_tester.h"
 #include <bctoolbox/tester.h>
+#include <bctoolbox/vfs.h>
 #include "tester_utils.h"
 
 #define SKIP_PULSEAUDIO 1
@@ -48,6 +49,8 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,2000};
 
+const char* flexisip_tester_dns_server = "fs-test.linphone.org";
+bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
 const char* test_username="liblinphone_tester";
@@ -137,12 +140,14 @@ void reset_counters( stats* counters) {
 }
 
 static void setup_dns(LinphoneCore *lc, const char *path){
-	if (strcmp(userhostsfile, "none") != 0) {
+	if (flexisip_tester_dns_ip_addresses){
+		linphone_core_set_dns_servers(lc, flexisip_tester_dns_ip_addresses);
+	}else if (strcmp(userhostsfile, "none") != 0) {
 		char *dnsuserhostspath = strchr(userhostsfile, '/') ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 		sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
 		ms_free(dnsuserhostspath);
-	} else {
-		bctbx_message("no dns-hosts file used");
+	} else{
+		bctbx_warning("No dns-hosts file and no flexisip-tester dns server used.");
 	}
 }
 
@@ -370,7 +375,8 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	if (filepath && bctbx_file_exist(filepath) != 0) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
-	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), NULL, filepath);
+	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
+	bctbx_free(filepath);
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
@@ -507,14 +513,24 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	mgr->phone_alias = phone_alias ? ms_strdup(phone_alias) : NULL;
 
 	reset_counters(&mgr->stat);
+
 	manager_count++;
 }
 
-void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, const char* linphone_db, const char *lime_db) {
 	linphone_core_manager_init2(mgr, rc_file, phone_alias);
 	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
-	generate_random_database_path(mgr);
+	if (linphone_db == NULL && lime_db == NULL) {
+		generate_random_database_path(mgr);
+	} else {
+		mgr->database_path = bctbx_strdup(linphone_db);
+		mgr->lime_database_path = bctbx_strdup(lime_db);
+	}
 	linphone_core_manager_configure(mgr);
+}
+
+void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
+	linphone_core_manager_init_with_db(mgr, rc_file, phone_alias, NULL, NULL);
 }
 
 void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
@@ -624,6 +640,20 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 	}
 }
 
+/* same as new but insert the rc_local in the core manager before the init and provide path to db files */
+LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
+	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
+	manager->rc_local = bctbx_strdup(rc_local);
+	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db);
+	return manager;
+}
+
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
+	LinphoneCoreManager *manager = linphone_core_manager_create_local(rc_factory, rc_local, linphone_db, lime_db);
+	linphone_core_manager_start(manager, TRUE);
+
+	return manager;
+}
 
 /**
  * Create a LinphoneCoreManager that holds a shared Core.
@@ -692,7 +722,7 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 	linphone_core_manager_start(mgr, check_for_proxies);
 }
 
-void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
+void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 	int old_log_level = linphone_core_get_log_level_mask();
 	linphone_core_set_log_level(ORTP_ERROR);
 	if (mgr->phone_alias) {
@@ -704,11 +734,15 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->rc_path)
 		bctbx_free(mgr->rc_path);
 	if (mgr->database_path) {
-		unlink(mgr->database_path);
+		if (unlinkDb == TRUE) {
+			unlink(mgr->database_path);
+		}
 		bc_free(mgr->database_path);
 	}
 	if (mgr->lime_database_path) {
-		unlink(mgr->lime_database_path);
+		if (unlinkDb == TRUE) {
+			unlink(mgr->lime_database_path);
+		}
 		bc_free(mgr->lime_database_path);
 	}
 	if (mgr->app_group_id)
@@ -717,11 +751,20 @@ void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
 	if (mgr->cbs)
 		linphone_core_cbs_unref(mgr->cbs);
 
+	if (mgr->rc_local) {
+		bctbx_free(mgr->rc_local);
+		mgr->rc_local = NULL;
+	}
+
 	reset_counters(&mgr->stat);
 
 	manager_count--;
 	linphone_core_set_log_level_mask(old_log_level);
 }
+void linphone_core_manager_uninit(LinphoneCoreManager *mgr) {
+	linphone_core_manager_uninit2(mgr, TRUE);
+}
+
 
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr) {
 	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(mgr->lc);
@@ -1087,19 +1130,35 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 }
 
 void compare_files(const char *path1, const char *path2) {
-	size_t size1;
-	size_t size2;
 	uint8_t *buf1;
 	uint8_t *buf2;
 
-	buf1 = (uint8_t*)ms_load_path_content(path1, &size1);
-	buf2 = (uint8_t*)ms_load_path_content(path2, &size2);
-	BC_ASSERT_PTR_NOT_NULL(buf1);
-	BC_ASSERT_PTR_NOT_NULL(buf2);
+	bctbx_vfs_file_t* f1 = bctbx_file_open(bctbx_vfs_get_default(), path1, "r");
+	bctbx_vfs_file_t* f2 = bctbx_file_open(bctbx_vfs_get_default(), path2, "r");
+	BC_ASSERT_PTR_NOT_NULL(f1);
+	BC_ASSERT_PTR_NOT_NULL(f2);
+	if (f1 == NULL || f2 == NULL) return;
+
+	int64_t s1 = bctbx_file_size(f1);
+	int64_t s2 = bctbx_file_size(f2);
+
+	BC_ASSERT_TRUE(s1==s2);
+	BC_ASSERT_TRUE(s1 != BCTBX_VFS_ERROR);
+	if (s1 != s2 || s1 == BCTBX_VFS_ERROR) return;
+	ssize_t fileSize = (ssize_t)s1;
+
+	buf1 = bctbx_malloc(fileSize);
+	buf2 = bctbx_malloc(fileSize);
+
+	BC_ASSERT_TRUE(bctbx_file_read(f1, buf1, (size_t)fileSize, 0) == fileSize);
+	BC_ASSERT_TRUE(bctbx_file_read(f2, buf2, (size_t)fileSize, 0) == fileSize);
+
+	bctbx_file_close(f1);
+	bctbx_file_close(f2);
+
 	if (buf1 && buf2){
-		BC_ASSERT_EQUAL(memcmp(buf1, buf2, size1), 0, int, "%d");
+		BC_ASSERT_EQUAL(memcmp(buf1, buf2, (size_t)fileSize), 0, int, "%d");
 	}
-	BC_ASSERT_EQUAL((uint8_t)size2, (uint8_t)size1, uint8_t, "%u");
 
 	if (buf1) ms_free(buf1);
 	if (buf2) ms_free(buf2);
@@ -1700,6 +1759,35 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, LinphoneCon
 	return lb;
 }
 
+void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *lb){
+	size_t file_size;
+	size_t size_to_send;
+	uint8_t *buf;
+	FILE *file_to_send = linphone_content_get_user_data(content);
+
+	// If a file path is set, we should NOT call the on_send callback !
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
+
+	BC_ASSERT_PTR_NOT_NULL(file_to_send);
+	if (file_to_send == NULL){
+		return;
+	}
+	
+	fseek(file_to_send, 0, SEEK_END);
+	file_size = ftell(file_to_send);
+	fseek(file_to_send, (long)offset, SEEK_SET);
+	size_to_send = MIN(size, file_size - offset);
+	buf = ms_malloc(size_to_send);
+	if (fread(buf, sizeof(uint8_t), size_to_send, file_to_send) != size_to_send){
+		// reaching end of file, close it
+		fclose(file_to_send);
+		linphone_content_set_user_data(content, NULL);
+	}
+	linphone_buffer_set_content(lb, buf, size_to_send);
+	ms_free(buf);
+}
+
 /**
  * function invoked to report file transfer progress.
  * */
@@ -1733,34 +1821,42 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
  * */
 void file_transfer_received(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer){
 	FILE* file=NULL;
-	char *receive_file = NULL;
+	
 
-	// If a file path is set, we should NOT call the on_recv callback !
-	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 
-	receive_file = bc_tester_file("receive_file.dump");
+	
 	if (!linphone_content_get_user_data(content)) {
+		// If a file path is set, we should NOT call the on_recv callback !
+		BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+		char receive_file_name[255];
+		char random_part[10];
+		belle_sip_random_token(random_part, sizeof(random_part)-1);
+		snprintf(receive_file_name,sizeof(receive_file_name),"receive_file-%s.dump",random_part);
+		char *receive_file = bc_tester_file(receive_file_name);
 		/*first chunk, creating file*/
 		file = fopen(receive_file,"wb");
 		linphone_content_set_user_data(content,(void*)file); /*store fd for next chunks*/
+		linphone_chat_message_set_file_transfer_filepath(msg,receive_file);
+		bc_free(receive_file);
 	}
 
 	file = (FILE*)linphone_content_get_user_data(content);
 	BC_ASSERT_PTR_NOT_NULL(file);
 	if (linphone_buffer_is_empty(buffer)) { /* tranfer complete */
 		struct stat st;
-
 		linphone_content_set_user_data(content, NULL);
 		fclose(file);
-		BC_ASSERT_TRUE(stat(receive_file, &st)==0);
+		BC_ASSERT_TRUE(stat(linphone_chat_message_get_file_transfer_filepath(msg), &st)==0);
 		BC_ASSERT_EQUAL((int)linphone_content_get_file_size(content), (int)st.st_size, int, "%i");
+		
 	} else { /* store content on a file*/
 		if (fwrite(linphone_buffer_get_content(buffer),linphone_buffer_get_size(buffer),1,file)==0){
 			ms_error("file_transfer_received(): write() failed: %s",strerror(errno));
 		}
 	}
-	bc_free(receive_file);
+	
+	
 }
 
 void global_state_changed(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message) {

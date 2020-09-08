@@ -655,6 +655,65 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+
+static void video_call_loss_resilience(bool_t with_avpf) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
+	LinphoneVideoPolicy pol = {0};
+	OrtpNetworkSimulatorParams simparams = { 0 };
+
+	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_capture(pauline->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	pol.automatically_accept = TRUE;
+	pol.automatically_initiate = TRUE;
+	linphone_core_set_video_policy(marie->lc, &pol);
+	linphone_core_set_video_policy(pauline->lc, &pol);
+
+	linphone_core_set_video_preset(marie->lc, "custom");
+	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); /* We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms*/
+
+	simparams.mode = OrtpNetworkSimulatorOutbound;
+	simparams.enabled = TRUE;
+	simparams.max_bandwidth = 1000000;
+	simparams.max_buffer_size = (int)simparams.max_bandwidth;
+	simparams.latency = 60;
+	simparams.loss_rate = 70;
+	linphone_core_set_network_simulator_params(marie->lc, &simparams);
+
+	if (!with_avpf){
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_fb_implicit_rtcp_fb", 0);
+	}else{
+		/* AVPF (with implicit mode) is the default. */
+	}
+
+	if (BC_ASSERT_TRUE(call(marie, pauline))){
+		/* Given the high loss rate, no video frame should be decoded. The initial I-frame is lost.*/
+		liblinphone_tester_set_next_video_frame_decoded_cb(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_FALSE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_IframeDecoded, 1));
+		/* Now modify the network simulation to remove loss rate. We should quickly get a new i-frame thanks to RTCP feedback or SIP INFO.*/
+		simparams.loss_rate = 0;
+		linphone_core_set_network_simulator_params(marie->lc, &simparams);
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_IframeDecoded, 1, with_avpf ? 2000 : 6000));
+		
+		end_call(marie, pauline);
+	}
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void video_call_loss_resilience_with_implicit_avpf(void){
+	video_call_loss_resilience(TRUE);
+}
+
+static void video_call_loss_resilience_without_avpf(void){
+	video_call_loss_resilience(FALSE);
+}
+
 static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call with thin congestion", video_call_with_thin_congestion),
 	TEST_NO_TAG("Video call with high bandwidth available", video_call_with_high_bandwidth_available),
@@ -673,7 +732,9 @@ static test_t call_video_quality_tests[] = {
 	TEST_NO_TAG("Video call with explicit bandwidth limit", video_call_with_explicit_bandwidth_limit),
 	TEST_NO_TAG("Video call with explicit bandwidth limit for the video stream", video_call_with_explicit_bandwidth_limit_for_stream),
 	TEST_NO_TAG("Video call with retransmission on nack", call_with_retransmissions_on_nack),
-	TEST_NO_TAG("Video call with retransmission on nack with congestion", call_with_retransmissions_on_nack_with_congestion)
+	TEST_NO_TAG("Video call with retransmission on nack with congestion", call_with_retransmissions_on_nack_with_congestion),
+	TEST_NO_TAG("Video loss rate resilience with implicit AVPF", video_call_loss_resilience_with_implicit_avpf),
+	TEST_NO_TAG("Video loss rate resilience without AVPF", video_call_loss_resilience_without_avpf)
 };
 
 test_suite_t call_video_quality_test_suite = {"Video Call quality", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

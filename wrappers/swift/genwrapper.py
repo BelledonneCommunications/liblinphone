@@ -106,6 +106,7 @@ class SwiftTranslator(object):
             methodDict['is_enum'] = type(method.returnType) is AbsApi.EnumType
             methodDict['is_generic'] = self.is_generic(methodDict)
             methodDict['isNotConst'] = not method.returnType.isconst
+            methodDict['isDeprecated'] = method.deprecated
 
             methodDict['impl']['create_method'] = 'create' in method.name.to_word_list()
             if (methodDict['is_class'] and not methodDict['impl']['create_method']):
@@ -222,21 +223,6 @@ class SwiftTranslator(object):
         listenerDict['delegate']["c_name_setter"] = c_name_setter
         return listenerDict
 
-    def generate_getter_for_listener_callbacks(self, _class, classname):
-        methodDict = self.init_method_dict()
-        c_name = _class.name.to_snake_case(fullName=True) + '_get_callbacks'
-
-        methodDict['listener'] = True
-        methodDict['getListener'] = True
-        methodDict['property_return'] = classname
-        methodDict['name'] = 'getDelegate'
-        methodDict['args'] = ''
-
-        methodDict['c_name'] = c_name
-        methodDict['addListener'] = False
-
-        return methodDict
-
 
     def generate_add_for_listener_callbacks(self, _class, classname):
         methodDict = self.init_method_dict()
@@ -317,8 +303,6 @@ class SwiftTranslator(object):
         if islistenable:
             classDict['hasListener'] = True
             listenerName = _class.listenerInterface.name.translate(self.nameTranslator)
-            if _class.singlelistener:
-                classDict['properties'].append(self.generate_getter_for_listener_callbacks(_class, listenerName))
             if _class.multilistener:
                 classDict['properties'].append(self.generate_add_for_listener_callbacks(_class, listenerName))
                 classDict['properties'].append(self.generate_remove_for_listener_callbacks(_class, listenerName))
@@ -377,6 +361,7 @@ class SwiftTranslator(object):
         methodDict['has_property'] = True
         methodDict['has_getter'] = True
         methodDict['has_setter'] = False
+        methodDict['isDeprecated'] = prop.deprecated
         namespace = prop.find_first_ancestor_by_type(AbsApi.Namespace)
         methodDict['return'] = prop.returnType.translate(self.langTranslator, namespace=namespace)
         if methodDict['return'].endswith('Delegate'):
@@ -410,6 +395,7 @@ class SwiftTranslator(object):
 
         methodDict['property_name'] = name
         methodDict['func_name'] = "set" + name.capitalize()
+        methodDict['isDeprecated'] = prop.deprecated
 
         methodDict['has_getter'] = False
         methodDict['has_setter'] = True

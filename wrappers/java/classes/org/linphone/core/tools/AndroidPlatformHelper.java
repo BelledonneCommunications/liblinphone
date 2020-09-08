@@ -39,6 +39,7 @@ import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
 import android.view.Surface;
 import android.view.TextureView;
+import android.view.WindowManager;
 
 import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.network.NetworkManager;
@@ -155,8 +156,7 @@ public class AndroidPlatformHelper {
         setVideoPreviewView(null);
         setVideoRenderingView(null);
 
-        //cleaning manually the wakelocks in case of unreleased ones (linphone_core_destroy for instance)
-
+        // Cleaning manually the wakelocks in case of unreleased ones (linphone_core_destroy for instance)
         while (mWakeLock.isHeld()) {
             mWakeLock.release();
         }
@@ -392,6 +392,12 @@ public class AndroidPlatformHelper {
     }
 
     public synchronized void setVideoPreviewView(Object view) {
+        if (mPreviewTextureView != null) {
+            Log.w("[Platform Helper] Found an existing preview TextureView, let's destroy it first");
+            mPreviewTextureView.setSurfaceTextureListener(null);
+            mPreviewTextureView = null;
+        }
+
         if (view == null) {
             Log.i("[Platform Helper] Preview window surface set to null");
             setNativePreviewWindowId(mNativePtr, null);
@@ -423,18 +429,19 @@ public class AndroidPlatformHelper {
         mPreviewTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                Log.i("[Platform Helper] Preview window surface is available");
+                Log.i("[Platform Helper] Preview window surface texture [" + surface + "] is available for texture view [" + mPreviewTextureView + "]");
+                rotateVideoPreview();
                 setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+                Log.i("[Platform Helper] Preview surface texture [" + surface + "] size changed: " + width + "x" + height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                Log.i("[Platform Helper] Preview surface texture destroyed");
+                Log.i("[Platform Helper] Preview surface texture [" + surface + "] destroyed");
 
                 if (mNativePtr != 0 && mPreviewTextureView != null) {
                     if (surface.equals(mPreviewTextureView.getSurfaceTexture())) {
@@ -445,7 +452,7 @@ public class AndroidPlatformHelper {
                 }
 
                 if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
-                    Log.i("[Platform Helper] Releasing preview window surface");
+                    Log.i("[Platform Helper] Releasing preview window surface texture [" + surface + "]");
                     surface.release();
                 }
                 return true;
@@ -453,17 +460,24 @@ public class AndroidPlatformHelper {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+                Log.i("[Platform Helper] Preview surface texture [" + surface + "] has been updated");
             }
         });
 
         if (mPreviewTextureView.isAvailable()) {
-            Log.i("[Platform Helper] Preview window surface is available");
+            Log.i("[Platform Helper] Preview window surface is directly available for texture view [" + mPreviewTextureView + "]");
+            rotateVideoPreview();
             setNativePreviewWindowId(mNativePtr, mPreviewTextureView);
         }
     }
 
     public synchronized void setVideoRenderingView(Object view) {
+        if (mVideoTextureView != null) {
+            Log.w("[Platform Helper] Found an existing video TextureView, let's destroy it first");
+            mVideoTextureView.setSurfaceTextureListener(null);
+            mVideoTextureView = null;
+        }
+
         if (view == null) {
             Log.i("[Platform Helper] Video window surface set to null");
             setNativeVideoWindowId(mNativePtr, null);
@@ -495,19 +509,18 @@ public class AndroidPlatformHelper {
         mVideoTextureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-                Log.i("[Platform Helper] Rendering window surface is available");
-                rotateVideoPreview();
+                Log.i("[Platform Helper] Rendering window surface texture [" + surface + "] is available for texture view [" + mVideoTextureView + "]");
                 setNativeVideoWindowId(mNativePtr, mVideoTextureView);
             }
 
             @Override
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height) {
-
+                Log.i("[Platform Helper] Surface texture [" + surface + "] size changed: " + width + "x" + height);
             }
 
             @Override
             public boolean onSurfaceTextureDestroyed(SurfaceTexture surface) {
-                Log.i("[Platform Helper] Rendering surface texture destroyed");
+                Log.i("[Platform Helper] Rendering surface texture [" + surface + "] destroyed");
 
                 if (mNativePtr != 0 && mVideoTextureView != null) {
                     if (surface.equals(mVideoTextureView.getSurfaceTexture())) {
@@ -518,7 +531,7 @@ public class AndroidPlatformHelper {
                 }
 
                 if (!DeviceUtils.isSurfaceTextureReleased(surface)) {
-                    Log.i("[Platform Helper] Releasing window surface");
+                    Log.i("[Platform Helper] Releasing window surface texture [" + surface + "]");
                     surface.release();
                 }
 
@@ -527,13 +540,12 @@ public class AndroidPlatformHelper {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-
+                Log.i("[Platform Helper] Surface texture [" + surface + "] has been updated");
             }
         });
 
         if (mVideoTextureView.isAvailable()) {
-            Log.i("[Platform Helper] Rendering window surface is available");
-            rotateVideoPreview();
+            Log.i("[Platform Helper] Rendering window surface is directly available for texture view [" + mVideoTextureView + "]");
             setNativeVideoWindowId(mNativePtr, mVideoTextureView);
         }
     }
@@ -541,7 +553,9 @@ public class AndroidPlatformHelper {
     public synchronized void rotateVideoPreview() {
         if (mPreviewTextureView != null && mPreviewTextureView instanceof CaptureTextureView) {
             Log.i("[Platform Helper] Found CaptureTextureView, rotating...");
-            ((CaptureTextureView) mPreviewTextureView).rotateToMatchDisplayOrientation();
+            WindowManager windowManager = (WindowManager) mContext.getSystemService(Context.WINDOW_SERVICE);
+            int rotation = windowManager.getDefaultDisplay().getRotation() * 90;
+            ((CaptureTextureView) mPreviewTextureView).rotateToMatchDisplayOrientation(rotation);
         } else if (mPreviewTextureView != null) {
             Log.w("[Platform Helper] It seems you are using a TextureView instead of our CaptureTextureView, we strongly advise you to use ours to benefit from correct rotation & ratio");
         }

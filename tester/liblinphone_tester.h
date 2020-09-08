@@ -94,12 +94,14 @@ extern test_suite_t call_secure_test_suite;
 extern test_suite_t call_with_rtp_bundle_test_suite;
 extern test_suite_t shared_core_test_suite;
 extern test_suite_t lime_server_auth_test_suite;
+extern test_suite_t vfs_encryption_test_suite;
 
 #ifdef VCARD_ENABLED
 	extern test_suite_t vcard_test_suite;
 #endif
 
 extern test_suite_t audio_bypass_suite;
+extern test_suite_t audio_routes_test_suite;
 #if HAVE_SIPP
 	extern test_suite_t complex_sip_call_test_suite;
 #endif
@@ -139,7 +141,8 @@ void liblinphone_tester_disable_leak_detector(int disabled);
  */
 extern void liblinphone_tester_clear_accounts(void);
 
-
+extern const char* flexisip_tester_dns_server;
+extern bctbx_list_t *flexisip_tester_dns_ip_addresses;
 extern const char* test_domain;
 extern const char* auth_domain;
 extern const char* test_username;
@@ -365,6 +368,7 @@ typedef struct _LinphoneCoreManager {
 	int number_of_bcunit_error_at_creation;
 	char *phone_alias;
 	char *rc_path;
+	char *rc_local;
 	char *database_path;
 	char *lime_database_path;
 	char *app_group_id;
@@ -399,6 +403,8 @@ LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_f
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias);
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
+LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db);
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db);
 LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *app_group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
@@ -407,6 +413,7 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 /* This function is used to restore the fake DNS which is lost after a linphone_core_stop() */
 void linphone_core_manager_setup_dns(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit(LinphoneCoreManager *mgr);
+void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb);
 void linphone_core_manager_wait_for_stun_resolution(LinphoneCoreManager *mgr);
 void linphone_core_manager_destroy(LinphoneCoreManager* mgr);
 void linphone_core_manager_destroy_after_stop_async(LinphoneCoreManager* mgr);
@@ -424,6 +431,7 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *l
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* message);
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
+void tester_file_transfer_send_2(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer);
 LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t ephemeral);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer);

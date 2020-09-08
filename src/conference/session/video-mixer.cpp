@@ -94,7 +94,9 @@ void MS2VideoMixer::addLocalParticipant(){
 	
 	video_stream_set_native_preview_window_id(st, linphone_core_get_native_preview_window_id(core));// Ensure to pass Window ID options (like not having to create a window)
 	video_stream_set_native_window_id(st, linphone_core_get_native_video_window_id(core));
-	video_stream_set_display_filter_name(st, linphone_core_get_video_display_filter(core));	// Use the filter defined in configuration
+	if (linphone_core_get_video_display_filter(core)) {
+		video_stream_set_display_filter_name(st, linphone_core_get_video_display_filter(core));	// Use the filter defined in configuration
+	} /*else keep default one*/
 	video_stream_use_preview_video_window(st, linphone_core_video_preview_enabled(core));	// Allow preview on conference
 	
 	video_stream_set_device_rotation(st, mSession.getCCore()->device_rotation);

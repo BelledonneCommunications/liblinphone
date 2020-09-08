@@ -115,12 +115,12 @@ public:
 		return contents;
 	}
 
-	void setAutoFileTransferDownloadHappened(bool yesno) {
-		isAutoDownloadAttachedFilesHappened = yesno;
+	void setAutoFileTransferDownloadInProgress (bool yesno) {
+		isAutoDownloadAttachedFilesInProgress = yesno;
 	}
 
-	bool isAutoFileTransferDownloadHappened() const {
-		return isAutoDownloadAttachedFilesHappened;
+	bool isAutoFileTransferDownloadInProgress () const {
+		return isAutoDownloadAttachedFilesInProgress;
 	}
 
 	void handleAutoDownload();
@@ -234,7 +234,7 @@ private:
 	mutable bool isReadOnly = false;
 	bool markedAsRead = false;
 	Content internalContent;
-	bool isAutoDownloadAttachedFilesHappened = false;
+	bool isAutoDownloadAttachedFilesInProgress = false;
 	std::string callId;
 
 	// TODO: to replace salCustomheaders

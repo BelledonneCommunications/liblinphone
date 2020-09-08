@@ -23,6 +23,9 @@
 
 #include "address/address-p.h"
 #include "core/paths/paths.h"
+#include "bctoolbox/vfs_encrypted.hh"
+#include "bctoolbox/crypto.h"
+#include "sqlite3_bctbx_vfs.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
@@ -61,8 +64,13 @@ struct _LinphoneFactory {
 	char *cached_ring_resources_dir;
 	char *cached_image_resources_dir;
 	char *cached_msplugins_dir;
+	char *cached_config_dir;
+	char *cached_data_dir;
+	char *cached_download_dir;
 	LinphoneErrorInfo* ei;
 
+	/* the EVFS encryption key */
+	std::shared_ptr<std::vector<uint8_t>> evfs_master_key; // use a shared_ptr as _LinphoneFactory is not really an object and vector destructor end up never being called otherwise
 	void *user_data;
 };
 
@@ -81,6 +89,19 @@ static void linphone_factory_uninit(LinphoneFactory *obj){
 	STRING_RESET(obj->cached_ring_resources_dir);
 	STRING_RESET(obj->cached_image_resources_dir);
 	STRING_RESET(obj->cached_msplugins_dir);
+
+	STRING_RESET(obj->cached_config_dir);
+	STRING_RESET(obj->cached_data_dir);
+	STRING_RESET(obj->cached_download_dir);
+
+	// sqlite3 vfs is registered at factory creation, so unregister it when destroying it
+	sqlite3_bctbx_vfs_unregister();
+
+	// proper cleaning of EVFS master key if any is set
+	if (obj->evfs_master_key != nullptr) {
+		bctbx_clean(obj->evfs_master_key->data(), obj->evfs_master_key->size());
+		obj->evfs_master_key = nullptr;
+	}
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
@@ -135,6 +156,10 @@ static LinphoneFactory *linphone_factory_new(void){
 	LinphoneFactory *factory = belle_sip_object_new(LinphoneFactory);
 	factory->top_resources_dir = bctbx_strdup(PACKAGE_DATA_DIR);
 	initialize_supported_video_definitions(factory);
+	/* register the bctbx sqlite vfs. It is not used by default */
+	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
+	sqlite3_bctbx_vfs_register(0);
+	factory->evfs_master_key = nullptr;
 	return factory;
 }
 
@@ -561,16 +586,60 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context);
-	return path.c_str();
+	STRING_SET(factory->cached_config_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Config, context).c_str());
+	return factory->cached_config_dir;
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context);
-	return path.c_str();
+	STRING_SET(factory->cached_data_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Data, context).c_str());
+	return factory->cached_data_dir;
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
-	std::string path = LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context);
-	return path.c_str();
+	STRING_SET(factory->cached_download_dir, LinphonePrivate::Paths::getPath(LinphonePrivate::Paths::Download, context).c_str());
+	return factory->cached_download_dir;
+}
+
+void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
+
+	/* Check encryptionMpdule is valid */
+	auto module = bctoolbox::EncryptionSuite::unset;
+	switch (encryptionModule) {
+		case LINPHONE_VFS_ENCRYPTION_UNSET: // do not use the encrypted VFS
+			bctbx_vfs_set_default(bctbx_vfs_get_standard());
+			bctoolbox::VfsEncryption::openCallbackSet(nullptr);
+			return;
+		case LINPHONE_VFS_ENCRYPTION_PLAIN: // use the encrypted VFS but write plain files
+			bctbx_warning("linphone_factory_set_vfs_encryption : encryptionModule set to plain text");
+			module = bctoolbox::EncryptionSuite::plain;
+			break;
+		case LINPHONE_VFS_ENCRYPTION_DUMMY:
+			module = bctoolbox::EncryptionSuite::dummy;
+			break;
+		case LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256:
+			module = bctoolbox::EncryptionSuite::aes256gcm128_sha256;
+			break;
+		default:
+			bctbx_error("linphone_factory_set_vfs_encryption : encryptionModule %04x unknown", encryptionModule);
+			return;
+	}
+
+	/* save the key */
+	if (factory->evfs_master_key != nullptr) {
+		bctbx_clean(factory->evfs_master_key->data(), factory->evfs_master_key->size());
+	}
+	factory->evfs_master_key = std::make_shared<std::vector<uint8_t>>(secret, secret+secretSize);
+
+	// Set the default bctbx vfs to the encrypted one
+	bctbx_vfs_set_default(&bctoolbox::bcEncryptedVfs);
+
+	// Associate the VfsEncryption class callback
+	bctoolbox::VfsEncryption::openCallbackSet([module](bctoolbox::VfsEncryption &settings) {
+		bctbx_message("Encrypted VFS: Open file %s, encryption is set to %s file. Current file's encryption module is %s", settings.filenameGet().data(), encryptionSuiteString(module).data(), encryptionSuiteString(settings.encryptionSuiteGet()).data());
+
+		settings.encryptionSuiteSet(module); // This call will migrate plain files to encrypted ones if needed
+		if (module!=bctoolbox::EncryptionSuite::plain) { // do not set keys for plain module
+			settings.secretMaterialSet(*(linphone_factory_get()->evfs_master_key));
+		}
+	});
 }
