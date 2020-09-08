@@ -126,9 +126,9 @@ LinphoneMediaDirection MediaSessionParamsPrivate::salStreamDirToMediaDirection (
 
 void MediaSessionParamsPrivate::adaptToNetwork (LinphoneCore *core, int pingTimeMs) {
 	L_Q();
-	if ((pingTimeMs > 0) && lp_config_get_int(linphone_core_get_config(core), "net", "activate_edge_workarounds", 0)) {
+	if ((pingTimeMs > 0) && linphone_config_get_int(linphone_core_get_config(core), "net", "activate_edge_workarounds", 0)) {
 		lInfo() << "STUN server ping time is " << pingTimeMs << " ms";
-		int threshold = lp_config_get_int(linphone_core_get_config(core), "net", "edge_ping_time", 500);
+		int threshold = linphone_config_get_int(linphone_core_get_config(core), "net", "edge_ping_time", 500);
 		if (pingTimeMs > threshold) {
 			/* We might be in a 2G network */
 			q->enableLowBandwidth(true);
@@ -253,14 +253,14 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 	d->realtimeTextKeepaliveInterval = linphone_core_realtime_text_get_keepalive_interval(cCore);
 	d->encryption = linphone_core_get_media_encryption(cCore);
 	d->avpfEnabled = (linphone_core_get_avpf_mode(cCore) == LinphoneAVPFEnabled);
-	d->_implicitRtcpFbEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
+	d->_implicitRtcpFbEnabled = !!linphone_config_get_int(linphone_core_get_config(cCore), "rtp", "rtcp_fb_implicit_rtcp_fb", true);
 	d->avpfRrInterval = static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(cCore) * 1000);
 	d->audioDirection = LinphoneMediaDirectionSendRecv;
 	d->videoDirection = LinphoneMediaDirectionSendRecv;
-	d->earlyMediaSendingEnabled = !!lp_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
+	d->earlyMediaSendingEnabled = !!linphone_config_get_int(linphone_core_get_config(cCore), "misc", "real_early_media", false);
 	d->audioMulticastEnabled = !!linphone_core_audio_multicast_enabled(cCore);
 	d->videoMulticastEnabled = !!linphone_core_video_multicast_enabled(cCore);
-	d->updateCallWhenIceCompleted = !!lp_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
+	d->updateCallWhenIceCompleted = !!linphone_config_get_int(linphone_core_get_config(cCore), "sip", "update_call_when_ice_completed", true);
 	/*
 	 * At the time of WebRTC/JSSIP interoperability tests, it was found that the ICE re-INVITE was breaking communication.
 	 * The update_call_when_ice_completed_with_dtls property is hence set to false.

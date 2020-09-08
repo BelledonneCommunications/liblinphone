@@ -937,7 +937,6 @@ void Call::setInputAudioDevice(AudioDevice *audioDevice) {
 	setInputAudioDevicePrivate(audioDevice);
 
 	linphone_call_notify_audio_device_changed(getSharedFromThis()->toC(), audioDevice->toC());
-
 }
 
 void Call::setOutputAudioDevice(AudioDevice *audioDevice) {

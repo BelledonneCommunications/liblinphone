@@ -75,8 +75,9 @@ static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
+	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
 
 	if (auth_info) {
 		linphone_auth_info_fill_belle_sip_event(auth_info, event);
@@ -127,7 +128,7 @@ int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char
 LinphoneStatus linphone_core_set_provisioning_uri(LinphoneCore *lc, const char *remote_provisioning_uri) {
 	belle_generic_uri_t *uri=remote_provisioning_uri?belle_generic_uri_parse(remote_provisioning_uri):NULL;
 	if (!remote_provisioning_uri||uri) {
-		lp_config_set_string(lc->config,"misc","config-uri",remote_provisioning_uri);
+		linphone_config_set_string(lc->config,"misc","config-uri",remote_provisioning_uri);
 		if (uri) {
 			belle_sip_object_unref(uri);
 		}
@@ -139,9 +140,9 @@ LinphoneStatus linphone_core_set_provisioning_uri(LinphoneCore *lc, const char *
 }
 
 const char*linphone_core_get_provisioning_uri(const LinphoneCore *lc){
-	return lp_config_get_string(lc->config,"misc","config-uri",NULL);
+	return linphone_config_get_string(lc->config,"misc","config-uri",NULL);
 }
 
 bool_t linphone_core_is_provisioning_transient(LinphoneCore *lc) {
-	return lp_config_get_int(lc->config, "misc", "transient_provisioning", 0) == 1;
+	return linphone_config_get_int(lc->config, "misc", "transient_provisioning", 0) == 1;
 }

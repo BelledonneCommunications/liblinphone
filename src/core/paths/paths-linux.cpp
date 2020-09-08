@@ -49,8 +49,7 @@ string SysPaths::getConfigPath (void *) {
 }
 
 string SysPaths::getDownloadPath (void *) {
-	//TODO
-	static string downloadPath = getBaseDirectory() + "/.config/linphone/";
+	static string downloadPath = getBaseDirectory() + "/.local/share/linphone/";
 	return downloadPath;
 }
 

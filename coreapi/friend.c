@@ -203,7 +203,7 @@ void __linphone_friend_do_subscribe(LinphoneFriend *fr){
 		}
 		fr->outsub=new SalPresenceOp(lc->sal);
 		linphone_configure_op(lc,fr->outsub,addr,NULL,TRUE);
-		fr->outsub->subscribe(lp_config_get_int(lc->config,"sip","subscribe_expires",600));
+		fr->outsub->subscribe(linphone_config_get_int(lc->config,"sip","subscribe_expires",600));
 		fr->subscribe_active=TRUE;
 	} else {
 		ms_error("Can't send a SUBSCRIBE for friend [%p] without an address!", fr);
@@ -981,7 +981,7 @@ void linphone_core_update_friends_subscriptions(LinphoneCore *lc) {
 }
 
 bool_t linphone_core_should_subscribe_friends_only_when_registered(const LinphoneCore *lc){
-	return !!lp_config_get_int(lc->config,"sip","subscribe_presence_only_when_registered",1);
+	return !!linphone_config_get_int(lc->config,"sip","subscribe_presence_only_when_registered",1);
 }
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc) {
@@ -1129,11 +1129,11 @@ LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int inde
 
 	sprintf(item,"friend_%i",index);
 
-	if (!lp_config_has_section(config,item)){
+	if (!linphone_config_has_section(config,item)){
 		return NULL;
 	}
 
-	tmp=lp_config_get_string(config,item,"url",NULL);
+	tmp=linphone_config_get_string(config,item,"url",NULL);
 	if (tmp==NULL) {
 		return NULL;
 	}
@@ -1141,18 +1141,18 @@ LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, int inde
 	if (lf==NULL) {
 		return NULL;
 	}
-	tmp=lp_config_get_string(config,item,"pol",NULL);
+	tmp=linphone_config_get_string(config,item,"pol",NULL);
 	if (tmp==NULL) linphone_friend_set_inc_subscribe_policy(lf,LinphoneSPWait);
 	else{
 		linphone_friend_set_inc_subscribe_policy(lf,__policy_str_to_enum(tmp));
 	}
-	a=lp_config_get_int(config,item,"subscribe",0);
+	a=linphone_config_get_int(config,item,"subscribe",0);
 	linphone_friend_send_subscribe(lf,!!a);
-	a = lp_config_get_int(config, item, "presence_received", 0);
+	a = linphone_config_get_int(config, item, "presence_received", 0);
 	lf->presence_received = (bool_t)a;
 	lf->rc_index = index;
 
-	linphone_friend_set_ref_key(lf,lp_config_get_string(config,item,"refkey",NULL));
+	linphone_friend_set_ref_key(lf,linphone_config_get_string(config,item,"refkey",NULL));
 	return lf;
 }
 
@@ -1240,7 +1240,7 @@ bool_t linphone_friend_create_vcard(LinphoneFriend *fr, const char *name) {
 		lc = fr->friend_list->lc;
 	}
 	if (lc) {
-		skip = !lp_config_get_int(fr->lc->config, "misc", "store_friends", 1);
+		skip = !linphone_config_get_int(fr->lc->config, "misc", "store_friends", 1);
 		linphone_vcard_set_skip_validation(vcard, skip);
 	}
 	linphone_vcard_set_full_name(vcard, name);
@@ -1542,7 +1542,7 @@ static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
 void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 	if (lc && lc->friends_db) {
 		char *buf;
-		int store_friends = lp_config_get_int(lc->config, "misc", "store_friends", 1);
+		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 		LinphoneVcard *vcard = NULL;
 		const LinphoneAddress *addr;
 		char *addr_str = NULL;
@@ -1604,7 +1604,7 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 void linphone_core_store_friends_list_in_db(LinphoneCore *lc, LinphoneFriendList *list) {
 	if (lc && lc->friends_db) {
 		char *buf;
-		int store_friends = lp_config_get_int(lc->config, "misc", "store_friends", 1);
+		int store_friends = linphone_config_get_int(lc->config, "misc", "store_friends", 1);
 
 		if (!store_friends) {
 			return;

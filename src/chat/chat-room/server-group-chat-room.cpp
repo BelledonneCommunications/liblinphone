@@ -1010,6 +1010,17 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 			unSubscribeRegistrationForParticipant(participant->getAddress());
 		}
 	}
+	
+	//device left, we no longuer need to receive subscription info from it
+	if (device->isSubscribedToConferenceEventPackage()) {
+		lError() << q << " still subscription pending for [" << device << "], terminating in emergency";
+		//try to terminate subscription if any, but do not wait for anser.
+		LinphoneEventCbs *cbs = linphone_event_get_callbacks(device->getConferenceSubscribeEvent());
+		linphone_event_cbs_set_user_data(cbs, nullptr);
+		linphone_event_cbs_set_notify_response(cbs, nullptr);
+		linphone_event_terminate(device->getConferenceSubscribeEvent());
+	}
+	
 	/* if all devices of participants are left we'll delete the chatroom*/
 	bool allLeft = true;
 	for (const auto &participant : q->LocalConference::getParticipants()){

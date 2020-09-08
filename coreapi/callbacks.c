@@ -82,7 +82,7 @@ static void call_received(SalCallOp *h) {
 	LinphoneAddress *fromAddr = nullptr;
 	const char *pAssertedId = sal_custom_header_find(h->getRecvCustomHeaders(), "P-Asserted-Identity");
 	/* In some situation, better to trust the network rather than the UAC */
-	if (lp_config_get_int(linphone_core_get_config(lc), "sip", "call_logs_use_asserted_id_instead_of_from", 0)) {
+	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "call_logs_use_asserted_id_instead_of_from", 0)) {
 		if (pAssertedId) {
 			LinphoneAddress *pAssertedIdAddr = linphone_address_new(pAssertedId);
 			if (pAssertedIdAddr) {
@@ -228,7 +228,7 @@ static void call_received(SalCallOp *h) {
 		return;
 	}
 
-	if (lp_config_get_int(linphone_core_get_config(lc), "sip", "reject_duplicated_calls", 1)){
+	if (linphone_config_get_int(linphone_core_get_config(lc), "sip", "reject_duplicated_calls", 1)){
 		/* Check if I'm the caller */
 		LinphoneAddress *fromAddressToSearchIfMe = nullptr;
 		if (h->getPrivacy() == SalPrivacyNone)
@@ -632,6 +632,7 @@ static bool_t auth_requested(Sal* sal, SalAuthInfo* sai) {
 	} else {
 		LinphoneAuthMethod method = sai->mode == SalAuthModeHttpDigest ? LinphoneAuthHttpDigest : LinphoneAuthTls;
 		LinphoneAuthInfo *ai = linphone_core_create_auth_info(lc, sai->username, NULL, NULL, NULL, sai->realm, sai->domain);
+		linphone_auth_info_set_algorithm(ai, sai->algorithm);
 
 		if (method == LinphoneAuthHttpDigest){
 			/* Request app for new authentication information, but later. */

@@ -74,7 +74,7 @@ void IceService::checkSession (IceRole role) {
 
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	
-	if (lp_config_get_int(config, "net", "force_ice_disablement", 0)){
+	if (linphone_config_get_int(config, "net", "force_ice_disablement", 0)){
 		lWarning()<<"ICE is disabled in this version";
 		return;
 	}
@@ -84,9 +84,9 @@ void IceService::checkSession (IceRole role) {
 	// For backward compatibility purposes, shall be enabled by default in the future.
 	ice_session_enable_message_integrity_check(
 		mIceSession,
-		!!lp_config_get_int(config, "net", "ice_session_enable_message_integrity_check", 1)
+		!!linphone_config_get_int(config, "net", "ice_session_enable_message_integrity_check", 1)
 	);
-	if (lp_config_get_int(config, "net", "dont_default_to_stun_candidates", 0)) {
+	if (linphone_config_get_int(config, "net", "dont_default_to_stun_candidates", 0)) {
 		IceCandidateType types[ICT_CandidateTypeMax];
 		types[0] = ICT_HostCandidate;
 		types[1] = ICT_RelayedCandidate;

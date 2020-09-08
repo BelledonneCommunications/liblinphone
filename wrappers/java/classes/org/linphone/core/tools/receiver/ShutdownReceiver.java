@@ -21,22 +21,16 @@ package org.linphone.core.tools.receiver;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import androidx.core.content.ContextCompat;
 
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.service.CoreManager;
 
-/*
- * Purpose of this receiver is to disable keep alives when screen is off
- */
-public class InteractivityReceiver extends BroadcastReceiver {
-    public InteractivityReceiver() { }
+public class ShutdownReceiver extends BroadcastReceiver {
+    public ShutdownReceiver() { }
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        String action = intent.getAction();
-        if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_ON)) {
-            Log.i("[Platform Helper] [Interactivity Receiver] Device screen is ON");
-        } else if (action.equalsIgnoreCase(Intent.ACTION_SCREEN_OFF)) {
-            Log.i("[Platform Helper] [Interactivity Receiver] Device screen is OFF");
-        }
+        if (CoreManager.isReady()) CoreManager.instance().stop();
     }
 }

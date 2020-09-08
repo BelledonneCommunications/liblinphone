@@ -20,6 +20,7 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 package {{packageName}};
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 {{#imports}}
 import {{import}}
 {{/imports}}
@@ -98,7 +99,7 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     public static final synchronized Factory instance() {
 		try {
 			if (_Factory == null) {
-				_Factory = new FactoryImpl(0); // This value is not relevant, correct factory pointer will be used in JNI layer
+				_Factory = new FactoryImpl();
 			}
 		} catch (Exception e) {
 			System.err.println("Cannot instanciate factory");
@@ -140,7 +141,8 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
     */
     {{#deprecated}}@Deprecated
     {{/deprecated}}{{#return_maybenil}}@Nullable
-    {{/return_maybenil}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
+    {{/return_maybenil}}{{#return_notnil}}@NotNull
+    {{/return_notnil}}{{#isLinphoneFactory}}abstract {{/isLinphoneFactory}}public {{return}} {{name}}({{params}}){{#exception}} throws CoreException{{/exception}};
 
 {{/methods}}
     /**
@@ -170,10 +172,19 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
     protected transient Object userData = null;{{#hasCoreAccessor}}
     protected Core core = null;{{/hasCoreAccessor}}
 
+{{#isLinphoneFactory}}
+    protected FactoryImpl() {
+        nativePtr = init();
+    }
+
+    private native long init();
+{{/isLinphoneFactory}}
+{{#isNotLinphoneFactory}}
     protected {{classImplName}}(long ptr) {
         nativePtr = ptr;{{#hasCoreAccessor}}
         core = getCore();{{/hasCoreAccessor}}
     }
+{{/isNotLinphoneFactory}}
 
     public long getNativePointer() {
         return nativePtr;
@@ -226,7 +237,7 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 
 {{#methods}}
     private native {{return_native}} {{name_native}}({{native_params}});
-    @Override{{#return_maybenil}} @Nullable{{/return_maybenil}}
+    @Override{{#return_maybenil}} @Nullable{{/return_maybenil}}{{#return_notnil}} @NotNull{{/return_notnil}}
     synchronized public {{return}} {{name}}({{params}}) {{#exception}}throws CoreException{{/exception}} {
         {{#hasCoreAccessor}}{{#isNotGetCore}}synchronized(core) { {{/isNotGetCore}}{{/hasCoreAccessor}}
         {{#exception}}int exceptionResult = {{/exception}}{{return_keyword}}{{#enumCast}}{{return}}.fromInt({{/enumCast}}{{#classCast}}({{return}}){{/classCast}}{{name_native}}({{native_params_impl}}){{#enumCast}}){{/enumCast}};{{#exception}}

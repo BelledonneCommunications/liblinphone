@@ -793,7 +793,7 @@ int lime_im_encryption_engine_process_incoming_message_cb(LinphoneImEncryptionEn
 		);
 
 		retval = lime_decryptMultipartMessage(zrtp_cache_db, (uint8_t *)linphone_chat_message_get_text(msg), selfUri, peerUri, &decrypted_body, &decrypted_content_type,
-						      bctbx_time_string_to_sec(lp_config_get_string(lc->config, "sip", "lime_key_validity", "0")));
+						      bctbx_time_string_to_sec(linphone_config_get_string(lc->config, "sip", "lime_key_validity", "0")));
 		ms_free(peerUri);
 		ms_free(selfUri);
 		if (retval != 0) {

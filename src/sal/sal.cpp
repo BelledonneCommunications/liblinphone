@@ -28,6 +28,7 @@
 #include "bellesip_sal/sal_impl.h"
 #include "tester_utils.h"
 #include "private.h"
+#include "bctoolbox/crypto.hh"
 
 #include "c-wrapper/internal/c-tools.h"
 
@@ -651,6 +652,10 @@ void Sal::sendKeepAlive () {
 	}
 }
 
+void Sal::cleanUnreliableConnections(){
+	belle_sip_provider_clean_unreliable_channels(mProvider);
+}
+
 int Sal::setTunnel (void *tunnelclient) {
 #ifdef TUNNEL_ENABLED
 	mTunnelClient = tunnelclient;
@@ -736,7 +741,7 @@ string Sal::createUuid () {
 string Sal::generateUuid () {
 	// Create an UUID as described in RFC4122, 4.4
 	SalUuid uuidStruct;
-	belle_sip_random_bytes((unsigned char *)&uuidStruct, sizeof(uuidStruct));
+	bctoolbox::RNG::cRandomize((unsigned char *)&uuidStruct, sizeof(uuidStruct));
 	uuidStruct.clockSeqHiAndReserved &= (unsigned char)~(1 << 6);
 	uuidStruct.clockSeqHiAndReserved |= (unsigned char)(1 << 7);
 	uuidStruct.timeHiAndVersion &= (unsigned char)~(0xf << 12);

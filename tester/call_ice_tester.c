@@ -242,7 +242,7 @@ static void call_with_ice_with_default_candidate_not_stun(void){
 	bool_t call_ok;
 	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
@@ -381,8 +381,8 @@ static void ice_added_by_reinvite(void){
 	LinphoneCall *c;
 	bool_t call_ok;
 
-	lp_config_set_int(linphone_core_get_config(marie->lc), "net", "allow_late_ice", 1);
-	lp_config_set_int(linphone_core_get_config(pauline->lc), "net", "allow_late_ice", 1);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "allow_late_ice", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "net", "allow_late_ice", 1);
 
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 	if (!call_ok) goto end;

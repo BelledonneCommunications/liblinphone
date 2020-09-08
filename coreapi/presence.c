@@ -1774,7 +1774,7 @@ void linphone_subscription_new(LinphoneCore *lc, SalSubscribeOp *op, const char 
 		if (lf->pol != LinphoneSPDeny) {
 			linphone_friend_add_incoming_subscription(lf, op);
 			lf->inc_subscribe_pending=TRUE;
-			if (lp_config_get_int(lc->config,"sip","notify_pending_state",0)) {
+			if (linphone_config_get_int(lc->config,"sip","notify_pending_state",0)) {
 				op->notifyPendingState();
 			}
 			op->accept();
@@ -2147,7 +2147,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 
 	if (linphone_core_get_default_friend_list(lc) != NULL)
 		lf=linphone_core_find_friend_by_out_subscribe(lc, op);
-	if (lf==NULL && lp_config_get_int(lc->config,"sip","allow_out_of_subscribe_presence",0)){
+	if (lf==NULL && linphone_config_get_int(lc->config,"sip","allow_out_of_subscribe_presence",0)){
 		char *buf = sal_address_as_string_uri_only(op->getFromAddress());
 		LinphoneAddress *addr = linphone_address_new(buf);
 		lf = linphone_core_find_friend(lc, addr);

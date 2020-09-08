@@ -217,7 +217,7 @@ void MediaSessionPrivate::ackReceived (LinphoneHeaders *headers) {
 		switch (state) {
 			case CallSession::State::StreamsRunning:
 			case CallSession::State::PausedByRemote:
-				setState(CallSession::State::UpdatedByRemote, "UpdatedByRemote");
+				setState(CallSession::State::UpdatedByRemote, "Updated by remote");
 				break;
 			default:
 				break;
@@ -305,7 +305,7 @@ void MediaSessionPrivate::pauseForTransfer () {
 void MediaSessionPrivate::pausedByRemote () {
 	L_Q();
 	MediaSessionParams newParams(*getParams());
-	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
+	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 
@@ -430,7 +430,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
-		if (!rmd && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
+		if (!rmd && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
 			lInfo() << "Applying default policy for offering SDP on CallSession [" << q << "]";
 			setParams(new MediaSessionParams());
 			// Yes we init parameters as if we were in the case of an outgoing call, because it is a resume with no SDP.
@@ -565,7 +565,7 @@ void MediaSessionPrivate::onNetworkReachable (bool sipNetworkReachable, bool med
 	L_Q();
 	if (mediaNetworkReachable) {
 		LinphoneConfig *config = linphone_core_get_config(q->getCore()->getCCore());
-		if (lp_config_get_int(config, "net", "recreate_sockets_when_network_is_up", 0))
+		if (linphone_config_get_int(config, "net", "recreate_sockets_when_network_is_up", 0))
 			refreshSockets();
 	} else {
 		setBroken();
@@ -1014,12 +1014,22 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *
 	L_Q();
 	for (int i = 0; i < md->nb_streams; i++) {
 		SalStreamDescription *sd = &md->streams[i];
-		switch (state) {
+		CallSession::State stateToConsider = state;
+		
+		switch (stateToConsider){
+			case CallSession::State::UpdatedByRemote:
+				stateToConsider = prevState;
+			break;
+			default:
+			break;
+		}
+		
+		switch (stateToConsider) {
 			case CallSession::State::Pausing:
 			case CallSession::State::Paused:
 				if (sd->dir != SalStreamInactive) {
 					sd->dir = SalStreamSendOnly;
-					if ((sd->type == SalVideo) && lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
+					if ((sd->type == SalVideo) && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 						sd->dir = SalStreamInactive;
 				}
 				break;
@@ -1121,7 +1131,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
-	bool rtcpMux = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
+	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
 
@@ -1349,8 +1359,8 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCrypto
 void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 	L_Q();
 	for (int i = 0; i < md->nb_streams; i++) {
-		md->streams[i].rtcp_fb.generic_nack_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
-		md->streams[i].rtcp_fb.tmmbr_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
+		md->streams[i].rtcp_fb.generic_nack_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
+		md->streams[i].rtcp_fb.tmmbr_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
 		md->streams[i].implicit_rtcp_fb = getParams()->getPrivate()->implicitRtcpFbEnabled();
 		for (const bctbx_list_t *it = md->streams[i].payloads; it != nullptr; it = bctbx_list_next(it)) {
 			OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
@@ -1370,9 +1380,9 @@ void MediaSessionPrivate::setupRtcpFb (SalMediaDescription *md) {
 
 void MediaSessionPrivate::setupRtcpXr (SalMediaDescription *md) {
 	L_Q();
-	md->rtcp_xr.enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_enabled", 1);
+	md->rtcp_xr.enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_enabled", 1);
 	if (md->rtcp_xr.enabled) {
-		const char *rcvr_rtt_mode = lp_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_mode", "all");
+		const char *rcvr_rtt_mode = linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_mode", "all");
 		if (strcasecmp(rcvr_rtt_mode, "all") == 0)
 			md->rtcp_xr.rcvr_rtt_mode = OrtpRtcpXrRcvrRttAll;
 		else if (strcasecmp(rcvr_rtt_mode, "sender") == 0)
@@ -1380,11 +1390,11 @@ void MediaSessionPrivate::setupRtcpXr (SalMediaDescription *md) {
 		else
 			md->rtcp_xr.rcvr_rtt_mode = OrtpRtcpXrRcvrRttNone;
 		if (md->rtcp_xr.rcvr_rtt_mode != OrtpRtcpXrRcvrRttNone)
-			md->rtcp_xr.rcvr_rtt_max_size = lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_max_size", 10000);
-		md->rtcp_xr.stat_summary_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_stat_summary_enabled", 1);
+			md->rtcp_xr.rcvr_rtt_max_size = linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_rcvr_rtt_max_size", 10000);
+		md->rtcp_xr.stat_summary_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_stat_summary_enabled", 1);
 		if (md->rtcp_xr.stat_summary_enabled)
 			md->rtcp_xr.stat_summary_flags = OrtpRtcpXrStatSummaryLoss | OrtpRtcpXrStatSummaryDup | OrtpRtcpXrStatSummaryJitt | OrtpRtcpXrStatSummaryTTL;
-		md->rtcp_xr.voip_metrics_enabled = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
+		md->rtcp_xr.voip_metrics_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_voip_metrics_enabled", 1);
 	}
 	for (int i = 0; i < md->nb_streams; i++) {
 		memcpy(&md->streams[i].rtcp_xr, &md->rtcp_xr, sizeof(md->streams[i].rtcp_xr));
@@ -1410,7 +1420,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (SalMediaDescription
 void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
-	bool keepSrtpKeys = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
+	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	for (int i = 0; i < md->nb_streams; i++) {
 		if (sal_stream_description_has_srtp(&md->streams[i])) {
 			if (keepSrtpKeys && oldMd && sal_stream_description_enabled(&oldMd->streams[i]) && sal_stream_description_has_srtp(&oldMd->streams[i])) {
@@ -1486,34 +1496,23 @@ void MediaSessionPrivate::freeResources () {
 	getStreamsGroup().finish();
 }
 
+
+void MediaSessionPrivate::queueIceCompletionTask(const std::function<void()> &lambda){
+	iceDeferedTasks.push(lambda);
+}
+
+void MediaSessionPrivate::runIceCompletionTasks(){
+	while(!iceDeferedTasks.empty()){
+		iceDeferedTasks.front()();
+		iceDeferedTasks.pop();
+	}
+}
+
 /*
  * IceServiceListener implementation
  */
 void MediaSessionPrivate::onGatheringFinished(IceService &service){
-	L_Q();
-	updateLocalMediaDescriptionFromIce(localIsOfferer);
-	switch (state) {
-		case CallSession::State::IncomingReceived:
-		case CallSession::State::PushIncomingReceived:
-		case CallSession::State::IncomingEarlyMedia:
-			if (callAcceptanceDefered) startAccept();
-			break;
-		case CallSession::State::Updating:
-			startUpdate();
-			break;
-		case CallSession::State::UpdatedByRemote:
-			startAcceptUpdate(prevState, Utils::toString(prevState));
-			break;
-		case CallSession::State::OutgoingInit:
-			q->startInvite(nullptr, "");
-			break;
-		case CallSession::State::Idle:
-			deferIncomingNotification = false;
-			startIncomingNotification();
-			break;
-		default:
-			break;
-	}
+	runIceCompletionTasks();
 }
 
 void MediaSessionPrivate::onIceCompleted(IceService &service){
@@ -1521,12 +1520,19 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 	/* The ICE session has succeeded, so perform a call update */
 	if (!getStreamsGroup().getIceService().hasCompletedCheckList()) return;
 	if (getStreamsGroup().getIceService().isControlling() && getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-		if (state == CallSession::State::StreamsRunning){
-			MediaSessionParams newParams(*getParams());
-			newParams.getPrivate()->setInternalCallUpdate(true);
-			q->update(&newParams);
-		}else{
-			lWarning() << "Cannot send reINVITE for ICE during state " << state;
+		switch (state){
+			case CallSession::State::StreamsRunning:
+			case CallSession::State::Paused:
+			case CallSession::State::PausedByRemote:
+			{
+				MediaSessionParams newParams(*getParams());
+				newParams.getPrivate()->setInternalCallUpdate(true);
+				q->update(&newParams);
+			}
+			break;
+			default:
+				lWarning() << "Cannot send reINVITE for ICE during state " << state;
+			break;
 		}
 	}
 	startDtlsOnAllStreams();
@@ -1727,7 +1733,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 
 	/* Try to be best-effort in giving real local or routable contact address for 100Rel case */
 	setContactOp();
-	bool proposeEarlyMedia = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
+	bool proposeEarlyMedia = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "incoming_calls_early_media", false);
 	if (proposeEarlyMedia)
 		q->acceptEarlyMedia();
 	else
@@ -1948,7 +1954,6 @@ void MediaSessionPrivate::startAccept(){
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
 	} else
 		expectMediaInAck = true;
-	if (callAcceptanceDefered) callAcceptanceDefered = false;
 }
 
 void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging) {
@@ -1962,21 +1967,22 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 	updateRemoteSessionIdAndVer();
 
-
-	if (getStreamsGroup().prepare()){
-		callAcceptanceDefered = true;
-		return; /* Deferred until completion of ICE gathering */
-	} else {
+	auto acceptCompletionTask = [this](){
 		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+		startAccept();
+	};
+	if (getStreamsGroup().prepare()){
+		queueIceCompletionTask(acceptCompletionTask);
+		return; /* Deferred until completion of ICE gathering */
 	}
-	startAccept();
+	acceptCompletionTask();
 }
 
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
 	L_Q();
 	SalMediaDescription *desc = op->getRemoteMediaDescription();
 
-	bool keepSdpVersion = !!lp_config_get_int(
+	bool keepSdpVersion = !!linphone_config_get_int(
 		linphone_core_get_config(q->getCore()->getCCore()),
 		"sip",
 		"keep_sdp_version",
@@ -2007,11 +2013,17 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	updateRemoteSessionIdAndVer();
 	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 
-	if (getStreamsGroup().prepare())
+	auto acceptCompletionTask = [this, nextState, stateInfo](){
+		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+		startAcceptUpdate(nextState, stateInfo);
+	};
+	
+	if (getStreamsGroup().prepare()){
+		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
+		queueIceCompletionTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
-	updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
-	startAcceptUpdate(nextState, stateInfo);
-
+	}
+	acceptCompletionTask();
 	return 0;
 }
 
@@ -2136,7 +2148,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->streamsGroup->getIceService().setListener(d);
 
-	lInfo() << "New MediaSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
+	lInfo() << "New MediaSession [" << this << "] initialized (liblinphone version: " << linphone_core_get_version() << ")";
 }
 
 MediaSession::~MediaSession () {
@@ -2284,7 +2296,16 @@ void MediaSession::initiateIncoming () {
 			 * If ICE gathering is done, we can update the local media description immediately.
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 			 */
-			if (!d->deferIncomingNotification) d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			if (d->deferIncomingNotification) {
+				auto incomingNotificationTask = [d](){
+					d->deferIncomingNotification = false;
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					d->startIncomingNotification();
+				};
+				d->queueIceCompletionTask(incomingNotificationTask);
+			}else{
+				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			}
 		}
 	}
 }
@@ -2304,6 +2325,12 @@ bool MediaSession::initiateOutgoing () {
 				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			}else{
+				d->queueIceCompletionTask([this]() {
+					L_D();
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					startInvite(nullptr, "");
+				});
 			}
 			defer |= ice_needs_defer;
 		}
@@ -2343,7 +2370,7 @@ LinphoneStatus MediaSession::resume () {
 	 * prevents the participants to hear it while the 200OK comes back. */
 	Stream *as = d->getStreamsGroup().lookupMainStream(SalAudio);
 	if (as) as->stop();
-	d->setState(CallSession::State::Resuming,"Resuming");
+	d->setState(CallSession::State::Resuming, "Resuming");
 	d->makeLocalMediaDescription(true);
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
@@ -2378,7 +2405,7 @@ LinphoneStatus MediaSession::sendDtmfs (const std::string &dtmfs) {
 		return -2;
 	}
 	if (!dtmfs.empty()) {
-		int delayMs = lp_config_get_int(linphone_core_get_config(getCore()->getCCore()), "net", "dtmf_delay_ms", 200);
+		int delayMs = linphone_config_get_int(linphone_core_get_config(getCore()->getCCore()), "net", "dtmf_delay_ms", 200);
 		if (delayMs < 0)
 			delayMs = 0;
 		d->dtmfSequence = dtmfs;
@@ -2487,15 +2514,23 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription(true);
 
+		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
+			L_D();
+			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			LinphoneStatus res = d->startUpdate(subject);
+			if (res && (d->state != initialState)) {
+				/* Restore initial state */
+				d->setState(initialState, "Restore initial state");
+			}
+			return res;
+		};
+		
 		if (d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
+			d->queueIceCompletionTask(updateCompletionTask);
 			return 0;
 		}
-		result = d->startUpdate(subject);
-		if (result && (d->state != initialState)) {
-			/* Restore initial state */
-			d->setState(initialState, "Restore initial state");
-		}
+		result = updateCompletionTask();
 	} else if (d->state == CallSession::State::StreamsRunning) {
 		const sound_config_t &soundConfig = getCore()->getCCore()->sound_conf;
 		const MSSndCard *captureCard = soundConfig.capt_sndcard;

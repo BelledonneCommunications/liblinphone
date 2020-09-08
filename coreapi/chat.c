@@ -190,16 +190,16 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 	const LinphoneAddress *peer_addr,
 	const LinphoneAddress *local_addr
 ) {
-	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
-	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
-	linphone_chat_room_params_enable_group(params, FALSE);
-	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, params, local_addr, peer_addr, NULL);
+	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
 	if (result == NULL) {
 		bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
+		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
+		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+		linphone_chat_room_params_enable_group(params, FALSE);
 		result = linphone_core_create_chat_room_6(lc, params, local_addr, paricipants);
+		linphone_chat_room_params_unref(params);
 		bctbx_list_free(paricipants);
 	}
-	linphone_chat_room_params_unref(params);
 	return result;
 }
 

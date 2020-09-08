@@ -69,6 +69,10 @@ public:
 		chatRoom->getPrivate()->removeTransientChatMessage(message);
 	}
 
+	inline std::list<std::shared_ptr<ChatMessage>> getTransientChatMessages () override {
+		return chatRoom->getPrivate()->getTransientChatMessages();
+	}
+
 	inline void setIsEmpty (const bool empty) override {
 		chatRoom->getPrivate()->setIsEmpty(empty);
 	}

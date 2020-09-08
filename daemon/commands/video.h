@@ -47,4 +47,36 @@ public:
 	void exec(Daemon *app, const std::string& args) override;
 };
 
+class VideoSourceGet : public DaemonCommand
+{
+public:
+	VideoSourceGet();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
+class VideoSourceList : public DaemonCommand
+{
+public:
+	VideoSourceList();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
+class VideoSourceSet : public DaemonCommand
+{
+public:
+	VideoSourceSet();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
+class VideoSourceReload : public DaemonCommand
+{
+public:
+	VideoSourceReload();
+
+	void exec(Daemon *app, const std::string& args) override;
+};
+
 #endif // LINPHONE_DAEMON_COMMAND_VIDEO_H

@@ -71,9 +71,9 @@ static void _linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy,
 	bctbx_list_t *l = NULL;
 
 	section = belle_sip_strdup_printf("nat_policy_%i", index);
-	lp_config_set_string(config, section, "ref", policy->ref);
-	lp_config_set_string(config, section, "stun_server", policy->stun_server);
-	lp_config_set_string(config, section, "stun_server_username", policy->stun_server_username);
+	linphone_config_set_string(config, section, "ref", policy->ref);
+	linphone_config_set_string(config, section, "stun_server", policy->stun_server);
+	linphone_config_set_string(config, section, "stun_server_username", policy->stun_server_username);
 	if (linphone_nat_policy_upnp_enabled(policy)) {
 		l = bctbx_list_append(l, (void *)"upnp");
 	} else {
@@ -81,7 +81,7 @@ static void _linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy,
 		if (linphone_nat_policy_turn_enabled(policy)) l = bctbx_list_append(l, (void *)"turn");
 		if (linphone_nat_policy_ice_enabled(policy)) l = bctbx_list_append(l, (void *)"ice");
 	}
-	lp_config_set_string_list(config, section, "protocols", l);
+	linphone_config_set_string_list(config, section, "protocols", l);
 	belle_sip_free(section);
 	bctbx_list_free(l);
 }
@@ -94,8 +94,8 @@ void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy) {
 
 	for (index = 0; finished != TRUE; index++) {
 		section = belle_sip_strdup_printf("nat_policy_%i", index);
-		if (lp_config_has_section(config, section)) {
-			const char *config_ref = lp_config_get_string(config, section, "ref", NULL);
+		if (linphone_config_has_section(config, section)) {
+			const char *config_ref = linphone_config_get_string(config, section, "ref", NULL);
 			if ((config_ref != NULL) && (strcmp(config_ref, policy->ref) == 0)) {
 				_linphone_nat_policy_save_to_config(policy, config, index);
 				finished = TRUE;
@@ -287,10 +287,10 @@ LinphoneNatPolicy * linphone_core_create_nat_policy(LinphoneCore *lc) {
 }
 
 LinphoneNatPolicy * linphone_config_create_nat_policy_from_section(const LinphoneConfig *config, const char* section) {
-	const char *config_ref = lp_config_get_string(config, section, "ref", NULL);
-	const char *server = lp_config_get_string(config, section, "stun_server", NULL);
-	const char *username = lp_config_get_string(config, section, "stun_server_username", NULL);
-	bctbx_list_t *l = lp_config_get_string_list(config, section, "protocols", NULL);
+	const char *config_ref = linphone_config_get_string(config, section, "ref", NULL);
+	const char *server = linphone_config_get_string(config, section, "stun_server", NULL);
+	const char *username = linphone_config_get_string(config, section, "stun_server_username", NULL);
+	bctbx_list_t *l = linphone_config_get_string_list(config, section, "protocols", NULL);
 	bool_t turn_enable_udp = linphone_config_get_bool(config, section, "turn_enable_udp", TRUE);
 	bool_t turn_enable_tcp = linphone_config_get_bool(config, section, "turn_enable_tcp", FALSE);
 	bool_t turn_enable_tls = linphone_config_get_bool(config, section, "turn_enable_tls", FALSE);
@@ -329,8 +329,8 @@ LinphoneNatPolicy * linphone_core_create_nat_policy_from_config(LinphoneCore *lc
 
 	for (index = 0; finished != TRUE; index++) {
 		section = belle_sip_strdup_printf("nat_policy_%i", index);
-		if (lp_config_has_section(config, section)) {
-			const char *config_ref = lp_config_get_string(config, section, "ref", NULL);
+		if (linphone_config_has_section(config, section)) {
+			const char *config_ref = linphone_config_get_string(config, section, "ref", NULL);
 			if ((config_ref != NULL) && (strcmp(config_ref, ref) == 0)) {
 				policy = linphone_config_create_nat_policy_from_section(config, section);
 				policy->lc = lc;

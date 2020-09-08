@@ -527,6 +527,64 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static bool_t setup_dtls_srtp(LinphoneCoreManager *marie, LinphoneCoreManager *pauline){
+	if (!linphone_core_media_encryption_supported(marie->lc,LinphoneMediaEncryptionDTLS)){
+		BC_FAIL("SRTP-DTLS not supported.");
+		return FALSE;
+	}
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionDTLS);
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionDTLS);
+	char *path = bc_tester_file("certificates-marie");
+	linphone_core_set_user_certificates_path(marie->lc, path);
+	bc_free(path);
+	path = bc_tester_file("certificates-pauline");
+	linphone_core_set_user_certificates_path(pauline->lc, path);
+	bc_free(path);
+	belle_sip_mkdir(linphone_core_get_user_certificates_path(marie->lc));
+	belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
+	return TRUE;
+}
+
+static void dtls_srtp_audio_call_with_rtcp_mux(void) {
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call, *marie_call;
+	
+	marie = linphone_core_manager_new( "marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "rtcp_mux", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "rtcp_mux", 1);
+	
+	setup_dtls_srtp(marie, pauline);
+	{
+		/*enable ICE on both ends*/
+		LinphoneNatPolicy *pol;
+		pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, pol);
+		pol = linphone_core_get_nat_policy(pauline->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_nat_policy_enable_stun(pol, TRUE);
+		linphone_core_set_nat_policy(pauline->lc, pol);
+	}
+	
+	BC_ASSERT_TRUE(call(marie,pauline));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	marie_call = linphone_core_get_current_call(marie->lc);
+	
+	if (BC_ASSERT_PTR_NOT_NULL(pauline_call) && BC_ASSERT_PTR_NOT_NULL(marie_call)){
+		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)) == LinphoneMediaEncryptionDTLS);
+		BC_ASSERT_TRUE(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)) == LinphoneMediaEncryptionDTLS);
+		liblinphone_tester_check_rtcp(marie,pauline);
+	}
+	
+	end_call(marie,pauline);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
 	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
@@ -550,6 +608,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP DTLS mandatory called by non SRTP DTLS", srtp_dtls_mandatory_called_by_non_srtp_dtls),
 	TEST_NO_TAG("ZRTP mandatory called by SRTP", zrtp_mandatory_called_by_srtp),
 	TEST_NO_TAG("Video SRTP call without audio", video_srtp_call_without_audio),
+	TEST_NO_TAG("DTLS-SRTP call with rtcp-mux", dtls_srtp_audio_call_with_rtcp_mux)
 };
 
 test_suite_t call_secure_test_suite = {"Secure Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

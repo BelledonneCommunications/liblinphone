@@ -106,50 +106,50 @@ void linphone_dictionary_foreach(const LinphoneDictionary* obj, void (*apply_fun
 	belle_sip_dict_foreach(obj, apply_func, userdata);
 }
 
-struct lp_config_to_dict {
+struct linphone_config_to_dict {
 	const char*         section;
 	const LpConfig*     config;
 	LinphoneDictionary* dict;
 };
 
-static void lp_config_section_to_dict_cb(const char*key, struct lp_config_to_dict* userdata)
+static void linphone_config_section_to_dict_cb(const char*key, struct linphone_config_to_dict* userdata)
 {
-	const char* value = lp_config_get_string(userdata->config, userdata->section, key, "");
+	const char* value = linphone_config_get_string(userdata->config, userdata->section, key, "");
 	linphone_dictionary_set_string(userdata->dict, key, value);
 }
 
-LinphoneDictionary* lp_config_section_to_dict(const LpConfig* lpconfig, const char* section)
+LinphoneDictionary* linphone_config_section_to_dict(const LpConfig* lpconfig, const char* section)
 {
 	LinphoneDictionary* dict = NULL;
-	struct lp_config_to_dict fd;
+	struct linphone_config_to_dict fd;
 	fd.config = lpconfig;
 	fd.section = section;
 
 	dict = linphone_dictionary_new();
 	fd.dict = dict;
 
-	lp_config_for_each_entry(lpconfig, section,
-							 (void (*)(const char*, void*))lp_config_section_to_dict_cb,
+	linphone_config_for_each_entry(lpconfig, section,
+							 (void (*)(const char*, void*))linphone_config_section_to_dict_cb,
 							 &fd);
 
 	return dict;
 }
 
-struct lp_config_from_dict {
+struct linphone_config_from_dict {
 	const char* section;
 	LpConfig*   config;
 };
 
-static void lp_config_dict_dump_cb( const char* key, void* value, void* userdata)
+static void linphone_config_dict_dump_cb( const char* key, void* value, void* userdata)
 {
-	struct lp_config_from_dict* fd= (struct lp_config_from_dict*)userdata;
-	lp_config_set_string(fd->config, fd->section, key, (const char*)value);
+	struct linphone_config_from_dict* fd= (struct linphone_config_from_dict*)userdata;
+	linphone_config_set_string(fd->config, fd->section, key, (const char*)value);
 }
 
-void lp_config_load_dict_to_section(LpConfig* lpconfig, const char* section, const LinphoneDictionary* dict)
+void linphone_config_load_dict_to_section(LpConfig* lpconfig, const char* section, const LinphoneDictionary* dict)
 {
-	struct lp_config_from_dict pvdata = { section, lpconfig };
-	linphone_dictionary_foreach(dict,lp_config_dict_dump_cb, &pvdata);
+	struct linphone_config_from_dict pvdata = { section, lpconfig };
+	linphone_dictionary_foreach(dict,linphone_config_dict_dump_cb, &pvdata);
 }
 
 

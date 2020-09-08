@@ -156,10 +156,10 @@ static int processEntry(xmlElement *element, const char *sectionName, xml2lpc_co
 		value = "";
 
 	if(name != NULL) {
-		const char *str = lp_config_get_string(ctx->lpc, sectionName, name, NULL);
+		const char *str = linphone_config_get_string(ctx->lpc, sectionName, name, NULL);
 		if(str == NULL || overwrite) {
 			xml2lpc_log(ctx, XML2LPC_MESSAGE, "Set %s|%s = %s", sectionName, name, value);
-			lp_config_set_string(ctx->lpc, sectionName, name, value);
+			linphone_config_set_string(ctx->lpc, sectionName, name, value);
 		} else {
 			xml2lpc_log(ctx, XML2LPC_MESSAGE, "Don't touch %s|%s = %s",sectionName, name, str);
 		}

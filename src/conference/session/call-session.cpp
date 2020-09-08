@@ -159,7 +159,7 @@ void CallSessionPrivate::startIncomingNotification () {
 	if (listener && state != CallSession::State::PushIncomingReceived)
 		listener->onIncomingCallSessionStarted(q->getSharedFromThis());
 
-	setState(CallSession::State::IncomingReceived, "Incoming CallSession");
+	setState(CallSession::State::IncomingReceived, "Incoming call received");
 
 	// From now on, the application is aware of the call and supposed to take background task or already submitted
 	// notification to the user. We can then drop our background task.
@@ -424,7 +424,7 @@ void CallSessionPrivate::terminated () {
 
 void CallSessionPrivate::updated (bool isUpdate) {
 	L_Q();
-	deferUpdate = !!lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "defer_update_default", FALSE);
+	deferUpdate = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "defer_update_default", FALSE);
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	switch (state) {
@@ -447,7 +447,8 @@ void CallSessionPrivate::updated (bool isUpdate) {
 			break;
 		case CallSession::State::Paused:
 			/* We'll remain in pause state but accept the offer anyway according to default parameters */
-			acceptUpdate(nullptr, state, Utils::toString(state));
+			setState(CallSession::State::UpdatedByRemote, "Call updated by remote (while in Paused)");
+			acceptUpdate(nullptr, CallSession::State::Paused, "Paused");
 			break;
 		case CallSession::State::Updating:
 		case CallSession::State::Pausing:
@@ -516,7 +517,7 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 void CallSessionPrivate::acceptOrTerminateReplacedSessionInIncomingNotification () {
 	L_Q();
 	CallSession *replacedSession = nullptr;
-	if (lp_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
+	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "auto_answer_replacing_calls", 1)) {
 		if (op->getReplaces())
 			replacedSession = reinterpret_cast<CallSession *>(op->getReplaces()->getUserPointer());
 		if (replacedSession) {
@@ -655,7 +656,7 @@ void CallSessionPrivate::setTerminated() {
 		listener->onCallSessionSetTerminated(q->getSharedFromThis());
 }
 
-LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextState, const std::string &stateInfo) {
+LinphoneStatus CallSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
 	op->accept();
 	setState(nextState, stateInfo);
 	return 0;
@@ -836,7 +837,7 @@ void CallSessionPrivate::repairIfBroken () {
 	try {
 		LinphoneCore *lc = q->getCore()->getCCore();
 		LinphoneConfig *config = linphone_core_get_config(lc);
-		if (!lp_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
+		if (!linphone_config_get_int(config, "sip", "repair_broken_calls", 1) || !lc->media_network_state.global_state || !broken)
 			return;
 	} catch (const bad_weak_ptr &) {
 		return; // Cannot repair if core is destroyed.
@@ -887,7 +888,14 @@ void CallSessionPrivate::repairIfBroken () {
 			break;
 		case CallSession::State::OutgoingEarlyMedia:
 		case CallSession::State::OutgoingRinging:
-			repairByInviteWithReplaces();
+			if (op->getRemoteTag() != nullptr){
+				repairByInviteWithReplaces();
+			}else{
+				lWarning() << "No remote tag in last provisional response, no early dialog, so trying to cancel lost INVITE and will retry later.";
+				if (op->cancelInvite() == 0){
+					reinviteOnCancelResponseRequested = true;
+				}
+			}
 			break;
 		case CallSession::State::IncomingEarlyMedia:
 		case CallSession::State::IncomingReceived:
@@ -997,7 +1005,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		d->op = op;
 		d->op->setUserPointer(this);
 		op->enableCnxIpTo0000IfSendOnly(
-			!!lp_config_get_default_int(
+			!!linphone_config_get_default_int(
 				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
@@ -1161,6 +1169,10 @@ void CallSession::startIncomingNotification (bool notifyRinging) {
 	if (d->state != CallSession::State::PushIncomingReceived) {
 		startBasicIncomingNotification(notifyRinging);
 	}
+	if (d->deferIncomingNotification) {
+		lInfo() << "Defer incoming notification";
+		return;
+	}
 	d->startIncomingNotification();
 }
 
@@ -1173,10 +1185,6 @@ void CallSession::startBasicIncomingNotification (bool notifyRinging) {
 	}
 	/* Prevent the CallSession from being destroyed while we are notifying, if the user declines within the state callback */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (d->deferIncomingNotification) {
-		lInfo() << "Defer incoming notification";
-		return;
-	}
 }
 
 void CallSession::startPushIncomingNotification () {
@@ -1184,7 +1192,7 @@ void CallSession::startPushIncomingNotification () {
 	if (d->listener)
 		d->listener->onIncomingCallSessionStarted(getSharedFromThis());
 
-	d->setState(CallSession::State::PushIncomingReceived, "PushIncoming CallSession");
+	d->setState(CallSession::State::PushIncomingReceived, "Push notification received");
 }
 
 

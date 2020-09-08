@@ -140,7 +140,7 @@ void linphone_core_check_for_update(LinphoneCore *lc, const char *current_versio
 	bool_t is_desktop = FALSE;
 	const char *platform = NULL;
 	const char *mobilePlatform = NULL;
-	const char *version_check_url_root = lp_config_get_string(lc->config, "misc", "version_check_url_root", NULL);
+	const char *version_check_url_root = linphone_config_get_string(lc->config, "misc", "version_check_url_root", NULL);
 
 	if (current_version == NULL || strlen(current_version) == 0) {
 		bctbx_error("Can't check for a version newer than null or empty !");

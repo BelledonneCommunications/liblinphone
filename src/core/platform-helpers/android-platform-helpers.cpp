@@ -530,7 +530,7 @@ extern "C" JNIEXPORT void JNICALL Java_org_linphone_core_tools_AndroidPlatformHe
 extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_useSystemHttpProxy(JNIEnv* env, jobject thiz, jlong ptr) {
 	AndroidPlatformHelpers *androidPlatformHelper = static_cast<AndroidPlatformHelpers *>((void *)ptr);
 	LpConfig *config = linphone_core_get_config(androidPlatformHelper->getCore()->getCCore());
-	return !!lp_config_get_int(config, "sip", "use_system_http_proxy", 0);
+	return !!linphone_config_get_int(config, "sip", "use_system_http_proxy", 0);
 }
 
 extern "C" JNIEXPORT jboolean JNICALL Java_org_linphone_core_tools_AndroidPlatformHelper_isInBackground(JNIEnv *env, jobject thiz, jlong ptr) {

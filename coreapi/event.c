@@ -223,14 +223,14 @@ LinphoneReason linphone_event_get_reason(const LinphoneEvent *lev){
 LinphoneEvent *linphone_core_create_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires){
 	LinphoneEvent *lev=linphone_event_new(lc, LinphoneSubscriptionOutgoing, event, expires);
 	linphone_configure_op(lc,lev->op,resource,NULL,TRUE);
-	lev->op->setManualRefresherMode(!lp_config_get_int(lc->config,"sip","refresh_generic_subscribe",1));
+	lev->op->setManualRefresherMode(!linphone_config_get_int(lc->config,"sip","refresh_generic_subscribe",1));
 	return lev;
 }
 
 LinphoneEvent *linphone_core_create_subscribe_2(LinphoneCore *lc, const LinphoneAddress *resource, LinphoneProxyConfig *cfg, const char *event, int expires){
 	LinphoneEvent *lev=linphone_event_new(lc, LinphoneSubscriptionOutgoing, event, expires);
 	linphone_configure_op_with_proxy(lc,lev->op,resource,NULL,TRUE,cfg);
-	lev->op->setManualRefresherMode(!lp_config_get_int(lc->config,"sip","refresh_generic_subscribe",1));
+	lev->op->setManualRefresherMode(!linphone_config_get_int(lc->config,"sip","refresh_generic_subscribe",1));
 	return lev;
 }
 
@@ -348,8 +348,8 @@ LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneProxyCo
 	lev = linphone_event_new_with_op(lc, new SalPublishOp(lc->sal), LinphoneSubscriptionInvalidDir, event);
 	lev->expires = expires;
 	if (!cfg) cfg = linphone_core_lookup_known_proxy(lc, resource);
-	linphone_configure_op_with_proxy(lc,lev->op,resource,NULL, !!lp_config_get_int(lc->config,"sip","publish_msg_with_contact",0),cfg);
-	lev->op->setManualRefresherMode(!lp_config_get_int(lc->config,"sip","refresh_generic_publish",1));
+	linphone_configure_op_with_proxy(lc,lev->op,resource,NULL, !!linphone_config_get_int(lc->config,"sip","publish_msg_with_contact",0),cfg);
+	lev->op->setManualRefresherMode(!linphone_config_get_int(lc->config,"sip","refresh_generic_publish",1));
 	return lev;
 }
 

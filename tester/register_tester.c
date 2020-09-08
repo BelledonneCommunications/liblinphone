@@ -26,6 +26,14 @@
 static void authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method) {
 	linphone_auth_info_set_passwd(auth_info, test_password);
 	linphone_core_add_auth_info(lc, auth_info); /*add authentication info to LinphoneCore*/
+	const char * algo = linphone_auth_info_get_algorithm(auth_info);
+	BC_ASSERT_STRING_NOT_EQUAL(algo, "");// Must have an algorithm
+	bctbx_list_t * algos = linphone_auth_info_get_available_algorithms(auth_info);
+	bool_t have_algo = FALSE;
+	for(bctbx_list_t * elem = algos ; !have_algo && elem != NULL ; elem = algos->next)
+		have_algo = (strcmp((char*)elem->data,algo)==0);
+	BC_ASSERT(have_algo);// Must have algorithm in list of available algorithms
+	bctbx_list_free_with_data(algos, (bctbx_list_free_func)bctbx_free);
 }
 
 static LinphoneCoreManager* create_lcm_with_auth(unsigned int with_auth) {
@@ -489,8 +497,8 @@ static void authenticated_register_with_provided_credentials(void){
 	BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&counters->number_of_LinphoneRegistrationOk,1));
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
 
-	BC_ASSERT_PTR_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
-	BC_ASSERT_PTR_NOT_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
+	BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
 
 	linphone_proxy_config_unref(cfg);
 	linphone_core_manager_destroy(lcm);
@@ -518,8 +526,8 @@ static void authenticated_register_with_provided_credentials_and_username_with_s
 	BC_ASSERT_TRUE(wait_for(lcm->lc, lcm->lc, &counters->number_of_LinphoneRegistrationOk, 1));
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested, 0, int, "%d");
 
-	BC_ASSERT_PTR_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
-	BC_ASSERT_PTR_NOT_NULL(lp_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
+	BC_ASSERT_PTR_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "passwd", NULL));
+	BC_ASSERT_PTR_NOT_NULL(linphone_config_get_string(linphone_core_get_config(lcm->lc), "auth_info_0", "ha1", NULL));
 
 	linphone_proxy_config_unref(cfg);
 	linphone_core_manager_destroy(lcm);
@@ -1023,18 +1031,18 @@ static void tls_certificate_subject_check(void){
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc, rootcapath);
 		/*let's search for a subject that is not in the certificate, it should fail*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "cotcotcot.org");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "cotcotcot.org");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&lcm->stat.number_of_LinphoneRegistrationFailed,1));
 	
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "altname.linphone.org");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "altname.linphone.org");
 		linphone_core_refresh_registers(lcm->lc);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,1));
 		linphone_core_set_network_reachable(lc,FALSE);
 		
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
-		lp_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
+		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,2));
 		
@@ -1175,8 +1183,8 @@ static void tls_auth_global_client_cert(void) {
 		char *key_path = bc_tester_res("certificates/client/key.pem");
 		linphone_core_manager_init(manager, "pauline_tls_client_rc", NULL);
 		lpc = linphone_core_get_config(manager->lc);
-		lp_config_set_string(lpc, "sip", "client_cert_chain", cert_path);
-		lp_config_set_string(lpc, "sip", "client_cert_key", key_path);
+		linphone_config_set_string(lpc, "sip", "client_cert_chain", cert_path);
+		linphone_config_set_string(lpc, "sip", "client_cert_key", key_path);
 		linphone_core_manager_start(manager, TRUE);
 		linphone_core_manager_destroy(manager);
 		bc_free(cert_path);
@@ -1467,6 +1475,19 @@ static void register_with_specific_client_port(void){
 #endif
 }
 
+static void unreliable_channels_cleanup(void){
+	LinphoneCoreManager *lcm = linphone_core_manager_new2("pauline_tcp_rc", TRUE);
+	
+	BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 1, int, "%i");
+	/* wait 4 seconds */
+	wait_for_until(lcm->lc, lcm->lc, NULL, 0, 4000);
+	/* simulate a push notification to be received, in order to have the unreliable connection to be closed. */
+	linphone_core_ensure_registered(lcm->lc);
+	/* this should result in a new register to be done */
+	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &lcm->stat.number_of_LinphoneRegistrationOk, 2, 8000));
+	linphone_core_manager_destroy(lcm);	
+}
+
 
 test_t register_tests[] = {
 	TEST_NO_TAG("Simple register", simple_register),
@@ -1521,7 +1542,8 @@ test_t register_tests[] = {
 	TEST_NO_TAG("Register get GRUU", register_get_gruu),
 	TEST_NO_TAG("Register get GRUU for multi device", multi_devices_register_with_gruu),
 	TEST_NO_TAG("Update contact private IP address", update_contact_private_ip_address),
-	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port)
+	TEST_NO_TAG("Register with specific client port", register_with_specific_client_port),
+	TEST_NO_TAG("Cleanup of unreliable channels", unreliable_channels_cleanup)
 };
 
 test_suite_t register_test_suite = {"Register", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

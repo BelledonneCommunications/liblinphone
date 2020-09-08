@@ -5,29 +5,25 @@
  *
  * @section what_is_it What is liblinphone
  *
- * Liblinphone is a high level library for bringing SIP video call functionnality
- * into an application. It aims at making easy the integration of the SIP
- * video calls into any applications. All variants of linphone are directly based
- * on it:
- * - linphone (gtk interface)
- * - linphonec (console interface)
- * - linphone for iOS
- * - linphone for Android
+ * Liblinphone is a high-level open source library that integrates all the SIP voice/video and instant messaging features into a single easy-to-use API.
+ * This is the VoIP SDK engine on which Linphone applications are based.
  *
- * Liblinphone is GPL (see COPYING file). Please understand the licencing details
- * before using it!
+ * Liblinphone combines our media processing and streaming toolkit (Mediastreamer2) with our user-agent library for SIP signaling (belle-sip).
+ * Liblinphone has support for a variety of languages, each one has its own reference documentation:
  *
- * For any use of this library beyond the rights granted to you by the
- * GPL license, please contact Belledonne Communications
- * (contact@belledonne-communications.com)
+ * - C (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@LINPHONE_VERSION@/c)
+ * - C++ (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@LINPHONE_VERSION@/c++)
+ * - Swift (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@LINPHONE_VERSION@/swift)
+ * - Java (https://linphone.org/@LINPHONE_STATE@/docs/liblinphone/@LINPHONE_VERSION@/java)
+ * - C# (coming soon)
+ * - Python (coming soon)
+ *
+ * Liblinphone is distributed under GPLv3 (https://www.gnu.org/licenses/gpl-3.0.html). Please understand the licencing details before using it!
+ *
+ * For any use of this library beyond the rights granted to you by the GPLv3 license, please contact Belledonne Communications (https://www.linphone.org/contact).
  *
  *
 **/
-
-/**
- * @page liblinphone_license COPYING
- * @include COPYING
- */
 
 /**
  * @defgroup initializing Initializing
@@ -62,7 +58,7 @@
 /**
  * @defgroup media_parameters Media parameters
  * @brief Controlling media parameters.
- * 
+ *
  * <b>Multicast</b>
  *
  * Call using rtp multicast addresses are supported for both audio and video with some limitations. Limitations are, no stun, no ice, no encryption.
@@ -74,7 +70,7 @@
 /**
  * @defgroup proxies Proxies
  * @brief Managing proxies.
- * 
+ *
  * User registration is controled by  #LinphoneProxyConfig settings.<br> Each #LinphoneProxyConfig object can be configured with registration informations
  * like \link linphone_proxy_config_set_server_addr() proxy address \endlink , \link linphone_proxy_config_set_identity_address() user id \endlink, \link linphone_proxy_config_expires()
  * refresh period \endlink, and so on.
@@ -123,8 +119,8 @@
  *<br> Unregistration or any changes to #LinphoneProxyConfig must be first started by a call to function linphone_proxy_config_edit() and validated by  function linphone_proxy_config_done()
  *<br> This pseudo code shows how to unregister a user associated to a #LinphoneProxyConfig
  *\code
- 	LinphoneProxyConfig* proxy_cfg;
- 	linphone_core_get_default_proxy(lc,&proxy_cfg); /* get default proxy config*/
+	LinphoneProxyConfig* proxy_cfg;
+	linphone_core_get_default_proxy(lc,&proxy_cfg); /* get default proxy config*/
 	linphone_proxy_config_edit(proxy_cfg); /*start editing proxy configuration*/
 	linphone_proxy_config_enable_register(proxy_cfg,FALSE); /*de-activate registration for this proxy config*/
 	linphone_proxy_config_done(proxy_cfg); /*initiate REGISTER with expire = 0*/
@@ -146,7 +142,7 @@
 /**
  * @defgroup buddy_list Buddy list
  * @brief Managing Buddies and buddy list and presence.
- * 
+ *
  * <b>Buddies and buddy list</b>
  * <br>Each buddy is represented by a #LinphoneFriend object created by function linphone_friend_new().
  * Buddy configuration parameters like \link linphone_friend_set_addr() sip uri \endlink or  \link linphone_friend_set_inc_subscribe_policy() status publication \endlink policy for
@@ -175,31 +171,31 @@
  * linphone_friend_enable_subscribes(my_friend,FALSE); /*disable subscription for this friend*/
  * linphone_friend_done(my_friend); /*commit changes triggering an UNSUBSCRIBE message*/
  * \endcode
- * 
- * 
+ *
+ *
  * <b> Publishing presence status </b>
  * <br>Local presence status can be changed using function linphone_core_set_presence_model() .New status is propagated to all friends \link linphone_core_add_friend() previously added \endlink to #LinphoneCore.
- * 
+ *
  * <b>Handling incoming subscription request</b>
  * <br> New incoming subscription requests are process according to \link linphone_friend_set_inc_subscribe_policy() the incoming subscription policy state \endlink for subscription initiated by \link linphone_core_add_friend() members of the buddy list. \endlink
  * <br> For incoming request comming from an unknown buddy, the call back  LinphoneCoreVTable.new_subscription_request is invoked.
- * 
+ *
  * <br> A complete tutorial can be found at : \ref buddy_tutorials "Registration tutorial"
- * 
- * 
+ *
+ *
 **/
 
 /**
  * @defgroup chatroom Chatroom
  * @brief Chat room and Messaging.
- * 
+ *
  * <b> Exchanging text messages</b>
  * <br> Messages are sent using #LinphoneChatRoom object. First step is to create a \link linphone_core_get_chat_room() chat room \endlink
  * from a peer sip uri.
  * \code
  * LinphoneChatRoom* chat_room = linphone_core_get_chat_room(lc,"sip:joe@sip.linphone.org");
  * \endcode
- * 
+ *
  * <br>Once created, messages are sent using function linphone_chat_room_send_message().
  * \code
  * linphone_chat_room_send_message(chat_room,"Hello world"); /*sending message*/
@@ -280,7 +276,7 @@
  <br> Liblinphone for IOS natively supports multitasking assuming application follows multitasking guides provided by Apple. First step is to declare application as multitasked. It means adding background mode for both audio and voip to Info.plist file.
  <br>
  \code
- 	<key>UIBackgroundModes</key>
+	<key>UIBackgroundModes</key>
 	<array>
 		<string>voip</string>
 		<string>audio</string>

@@ -125,6 +125,14 @@ void linphone_player_close(LinphonePlayer *obj){
 	obj->close(obj);
 }
 
+void linphone_player_set_window_id(LinphonePlayer *obj, void* window_id){
+	obj->set_window_id(obj, window_id);
+}
+
+bool_t linphone_player_get_is_video_available(LinphonePlayer *obj) {
+	return obj->is_video_available(obj);
+}
+
 void linphone_player_destroy(LinphonePlayer *obj) {
 	_linphone_player_destroy(obj);
 }

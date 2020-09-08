@@ -61,7 +61,7 @@ void send_dtmf_base(LinphoneCoreManager **pmarie, LinphoneCoreManager **ppauline
 	}
 
 	if (dtmf_seq != NULL) {
-		int dtmf_delay_ms = lp_config_get_int(linphone_core_get_config(linphone_call_get_core(marie_call)),"net","dtmf_delay_ms",200);
+		int dtmf_delay_ms = linphone_config_get_int(linphone_core_get_config(linphone_call_get_core(marie_call)),"net","dtmf_delay_ms",200);
 		dtmf_count_prev = pauline->stat.dtmf_count;
 		linphone_call_send_dtmfs(marie_call, dtmf_seq);
 

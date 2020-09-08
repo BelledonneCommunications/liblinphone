@@ -608,7 +608,7 @@ LinphoneCall *linphone_call_new_incoming (LinphoneCore *lc, const LinphoneAddres
 	LinphoneCall *lcall = Call::createCObject(L_GET_CPP_PTR_FROM_C_OBJECT(lc), LinphoneCallIncoming,
 	*L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to),
 	nullptr, op, nullptr);
-	
+	Call::toCpp(lcall)->initiateIncoming();
 	return lcall;
 }
 
@@ -627,6 +627,7 @@ void linphone_call_start_basic_incoming_notification(LinphoneCall *call) {
 
 void linphone_call_configure (LinphoneCall *call, const LinphoneAddress *from, const LinphoneAddress *to, LinphonePrivate::SalCallOp *op) {
 	Call::toCpp(call)->configure(LinphoneCallIncoming, *L_GET_CPP_PTR_FROM_C_OBJECT(from), *L_GET_CPP_PTR_FROM_C_OBJECT(to), nullptr, op, nullptr);
+	LinphonePrivate::Call::toCpp(call)->initiateIncoming();
 }
 
 bool_t linphone_call_is_op_configured (const LinphoneCall *call) {

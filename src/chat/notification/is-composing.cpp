@@ -59,7 +59,7 @@ string IsComposing::createXml (bool isComposing) {
 #ifdef HAVE_ADVANCED_IM
 	Xsd::IsComposing::IsComposing node(isComposing ? "active" : "idle");
 	if (isComposing)
-		node.setRefresh(static_cast<unsigned long long>(lp_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout)));
+		node.setRefresh(static_cast<unsigned long long>(linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout)));
 
 	stringstream ss;
 	Xsd::XmlSchema::NamespaceInfomap map;
@@ -100,7 +100,7 @@ void IsComposing::startIdleTimer () {
 		idleTimer = core->sal->createTimer(idleTimerExpired, this,
 			duration * 1000, "composing idle timeout");
 	} else {
-		belle_sip_source_set_timeout(idleTimer, duration * 1000);
+		belle_sip_source_set_timeout_int64(idleTimer, duration * 1000LL);
 	}
 }
 
@@ -110,7 +110,7 @@ void IsComposing::startRefreshTimer () {
 		refreshTimer = core->sal->createTimer(refreshTimerExpired, this,
 			duration * 1000, "composing refresh timeout");
 	} else {
-		belle_sip_source_set_timeout(refreshTimer, duration * 1000);
+		belle_sip_source_set_timeout_int64(refreshTimer, duration * 1000LL);
 	}
 }
 
@@ -149,17 +149,17 @@ void IsComposing::stopRemoteRefreshTimer (const string &uri) {
 // -----------------------------------------------------------------------------
 
 unsigned int IsComposing::getIdleTimerDuration () {
-	int idleTimerDuration = lp_config_get_int(core->config, "sip", "composing_idle_timeout", defaultIdleTimeout);
+	int idleTimerDuration = linphone_config_get_int(core->config, "sip", "composing_idle_timeout", defaultIdleTimeout);
 	return idleTimerDuration < 0 ? 0 : static_cast<unsigned int>(idleTimerDuration);
 }
 
 unsigned int IsComposing::getRefreshTimerDuration () {
-	int refreshTimerDuration = lp_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout);
+	int refreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout);
 	return refreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(refreshTimerDuration);
 }
 
 unsigned int IsComposing::getRemoteRefreshTimerDuration () {
-	int remoteRefreshTimerDuration = lp_config_get_int(core->config, "sip", "composing_remote_refresh_timeout", defaultRemoteRefreshTimeout);
+	int remoteRefreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_remote_refresh_timeout", defaultRemoteRefreshTimeout);
 	return remoteRefreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(remoteRefreshTimerDuration);
 }
 
@@ -193,7 +193,7 @@ void IsComposing::startRemoteRefreshTimer (const string &uri, unsigned long long
 		pair<string, belle_sip_source_t *> p(uri, timer);
 		remoteRefreshTimers.insert(p);
 	} else
-		belle_sip_source_set_timeout(it->second, duration * 1000);
+		belle_sip_source_set_timeout_int64(it->second, duration * 1000LL);
 }
 
 void IsComposing::stopAllRemoteRefreshTimers () {

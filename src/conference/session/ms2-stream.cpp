@@ -146,7 +146,7 @@ void MS2Stream::setIceCheckList(IceCheckList *cl){
 }
 
 string MS2Stream::getBindIp(){
-	string bindIp = lp_config_get_string(linphone_core_get_config(getCCore()), "rtp", "bind_address", "");
+	string bindIp = linphone_config_get_string(linphone_core_get_config(getCCore()), "rtp", "bind_address", "");
 	
 	if (!mPortConfig.multicastIp.empty()){
 		if (mPortConfig.multicastRole == SalMulticastSender) {
@@ -463,15 +463,15 @@ void MS2Stream::applyJitterBufferParams (RtpSession *session) {
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	JBParameters params;
 	rtp_session_get_jitter_buffer_params(session, &params);
-	params.min_size = lp_config_get_int(config, "rtp", "jitter_buffer_min_size", 40);
-	params.max_size = lp_config_get_int(config, "rtp", "jitter_buffer_max_size", 500);
+	params.min_size = linphone_config_get_int(config, "rtp", "jitter_buffer_min_size", 40);
+	params.max_size = linphone_config_get_int(config, "rtp", "jitter_buffer_max_size", 500);
 	params.max_packets = params.max_size * 200 / 1000; /* Allow 200 packet per seconds, quite large */
-	const char *algo = lp_config_get_string(config, "rtp", "jitter_buffer_algorithm", "rls");
+	const char *algo = linphone_config_get_string(config, "rtp", "jitter_buffer_algorithm", "rls");
 	params.buffer_algorithm = jitterBufferNameToAlgo(algo ? algo : "");
-	params.refresh_ms = lp_config_get_int(config, "rtp", "jitter_buffer_refresh_period", 5000);
-	params.ramp_refresh_ms = lp_config_get_int(config, "rtp", "jitter_buffer_ramp_refresh_period", 5000);
-	params.ramp_step_ms = lp_config_get_int(config, "rtp", "jitter_buffer_ramp_step", 20);
-	params.ramp_threshold = lp_config_get_int(config, "rtp", "jitter_buffer_ramp_threshold", 70);
+	params.refresh_ms = linphone_config_get_int(config, "rtp", "jitter_buffer_refresh_period", 5000);
+	params.ramp_refresh_ms = linphone_config_get_int(config, "rtp", "jitter_buffer_ramp_refresh_period", 5000);
+	params.ramp_step_ms = linphone_config_get_int(config, "rtp", "jitter_buffer_ramp_step", 20);
+	params.ramp_threshold = linphone_config_get_int(config, "rtp", "jitter_buffer_ramp_threshold", 70);
 
 	switch (getType()) {
 		case SalAudio:
@@ -505,7 +505,7 @@ void MS2Stream::configureRtpSession(RtpSession *session){
 	rtp_session_set_symmetric_rtp(session, linphone_core_symmetric_rtp_enabled(getCCore()));
 	
 	if (getType() == SalVideo){
-		int videoRecvBufSize = lp_config_get_int(linphone_core_get_config(getCCore()), "video", "recv_buf_size", 0);
+		int videoRecvBufSize = linphone_config_get_int(linphone_core_get_config(getCCore()), "video", "recv_buf_size", 0);
 		if (videoRecvBufSize > 0)
 			rtp_session_set_recv_buf_size(session, videoRecvBufSize);
 	}
@@ -565,7 +565,7 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 			return;
 		}
 		/* Workaround for buggy openssl versions that send DTLS packets bigger than the MTU. We need to increase the recv buf size of the RtpSession.*/
-		int recv_buf_size = lp_config_get_int(linphone_core_get_config(getCCore()),"rtp", "dtls_recv_buf_size", 5000);
+		int recv_buf_size = linphone_config_get_int(linphone_core_get_config(getCCore()),"rtp", "dtls_recv_buf_size", 5000);
 		rtp_session_set_recv_buf_size(mSessions.rtp_session, recv_buf_size);
 		
 		/* If DTLS is available at both end points */
@@ -1024,27 +1024,27 @@ bool MS2Stream::isMuted()const{
 RtpSession* MS2Stream::createRtpIoSession() {
 	LinphoneConfig *config = linphone_core_get_config(getCCore());
 	const char *config_section = getType() == SalAudio ? "sound" : "video";
-	const char *rtpmap = lp_config_get_string(config, config_section, "rtp_map", getType() == SalAudio ? "pcmu/8000/1" : "vp8/90000");
+	const char *rtpmap = linphone_config_get_string(config, config_section, "rtp_map", getType() == SalAudio ? "pcmu/8000/1" : "vp8/90000");
 	OrtpPayloadType *pt = rtp_profile_get_payload_from_rtpmap(mRtpProfile, rtpmap);
 	if (!pt)
 		return nullptr;
 	string profileName = string("RTP IO ") + string(config_section) + string(" profile");
 	mRtpIoProfile = rtp_profile_new(profileName.c_str());
-	int ptnum = lp_config_get_int(config, config_section, "rtp_ptnum", 0);
+	int ptnum = linphone_config_get_int(config, config_section, "rtp_ptnum", 0);
 	rtp_profile_set_payload(mRtpIoProfile, ptnum, payload_type_clone(pt));
-	const char *localIp = lp_config_get_string(config, config_section, "rtp_local_addr", "127.0.0.1");
-	int localPort = lp_config_get_int(config, config_section, "rtp_local_port", 17076);
+	const char *localIp = linphone_config_get_string(config, config_section, "rtp_local_addr", "127.0.0.1");
+	int localPort = linphone_config_get_int(config, config_section, "rtp_local_port", 17076);
 	RtpSession *rtpSession = ms_create_duplex_rtp_session(localIp, localPort, -1, ms_factory_get_mtu(getCCore()->factory));
 	rtp_session_set_profile(rtpSession, mRtpIoProfile);
-	const char *remoteIp = lp_config_get_string(config, config_section, "rtp_remote_addr", "127.0.0.1");
-	int remotePort = lp_config_get_int(config, config_section, "rtp_remote_port", 17078);
+	const char *remoteIp = linphone_config_get_string(config, config_section, "rtp_remote_addr", "127.0.0.1");
+	int remotePort = linphone_config_get_int(config, config_section, "rtp_remote_port", 17078);
 	rtp_session_set_remote_addr_and_port(rtpSession, remoteIp, remotePort, -1);
 	rtp_session_enable_rtcp(rtpSession, false);
 	rtp_session_set_payload_type(rtpSession, ptnum);
-	int jittcomp = lp_config_get_int(config, config_section, "rtp_jittcomp", 0); /* 0 means no jitter buffer */
+	int jittcomp = linphone_config_get_int(config, config_section, "rtp_jittcomp", 0); /* 0 means no jitter buffer */
 	rtp_session_set_jitter_compensation(rtpSession, jittcomp);
 	rtp_session_enable_jitter_buffer(rtpSession, (jittcomp > 0));
-	bool symmetric = !!lp_config_get_int(config, config_section, "rtp_symmetric", 0);
+	bool symmetric = !!linphone_config_get_int(config, config_section, "rtp_symmetric", 0);
 	rtp_session_set_symmetric_rtp(rtpSession, symmetric);
 	return rtpSession;
 }

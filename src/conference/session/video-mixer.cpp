@@ -92,9 +92,16 @@ void MS2VideoMixer::addLocalParticipant(){
 	io.input.camera = getVideoDevice();
 	io.output.type = MSResourceDefault;
 	
+	video_stream_set_native_preview_window_id(st, linphone_core_get_native_preview_window_id(core));// Ensure to pass Window ID options (like not having to create a window)
+	video_stream_set_native_window_id(st, linphone_core_get_native_video_window_id(core));
+	if (linphone_core_get_video_display_filter(core)) {
+		video_stream_set_display_filter_name(st, linphone_core_get_video_display_filter(core));	// Use the filter defined in configuration
+	} /*else keep default one*/
+	video_stream_use_preview_video_window(st, linphone_core_video_preview_enabled(core));	// Allow preview on conference
+	
 	video_stream_set_device_rotation(st, mSession.getCCore()->device_rotation);
-	video_stream_set_freeze_on_error(st, !!lp_config_get_int(linphone_core_get_config(mSession.getCCore()), "video", "freeze_on_error", 1));
-	video_stream_use_video_preset(st, lp_config_get_string(linphone_core_get_config(mSession.getCCore()), "video", "preset", nullptr));
+	video_stream_set_freeze_on_error(st, !!linphone_config_get_int(linphone_core_get_config(mSession.getCCore()), "video", "freeze_on_error", 1));
+	video_stream_use_video_preset(st, linphone_config_get_string(linphone_core_get_config(mSession.getCCore()), "video", "preset", nullptr));
 	media_stream_set_max_network_bitrate(&st->ms, outputBandwidth);
 	pt = rtp_profile_get_payload(mLocalDummyProfile, sVP8PayloadTypeNumber);
 	pt->normal_bitrate =  outputBandwidth; /* Is it really needed ?*/
@@ -107,7 +114,6 @@ void MS2VideoMixer::addLocalParticipant(){
 		vsize.height = static_cast<int>(linphone_video_definition_get_height(vdef));
 		video_stream_set_sent_video_size(st, vsize);
 	}
-	
 	
 	if (video_stream_start_from_io(st, mLocalDummyProfile, "127.0.0.1", 65002, "127.0.0.1", 65003, sVP8PayloadTypeNumber, &io) != 0){
 		lError() << "Could not start video stream.";

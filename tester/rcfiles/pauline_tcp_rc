@@ -5,6 +5,7 @@ sip_tls_port=-1
 default_proxy=0
 ping_with_options=0
 composing_idle_timeout=1
+unreliable_connection_timeout=3
 
 [auth_info_0]
 username=pauline

@@ -381,6 +381,7 @@ static void dependent_proxy_dependency_removal(void) {
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
 
+	linphone_core_manager_start(marie, FALSE);
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 
 	linphone_core_remove_proxy_config(marie->lc, master);
@@ -550,7 +551,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	}
 
 	if (use_legacy_format) {
-		lp_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
@@ -667,7 +668,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	}
 	
 	if (use_legacy_format) {
-		lp_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
@@ -785,7 +786,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 	}
 	
 	if (use_legacy_format) {
-		lp_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "use_legacy_push_notification_params", TRUE);
 	}
 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));

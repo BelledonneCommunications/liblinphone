@@ -122,7 +122,7 @@ static void lpc2xml_genericxml_warning(void *ctx, const char *fmt, ...) {
 */
 
 static int processEntry(const char *section, const char *entry, xmlNode *node, lpc2xml_context *ctx) {
-	const char *content = lp_config_get_string(ctx->lpc, section, entry, NULL);
+	const char *content = linphone_config_get_string(ctx->lpc, section, entry, NULL);
 	xmlChar *converted_content = NULL;
 	if (content == NULL) {
 		lpc2xml_log(ctx, LPC2XML_ERROR, "Issue when reading the lpc");
@@ -142,7 +142,7 @@ static int processEntry(const char *section, const char *entry, xmlNode *node, l
 		xmlNodeAddContent(node, (const xmlChar *) content);
 	}
 
-	if (lp_config_get_overwrite_flag_for_entry(ctx->lpc, section, entry) || lp_config_get_overwrite_flag_for_section(ctx->lpc, section)) {
+	if (linphone_config_get_overwrite_flag_for_entry(ctx->lpc, section, entry) || linphone_config_get_overwrite_flag_for_section(ctx->lpc, section)) {
 		xmlSetProp(node, (const xmlChar *)"overwrite", (const xmlChar *) "true");
 	}
 	return 0;
@@ -166,7 +166,7 @@ static void processSection_cb(const char *entry, struct __processSectionCtx *ctx
 			return;
 		}
 
-		if (lp_config_get_skip_flag_for_entry(ctx->ctx->lpc, ctx->section, entry)) {
+		if (linphone_config_get_skip_flag_for_entry(ctx->ctx->lpc, ctx->section, entry)) {
 			lpc2xml_log(ctx->ctx, LPC2XML_WARNING, "Skipped entry %s", entry);
 			ctx->ret = 0;
 			return;
@@ -191,7 +191,7 @@ static void processSection_cb(const char *entry, struct __processSectionCtx *ctx
 
 static int processSection(const char *section, xmlNode *node, lpc2xml_context *ctx) {
 	struct __processSectionCtx pc_ctx = {0, section, node, ctx};
-	lp_config_for_each_entry(ctx->lpc, section, (void (*)(const char *, void *))processSection_cb, (void*)&pc_ctx);
+	linphone_config_for_each_entry(ctx->lpc, section, (void (*)(const char *, void *))processSection_cb, (void*)&pc_ctx);
 	return pc_ctx.ret;
 }
 
@@ -208,7 +208,7 @@ static void processConfig_cb(const char *section, struct __processConfigCtx *ctx
 		xmlNode *node;
 		xmlAttr *name_attr;
 
-		if (lp_config_get_skip_flag_for_section(ctx->ctx->lpc, section)) {
+		if (linphone_config_get_skip_flag_for_section(ctx->ctx->lpc, section)) {
 			lpc2xml_log(ctx->ctx, LPC2XML_WARNING, "Skipped section %s", section);
 			ctx->ret = 0;
 			return;
@@ -232,7 +232,7 @@ static void processConfig_cb(const char *section, struct __processConfigCtx *ctx
 
 static int processConfig(xmlNode *node, lpc2xml_context *ctx) {
 	struct __processConfigCtx pc_ctx = {0, node, ctx};
-	lp_config_for_each_section(ctx->lpc, (void (*)(const char *, void *))processConfig_cb, (void*)&pc_ctx);
+	linphone_config_for_each_section(ctx->lpc, (void (*)(const char *, void *))processConfig_cb, (void*)&pc_ctx);
 	return pc_ctx.ret;
 }
 
