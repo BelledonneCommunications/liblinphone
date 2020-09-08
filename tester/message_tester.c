@@ -521,9 +521,9 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
+void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
-							int auto_download, bool_t two_files, bool_t legacy) {
+							int auto_download, bool_t two_files, bool_t legacy, const char* url) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -540,7 +540,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 
 	/* Globally configure an http file transfer server. */
-	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+	linphone_core_set_file_transfer_server(pauline->lc, url);
 
 	/* create a chatroom on pauline's side */
 	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
@@ -730,6 +730,80 @@ end:
 	bctbx_list_free_with_data(msg_list, (bctbx_list_free_func)linphone_chat_message_unref);
 	bc_free(send_filepath);
 	bc_free(send_filepath2);
+}
+
+// Add tls information for given user into the linphone core
+// cert and keys are path to the file, set them as buffer as it is the most likely method to be used
+static void add_tls_client_certificate(LinphoneCore *lc, const char *username, const char *realm, const char *cert, const char *key ) {
+	// We shall already have an auth info for this username/realm, add the tls cert in it
+	LinphoneAuthInfo* auth_info = linphone_auth_info_clone(linphone_core_find_auth_info(lc, realm, username, realm));
+	// otherwise create it
+	if (auth_info == NULL) {
+		auth_info = linphone_auth_info_new(username, NULL, NULL, NULL, realm, realm);
+	}
+	if (cert != NULL) {
+		char *cert_path = bc_tester_res(cert);
+		char *cert_buffer = NULL;
+		liblinphone_tester_load_text_file_in_buffer(cert_path, &cert_buffer);
+		linphone_auth_info_set_tls_cert(auth_info, cert_buffer);
+		bc_free(cert_path);
+		bctbx_free(cert_buffer);
+	}
+	if (key != NULL) {
+		char *key_path = bc_tester_res(key);
+		char *key_buffer = NULL;
+		liblinphone_tester_load_text_file_in_buffer(key_path, &key_buffer);
+		linphone_auth_info_set_tls_key(auth_info, key_buffer);
+		bc_free(key_path);
+		bctbx_free(key_buffer);
+	}
+	linphone_core_add_auth_info(lc, auth_info);
+	linphone_auth_info_unref(auth_info);
+}
+
+static void transfer_message_tls_client_auth(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+		// set a TLS client certificate
+		// Note: this certificates allow to authenticate on sip.example.org but are for user_1 and user_2 not marie_XXX or pauline_XXX
+		// This is not a problem as the file transfer server won't check the individual access but only certificate validity but they must be indexed internally
+		// with the correct username and domain
+		LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+		LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
+		add_tls_client_certificate(marie->lc, linphone_address_get_username(marieAddr), linphone_address_get_domain(marieAddr), "certificates/client/user1_cert.pem", "certificates/client/user1_key.pem");
+		add_tls_client_certificate(pauline->lc, linphone_address_get_username(paulineAddr), linphone_address_get_domain(paulineAddr), "certificates/client/user2_cert.pem", "certificates/client/user2_key.pem");
+		linphone_address_unref(marieAddr);
+		linphone_address_unref(paulineAddr);
+
+		// enable imdn (otherwise transfer_message_base3 is unhappy)
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+		transfer_message_base3(marie, pauline,
+			FALSE, FALSE,
+			FALSE, FALSE,
+			FALSE,
+			-1, FALSE, FALSE, file_transfer_url_tls_client_auth);
+
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
+}
+
+void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
+							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history,
+							int auto_download, bool_t two_files, bool_t legacy) {
+	transfer_message_base3(marie, pauline,
+			upload_error, download_error,
+			use_file_body_handler_in_upload, use_file_body_handler_in_download,
+			download_from_history,
+			auto_download, two_files, legacy, file_transfer_url);
 }
 
 void transfer_message_base(
@@ -3196,6 +3270,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer using external body URL", file_transfer_using_external_body_url),
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
 	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using certificate", transfer_message_tls_client_auth),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 #ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
