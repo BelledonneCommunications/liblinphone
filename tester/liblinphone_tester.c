@@ -25,9 +25,7 @@
 static FILE * log_file = NULL;
 
 static const char* liblinphone_helper =
-		"\t\t\t--domain <test sip domain>\n"
-		"\t\t\t--auth-domain <test auth domain>\n"
-		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: tester_hosts)>\n"
+		"\t\t\t--dns-server <hostname or ip address> (specify the DNS server of the flexisip-tester infrastructure used for the test)\n"
 		"\t\t\t--keep-recorded-files\n"
 		"\t\t\t--disable-leak-detector\n"
 		"\t\t\t--disable-tls-support\n"
@@ -35,7 +33,54 @@ static const char* liblinphone_helper =
 		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
 		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
 		"\t\t\t--file-transfer-server-url <url> - override the default https://transfer.example.org:9444/http-file-transfer-server/hft.php\n"
+		"\t\t\t--domain <test sip domain>	(deprecated)\n"
+		"\t\t\t--auth-domain <test auth domain>	(deprecated)\n"
+		"\t\t\t--dns-hosts </etc/hosts -like file to used to override DNS names or 'none' for no overriding (default: tester_hosts)> (deprecated)\n"
 		;
+
+/*
+ * Returns the list of ip address for the supplied host name using libc's dns resolver.
+ * They are returned as a bctx_list_t of char*, to be freed with bctbx_list_free_with_data(list, bctbx_free).
+ */
+static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *name){
+	struct addrinfo *ai,*ai_it;
+	struct addrinfo hints;
+	bctbx_list_t *ret = NULL;
+	int err;
+	
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	
+	err = getaddrinfo(name, NULL, &hints, &ai);
+	if (err != 0){
+		return NULL;
+	}
+	for(ai_it = ai; ai_it != NULL ; ai_it = ai_it->ai_next){
+		char ipaddress[NI_MAXHOST] = { 0 };
+		err = getnameinfo(ai_it->ai_addr, ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+		if (err != 0){
+			ms_error("liblinphone_tester_resolve_name_to_ip_address(): getnameinfo() error : %s", gai_strerror(err));
+			continue;
+		}
+		ret = bctbx_list_append(ret, bctbx_strdup(ipaddress));
+	}
+	return ret;
+}
+
+static bctbx_list_t * remove_v6_addr(bctbx_list_t *l){
+	bctbx_list_t *it;
+	for (it = l ; it != NULL; ){
+		char *ip = (char*)l->data;
+		printf("seeing %s \n", ip);
+		if (strchr(ip, ':')){
+			l = bctbx_list_erase_link(l, it);
+			bctbx_free(ip);
+			it = l;
+		}else it = it->next;
+	}
+	return l;
+}
 
 static int liblinphone_tester_start(int argc, char *argv[]) {
 	int i;
@@ -61,9 +106,13 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		}else if (strcmp(argv[i],"--dns-hosts")==0){
 			CHECK_ARG("--dns-hosts", ++i, argc);
 			userhostsfile=argv[i];
+			flexisip_tester_dns_server = NULL; /* host file is provided, do not use dns server.*/
 		}else if (strcmp(argv[i],"--file-transfer-server-url")==0){
 			CHECK_ARG("--file-transfer-server-url", ++i, argc);
 			file_transfer_url=argv[i];
+		}else if (strcmp(argv[i], "--dns-server") == 0){
+			CHECK_ARG("--dns-server", ++i, argc);
+			flexisip_tester_dns_server=argv[i];
 		} else if (strcmp(argv[i],"--keep-recorded-files")==0){
 			liblinphone_tester_keep_recorded_files(TRUE);
 		} else if (strcmp(argv[i],"--disable-leak-detector")==0){
@@ -88,7 +137,21 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 		}
 	}
 
+	if (flexisip_tester_dns_server != NULL){
+		/*
+		 * We have to remove ipv6 addresses because flexisip-tester internally uses a dnsmasq configuration that does not listen on ipv6.
+		 */
+		flexisip_tester_dns_ip_addresses = remove_v6_addr(liblinphone_tester_resolve_name_to_ip_address(flexisip_tester_dns_server));
+		if (flexisip_tester_dns_ip_addresses == NULL){
+			ms_error("Cannot resolve the flexisip-tester's dns server name '%s'.", flexisip_tester_dns_server);
+			return -1;
+		}
+	}
 	ret = bc_tester_start(argv[0]);
+	if (flexisip_tester_dns_ip_addresses){
+		bctbx_list_free_with_data(flexisip_tester_dns_ip_addresses, bctbx_free);
+		flexisip_tester_dns_ip_addresses = NULL;
+	}
 	return ret;
 }
 

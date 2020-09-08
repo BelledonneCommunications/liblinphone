@@ -22,6 +22,7 @@ package org.linphone.core.tools.service;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ServiceInfo;
@@ -35,6 +36,7 @@ import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.audio.AudioHelper;
 import org.linphone.core.tools.audio.BluetoothHelper;
+import org.linphone.core.tools.receiver.ShutdownReceiver;
 import org.linphone.mediastream.Version;
 
 import java.lang.reflect.Constructor;
@@ -70,6 +72,7 @@ public class CoreManager {
     private CoreListenerStub mListener;
     private AudioHelper mAudioHelper;
     private BluetoothHelper mBluetoothHelper;
+    private ShutdownReceiver mShutdownReceiver;
 
     private native void updatePushNotificationInformation(long ptr, String appId, String token);
 
@@ -90,7 +93,7 @@ public class CoreManager {
 
         PushNotificationUtils.init(mContext);
         if (!PushNotificationUtils.isAvailable(mContext)) {
-            Log.w("[Core Manager] Push notifications aren't available");
+            Log.w("[Core Manager] Push notifications aren't available (see push utils log)");
         }
         
         if (isAndroidXMediaAvailable()) {
@@ -99,6 +102,13 @@ public class CoreManager {
             Log.w("[Core Manager] Do you have a dependency on androidx.media:media package?");
         }
         mBluetoothHelper = new BluetoothHelper(mContext);
+
+        IntentFilter shutdownIntentFilter = new IntentFilter(Intent.ACTION_SHUTDOWN);
+        // Without that the broadcast timeout might be reached before we were called
+        shutdownIntentFilter.setPriority(IntentFilter.SYSTEM_HIGH_PRIORITY - 1);
+        mShutdownReceiver = new ShutdownReceiver();
+        Log.i("[Core Manager] Registering shutdown receiver");
+        mContext.registerReceiver(mShutdownReceiver, shutdownIntentFilter);
 
         Log.i("[Core Manager] Ready");
     }
@@ -187,8 +197,19 @@ public class CoreManager {
         }
     }
 
+    public void stop() {
+        Log.i("[Core Manager] Stopping");
+        mCore.stop();
+    }
+
     public void onLinphoneCoreStop() {
         Log.i("[Core Manager] Destroying");
+
+        if (mShutdownReceiver != null) {
+            Log.i("[Core Manager] Unregistering shutdown receiver");
+            mContext.unregisterReceiver(mShutdownReceiver);
+            mShutdownReceiver = null;
+        }
 
         mContext.stopService(new Intent().setClass(mContext, mServiceClass));
         Log.i("[Core Manager] Stopping service ", mServiceClass.getName());

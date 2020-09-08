@@ -98,7 +98,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	if (!isValidStateTransition(currentState, newState))
 		return;
 
-	lInfo() << "Chat message " << this << ": moving participant '" << participantAddress.asString() << "' state to "
+	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving participant '" << participantAddress.asString() << "' state to "
 		<< Utils::toString(newState);
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
 
@@ -157,7 +157,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		return;
 
 	// 2. Update state and notify changes.
-	lInfo() << "Chat message " << this << ": moving from " << Utils::toString(state) <<
+	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
@@ -167,6 +167,12 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 			salOp->setUserPointer(nullptr);
 			salOp->unref();
 			salOp = nullptr;
+		}
+	}
+
+	if (direction == ChatMessage::Direction::Outgoing) {
+		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
+			q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 		}
 	}
 
@@ -740,7 +746,7 @@ void ChatMessagePrivate::handleAutoDownload() {
 							string filepath = downloadPath + ftc->getFileName();
 							lInfo() << "Downloading file to " << filepath;
 							ftc->setFilePath(filepath);
-							setAutoFileTransferDownloadHappened(true);
+							setAutoFileTransferDownloadInProgress(true);
 							q->downloadFile(ftc);
 							return;
 						} else {
@@ -754,7 +760,8 @@ void ChatMessagePrivate::handleAutoDownload() {
 	}
 
 	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
-	setAutoFileTransferDownloadHappened(false);
+	setAutoFileTransferDownloadInProgress(false);
+	setState(ChatMessage::State::Delivered);
 	q->getChatRoom()->getPrivate()->onChatMessageReceived(q->getSharedFromThis());
 	return;
 }
@@ -947,11 +954,15 @@ void ChatMessagePrivate::send () {
 	}
 
 	restoreFileTransferContentAsFileContent();
-	q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
+	
+	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
+	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
+		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+	}
 
 	if (imdnId.empty()) {
 		setImdnMessageId(op->getCallId());   /* must be known at that time */
@@ -1017,7 +1028,7 @@ void ChatMessagePrivate::updateInDb () {
 	L_Q();
 
 	if (!dbKey.isValid()) {
-		lError() << "Invalid db key [" << &dbKey << "] associated to message [" << this <<"]";
+		lError() << "Invalid db key [" << &dbKey << "] associated to message [" << q->getSharedFromThis() <<"]";
 		return;
 	}
 
@@ -1025,7 +1036,7 @@ void ChatMessagePrivate::updateInDb () {
 	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
 
 	if (!eventLog) {
-		lError() << "cannot find eventLog for db key [" << &dbKey << "] associated to message [" << this <<"]";
+		lError() << "cannot find eventLog for db key [" << &dbKey << "] associated to message [" << q->getSharedFromThis() <<"]";
 		return;
 	}
 	// Avoid transaction in transaction if contents are not loaded.
@@ -1353,8 +1364,15 @@ bool ChatMessage::isFileTransferInProgress () const {
 void ChatMessage::cancelFileTransfer () {
 	L_D();
 	if (d->fileTransferChatMessageModifier.isFileTransferInProgressAndValid()) {
+		lWarning() << "Canceling file transfer on message [" << getSharedFromThis() << "]";
 		if (d->state == State::FileTransferInProgress) {
-			d->setState(State::NotDelivered);
+			// For auto download messages, set the state back to Delivered
+			if (d->isAutoFileTransferDownloadInProgress()) {
+				d->setState(State::Delivered);
+				getChatRoom()->getPrivate()->removeTransientChatMessage(getSharedFromThis());
+			} else {
+				d->setState(State::NotDelivered);
+			}
 		}
 		d->fileTransferChatMessageModifier.cancelFileTransfer();
 	} else {

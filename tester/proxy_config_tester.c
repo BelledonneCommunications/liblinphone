@@ -381,6 +381,7 @@ static void dependent_proxy_dependency_removal(void) {
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 	LinphoneProxyConfig *master = (LinphoneProxyConfig *) proxyConfigs->data;
 
+	linphone_core_manager_start(marie, FALSE);
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 
 	linphone_core_remove_proxy_config(marie->lc, master);

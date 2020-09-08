@@ -21,7 +21,6 @@
 ############################################################################
 
 add_subdirectory(doxygen)
-add_subdirectory(sphinx)
 
 if(ENABLE_JAVADOC)
 		find_package(Java REQUIRED)

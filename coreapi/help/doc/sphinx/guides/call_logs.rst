@@ -1,2 +1,0 @@
-Managing call logs
-==================

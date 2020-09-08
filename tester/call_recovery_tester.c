@@ -138,7 +138,7 @@ end:
 static void recovered_call_on_network_switch_in_early_state_4(void) {
 	LinphoneCall *incoming_call;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
 
 	linphone_core_invite_address(marie->lc, pauline->identity);
 	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1))) goto end;

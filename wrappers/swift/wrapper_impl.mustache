@@ -19,6 +19,9 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 import Foundation
 import linphone
+#if canImport(SwiftUI)
+import SwiftUI
+#endif
 
 {{#enums}}
 {{#enum}}
@@ -116,6 +119,29 @@ func ObjectArrayToBctbxList<T:LinphoneObject>(list: [T]?) -> UnsafeMutablePointe
 	}
 	return cList
 }
+
+#if canImport(SwiftUI) && (arch(arm64) || arch(x86_64))
+@available(iOS 13.0, tvOS 13.0, *)
+@available(OSX, unavailable)
+@available(watchOS, unavailable)
+/// Add this object in your SwiftUI while giving him the callback necessary to link its view to the Core (using Core.nativeVideoWindowId for example).
+public struct LinphoneVideoViewHolder: UIViewRepresentable {
+	private let _view = UIView()
+	private let _setVideoWindowFn : (UIView) -> Void
+
+	public init(setVideoWindowFn : @escaping (UIView) -> Void)
+	{
+		_setVideoWindowFn = setVideoWindowFn
+	}
+
+	public func makeUIView(context: Context) -> UIView {
+		_setVideoWindowFn(_view)
+		return _view
+	}
+
+	public func updateUIView(_ uiView: UIView, context: Context) {}
+}
+#endif
 
 protocol LinphoneObjectDelegate {
 	var cPtr: OpaquePointer {get set}
@@ -218,32 +244,47 @@ public class {{className}} : LinphoneObject
 		return cPtr
 	}
 	{{#isLinphoneCore}}
-
-	/// Get the native window handle of the video window.
-	public var NativeVideoWindowIdString: String
+	/// Get the UIView in which the video is be rendered. Use nativeVideoWindowId for direct pointer management.
+	/// - Returns: The UIView in which the video will be rendered.
+	public var nativeVideoWindow: UIView?
 	{
 		get
 		{
-			return String(cString: unsafeBitCast(linphone_core_get_native_video_window_id(cPtr), to: UnsafePointer<CChar>.self))
+			return Unmanaged<UIView>.fromOpaque(linphone_core_get_native_video_window_id(cPtr)).takeUnretainedValue()
 		}
 		set
 		{
-			let sValue:NSString = newValue as NSString
-			linphone_core_set_native_video_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
+			if let previousViewPtr = linphone_core_get_native_video_window_id(cPtr)
+			{
+				Unmanaged<UIView>.fromOpaque(previousViewPtr).release()
+			}
+			if let view = newValue {
+				linphone_core_set_native_video_window_id(cPtr, UnsafeMutableRawPointer(Unmanaged.passRetained(view).toOpaque()))
+			} else {
+				linphone_core_set_native_video_window_id(cPtr, nil)
+			}
 		}
 	}
 
-	/// Get the native window handle of the video preview window.
-	public var NativePreviewWindowIdString: String
+	/// Get the UIView in which the camera preview is be rendered. Use nativePreviewWindowId for direct pointer management.
+	/// - Returns: The UIView in which the camera preview will be rendered.
+	public var nativePreviewWindow: UIView?
 	{
 		get
 		{
-			return String(cString: unsafeBitCast(linphone_core_get_native_preview_window_id(cPtr), to: UnsafePointer<CChar>.self))
+			return Unmanaged<UIView>.fromOpaque(linphone_core_get_native_preview_window_id(cPtr)).takeUnretainedValue()
 		}
 		set
 		{
-			let sValue:NSString = newValue as NSString
-			linphone_core_set_native_preview_window_id(cPtr, unsafeBitCast(sValue.utf8String, to: UnsafeMutablePointer<CChar>.self))
+			if let previousViewPtr = linphone_core_get_native_preview_window_id(cPtr)
+			{
+				Unmanaged<UIView>.fromOpaque(previousViewPtr).release()
+			}
+			if let view = newValue {
+				linphone_core_set_native_preview_window_id(cPtr, UnsafeMutableRawPointer(Unmanaged.passRetained(view).toOpaque()))
+			} else {
+				linphone_core_set_native_preview_window_id(cPtr, nil)
+			}
 		}
 	}
 	{{/isLinphoneCore}}
