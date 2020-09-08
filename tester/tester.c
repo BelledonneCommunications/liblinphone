@@ -60,6 +60,7 @@ const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
 const char *file_transfer_url="https://transfer.example.org:9444/http-file-transfer-server/hft.php";
+const char *file_transfer_url_tls_client_auth="https://transfer.example.org:9445/http-file-transfer-server/hft.php";
 // These lime server authenticate user using Digest auth only
 const char *lime_server_c25519_url="https://lime.wildcard1.linphone.org:8443/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_url="https://lime.wildcard1.linphone.org:8443/lime-server-c448/lime-server.php";

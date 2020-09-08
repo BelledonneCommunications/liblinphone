@@ -465,13 +465,13 @@ static void _chat_message_process_auth_requested_upload (void *data, belle_sip_a
 	d->processAuthRequestedUpload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedUpload (const belle_sip_auth_event *event) {
+void FileTransferChatMessageModifier::processAuthRequestedUpload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	lError() << "Error during file upload: auth requested for message [" << message << "]";
-	if (!message)
-		return;
-	message->getPrivate()->setState(ChatMessage::State::NotDelivered);
-	releaseHttpRequest();
+	// Fill the authentication info
+	// Pass the server domain as parameter so if the auth request mode is TLS client certificate
+	// We'll look for a matching certificate in the auth_info
+	lInfo() << "File transfer upload authentication requested from server on domain "<<belle_sip_auth_event_get_distinguished_name(event);
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, NULL, belle_sip_auth_event_get_distinguished_name(event));
 }
 
 int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
@@ -982,10 +982,13 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 	d->processAuthRequestedDownload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_sip_auth_event *event) {
+void FileTransferChatMessageModifier::processAuthRequestedDownload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	lError() << "Error during file download : auth requested for message [" << message << "]";
-	onDownloadFailed();
+	// Fill the authentication info
+	// Pass the server domain as parameter so if the auth request mode is TLS client certificate
+	// We'll look for a matching certificate in the auth_info
+	lInfo() << "File transfer download authentication requested from server on domain "<<belle_sip_auth_event_get_distinguished_name(event);
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, NULL, belle_sip_auth_event_get_distinguished_name(event));
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {

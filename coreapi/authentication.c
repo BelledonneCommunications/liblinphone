@@ -138,9 +138,9 @@ const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *
 		LinphoneAuthInfo *pinfo = (LinphoneAuthInfo*)elem->data;
 		// if auth info holds tls_cert and key or a path to them
 		if ((linphone_auth_info_get_tls_cert(pinfo) && linphone_auth_info_get_tls_key(pinfo)) || (linphone_auth_info_get_tls_cert_path(pinfo) && linphone_auth_info_get_tls_key_path(pinfo))) {
-			// check it matches requested username/domain
-			if (username && linphone_auth_info_get_username(pinfo) && (strcmp(username, linphone_auth_info_get_username(pinfo))==0)
-			&& domain && linphone_auth_info_get_domain(pinfo) && (strcmp(domain, linphone_auth_info_get_domain(pinfo))==0)) {
+			// check it matches requested username/domain, when username is NULL, just check the domain
+			if ( ((username == NULL) || (username && linphone_auth_info_get_username(pinfo) && (strcmp(username, linphone_auth_info_get_username(pinfo))==0)))
+			&& (domain && linphone_auth_info_get_domain(pinfo) && (strcmp(domain, linphone_auth_info_get_domain(pinfo))==0))) {
 				return pinfo;
 			}
 		}
@@ -319,5 +319,87 @@ void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, 
 		belle_sip_auth_event_set_passwd(event, auth_password);
 		belle_sip_auth_event_set_ha1(event, auth_ha1);
 		belle_sip_auth_event_set_algorithm(event, auth_algo);
+	}
+}
+
+/**
+ * @brief Fill the requested authentication event from the given linphone core
+ * If the authentication event is a TLS one, username(optionnal) and domain should be given as parameter
+ *
+ * @Warning This function assumes the authentication information were already provided to the core (at application start or when registering on flexisip)
+ * and won't call the linphone_core_notify_authentication_requested to give the application an other chance to fill the auth_info into the core.
+ *
+ * @param[in]		lc		The linphone core used to access the auth_info
+ * @param[in/out]	event		The belle sip auth event to fill with requested authentication credentials
+ * @param[in]		username	Used only when auth mode is TLS to get a matching client certificate. If empty, look for any certificate matching domain nane
+ * @param[in]		domain		Used only when auth mode is TLS to get a matching client certificate.
+ */
+void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc, belle_sip_auth_event *event, const char *username, const char *domain) {
+	switch (belle_sip_auth_event_get_mode(event)) {
+		case BELLE_SIP_AUTH_MODE_HTTP_DIGEST:{
+			const char *realm = belle_sip_auth_event_get_realm(event);
+			const char *username = belle_sip_auth_event_get_username(event);
+			const char *domain = belle_sip_auth_event_get_domain(event);
+			const char *algorithm = belle_sip_auth_event_get_algorithm(event);
+
+			const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
+			linphone_auth_info_fill_belle_sip_event(auth_info, event);
+		}
+		break;
+		case BELLE_SIP_AUTH_MODE_TLS: {
+			/* extract username and domain from the GRUU stored in userData->username */
+			const char *cert_chain_path = nullptr;
+			const char *key_path = nullptr;
+			const char *cert_chain = nullptr;
+			const char *key = nullptr;
+			const LinphoneAuthInfo *auth_info = _linphone_core_find_indexed_tls_auth_info(lc, username, domain);
+			if (auth_info) { /* tls_auth_info found something */
+				if (linphone_auth_info_get_tls_cert(auth_info) && linphone_auth_info_get_tls_key(auth_info)) {
+					cert_chain = linphone_auth_info_get_tls_cert(auth_info);
+					key = linphone_auth_info_get_tls_key(auth_info);
+				} else if (linphone_auth_info_get_tls_cert_path(auth_info) && linphone_auth_info_get_tls_key_path(auth_info)) {
+					cert_chain_path = linphone_auth_info_get_tls_cert_path(auth_info);
+					key_path = linphone_auth_info_get_tls_key_path(auth_info);
+				}
+			} else { /* get directly from linphonecore
+				    or given in the sip/client_cert_chain in the config file, no username/domain associated with it, last resort try
+				   it shall work if we have only one user */
+				cert_chain = linphone_core_get_tls_cert(lc);
+				key = linphone_core_get_tls_key(lc);
+				if (!cert_chain || !key) {
+					cert_chain_path = linphone_core_get_tls_cert_path(lc);
+					key_path = linphone_core_get_tls_key_path(lc);
+				}
+			}
+
+			if (cert_chain != nullptr && key != nullptr) {
+				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse(cert_chain, strlen(cert_chain), BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
+				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse(key, strlen(key), nullptr);
+				if (bs_cert_chain && bs_key) {
+					belle_sip_auth_event_set_signing_key(event,  bs_key);
+					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
+				}
+			} else if (cert_chain_path != nullptr && key_path != nullptr) {
+				belle_sip_certificates_chain_t *bs_cert_chain = belle_sip_certificates_chain_parse_file(cert_chain_path, BELLE_SIP_CERTIFICATE_RAW_FORMAT_PEM);
+				belle_sip_signing_key_t *bs_key = belle_sip_signing_key_parse_file(key_path, nullptr);
+				if (bs_cert_chain && bs_key) {
+					belle_sip_auth_event_set_signing_key(event,  bs_key);
+					belle_sip_auth_event_set_client_certificates_chain(event, bs_cert_chain);
+				}
+			} else {
+				lInfo() << "Could not retrieve any client certificate upon server's request";
+				// To enable callback:
+				//  - create an AuthInfo object with username and domain
+				//  - call linphone_core_notify_authentication_requested on it to give the app a chance to fill the auth_info.
+				//  - call again _linphone_core_find_indexed_tls_auth_info to retrieve the auth_info set by the callback.
+				//  Not done as we assume that authentication on flexisip server was performed before
+				//  so the application layer already got a chance to set the correct auth_info in the core
+				return;
+			}
+		}
+		break;
+		default:
+			lError() << "Connection gets an auth event of unexpected type";
+		break;
 	}
 }
