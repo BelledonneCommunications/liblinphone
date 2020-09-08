@@ -3657,7 +3657,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 		lc_callback_obj_invoke(&lc->preview_finished_cb,lc);
 	}
 
-	lc->sal->iterate();
+	if (lc->sal) lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
 	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring)
 		// Avoid registration before getting remote configuration results
