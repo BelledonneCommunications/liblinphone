@@ -189,7 +189,7 @@ void TunnelManager::setKey(bctbx_signing_key_t *key) {
 	mKey = key;
 }
 
-int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, unsigned char *dn, size_t dn_length) {
+int TunnelManager::tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, const bctbx_list_t *names) {
 	TunnelManager *zis = static_cast<TunnelManager*>(data);
 	int error;
 
