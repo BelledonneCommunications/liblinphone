@@ -171,8 +171,8 @@ LINPHONE_PUBLIC void linphone_event_add_custom_header(LinphoneEvent *linphone_ev
 
 /**
  * Remove custom header to an outgoing susbscription or publish.
- * @param ev the #LinphoneEvent
- * @param name header's name
+ * @param ev the #LinphoneEvent @notnil
+ * @param name header's name @notnil
 **/
 LINPHONE_PUBLIC void linphone_event_remove_custom_header(LinphoneEvent *ev, const char *name);
 
@@ -226,6 +226,8 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEve
 
 /**
  * Get the "to" address of the subscription.
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return the "to" #LinphoneAddress. @notnil
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev);
 
