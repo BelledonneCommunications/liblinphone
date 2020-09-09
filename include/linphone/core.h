@@ -1176,6 +1176,7 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
  * created by linphone_core_interpret_url().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
+ * If the proxy is not specified in parameters, the caller proxy will be automatically selected by finding what is the best to reach the destination of the call.
  * @param core #LinphoneCore object @notnil
  * @param addr The destination of the call (sip address). @notnil
  * @param params Call parameters @notnil
