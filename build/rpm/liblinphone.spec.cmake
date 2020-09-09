@@ -115,8 +115,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.so
 %endif
 %if @ENABLE_DOC@
-%{_docdir}/linphone*/html
-%{_docdir}/linphone*/xml
+%{_docdir}/liblinphone*
 %endif
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
