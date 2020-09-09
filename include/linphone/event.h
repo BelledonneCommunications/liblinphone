@@ -226,6 +226,8 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_from(const LinphoneEve
 
 /**
  * Get the "to" address of the subscription.
+ * @param lev #LinphoneEvent object @notnil
+ * @return the from #LinphoneAddress. @notnil
 **/
 LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_to(const LinphoneEvent *lev);
 
