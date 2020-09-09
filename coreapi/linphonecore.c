@@ -2511,6 +2511,7 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
+	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
 		RemoteConferenceEventHandler * handler = static_cast<RemoteConferenceEventHandler*>(
@@ -2519,6 +2520,7 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 			handler->invalidateSubscription();
 		}
 	}else{
+		/* This has to be done only when running as server */
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
 			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
