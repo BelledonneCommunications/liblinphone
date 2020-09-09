@@ -2511,27 +2511,28 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
+	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	if (!linphone_core_conference_server_enabled(lc)) {
-		// FIXME: It works only because both RemoteConferenceEventHandler and RemoteConferenceListEventHandler inherits first from RemoteConferenceEventHandlerBase
 		RemoteConferenceEventHandlerBase *thiz = static_cast<RemoteConferenceEventHandlerBase *>(linphone_event_get_user_data(lev));
 		if (thiz && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
 			thiz->invalidateSubscription();
 		}
-		return;
+	}else{
+		/* This has to be done only when running as server */
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))));
+		if (chatRoom)
+			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+		
 	}
 
-	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-	));
 	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
-	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
-	else if (audioVideoConference)
+	
+	if (audioVideoConference)
 		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscriptionStateChanged(lev, state);
 #else
 	ms_warning("Advanced IM such as group chat is disabled!");

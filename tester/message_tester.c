@@ -2301,11 +2301,11 @@ static void real_time_text_conversation(void) {
 
 			for (i = 0; i < strlen(message1_1); i++) {
 				linphone_chat_message_put_char(pauline_rtt_message, message1_1[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message1_1[i], char, "%c");
 
 				linphone_chat_message_put_char(marie_rtt_message, message1_2[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), message1_2[i], char, "%c");
 			}
 
@@ -2339,11 +2339,11 @@ static void real_time_text_conversation(void) {
 
 			for (i = 0; i < strlen(message2_1); i++) {
 				linphone_chat_message_put_char(pauline_rtt_message, message2_1[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message2_1[i], char, "%c");
 
 				linphone_chat_message_put_char(marie_rtt_message, message2_2[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), message2_2[i], char, "%c");
 			}
 
@@ -2419,7 +2419,7 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 
 			for (i = 0; i < strlen(message); i++) {
 				linphone_chat_message_put_char(rtt_message, message[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], char, "%c");
 			}
 
@@ -2428,7 +2428,7 @@ static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_
 			} else if (end_with_lf) {
 				linphone_chat_message_put_char(rtt_message, lf);
 			}
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message), 1000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message), 5000));
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 			linphone_chat_message_unref(rtt_message);
 		}
@@ -2475,7 +2475,7 @@ static void real_time_text_message_accented_chars(void) {
 			int i;
 			for (i = 0; i < message_len; i++) {
 				linphone_chat_message_put_char(rtt_message, message[i]);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 1000));
+				BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 5000));
 				BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
 			}
 
@@ -2548,7 +2548,7 @@ static void real_time_text_and_early_media(void) {
 		message[7] = 0xFF; // ÿ
 		for (i = 0; i < message_len; i++) {
 			linphone_chat_message_put_char(rtt_message, message[i]);
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 1000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, i+1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
 		}
 
@@ -2575,7 +2575,7 @@ static void real_time_text_and_early_media(void) {
 		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
 		for (i = 0; i < message_len; i++) {
 			linphone_chat_message_put_char(rtt_message, message[i]);
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 1000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
 		}
 
@@ -2645,7 +2645,7 @@ static void only_real_time_text_accepted(void) {
 		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
 		for (i = 0; i < message_len; i++) {
 			linphone_chat_message_put_char(rtt_message, message[i]);
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 1000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, chars_received + i + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i], unsigned long, "%lu");
 		}
 
@@ -2707,7 +2707,7 @@ static void real_time_text_copy_paste(void) {
 				linphone_chat_message_put_char(rtt_message, message[i-1]);
 				if (i % 4 == 0) {
 					int j;
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i, 1000));
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)i, 5000));
 					for (j = 4; j > 0; j--) {
 						BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), message[i-j], char, "%c");
 					}

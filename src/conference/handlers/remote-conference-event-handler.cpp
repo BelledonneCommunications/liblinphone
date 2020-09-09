@@ -296,7 +296,8 @@ void RemoteConferenceEventHandler::subscribe () {
 	linphone_address_unref(lAddr);
 	linphone_address_unref(peerAddr);
 	linphone_event_set_internal(lev, TRUE);
-	linphone_event_set_user_data(lev, this);
+	// This is needs to be cast to the base class, as it the expected type for the one who calls linphone_event_get_user_data().
+	linphone_event_set_user_data(lev, static_cast< RemoteConferenceEventHandlerBase*>(this)); 
 	lInfo() << "Subscribing to chat room or conference: " << peerAddress << "with last notify: " << lastNotifyStr;
 	linphone_event_send_subscribe(lev, nullptr);
 }
