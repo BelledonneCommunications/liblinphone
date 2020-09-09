@@ -57,7 +57,7 @@ void AbstractDbPrivate::safeInit () {
 
 AbstractDb::AbstractDb (AbstractDbPrivate &p) : Object(p) {}
 
-bool AbstractDb::connect (Backend backend, const string &parameters) {
+bool AbstractDb::connect (Backend backend, const string &nameParams) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
@@ -74,7 +74,7 @@ bool AbstractDb::connect (Backend backend, const string &parameters) {
 
 	d->backend = backend;
 	d->dbSession = DbSession(
-		(backend == Mysql ? "mysql://" : "sqlite3://") + parameters
+		(backend == Mysql ? "mysql://" : "sqlite3://") + nameParams
 	);
 
 	if (d->dbSession) {

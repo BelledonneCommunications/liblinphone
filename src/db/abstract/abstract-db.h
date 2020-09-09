@@ -38,7 +38,15 @@ public:
 
 	virtual ~AbstractDb () = default;
 
-	bool connect (Backend backend, const std::string &parameters);
+	/*
+	 * Connect to the database, using specified backend.
+	 * 'nameParams' must be start either with:
+	 * - a file path if sqlite3 backend is used. If the path contains spaces, it must be enclosed within quotes.
+	 * - a database name if using mysql.
+	 * Then optional parameters can be added, in the form "param-name=param-value", separated with spaces.
+	 * The meaning of these optional parameters is implementation dependant, refer to SOCI documentation for more details.
+	 */
+	bool connect (Backend backend, const std::string &nameParams);
 	void disconnect ();
 
 	bool forceReconnect ();

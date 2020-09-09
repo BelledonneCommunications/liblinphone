@@ -48,7 +48,6 @@ public:
 	unsigned int getLastNotify () const;
 	void setLastNotify (unsigned int lastNotify);
 	void resetLastNotify ();
-
 private:
 	L_DECLARE_PRIVATE(RemoteConferenceEventHandler);
 	L_DISABLE_COPY(RemoteConferenceEventHandler);
