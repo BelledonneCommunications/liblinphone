@@ -153,6 +153,7 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string localeToUtf8 (const std::string &str);
 	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);
 	LINPHONE_PUBLIC std::string convertAnyToUtf8 (const std::string &str, const std::string &encoding);
+	LINPHONE_PUBLIC std::string quotePathIfNeeded(const std::string &str);
 }
 
 LINPHONE_END_NAMESPACE

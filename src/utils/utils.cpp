@@ -251,4 +251,9 @@ string Utils::convertAnyToUtf8 (const string &str, const string &encoding) {
 	return convertedStr;
 }
 
+string Utils::quotePathIfNeeded(const string &str){
+	if (str.empty() || str[0] == '"') return str;
+	return string("\"") + str + string("\"");
+}
+
 LINPHONE_END_NAMESPACE
