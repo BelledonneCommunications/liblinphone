@@ -114,10 +114,7 @@ rm -rf $RPM_BUILD_ROOT
 %if @ENABLE_SHARED@
 %{_libdir}/*.so
 %endif
-%if @ENABLE_DOC@
-%{_docdir}/linphone*/html
-%{_docdir}/linphone*/xml
-%endif
+%{_docdir}/liblinphone*
 %{_datadir}/Linphone/cmake/*.cmake
 %{_datadir}/LinphoneCxx/cmake/*.cmake
 
