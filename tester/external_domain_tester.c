@@ -24,7 +24,11 @@ static void simple_call(void) {
 	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE);
 };
 
-static void group_chat (bool_t encryption) {
+/**
+ * @param[in] encryption	true to activate message encryption
+ * @param[in] external_sender	if true claire (from the external domain) will send the message, otherwise marie will do it
+ */
+static void group_chat (bool_t encryption, bool_t external_sender) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *claire = linphone_core_manager_create("claire_rc"); // External
@@ -90,23 +94,44 @@ static void group_chat (bool_t encryption) {
 	// Check that the chat room is correctly created on Claire's side and that the participants are added
 	LinphoneChatRoom *claireCr = check_creation_chat_room_client_side(coresList, claire, &initialClaireStats, confAddr, initialSubject, 2, FALSE);
 
-	// Pauline begins composing a message
-	const char *paulineTextMessage = "Hello";
-	LinphoneChatMessage *paulineMessage = _send_message(paulineCr, paulineTextMessage);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &claire->stat.number_of_LinphoneMessageReceived, initialClaireStats.number_of_LinphoneMessageReceived + 1, 5000));
-	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
+	// Sender selection
+	LinphoneChatRoom *senderCr = NULL;
+	LinphoneCoreManager *recipient1CoreManager = NULL;
+	LinphoneCoreManager *recipient2CoreManager = NULL;
+	stats *recipient1InitialStats = NULL;
+	stats *recipient2InitialStats = NULL;
+
+	if (external_sender == TRUE) { // Claire is the sender
+		senderCr = claireCr;
+		recipient1CoreManager = marie;
+		recipient2CoreManager = pauline;
+		recipient1InitialStats = &initialMarieStats;
+		recipient2InitialStats = &initialPaulineStats;
+	} else { // Pauline - from external domaine - is the sender
+		senderCr = paulineCr;
+		recipient1CoreManager = marie;
+		recipient2CoreManager = claire;
+		recipient1InitialStats = &initialMarieStats;
+		recipient2InitialStats = &initialClaireStats;
+	}
+
+	// Sender (Pauline or Claire - external domain -) begins composing a message
+	const char *senderTextMessage = "Hello";
+	LinphoneChatMessage *senderMessage = _send_message(senderCr, senderTextMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient1CoreManager->stat.number_of_LinphoneMessageReceived, recipient1InitialStats->number_of_LinphoneMessageReceived + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient2CoreManager->stat.number_of_LinphoneMessageReceived, recipient2InitialStats->number_of_LinphoneMessageReceived + 1, 5000));
+	LinphoneChatMessage *recipient1LastMsg = recipient1CoreManager->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(recipient1LastMsg))
 		goto end;
-	LinphoneChatMessage *claireLastMsg = claire->stat.last_received_chat_message;
-	if (!BC_ASSERT_PTR_NOT_NULL(claireLastMsg))
+	LinphoneChatMessage *recipient2LastMsg = recipient2CoreManager->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(recipient2LastMsg))
 		goto end;
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineTextMessage);
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(claireLastMsg), paulineTextMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient1LastMsg), senderTextMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient2LastMsg), senderTextMessage);
 
 end:
-	linphone_chat_message_unref(paulineMessage);
+	linphone_chat_message_unref(senderMessage);
 
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -120,16 +145,24 @@ end:
 }
 
 static void group_chat_external_domain_participant (void) {
-	group_chat(FALSE);
+	group_chat(FALSE, FALSE);
+}
+static void group_chat_external_domain_participant_ext_sender (void) {
+	group_chat(FALSE, TRUE);
 }
 static void encrypted_message(void) {
-	group_chat(TRUE);
+	group_chat(TRUE, FALSE);
+}
+static void encrypted_message_ext_sender(void) {
+	group_chat(TRUE, TRUE);
 }
 
 test_t external_domain_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
-	TEST_NO_TAG("Chatroom with external domain participant", group_chat_external_domain_participant),
-	TEST_NO_TAG("Encrypted Message", encrypted_message)
+	TEST_NO_TAG("Message sent from domainA", group_chat_external_domain_participant),
+	TEST_NO_TAG("Message sent from domainB", group_chat_external_domain_participant_ext_sender),
+	TEST_NO_TAG("Encrypted message sent from domainA", encrypted_message),
+	TEST_NO_TAG("Encrypted message sent from domainB", encrypted_message_ext_sender)
 };
 
 test_suite_t external_domain_test_suite = {"External domain", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
