@@ -1826,6 +1826,7 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 	fmtp=linphone_config_get_string(config,codeckey,"recv_fmtp",NULL);
 	channels=linphone_config_get_int(config,codeckey,"channels",0);
 	enabled=linphone_config_get_int(config,codeckey,"enabled",1);
+	mime=linphone_config_get_string(config,codeckey,"mime",NULL);
 	if (!linphone_core_codec_supported(lc, type, mime)){
 		ms_warning("Codec %s/%i read from conf is not supported by mediastreamer2, ignored.",mime,rate);
 		return TRUE;
@@ -6576,6 +6577,7 @@ void _linphone_core_codec_config_write(LinphoneCore *lc){
 			linphone_config_set_int(lc->config,key,"rate",pt->clock_rate);
 			linphone_config_set_int(lc->config,key,"channels",pt->channels);
 			linphone_config_set_int(lc->config,key,"enabled",payload_type_enabled(pt));
+			linphone_config_set_string(lc->config,key,"recv_fmtp",pt->recv_fmtp);
 			index++;
 		}
 		sprintf(key,"audio_codec_%i",index);
