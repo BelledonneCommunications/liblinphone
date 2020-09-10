@@ -154,6 +154,7 @@ public:
 
 	int getHistorySize (const ConferenceId &conferenceId, FilterMask mask = NoFilter) const;
 
+	std::list<std::string> loadFilesRelatedToMessagesInChatRoom (const ConferenceId &conferenceId);
 	void cleanHistory (const ConferenceId &conferenceId, FilterMask mask = NoFilter);
 
 	// ---------------------------------------------------------------------------

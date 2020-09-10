@@ -500,6 +500,17 @@ void ChatRoom::deleteFromDb () {
 
 void ChatRoom::deleteHistory () {
 	L_D();
+
+	LinphoneCore *lc = getCore()->getCCore();
+	LinphoneConfig *config = linphone_core_get_config(lc);
+	bool deleteFilesFromMessagesInDeletedChatRoom = !!linphone_config_get_int(config, "misc", "delete_files_from_chat_message_upon_removal", 0);
+	if (deleteFilesFromMessagesInDeletedChatRoom) {
+		for (auto path : getCore()->getPrivate()->mainDb->loadFilesRelatedToMessagesInChatRoom(getConferenceId())) {
+			lDebug() << "Removing file [" << path << "] attached to chat message in chat room";
+			unlink(path.c_str());
+		}
+	}
+
 	getCore()->getPrivate()->mainDb->cleanHistory(getConferenceId());
 	d->setIsEmpty(true);
 }

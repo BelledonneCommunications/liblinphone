@@ -126,7 +126,6 @@ public:
 	bool getToBeStored () const;
 	virtual void setToBeStored (bool value);
 
-
 	std::list<ParticipantImdnState> getParticipantsByImdnState (State state) const;
 
 	const std::list<Content *> &getContents () const;

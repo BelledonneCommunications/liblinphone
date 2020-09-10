@@ -360,6 +360,13 @@ typedef void (*LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequested
  */
 typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
+/**
+ * Callback used to notify that a chat message has been removed from a chatroom
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param message The #LinphoneChatMessage that has been removed @notnil
+ */
+typedef void (*LinphoneChatRoomCbsMessageRemovedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

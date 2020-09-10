@@ -361,12 +361,27 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_registration_unsubsc
  * @return The message should be stored getting callback
  */
 LINPHONE_PUBLIC LinphoneChatRoomCbsShouldChatMessageBeStoredCb linphone_chat_room_cbs_get_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs);
+
 /**
  * Set the message should be stored callback.
  * @param cbs LinphoneChatRoomCbs object @notnil
  * @param cb The message should be stored callback to be used
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsShouldChatMessageBeStoredCb cb);
+
+/**
+ * Get the message has been removed callback.
+ * @param cbs LinphoneChatRoomCbs object @notnil
+ * @return The message has been removed callback
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsMessageRemovedCb linphone_chat_room_cbs_get_chat_message_removed (LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the message has been removed callback.
+ * @param cbs LinphoneChatRoomCbs object @notnil
+ * @param cb The message has been removed callback to be used
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_removed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageRemovedCb cb);
 
 /**
  * @}

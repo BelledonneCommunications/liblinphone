@@ -695,9 +695,19 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string
 
 void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	CorePrivate *d = chatRoom->getCore()->getPrivate();
+	const ConferenceId &conferenceId = chatRoom->getConferenceId();
+
+	LinphoneCore *lc = d->getCCore();
+	LinphoneConfig *config = linphone_core_get_config(lc);
+	bool deleteFilesFromMessagesInDeletedChatRoom = !!linphone_config_get_int(config, "misc", "delete_files_from_chat_message_upon_removal", 0);
+	if (deleteFilesFromMessagesInDeletedChatRoom) {
+		for (auto path : d->mainDb->loadFilesRelatedToMessagesInChatRoom(conferenceId)) {
+			lDebug() << "Removing file [" << path << "] attached to chat message in chat room";
+			unlink(path.c_str());
+		}
+	}
 
 	d->noCreatedClientGroupChatRooms.erase(chatRoom.get());
-	const ConferenceId &conferenceId = chatRoom->getConferenceId();
 	auto chatRoomsByIdIt = d->chatRoomsById.find(conferenceId);
 	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
 		d->chatRoomsById.erase(chatRoomsByIdIt);
