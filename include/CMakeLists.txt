@@ -91,6 +91,7 @@ set(C_API_HEADER_FILES
 	c-content.h
 	c-dial-plan.h
 	c-event-log.h
+	c-factory.h
 	c-magic-search.h
 	c-participant.h
 	c-participant-device.h
@@ -172,5 +173,3 @@ install(FILES ${UTILS_HEADER_FILES}
 	DESTINATION "${DEST_ROOT_DIRECTORY}/utils"
 	PERMISSIONS OWNER_READ OWNER_WRITE GROUP_READ WORLD_READ
 )
-
-
