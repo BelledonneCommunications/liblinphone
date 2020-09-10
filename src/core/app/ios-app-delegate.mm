@@ -18,6 +18,7 @@
 */
 
 #include "ios-app-delegate.h"
+#import <AVFoundation/AVFoundation.h>
 
 @implementation IosAppDelegate
 
@@ -83,6 +84,78 @@
 		}
 		ms_message("[Ios App] Auto core.iterate() stopped");
 	}
+}
+
+
+- (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif
+{
+	AVAudioSession * audioSession = [AVAudioSession sharedInstance];
+		   
+	NSDictionary * userInfo = [notif userInfo];
+	NSInteger changeReason = [[userInfo valueForKey:AVAudioSessionRouteChangeReasonKey] integerValue];
+
+	AVAudioSessionRouteDescription *previousRoute = [userInfo valueForKey:AVAudioSessionRouteChangePreviousRouteKey];
+	AVAudioSessionRouteDescription *currentRoute = [audioSession currentRoute];
+	
+	std::string previousInputPort("No input");
+	std::string currentInputPort("No input");
+	std::string previousOutputPort("No output");
+	std::string currentOutputPort("No output");
+
+	if (previousRoute.inputs.count > 0)
+		previousInputPort = std::string([previousRoute.inputs[0].portName UTF8String]);
+	if (previousRoute.outputs.count > 0)
+		previousOutputPort = std::string([previousRoute.outputs[0].portName UTF8String]);
+	if (currentRoute.inputs.count > 0)
+		currentInputPort = std::string([currentRoute.inputs[0].portName UTF8String]);
+	if (currentRoute.outputs.count > 0)
+		currentOutputPort = std::string([currentRoute.outputs[0].portName UTF8String]);
+
+	ms_message("Previous audio route: input=%s, output=%s, New audio route: input=%s, output=%s"
+			  , previousInputPort.c_str(), previousOutputPort.c_str()
+			  , currentInputPort.c_str(), currentOutputPort.c_str());
+
+	AVAudioSessionCategory currentCategory = [audioSession category];
+	// Relevant audio devices will not be detected by [AVAudioSession availableinputs] if not in PlayAndRecord category
+	if (currentCategory != AVAudioSessionCategoryPlayAndRecord)
+	   return;
+
+	// Reload only if there was an effective change in the route ports
+	if (currentInputPort == previousInputPort && currentOutputPort == previousOutputPort)
+	   return;
+	
+	pcore->doLater([currentOutputPort, currentInputPort, changeReason, self]() {
+		
+		switch (changeReason)
+		{
+			case AVAudioSessionRouteChangeReasonNewDeviceAvailable:
+			case AVAudioSessionRouteChangeReasonOldDeviceUnavailable:
+			case AVAudioSessionRouteChangeReasonCategoryChange:
+			{
+				// We need to reload for these 3 category, because the first list of AudioDevices available may not be up to date
+				// For example, bluetooth devices would possibly not be detected before a call Start, as the AudioSession may be in a category other than AVAudioSessionCategoryPlayAndRecord
+				linphone_core_reload_sound_devices(pcore->getCCore());
+			}
+			default: {}
+		}
+		
+		// Make sure that the current device the core is using match the reality of the IOS audio route. If not, set it properly
+		const char * currentDeviceInCore = linphone_audio_device_get_device_name(linphone_core_get_output_audio_device(pcore->getCCore()));
+		if (currentDeviceInCore && strcmp(currentOutputPort.c_str(),  currentDeviceInCore) == 0) {
+			return;
+		}
+
+		bctbx_list_t * deviceIt = linphone_core_get_audio_devices(pcore->getCCore());
+		while (deviceIt != NULL) {
+			LinphoneAudioDevice * pDevice = (LinphoneAudioDevice *) deviceIt->data;
+			if (strcmp(currentInputPort.c_str(), linphone_audio_device_get_device_name(pDevice)) == 0)
+			{
+				linphone_core_set_output_audio_device(pcore->getCCore(), pDevice);
+				break;
+			}
+			deviceIt = deviceIt->next;
+		}
+	});
 }
 
 @end
