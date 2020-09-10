@@ -771,7 +771,7 @@ void linphone_core_set_log_collection_path(const char *path) {
 		liblinphone_log_collection_path = NULL;
 	}
 	if (path != NULL) {
-		ortp_mutex_lock(&liblinphone_log_collection_mutex);		
+		ortp_mutex_lock(&liblinphone_log_collection_mutex);
 		_close_log_collection_file();
 		liblinphone_log_collection_path = ms_strdup(path);
 		_open_log_collection_file();
@@ -1222,7 +1222,7 @@ static void net_config_read(LinphoneCore *lc) {
 		} else {
 			bctbx_warning("Failed to create nat policy from ref [%s]", nat_policy_ref);
 		}
-		
+
 	}
 	if (lc->nat_policy == NULL){
 		/*this will create a default nat policy according to deprecated config keys, or an empty nat policy otherwise*/
@@ -1270,7 +1270,7 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	old=lc->sound_conf.cards;
 	lc->sound_conf.cards=devices;
 	if (old!=NULL) ms_free((void *)old);
-	
+
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->computeAudioDevicesList();
 	linphone_core_notify_audio_devices_list_updated(lc);
 }
@@ -1401,7 +1401,7 @@ static void sound_config_read(LinphoneCore *lc) {
 
 	linphone_core_set_playback_gain_db (lc,linphone_config_get_float(lc->config,"sound","playback_gain_db",0));
 	linphone_core_set_mic_gain_db (lc,linphone_config_get_float(lc->config,"sound","mic_gain_db",0));
-
+	linphone_core_set_disable_record_on_mute(lc, linphone_config_get_bool(lc->config,"sound","disable_record_on_mute", FALSE));
 	linphone_core_set_remote_ringback_tone (lc,linphone_config_get_string(lc->config,"sound","ringback_tone",NULL));
 
 	/*just parse requested stream feature once at start to print out eventual errors*/
@@ -1792,7 +1792,7 @@ static PayloadType* find_payload_type_from_list(const char* type, int rate, int 
 
 static bool_t linphone_core_codec_supported(LinphoneCore *lc, SalStreamType type, const char *mime){
 	if (type == SalVideo && lc->codecs_conf.dont_check_video_codec_support){
-		return TRUE; 
+		return TRUE;
 	} else if (type == SalAudio && lc->codecs_conf.dont_check_audio_codec_support){
 		return TRUE;
 	} else if (type == SalText) {
@@ -1953,9 +1953,9 @@ static void codecs_config_read(LinphoneCore *lc){
 	/*in rtp io mode, we don't transcode audio, thus we can support a format for which we have no encoder nor decoder.*/
 	lc->codecs_conf.dont_check_audio_codec_support = linphone_config_get_int(lc->config,"sound","rtp_io", FALSE);
 	/*in rtp io mode, we don't transcode video, thus we can support a format for which we have no encoder nor decoder.*/
-	lc->codecs_conf.dont_check_video_codec_support = linphone_config_get_int(lc->config,"video","rtp_io", FALSE) || 
+	lc->codecs_conf.dont_check_video_codec_support = linphone_config_get_int(lc->config,"video","rtp_io", FALSE) ||
 						linphone_config_get_int(lc->config, "video", "dont_check_codecs", FALSE);
-	
+
 	for (i=0;get_codec(lc,SalAudio,i,&pt);i++){
 		if (pt){
 			audio_codecs=codec_append_if_new(audio_codecs, pt);
@@ -2480,21 +2480,21 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
-		ObjectPrivate *parent = static_cast<ObjectPrivate *>(linphone_event_get_user_data(lev));
-		RemoteConferenceEventHandlerPrivate *thiz = dynamic_cast<RemoteConferenceEventHandlerPrivate *>(parent);
-		if (thiz && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
-			thiz->invalidateSubscription();
-			return;
+		/* Liblinphone in a client application. */
+		RemoteConferenceEventHandlerPrivate * handler = static_cast<RemoteConferenceEventHandlerPrivate*>(
+			belle_sip_object_data_get(BELLE_SIP_OBJECT(lev), "event-handler-private"));
+		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
+			handler->invalidateSubscription();
 		}
+	}else{
+		const LinphoneAddress *resource = linphone_event_get_resource(lev);
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		));
+		if (chatRoom)
+			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
 	}
-
-	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-	));
-	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
 #else
 	ms_warning("Advanced IM such as group chat is disabled!");
 #endif
@@ -2547,7 +2547,7 @@ static void update_proxy_config_push_params(LinphoneCore *core) {
 	if (core->push_notification_enabled) {
 		computedPushParams = linphone_core_get_push_notification_contact_uri_parameters(core);
 	}
-	
+
 	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
 	for (; proxies != NULL; proxies = proxies->next) {
 		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
@@ -2605,7 +2605,7 @@ void linphone_core_update_push_notification_information(LinphoneCore *core, cons
 char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core) {
 	if (!core->push_notification_enabled) return NULL;
 	if (!core->push_notification_param || !core->push_notification_prid) return NULL;
-	
+
 	bool_t use_legacy_params = !!linphone_config_get_int(core->config, "net", "use_legacy_push_notification_params", FALSE);
 	const char *format = "pn-provider=%s;pn-param=%s;pn-prid=%s;pn-timeout=0;pn-silent=1";
 	if (use_legacy_params) {
@@ -2821,7 +2821,7 @@ LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 		}
 
 		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
-		
+
 		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
 
 		//to give a chance to change uuid before starting
@@ -3601,7 +3601,7 @@ static LinphoneStatus _linphone_core_set_sip_transports(LinphoneCore *lc, const 
 
 LinphoneStatus linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config /*config to be saved*/){
 	return _linphone_core_set_sip_transports(lc, tr_config, TRUE);
-	
+
 }
 
 LinphoneStatus linphone_core_set_transports(LinphoneCore *lc, const LinphoneTransports * transports){
@@ -3851,7 +3851,7 @@ void linphone_core_iterate(LinphoneCore *lc){
 		lc_callback_obj_invoke(&lc->preview_finished_cb,lc);
 	}
 
-	lc->sal->iterate();
+	if (lc->sal) lc->sal->iterate();
 	if (lc->msevq) ms_event_queue_pump(lc->msevq);
 	if (linphone_core_get_global_state(lc) == LinphoneGlobalConfiguring)
 		// Avoid registration before getting remote configuration results
@@ -4690,6 +4690,18 @@ void linphone_core_set_mic_gain_db (LinphoneCore *lc, float gaindb){
 		return;
 	}
 	audio_stream_set_mic_gain_db(st,gain);
+}
+
+bool_t linphone_core_get_disable_record_on_mute(LinphoneCore *lc) {
+	return lc->sound_conf.disable_record_on_mute;
+}
+
+void linphone_core_set_disable_record_on_mute(LinphoneCore *lc, bool_t disable) {
+	lc->sound_conf.disable_record_on_mute = disable;
+
+	if (linphone_core_ready(lc)){
+		linphone_config_set_bool(lc->config,"sound","disable_record_on_mute",lc->sound_conf.disable_record_on_mute);
+	}
 }
 
 float linphone_core_get_mic_gain_db(LinphoneCore *lc) {
@@ -6526,6 +6538,7 @@ static void sound_config_uninit(LinphoneCore *lc)
 	linphone_config_set_string(lc->config,"sound","remote_ring",config->remote_ring);
 	linphone_config_set_float(lc->config,"sound","playback_gain_db",config->soft_play_lev);
 	linphone_config_set_float(lc->config,"sound","mic_gain_db",config->soft_mic_lev);
+	linphone_config_set_bool(lc->config,"sound","disable_record_on_mute",config->disable_record_on_mute);
 
 	if (config->local_ring) ms_free(config->local_ring);
 	if (config->remote_ring) ms_free(config->remote_ring);
@@ -7720,7 +7733,7 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
-		
+
 		conf_method_name = linphone_config_get_string(lc->config, "misc", "conference_type", "local");
 		if (strcasecmp(conf_method_name, "local") == 0) {
 			conf = linphone_local_conference_new_with_params(lc, params2);
@@ -7842,6 +7855,7 @@ bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const Linp
 	// Do not compare ports
 	linphone_address_set_port(factoryAddr, 0);
 	LinphoneAddress *testedAddr = linphone_address_clone(addr);
+
 	linphone_address_set_port(testedAddr, 0);
 	bool_t result = linphone_address_weak_equal(factoryAddr, testedAddr);
 	linphone_address_unref(factoryAddr);

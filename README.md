@@ -42,7 +42,6 @@ Here the main dependencies listed:
 * **python interpreter** and **pystache**, **six** python module (needed for C++/C#/Java wrappers and API documentation)
 * **doxygen** and **dot** (needed for C++ wrapper and API documentation)
 * **Bzrtp[6]:** zrtp stack used to secure calls
-* For API documentation generation: **sphinx**, **javasphinx**, **sphinx_csharp** python modules are needed.
 
 
 ## Build instructions (when used standalone, outside of linphone-sdk)

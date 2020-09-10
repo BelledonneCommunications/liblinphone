@@ -411,6 +411,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->dir=compute_dir_outgoing(local_offer->dir,remote_answer->dir);
 	}
 
+	result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
 	if (remote_answer->mid[0] != '\0'){
 		if (local_offer->mid[0] != '\0'){
 			strncpy(result->mid, remote_answer->mid, sizeof(result->mid) - 1);
@@ -420,8 +421,6 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
-	}else{
-		result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
 	}
 
 	if (result->payloads && !only_telephone_event(result->payloads)){
@@ -501,6 +500,8 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->maxptime=local_cap->maxptime;
 	}
 	
+	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
+	
 	/* Handle RTP bundle negociation */
 	if (remote_offer->mid[0] != '\0' && bundle_owner_mid){
 		strncpy(result->mid, remote_offer->mid, sizeof(result->mid) - 1);
@@ -513,8 +514,6 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 			result->rtp_port = 0;
 		}
 		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
-	}else {
-		result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	}
 
 	if (sal_stream_description_has_srtp(result) == TRUE) {

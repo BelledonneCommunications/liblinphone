@@ -177,7 +177,18 @@ int FileTransferChatMessageModifier::onSendBody (
 			// Legacy
 			linphone_core_notify_file_transfer_send(message->getCore()->getCCore(), msg, content, (char *)buffer, size);
 		}
+
+		// Deprecated, use _linphone_chat_message_notify_file_transfer_send_chunk instead
 		_linphone_chat_message_notify_file_transfer_send(msg, content, offset, *size);
+
+		LinphoneBuffer *lb = linphone_buffer_new();
+		_linphone_chat_message_notify_file_transfer_send_chunk(msg, content, offset, *size, lb);
+		size_t lb_size = linphone_buffer_get_size(lb);
+		if (lb_size != 0) {
+			memcpy(buffer, linphone_buffer_get_content(lb), lb_size);
+			*size = lb_size;
+		}
+		linphone_buffer_unref(lb);
 	}
 
 	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
@@ -195,7 +206,7 @@ int FileTransferChatMessageModifier::onSendBody (
 		ms_free(encrypted_buffer);
 	}
 
-	return retval <= 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
+	return retval <= 0 && *size != 0 ? BELLE_SIP_CONTINUE : BELLE_SIP_STOP;
 }
 
 static void _chat_message_on_send_end (belle_sip_user_body_handler_t *bh, void *data) {
@@ -441,8 +452,8 @@ static void _chat_message_process_io_error_upload (void *data, const belle_sip_i
 }
 
 void FileTransferChatMessageModifier::processIoErrorUpload (const belle_sip_io_error_event_t *event) {
-	lError() << "I/O Error during file upload of msg [" << this << "]";
 	shared_ptr<ChatMessage> message = chatMessage.lock();
+	lError() << "I/O Error during file upload of message [" << message << "]";
 	if (!message)
 		return;
 	message->getPrivate()->setState(ChatMessage::State::NotDelivered);
@@ -454,13 +465,16 @@ static void _chat_message_process_auth_requested_upload (void *data, belle_sip_a
 	d->processAuthRequestedUpload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedUpload (const belle_sip_auth_event *event) {
-	lError() << "Error during file upload: auth requested for msg [" << this << "]";
+void FileTransferChatMessageModifier::processAuthRequestedUpload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-	message->getPrivate()->setState(ChatMessage::State::NotDelivered);
-	releaseHttpRequest();
+	/* extract username and domain from the message local adress */
+	auto address = message->getLocalAdress();
+	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(), address.getDomain().data());
+
 }
 
 int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
@@ -499,12 +513,12 @@ int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const
 	}
 
 	if (url.empty()) {
-		lWarning() << "Cannot process file transfer msg [" << this << "]: no file remote URI configured.";
+		lWarning() << "Cannot process file transfer message [" << message << "]: no file remote URI configured.";
 		goto error;
 	}
 	uri = belle_generic_uri_parse(url.c_str());
 	if (!uri || !belle_generic_uri_get_host(uri)) {
-		lWarning() << "Cannot process file transfer msg [" << this << "]: incorrect file remote URI configured '" <<
+		lWarning() << "Cannot process file transfer message [" << message << "]: incorrect file remote URI configured '" <<
 			url << "'.";
 		goto error;
 	}
@@ -754,8 +768,9 @@ static void _chat_message_on_recv_body (belle_sip_user_body_handler_t *bh, belle
 }
 
 void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t *bh, belle_sip_message_t *m, size_t offset, uint8_t *buffer, size_t size) {
+	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!httpRequest || belle_http_request_is_cancelled(httpRequest)) {
-		lWarning() << "Cancelled request for msg [" << this << "], ignoring " << __FUNCTION__;
+		lWarning() << "Cancelled request for message [" << message << "], ignoring " << __FUNCTION__;
 		return;
 	}
 
@@ -764,7 +779,6 @@ void FileTransferChatMessageModifier::onRecvBody (belle_sip_user_body_handler_t 
 		return;
 	}
 
-	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
 
@@ -848,12 +862,10 @@ void FileTransferChatMessageModifier::onRecvEnd (belle_sip_user_body_handler_t *
 				currentFileTransferContent = nullptr;
 			}
 
-			if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
-				releaseHttpRequest();
+			releaseHttpRequest();
+			message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
+			if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
 				message->getPrivate()->handleAutoDownload();
-			} else {
-				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
-				releaseHttpRequest();
 			}
 		}
 	} else {
@@ -915,7 +927,7 @@ void FileTransferChatMessageModifier::processResponseHeadersFromGetFile (const b
 			currentFileContentToTransfer->setFileSize(belle_sip_header_content_length_get_content_length(content_length_hdr));
 			lInfo() << "Extracted content length " << currentFileContentToTransfer->getFileSize() << " from header";
 		} else {
-			lWarning() << "No file transfer information for msg [" << this << "]: creating...";
+			lWarning() << "No file transfer information for message [" << message << "]: creating...";
 			FileContent *content = createFileTransferInformationFromHeaders(response);
 			message->addContent(content);
 		}
@@ -956,7 +968,8 @@ void FileTransferChatMessageModifier::onDownloadFailed() {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
 	if (!message)
 		return;
-	if (message->getPrivate()->isAutoFileTransferDownloadHappened()) {
+	if (message->getPrivate()->isAutoFileTransferDownloadInProgress()) {
+		lError() << "Auto download failed for message [" << message << "]";
 		message->getPrivate()->doNotRetryAutoDownload();
 		releaseHttpRequest();
 		message->getPrivate()->handleAutoDownload();
@@ -972,9 +985,15 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 	d->processAuthRequestedDownload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_sip_auth_event *event) {
-	lError() << "Error during file download : auth requested for msg [" << this << "]";
-	onDownloadFailed();
+void FileTransferChatMessageModifier::processAuthRequestedDownload (belle_sip_auth_event *event) {
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	/* extract username and domain from the message local adress */
+	auto address = message->getLocalAdress();
+	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(), address.getDomain().data());
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {
@@ -983,7 +1002,8 @@ static void _chat_message_process_io_error_download (void *data, const belle_sip
 }
 
 void FileTransferChatMessageModifier::processIoErrorDownload (const belle_sip_io_error_event_t *event) {
-	lError() << "I/O Error during file download msg [" << this << "]";
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	lError() << "I/O Error during file download message [" << message << "]";
 	onDownloadFailed();
 }
 
@@ -1063,12 +1083,12 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	if (!belle_http_request_is_cancelled(httpRequest)) {
 		shared_ptr<ChatMessage> message = chatMessage.lock();
 		if (message) {
-			lInfo() << "Canceling file transfer " << (
-				currentFileContentToTransfer->getFilePath().empty()
-					? L_C_TO_STRING(linphone_core_get_file_transfer_server(message->getCore()->getCCore()))
-					: currentFileContentToTransfer->getFilePath().c_str()
-				);
-
+			lInfo() << "Canceling file transfer " << currentFileContentToTransfer->getFilePath();
+			lWarning() << "Deleting incomplete file " << currentFileContentToTransfer->getFilePath();
+			int result = unlink(currentFileContentToTransfer->getFilePath().c_str());
+			if (result != 0) {
+				lError() << "Couldn't delete file " << currentFileContentToTransfer->getFilePath() << ", errno is " << result;
+			}
 		} else {
 			lInfo() << "Warning: http request still running for ORPHAN msg: this is a memory leak";
 		}

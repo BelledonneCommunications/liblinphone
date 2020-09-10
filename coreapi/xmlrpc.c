@@ -202,8 +202,9 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
+	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(request->core, realm, username, domain);
+	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(request->core, realm, username, domain, algorithm, TRUE);
 
 	if (auth_info) {
 		linphone_auth_info_fill_belle_sip_event(auth_info, event);

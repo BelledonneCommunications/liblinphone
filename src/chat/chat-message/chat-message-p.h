@@ -80,7 +80,7 @@ public:
 	bool isMarkedAsRead () const;
 
 	void setImdnMessageId (const std::string &imdnMessageId);
-	
+
 	void setForwardInfo (const std::string &fInfo);
 
 	void enableEphemeralWithTime (long time);
@@ -115,12 +115,12 @@ public:
 		return contents;
 	}
 
-	void setAutoFileTransferDownloadHappened(bool yesno) {
-		isAutoDownloadAttachedFilesHappened = yesno;
+	void setAutoFileTransferDownloadInProgress (bool yesno) {
+		isAutoDownloadAttachedFilesInProgress = yesno;
 	}
 
-	bool isAutoFileTransferDownloadHappened() const {
-		return isAutoDownloadAttachedFilesHappened;
+	bool isAutoFileTransferDownloadInProgress () const {
+		return isAutoDownloadAttachedFilesInProgress;
 	}
 
 	void handleAutoDownload();
@@ -231,11 +231,8 @@ private:
 	mutable bool isReadOnly = false;
 	bool markedAsRead = false;
 	Content internalContent;
-	bool isAutoDownloadAttachedFilesHappened = false;
+	bool isAutoDownloadAttachedFilesInProgress = false;
 	std::string callId;
-
-	// TODO: to replace salCustomheaders
-	std::unordered_map<std::string, std::string> customHeaders;
 
 	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;

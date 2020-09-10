@@ -379,7 +379,7 @@ static {{return}} {{callbackName}}({{params}}) {
 
 	jobject up = env->NewLocalRef((jobject)jlistener);
 	if (up == nullptr) {
-		bctbx_warning("{{callbackName}}() listener in weak reference has been destroyed");
+		bctbx_debug("{{callbackName}}() listener in weak reference has been destroyed");
 		return{{returnIfFail}};
 	}
 

@@ -75,8 +75,9 @@ static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event
 	const char *realm = belle_sip_auth_event_get_realm(event);
 	const char *username = belle_sip_auth_event_get_username(event);
 	const char *domain = belle_sip_auth_event_get_domain(event);
+	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
-	const LinphoneAuthInfo *auth_info = linphone_core_find_auth_info(lc, realm, username, domain);
+	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
 
 	if (auth_info) {
 		linphone_auth_info_fill_belle_sip_event(auth_info, event);

@@ -2148,7 +2148,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->streamsGroup->getIceService().setListener(d);
 
-	lInfo() << "New MediaSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
+	lInfo() << "New MediaSession [" << this << "] initialized (liblinphone version: " << linphone_core_get_version() << ")";
 }
 
 MediaSession::~MediaSession () {
@@ -2297,10 +2297,10 @@ void MediaSession::initiateIncoming () {
 			 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 			 */
 			if (d->deferIncomingNotification) {
-				auto incomingNotificationTask = [this, d](){
+				auto incomingNotificationTask = [d](){
 					d->deferIncomingNotification = false;
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
-					startIncomingNotification();
+					d->startIncomingNotification();
 				};
 				d->queueIceCompletionTask(incomingNotificationTask);
 			}else{

@@ -101,6 +101,7 @@ extern test_suite_t vfs_encryption_test_suite;
 #endif
 
 extern test_suite_t audio_bypass_suite;
+extern test_suite_t audio_routes_test_suite;
 #if HAVE_SIPP
 	extern test_suite_t complex_sip_call_test_suite;
 #endif
@@ -140,7 +141,8 @@ void liblinphone_tester_disable_leak_detector(int disabled);
  */
 extern void liblinphone_tester_clear_accounts(void);
 
-
+extern const char* flexisip_tester_dns_server;
+extern bctbx_list_t *flexisip_tester_dns_ip_addresses;
 extern const char* test_domain;
 extern const char* auth_domain;
 extern const char* test_username;
@@ -150,6 +152,7 @@ extern const char* test_password;
 extern const char* test_route;
 extern const char* userhostsfile;
 extern const char* file_transfer_url;
+extern const char* file_transfer_url_tls_client_auth;
 extern const char* lime_server_c25519_url;
 extern const char* lime_server_c448_url;
 extern bool_t liblinphone_tester_keep_uuid;
@@ -429,6 +432,7 @@ void notify_presence_received_for_uri_or_tel(LinphoneCore *lc, LinphoneFriend *l
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* message);
 void file_transfer_received(LinphoneChatMessage *message, LinphoneContent* content, const LinphoneBuffer *buffer);
 LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
+void tester_file_transfer_send_2(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer);
 LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t ephemeral);
 LinphoneChatMessage *_send_message(LinphoneChatRoom *chatRoom, const char *message);
 void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const char *sendFilepath2, const char *text, bool_t use_buffer);

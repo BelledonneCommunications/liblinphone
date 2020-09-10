@@ -135,6 +135,7 @@ const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
 const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm);
 void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
+void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc, belle_sip_auth_event *event, const char *username, const char *domain);
 
 void linphone_core_update_proxy_register(LinphoneCore *lc);
 const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc);
@@ -344,6 +345,7 @@ void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage* msg, L
 void _linphone_chat_message_notify_participant_imdn_state_changed(LinphoneChatMessage* msg, const LinphoneParticipantImdnState *state);
 void _linphone_chat_message_notify_file_transfer_recv(LinphoneChatMessage *msg, LinphoneContent* content, const LinphoneBuffer *buffer);
 void _linphone_chat_message_notify_file_transfer_send(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size);
+void _linphone_chat_message_notify_file_transfer_send_chunk(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *buffer);
 void _linphone_chat_message_notify_file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total);
 void _linphone_chat_message_notify_ephemeral_message_timer_started(LinphoneChatMessage* msg);
 void _linphone_chat_message_notify_ephemeral_message_deleted(LinphoneChatMessage* msg);

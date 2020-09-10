@@ -49,6 +49,8 @@ int manager_count = 0;
 int leaked_objects_count = 0;
 const MSAudioDiffParams audio_cmp_params = {10,2000};
 
+const char* flexisip_tester_dns_server = "fs-test.linphone.org";
+bctbx_list_t *flexisip_tester_dns_ip_addresses = NULL;
 const char* test_domain="sipopen.example.org";
 const char* auth_domain="sip.example.org";
 const char* test_username="liblinphone_tester";
@@ -58,6 +60,7 @@ const char* test_password="secret";
 const char* test_route="sip2.linphone.org";
 const char *userhostsfile = "tester_hosts";
 const char *file_transfer_url="https://transfer.example.org:9444/http-file-transfer-server/hft.php";
+const char *file_transfer_url_tls_client_auth="https://transfer.example.org:9445/http-file-transfer-server/hft.php";
 // These lime server authenticate user using Digest auth only
 const char *lime_server_c25519_url="https://lime.wildcard1.linphone.org:8443/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_url="https://lime.wildcard1.linphone.org:8443/lime-server-c448/lime-server.php";
@@ -138,12 +141,14 @@ void reset_counters( stats* counters) {
 }
 
 static void setup_dns(LinphoneCore *lc, const char *path){
-	if (strcmp(userhostsfile, "none") != 0) {
+	if (flexisip_tester_dns_ip_addresses){
+		linphone_core_set_dns_servers(lc, flexisip_tester_dns_ip_addresses);
+	}else if (strcmp(userhostsfile, "none") != 0) {
 		char *dnsuserhostspath = strchr(userhostsfile, '/') ? ms_strdup(userhostsfile) : ms_strdup_printf("%s/%s", path, userhostsfile);
 		sal_set_dns_user_hosts_file(linphone_core_get_sal(lc), dnsuserhostspath);
 		ms_free(dnsuserhostspath);
-	} else {
-		bctbx_message("no dns-hosts file used");
+	} else{
+		bctbx_warning("No dns-hosts file and no flexisip-tester dns server used.");
 	}
 }
 
@@ -1753,6 +1758,35 @@ LinphoneBuffer * tester_file_transfer_send(LinphoneChatMessage *msg, LinphoneCon
 	lb = linphone_buffer_new_from_data(buf, size_to_send);
 	ms_free(buf);
 	return lb;
+}
+
+void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t size, LinphoneBuffer *lb){
+	size_t file_size;
+	size_t size_to_send;
+	uint8_t *buf;
+	FILE *file_to_send = linphone_content_get_user_data(content);
+
+	// If a file path is set, we should NOT call the on_send callback !
+	BC_ASSERT_PTR_NULL(linphone_chat_message_get_file_transfer_filepath(msg));
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
+
+	BC_ASSERT_PTR_NOT_NULL(file_to_send);
+	if (file_to_send == NULL){
+		return;
+	}
+	
+	fseek(file_to_send, 0, SEEK_END);
+	file_size = ftell(file_to_send);
+	fseek(file_to_send, (long)offset, SEEK_SET);
+	size_to_send = MIN(size, file_size - offset);
+	buf = ms_malloc(size_to_send);
+	if (fread(buf, sizeof(uint8_t), size_to_send, file_to_send) != size_to_send){
+		// reaching end of file, close it
+		fclose(file_to_send);
+		linphone_content_set_user_data(content, NULL);
+	}
+	linphone_buffer_set_content(lb, buf, size_to_send);
+	ms_free(buf);
 }
 
 /**
