@@ -2330,6 +2330,7 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 					--*count;
 			}
 			chatMessage->getPrivate()->dbKey = MainDbChatMessageKey();
+			chatMessage->getPrivate()->onMessageRemoved();
 		}
 
 		return true;
@@ -3062,6 +3063,29 @@ int MainDb::getHistorySize (const ConferenceId &conferenceId, FilterMask mask) c
 #endif
 }
 
+list<string> MainDb::loadFilesRelatedToMessagesInChatRoom (const ConferenceId &conferenceId) {
+	list<string> paths;
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+
+		const string query = "SELECT path from chat_message_file_content WHERE chat_message_content_id IN "
+			"(SELECT * from chat_message_content WHERE event_id IN "
+				"(SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId))";
+
+		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
+		soci::session *session = d->dbSession.getBackendSession();
+		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
+
+		for (const auto &row : rows) {
+			string path = row.get<string>(0);
+			paths.push_front(path);
+		}
+	};
+#endif
+	return paths;
+}
 
 void MainDb::cleanHistory (const ConferenceId &conferenceId, FilterMask mask) {
 #ifdef HAVE_DB_STORAGE
@@ -3395,10 +3419,11 @@ void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
 
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 
-		d->invalidConferenceEventsFromQuery(
+		/*d->invalidConferenceEventsFromQuery(
 			"SELECT event_id FROM conference_event WHERE chat_room_id = :chatRoomId",
 			dbChatRoomId
-		);
+		);*/
+		cleanHistory(conferenceId);
 
 		*d->dbSession.getBackendSession() << "DELETE FROM chat_room WHERE id = :chatRoomId", soci::use(dbChatRoomId);
 

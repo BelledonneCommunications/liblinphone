@@ -585,6 +585,10 @@ void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *
 	NOTIFY_IF_EXIST(ShouldChatMessageBeStored, chat_message_should_be_stored, cr, msg)
 }
 
+void _linphone_chat_room_notify_chat_message_has_been_removed(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
+	NOTIFY_IF_EXIST(MessageRemoved, chat_message_removed, cr, msg)
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================

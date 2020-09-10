@@ -48,6 +48,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsEphemeralEventCb ephemeralEventCb;
 	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
+	LinphoneChatRoomCbsMessageRemovedCb messageRemovedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -258,4 +259,12 @@ LinphoneChatRoomCbsShouldChatMessageBeStoredCb linphone_chat_room_cbs_get_chat_m
 
 void linphone_chat_room_cbs_set_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsShouldChatMessageBeStoredCb cb) {
 	cbs->shouldMessageBeStoredCb = cb;
+}
+
+LinphoneChatRoomCbsMessageRemovedCb linphone_chat_room_cbs_get_chat_message_removed (LinphoneChatRoomCbs *cbs) {
+	return cbs->messageRemovedCb;
+}
+
+void linphone_chat_room_cbs_set_chat_message_removed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageRemovedCb cb) {
+	cbs->messageRemovedCb = cb;
 }

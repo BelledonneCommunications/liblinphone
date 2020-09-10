@@ -510,6 +510,36 @@ void ChatMessagePrivate::setChatRoom (const shared_ptr<AbstractChatRoom> &cr) {
 	}
 }
 
+void ChatMessagePrivate::onMessageRemoved (void) const {
+	L_Q();
+
+	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
+	_linphone_chat_room_notify_chat_message_has_been_removed(cr, msg);
+
+	LinphoneCore *lc = q->getChatRoom()->getCore()->getCCore();
+	LinphoneConfig *config = linphone_core_get_config(lc);
+	bool deleteFilesFromMessagesInDeletedChatRoom = !!linphone_config_get_int(config, "misc", "delete_files_from_chat_message_upon_removal", 1);
+	if (deleteFilesFromMessagesInDeletedChatRoom) {
+		for (auto &content : contents) {
+			if (content->isFile()) {
+				FileContent *fileContent = static_cast<FileContent *>(content);
+				string path = fileContent->getFilePath();
+				if (!path.empty()) {
+					lDebug() << "Removing file [" << path << "] attached to chat message";
+					unlink(path.c_str());
+				}
+				
+				path = fileContent->getPlainFilePath();
+				if (!path.empty()) {
+					lDebug() << "Removing plain file [" << path << "] attached to chat message";
+					unlink(path.c_str());
+				}
+			}
+		}
+	}
+}
+
 // -----------------------------------------------------------------------------
 
 static void forceUtf8Content (Content &content) {

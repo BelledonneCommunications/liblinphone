@@ -153,6 +153,8 @@ public:
 
 	void setChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom);
 
+	void onMessageRemoved (void) const;
+
 	void setEncryptionPrevented (bool value) { encryptionPrevented = value; }
 
 	void doNotRetryAutoDownload() {
