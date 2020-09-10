@@ -225,6 +225,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	event-log/event-log-p.h
 	event-log/event-log.h
 	event-log/events.h
+	factory/factory.h
 	hacks/hacks.h
 	logger/logger.h
 	nat/ice-service.h
@@ -306,6 +307,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
+	c-wrapper/api/c-factory.cpp
 	c-wrapper/api/c-magic-search.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-participant-device.cpp
@@ -393,6 +395,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	event-log/conference/conference-subject-event.cpp
 	event-log/conference/conference-ephemeral-message-event.cpp
 	event-log/event-log.cpp
+	factory/factory.cpp
 	hacks/hacks.cpp
 	logger/logger.cpp
 	nat/ice-service.cpp
@@ -552,9 +555,9 @@ if(ENABLE_SHARED)
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
 	) # Keep it relative to current dir to allow CMakeList inclusion
-	
+
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-	
+
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
@@ -634,7 +637,7 @@ if(ENABLE_SHARED)
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
-	
+
 endif()
 
 if(ICONV_FOUND)
