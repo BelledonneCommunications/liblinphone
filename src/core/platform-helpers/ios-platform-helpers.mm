@@ -40,6 +40,8 @@
 #include "private.h"
 
 #include "core/app/ios-app-delegate.h"
+
+#import <AVFoundation/AVFoundation.h>
 // =============================================================================
 
 using namespace std;
@@ -102,7 +104,7 @@ private:
 	static void sBgTaskTimeout (void *data);
 	static string getResourceDirPath (const string &framework, const string &resource);
 	static string getResourcePath (const string &framework, const string &resource);
-
+    
 	long int mCpuLockTaskId;
 	int mCpuLockCount;
 	SCNetworkReachabilityRef reachabilityRef = NULL;
@@ -148,6 +150,12 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 	else
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
+    
+    [NSNotificationCenter.defaultCenter addObserver:mAppDelegate
+     selector:@selector(reloadDeviceOnRouteChangeCallback:)
+     name:AVAudioSessionRouteChangeNotification
+     object:nil];
+    
 	ms_message("IosPlatformHelpers is fully initialised");
 }
 
@@ -616,6 +624,7 @@ string IosPlatformHelpers::getWifiSSID(void) {
 PlatformHelpers *createIosPlatformHelpers(std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) {
 	return new IosPlatformHelpers(core, systemContext);
 }
+
 
 LINPHONE_END_NAMESPACE
 

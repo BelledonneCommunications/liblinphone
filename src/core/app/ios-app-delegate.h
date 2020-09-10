@@ -19,6 +19,7 @@
 
 #include <UIKit/UIKit.h>
 #include "private.h"
+#import <UserNotifications/UserNotifications.h>
 
 @interface IosAppDelegate : NSObject {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
@@ -28,5 +29,6 @@
 - (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)onLinphoneCoreStart;
 - (void)onLinphoneCoreStop;
+- (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
 
 @end
