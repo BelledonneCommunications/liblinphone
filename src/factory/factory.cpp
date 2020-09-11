@@ -60,7 +60,7 @@ static LinphoneFactory* Factory::create(void){
 
 	LinphoneFactory *factory = belle_sip_object_new(LinphoneFactory);
 	factory->mTopResourcesDir = bctbx_strdup(PACKAGE_DATA_DIR);
-	initialize_supported_video_definitions(factory);
+	initializeSupportedVideoDefinitions(factory);
 	// register the bctbx sqlite vfs. It is not used by default
 	// sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db //
 	sqlite3_bctbx_vfs_register(0);
@@ -174,7 +174,7 @@ LinphoneCore *_createCore (
 	void *user_data,
 	void *system_context,
 	bool_t automatically_start
-) {
+) const {
 	bctbx_init_logger(FALSE);
 	LpConfig *config = linphone_config_new_with_factory(config_path, factory_config_path);
 	LinphoneCore *lc = _linphone_core_new_with_config(cbs, config, user_data, system_context, automatically_start);
@@ -192,7 +192,7 @@ LinphoneCore *_createSharedCore (
 	bool_t automatically_start,
 	const char *app_group_id,
 	bool_t main_core
-) {
+) const{
 	bctbx_init_logger(FALSE);
 	LpConfig *config = linphone_config_new_for_shared_core(app_group_id, config_filename, factory_config_path);
 	LinphoneCore *lc = _linphone_core_new_shared_with_config(cbs, config, user_data, system_context, automatically_start, app_group_id, main_core);
@@ -205,7 +205,7 @@ LinphoneCore* Factory::createCore (
 	LinphoneCoreCbs *cbs,
 	const char *config_path,
 	const char *factory_config_path
-) {
+) const {
 	return Factory::_createCore(cbs, config_path, factory_config_path, NULL, NULL, TRUE);
 }
 
@@ -215,7 +215,7 @@ LinphoneCore* Factory::createCore (
 	const char *factory_config_path,
 	void *user_data,
 	void *system_context
-) {
+) const {
 	return Factory::_createCore(cbs, config_path, factory_config_path, user_data, system_context, TRUE);
 }
 
@@ -223,7 +223,7 @@ LinphoneCore* Factory::createCore (
 	const char *config_path,
 	const char *factory_config_path,
 	void *system_context
-) {
+) const {
 	return Factory::_createCore(NULL, config_path, factory_config_path, NULL, system_context, FALSE);
 }
 
@@ -233,14 +233,14 @@ LinphoneCore* Factory::createSharedCore (
 	void *system_context,
 	const char *app_group_id,
 	bool_t main_core
-) {
+) const {
 	return Factory::_CreateSharedCore(NULL, factory_config_path, factory_config_path, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
 LinphoneCore* Factory::createCoreWithConfig (
 	LinphoneCoreCbs *cbs,
 	LinphoneConfig *config
-) {
+) const {
 	return _linphone_core_new_with_config(cbs, config, NULL, NULL, TRUE);
 }
 
@@ -249,14 +249,14 @@ LinphoneCore* Factory::createCoreWithConfig (
 	LinphoneConfig *config,
 	void *user_data,
 	void *system_context
-) {
+) const {
 	return _linphone_core_new_with_config(cbs, config, user_data, system_context, TRUE);
 }
 
 LinphoneCore* Factory::createCoreWithConfig (
 	LinphoneConfig *config,
 	void *system_context
-) {
+) const {
 	return _linphone_core_new_with_config(NULL, config, NULL, system_context, FALSE);
 }
 
@@ -265,22 +265,22 @@ LinphoneCore* Factory::createSharedCoreWithConfig (
 	void *system_context,
 	const char *app_group_id,
 	bool_t main_core
-) {
+) const {
 	return _linphone_core_new_shared_with_config(NULL, config, NULL, system_context, FALSE, app_group_id, main_core);
 }
 
-LinphoneCoreCbs* Factory::createCoreCbs() {
+LinphoneCoreCbs* Factory::createCoreCbs() const {
 	return _linphone_core_cbs_new();
 }
 
-LinphoneAddress* Factory::createAddress(const char *addr) {
+LinphoneAddress* Factory::createAddress (const char *addr) const {
 	return linphone_address_new(addr);
 }
 
-static LinphoneParticipantDeviceIdentity* Factory::createParticipantDeviceIdentity(
+static LinphoneParticipantDeviceIdentity* Factory::createParticipantDeviceIdentity (
 	const LinphoneAddress *address,
 	const char *name
-) {
+) const {
 #ifdef HAVE_ADVANCED_IM
 	return linphone_participant_device_identity_new(address, name);
 #else
@@ -289,36 +289,36 @@ static LinphoneParticipantDeviceIdentity* Factory::createParticipantDeviceIdenti
 #endif
 }
 
-LinphoneAuthInfo* Factory::createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
+LinphoneAuthInfo* Factory::createAuthInfo (const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) const {
 	return linphone_auth_info_new(username, userid, passwd, ha1, realm, domain);
 }
 
-LinphoneAuthInfo* Factory::createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) {
+LinphoneAuthInfo* Factory::createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) const {
 	return linphone_auth_info_new_for_algorithm(username, userid, passwd, ha1, realm, domain, algorithm);
 }
 
-LinphoneCallCbs* Factory::createCallCbs() {
+LinphoneCallCbs* Factory::createCallCbs() const {
 	return _linphone_call_cbs_new();
 }
 
-LinphoneChatRoomCbs* Factory::createChatRoomCbs() {
+LinphoneChatRoomCbs* Factory::createChatRoomCbs() const {
 	return _linphone_chat_room_cbs_new();
 }
 
-LinphoneChatMessageCbs* Factory::createChatMessageCbs() {
+LinphoneChatMessageCbs* Factory::createChatMessageCbs() const {
 	return linphone_chat_message_cbs_new();
 }
 
-LinphoneVcard* Factory::createVcard() {
+LinphoneVcard* Factory::createVcard() const {
 	return _linphone_vcard_new();
 }
 
-LinphoneVideoDefinition* Factory::createVideoDefinition(unsigned int width, unsigned int height) {
+LinphoneVideoDefinition* Factory::createVideoDefinition(unsigned int width, unsigned int height) const {
 	LinphoneVideoDefinition *supported = Factory::findSupportedVideoDefinition(this, width, height);
 	return supported ? linphone_video_definition_clone(supported) : linphone_video_definition_new(width, height, NULL);
 }
 
-LinphoneVideoDefinition* Factory::createVideoDefinitionFromName(const char *name) {
+LinphoneVideoDefinition* Factory::createVideoDefinitionFromName(const char *name) const {
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = Factory::findSupportedVideoDefinitionByName(this, name);
@@ -329,11 +329,11 @@ LinphoneVideoDefinition* Factory::createVideoDefinitionFromName(const char *name
 	return linphone_video_definition_new(0, 0, NULL);
 }
 
-const bctbx_list_t* Factory::getSupportedVideoDefinitions() {
+const bctbx_list_t* Factory::getSupportedVideoDefinitions() const {
 	return mSupportedVideoDefinitions;
 }
 
-LinphoneVideoDefinition* Factory::findSupportedVideoDefinition(unsigned int width, unsigned int height) {
+LinphoneVideoDefinition* Factory::findSupportedVideoDefinition(unsigned int width, unsigned int height) const {
 	const bctbx_list_t *item;
 	const bctbx_list_t *supported = Factory::getSupportedVideoDefinitions(this);
 	LinphoneVideoDefinition *searched_vdef = linphone_video_definition_new(width, height, NULL);
@@ -354,7 +354,7 @@ LinphoneVideoDefinition* Factory::findSupportedVideoDefinition(unsigned int widt
 	return found;
 }
 
-LinphoneVideoDefinition* Factory::findSupportedVideoDefinitionByName(const char *name) {
+LinphoneVideoDefinition* Factory::findSupportedVideoDefinitionByName(const char *name) const {
 	const bctbx_list_t *item;
 	const bctbx_list_t *supported = Factory::getSupportedVideoDefinitions(this);
 
@@ -369,7 +369,7 @@ LinphoneVideoDefinition* Factory::findSupportedVideoDefinitionByName(const char 
 	return NULL;
 }
 
-const char* Factory::getTopResourcesDir() {
+const char* Factory::getTopResourcesDir() const {
 	return mTopResourcesDir;
 }
 
@@ -377,7 +377,7 @@ void Factory::setTopResourcesDir(const char *path) {
 	mTopResourcesDir = path);
 }
 
-const char* Factory::getDataResourcesDir() {
+const char* Factory::getDataResourcesDir() const {
 	if (mDataResourcesDir) return mDataResourcesDir;
 	if (mTopResourcesDir){
 		mCachedDataResourcesDir = mTopResourcesDir + "/linphone";
@@ -391,7 +391,7 @@ void Factory::setDataResourcesDir(const char *path) {
 	mDataResourcesDir = path;
 }
 
-const char* Factory::getSoundResourcesDir() {
+const char* Factory::getSoundResourcesDir() const {
 	if (mSoundResourcesDir) return mSoundResourcesDir;
 	if (mTopResourcesDir){
 		mcachedSoundResourcesDir = mTopResourcesDir + "/sounds/linphone";
@@ -404,7 +404,7 @@ void Factory::setSoundResourcesDir(const char *path) {
 	mSoundResourcesDir = path;
 }
 
-const char* Factory::getRingResourcesDir() {
+const char* Factory::getRingResourcesDir() const {
 	if (mRingResourcesDir) return mRingResourcesDir;
 	if (mSoundResourcesDir){
 		mcachedRingResourcesDir = mSoundResourcesDir + "/rings";
@@ -421,7 +421,7 @@ void Factory::setRingResourcesDir(const char *path) {
 	mRingResourcesDir = path;
 }
 
-const char* Factory::getImageResourcesDir() {
+const char* Factory::getImageResourcesDir() const {
 	if (mImageResourcesDir) return mImageResourcesDir;
 	if (mTopResourcesDir) {
 		mcachedImageResourcesDir = mTopResourcesDir + "/images";
@@ -435,7 +435,7 @@ void Factory::setImageResourcesDir(const char *path) {
 	mImageResourcesDir = path;
 }
 
-const char* Factory::getMspluginsDir() {
+const char* Factory::getMspluginsDir() const {
 	return mMspluginsDir;
 }
 
@@ -443,57 +443,57 @@ void Factory::setMspluginsDir(const char *path) {
 	mMspluginsDir = path;
 }
 
-LinphoneErrorInfo* Factory::createErrorInfo(){
+LinphoneErrorInfo* Factory::createErrorInfo() const {
 
 	return linphone_error_info_new();
 
 }
 
-LinphoneRange* Factory::createRange() {
+LinphoneRange* Factory::createRange() const {
 	return linphone_range_new();
 }
 
-LinphoneTransports* Factory::createTransports() {
+LinphoneTransports* Factory::createTransports() const {
 	return linphone_transports_new();
 }
 
-LinphoneVideoActivationPolicy* Factory::createVideoActivationPolicy() {
+LinphoneVideoActivationPolicy* Factory::createVideoActivationPolicy() const {
 	return linphone_video_activation_policy_new();
 }
 
-LinphoneContent* Factory::createContent() {
+LinphoneContent* Factory::createContent() const {
 	return linphone_content_new();
 }
 
-LinphoneBuffer* Factory::createBuffer() {
+LinphoneBuffer* Factory::createBuffer() const {
 	return linphone_buffer_new();
 }
 
-LinphoneBuffer* Factory::createBufferFromData(const uint8_t *data, size_t size) {
+LinphoneBuffer* Factory::createBufferFromData(const uint8_t *data, size_t size) const {
 	return linphone_buffer_new_from_data(data, size);
 }
 
-LinphoneBuffer* Factory::createbufferFromString(const char *data) {
+LinphoneBuffer* Factory::createbufferFromString(const char *data) const {
 	return linphone_buffer_new_from_string(data);
 }
 
-LinphoneConfig* Factory::createConfig(const char *path) {
+LinphoneConfig* Factory::createConfig(const char *path) const {
 	return linphone_config_new(path);
 }
 
-LinphoneConfig* Factory::createConfigWithFactory(const char *path, const char *factory_path) {
+LinphoneConfig* Factory::createConfigWithFactory(const char *path, const char *factory_path) const {
 	return linphone_config_new_with_factory(path, factory_path);
 }
 
-LinphoneConfig* Factory::createConfigFromString(const char *data) {
+LinphoneConfig* Factory::createConfigFromString(const char *data) const {
 	return linphone_config_new_from_buffer(data);
 }
 
-const bctbx_list_t* Factory::getDialPlans() {
+const bctbx_list_t* Factory::getDialPlans() const {
 	return linphone_dial_plan_get_all_list();
 }
 
-void* Factory::getUserData() {
+void* Factory::getUserData() const {
 	return mUserData;
 }
 
@@ -501,43 +501,43 @@ void Factory::setUserData(void *data) {
 	mUserData = data;
 }
 
-void Factory::setLogCollectionPath(const char *path) {
+void Factory::setLogCollectionPath(const char *path) const {
 	linphone_core_set_log_collection_path(path);
 }
 
-void Factory::enableLogCollection(LinphoneLogCollectionState state) {
+void Factory::enableLogCollection(LinphoneLogCollectionState state) const {
 	linphone_core_enable_log_collection(state);
 }
 
-LinphoneTunnelConfig* Factory::createTunnelConfig() {
+LinphoneTunnelConfig* Factory::createTunnelConfig() const {
 	return linphone_tunnel_config_new();
 }
 
-LinphoneLoggingServiceCbs* Factory::createLoggingServiceCbs() {
+LinphoneLoggingServiceCbs* Factory::createLoggingServiceCbs() const {
 	return linphone_logging_service_cbs_new();
 }
 
-LinphonePlayerCbs* Factory::createPlayerCbs() {
+LinphonePlayerCbs* Factory::createPlayerCbs() const {
 	return linphone_player_cbs_new();
 }
 
-LinphoneEventCbs* Factory::createEventCbs() {
+LinphoneEventCbs* Factory::createEventCbs() const {
 	return linphone_event_cbs_new();
 }
 
-LinphoneFriendListCbs* Factory::createFriendListCbs() {
+LinphoneFriendListCbs* Factory::createFriendListCbs() const {
 	return linphone_friend_list_cbs_new();
 }
 
-LinphoneAccountCreatorCbs* Factory::createAccountCreatorCbs() {
+LinphoneAccountCreatorCbs* Factory::createAccountCreatorCbs() const {
 	return linphone_account_creator_cbs_new();
 }
 
-LinphoneXmlRpcRequestCbs* Factory::createXmlRpcRequestCbs() {
+LinphoneXmlRpcRequestCbs* Factory::createXmlRpcRequestCbs() const {
 	return linphone_xml_rpc_request_cbs_new();
 }
 
-bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) {
+bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) const {
 #ifdef HAVE_ADVANCED_IM
 	return TRUE;
 #else
@@ -545,7 +545,7 @@ bool_t Factory::isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_back
 #endif
 }
 
-bool_t Factory::isDatabaseStorageAvailable() {
+bool_t Factory::isDatabaseStorageAvailable() const {
 #ifdef HAVE_DB_STORAGE
 	return TRUE;
 #else
@@ -553,7 +553,7 @@ bool_t Factory::isDatabaseStorageAvailable() {
 #endif
 }
 
-bool_t Factory::isImdnAvailable() {
+bool_t Factory::isImdnAvailable() const {
 #ifdef HAVE_ADVANCED_IM
 	return TRUE;
 #else
@@ -632,4 +632,5 @@ void Factory::setVfsEncryption(const uint16_t encryptionModule, const uint8_t *s
 		mEvfsMasterKey = nullptr;
 	}
 }
+
 LINPHONE_END_NAMESPACE

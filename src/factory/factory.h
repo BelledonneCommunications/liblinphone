@@ -20,6 +20,9 @@
  #ifndef FACTORY_H_
  #define FACTORY_H_
 
+#include <belle-sip/object++.hh>
+#include "linphone/api/c-types.h"
+
 #include "linphone/factory.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -84,7 +87,7 @@ public:
   	void *user_data,
   	void *system_context,
   	bool_t automatically_start
-  );
+  ) const;
 
   LinphoneCore *_createSharedCore (
   	LinphoneCoreCbs *cbs,
@@ -95,13 +98,13 @@ public:
   	bool_t automatically_start,
   	const char *app_group_id,
   	bool_t main_core
-  );
+  ) const;
 
   LinphoneCore *createCore (
   	LinphoneCoreCbs *cbs,
   	const char *config_path,
   	const char *factory_config_path
-  );
+  ) const;
 
   LinphoneCore *createCore (
   	LinphoneCoreCbs *cbs,
@@ -109,13 +112,13 @@ public:
   	const char *factory_config_path,
   	void *user_data,
   	void *system_context
-  );
+  ) const;
 
   LinphoneCore *createCore (
   	const char *config_path,
   	const char *factory_config_path,
   	void *system_context
-  );
+  ) const;
 
   LinphoneCore *createSharedCore (
   	const char *config_filename,
@@ -123,137 +126,137 @@ public:
   	void *system_context,
   	const char *app_group_id,
   	bool_t main_core
-  );
+  ) const;
 
   LinphoneCore *createCoreWithConfig (
   	LinphoneCoreCbs *cbs,
   	LinphoneConfig *config
-  );
+  ) const;
 
   LinphoneCore *createCoreWithConfig (
   	LinphoneCoreCbs *cbs,
   	LinphoneConfig *config,
   	void *user_data,
   	void *system_context
-  );
+  ) const;
 
   LinphoneCore *createCoreWithConfig (
   	LinphoneConfig *config,
   	void *system_context
-  );
+  ) const;
 
   LinphoneCore *createSharedCoreWithConfig (
   	LinphoneConfig *config,
   	void *system_context,
   	const char *app_group_id,
   	bool_t main_core
-  );
+  ) const;
 
-  LinphoneCoreCbs *createCoreCbs();
+  LinphoneCoreCbs *createCoreCbs() const ;
 
-  LinphoneAddress *createAddress(const char *addr);
+  LinphoneAddress *createAddress(const char *addr) const;
 
   LinphoneParticipantDeviceIdentity *createParticipantDeviceIdentity(const LinphoneAddress *address,
   	const char *name
-  );
+  ) const;
 
-  LinphoneAuthInfo *createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain);
+  LinphoneAuthInfo *createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) const;
 
-  LinphoneAuthInfo *createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm);
+  LinphoneAuthInfo *createAuthInfo(const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain, const char *algorithm) const;
 
-  LinphoneCallCbs * createCallCbs();
+  LinphoneCallCbs * createCallCbs() const;
 
-  LinphoneChatRoomCbs * createChatRoomCbs();
+  LinphoneChatRoomCbs * createChatRoomCbs() const;
 
-  LinphoneChatMessageCbs * createChatMessageCbs();
+  LinphoneChatMessageCbs * createChatMessageCbs() const;
 
-  LinphoneVcard *createVcard();
+  LinphoneVcard *createVcard() const;
 
-  LinphoneVideoDefinition * createVideoDefinition(unsigned int width, unsigned int height);
+  LinphoneVideoDefinition * createVideoDefinition(unsigned int width, unsigned int height) const;
 
-  LinphoneVideoDefinition * createVideoDefinitionFromName(const char *name);
+  LinphoneVideoDefinition * createVideoDefinitionFromName(const char *name) const;
 
-  const bctbx_list_t * getSupportedVideoDefinitions();
+  const bctbx_list_t * getSupportedVideoDefinitions() const;
 
-  LinphoneVideoDefinition * findSupportedVideoDefinition(unsigned int width, unsigned int height);
+  LinphoneVideoDefinition * findSupportedVideoDefinition(unsigned int width, unsigned int height) const;
 
-  LinphoneVideoDefinition * findSupportedVideoDefinitionByName(const char *name);
+  LinphoneVideoDefinition * findSupportedVideoDefinitionByName(const char *name) const;
 
-  const char * getTopResourcesDir();
+  const char * getTopResourcesDir() const;
 
   void setTopResourcesDir(const char *path);
 
-  const char * getDataResourcesDir();
+  const char * getDataResourcesDir() const;
 
   void setDataResourcesDir(const char *path);
 
-  const char * getSoundResourcesDir();
+  const char * getSoundResourcesDir() const;
 
   void setSoundResourcesDir(const char *path);
 
-  const char * getRingResourcesDir();
+  const char * getRingResourcesDir() const;
 
   void setRingResourcesDir(const char *path);
 
-  const char * getImageResourcesDir();
+  const char * getImageResourcesDir() const;
 
   void setImageResourcesDir(const char *path);
 
-  const char * getMspluginsDir();
+  const char * getMspluginsDir() const;
 
   void setMspluginsDir(const char *path);
 
-  LinphoneErrorInfo *createErrorInfo();
+  LinphoneErrorInfo *createErrorInfo() const;
 
-  LinphoneRange *createRange();
+  LinphoneRange *createRange() const;
 
-  LinphoneTransports *createTransports();
+  LinphoneTransports *createTransports() const;
 
-  LinphoneVideoActivationPolicy *createVideoActivationPolicy();
+  LinphoneVideoActivationPolicy *createVideoActivationPolicy() const;
 
-  LinphoneContent *createContent();
+  LinphoneContent *createContent() const;
 
-  LinphoneBuffer *createBuffer();
+  LinphoneBuffer *createBuffer() const;
 
-  LinphoneBuffer *createBufferFromData(const uint8_t *data, size_t size);
+  LinphoneBuffer *createBufferFromData(const uint8_t *data, size_t size) const;
 
-  LinphoneBuffer *createBufferFromString(const char *data);
+  LinphoneBuffer *createBufferFromString(const char *data) const;
 
-  LinphoneConfig *createConfig(const char *path);
+  LinphoneConfig *createConfig(const char *path) const;
 
-  LinphoneConfig *createConfigWithFactory(const char *path, const char *factory_path);
+  LinphoneConfig *createConfigWithFactory(const char *path, const char *factory_path) const;
 
-  LinphoneConfig *createConfigFromString(const char *data);
+  LinphoneConfig *createConfigFromString(const char *data) const;
 
-  const bctbx_list_t * getDialPlans();
+  const bctbx_list_t * getDialPlans() const;
 
-  void *getUserData();
+  void *getUserData() const;
 
   void setUserData(void *data);
 
-  void setLogCollectionPath(const char *path);
+  void setLogCollectionPath(const char *path) const;
 
-  void enableLogCollection(LinphoneLogCollectionState state);
+  void enableLogCollection(LinphoneLogCollectionState state) const;
 
-  LinphoneTunnelConfig *createTunnelConfig();
+  LinphoneTunnelConfig *createTunnelConfig() const;
 
-  LinphoneLoggingServiceCbs *createLoggingServiceCbs();
+  LinphoneLoggingServiceCbs *createLoggingServiceCbs() const;
 
-  LinphonePlayerCbs *createPlayerCbs();
+  LinphonePlayerCbs *createPlayerCbs() const;
 
-  LinphoneEventCbs *createEventCbs();
+  LinphoneEventCbs *createEventCbs() const;
 
-  LinphoneFriendListCbs *createFriendListCbs();
+  LinphoneFriendListCbs *createFriendListCbs() const;
 
-  LinphoneAccountCreatorCbs *createAccountCreatorCbs();
+  LinphoneAccountCreatorCbs *createAccountCreatorCbs() const;
 
-  LinphoneXmlRpcRequestCbs *createXmlRpcRequestCbs();
+  LinphoneXmlRpcRequestCbs *createXmlRpcRequestCbs() const;
 
-  bool_t isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend);
+  bool_t isChatroomBackendAvailable(LinphoneChatRoomBackend chatroom_backend) const;
 
-  bool_t isDatabaseStorageAvailable();
+  bool_t isDatabaseStorageAvailable() const;
 
-  bool_t isImdnAvailable();
+  bool_t isImdnAvailable() const;
 
   const char *getConfigDir(void *context);
 

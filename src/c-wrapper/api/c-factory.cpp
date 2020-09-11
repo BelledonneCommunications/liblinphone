@@ -246,7 +246,7 @@ LinphoneCoreCbs *linphone_factory_create_core_cbs(const LinphoneFactory *factory
 }
 
 LinphoneAddress *linphone_factory_create_address(const LinphoneFactory *factory, const char *addr) {
-  return Factory::toCpp(factory)->CreateAddress(addr ? addr : "");
+  return Factory::toCpp(factory)->createAddress(addr ? addr : "");
 }
 
 LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_identity(
@@ -254,7 +254,9 @@ LinphoneParticipantDeviceIdentity *linphone_factory_create_participant_device_id
 	const LinphoneAddress *address,
 	const char *name
 ) {
-  return Factory::toCpp(factory)->createParticipantDeviceIdentity(addr ? addr : "");
+  return Factory::toCpp(factory)->createParticipantDeviceIdentity(
+    address,
+    name ? name : "");
 }
 
 LinphoneAuthInfo *linphone_factory_create_auth_info(const LinphoneFactory *factory, const char *username, const char *userid, const char *passwd, const char *ha1, const char *realm, const char *domain) {
@@ -276,7 +278,7 @@ LinphoneAuthInfo *linphone_factory_create_auth_info_2(const LinphoneFactory *fac
     ha1 ? ha1 : "",
     realm ? realm : "",
     domain ? domain : "",
-    algorithm ? algorithm : "",
+    algorithm ? algorithm : ""
   );
 
 }
@@ -287,7 +289,7 @@ LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factor
 }
 
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->createCreateChatRoomCbs();
+  return Factory::toCpp(factory)->createChatRoomCbs();
 
 }
 
@@ -300,7 +302,7 @@ LinphoneVcard *linphone_factory_create_vcard(LinphoneFactory *factory) {
 }
 
 LinphoneVideoDefinition * linphone_factory_create_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
-  return Factory::toCpp(factory)->createCreateVideoDefinition(width, height);
+  return Factory::toCpp(factory)->createVideoDefinition(width, height);
 
 }
 
@@ -312,11 +314,11 @@ LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(con
 }
 
 const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getSupportedVidepDefinitions();
+  return Factory::toCpp(factory)->getSupportedVideoDefinitions();
 }
 
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
-  return Factory::toCpp(factory)->findSupportedVideoDefinition();
+  return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height);
 
 }
 
@@ -328,7 +330,7 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_na
 }
 
 void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char *path) {
-  Factory::toCpp(factory)->factorySetTopResourcesDir(
+  Factory::toCpp(factory)->setTopResourcesDir(
     path ? path : ""
   );
 }
@@ -338,7 +340,9 @@ const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory) {
 }
 
 void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const char *path) {
-  Factory::toCpp(factory)->setDataResourcesDir();
+  Factory::toCpp(factory)->setDataResourcesDir(
+    path ? path : ""
+  );
 
 }
 
@@ -371,7 +375,7 @@ const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory) 
 void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const char *path) {
     Factory::toCpp(factory)->setImageResourcesDir(
       path ? path : ""
-    )->toC();
+    );
 }
 
 const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
@@ -397,7 +401,7 @@ LinphoneTransports *linphone_factory_create_transports(LinphoneFactory *factory)
 }
 
 LinphoneVideoActivationPolicy *linphone_factory_create_video_activation_policy(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getMspluginsDir();
+  return Factory::toCpp(factory)->createVideoActivationPolicy();
 }
 
 LinphoneContent *linphone_factory_create_content(LinphoneFactory *factory) {
@@ -447,9 +451,7 @@ void *linphone_factory_get_user_data(const LinphoneFactory *factory) {
 }
 
 void linphone_factory_set_user_data(LinphoneFactory *factory, void *data) {
-  return Factory::toCpp(factory)->setUserData(
-    data ? data : ""
-  );
+  return Factory::toCpp(factory)->setUserData(data);
 }
 
 void linphone_factory_set_log_collection_path(LinphoneFactory *factory, const char *path) {
