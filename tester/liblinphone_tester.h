@@ -337,6 +337,7 @@ typedef struct _stats {
 	int number_of_core_chat_room_subject_changed;
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
+	int number_of_participant_state_changed;
 
 	int number_of_SecurityLevelDowngraded;
 	int number_of_ParticipantMaxDeviceCountExceeded;

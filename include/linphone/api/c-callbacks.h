@@ -360,6 +360,14 @@ typedef void (*LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequested
  */
 typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
+/**
+ * Callback used to notify a participant state has changed in a message of this chat room.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param message The #LinphoneChatMessage for which a participant has it's state changed @notnil
+ * @param state The #LinphoneParticipantImdnState @notnil
+ */
+typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message, const LinphoneParticipantImdnState *state);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

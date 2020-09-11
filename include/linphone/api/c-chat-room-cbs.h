@@ -358,15 +358,30 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_registration_unsubsc
 /**
  * Get the message should be stored callback.
  * @param cbs LinphoneChatRoomCbs object @notnil
- * @return The message should be stored getting callback
+ * @return The message should be stored callback
  */
-LINPHONE_PUBLIC LinphoneChatRoomCbsShouldChatMessageBeStoredCb linphone_chat_room_cbs_get_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs);
+LINPHONE_PUBLIC LinphoneChatRoomCbsShouldChatMessageBeStoredCb linphone_chat_room_cbs_get_chat_message_should_be_stored (LinphoneChatRoomCbs *cbs);
+
 /**
  * Set the message should be stored callback.
  * @param cbs LinphoneChatRoomCbs object @notnil
  * @param cb The message should be stored callback to be used
  */
-LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_should_be_stored( LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsShouldChatMessageBeStoredCb cb);
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_should_be_stored (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsShouldChatMessageBeStoredCb cb);
+
+/**
+ * Get the message's participant state changed callback.
+ * @param cbs LinphoneChatRoomCbs object @notnil
+ * @return The message's participant state changed callback callback
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb linphone_chat_room_cbs_get_chat_message_participant_imdn_state_changed (LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the message's participant state changed callback callback.
+ * @param cbs LinphoneChatRoomCbs object @notnil
+ * @param cb The message's participant state changed callback to be used
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_participant_imdn_state_changed (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb cb);
 
 /**
  * @}

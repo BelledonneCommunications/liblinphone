@@ -585,6 +585,10 @@ void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *
 	NOTIFY_IF_EXIST(ShouldChatMessageBeStored, chat_message_should_be_stored, cr, msg)
 }
 
+void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(LinphoneChatRoom *cr, LinphoneChatMessage *msg, const LinphoneParticipantImdnState *state) {
+	NOTIFY_IF_EXIST(ChatMessageParticipantImdnStateChanged, chat_message_participant_imdn_state_changed, cr, msg, state)
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================
