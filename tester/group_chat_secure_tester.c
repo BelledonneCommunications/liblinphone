@@ -3016,6 +3016,12 @@ static void group_chat_lime_x3dh_update_keys(void) {
 	group_chat_lime_x3dh_update_keys_curve(448);
 }
 
+static void chat_room_message_participant_state_changed(LinphoneChatRoom *cr, LinphoneChatMessage *msg, const LinphoneParticipantImdnState *state) {
+	LinphoneChatRoomCbs *cbs = linphone_chat_room_get_current_callbacks(cr);
+	LinphoneCoreManager *chloe = (LinphoneCoreManager *)linphone_chat_room_cbs_get_user_data(cbs);
+	chloe->stat.number_of_participant_state_changed += 1;
+}
+
 static void imdn_for_group_chat_room_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
@@ -3058,6 +3064,12 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	// Check that the chat room is correctly created on Chloe's side and that the participants are added
 	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 2, FALSE);
 
+	LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
+	linphone_chat_room_cbs_set_chat_message_participant_imdn_state_changed(cbs, chat_room_message_participant_state_changed);
+	linphone_chat_room_add_callbacks(chloeCr, cbs);
+	linphone_chat_room_cbs_set_user_data(cbs, chloe);
+	linphone_chat_room_cbs_unref(cbs);
+
 	// Chloe begins composing a message
 	const char *chloeTextMessage = "Hello";
 	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
@@ -3075,6 +3087,7 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	// Check that the message has been delivered to Marie and Pauline
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDeliveredToUser, initialChloeStats.number_of_LinphoneMessageDeliveredToUser + 1, 3000));
 	BC_ASSERT_PTR_NULL(linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_participant_state_changed, 2, 1000));
 	bctbx_list_t *participantsThatReceivedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDeliveredToUser);
 	if (BC_ASSERT_PTR_NOT_NULL(participantsThatReceivedChloeMessage)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatReceivedChloeMessage), 2, int, "%d");
@@ -3093,6 +3106,7 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	linphone_chat_room_mark_as_read(marieCr);
 	BC_ASSERT_FALSE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 0, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_participant_state_changed, 3, 1000));
 	bctbx_list_t *participantsThatDisplayedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed);
 	if (BC_ASSERT_PTR_NOT_NULL(participantsThatDisplayedChloeMessage)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatDisplayedChloeMessage), 1, int, "%d");
@@ -3110,6 +3124,7 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	linphone_chat_room_mark_as_read(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_LinphoneMessageDisplayed, initialChloeStats.number_of_LinphoneMessageDisplayed + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 0, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &chloe->stat.number_of_participant_state_changed, 4, 1000));
 	participantsThatDisplayedChloeMessage = linphone_chat_message_get_participants_by_imdn_state(chloeMessage, LinphoneChatMessageStateDisplayed);
 	if (BC_ASSERT_PTR_NOT_NULL(participantsThatDisplayedChloeMessage)) {
 		BC_ASSERT_EQUAL((int)bctbx_list_size(participantsThatDisplayedChloeMessage), 2, int, "%d");
