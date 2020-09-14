@@ -111,7 +111,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
 	// FIXME: Take a ref of the event because when linphone_event_release is called upon termination of the subscription. This function unrefs the event causing a dangling pointer to be left to the event handler
-//	linphone_event_ref(lev);
+	linphone_event_ref(lev);
 	char *from = linphone_address_as_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
 	lev->op->setFrom(from);
 	bctbx_free(from);
@@ -132,12 +132,12 @@ void RemoteConferenceListEventHandler::subscribe () {
 void RemoteConferenceListEventHandler::unsubscribe () {
 	if (lev) {
 		linphone_event_terminate(lev);
+		linphone_event_unref(lev);
 		lev = nullptr;
 	}
 }
 
 void RemoteConferenceListEventHandler::invalidateSubscription () {
-//	linphone_event_unref(lev);
 	lev = nullptr;
 }
 
