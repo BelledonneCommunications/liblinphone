@@ -47,6 +47,7 @@ class LINPHONE_INTERNAL_PUBLIC MainDb : public AbstractDb, public CoreAccessor {
 
 	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
+	friend class ChatMessage;
 
 public:
 	enum Filter {

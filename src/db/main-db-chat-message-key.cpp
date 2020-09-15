@@ -35,10 +35,6 @@ MainDbChatMessageKey::MainDbChatMessageKey () : MainDbKey() {};
 MainDbChatMessageKey::MainDbChatMessageKey (const shared_ptr<Core> &core, long long storageId) : MainDbKey(core, storageId) {}
 
 MainDbChatMessageKey::~MainDbChatMessageKey () {
-	L_D();
-
-	if (isValid())
-		d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToChatMessage.erase(d->storageId);
 }
 
 LINPHONE_END_NAMESPACE

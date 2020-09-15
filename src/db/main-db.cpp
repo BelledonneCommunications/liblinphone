@@ -2316,6 +2316,8 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 			shared_ptr<AbstractChatRoom> chatRoom(chatMessage->getChatRoom());
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*session << "UPDATE chat_room SET last_message_id = IFNULL((SELECT id FROM conference_event_simple_view WHERE chat_room_id = chat_room.id AND type = " << mapEventFilterToSql(ConferenceChatMessageFilter) << " ORDER BY id DESC LIMIT 1), 0) WHERE id = :1", soci::use(dbChatRoomId);
+			// Delete chat message from cache as the eventy is deleted
+			d->storageIdToChatMessage.erase(dEventKey->storageId);
 		}
 
 		tr.commit();

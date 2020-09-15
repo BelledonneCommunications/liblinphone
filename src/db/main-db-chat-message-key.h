@@ -28,6 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class MainDbChatMessageKey : public MainDbKey {
 	friend class ChatMessagePrivate;
+	friend class ChatMessage;
 public:
 	MainDbChatMessageKey ();
 	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
