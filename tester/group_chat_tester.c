@@ -1016,6 +1016,7 @@ static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, initialPaulineStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));
 	const char *chloeTextMessage = "Hello";
 	LinphoneChatMessage *chloeMessage = _send_message(chloeCr, chloeTextMessage);
+	const char* messageId = linphone_chat_message_get_message_id(chloeMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingIdleReceived, initialMarieStats.number_of_LinphoneIsComposingIdleReceived + 1, 5000));
@@ -1026,6 +1027,12 @@ static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
 	linphone_chat_message_unref(chloeMessage);
+
+	LinphoneChatMessage *foundMessage = linphone_chat_room_find_message(chloeCr, messageId);
+	BC_ASSERT_PTR_NOT_NULL(foundMessage);
+	BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
+	linphone_chat_message_unref(foundMessage);
+
 	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 
 	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
