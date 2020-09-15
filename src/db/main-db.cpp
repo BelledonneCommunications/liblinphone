@@ -1298,13 +1298,11 @@ void MainDbPrivate::cache (const shared_ptr<EventLog> &eventLog, long long stora
 
 void MainDbPrivate::cache (const shared_ptr<ChatMessage> &chatMessage, long long storageId) const {
 #ifdef HAVE_DB_STORAGE
-	L_Q();
-
 	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-	L_ASSERT(!dChatMessage->dbKey.isValid());
-	dChatMessage->dbKey = MainDbChatMessageKey(q->getCore(), storageId);
+	L_ASSERT(!chatMessage->isValid());
+	dChatMessage->setStorageId(storageId);
 	storageIdToChatMessage[storageId] = chatMessage;
-	L_ASSERT(dChatMessage->dbKey.isValid());
+	L_ASSERT(chatMessage->isValid());
 #endif
 }
 
@@ -1328,9 +1326,9 @@ void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long 
 		}
 		shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
 		if (chatMessage) {
-			const ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-			L_ASSERT(dChatMessage->dbKey.isValid());
-			dChatMessage->dbKey = MainDbChatMessageKey();
+			L_ASSERT(chatMessage->isValid());
+			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+			dChatMessage->resetStorageId();
 		}
 	}
 #endif
@@ -2317,7 +2315,9 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 			const long long &dbChatRoomId = d->selectChatRoomId(chatRoom->getConferenceId());
 			*session << "UPDATE chat_room SET last_message_id = IFNULL((SELECT id FROM conference_event_simple_view WHERE chat_room_id = chat_room.id AND type = " << mapEventFilterToSql(ConferenceChatMessageFilter) << " ORDER BY id DESC LIMIT 1), 0) WHERE id = :1", soci::use(dbChatRoomId);
 			// Delete chat message from cache as the event is deleted
-			d->storageIdToChatMessage.erase(dEventKey->storageId);
+			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+			dChatMessage->resetStorageId();
+			//d->storageIdToChatMessage.erase(dEventKey->storageId);
 		}
 
 		tr.commit();
@@ -2334,7 +2334,7 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 				if (count)
 					--*count;
 			}
-			chatMessage->getPrivate()->dbKey = MainDbChatMessageKey();
+			chatMessage->getPrivate()->resetStorageId();
 		}
 
 		return true;
@@ -2366,26 +2366,24 @@ int MainDb::getEventCount (FilterMask mask) const {
 #endif
 }
 
-shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
+shared_ptr<EventLog> MainDb::getEvent (const unique_ptr<MainDb> &mainDb, const long long& storageId) {
 #ifdef HAVE_DB_STORAGE
-	if (!dbKey.isValid()) {
-		lWarning() << "Unable to get event from invalid key.";
+	if ((storageId < 0) || (mainDb == nullptr)) {
+		lWarning() << "Unable to get event from invalid storage ID " << storageId;
 		return nullptr;
 	}
 
-	unique_ptr<MainDb> &q = dbKey.getPrivate()->core.lock()->getPrivate()->mainDb;
-	MainDbPrivate *d = q->getPrivate();
+	MainDbPrivate *d = mainDb->getPrivate();
 
-	const long long &eventId = dbKey.getPrivate()->storageId;
-	shared_ptr<EventLog> event = d->getEventFromCache(eventId);
+	shared_ptr<EventLog> event = d->getEventFromCache(storageId);
 	if (event)
 		return event;
 
-	return L_DB_TRANSACTION_C(q.get()) {
+	return L_DB_TRANSACTION_C(mainDb.get()) {
 		// TODO: Improve. Deal with all events in the future.
 		soci::row row;
 		*d->dbSession.getBackendSession() << Statements::get(Statements::SelectConferenceEvent),
-			soci::into(row), soci::use(eventId);
+			soci::into(row), soci::use(storageId);
 
 		ConferenceId conferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)));
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
@@ -2394,6 +2392,21 @@ shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
 
 		return d->selectGenericConferenceEvent(chatRoom, row);
 	};
+#else
+	return nullptr;
+#endif
+}
+
+shared_ptr<EventLog> MainDb::getEventFromKey (const MainDbKey &dbKey) {
+#ifdef HAVE_DB_STORAGE
+	if (!dbKey.isValid()) {
+		lWarning() << "Unable to get event from invalid key.";
+		return nullptr;
+	}
+
+	unique_ptr<MainDb> &q = dbKey.getPrivate()->core.lock()->getPrivate()->mainDb;
+	const long long &eventId = dbKey.getPrivate()->storageId;
+	return MainDb::getEvent(q, eventId);
 #else
 	return nullptr;
 #endif
@@ -3127,8 +3140,7 @@ void MainDb::loadChatMessageContents (const shared_ptr<ChatMessage> &chatMessage
 		bool hasFileTransferContent = false;
 
 		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-		MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dChatMessage->dbKey).getPrivate();
-		const long long &eventId = dEventKey->storageId;
+		const long long &eventId = chatMessage->getStorageId();
 
 		static const string query = "SELECT chat_message_content.id, content_type.id, content_type.value, body, body_encoding_type"
 			" FROM chat_message_content, content_type"
