@@ -104,6 +104,10 @@ void Imdn::onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message) 
 	sentImdnMessages.remove(message);
 }
 
+void Imdn::onImdnMessageNotDelivered (const std::shared_ptr<ImdnMessage> &message) {
+	sentImdnMessages.remove(message);
+}
+
 bool Imdn::hasUndeliveredImdnMessage() {
 	return !(sentImdnMessages.empty() && deliveredMessages.empty() && displayedMessages.empty() && nonDeliveredMessages.empty());
 }

@@ -2902,6 +2902,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 	try {
+		//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
+		if (lc->state == LinphoneGlobalShutdown) {
+			_linphone_core_stop_async_end(lc);
+		}
 		if (lc->state == LinphoneGlobalOn) {
 			bctbx_warning("Core is already started, skipping...");
 			return -1;
@@ -7273,7 +7277,8 @@ bool_t linphone_core_keep_alive_enabled(LinphoneCore* lc) {
 }
 
 void linphone_core_start_dtmf_stream(LinphoneCore* lc) {
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStartDtmfStream();
+	if (linphone_core_get_global_state(lc) != LinphoneGlobalShutdown)
+		L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->linphoneCoreStartDtmfStream();
 }
 
 void linphone_core_stop_ringing(LinphoneCore* lc) {
