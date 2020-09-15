@@ -62,6 +62,9 @@ public:
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
 
+	void setStorageId (long long id);
+	void resetStorageId ();
+
 	void setDirection (ChatMessage::Direction dir);
 
 	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
@@ -212,7 +215,7 @@ private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
 
 public:
-	mutable MainDbChatMessageKey dbKey;
+	long long storageId = -1;
 
 protected:
 	bool displayNotificationRequired = true;

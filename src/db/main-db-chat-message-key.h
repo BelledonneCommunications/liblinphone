@@ -27,11 +27,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class MainDbChatMessageKey : public MainDbKey {
-	friend class ChatMessagePrivate;
-	friend class ChatMessage;
 public:
-	MainDbChatMessageKey ();
-	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
 	~MainDbChatMessageKey ();
 
 	MainDbChatMessageKey* clone () const override {
@@ -39,6 +35,9 @@ public:
 	}
 
 private:
+
+	MainDbChatMessageKey ();
+	MainDbChatMessageKey (const std::shared_ptr<Core> &core, long long storageId);
 	L_DECLARE_PRIVATE(MainDbKey);
 };
 
