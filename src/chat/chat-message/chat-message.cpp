@@ -1120,14 +1120,20 @@ ChatMessage::~ChatMessage () {
 }
 
 bool ChatMessage::isValid () const {
-	return (getChatRoom() && getChatRoom()->getCore() && (getStorageId() >= 0));
-	//return (getCore() && (getStorageId() >= 0));
+	std::shared_ptr<Core> core = nullptr;
+	try {
+		core = getCore();
+	} catch (const bad_weak_ptr &) {
+		return false; // Return false if core is destroyed.
+	}
+
+	return (core && (getStorageId() >= 0));
 }
 
 void ChatMessage::deleteChatMessageFromCache () {
 	if (isValid()) {
 		// Delete chat message from the cache
-		unique_ptr<MainDb> &mainDb = getChatRoom()->getCore()->getPrivate()->mainDb;
+		unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
 		if (mainDb->getPrivate()->storageIdToChatMessage.find(getStorageId()) != mainDb->getPrivate()->storageIdToChatMessage.cend()) {
 			mainDb->getPrivate()->storageIdToChatMessage.erase(getStorageId());
 		}

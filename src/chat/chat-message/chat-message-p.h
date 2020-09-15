@@ -31,7 +31,6 @@
 #include "content/content.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
-#include "db/main-db-chat-message-key.h"
 #include "db/main-db.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
