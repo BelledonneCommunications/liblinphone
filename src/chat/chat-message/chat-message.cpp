@@ -47,6 +47,7 @@
 #include "ortp/b64.h"
 
 #include "db/main-db-key-p.h"
+#include "db/main-db-p.h"
 // =============================================================================
 
 using namespace std;
@@ -1089,6 +1090,11 @@ ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.get
 ChatMessage::~ChatMessage () {
 	L_D();
 
+	if (getChatRoom() && getChatRoom()->getCore()) {
+		// Delete chat message from the cache
+		unique_ptr<MainDb> &mainDb = getChatRoom()->getCore()->getPrivate()->mainDb;
+		mainDb->getPrivate()->storageIdToChatMessage.erase(d->dbKey.getPrivate()->storageId);
+	}
 	for (Content *content : d->contents) {
 		if (content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
