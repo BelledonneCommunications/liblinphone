@@ -45,11 +45,18 @@ DbSession::DbSession () : mPrivate(new DbSessionPrivate) {}
 DbSession::DbSession (const string &uri) : DbSession() {
 	try {
 		L_D();
-		if (uri.find("sqlite3://") != std::string::npos) { // opening a sqlite3 db, force SOCI to use the bctbx_sqlite3_vfs
+		auto sqlitePos = uri.find("sqlite3://");
+		if (sqlitePos != std::string::npos) { // opening a sqlite3 db, force SOCI to use the bctbx_sqlite3_vfs
 			// uri might be just the filepath, add a db= in front of it in that case
 			std::string uriArgs{uri};
 			if ((uri.find("db=")==std::string::npos) && (uri.find("dbname=")==std::string::npos)) { // db name parameter can be db= or dbname=
-				uriArgs.insert(10, "db="); // insert just after "sqlite3://" position 10
+				// Add the db= prefix
+				if (uriArgs[sqlitePos+10] != '"') { // file path is not enclosed in quotes, do it too
+					uriArgs.insert(sqlitePos+10, "db=\""); // insert just after "sqlite3://" position +10
+					uriArgs.push_back('\"');
+				} else { // file path is already enclosed in quotes
+					uriArgs.insert(sqlitePos+10, "db="); // insert just after "sqlite3://" position +10, before the opening "
+				}
 			}
 			uriArgs.append(" vfs=").append(BCTBX_SQLITE3_VFS);
 			d->backendSession = makeUnique<soci::session>(uriArgs);
