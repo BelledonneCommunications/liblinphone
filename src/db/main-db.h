@@ -20,6 +20,7 @@
 #ifndef _L_MAIN_DB_H_
 #define _L_MAIN_DB_H_
 
+#include <memory>
 #include <functional>
 
 #include "linphone/utils/enum-mask.h"
@@ -83,6 +84,7 @@ public:
 	int getEventCount (FilterMask mask = NoFilter) const;
 
 	static std::shared_ptr<EventLog> getEventFromKey (const MainDbKey &dbKey);
+	static std::shared_ptr<EventLog> getEvent (const std::unique_ptr<MainDb> &mainDb, const long long& storageId);
 
 	// ---------------------------------------------------------------------------
 	// Conference notified events.
