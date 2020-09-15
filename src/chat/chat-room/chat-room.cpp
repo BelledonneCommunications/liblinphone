@@ -62,7 +62,7 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
 	if (!isResend && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
 		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
+			q->getCore()->getPrivate()->mainDb->getEvent(q->getCore()->getPrivate()->mainDb, chatMessage->getStorageId())
 		);
 		if (!event) {
 			event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
@@ -506,8 +506,9 @@ void ChatRoom::deleteHistory () {
 
 void ChatRoom::deleteMessageFromHistory (const shared_ptr<ChatMessage> &message) {
 	L_D();
-	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
-		message->getPrivate()->dbKey
+
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(
+		getCore()->getPrivate()->mainDb, message->getStorageId()
 	);
 	if (event) {
 		LinphonePrivate::EventLog::deleteFromDatabase(event);

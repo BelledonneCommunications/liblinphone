@@ -91,9 +91,8 @@ void RealTimeTextChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage>
 		chatMessage->putCharacter(newLine);
 	}
 
-	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 	shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-		q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
+		q->getCore()->getPrivate()->mainDb->getEvent(q->getCore()->getPrivate()->mainDb, chatMessage->getStorageId())
 	);
 	if (!event)
 		event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);

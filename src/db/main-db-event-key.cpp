@@ -35,10 +35,17 @@ MainDbEventKey::MainDbEventKey () : MainDbKey() {};
 MainDbEventKey::MainDbEventKey (const shared_ptr<Core> &core, long long storageId) : MainDbKey(core, storageId) {}
 
 MainDbEventKey::~MainDbEventKey () {
+	resetStorageId();
+}
+
+void MainDbEventKey::resetStorageId() {
 	L_D();
 
 	if (isValid())
 		d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToEvent.erase(d->storageId);
+
+	d->storageId = -1;
 }
+
 
 LINPHONE_END_NAMESPACE

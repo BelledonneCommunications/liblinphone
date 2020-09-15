@@ -203,7 +203,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	db/abstract/abstract-db-p.h
 	db/abstract/abstract-db.h
 	db/internal/statements.h
-	db/main-db-chat-message-key.h
 	db/main-db-event-key.h
 	db/main-db-key-p.h
 	db/main-db-key.h
@@ -378,7 +377,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	core/shared-core-helpers/shared-core-helpers.cpp
 	db/abstract/abstract-db.cpp
 	db/internal/statements.cpp
-	db/main-db-chat-message-key.cpp
 	db/main-db-event-key.cpp
 	db/main-db-key.cpp
 	db/main-db.cpp

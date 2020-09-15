@@ -416,7 +416,7 @@ void CorePrivate::handleEphemeralMessages (time_t currentTime) {
 		shared_ptr<ChatMessage> msg = ephemeralMessages.front();
 		time_t expireTime = msg->getEphemeralExpireTime();
 		if (currentTime > expireTime) {
-			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(msg->getPrivate()->dbKey);
+			shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(mainDb, msg->getStorageId());
 			shared_ptr<AbstractChatRoom> chatRoom = msg->getChatRoom();
 			if (chatRoom && event) {
 				LinphonePrivate::EventLog::deleteFromDatabase(event);
