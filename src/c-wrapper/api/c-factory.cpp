@@ -48,14 +48,6 @@
 
 using namespace LinphonePrivate;
 
-static LinphoneFactory *linphone_factory_new(void){
-  return Factory::create();
-}
-
-static void linphone_factory_uninit(LinphoneFactory *obj){
-  Factory::uninit(Factory::toCpp(obj));
-}
-
 /*BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
 BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
 	linphone_factory_uninit, // destroy
@@ -64,78 +56,8 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
 	FALSE
 );*/
 
-static LinphoneFactory *_factory = NULL;
-
-static void _linphone_factory_destroying_cb(void) {
-	if (_factory != NULL) {
-		belle_sip_object_unref(_factory);
-		_factory = NULL;
-	}
-}
-
-#define ADD_SUPPORTED_VIDEO_DEFINITION(factory, width, height, name) \
-	(factory)->supported_video_definitions = bctbx_list_append((factory)->supported_video_definitions, \
-		linphone_video_definition_new(width, height, name))
-
-static void initialize_supported_video_definitions(LinphoneFactory *factory) {
-  Factory::initializeSupportedVideoDefinitions(Factory::toCpp(factory));
-}
-
-//??????
 LinphoneFactory *linphone_factory_get(void) {
-  return Factory::get()->toC();
-
-}
-
-
-//??????
-void linphone_factory_clean(void){
-  Factory::clean();
-}
-
-static LinphoneCore *_linphone_factory_create_core (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_path,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context,
-	bool_t automatically_start
-) {
-  return Factory::toCpp(factory)->_createCore(
-    cbs,
-    config_path ? config_path : "",
-    factory_config_path ? factory_config_path : "",
-    user_data,
-    system_context,
-    automatically_start
-  );
-
-}
-
-static LinphoneCore *_linphone_factory_create_shared_core (
-	const LinphoneFactory *factory,
-	LinphoneCoreCbs *cbs,
-	const char *config_filename,
-	const char *factory_config_path,
-	void *user_data,
-	void *system_context,
-	bool_t automatically_start,
-	const char *app_group_id,
-	bool_t main_core
-) {
-
-  return Factory::toCpp(factory)->_createSharedCore(
-    cbs,
-    config_filename ? config_filename : "",
-    factory_config_path ? factory_config_path : "",
-    user_data,
-    system_context,
-    automatically_start,
-    app_group_id ? app_group_id : "",
-    main_core
-  );
-
+  return Factory::get().get()->toC();
 }
 
 LinphoneCore *linphone_factory_create_core (
@@ -336,7 +258,7 @@ void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char
 }
 
 const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getDataResourcesDir();
+  return Factory::toCpp(factory)->getDataResourcesDir().c_str();
 }
 
 void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -347,7 +269,7 @@ void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const cha
 }
 
 const char * linphone_factory_get_sound_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getSoundResourcesDir();
+  return Factory::toCpp(factory)->getSoundResourcesDir().c_str();
 }
 
 void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -358,7 +280,7 @@ void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const ch
 }
 
 const char * linphone_factory_get_ring_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getRingResourcesDir();
+  return Factory::toCpp(factory)->getRingResourcesDir().c_str();
 }
 
 void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -369,7 +291,7 @@ void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const cha
 }
 
 const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getImageResourcesDir();
+  return Factory::toCpp(factory)->getImageResourcesDir().c_str();
 }
 
 void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -379,7 +301,7 @@ void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const ch
 }
 
 const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getMspluginsDir();
+  return Factory::toCpp(factory)->getMspluginsDir().c_str();
 }
 
 void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path) {
@@ -505,15 +427,15 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getConfigDir(context);
+  return Factory::toCpp(factory)->getConfigDir(context).c_str();
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getDataDir(context);
+  return Factory::toCpp(factory)->getDataDir(context).c_str();
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getDownloadDir(context);
+  return Factory::toCpp(factory)->getDownloadDir(context).c_str();
 }
 
 void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {

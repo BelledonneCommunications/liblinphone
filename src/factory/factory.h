@@ -51,12 +51,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 class Factory : public bellesip::HybridObject<LinphoneFactory, Factory> {
 public:
-	Factory ();
-  ~Factory ();
-
-  static LinphoneFactory *create(void);
-
-  static void uninit(Factory *obj);
 
   //BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
   /*BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
@@ -70,13 +64,13 @@ public:
 
   //static void _linphone_factory_destroying_cb(void);
 
-  #define ADD_SUPPORTED_VIDEO_DEFINITION(factory, width, height, name) \
-  	(factory)->supported_video_definitions = bctbx_list_append((factory)->supported_video_definitions, \
-  		linphone_video_definition_new(width, height, name))
+  Factory ();
+  
+  ~Factory ();
 
   static void initializeSupportedVideoDefinitions(Factory *factory);
 
-  static Factory *get(void);
+  static std::shared_ptr<Factory> get(void);
 
   static void clean(void);
 
@@ -182,27 +176,27 @@ public:
 
   LinphoneVideoDefinition * findSupportedVideoDefinitionByName(const char *name) const;
 
-  const char * getTopResourcesDir() const;
+  const std::string getTopResourcesDir() const;
 
   void setTopResourcesDir(const char *path);
 
-  const char * getDataResourcesDir() const;
+  const std::string getDataResourcesDir();
 
   void setDataResourcesDir(const char *path);
 
-  const char * getSoundResourcesDir() const;
+  const std::string getSoundResourcesDir();
 
   void setSoundResourcesDir(const char *path);
 
-  const char * getRingResourcesDir() const;
+  const std::string getRingResourcesDir();
 
   void setRingResourcesDir(const char *path);
 
-  const char * getImageResourcesDir() const;
+  const std::string getImageResourcesDir();
 
   void setImageResourcesDir(const char *path);
 
-  const char * getMspluginsDir() const;
+  const std::string getMspluginsDir() const;
 
   void setMspluginsDir(const char *path);
 
@@ -258,13 +252,17 @@ public:
 
   bool_t isImdnAvailable() const;
 
-  const char *getConfigDir(void *context);
+  const std::string getConfigDir(void *context);
 
-  const char *getDataDir(void *context);
+  const std::string getDataDir(void *context);
 
-  const char *getDownloadDir(void *context);
+  const std::string getDownloadDir(void *context);
 
   void setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
+
+protected:
+  static void _DestroyingCb(void);
+  static std::shared_ptr<Factory> instance;
 
 private:
   belle_sip_object_t mBase;
