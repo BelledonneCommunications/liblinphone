@@ -20,6 +20,7 @@
 #ifndef _L_MAIN_DB_H_
 #define _L_MAIN_DB_H_
 
+#include <memory>
 #include <functional>
 
 #include "linphone/utils/enum-mask.h"
@@ -45,8 +46,9 @@ class LINPHONE_INTERNAL_PUBLIC MainDb : public AbstractDb, public CoreAccessor {
 	template<typename Function>
 	friend class DbTransaction;
 
-	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
+	friend class ChatMessage;
+	friend class EventLog;
 
 public:
 	enum Filter {
@@ -81,6 +83,7 @@ public:
 	int getEventCount (FilterMask mask = NoFilter) const;
 
 	static std::shared_ptr<EventLog> getEventFromKey (const MainDbKey &dbKey);
+	static std::shared_ptr<EventLog> getEvent (const std::unique_ptr<MainDb> &mainDb, const long long& storageId);
 
 	// ---------------------------------------------------------------------------
 	// Conference notified events.

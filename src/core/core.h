@@ -46,6 +46,7 @@ class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
+class EventLog;
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -62,7 +63,6 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class Imdn;
 	friend class LocalConferenceEventHandlerPrivate;
 	friend class MainDb;
-	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
 	friend class MediaSessionPrivate;
 	friend class RealTimeTextChatRoomPrivate;
@@ -72,6 +72,7 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ServerGroupChatRoomPrivate;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
+	friend class EventLog;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
