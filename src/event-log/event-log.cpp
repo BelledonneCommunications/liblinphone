@@ -17,7 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "core/core-p.h"
 #include "db/main-db.h"
+#include "db/main-db-p.h"
+#include "db/main-db-key-p.h"
 #include "event-log-p.h"
 
 // =============================================================================
@@ -32,6 +35,15 @@ EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseOb
 	L_D();
 	d->type = type;
 	d->creationTime = creationTime;
+}
+
+EventLog::~EventLog () {
+	L_D();
+	if (d->dbKey.isValid()) {
+		// Delete chat message from the cache
+		unique_ptr<MainDb> &mainDb = d->dbKey.getPrivate()->core.lock()->getPrivate()->mainDb;
+		mainDb->getPrivate()->storageIdToEvent.erase(d->dbKey.getPrivate()->storageId);
+	}
 }
 
 EventLog::Type EventLog::getType () const {
