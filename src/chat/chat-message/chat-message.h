@@ -95,6 +95,9 @@ public:
 	void setIsSecured (bool isSecured);
 	// ----- TODO: Remove me.
 
+	long long getStorageId () const;
+	void deleteChatMessageFromCache ();
+
 	std::shared_ptr<AbstractChatRoom> getChatRoom () const;
 
 	void send ();
@@ -102,6 +105,7 @@ public:
 	time_t getTime () const;
 
 	bool isSecured () const;
+	bool isValid () const;
 	State getState () const;
 	Direction getDirection () const;
 

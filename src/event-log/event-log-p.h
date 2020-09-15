@@ -33,6 +33,8 @@ class EventLogPrivate : public BaseObjectPrivate {
 public:
 	mutable MainDbEventKey dbKey;
 
+	void resetStorageId();
+
 private:
 	EventLog::Type type = EventLog::Type::None;
 	time_t creationTime = -1;
