@@ -42,6 +42,7 @@ void ImdnMessagePrivate::setState (ChatMessage::State newState) {
 		static_pointer_cast<ChatRoom>(context.chatRoom)->getPrivate()->getImdnHandler()->onImdnMessageDelivered(q->getSharedFromThis());
 	} else if (newState == ChatMessage::State::NotDelivered) {
 		// TODO: Maybe we should retry sending the IMDN message if we get an error here
+		static_pointer_cast<ChatRoom>(context.chatRoom)->getPrivate()->getImdnHandler()->onImdnMessageNotDelivered(q->getSharedFromThis());
 	}
 }
 
