@@ -82,9 +82,12 @@ void CorePrivate::init () {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
 		if (!uri.empty())
-			backend = strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
-				? MainDb::Mysql
-				: MainDb::Sqlite3;
+			if (strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
+				backend = MainDb::Mysql;
+			} else {
+				backend = MainDb::Sqlite3;
+				uri = Utils::quotePathIfNeeded(uri);
+			}
 		else {
 			backend = AbstractDb::Sqlite3;
 			uri = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_DB);
