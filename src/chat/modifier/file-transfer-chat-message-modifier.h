@@ -51,12 +51,12 @@ public:
 	void fileTransferOnProgress (belle_sip_body_handler_t *bh, belle_sip_message_t *m, size_t offset, size_t total);
 	void processResponseFromPostFile (const belle_http_response_event_t *event);
 	void processIoErrorUpload (const belle_sip_io_error_event_t *event);
-	void processAuthRequestedUpload (const belle_sip_auth_event *event);
+	void processAuthRequestedUpload (belle_sip_auth_event *event);
 
 	void onRecvBody (belle_sip_user_body_handler_t *bh, belle_sip_message_t *m, size_t offset, uint8_t *buffer, size_t size);
 	void onRecvEnd (belle_sip_user_body_handler_t *bh);
 	void processResponseHeadersFromGetFile (const belle_http_response_event_t *event);
-	void processAuthRequestedDownload (const belle_sip_auth_event *event);
+	void processAuthRequestedDownload (belle_sip_auth_event *event);
 	void processIoErrorDownload (const belle_sip_io_error_event_t *event);
 	void processResponseFromGetFile (const belle_http_response_event_t *event);
 

@@ -152,6 +152,7 @@ extern const char* test_password;
 extern const char* test_route;
 extern const char* userhostsfile;
 extern const char* file_transfer_url;
+extern const char* file_transfer_url_tls_client_auth;
 extern const char* lime_server_c25519_url;
 extern const char* lime_server_c448_url;
 extern bool_t liblinphone_tester_keep_uuid;
@@ -336,6 +337,7 @@ typedef struct _stats {
 	int number_of_core_chat_room_subject_changed;
 	int number_of_participant_devices_added;
 	int number_of_participant_devices_removed;
+	int number_of_participant_state_changed;
 
 	int number_of_SecurityLevelDowngraded;
 	int number_of_ParticipantMaxDeviceCountExceeded;

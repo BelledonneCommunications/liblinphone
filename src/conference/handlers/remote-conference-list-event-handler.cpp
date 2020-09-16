@@ -127,7 +127,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 		content.setContentEncoding("deflate");
 		linphone_event_add_custom_header(lev, "Accept-Encoding", "deflate");
 	}
-	linphone_event_set_user_data(lev, this);
+	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "list-event-handler", this, NULL);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_send_subscribe(lev, cContent);
 }

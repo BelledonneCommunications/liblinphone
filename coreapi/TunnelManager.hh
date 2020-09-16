@@ -215,7 +215,7 @@ namespace belledonnecomm {
 		static void sUdpMirrorClientCallback(bool result, void* data);
 		static void networkReachableCb(LinphoneCore *lc, bool_t reachable);
 		static void globalStateChangedCb(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-		static int tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, unsigned char *dn, size_t dn_length);
+		static int tlsCallbackClientCertificate(void *data, bctbx_ssl_context_t *ctx, const bctbx_list_t *names);
 		
 
 	private:

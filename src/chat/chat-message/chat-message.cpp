@@ -103,15 +103,21 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
-	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
 	auto participant = q->getChatRoom()->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
+	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
+
+	// Legacy callbacks, deprecated !
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	if (cbs && linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)) {
 		linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)(msg,
 			_linphone_participant_imdn_state_from_cpp_obj(imdnState)
 		);
 	}
-	_linphone_chat_message_notify_participant_imdn_state_changed(msg, _linphone_participant_imdn_state_from_cpp_obj(imdnState));
+
+	_linphone_chat_message_notify_participant_imdn_state_changed(msg, c_state);
+	_linphone_chat_room_notify_chat_message_participant_imdn_state_changed(cr, msg, c_state);
 
 	if (linphone_config_get_bool(linphone_core_get_config(q->getChatRoom()->getCore()->getCCore()),
 			"misc", "enable_simple_group_chat_message_state", FALSE
@@ -563,7 +569,7 @@ void ChatMessagePrivate::notifyReceiving () {
 	// Legacy.
 	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
 	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
-	
+
 	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
 }
 
@@ -958,7 +964,7 @@ void ChatMessagePrivate::send () {
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
 	internalContent.setBody("");
 	internalContent.setContentType(ContentType(""));
-	
+
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
 	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
 		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
@@ -1306,30 +1312,6 @@ const Content &ChatMessage::getInternalContent () const {
 void ChatMessage::setInternalContent (const Content &content) {
 	L_D();
 	d->internalContent = content;
-}
-
-string ChatMessage::getCustomHeaderValue (const string &headerName) const {
-	L_D();
-	try {
-		return d->customHeaders.at(headerName);
-	} catch (const exception &) {
-		// Key doesn't exist.
-	}
-	return nullptr;
-}
-
-void ChatMessage::addCustomHeader (const string &headerName, const string &headerValue) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders[headerName] = headerValue;
-}
-
-void ChatMessage::removeCustomHeader (const string &headerName) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders.erase(headerName);
 }
 
 void ChatMessage::send () {
