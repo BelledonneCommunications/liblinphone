@@ -29,6 +29,10 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+void EventLogPrivate::resetStorageId () {
+	dbKey.resetStorageId();
+}
+
 EventLog::EventLog () : BaseObject(*new EventLogPrivate) {}
 
 EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseObject(p) {
@@ -39,11 +43,8 @@ EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseOb
 
 EventLog::~EventLog () {
 	L_D();
-	if (d->dbKey.isValid()) {
-		// Delete chat message from the cache
-		unique_ptr<MainDb> &mainDb = d->dbKey.getPrivate()->core.lock()->getPrivate()->mainDb;
-		mainDb->getPrivate()->storageIdToEvent.erase(d->dbKey.getPrivate()->storageId);
-	}
+	d->resetStorageId();
+
 }
 
 EventLog::Type EventLog::getType () const {

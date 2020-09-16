@@ -30,6 +30,7 @@ class EventLog;
 
 class MainDbEventKey : public MainDbKey {
 	friend class EventLog;
+	friend class EventLogPrivate;
 
 public:
 	MainDbEventKey ();
@@ -42,6 +43,7 @@ public:
 
 private:
 	L_DECLARE_PRIVATE(MainDbKey);
+	void resetStorageId();
 };
 
 LINPHONE_END_NAMESPACE
