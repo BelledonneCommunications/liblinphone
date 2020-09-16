@@ -184,6 +184,10 @@ void CorePrivate::shutdown() {
 			}
 		}
 	}
+
+	if (pushReceivedBackgroundTaskId != 0) {
+		pushReceivedBackgroundTaskEnded();
+	}
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
@@ -342,20 +346,20 @@ int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents)
 void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
 	double time = difftime(expireTime, ::ms_time(NULL));
 	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
-	if (!timer) {
-		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
+	if (!ephemeralTimer) {
+		ephemeralTimer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	} else {
-		belle_sip_source_set_timeout_int64(timer, (int64_t)timeoutValueMs);
+		belle_sip_source_set_timeout_int64(ephemeralTimer, (int64_t)timeoutValueMs);
 	}
 }
 
 void CorePrivate::stopEphemeralMessageTimer () {
-	if (timer) {
+	if (ephemeralTimer) {
 		auto core = getPublic()->getCCore();
 		if (core && core->sal)
-			core->sal->cancelTimer(timer);
-		belle_sip_object_unref(timer);
-		timer = nullptr;
+			core->sal->cancelTimer(ephemeralTimer);
+		belle_sip_object_unref(ephemeralTimer);
+		ephemeralTimer = nullptr;
 	}
 }
 
@@ -857,19 +861,48 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
 // Misc.
 // -----------------------------------------------------------------------------
 
+void CorePrivate::pushReceivedBackgroundTaskEnded() {
+	L_Q();
+
+	lWarning() << "Ending push received background task [" << pushReceivedBackgroundTaskId << "]";
+	belle_sip_end_background_task(pushReceivedBackgroundTaskId);
+	pushReceivedBackgroundTaskId = 0;
+
+	if (pushTimer) {
+		q->destroyTimer(pushTimer);
+		pushTimer = nullptr;
+	}
+}
+
+static void push_received_background_task_ended(CorePrivate *corePrivate) {
+	corePrivate->pushReceivedBackgroundTaskEnded();
+}
 
 /*
  * pushNotificationReceived() is a critical piece of code.
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived () const {
+void Core::pushNotificationReceived () {
 	L_D();
 	LinphoneCore *lc = getCCore();
 	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
 
 	lInfo() << "Push notification received";
+	// Start a background task for 20 seconds to ensure we have time to process the push
+	if (d->pushTimer) {
+		destroyTimer(d->pushTimer);
+		d->pushTimer = nullptr;
+	}
+	if (d->pushReceivedBackgroundTaskId == 0) {
+		lInfo() << "Started push notif background task [" << d->pushReceivedBackgroundTaskId << "]";
+		d->pushReceivedBackgroundTaskId = belle_sip_begin_background_task("Push received",(void (*)(void*))push_received_background_task_ended, d);
+	}
+	d->pushTimer = createTimer([d]() -> bool {
+		push_received_background_task_ended(d);
+		return false;
+	}, 20000, "push received background task timeout");
 
 	// We can assume network should be reachable when a push notification is received.
 	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
