@@ -1140,9 +1140,7 @@ void ChatMessage::deleteChatMessageFromCache () {
 	if (isValid()) {
 		// Delete chat message from the cache
 		unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
-		if (mainDb->getPrivate()->storageIdToChatMessage.find(getStorageId()) != mainDb->getPrivate()->storageIdToChatMessage.cend()) {
-			mainDb->getPrivate()->storageIdToChatMessage.erase(getStorageId());
-		}
+		mainDb->getPrivate()->storageIdToChatMessage.erase(getStorageId());
 	}
 }
 

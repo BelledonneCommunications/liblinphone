@@ -1322,6 +1322,10 @@ void MainDbPrivate::invalidConferenceEventsFromQuery (const string &query, long 
 		if (eventLog) {
 			const EventLogPrivate *dEventLog = eventLog->getPrivate();
 			L_ASSERT(dEventLog->dbKey.isValid());
+			// Delete event from cache as the event is deleted
+			MainDbKeyPrivate *dEventKey = static_cast<MainDbKey &>(dEventLog->dbKey).getPrivate();
+			const long long &eventId = dEventKey->storageId;
+			storageIdToEvent.erase(eventId);
 			dEventLog->dbKey = MainDbEventKey();
 		}
 		shared_ptr<ChatMessage> chatMessage = getChatMessageFromCache(eventId);
@@ -2317,7 +2321,6 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 			// Delete chat message from cache as the event is deleted
 			ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
 			dChatMessage->resetStorageId();
-			//d->storageIdToChatMessage.erase(dEventKey->storageId);
 		}
 
 		tr.commit();
@@ -2334,7 +2337,6 @@ bool MainDb::deleteEvent (const shared_ptr<const EventLog> &eventLog) {
 				if (count)
 					--*count;
 			}
-			chatMessage->getPrivate()->resetStorageId();
 		}
 
 		return true;
