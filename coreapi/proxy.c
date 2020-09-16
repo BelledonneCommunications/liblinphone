@@ -1928,7 +1928,7 @@ char *linphone_proxy_config_get_computed_push_notification_parameters(const Linp
 		if (remotePushAllowed) {
 			strcat(services, "remote");
 		}
-		char pn_param[100];
+		char pn_param[200];
 		memset(pn_param, 0, sizeof(pn_param));
 		snprintf(pn_param, sizeof(pn_param), param_format, team_id, bundle_identifer, services);
 		param = pn_param;
