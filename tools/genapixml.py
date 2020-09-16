@@ -511,6 +511,8 @@ class Project:
 					for arg in argslist.arguments:
 						for paramdesc in paramdescs:
 							if arg.name == paramdesc.find('./parameternamelist').find('./parametername').text:
+								arg.maybenil = True if paramdesc.find('.//maybenil') is not None else False
+								arg.notnil = True if paramdesc.find('.//notnil') is not None else False
 								arg.description = self.__cleanDescription(paramdesc.find('./parameterdescription'))
 					missingDocWarning = ''
 					for arg in argslist.arguments:
