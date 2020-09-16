@@ -150,7 +150,6 @@ void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg
 LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires);
 LINPHONE_PUBLIC char *linphone_proxy_config_get_computed_push_notification_parameters(const LinphoneProxyConfig *cfg);
 LINPHONE_PUBLIC void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConfig *cfg);
-LINPHONE_PUBLIC bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg);
 
 /*
  * returns service route as defined in as defined by rfc3608, might be a list instead of just one.

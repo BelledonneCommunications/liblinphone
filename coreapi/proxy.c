@@ -1847,17 +1847,22 @@ void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyCon
 	linphone_proxy_config_update_push_notification_parameters(cfg);
 }
 
-bool_t linphone_proxy_config_is_all_push_notification_ready(const LinphoneProxyConfig *cfg) {
+bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg) {
 	LinphonePushNotificationConfig *push_cfg = cfg->lc->push_cfg;
 	const char *prid = linphone_push_notification_config_get_prid(push_cfg);
+	const char *param = linphone_push_notification_config_get_param(push_cfg);
 	const char *basicToken = linphone_push_notification_config_get_voip_token(push_cfg);
 	const char *remoteToken = linphone_push_notification_config_get_remote_token(push_cfg);
+	const char *bundle = linphone_push_notification_config_get_bundle_identifier(push_cfg);
 	// Proxy configuration can support multiple types of push. Push notification is ready when all supported push's tokens to set
-	return !STRING_IS_NULL(prid) || !((cfg->push_notification_allowed && STRING_IS_NULL(basicToken)) || (cfg->remote_push_notification_allowed && STRING_IS_NULL(remoteToken)));
+
+	bool paramAvailable = !STRING_IS_NULL(param) || !STRING_IS_NULL(bundle);
+	bool pridAvailable =!STRING_IS_NULL(prid) || !((cfg->push_notification_allowed && STRING_IS_NULL(basicToken)) || (cfg->remote_push_notification_allowed && STRING_IS_NULL(remoteToken)));
+	return paramAvailable && pridAvailable;
 }
 
 void linphone_proxy_config_update_push_notification_parameters(LinphoneProxyConfig *cfg) {
-	bool_t pushReady = linphone_proxy_config_is_all_push_notification_ready(cfg);
+	bool_t pushReady = linphone_proxy_config_is_push_notification_available(cfg);
 	// Do not alter contact uri params if push notification not ready
 	if (pushReady) {
 		char *computedPushParams = linphone_proxy_config_get_computed_push_notification_parameters(cfg);

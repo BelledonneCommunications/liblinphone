@@ -2549,6 +2549,15 @@ void linphone_core_update_proxy_config_push_params(LinphoneCore *core) {
 	}
 }
 
+bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
+	bctbx_list_t* proxies = (bctbx_list_t*)linphone_core_get_proxy_config_list(core);
+	for (; proxies != NULL; proxies = proxies->next) {
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig *)proxies->data;
+		if (!linphone_proxy_config_is_push_notification_available(proxy)) return FALSE;
+	}
+	return TRUE;
+}
+
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
 	linphone_push_notification_config_set_param(core->push_cfg, param);
 	linphone_push_notification_config_set_prid(core->push_cfg, prid);

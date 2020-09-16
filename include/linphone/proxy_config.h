@@ -649,6 +649,14 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_remote_push_notification_allowed
 LINPHONE_PUBLIC void linphone_proxy_config_set_remote_push_notification_allowed(LinphoneProxyConfig *cfg, bool_t allow);
 
 /**
+* Gets whether push notifications are available or not (Android & iOS only).
+* @param proxy_config #LinphoneProxyConfig object. @notnil
+* @return TRUE if push notifications are available, FALSE otherwise
+* @ingroup misc
+*/
+LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_available(const LinphoneProxyConfig *cfg);
+
+/**
  * Return the unread chat message count for a given proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @return The unread chat message count.
