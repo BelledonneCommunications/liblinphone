@@ -5216,7 +5216,7 @@ LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_core_get_push_notificat
 /**
 * Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
 * @param core The #LinphoneCore @notnil
-* @param device_token, format (NSData *).
+* @param device_token, format (NSData *). @maybenil
 * @ingroup misc
 */
 LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *lc, void *device_token);
