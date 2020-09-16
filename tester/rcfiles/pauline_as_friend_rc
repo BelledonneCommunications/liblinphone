@@ -10,3 +10,5 @@ url=sip:pauline@localhost:5088
 pol=accept
 subscribe=1
 
+[tester]
+test_env=1s

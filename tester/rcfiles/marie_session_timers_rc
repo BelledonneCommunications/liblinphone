@@ -17,3 +17,6 @@ session_expires_enabled=1
 session_expires_value=8
 session_expires_min_value=5
 session_expires_refresher_value=2
+
+[tester]
+test_env=1

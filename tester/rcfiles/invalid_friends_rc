@@ -37,3 +37,6 @@ subscribe=0
 url="" <sip:@127.0.0.1>
 pol=deny
 subscribe=1
+
+[tester]
+test_env=1

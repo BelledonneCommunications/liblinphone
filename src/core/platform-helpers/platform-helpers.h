@@ -86,9 +86,9 @@ public:
 	virtual void startAudioForEchoTestOrCalibration () = 0;
 	virtual void stopAudioForEchoTestOrCalibration () = 0;
 
-	virtual void createAppDelegate () = 0;
-	virtual void destroyAppDelegate () = 0;
 	virtual void didRegisterForRemotePush(void *token) = 0;
+	virtual void start (std::shared_ptr<LinphonePrivate::Core> core) = 0;
+	virtual void stop (void) = 0;
 
 protected:
 	inline explicit PlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -143,9 +143,9 @@ public:
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
 
-	void createAppDelegate () override {};
-	void destroyAppDelegate () override {};
 	void didRegisterForRemotePush(void *token) override {};
+	void start (std::shared_ptr<LinphonePrivate::Core> core) override {};
+	void stop (void) override {};
 
 protected:
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;

@@ -10,3 +10,6 @@ domain=dav.linphone.org
 username=tester
 ha1=102bdd8ccafef75cf7572c97969afd9a
 realm=BaikalDAV
+
+[tester]
+test_env=1

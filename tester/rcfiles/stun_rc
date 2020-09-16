@@ -1,2 +1,5 @@
  [net]
  firewall_policy=2
+
+ [tester]
+ test_env=1
