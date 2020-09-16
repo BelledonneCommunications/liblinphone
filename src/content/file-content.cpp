@@ -22,6 +22,8 @@
 
 #include "content-p.h"
 #include "file-content.h"
+#include "bctoolbox/vfs_encrypted.hh"
+#include "logger/logger.h"
 #include <algorithm>
 
 // =============================================================================
