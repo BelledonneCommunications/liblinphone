@@ -5208,7 +5208,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
 /**
 * Gets the push notification config, used for contact uri parameter (Android & iOS only).
 * @param core The #LinphoneCore @notnil
-* @return #LinphonePushNotificationConfig
+* @return #LinphonePushNotificationConfig @notnil
 * @ingroup misc
 */
 LINPHONE_PUBLIC LinphonePushNotificationConfig *linphone_core_get_push_notification_config(const LinphoneCore *core);
