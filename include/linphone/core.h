@@ -6383,10 +6383,10 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_destroy(LinphoneCore *cor
 /**
  * Get a pointer to the sqlite db holding zrtp/lime cache.
  * @param core #LinphoneCore object. @notnil
- * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
+ * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed) @maybenil
  * @ingroup initializing
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void *linphone_core_get_zrtp_cache_db(LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void* linphone_core_get_zrtp_cache_db(LinphoneCore *core);
 
 /**
  * Returns a null terminated table of strings containing the file format extension supported for call recording.

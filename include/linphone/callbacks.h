@@ -256,7 +256,7 @@ typedef LinphoneCoreCbsIsComposingReceivedCb LinphoneCoreIsComposingReceivedCb;
  * @param call the #LinphoneCall that received the dtmf @notnil
  * @param dtmf the ascii code of the dtmf
  */
-typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* lc, LinphoneCall *call, int dtmf);
+typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* core, LinphoneCall *call, int dtmf);
 
 /**
  * Old name of #LinphoneCoreCbsDtmfReceivedCb.
@@ -278,7 +278,7 @@ typedef LinphoneCoreCbsReferReceivedCb LinphoneCoreReferReceivedCb;
 /** 
  * Callback prototype when using the buddy plugin
  * @param core the #LinphoneCore @notnil
- * @param linphone_friend the #LinphoneFriend that has been updated
+ * @param linphone_friend the #LinphoneFriend that has been updated @notnil
  */ 
 typedef void (*LinphoneCoreCbsBuddyInfoUpdatedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend);
 
@@ -487,9 +487,9 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
  * Callback prototype for notifying the application about notification received from the network.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
- * @param notified_event  @notnil
+ * @param notified_event The event as string @notnil
  * @param body the #LinphoneContent of the event @notnil
-**/
+ */
 typedef void (*LinphoneCoreCbsNotifyReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *notified_event, const LinphoneContent *body);
 
 /**
@@ -501,9 +501,9 @@ typedef LinphoneCoreCbsNotifyReceivedCb LinphoneCoreNotifyReceivedCb;
  * Callback prototype for notifying the application about subscription received from the network.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
- * @param subscribe_event @notnil
+ * @param subscribe_event The event as string @notnil
  * @param body the #LinphoneContent of the event @notnil
-**/
+ */
 typedef void (*LinphoneCoreCbsSubscribeReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *subscribe_event, const LinphoneContent *body);
 
 /**
@@ -516,7 +516,7 @@ typedef LinphoneCoreCbsSubscribeReceivedCb LinphoneCoreSubscribeReceivedCb;
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent @notnil
  * @param state the new #LinphoneSubscriptionState
-**/
+ */
 typedef void (*LinphoneCoreCbsSubscriptionStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphoneSubscriptionState state);
 
 /**
@@ -529,7 +529,7 @@ typedef LinphoneCoreCbsSubscriptionStateChangedCb LinphoneCoreSubscriptionStateC
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent @notnil
  * @param state the new #LinphonePublishState
-**/
+ */
 typedef void (*LinphoneCoreCbsPublishStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphonePublishState state);
 
 /**

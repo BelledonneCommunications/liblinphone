@@ -103,7 +103,7 @@ LINPHONE_PUBLIC LinphoneChatMessageCbsFileTransferSendCb linphone_chat_message_c
  * Set the file transfer send callback.
  * @param cbs LinphoneChatMessageCbs object. @notnil
  * @param cb The file transfer send callback to be used.
-  * @deprecated 17/08/2020 Use #linphone_chat_message_cbs_set_file_transfer_send_chunk instead.
+ * @deprecated 17/08/2020 Use #linphone_chat_message_cbs_set_file_transfer_send_chunk instead.
  */
 LINPHONE_PUBLIC void linphone_chat_message_cbs_set_file_transfer_send (LinphoneChatMessageCbs *cbs, LinphoneChatMessageCbsFileTransferSendCb cb);
 

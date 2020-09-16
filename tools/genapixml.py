@@ -480,6 +480,8 @@ class Project:
 					n = returndesc.find('.//bctbxlist')
 					if n is not None:
 						returnarg.containedType = n.text
+				returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
+				returnarg.notnil = True if returndesc.find('.//notnil') is not None else False
 				returnarg.description = self.__cleanDescription(returndesc)
 			elif returnarg.completeType != 'void':
 				missingDocWarning += "\tReturn value is not documented\n"

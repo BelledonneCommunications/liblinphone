@@ -258,11 +258,6 @@ class JavaTranslator(object):
         namespace = class_.find_first_ancestor_by_type(AbsApi.Namespace)
         className = class_.name.translate(self.nameTranslator)
 
-        if _method.maybenil and _method.notnil:
-            raise Exception("Method " + _method.name.to_c() + " returned pointer can't be both maybenil and notnil !")
-        elif not _method.maybenil and not _method.notnil and _method.returnType.isref:
-            raise Exception("Method " + _method.name.to_c() + " returned pointer isn't maybenil nor notnil !")
-
         methodDict = {'notEmpty': True}
         methodDict['classCName'] = class_.name.to_c()
         methodDict['className'] = className
@@ -345,11 +340,6 @@ class JavaTranslator(object):
 
             methodDict['params'] += arg.translate(self.langTranslator, jni=True, namespace=namespace)
             argname = arg.name.translate(self.nameTranslator)
-
-            if arg.maybenil and arg.notnil:
-                raise Exception("Method " + _method.name.to_c() + " argument " + argname + " pointer can't be both maybenil and notnil !")
-            elif arg.type.isref and not arg.maybenil and not arg.notnil:
-                raise Exception("Method " + _method.name.to_c() + " argument " + argname + " pointer isn't maybenil nor notnil !")
 
             if isinstance(arg.type, AbsApi.ClassType):
                 classCName = 'Linphone' + arg.type.desc.name.to_camel_case()
