@@ -865,6 +865,7 @@ namespace LinphonePrivate {
 	char * push_notification_param; \
 	char * push_notification_prid; \
 	bool_t auto_iterate_enabled; \
-	bool_t native_ringing_enabled;
+	bool_t native_ringing_enabled; \
+	unsigned long push_received_task_id;
 
 #endif /* _PRIVATE_STRUCTS_H_ */

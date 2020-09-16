@@ -181,7 +181,8 @@ private:
 	AuthStack authStack;
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
-	belle_sip_source_t *timer = nullptr;
+	belle_sip_source_t *ephemeralTimer = nullptr;
+	belle_sip_source_t *pushTimer = nullptr;
 
 	std::list<AudioDevice *> audioDevices;
 	L_DECLARE_PUBLIC(Core);
