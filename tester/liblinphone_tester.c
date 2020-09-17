@@ -403,6 +403,7 @@ void liblinphone_tester_add_suites() {
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
+	bc_tester_add_suite(&audio_quality_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
