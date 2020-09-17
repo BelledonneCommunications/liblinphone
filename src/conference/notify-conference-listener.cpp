@@ -52,12 +52,18 @@ void NotifyConferenceListener::onSubjectChanged (const std::shared_ptr<Conferenc
 }
 
 void NotifyConferenceListener::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const std::shared_ptr<ParticipantDevice> & device = event->getDevice();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
+	const IdentityAddress & deviceAddress = event->getDeviceAddress();
+	const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
 	_linphone_conference_notify_participant_device_added(conf->toC(), device->toC());
 }
 
 void NotifyConferenceListener::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const std::shared_ptr<ParticipantDevice> & device = event->getDevice();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
+	const IdentityAddress & deviceAddress = event->getDeviceAddress();
+	const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
 	_linphone_conference_notify_participant_device_removed(conf->toC(), device->toC());
 }
 

@@ -38,12 +38,11 @@ public:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const std::shared_ptr<Participant> &articipant,
-		const std::shared_ptr<ParticipantDevice> &device,
+		const IdentityAddress &participantAddress,
+		const IdentityAddress &deviceAddress,
 		const std::string &name = ""
 	);
 
-	const std::shared_ptr<ParticipantDevice> &getDevice () const;
 	const IdentityAddress &getDeviceAddress () const;
 	const std::string &getDeviceName () const;
 
