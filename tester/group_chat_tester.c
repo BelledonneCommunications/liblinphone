@@ -1626,7 +1626,6 @@ static void group_chat_room_remove_participant_base (bool_t restart) {
 	bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_event_log_unref);
 	BC_ASSERT_EQUAL(nbMarieParticipantRemoved, 1, unsigned int, "%u");
 
-
 	linphone_address_unref(confAddr);
 
 	// Clean db from chat room
@@ -5504,7 +5503,6 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	coresList = bctbx_list_remove(coresList, pauline->lc);
 	memset(&initialPaulineStats, 0, sizeof(initialPaulineStats));
 
-
 	linphone_core_manager_reinit(pauline);
 	//force full state
 	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_package_force_full_state",TRUE);
@@ -5996,7 +5994,7 @@ test_t group_chat_tests[] = {
 	TEST_TWO_TAGS("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch", "LeaksMemory"),
 	TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory"),
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Check  if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Check if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Linphone core stop/start and chatroom ref", core_stop_start_with_chat_room_ref, "LeaksMemory" /*due to core restart*/),
