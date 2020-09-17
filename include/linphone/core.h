@@ -3035,6 +3035,16 @@ LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_core_get_video_activatio
 LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition(LinphoneCore *core, LinphoneVideoDefinition *video_definition);
 
 /**
+ * Sets the preferred video definition by its name.
+ * Call #linphone_factory_get_supported_video_definitions() to have a list of supported video definitions.
+ *
+ * @ingroup media_parameters
+ * @param core The #LinphoneCore object @notnil
+ * @param name The name of the definition to set @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *core, const char *name);
+
+/**
  * Set the video definition for the captured (preview) video.
  * This method is for advanced usage where a video capture must be set independently of the definition of the stream actually sent through the call.
  * This allows for example to have the preview window in High Definition  even if due to bandwidth constraint the sent video definition is small.
@@ -6346,7 +6356,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED char * linphone_core_get_preferred_video_siz
  * that it takes the name of the video resolution as input.
  * Video resolution names are: qcif, svga, cif, vga, 4cif, svga ...
  * @ingroup media_parameters
- * @deprecated 28/03/2017 Use linphone_factory_create_video_definition_from_name() and linphone_core_set_preferred_video_definition() instead
+ * @deprecated 28/03/2017 Use linphone_core_set_preferred_video_definition_by_name() instead
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preferred_video_size_by_name(LinphoneCore *core, const char *name);

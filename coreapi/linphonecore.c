@@ -6110,7 +6110,7 @@ static bool_t video_definition_supported(const LinphoneVideoDefinition *vdef) {
 }
 
 void linphone_core_set_preferred_video_definition(LinphoneCore *lc, LinphoneVideoDefinition *vdef) {
-	if (video_definition_supported(vdef)) {
+	if (!linphone_video_definition_is_undefined(vdef) && video_definition_supported(vdef)) {
 		LinphoneVideoDefinition *oldvdef = lc->video_conf.vdef;
 		lc->video_conf.vdef = linphone_video_definition_ref(vdef);
 
