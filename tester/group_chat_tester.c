@@ -1553,7 +1553,7 @@ static void group_chat_room_change_subject_non_admin (void) {
 	linphone_core_manager_destroy(laure);
 }
 
-static void group_chat_room_remove_participant (void) {
+static void group_chat_room_remove_participant_base (bool_t restart) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *laure = linphone_core_manager_create("laure_tcp_rc");
@@ -1574,7 +1574,7 @@ static void group_chat_room_remove_participant (void) {
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
 
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
@@ -1591,6 +1591,42 @@ static void group_chat_room_remove_participant (void) {
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_removed, initialMarieStats.number_of_participants_removed + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed + 1, 5000));
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 1, int, "%d");
+
+	if (restart == TRUE) {
+		// Restart core for Marie
+		coresList = bctbx_list_remove(coresList, marie->lc);
+		linphone_core_manager_restart(marie, TRUE);
+		bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
+		init_core_for_conference(tmpCoresManagerList);
+		bctbx_list_free(tmpCoresManagerList);
+		coresList = bctbx_list_append(coresList, marie->lc);
+
+		// Retrieve chat room
+		LinphoneAddress *marieDeviceAddr =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc)));
+		marieCr = linphone_core_search_chat_room(marie->lc, NULL, marieDeviceAddr, confAddr, NULL);
+		linphone_address_unref(marieDeviceAddr);
+		BC_ASSERT_PTR_NOT_NULL(marieCr);
+
+	}
+
+	// Check that participant removed event has been stored
+	// Passing 0 as second argument because all events must be retrived
+	int nbMarieParticipantRemoved = 0;
+	bctbx_list_t * marieHistory = linphone_chat_room_get_history_events(marieCr, 0);
+	for (bctbx_list_t *item = marieHistory; item; item = bctbx_list_next(item)) {
+		LinphoneEventLog *event = (LinphoneEventLog *)bctbx_list_get_data(item);
+		if (linphone_event_log_get_type(event) == LinphoneEventLogTypeConferenceParticipantRemoved) {
+			nbMarieParticipantRemoved++;
+			const LinphoneAddress * removedParticipantAddress = linphone_event_log_get_participant_address (event);
+			BC_ASSERT_PTR_NOT_NULL(removedParticipantAddress);
+		}
+	}
+	bctbx_list_free_with_data(marieHistory, (bctbx_list_free_func)linphone_event_log_unref);
+	BC_ASSERT_EQUAL(nbMarieParticipantRemoved, 1, unsigned int, "%u");
+
+
+	linphone_address_unref(confAddr);
 
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
@@ -1602,6 +1638,14 @@ static void group_chat_room_remove_participant (void) {
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+}
+
+static void group_chat_room_remove_participant (void) {
+	group_chat_room_remove_participant_base(FALSE);
+}
+
+static void group_chat_room_remove_participant_and_restart (void) {
+	group_chat_room_remove_participant_base(TRUE);
 }
 
 static void group_chat_room_send_message_with_participant_removed (void) {
@@ -5904,6 +5948,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Change subject", group_chat_room_change_subject),
 	TEST_NO_TAG("Change subject with a non admin", group_chat_room_change_subject_non_admin),
 	TEST_NO_TAG("Remove participant", group_chat_room_remove_participant),
+	TEST_NO_TAG("Remove participant and restart", group_chat_room_remove_participant_and_restart),
 	TEST_NO_TAG("Send message with a participant removed", group_chat_room_send_message_with_participant_removed),
 	TEST_NO_TAG("Leave group chat room", group_chat_room_leave),
 	TEST_NO_TAG("Delete group chat room successful if it's already removed by server", group_chat_room_delete_twice),

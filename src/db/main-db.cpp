@@ -262,6 +262,7 @@ static string buildSqlEventFilter (
 
 shared_ptr<AbstractChatRoom> MainDbPrivate::findChatRoom (const ConferenceId &conferenceId) const {
 	L_Q();
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 	shared_ptr<AbstractChatRoom> chatRoom = q->getCore()->findChatRoom(conferenceId);
 	if (!chatRoom)
 		lError() << "Unable to find chat room: " << conferenceId << ".";
@@ -649,6 +650,7 @@ shared_ptr<EventLog> MainDbPrivate::selectGenericConferenceEvent (
 		return eventLog;
 	}
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling select conference info event";
 	return selectConferenceInfoEvent(chatRoom->getConferenceId(), row);
 }
 
@@ -658,10 +660,12 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 ) const {
 	long long eventId = getConferenceEventIdFromRow(row);
 	shared_ptr<EventLog> eventLog = getEventFromCache(eventId);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Entering - event log " << eventLog;
 	if (eventLog)
 		return eventLog;
 
 	EventLog::Type type = EventLog::Type(row.get<int>(1));
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Entering - type " << type;
 	switch (type) {
 		case EventLog::Type::None:
 		case EventLog::Type::ConferenceChatMessage:
@@ -703,8 +707,12 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 			eventLog = selectConferenceEphemeralMessageEvent(conferenceId, type, row);
 	}
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG After caching if not null - event log " << eventLog << " id " << eventId;
+
 	if (eventLog)
 		cache(eventLog, eventId);
+
+	lInfo() << __func__ <<  " MainDb Chat DEBUG After cached if not null - event log " << eventLog << " id " << eventId;
 
 	return eventLog;
 }
@@ -714,6 +722,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG - type " << type;
 	return make_shared<ConferenceEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
@@ -790,25 +799,20 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantEvent (
 	const soci::row &row
 ) const {
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
-	shared_ptr<Participant> participant = nullptr;
 
-	if (chatRoom) {
-		shared_ptr<Participant> me = chatRoom->getMe();
-		if (participantAddress == me->getAddress()) {
-			participant = me;
-		} else {
-			participant = chatRoom->findParticipant(participantAddress);
-		}
-	}
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room - participant " << participantAddress.asString();
+
 	std::shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		participant
+		participantAddress
 	);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	lInfo() << __func__ <<  " Exit MainDb Chat DEBUG Calling find chat room";
 	return event;
 }
 
@@ -817,6 +821,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	EventLog::Type type,
 	const soci::row &row
 ) const {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
 	shared_ptr<Participant> participant = nullptr;
@@ -2421,10 +2426,12 @@ shared_ptr<EventLog> MainDb::getEvent (const unique_ptr<MainDb> &mainDb, const l
 			soci::into(row), soci::use(storageId);
 
 		ConferenceId conferenceId(IdentityAddress(row.get<string>(16)), IdentityAddress(row.get<string>(17)));
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return shared_ptr<EventLog>();
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get event from key";
 		return d->selectGenericConferenceEvent(chatRoom, row);
 	};
 #else
@@ -2473,6 +2480,7 @@ list<shared_ptr<EventLog>> MainDb::getConferenceNotifiedEvents (
 
 		list<shared_ptr<EventLog>> events;
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId), soci::use(lastNotifyId));
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling select conference info event";
 		for (const auto &row : rows)
 			events.push_back(d->selectConferenceInfoEvent(conferenceId, row));
 		return events;
@@ -2657,6 +2665,7 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 		soci::session *session = d->dbSession.getBackendSession();
 
 		long long dbChatRoomId = d->selectChatRoomId(conferenceId);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		list<shared_ptr<ChatMessage>> chatMessages;
 		if (!chatRoom)
@@ -2664,11 +2673,13 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get unread";
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(
 				chatRoom,
 				row
 			);
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get unread" << " - event " << event;
 			if (event)
 				chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
 		}
@@ -2709,9 +2720,12 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 			}
 
 			if (conferenceId.isValid()) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 				if (chatRoom) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get ephemeral";
 					shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get ephemeral" << " - event " << event;
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
@@ -2865,6 +2879,7 @@ shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ConferenceId &conferen
 		soci::session *session = d->dbSession.getBackendSession();
 		shared_ptr<ChatMessage> chatMessage = nullptr;
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return chatMessage;
@@ -2872,7 +2887,9 @@ shared_ptr<ChatMessage> MainDb::getLastChatMessage (const ConferenceId &conferen
 		long long dbChatRoomId = d->selectChatRoomId(conferenceId);
 		soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get last chat message";
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - get last chat message" << " - event " << event;
 			if (event)
 				return static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage();
 		}
@@ -2902,6 +2919,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 	return L_DB_TRANSACTION {
 		L_D();
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		list<shared_ptr<ChatMessage>> chatMessages;
 		if (!chatRoom)
@@ -2912,7 +2930,9 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessages (
 			d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId), soci::use(imdnMessageId)
 		);
 		for (const auto &row : rows) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - find chat messages";
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - find chat messages" << " - event " << event;
 			if (event) {
 				L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 				chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
@@ -2952,9 +2972,12 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesFromCallId (const std::str
 			}
 
 			if (conferenceId.isValid()) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 				if (chatRoom) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - chat messages from call id";
 					shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - chat messages from call id" << " - event " << event;
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
@@ -3006,9 +3029,12 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered ()
 			}
 
 			if (conferenceId.isValid()) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 				shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 				if (chatRoom) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - chat message notify";
 					shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - chat message notify - event " << event;
 					if (event) {
 						L_ASSERT(event->getType() == EventLog::Type::ConferenceChatMessage);
 						chatMessages.push_back(static_pointer_cast<ConferenceChatMessageEvent>(event)->getChatMessage());
@@ -3026,6 +3052,7 @@ list<shared_ptr<ChatMessage>> MainDb::findChatMessagesToBeNotifiedAsDelivered ()
 
 list<shared_ptr<EventLog>> MainDb::getHistory (const ConferenceId &conferenceId, int nLast, FilterMask mask) const {
 #ifdef HAVE_DB_STORAGE
+	lInfo() << __func__ <<  " MainDb Chat DEBUG " ;
 	return getHistoryRange(conferenceId, 0, nLast, mask);
 #else
 	return list<shared_ptr<EventLog>>();
@@ -3074,6 +3101,7 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 	return L_DB_TRANSACTION {
 		L_D();
 
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 		shared_ptr<AbstractChatRoom> chatRoom = d->findChatRoom(conferenceId);
 		if (!chatRoom)
 			return events;
@@ -3081,7 +3109,9 @@ list<shared_ptr<EventLog>> MainDb::getHistoryRange (
 		const long long &dbChatRoomId = d->selectChatRoomId(conferenceId);
 		soci::rowset<soci::row> rows = (d->dbSession.getBackendSession()->prepare << query, soci::use(dbChatRoomId));
 		for (const auto &row : rows) {
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - history range";
 			shared_ptr<EventLog> event = d->selectGenericConferenceEvent(chatRoom, row);
+	lInfo() << __func__ <<  " MainDb Chat DEBUG select event - history range - event " << event;
 			if (event)
 				events.push_front(event);
 		}
@@ -3294,6 +3324,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 				ConferenceAddress(row.get<string>(2))
 			);
 			
+	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 			shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom(conferenceId, false);
 			if (chatRoom) {
 				chatRooms.push_back(chatRoom);
