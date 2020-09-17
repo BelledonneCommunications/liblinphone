@@ -352,8 +352,8 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		creationTime,
 		conferenceId,
-		participant,
-		participantDevice,
+		participant->getAddress(),
+		participantDevice->getAddress(),
 		name
 	);
 	event->setFullState(isFullState);
@@ -370,8 +370,8 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 		EventLog::Type::ConferenceParticipantDeviceRemoved,
 		creationTime,
 		conferenceId,
-		participant,
-		participantDevice
+		participant->getAddress(),
+		participantDevice->getAddress()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
