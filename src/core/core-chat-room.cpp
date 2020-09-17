@@ -666,7 +666,6 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {
 	L_D();
 
-	lInfo() << __func__ <<  " Chat DEBUG Calling find chat room";
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom) {
 		if (isRtt && !(chatRoom->getCapabilities() & ChatRoom::Capabilities::RealTimeText)) {

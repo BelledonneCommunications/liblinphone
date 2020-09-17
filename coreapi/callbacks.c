@@ -105,7 +105,6 @@ static void call_received(SalCallOp *h) {
 	if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
 #ifdef HAVE_ADVANCED_IM
 		if (linphone_core_conference_server_enabled(lc)) {
-	lInfo() << __func__ <<  "Chat DEBUG Calling find chat room";
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 				ConferenceId(ConferenceAddress(Address(h->getTo())), ConferenceAddress(Address(h->getTo())))
 			);
@@ -136,7 +135,6 @@ static void call_received(SalCallOp *h) {
 						
 						IdentityAddress confAddr = L_GET_PRIVATE_FROM_C_OBJECT(lc)->mainDb->findOneToOneConferenceChatRoomAddress(from, identAddresses.front(), encrypted);
 						if (confAddr.isValid()) {
-	lInfo() << __func__ <<  "Chat DEBUG text Calling find chat room";
 							shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(confAddr, confAddr));
 							L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmRecreation(h);
 							return;
@@ -156,7 +154,6 @@ static void call_received(SalCallOp *h) {
 				h->release();
 			}
 		} else {
-	lInfo() << __func__ <<  "Chat DEBUG no server Calling find chat room";
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 				ConferenceId(ConferenceAddress(Address(h->getFrom())), ConferenceAddress(Address(h->getTo())))
 			);
@@ -866,7 +863,6 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 			if (addr.hasUriParam("method") && (addr.getUriParamValue("method") == "BYE")) {
 				if (linphone_core_conference_server_enabled(lc)) {
 					// Removal of a participant at the server side
-	lInfo() << __func__ <<  "Chat DEBUG addr valid Calling find chat room";
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 						ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
 					);
@@ -883,7 +879,6 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 						return;
 					}
 				} else {
-	lInfo() << __func__ <<  "Chat DEBUG addr valid no server Calling find chat room";
 					// The server asks a participant to leave a chat room
 					LinphoneChatRoom *cr = L_GET_C_BACK_PTR(
 						L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(ConferenceId(addr, IdentityAddress(op->getTo())))
@@ -898,7 +893,6 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 			} else {
 				if (linphone_core_conference_server_enabled(lc)) {
 #ifdef HAVE_ADVANCED_IM
-	lInfo() << __func__ <<  "Chat DEBUG Calling find chat room";
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
 						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
 					);
