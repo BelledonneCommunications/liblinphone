@@ -308,8 +308,6 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (tim
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
 
-lInfo() << __func__ << " Chat DEBUG participant " << participant;
-
 	for (const auto &l : confListeners) {
 		l->onParticipantRemoved(event);
 	}
