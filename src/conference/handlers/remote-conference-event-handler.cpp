@@ -148,7 +148,6 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			if (!participant) {
 				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
 			} else {
-				conf->participants.remove(participant);
 				if (!isFullState) {
 					conf->notifyParticipantRemoved(
 						creationTime,
@@ -156,6 +155,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 						participant
 					);
 				}
+				conf->participants.remove(participant);
 
 				continue;
 			}
@@ -223,8 +223,6 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				if (state == StateType::deleted) {
 
 					shared_ptr<ParticipantDevice> device = participant->findDevice(gruu);
-					participant->removeDevice(gruu);
-
 					if (!isFullState) {
 						conf->notifyParticipantDeviceRemoved(
 							creationTime,
@@ -233,6 +231,9 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 							device
 						);
 					}
+
+					participant->removeDevice(gruu);
+
 				} else if (state == StateType::full) {
 
 					shared_ptr<ParticipantDevice> device = participant->addDevice(gruu);
