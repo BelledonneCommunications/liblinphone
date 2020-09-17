@@ -66,7 +66,7 @@ void _linphone_conference_notify_participant_device_added(LinphoneConference *co
 }
 
 void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device) {
-	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_added, conference, participant_device)
+	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_removed, conference, participant_device)
 }
 
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant) {
