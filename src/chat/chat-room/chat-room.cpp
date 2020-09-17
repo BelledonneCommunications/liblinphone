@@ -446,6 +446,7 @@ ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
 // -----------------------------------------------------------------------------
 
 list<shared_ptr<EventLog>> ChatRoom::getMessageHistory (int nLast) const {
+	lInfo() << __func__ <<  " chat room Chat DEBUG " ;
 	return getCore()->getPrivate()->mainDb->getHistory(getConferenceId(), nLast, MainDb::Filter::ConferenceChatMessageFilter);
 }
 
@@ -458,6 +459,7 @@ int ChatRoom::getMessageHistorySize () const {
 }
 
 list<shared_ptr<EventLog>> ChatRoom::getHistory (int nLast) const {
+	lInfo() << __func__ <<  " chat room Chat DEBUG " ;
 	return getCore()->getPrivate()->mainDb->getHistory(
 		getConferenceId(),
 		nLast,
