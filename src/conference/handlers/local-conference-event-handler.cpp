@@ -139,30 +139,38 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 		switch (eventLog->getType()) {
 			case EventLog::Type::ConferenceParticipantAdded: {
 				shared_ptr<ConferenceParticipantEvent> addedEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
+				const IdentityAddress & participantAddress = addedEvent->getParticipantAddress();
+				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdded(
-					addedEvent->getParticipant()
+					participant
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantRemoved: {
 				shared_ptr<ConferenceParticipantEvent> removedEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
+				const IdentityAddress & participantAddress = removedEvent->getParticipantAddress();
+				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantRemoved(
-					removedEvent->getParticipant()
+					participant
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantSetAdmin: {
 				shared_ptr<ConferenceParticipantEvent> setAdminEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
+				const IdentityAddress & participantAddress = setAdminEvent->getParticipantAddress();
+				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdminStatusChanged(
-					setAdminEvent->getParticipant(),
+					participant,
 					true
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantUnsetAdmin: {
 				shared_ptr<ConferenceParticipantEvent> unsetAdminEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
+				const IdentityAddress & participantAddress = unsetAdminEvent->getParticipantAddress();
+				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdminStatusChanged(
-					unsetAdminEvent->getParticipant(),
+					participant,
 					false
 				);
 			} break;
@@ -502,7 +510,8 @@ void LocalConferenceEventHandler::onFullStateReceived () {
 }
 
 void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(createNotifyParticipantAdded(participant), participant);
@@ -512,7 +521,8 @@ void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<Conf
 }
 
 void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
 		notifyAllExcept(createNotifyParticipantRemoved(participant), participant);
@@ -522,7 +532,8 @@ void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<Co
 }
 
 void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	const bool isAdmin = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {

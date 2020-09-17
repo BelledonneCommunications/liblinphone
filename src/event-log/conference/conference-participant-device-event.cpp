@@ -20,6 +20,7 @@
 #include "conference-participant-device-event.h"
 #include "conference-participant-event-p.h"
 #include "conference/participant-device.h"
+#include "conference/participant.h"
 
 // =============================================================================
 
@@ -49,7 +50,7 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	type,
 	creationTime,
 	conferenceId,
-	participant
+	participant->getAddress()
 ) {
 	L_D();
 	L_ASSERT(
