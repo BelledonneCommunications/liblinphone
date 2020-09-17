@@ -39,6 +39,13 @@ add_custom_command(OUTPUT "${jni_sources}"
 	COMMENT "Generating java wrapper"
 )
 
+set(LINPHONE_STATE "snapshots")
+execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
+if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
+	set(LINPHONE_STATE "releases")
+endif()
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package.html.in ${CMAKE_CURRENT_BINARY_DIR}/java/org/linphone/core/package.html)
+
 add_custom_target(linphonej ALL DEPENDS "${jni_sources}")
 
 set(LINPHONE_JNI_SOURCES "${jni_sources}" PARENT_SCOPE)
