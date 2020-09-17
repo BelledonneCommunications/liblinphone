@@ -29,18 +29,21 @@
 LINPHONE_BEGIN_NAMESPACE
 
 void NotifyConferenceListener::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> & participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	_linphone_conference_notify_participant_added(conf->toC(), participant->toC());
 }
 
 void NotifyConferenceListener::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> & participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	_linphone_conference_notify_participant_removed(conf->toC(), participant->toC());
 
 }
 
 void NotifyConferenceListener::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const std::shared_ptr<Participant> & participant = event->getParticipant();
+	const IdentityAddress & participantAddress = event->getParticipantAddress();
+	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 	_linphone_conference_notify_participant_admin_status_changed(conf->toC(), participant->toC());
 }
 
