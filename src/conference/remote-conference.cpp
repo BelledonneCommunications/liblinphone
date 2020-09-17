@@ -130,8 +130,8 @@ void RemoteConference::onFullStateReceived() {
 				EventLog::Type::ConferenceParticipantDeviceAdded,
 				creationTime,
 				conferenceId,
-				p,
-				d,
+				p->getAddress(),
+				d->getAddress(),
 				d->getName()
 			);
 			dEvent->setFullState(true);
