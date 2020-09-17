@@ -32,7 +32,7 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	const std::shared_ptr<Participant> &participant
+	const IdentityAddress &participantAddress
 ) : ConferenceNotifiedEvent(
 	*new ConferenceParticipantEventPrivate,
 	type,
@@ -46,7 +46,7 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 		type == Type::ConferenceParticipantSetAdmin ||
 		type == Type::ConferenceParticipantUnsetAdmin
 	);
-	d->participant = participant;
+	d->participantAddress = participantAddress;
 }
 
 ConferenceParticipantEvent::ConferenceParticipantEvent (
@@ -54,7 +54,7 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 	Type type,
 	time_t creationTime,
 	const ConferenceId &conferenceId,
-	const std::shared_ptr<Participant> &participant
+	const IdentityAddress &participantAddress
 ) : ConferenceNotifiedEvent(
 	p,
 	type,
@@ -62,17 +62,12 @@ ConferenceParticipantEvent::ConferenceParticipantEvent (
 	conferenceId
 ) {
 	L_D();
-	d->participant = participant;
-}
-
-const std::shared_ptr<Participant> &ConferenceParticipantEvent::getParticipant () const {
-	L_D();
-	return d->participant;
+	d->participantAddress = participantAddress;
 }
 
 const IdentityAddress &ConferenceParticipantEvent::getParticipantAddress () const {
 	L_D();
-	return d->participant->getAddress();
+	return d->participantAddress;
 }
 
 LINPHONE_END_NAMESPACE
