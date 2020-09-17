@@ -824,25 +824,14 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceParticipantDeviceEvent (
 	lInfo() << __func__ <<  " MainDb Chat DEBUG Calling find chat room";
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	IdentityAddress participantAddress(IdentityAddress(row.get<string>(12)));
-	shared_ptr<Participant> participant = nullptr;
-
-	if (chatRoom) {
-		shared_ptr<Participant> me = chatRoom->getMe();
-		if (participantAddress == me->getAddress()) {
-			participant = me;
-		} else {
-			participant = chatRoom->findParticipant(participantAddress);
-		}
-	}
 	IdentityAddress deviceAddress(IdentityAddress(row.get<string>(11)));
-	shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(deviceAddress);
 
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		type,
 		getConferenceEventCreationTimeFromRow(row),
 		conferenceId,
-		participant,
-		participantDevice
+		participantAddress,
+		deviceAddress
 	);
 	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
 	return event;
