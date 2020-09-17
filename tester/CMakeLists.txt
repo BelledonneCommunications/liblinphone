@@ -247,6 +247,7 @@ set(SOURCE_FILES_C
 )
 
 set(SOURCE_FILES_CXX
+	audio_quality_tester.cpp
 	clonable-object-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
@@ -266,6 +267,7 @@ if(ENABLE_DB_STORAGE)
 endif()
 
 set(HEADER_FILES
+	audio_quality_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
