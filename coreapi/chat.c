@@ -284,7 +284,6 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 		LinphonePrivate::ConferenceAddress(LinphonePrivate::Address(peerAddress)),
 		LinphonePrivate::ConferenceAddress(LinphonePrivate::Address(localAddress))
 	};
-	lInfo() << __func__ <<  "Chat DEBUG Calling find chat room";
 	shared_ptr<LinphonePrivate::AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
 	if (chatRoom)
 		reason = L_GET_PRIVATE(chatRoom)->onSipMessageReceived(op, sal_msg);
