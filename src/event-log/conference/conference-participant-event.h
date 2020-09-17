@@ -40,11 +40,10 @@ public:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const std::shared_ptr<Participant> &participant
+		const IdentityAddress &participantAddress
 	);
 
 	const IdentityAddress &getParticipantAddress () const;
-	const std::shared_ptr<Participant> &getParticipant () const;
 
 protected:
 	ConferenceParticipantEvent (
@@ -52,7 +51,7 @@ protected:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		const std::shared_ptr<Participant> &participant
+		const IdentityAddress &participantAddress
 	);
 
 private:
