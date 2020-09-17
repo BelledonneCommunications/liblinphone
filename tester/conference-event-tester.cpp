@@ -496,19 +496,19 @@ void ConferenceEventTester::onConferenceTerminated (const IdentityAddress &addr)
 void ConferenceEventTester::onFirstNotifyReceived (const IdentityAddress &addr) {}
 
 void ConferenceEventTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	participants.insert({ addr.asString(), false });
 	participantDevices.insert({ addr.asString(), 0 });
 }
 
 void ConferenceEventTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	participants.erase(addr.asString());
 	participantDevices.erase(addr.asString());
 }
 
 void ConferenceEventTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participants.find(addr.asString());
 	if (it != participants.end())
 		it->second = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
@@ -519,7 +519,7 @@ void ConferenceEventTester::onSubjectChanged(const shared_ptr<ConferenceSubjectE
 }
 
 void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end())
 		it->second++;
@@ -527,7 +527,7 @@ void ConferenceEventTester::onParticipantDeviceAdded (const shared_ptr<Conferenc
 }
 
 void ConferenceEventTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end() && it->second > 0)
 		it->second--;
@@ -591,21 +591,21 @@ public:
 };
 
 void ConferenceListenerInterfaceTester::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	participants.insert({ addr.asString(), false });
 	participantDevices.insert({ addr.asString(), 0 });
 	lastNotify++;
 }
 
 void ConferenceListenerInterfaceTester::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	participants.erase(addr.asString());
 	participantDevices.erase(addr.asString());
 	lastNotify++;
 }
 
 void ConferenceListenerInterfaceTester::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participants.find(addr.asString());
 	if (it != participants.end())
 		it->second = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
@@ -618,7 +618,7 @@ void ConferenceListenerInterfaceTester::onSubjectChanged(const shared_ptr<Confer
 }
 
 void ConferenceListenerInterfaceTester::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end())
 		it->second++;
@@ -627,7 +627,7 @@ void ConferenceListenerInterfaceTester::onParticipantDeviceAdded (const shared_p
 }
 
 void ConferenceListenerInterfaceTester::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress addr = event->getParticipant()->getAddress();
+	const IdentityAddress addr = event->getParticipantAddress();
 	auto it = participantDevices.find(addr.asString());
 	if (it != participantDevices.end() && it->second > 0)
 		it->second--;

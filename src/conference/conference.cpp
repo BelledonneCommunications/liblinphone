@@ -287,7 +287,7 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_
 		EventLog::Type::ConferenceParticipantAdded,
 		creationTime,
 		conferenceId,
-		participant
+		participant->getAddress()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
@@ -303,10 +303,12 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (tim
 		EventLog::Type::ConferenceParticipantRemoved,
 		creationTime,
 		conferenceId,
-		participant
+		participant->getAddress()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
+
+lInfo() << __func__ << " Chat DEBUG participant " << participant;
 
 	for (const auto &l : confListeners) {
 		l->onParticipantRemoved(event);
@@ -319,7 +321,7 @@ shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (ti
 		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 		creationTime,
 		conferenceId,
-		participant
+		participant->getAddress()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
