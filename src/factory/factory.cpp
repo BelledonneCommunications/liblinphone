@@ -47,9 +47,16 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+std::shared_ptr<Factory> Factory::instance;
+
 Factory::Factory(){
 	this->mTopResourcesDir = PACKAGE_DATA_DIR;
+
+	/*used to avoid crash when using bctbx_list_append in ADD_SUPPORTED_VIDEO_DEFINITION
+	since the element is null, bctbx_list_append return the added element directly*/
+	this->mSupportedVideoDefinitions = nullptr;
 	initializeSupportedVideoDefinitions(this);
+
 	/* register the bctbx sqlite vfs. It is not used by default */
 	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
 	sqlite3_bctbx_vfs_register(0);

@@ -22,7 +22,7 @@
 
 #include "linphone/api/c-types.h"
 #include "linphone/types.h"
-#include "logging.h"
+#include "linphone/logging.h"
 
 #ifdef __cplusplus
 extern "C" {

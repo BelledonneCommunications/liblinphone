@@ -65,7 +65,6 @@ public:
   //static void _linphone_factory_destroying_cb(void);
 
   Factory ();
-  
   ~Factory ();
 
   static void initializeSupportedVideoDefinitions(Factory *factory);

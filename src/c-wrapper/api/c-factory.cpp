@@ -60,6 +60,10 @@ LinphoneFactory *linphone_factory_get(void) {
   return Factory::get().get()->toC();
 }
 
+void linphone_factory_clean(void){
+	Factory::clean();
+}
+
 LinphoneCore *linphone_factory_create_core (
 	const LinphoneFactory *factory,
 	LinphoneCoreCbs *cbs,
@@ -248,7 +252,10 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_na
   return Factory::toCpp(factory)->findSupportedVideoDefinitionByName(
     name ? name : ""
   );
+}
 
+const char * linphone_factory_get_top_resources_dir(const LinphoneFactory *factory) {
+	return Factory::toCpp(factory)->getTopResourcesDir().c_str();
 }
 
 void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char *path) {
