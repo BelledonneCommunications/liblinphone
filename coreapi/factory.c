@@ -321,7 +321,7 @@ LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(con
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = linphone_factory_find_supported_video_definition_by_name(factory, name);
-	if (vdef != NULL) return vdef;
+	if (vdef != NULL) return linphone_video_definition_ref(vdef);
 	if (sscanf(name, "%ux%u", &width, &height) == 2) {
 		return linphone_video_definition_new(width, height, NULL);
 	}
