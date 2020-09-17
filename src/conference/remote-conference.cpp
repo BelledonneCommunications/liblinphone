@@ -104,7 +104,7 @@ void RemoteConference::onFullStateReceived() {
 			EventLog::Type::ConferenceParticipantAdded,
 			creationTime,
 			conferenceId,
-			p
+			p->getAddress()
 		);
 		pEvent->setFullState(true);
 		pEvent->setNotifyId(lastNotify);
@@ -116,7 +116,7 @@ void RemoteConference::onFullStateReceived() {
 			p->isAdmin() ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
 			creationTime,
 			conferenceId,
-			p
+			p->getAddress()
 		);
 		aEvent->setFullState(true);
 		aEvent->setNotifyId(lastNotify);

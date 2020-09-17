@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantEventPrivate : public ConferenceNotifiedEventPrivate {
 private:
-	std::shared_ptr<Participant> participant;
+	IdentityAddress participantAddress;
 
 	L_DECLARE_PUBLIC(ConferenceParticipantEvent);
 };
