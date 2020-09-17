@@ -459,7 +459,6 @@ void ClientGroupChatRoom::deleteFromDb () {
 
 list<shared_ptr<EventLog>> ClientGroupChatRoom::getHistory (int nLast) const {
 	L_D();
-	lInfo() << __func__ <<  " client chat room Chat DEBUG " ;
 	return getCore()->getPrivate()->mainDb->getHistory(
 		getConferenceId(),
 		nLast,
