@@ -264,8 +264,6 @@ protected:
   static std::shared_ptr<Factory> instance;
 
 private:
-  belle_sip_object_t mBase;
-
   bctbx_list_t *mSupportedVideoDefinitions;
 
   /*these are the directories set by the application*/
