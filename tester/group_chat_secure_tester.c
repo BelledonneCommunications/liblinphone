@@ -1905,7 +1905,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	// Check that the chat room is correctly created on Pauline1 and Laure sides and that the participants are added
 	LinphoneChatRoom *pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline1Cr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
 		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
@@ -2100,7 +2100,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	// Check that the chat room is correctly created on Pauline1 and Laure sides and that the participants are added
 	LinphoneChatRoom *pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline1Cr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
 		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
