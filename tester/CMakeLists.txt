@@ -222,8 +222,7 @@ set(SOURCE_FILES_C
 	dtmf_tester.c
 	eventapi_tester.c
 	flexisip_tester.c
-	group_chat_tester.c
-	group_chat_secure_tester.c
+        group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	liblinphone_tester.c
 	log_collection_tester.c
@@ -245,6 +244,9 @@ set(SOURCE_FILES_C
 	video_quality_tester.c
 	shared_core_tester.c
 )
+if(ENABLE_LIME_X3DH)
+    list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
+endif()
 
 set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp

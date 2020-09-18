@@ -386,7 +386,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM
 	bc_tester_add_suite(&group_chat_test_suite);
+#ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+#endif
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
 #endif
