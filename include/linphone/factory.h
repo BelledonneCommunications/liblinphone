@@ -239,8 +239,8 @@ LINPHONE_PUBLIC LinphoneCallCbs * linphone_factory_create_call_cbs(const Linphon
 
 /**
  * Create a #LinphoneConferenceCbs object that holds callbacks for events happening on a conference.
- * @param[in] factory #LinphoneFactory singletion object
- * @return A new #LinphoneConferenceCbs object
+ * @param[in] factory #LinphoneFactory singletion object @notnil
+ * @return A new #LinphoneConferenceCbs object @notnil
  */
 LINPHONE_PUBLIC LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory);
 
