@@ -1025,10 +1025,9 @@ static void group_chat_room_message (bool_t encrypt, bool_t sal_error) {
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
 
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
-	linphone_chat_message_unref(chloeMessage);
-
+        BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
 	LinphoneChatMessage *foundMessage = linphone_chat_room_find_message(chloeCr, messageId);
+        linphone_chat_message_unref(chloeMessage);// Unref here because of messageId using
 	BC_ASSERT_PTR_NOT_NULL(foundMessage);
 	BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_text(foundMessage));
 	linphone_chat_message_unref(foundMessage);

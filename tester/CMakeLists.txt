@@ -392,6 +392,14 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
 		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
+                if(MSVC)
+                        if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+                                install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
+                                        DESTINATION ${CMAKE_INSTALL_BINDIR}
+                                        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+                                )
+                        endif()
+                endif()
 
 		install(TARGETS liblinphone_tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
