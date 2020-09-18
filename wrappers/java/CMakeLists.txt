@@ -22,6 +22,12 @@
 
 set(jni_sources "${CMAKE_CURRENT_BINARY_DIR}/src/linphone_jni.cc")
 
+set(LINPHONE_STATE "snapshots")
+execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
+if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
+	set(LINPHONE_STATE "releases")
+endif()
+
 add_custom_command(OUTPUT "${jni_sources}"
 	COMMAND ${CMAKE_COMMAND} -E remove -f java/org/linphone/core/* src/*
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml" "-o" "${CMAKE_CURRENT_BINARY_DIR}"
@@ -39,16 +45,11 @@ add_custom_command(OUTPUT "${jni_sources}"
 	COMMENT "Generating java wrapper"
 )
 
-set(LINPHONE_STATE "snapshots")
-execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
-if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
-	set(LINPHONE_STATE "releases")
-endif()
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package.html.in ${CMAKE_CURRENT_BINARY_DIR}/java/org/linphone/core/package.html)
-
 add_custom_target(linphonej ALL DEPENDS "${jni_sources}")
 
 set(LINPHONE_JNI_SOURCES "${jni_sources}" PARENT_SCOPE)
+
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/package.html.in ${CMAKE_CURRENT_BINARY_DIR}/java/org/linphone/core/package.html)
 
 install(DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/java" DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonej/")
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/src/proguard.txt" DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonej/")
