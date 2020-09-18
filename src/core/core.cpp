@@ -327,7 +327,7 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
-CorePrivate::CorePrivate() : authStack(*this){
+CorePrivate::CorePrivate() : authStack(*this), pushReceivedBackgroundTaskId(0) {
 }
 
 std::shared_ptr<ToneManager> CorePrivate::getToneManager() {
@@ -864,6 +864,10 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
 // Misc.
 // -----------------------------------------------------------------------------
 
+static void push_received_background_task_ended(CorePrivate *corePrivate) {
+	corePrivate->pushReceivedBackgroundTaskEnded();
+}
+
 void CorePrivate::pushReceivedBackgroundTaskEnded() {
 	L_Q();
 
@@ -877,8 +881,25 @@ void CorePrivate::pushReceivedBackgroundTaskEnded() {
 	}
 }
 
-static void push_received_background_task_ended(CorePrivate *corePrivate) {
-	corePrivate->pushReceivedBackgroundTaskEnded();
+void CorePrivate::startPushReceivedBackgroundTask() {
+	L_Q();
+
+	if (pushTimer) {
+		q->destroyTimer(pushTimer);
+		pushTimer = nullptr;
+	}
+
+	if (pushReceivedBackgroundTaskId == 0) {
+		pushReceivedBackgroundTaskId = belle_sip_begin_background_task("Push received",(void (*)(void*))push_received_background_task_ended, this);
+		lInfo() << "Started push notif background task [" << pushReceivedBackgroundTaskId << "]";
+	} else {
+		lWarning() << "Found existing push notif background task [" << pushReceivedBackgroundTaskId << "]";
+	}
+
+	pushTimer = q->createTimer([this]() -> bool {
+		push_received_background_task_ended(this);
+		return false;
+	}, 20000, "push received background task timeout");
 }
 
 /*
@@ -888,24 +909,15 @@ static void push_received_background_task_ended(CorePrivate *corePrivate) {
  */
 void Core::pushNotificationReceived () {
 	L_D();
+
+	lInfo() << "Push notification received";
+
+	// Start a background task for 20 seconds to ensure we have time to process the push
+	d->startPushReceivedBackgroundTask();
+
 	LinphoneCore *lc = getCCore();
 	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
-
-	lInfo() << "Push notification received";
-	// Start a background task for 20 seconds to ensure we have time to process the push
-	if (d->pushTimer) {
-		destroyTimer(d->pushTimer);
-		d->pushTimer = nullptr;
-	}
-	if (d->pushReceivedBackgroundTaskId == 0) {
-		lInfo() << "Started push notif background task [" << d->pushReceivedBackgroundTaskId << "]";
-		d->pushReceivedBackgroundTaskId = belle_sip_begin_background_task("Push received",(void (*)(void*))push_received_background_task_ended, d);
-	}
-	d->pushTimer = createTimer([d]() -> bool {
-		push_received_background_task_ended(d);
-		return false;
-	}, 20000, "push received background task timeout");
 
 	// We can assume network should be reachable when a push notification is received.
 	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
