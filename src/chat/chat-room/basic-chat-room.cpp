@@ -43,10 +43,11 @@ BasicChatRoom::BasicChatRoom (
 ) : ChatRoom(p, core, params) {
 	L_D();
 
-	d->me = Participant::create(nullptr, getLocalAddress());
-	d->participants.push_back(Participant::create(nullptr, getPeerAddress()));
+	d->me = Participant::create(nullptr, conferenceId.getLocalAddress());
+	d->participants.push_back(Participant::create(nullptr, conferenceId.getPeerAddress()));
 
 	this->conferenceId = conferenceId;
+
 }
 
 void BasicChatRoom::allowCpim (bool value) {
