@@ -383,51 +383,61 @@ typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb) (Lin
 typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* message, LinphoneChatMessageState state, void* user_data);
 
 /**
+ * @}
+**/
+
+
+/**
+ * @addtogroup conference
+ * @{
+ */
+
+/**
  * Callback used to notify a chat room that a participant has been added.
- * @param[in] conference #LinphoneConference object
- * @param[in] participant #LinphoneParticipant that has been added to the conference
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant that has been added to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room that a participant has been removed.
- * @param[in] conference #LinphoneConference object
- * @param[in] participant #LinphoneParticipant that has been removed to the conference
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant that has been removed to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room that the admin status of a participant has been changed.
- * @param[in] conference #LinphoneConference object
- * @param[in] participant #LinphoneParticipant whose admin status has changed
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant whose admin status has changed @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantAdminStatusChangedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
 
 /**
  * Callback used to notify a chat room state has changed.
- * @param[in] conference #LinphoneConference object
+ * @param[in] conference #LinphoneConference object @notnil
  * @param[in] newState The new state of the chat room
  */
 typedef void (*LinphoneConferenceCbsStateChangedCb) (LinphoneConference *conference, LinphoneConferenceState newState);
 
 /**
  * Callback used to notify that the subject of a chat room has changed.
- * @param[in] conference #LinphoneConference object
- * @param[in] subject subject of the conference
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] subject subject of the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *conference, const char *subject);
 
 /**
  * Callback used to notify a chat room that a participant has been added.
- * @param[in] conference #LinphoneConference object
- * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
  * Callback used to notify a chat room that a participant has been removed.
- * @param[in] conference #LinphoneConference object
- * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference @notnil
  */
 typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
