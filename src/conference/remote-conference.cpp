@@ -70,17 +70,17 @@ void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 
 void RemoteConference::onFirstNotifyReceived (const IdentityAddress &) {}
 
-void RemoteConference::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &) {}
+void RemoteConference::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
-void RemoteConference::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &) {}
+void RemoteConference::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
-void RemoteConference::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &) {}
+void RemoteConference::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
 void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &) {}
 
-void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &) {}
+void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
 
-void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &) {}
+void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
 
 void RemoteConference::onFullStateReceived() {
 
@@ -109,7 +109,7 @@ void RemoteConference::onFullStateReceived() {
 		pEvent->setFullState(true);
 		pEvent->setNotifyId(lastNotify);
 		for (const auto &l : confListeners) {
-			l->onParticipantAdded(pEvent);
+			l->onParticipantAdded(pEvent, p);
 		}
 
 		shared_ptr<ConferenceParticipantEvent> aEvent = make_shared<ConferenceParticipantEvent>(
@@ -121,7 +121,7 @@ void RemoteConference::onFullStateReceived() {
 		aEvent->setFullState(true);
 		aEvent->setNotifyId(lastNotify);
 		for (const auto &l : confListeners) {
-			l->onParticipantSetAdmin(aEvent);
+			l->onParticipantSetAdmin(aEvent, p);
 		}
 
 		// Loop through the devices
@@ -137,7 +137,7 @@ void RemoteConference::onFullStateReceived() {
 			dEvent->setFullState(true);
 			dEvent->setNotifyId(lastNotify);
 			for (const auto &l : confListeners) {
-				l->onParticipantDeviceAdded(dEvent);
+				l->onParticipantDeviceAdded(dEvent, d);
 			}
 		}
 	}

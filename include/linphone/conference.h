@@ -232,7 +232,8 @@ LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *confere
 LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
 
 /**
- * Get participant hosting the conference
+ * For a local audio video conference, this function returns the participant hosting the conference
+ * For a remote audio video conference, this function returns the focus of the conference
  * @param conference The #LinphoneConference object. @notnil
  * @return a #LinphoneParticipant . @notnil
  */
