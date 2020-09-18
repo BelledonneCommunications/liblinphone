@@ -749,7 +749,7 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	d->bgTask.stop();
 }
 
-void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event) {
+void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	L_D();
 
 	if (event->getFullState())
@@ -761,7 +761,7 @@ void ClientGroupChatRoom::onParticipantAdded (const shared_ptr<ConferencePartici
 	_linphone_chat_room_notify_participant_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event) {
+void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	L_D();
 
 	d->addEvent(event);
@@ -770,7 +770,7 @@ void ClientGroupChatRoom::onParticipantRemoved (const shared_ptr<ConferenceParti
 	_linphone_chat_room_notify_participant_removed(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event) {
+void ClientGroupChatRoom::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	L_D();
 
 	if (event->getFullState())
@@ -817,7 +817,7 @@ void ClientGroupChatRoom::onSubjectChanged (const shared_ptr<ConferenceSubjectEv
 	linphone_core_notify_chat_room_subject_changed(linphone_chat_room_get_core(cr), cr);
 }
 
-void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
+void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	L_D();
 
 	const IdentityAddress &addr = event->getParticipantAddress();
@@ -847,7 +847,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 	_linphone_chat_room_notify_participant_device_added(cr, L_GET_C_BACK_PTR(event));
 }
 
-void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event) {
+void ClientGroupChatRoom::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	L_D();
 
 	d->addEvent(event);

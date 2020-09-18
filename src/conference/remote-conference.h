@@ -50,12 +50,12 @@ protected:
 	void onConferenceCreated (const ConferenceAddress &addr) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
-	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
-	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
-	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) override;
+	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
 	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
-	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
-	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) override;
+	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
 	void onFullStateReceived () override;
 
 
