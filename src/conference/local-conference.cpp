@@ -104,10 +104,10 @@ shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t
 	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice, const std::string name) {
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
 	++lastNotify;
-	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, participant, participantDevice, name);
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, participant, participantDevice);
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
