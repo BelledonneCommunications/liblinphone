@@ -1474,7 +1474,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 3, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 3, 0);
 	LinphoneChatRoom *chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 3, 0);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr) || !BC_ASSERT_PTR_NOT_NULL(chloeCr))
+		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
 	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
@@ -1617,7 +1618,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_partic
 	// Check that the chat room is correctly created on Pauline and Laure sides and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
 	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
@@ -1676,6 +1678,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_partic
 
 	// Check that the chat room is correctly created on Chloe's side and that she was added everywhere
 	chloeCr = check_creation_chat_room_client_side(coresList, chloe, &initialChloeStats, confAddr, initialSubject, 3, 0);
+	if (!BC_ASSERT_PTR_NOT_NULL(chloeCr))
+		goto end;
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_added, initialMarieStats.number_of_participants_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_added, initialLaureStats.number_of_participants_added + 1, 3000));
@@ -1751,7 +1755,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	// Check that the chat room is correctly created on Pauline and Laure sides and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
 	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
@@ -1900,7 +1905,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	// Check that the chat room is correctly created on Pauline1 and Laure sides and that the participants are added
 	LinphoneChatRoom *pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
 	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
@@ -1975,6 +1981,8 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 
 	// Check that the chat room is correctly created on Pauline2's side and that she was added everywhere
 	pauline2Cr = check_creation_chat_room_client_side(coresList, pauline2, &initialPauline2Stats, confAddr, initialSubject, 2, 0);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline2Cr))
+		goto end;
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participant_devices_added, initialMarieStats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline1->stat.number_of_participant_devices_added, initialPauline1Stats.number_of_participant_devices_added + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participant_devices_added, initialLaureStats.number_of_participant_devices_added + 1, 3000));
@@ -2092,7 +2100,8 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	// Check that the chat room is correctly created on Pauline1 and Laure sides and that the participants are added
 	LinphoneChatRoom *pauline1Cr = check_creation_chat_room_client_side(coresList, pauline1, &initialPauline1Stats, confAddr, initialSubject, 2, 0);
 	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr) || !BC_ASSERT_PTR_NOT_NULL(laureCr))
+		goto end;
 	// Marie sends a message to the chatroom
 	const char *marieMessage = "Hey guys ! What's up ?";
 	LinphoneChatMessage *marie_msg = _send_message(marieCr, marieMessage);
