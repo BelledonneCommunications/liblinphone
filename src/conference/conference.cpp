@@ -345,14 +345,14 @@ shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t crea
 	return event;
 }
 
-shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice, const std::string name) {
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
 	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
 		EventLog::Type::ConferenceParticipantDeviceAdded,
 		creationTime,
 		conferenceId,
 		participant->getAddress(),
 		participantDevice->getAddress(),
-		name
+		participantDevice->getName()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
