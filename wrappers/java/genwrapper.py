@@ -748,10 +748,15 @@ class Proguard(object):
         }
         self.listeners.append(obj)
 
+class PackageInfo(object):
+    def __init__(self, directory, version):
+        self.directory = directory
+        self.version = version
+
 ##########################################################################
 
 class GenWrapper(object):
-    def __init__(self, srcdir, javadir, package, xmldir, exceptions):
+    def __init__(self, srcdir, javadir, package, xmldir, exceptions, upload_dir, version):
         self.srcdir = srcdir
         self.javadir = javadir
         self.package = package
@@ -796,6 +801,7 @@ class GenWrapper(object):
         self.renderer = pystache.Renderer()
         self.jni = Jni(package)
         self.proguard = Proguard(package)
+        self.packageInfo = PackageInfo(upload_dir, version)
 
         self.enums = {}
         self.interfaces = {}
@@ -822,6 +828,7 @@ class GenWrapper(object):
 
         self.render(self.jni, self.srcdir + '/linphone_jni.cc')
         self.render(self.proguard, self.srcdir + '/proguard.txt')
+        self.render(self.packageInfo, self.javadir + '/package-info.java')
 
     def render(self, item, path):
         tmppath = path + '.tmp'
@@ -873,8 +880,10 @@ if __name__ == '__main__':
     argparser.add_argument('-o --output', type=str, help='the directory where to generate the source files', dest='outputdir', default='.')
     argparser.add_argument('-p --package', type=str, help='the package name for the wrapper', dest='package', default='org.linphone.core')
     argparser.add_argument('-n --name', type=str, help='the name of the genarated source file', dest='name', default='linphone_jni.cc')
+    argparser.add_argument('-v --version', type=str, help='the version of the SDK', dest='version', default='4.5.0')
+    argparser.add_argument('-d --directory', type=str, help='the directory where doc will be upload', dest='directory', default='snapshots')
     argparser.add_argument('-e --exceptions', type=bool, help='enable the wrapping of LinphoneStatus into CoreException', dest='exceptions', default=False)
-    argparser.add_argument('-v --verbose', action='store_true', dest='verbose_mode', default=False, help='Verbose mode.')
+    argparser.add_argument('-V --verbose', action='store_true', dest='verbose_mode', default=False, help='Verbose mode.')
     args = argparser.parse_args()
 
     loglevel = logging.INFO if args.verbose_mode else logging.ERROR
@@ -900,5 +909,5 @@ if __name__ == '__main__':
             logging.critical("Cannot create '{0}' dircetory: {1}".format(javadir, e.strerror))
             sys.exit(1)
 
-    genwrapper = GenWrapper(srcdir, javadir, args.package, args.xmldir, args.exceptions)
+    genwrapper = GenWrapper(srcdir, javadir, args.package, args.xmldir, args.exceptions, args.directory, args.version)
     genwrapper.render_all()
