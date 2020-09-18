@@ -176,12 +176,13 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 					linphone_event_terminate(event);
 					device->setConferenceSubscribeEvent(nullptr);
 				}
-				time_t creationTime = time(nullptr);
-				notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
 				call->removeFromConference(*remoteContact);
+
+				time_t creationTime = time(nullptr);
+				notifyParticipantDeviceRemoved(creationTime, false, p, device);
 
 				return 0;
 			}
@@ -197,9 +198,9 @@ int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) 
 	if (!p)
 		return -1;
 	if (p->getDevices().empty()) {
+		participants.remove(p);
 		time_t creationTime = time(nullptr);
 		notifyParticipantRemoved(creationTime, false, p);
-		participants.remove(p);
 	}
 
 	checkIfTerminated();
