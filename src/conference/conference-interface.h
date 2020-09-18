@@ -345,7 +345,8 @@ public:
 class LINPHONE_PUBLIC ConferenceFactoryInterface {
 	/*
 	* Create a conference object with an initial list of participant based on the provided conference parameters
-	 
+	* @param params conference parameters @notnil
+	* @param participants initial list of participants
 	*/
 	std::shared_ptr<ConferenceInterface>& createConference(const std::shared_ptr<ConferenceParamsInterface> &params,
 	const std::list<IdentityAddress> &participants);
