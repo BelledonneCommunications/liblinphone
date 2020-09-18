@@ -369,7 +369,8 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 		creationTime,
 		conferenceId,
 		participant->getAddress(),
-		participantDevice->getAddress()
+		participantDevice->getAddress(),
+		participantDevice->getName()
 	);
 	event->setFullState(isFullState);
 	event->setNotifyId(lastNotify);
