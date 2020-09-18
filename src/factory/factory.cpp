@@ -63,16 +63,6 @@ Factory::Factory(){
 	this->mEvfsMasterKey = nullptr;
 }
 
-//BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
-
-//useless ???
-/*BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
-	linphone_factory_uninit, // destroy
-	NULL, // clone
-	NULL, // Marshall
-	FALSE
-);*/
-
 
 void Factory::_DestroyingCb(void) {
 	if (Factory::instance != NULL)
