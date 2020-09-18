@@ -248,8 +248,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 							creationTime,
 							isFullState,
 							participant,
-							device,
-							name
+							device
 						);
 					}
 				}
