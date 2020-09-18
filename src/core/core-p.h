@@ -157,7 +157,8 @@ public:
 	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
 	void updateVideoDevice();
 
-	void pushReceivedBackgroundTaskEnded();
+	void startPushReceivedBackgroundTask ();
+	void pushReceivedBackgroundTaskEnded ();
 
 private:
 	bool isInBackground = false;
