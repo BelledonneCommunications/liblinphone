@@ -4135,6 +4135,7 @@ static void find_one_to_one_chat_room (void) {
 
 	// Create a basic chat room
 	marieOneToOneCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
 
 	// Check it's the same chat room
 	oneToOneChatRoom = linphone_core_find_one_to_one_chat_room(marie->lc, marieAddr, paulineAddr);
@@ -5998,7 +5999,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
 	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory"),
-	TEST_TWO_TAGS("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch", "LeaksMemory"),
+	TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch"),
 	TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory"),
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Check if participant device are removed", group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_notified, "LeaksMemory" /*due to core restart*/),
