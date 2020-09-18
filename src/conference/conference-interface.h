@@ -243,20 +243,23 @@ public:
 	/*
 	 * This fonction is called each time a new participant is added by the focus after full state notification.
 	 * @param[in] event informations related to the added participant.
+	 * @param[in] participant participant added to conference or chat room.
 	 */
-	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {}
+	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {}
 
 	/*
 	 * This fonction is called each time a new participant is removed by the focus after full state notification.
 	 * @param[in] event informations related to the removed participant.
+	 * @param[in] participant participant removed from conference or chat room.
 	 */
-	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {}
+	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {}
 
 	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.
 	 * @param[in] event informations related to the new admin participant.
+	 * @param[in] participant participant whose admin status changed.
 	 */
-	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {}
+	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {}
 
 	/*
 	 * This fonction is called each time a new subject is set by the focus after full state notification.
@@ -273,13 +276,15 @@ public:
 	/*
 	* This fonction is called each time a new participant device is added by the focus after full state notification.
 	* @param[in] event informations related to the added participant's device.
+	* @param[in] device participant device added to the conference or chat room.
 	*/
-	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {}
+	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
 	/*
 	* This fonction is called each time a new participant device is removed by the focus after full state notification.
 	* @param[in] event informations related to the removed device's participant.
+	* @param[in] device participant device removed from the conference or chat room.
 	*/
-	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {}
+	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
 };
 
 class ConferenceParamsInterface {
