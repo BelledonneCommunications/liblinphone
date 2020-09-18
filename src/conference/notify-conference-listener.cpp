@@ -28,22 +28,16 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-void NotifyConferenceListener::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress & participantAddress = event->getParticipantAddress();
-	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
+void NotifyConferenceListener::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_added(conf->toC(), participant->toC());
 }
 
-void NotifyConferenceListener::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress & participantAddress = event->getParticipantAddress();
-	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
+void NotifyConferenceListener::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_removed(conf->toC(), participant->toC());
 
 }
 
-void NotifyConferenceListener::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event) {
-	const IdentityAddress & participantAddress = event->getParticipantAddress();
-	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
+void NotifyConferenceListener::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	_linphone_conference_notify_participant_admin_status_changed(conf->toC(), participant->toC());
 }
 
@@ -51,19 +45,11 @@ void NotifyConferenceListener::onSubjectChanged (const std::shared_ptr<Conferenc
 	_linphone_conference_notify_subject_changed(conf->toC(), event->getSubject().c_str());
 }
 
-void NotifyConferenceListener::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress & participantAddress = event->getParticipantAddress();
-	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
-	const IdentityAddress & deviceAddress = event->getDeviceAddress();
-	const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
+void NotifyConferenceListener::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_added(conf->toC(), device->toC());
 }
 
-void NotifyConferenceListener::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event) {
-	const IdentityAddress & participantAddress = event->getParticipantAddress();
-	std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
-	const IdentityAddress & deviceAddress = event->getDeviceAddress();
-	const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
+void NotifyConferenceListener::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	_linphone_conference_notify_participant_device_removed(conf->toC(), device->toC());
 }
 
