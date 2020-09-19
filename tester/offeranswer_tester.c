@@ -412,7 +412,8 @@ static void profile_call_base(bool_t avpf1
 		goto end;
 	}
 
-	BC_ASSERT_TRUE(call(marie, pauline));
+	if(!BC_ASSERT_TRUE(call(marie, pauline)))
+	    goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/
@@ -784,7 +785,7 @@ end:
 }
 #endif
 
-static test_t offeranswer_tests[] = {
+static test_t offeranswer_tests[] = {/*
 	TEST_NO_TAG("Start with no config", start_with_no_config),
 	TEST_NO_TAG("Call failed because of codecs", call_failed_because_of_codecs),
 	TEST_NO_TAG("Simple call with different codec mappings", simple_call_with_different_codec_mappings),
@@ -804,7 +805,7 @@ static test_t offeranswer_tests[] = {
 	TEST_NO_TAG("SAVPF to AVP call", savpf_to_avp_call),
 	TEST_NO_TAG("SAVPF to AVPF call", savpf_to_avpf_call),
 	TEST_NO_TAG("SAVPF to SAVP call", savpf_to_savp_call),
-	TEST_NO_TAG("SAVPF to SAVPF call", savpf_to_savpf_call),
+	TEST_NO_TAG("SAVPF to SAVPF call", savpf_to_savpf_call),*/
 	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS call", savpf_dtls_to_savpf_dtls_call, "DTLS"),
 	TEST_ONE_TAG("SAVPF/DTLS to SAVPF/DTLS encryption mandatory call", savpf_dtls_to_savpf_dtls_encryption_mandatory_call, "DTLS"),
 	TEST_ONE_TAG("SAVPF/DTLS to SAVPF call", savpf_dtls_to_savpf_call, "DTLS"),
