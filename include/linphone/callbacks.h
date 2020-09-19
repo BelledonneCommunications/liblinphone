@@ -330,7 +330,7 @@ typedef LinphoneCoreCbsInfoReceivedCb LinphoneCoreInfoReceivedCb;
  * Callback prototype for configuring status changes notification
  * @param core the #LinphoneCore @notnil
  * @param status the current #LinphoneConfiguringState
- * @param message informational message. @notnil
+ * @param message informational message. @maybenil
  */
 typedef void (*LinphoneCoreCbsConfiguringStatusCb)(LinphoneCore *core, LinphoneConfiguringState status, const char *message);
 
