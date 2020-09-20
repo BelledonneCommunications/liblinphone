@@ -2089,6 +2089,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	if (callee_call && caller_call) {
 		LinphoneCallCbs *caller_cbs;
 		VideoStream *caller_stream;
+		MSWebCam * camera;
 
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
@@ -2102,7 +2103,9 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 		ms_filter_call_method(caller_stream->source, MS_FILTER_SET_FPS, &fps);
 
 		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
-		BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(video_stream_get_camera(caller_stream)), "Static picture");
+		camera = video_stream_get_camera(caller_stream);
+		if(BC_ASSERT_PTR_NOT_NULL(camera))
+		    BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(camera), "Static picture");
 	}
 	end_call(caller, callee);
 
@@ -2141,7 +2144,7 @@ static test_t call_video_tests[] = {/*
 	TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
 	TEST_NO_TAG("Call with video declined", call_with_declined_video),
 	TEST_NO_TAG("Call with video declined despite policy", call_with_declined_video_despite_policy),
-	TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),*/
+	TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),
 	TEST_NO_TAG("Video early-media call", video_early_media_call),
 	TEST_NO_TAG("Call with multiple early media", multiple_early_media),
 	TEST_ONE_TAG("Call with ICE from video to non-video", call_with_ice_video_to_novideo, "ICE"),
@@ -2176,7 +2179,7 @@ static test_t call_video_tests[] = {/*
 	TEST_NO_TAG("Incoming REINVITE with invalid SDP in ACK", incoming_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Outgoing REINVITE with invalid SDP in ACK", outgoing_reinvite_with_invalid_ack_sdp),
 	TEST_NO_TAG("Video call with no audio and no video codec", video_call_with_no_audio_and_no_video_codec),
-	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),
+	TEST_NO_TAG("Call with early media and no SDP in 200 Ok with video", call_with_early_media_and_no_sdp_in_200_with_video),*/
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 };
 
