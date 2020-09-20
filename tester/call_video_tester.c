@@ -2089,7 +2089,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	if (callee_call && caller_call) {
 		LinphoneCallCbs *caller_cbs;
 		VideoStream *caller_stream;
-		MSWebCam * camera;
+		const MSWebCam * camera;
 
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
