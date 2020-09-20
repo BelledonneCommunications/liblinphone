@@ -1452,7 +1452,8 @@ static void video_early_media_call(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_to_marie = linphone_core_get_current_call(pauline->lc));
 	if(pauline_to_marie) {
 		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(pauline_to_marie, LinphoneStreamTypeVideo);
-		BC_ASSERT_EQUAL(vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+		if(BC_ASSERT_PTR_NOT_NULL(vstream->source))
+		    BC_ASSERT_EQUAL(vstream->source->desc->id, MS_MIRE_ID, int, "%d");
 	}
 
 	end_call(pauline, marie);
@@ -2109,7 +2110,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	linphone_core_manager_destroy(callee);
 }
 
-static test_t call_video_tests[] = {
+static test_t call_video_tests[] = {/*
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
 	TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers", call_paused_resumed_with_no_sdp_ack_using_video_policy),
@@ -2140,7 +2141,7 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("SRTP call with several video switches", srtp_call_with_several_video_switches),
 	TEST_NO_TAG("Call with video declined", call_with_declined_video),
 	TEST_NO_TAG("Call with video declined despite policy", call_with_declined_video_despite_policy),
-	TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),
+	TEST_NO_TAG("Call with video declined using policy", call_with_declined_video_using_policy),*/
 	TEST_NO_TAG("Video early-media call", video_early_media_call),
 	TEST_NO_TAG("Call with multiple early media", multiple_early_media),
 	TEST_ONE_TAG("Call with ICE from video to non-video", call_with_ice_video_to_novideo, "ICE"),
