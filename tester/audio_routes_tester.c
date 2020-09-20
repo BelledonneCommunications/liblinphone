@@ -975,9 +975,9 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,1000));
 	linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(marie);
 
 	linphone_audio_device_unref(dev0);
 	linphone_audio_device_unref(dev1);
@@ -1225,16 +1225,18 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card
-	linphone_audio_device_unref(marie_dev0);
-	linphone_audio_device_unref(marie_dev1);
-	linphone_audio_device_unref(marie_current_dev);
-	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(laure);
 	linphone_audio_device_unref(pauline_dev0);
 	linphone_audio_device_unref(pauline_dev1);
 	linphone_audio_device_unref(pauline_current_dev);
 	linphone_core_manager_destroy(pauline);
+	linphone_audio_device_unref(marie_dev0);
+	linphone_audio_device_unref(marie_dev1);
+	linphone_audio_device_unref(marie_current_dev);
+	linphone_core_manager_destroy(marie);
 
-	linphone_core_manager_destroy(laure);
+
+
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -1252,7 +1254,7 @@ static void simple_conference_with_audio_device_change_during_pause_caller_calle
 	simple_conference_with_audio_device_change_during_pause_base(TRUE, TRUE);
 }
 
-test_t audio_routes_tests[] = {
+test_t audio_routes_tests[] = {/*
 	TEST_NO_TAG("Simple call with audio devices reload", simple_call_with_audio_devices_reload),
 	TEST_NO_TAG("Call with disconnecting device before ringback", call_with_disconnecting_device_before_ringback),
 	TEST_NO_TAG("Call with disconnecting device during ringback", call_with_disconnecting_device_during_ringback),
@@ -1264,7 +1266,7 @@ test_t audio_routes_tests[] = {
 	TEST_NO_TAG("Simple call with audio device change ping-pong", simple_call_with_audio_device_change_pingpong),
 	TEST_NO_TAG("Simple call with audio device change during call pause callee", simple_call_with_audio_device_change_during_call_pause_callee),
 	TEST_NO_TAG("Simple call with audio device change during call pause caller", simple_call_with_audio_device_change_during_call_pause_caller),
-	TEST_NO_TAG("Simple call with audio device change during call pause both parties", simple_call_with_audio_device_change_during_call_pause_caller_callee),
+	TEST_NO_TAG("Simple call with audio device change during call pause both parties", simple_call_with_audio_device_change_during_call_pause_caller_callee),*/
 	TEST_NO_TAG("Simple conference with audio device change during setup", simple_conference_with_audio_device_change_during_setup),
 	TEST_NO_TAG("Simple conference with audio device change before all join", simple_conference_with_audio_device_change_before_all_join),
 	TEST_NO_TAG("Simple conference with audio device change after all join", simple_conference_with_audio_device_change_after_all_join),
