@@ -186,6 +186,38 @@ public extension {{interfaceName}} {
 	{{/methods}}
 }
 
+public final class {{interfaceName}}Stub : {{interfaceName}}
+{
+	{{#methods}}
+	{{#delegate}}
+	var _{{cb_name}}: (({{{params_stub}}}) -> Void)?
+	{{/delegate}}
+	{{/methods}}
+
+	{{#methods}}
+	{{#delegate}}
+	{{#isDeprecated}}
+	@available(*, deprecated)
+	{{/isDeprecated}}
+	public func {{cb_name}}({{{params_public}}}){_{{cb_name}}.map{$0({{{params_private}}})}}
+	{{/delegate}}
+	{{/methods}}
+
+	public init (
+		{{#methods}}
+		{{#delegate}}
+		{{cb_name}}: (({{{params_stub}}}) -> Void)? = nil{{^lastValue}},{{/lastValue}}
+		{{/delegate}}
+		{{/methods}}
+	) {
+		{{#methods}}
+		{{#delegate}}
+		self._{{cb_name}} = {{cb_name}}
+		{{/delegate}}
+		{{/methods}}
+	}
+}
+
 class {{interfaceName}}Manager
 {
 	var cPtr: OpaquePointer
