@@ -136,7 +136,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 }
 
 void MS2AudioStream::configureAudioStream(){
-	
+	const char *tmpbuf;
 	
 	if (linphone_core_echo_limiter_enabled(getCCore())) {
 		string type = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "el_type", "mic");
@@ -148,7 +148,12 @@ void MS2AudioStream::configureAudioStream(){
 
 	// Equalizer location in the graph: 'mic' = in input graph, otherwise in output graph.
 	// Any other value than mic will default to output graph for compatibility.
-	string location = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", "hp");
+#if TARGET_OS_IPHONE
+	tmpbuf="mic";
+#else
+	tmpbuf="hp";
+#endif
+	string location = linphone_config_get_string(linphone_core_get_config(getCCore()), "sound", "eq_location", tmpbuf);
 	mStream->eq_loc = (location == "mic") ? MSEqualizerMic : MSEqualizerHP;
 	lInfo() << "Equalizer location: " << location;
 
@@ -492,11 +497,18 @@ void MS2AudioStream::setRoute(LinphoneAudioRoute route){
 }
 
 void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
+	const char *tmpbuf;
+
 	LinphoneConfig *config = linphone_core_get_config(lc);
 	const char *eqActive = linphone_config_get_string(config, "sound", "eq_active", nullptr);
 	if (eqActive)
 		lWarning() << "'eq_active' linphonerc parameter has no effect anymore. Please use 'mic_eq_active' or 'spk_eq_active' instead";
-	const char *eqGains = linphone_config_get_string(config, "sound", "eq_gains", nullptr);
+#if TARGET_OS_IPHONE
+	tmpbuf="50:2:50 100:2:50";
+#else
+	tmpbuf=nullptr;
+#endif
+	const char *eqGains = linphone_config_get_string(config, "sound", "eq_gains", tmpbuf);
 	if(eqGains)
 		lWarning() << "'eq_gains' linphonerc parameter has no effect anymore. Please use 'mic_eq_gains' or 'spk_eq_gains' instead";
 	if (as->mic_equalizer) {

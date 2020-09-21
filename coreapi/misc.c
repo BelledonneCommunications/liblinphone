@@ -194,7 +194,12 @@ int linphone_run_stun_tests(LinphoneCore *lc, int audioPort, int videoPort, int 
 }
 
 int linphone_core_get_edge_bw(LinphoneCore *lc){
-	int edge_bw=linphone_config_get_int(lc->config,"net","edge_bw",20);
+	int edge_bw;
+#if TARGET_OS_IOS
+	edge_bw=linphone_config_get_int(lc->config,"net","edge_bw",10);
+#else
+	edge_bw=linphone_config_get_int(lc->config,"net","edge_bw",20);
+#endif
 	return edge_bw;
 }
 

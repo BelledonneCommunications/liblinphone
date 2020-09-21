@@ -126,9 +126,15 @@ LinphoneMediaDirection MediaSessionParamsPrivate::salStreamDirToMediaDirection (
 
 void MediaSessionParamsPrivate::adaptToNetwork (LinphoneCore *core, int pingTimeMs) {
 	L_Q();
+	int tmp;
 	if ((pingTimeMs > 0) && linphone_config_get_int(linphone_core_get_config(core), "net", "activate_edge_workarounds", 0)) {
 		lInfo() << "STUN server ping time is " << pingTimeMs << " ms";
-		int threshold = linphone_config_get_int(linphone_core_get_config(core), "net", "edge_ping_time", 500);
+	#if TARGET_OS_IOS
+		tmp = 10;
+	#else
+		tmp = 500;
+	#endif
+		int threshold = linphone_config_get_int(linphone_core_get_config(core), "net", "edge_ping_time", tmp);
 		if (pingTimeMs > threshold) {
 			/* We might be in a 2G network */
 			q->enableLowBandwidth(true);
