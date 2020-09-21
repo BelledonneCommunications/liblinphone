@@ -2359,9 +2359,11 @@ static void register_again_during_conference(void) {
 	wait_for_list(lcs,NULL,1,3000);
 
 	//to force re-re-connection to restarted flexisip
-	linphone_core_set_network_reachable(marie->lc, FALSE);
 	linphone_core_set_network_reachable(pauline->lc, FALSE);
 	linphone_core_set_network_reachable(laure->lc, FALSE);
+	linphone_core_set_network_reachable(marie->lc, FALSE);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionTerminated, 1, 10000));
 
 	proxyConfig = linphone_core_get_default_proxy_config(laure->lc);
 	linphone_proxy_config_edit(proxyConfig);
@@ -2374,6 +2376,11 @@ static void register_again_during_conference(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneRegistrationOk, initial_pauline_stats.number_of_LinphoneRegistrationOk + 1, 10000));
 	linphone_core_set_network_reachable(laure->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneRegistrationOk, initial_laure_stats.number_of_LinphoneRegistrationOk + 1, 10000));
+
+	// Wait for subscriptins to be resent
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionActive, 5, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionActive, 2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneSubscriptionActive, 2, 10000));
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -3256,7 +3263,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Participant takes call after conference started and conference ends", participant_takes_call_after_conference_started_and_conference_ends),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference", participant_takes_call_after_conference_started_and_rejoins_conference),
 	TEST_NO_TAG("Participant takes call after conference started and rejoins conference after conference ended", participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended),
-	TEST_NO_TAG("Register again during conference", register_again_during_conference),
+	TEST_ONE_TAG("Register again during conference", register_again_during_conference, "LeaksMemory"), /* due to re-registration of cores */
 	TEST_NO_TAG("Try to update call parameter during conference", try_to_update_call_params_during_conference),
 	TEST_NO_TAG("Update conference parameter during conference", update_conf_params_during_conference),
 	TEST_NO_TAG("Toggle video settings during conference without automatically accept video policy", toggle_video_settings_during_conference_without_automatically_accept_video_policy),
