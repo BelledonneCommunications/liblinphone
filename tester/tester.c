@@ -1055,7 +1055,10 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, m->stat.number_of_LinphoneConferenceStateCreated, 5000));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,m->stat.number_of_LinphoneSubscriptionActive,10000));
+		// In case of a re-registration, the number of active subscriptions on the local conference side accounts the numbers of subscriptions before and after the re-registration
+		if ((m != conf_mgr) || (m->stat.number_of_LinphoneRegistrationOk == 1)) {
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,m->stat.number_of_LinphoneSubscriptionActive,10000));
+		}
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 		BC_ASSERT_PTR_NULL(conference);
