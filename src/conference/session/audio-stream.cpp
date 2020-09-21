@@ -730,6 +730,7 @@ void MS2AudioStream::setInputDevice(AudioDevice *audioDevice) {
 }
 
 void MS2AudioStream::setOutputDevice(AudioDevice *audioDevice) {
+	if (!mStream) return;
 	audio_stream_set_output_ms_snd_card(mStream, audioDevice->getSoundCard());
 }
 
