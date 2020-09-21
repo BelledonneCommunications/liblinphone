@@ -773,26 +773,42 @@ void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 }
 
 AudioDevice* Core::getInputAudioDevice() const {
-	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
-	if (call) {
-		return call->getInputAudioDevice();
-	}
 
-	for (const auto &call : getCalls()) {
-		return call->getInputAudioDevice();
+	// If the core in a local conference, then get the audio device of the audio control interface
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		AudioControlInterface *i = conf->getAudioControlInterface();
+		return i->getInputDevice();
+	} else {
+		shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+		if (call) {
+			return call->getInputAudioDevice();
+		}
+		for (const auto &call : getCalls()) {
+			return call->getInputAudioDevice();
+		}
 	}
 
 	return nullptr;
 }
 
 AudioDevice* Core::getOutputAudioDevice() const {
-	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
-	if (call) {
-		return call->getOutputAudioDevice();
-	}
 
-	for (const auto &call : getCalls()) {
-		return call->getOutputAudioDevice();
+	// If the core in a local conference, then get the audio device of the audio control interface
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		AudioControlInterface *i = conf->getAudioControlInterface();
+		return i->getOutputDevice();
+	} else {
+		shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+		if (call) {
+			return call->getOutputAudioDevice();
+		}
+		for (const auto &call : getCalls()) {
+			return call->getOutputAudioDevice();
+		}
 	}
 
 	return nullptr;
