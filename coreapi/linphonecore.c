@@ -2416,21 +2416,21 @@ static void linphone_core_internal_subscribe_received(LinphoneCore *lc, Linphone
 static void _linphone_core_conference_subscription_state_changed (LinphoneCore *lc, LinphoneEvent *lev, LinphoneSubscriptionState state) {
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
-		ObjectPrivate *parent = static_cast<ObjectPrivate *>(linphone_event_get_user_data(lev));
-		RemoteConferenceEventHandlerPrivate *thiz = dynamic_cast<RemoteConferenceEventHandlerPrivate *>(parent);
-		if (thiz && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
-			thiz->invalidateSubscription();
-			return;
+		/* Liblinphone in a client application. */
+		RemoteConferenceEventHandlerPrivate * handler = static_cast<RemoteConferenceEventHandlerPrivate*>(
+			belle_sip_object_data_get(BELLE_SIP_OBJECT(lev), "event-handler-private"));
+		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
+			handler->invalidateSubscription();
 		}
+	}else{
+		const LinphoneAddress *resource = linphone_event_get_resource(lev);
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		));
+		if (chatRoom)
+			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
 	}
-
-	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-	));
-	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
 #else
 	ms_warning("Advanced IM such as group chat is disabled!");
 #endif
