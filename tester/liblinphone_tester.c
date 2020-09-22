@@ -382,18 +382,17 @@ int logfile_arg_func(const char *arg) {
 }
 
 void liblinphone_tester_add_suites() {
-	//bc_tester_add_suite(&setup_test_suite);
-	//bc_tester_add_suite(&register_test_suite);
+	bc_tester_add_suite(&setup_test_suite);
+	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM
-	//bc_tester_add_suite(&group_chat_test_suite);
+	bc_tester_add_suite(&group_chat_test_suite);
 #ifdef HAVE_LIME_X3DH
-	//bc_tester_add_suite(&secure_group_chat_test_suite);
+	bc_tester_add_suite(&secure_group_chat_test_suite);
 #endif
-	//bc_tester_add_suite(&ephemeral_group_chat_test_suite);
-	//bc_tester_add_suite(&lime_server_auth_test_suite);
+	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
+	bc_tester_add_suite(&lime_server_auth_test_suite);
 #endif
-        //bc_tester_add_suite(&tunnel_test_suite);
-    /*
+	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
 	bc_tester_add_suite(&push_incoming_call_test_suite);
@@ -403,7 +402,7 @@ void liblinphone_tester_add_suites() {
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
 #endif // ifdef VIDEO_ENABLED
-	bc_tester_add_suite(&audio_bypass_suite);*/
+	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);

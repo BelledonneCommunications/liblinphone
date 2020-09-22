@@ -3285,7 +3285,6 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(v
 }
 
 test_t secure_group_chat_tests[] = {
-    /*
 	TEST_ONE_TAG("LIME X3DH create lime user", group_chat_lime_x3dh_create_lime_user, "LimeX3DH"),
 #if 0
 	BROKEN TEST - see comment at the beginning of the test
@@ -3314,7 +3313,6 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH chatroom security level self multidevices", group_chat_lime_x3dh_chatroom_security_level_self_multidevices, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH chatroom security alert", group_chat_lime_x3dh_chatroom_security_alert, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH call security alert", group_chat_lime_x3dh_call_security_alert, "LimeX3DH"),
-	    */
 	TEST_TWO_TAGS("LIME X3DH multiple successive messages", group_chat_lime_x3dh_send_multiple_successive_encrypted_messages, "LimeX3DH", "LeaksMemory"),
 	TEST_ONE_TAG("LIME X3DH encrypted message to disabled LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_disabled_lime_x3dh, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH encrypted message to unable to decrypt LIME X3DH", group_chat_lime_x3dh_send_encrypted_message_to_unable_to_decrypt_lime_x3dh, "LimeX3DH"),

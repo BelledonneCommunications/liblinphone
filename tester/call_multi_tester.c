@@ -696,9 +696,9 @@ static void video_conference_by_merging_calls(void){
 	
 end:	
 	if (conf) linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -980,8 +980,8 @@ static void unattended_call_transfer_with_error(void) {
 		end_call(marie, pauline);
 	}
 
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1078,9 +1078,9 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 		end_call(pauline, laure);
 	}
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1166,9 +1166,9 @@ static void call_transfer_existing_ringing_call(void) {
 	}
 
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1278,9 +1278,9 @@ static void eject_from_3_participants_local_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 static void eject_from_4_participants_conference(void) {
@@ -1362,10 +1362,10 @@ static void eject_from_4_participants_conference(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 3, 10000));
 
 end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(michelle);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1390,10 +1390,10 @@ void simple_remote_conference(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
 	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 void simple_remote_conference_shut_down_focus(void) {
@@ -1416,10 +1416,10 @@ void simple_remote_conference_shut_down_focus(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
+	linphone_conference_server_destroy(focus);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
-	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(marie);
 }
 
 void eject_from_3_participants_remote_conference(void) {
@@ -1442,10 +1442,10 @@ void eject_from_3_participants_remote_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus);
 
-	linphone_core_manager_destroy(marie);
+	linphone_conference_server_destroy(focus);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
-	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(marie);
 }
 
 void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
@@ -1493,9 +1493,9 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,2));
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 2, int, "%d");
 
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(marie);
 }
 
 void no_auto_answer_on_fake_call_with_replaces_header (void) {
