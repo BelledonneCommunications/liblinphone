@@ -128,6 +128,8 @@ private:
 		bool hasBeenLeft = false
 	);
 
+	void sendInvite (std::shared_ptr<CallSession> &session, const std::list<IdentityAddress> & addressList);
+
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
 

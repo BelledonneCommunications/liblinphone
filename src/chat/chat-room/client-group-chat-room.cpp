@@ -73,7 +73,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
 		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
-	shared_ptr<Participant> focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
+	shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
 	Address myCleanedAddress(q->getMe()->getAddress());
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
@@ -521,16 +521,8 @@ bool ClientGroupChatRoom::addParticipants (
 	}
 
 	if (getState() == ConferenceInterface::State::Instantiated) {
-		Content content;
-		content.setBodyFromUtf8(getConference()->getResourceLists(addressesList));
-		content.setContentType(ContentType::ResourceLists);
-		content.setContentDisposition(ContentDisposition::RecipientList);
-		if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
-			content.setContentEncoding("deflate");
-		}
-
 		auto session = d->createSession();
-		session->startInvite(nullptr, getSubject(), &content);
+		sendInvite(session, addressesList);
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
@@ -545,6 +537,17 @@ bool ClientGroupChatRoom::addParticipants (
 		referOp->unref();
 	}
 	return true;
+}
+
+void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, const list<IdentityAddress> & addressList) {
+		Content content;
+		content.setBody(getConference()->getResourceLists(addressList));
+		content.setContentType(ContentType::ResourceLists);
+		content.setContentDisposition(ContentDisposition::RecipientList);
+		if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
+			content.setContentEncoding("deflate");
+		}
+		session->startInvite(nullptr, getSubject(), &content);
 }
 
 bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &participant) {
@@ -652,7 +655,9 @@ void ClientGroupChatRoom::leave () {
 		session->terminate();
 	else {
 		session = d->createSession();
-		session->startInvite(nullptr, "", nullptr);
+		Address* addr = new Address(getConferenceId().getPeerAddress());
+		session->startInvite(addr, "", nullptr);
+		ms_free(addr);
 	}
 
 	setState(ConferenceInterface::State::TerminationPending);
