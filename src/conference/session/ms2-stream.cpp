@@ -977,7 +977,6 @@ void MS2Stream::handleEvents () {
 			} while (rtcp_next_packet(evd->packet));
 			rtcp_rewind(evd->packet);
 		}
-
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
 		switch(evt){
@@ -995,6 +994,7 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
 				getIceService().handleIceEvent(ev);
+				ms = getMediaStream();// Ice can change the stream and free the old one. Ensure to have an existant stream.
 			break;
 		}
 		notifyStatsUpdated();

@@ -381,7 +381,7 @@ int logfile_arg_func(const char *arg) {
 	return 0;
 }
 
-void liblinphone_tester_add_suites() {
+void liblinphone_tester_add_suites() {/*
 	bc_tester_add_suite(&setup_test_suite);
 	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM
@@ -395,7 +395,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
 	bc_tester_add_suite(&call_test_suite);
-	bc_tester_add_suite(&push_incoming_call_test_suite);
+	bc_tester_add_suite(&push_incoming_call_test_suite);*/
 	bc_tester_add_suite(&call_recovery_test_suite);
 	bc_tester_add_suite(&call_with_ice_test_suite);
 	bc_tester_add_suite(&call_secure_test_suite);
