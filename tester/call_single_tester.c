@@ -2757,8 +2757,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		ms_warning ("not tested because %s not available", linphone_media_encryption_to_string(mode));
 	}
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc){

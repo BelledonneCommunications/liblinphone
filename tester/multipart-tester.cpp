@@ -194,8 +194,8 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 
 	marieRoom.reset(); // Avoid bad weak ptr when the core is destroyed below this line.
 
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 static void multipart_two_text_content(void) {
