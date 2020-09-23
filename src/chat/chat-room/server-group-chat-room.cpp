@@ -272,9 +272,9 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	if (participant->isAdmin()) {
 		if (joiningPendingAfterCreation){
 			if (!initializeParticipants(participant, op)){
- 				op->decline(SalReasonNotAcceptable, "");
- 				requestDeletion();
- 			}
+				op->decline(SalReasonNotAcceptable, "");
+				requestDeletion();
+			}
 			/* we don't accept the session yet: initializeParticipants() has launched queries for device information
 			 * that will later populate the chatroom*/
 		}else{
