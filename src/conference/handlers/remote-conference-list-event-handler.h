@@ -53,10 +53,12 @@ public:
 	void clearHandlers ();
 	RemoteConferenceEventHandler *findHandler (const ConferenceId &conferenceId) const;
 private:
+	bool isHandlerInSameDomainAsCore(const ConferenceId & conferenceId) const;
 	std::unordered_map<ConferenceId, RemoteConferenceEventHandler *> handlers;
 	LinphoneEvent *lev = nullptr;
 
 	std::map<std::string, IdentityAddress> parseRlmi (const std::string &xmlBody) const;
+
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;

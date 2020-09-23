@@ -894,7 +894,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				if (linphone_core_conference_server_enabled(lc)) {
 #ifdef HAVE_ADVANCED_IM
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
-						ConferenceId(IdentityAddress(op->getTo()), IdentityAddress(op->getTo()))
+						ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
 					);
 					LinphoneChatRoom *cr = L_GET_C_BACK_PTR(chatRoom);
 					if (cr) {
