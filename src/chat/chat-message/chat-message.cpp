@@ -179,8 +179,10 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (!isValidStateTransition(state, newState))
 		return;
 
+	const shared_ptr<ChatMessage>& sharedMessage = q->getSharedFromThis();
+
 	// 2. Update state and notify changes.
-	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving from " << Utils::toString(state) <<
+	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
@@ -195,7 +197,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	if (direction == ChatMessage::Direction::Outgoing) {
 		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
-			q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+			q->getChatRoom()->getPrivate()->removeTransientChatMessage(sharedMessage);
 		}
 	}
 
@@ -233,7 +235,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 5. Send notification
 	if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming)) {
 		// Wait until all files are downloaded before sending displayed IMDN
-		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(sharedMessage);
 	}
 
 	// 6. update in database for ephemeral message if necessary.
@@ -242,7 +244,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
 		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(storageId, ephemeralExpireTime);
 
-		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(q->getSharedFromThis());
+		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(sharedMessage);
 
 		// notify start !
 		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
