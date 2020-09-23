@@ -2175,10 +2175,10 @@ void MediaSession::acceptDefault(){
 
 LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 	L_D();
+	// Must configure audio session in the same thread with linphone_core_accept
+	getCore()->soundcardConfigure();
 	if (!isOpConfigured()) {
 		lInfo() << "CallSession accepting";
-		// configure audio session
-		getCore()->soundcardConfigure();
 		if (msp)
 			d->setParams(new MediaSessionParams(*msp));
 		CallSession::accepting();
