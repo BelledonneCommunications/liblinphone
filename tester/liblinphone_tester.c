@@ -72,7 +72,6 @@ static bctbx_list_t * remove_v6_addr(bctbx_list_t *l){
 	bctbx_list_t *it;
 	for (it = l ; it != NULL; ){
 		char *ip = (char*)l->data;
-		printf("seeing %s \n", ip);
 		if (strchr(ip, ':')){
 			l = bctbx_list_erase_link(l, it);
 			bctbx_free(ip);
