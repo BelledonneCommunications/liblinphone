@@ -2203,13 +2203,16 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	LinphoneContent* content;
 	const LinphoneAddress* from_addr = linphone_event_get_from(lev);
 	char* from = linphone_address_as_string(from_addr);
+	const LinphoneAddress* to_addr = linphone_event_get_to(lev);
+	char* to = linphone_address_as_string(to_addr);
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml2");
 	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
 
-	ms_message("Subscription state [%s] from [%s]",linphone_subscription_state_to_string(state),from);
+	ms_message("Subscription state [%s] from [%s] to [%s]",linphone_subscription_state_to_string(state),from,to);
 	ms_free(from);
+	ms_free(to);
 
 	switch(state){
 		case LinphoneSubscriptionNone:
