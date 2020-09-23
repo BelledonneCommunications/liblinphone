@@ -314,7 +314,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 	static_pointer_cast<RemoteConference>(getConference())->eventHandler = std::make_shared<RemoteConferenceEventHandler>(getConference().get(), this);
 	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
-	const IdentityAddress &peerAddress = conferenceId.getPeerAddress();
+	const ConferenceAddress &peerAddress = conferenceId.getPeerAddress();
 	static_pointer_cast<RemoteConference>(getConference())->focus = Participant::create(getConference().get(),peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
@@ -335,7 +335,10 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(getConference())->eventHandler.get());
-		d->listHandlerUsed = true;
+		d->listHandlerUsed = getCore()->getPrivate()->remoteListEventHandler->findHandler(getConferenceId());
+		if (!d->listHandlerUsed) {
+			static_pointer_cast<RemoteConference>(getConference())->eventHandler->subscribe(getConferenceId());
+		}
 	}
 }
 
