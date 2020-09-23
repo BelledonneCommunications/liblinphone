@@ -3340,7 +3340,7 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 					));
 					chatRoom = clientGroupChatRoom;
 					conference = clientGroupChatRoom->getConference().get();
-					chatRoom->setState(ConferenceInterface::State::Instantiated);
+					chatRoom->setState(ConferenceInterface::State::CreationPending);
 					chatRoom->setState(hasBeenLeft
 						? ConferenceInterface::State::Terminated
 						: ConferenceInterface::State::Created

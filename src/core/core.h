@@ -95,6 +95,8 @@ public:
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create (LinphoneCore *cCore);
 
+	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
+
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.
 	// ---------------------------------------------------------------------------
