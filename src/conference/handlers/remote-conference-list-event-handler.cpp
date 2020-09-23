@@ -143,7 +143,7 @@ void RemoteConferenceListEventHandler::invalidateSubscription () {
 
 void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyContent) {
 	char *from = linphone_address_as_string(linphone_event_get_from(lev));
-	const IdentityAddress local(from);
+	const ConferenceAddress local(from);
 
 	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
 		// Simple notify received directly from a chat-room
@@ -160,7 +160,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 			return;
 		}
 
-		IdentityAddress entityAddress(confInfo->getEntity().c_str());
+		ConferenceAddress entityAddress(confInfo->getEntity().c_str());
 		ConferenceId id(entityAddress, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
@@ -217,25 +217,54 @@ void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler 
 		lWarning() << "Trying to insert null handler in the remote conference handler list";
 		return;
 	}
-	if (!handler->getConferenceId().isValid()){
+
+	const ConferenceId & conferenceId = handler->getConferenceId();
+
+	if (!conferenceId.isValid()){
 		lError() << "RemoteConferenceListEventHandler::addHandler invalid handler.";
 		return;
 	}
-	
-	if(findHandler(handler->getConferenceId())) {
-		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << handler->getConferenceId();
+
+	if (!isHandlerInSameDomainAsCore(conferenceId)){
+		lError() << "RemoteConferenceListEventHandler::addHandler conference address is in a difference domain than conference factory.";
 		return;
 	}
-	handlers[handler->getConferenceId()] = handler;
+
+	if(findHandler(conferenceId)) {
+		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << conferenceId;
+		return;
+	}
+	handlers[conferenceId] = handler;
+}
+
+bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const ConferenceId & conferenceId)const {
+	// Ensure that conference and conference factory are in the same domain
+	const ConferenceAddress & localAddress = conferenceId.getLocalAddress();
+	const ConferenceAddress & peerAddress = conferenceId.getPeerAddress();
+	IdentityAddress conferenceFactoryUri = IdentityAddress(Core::getConferenceFactoryUri(getCore(), localAddress));
+
+	if (peerAddress.getDomain() != conferenceFactoryUri.getDomain()) {
+		lWarning() << "Peer address " << peerAddress.asString() << " is not in the same domain as the conference factory URI " << conferenceFactoryUri.asString() << " hence not adding to the list of subscribes";
+		return false;
+	}
+
+	return true;
 }
 
 void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandler *handler) {
-	if (!handler->getConferenceId().isValid()){
+	const ConferenceId & conferenceId = handler->getConferenceId();
+	if (!conferenceId.isValid()){
 		lError() << "RemoteConferenceListEventHandler::removeHandler() invalid handler.";
 		return;
 	}
+
+	if (!isHandlerInSameDomainAsCore(conferenceId)){
+		lError() << "RemoteConferenceListEventHandler::removeHandler() conference address is in a difference domain than conference factory.";
+		return;
+	}
+
 	if (handler){
-		auto it = handlers.find(handler->getConferenceId());
+		auto it = handlers.find(conferenceId);
 		if (it != handlers.end() && handler == (*it).second){
 			handlers.erase(it);
 			lInfo() << "Handler removed.";
