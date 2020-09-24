@@ -77,7 +77,9 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
 	Address myCleanedAddress(q->getMe()->getAddress());
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
-	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, focus->getDevices().front()->getAddress());
+	const ConferenceAddress & peerAddress(q->getConferenceId().getPeerAddress());
+	const Address sessionTo = peerAddress.isValid() ? peerAddress : focus->getAddress();
+	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, sessionTo);
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
 
@@ -270,7 +272,7 @@ ChatRoom(*new ClientGroupChatRoomPrivate(capabilities | ChatRoom::Capabilities::
 	for (const auto &addr : Conference::parseResourceLists(content))
 		getConference()->participants.push_back(Participant::create(getConference().get(),addr));
 
-	getConference()->setConferenceId(conferenceId);
+	setConferenceId(conferenceId);
 
 	//if preserve_backward_compatibility, force creation of secure room in all cases
 	if (params->isEncrypted() || linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "lime", "preserve_backward_compatibility",FALSE))
@@ -292,7 +294,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 ) : ClientGroupChatRoom(
 	core,
 	IdentityAddress(factoryUri),
-	ConferenceId(IdentityAddress(), me),
+	ConferenceId(ConferenceAddress(), me),
 	subject,
 	Content(),
 	capabilities,
@@ -320,7 +322,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 	static_pointer_cast<RemoteConference>(getConference())->focus->setFocus(true);
 	getConference()->participants = move(newParticipants);
 
-	getConference()->setConferenceId(conferenceId);
+	setConferenceId(conferenceId);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(peerAddress);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setSubject(subject);
 	static_pointer_cast<RemoteConference>(getConference())->confParams->enableChat(true);
@@ -353,6 +355,28 @@ ClientGroupChatRoom::~ClientGroupChatRoom () {
 		// Unable to unregister listener here. Core is destroyed and the listener doesn't exist.
 	}
 	d->setCallSessionListener(nullptr);
+}
+
+void ClientGroupChatRoom::setConferenceId (const ConferenceId &conferenceId) {
+	getConference()->setConferenceId(conferenceId);
+
+	shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(getConference())->focus;
+	// Try to update the to field of the call log if the focus is defined.
+	if (focus) {
+		shared_ptr<CallSession> session = static_pointer_cast<RemoteConference>(getConference())->focus->getSession();
+		if (session) {
+			LinphoneCallLog * sessionLog = session->getLog();
+			if (sessionLog->to) linphone_address_unref(sessionLog->to);
+			if (conferenceId.getPeerAddress().isValid()) {
+				// Use the peer address of the conference ID because it has also the conf-id param hence the To field can be used to search in the map of chat rooms
+				sessionLog->to = linphone_address_new(conferenceId.getPeerAddress().asString().c_str());
+			} else {
+				// If the conference ID peer address is not valid, use the address of the focus
+				shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(getConference())->focus;
+				sessionLog->to = linphone_address_new(focus->getAddress().asString().c_str());
+			}
+		}
+	}
 }
 
 shared_ptr<Core> ClientGroupChatRoom::getCore () const {
@@ -655,9 +679,7 @@ void ClientGroupChatRoom::leave () {
 		session->terminate();
 	else {
 		session = d->createSession();
-		Address* addr = new Address(getConferenceId().getPeerAddress());
-		session->startInvite(addr, "", nullptr);
-		ms_free(addr);
+		session->startInvite(nullptr, "", nullptr);
 	}
 
 	setState(ConferenceInterface::State::TerminationPending);
@@ -672,7 +694,7 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	static_pointer_cast<RemoteConference>(getConference())->focus->clearDevices();
 	static_pointer_cast<RemoteConference>(getConference())->focus->addDevice(addr);
 
-	getConference()->setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
+	setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
 	setState(ConferenceInterface::State::Created);
 }
