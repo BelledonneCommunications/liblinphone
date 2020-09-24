@@ -625,10 +625,10 @@ static void multidomain_group_chat_room (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(michelleCrfocusAuth1DotExampleDotOrg), 3, int, "%d");
 
 	linphone_chat_message_unref(msg);
-	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
 	linphone_core_manager_delete_chat_room(laure.getCMgr(), laureCr, coresList);
 	linphone_core_manager_delete_chat_room(michelle.getCMgr(), michelleCr, coresList);
+	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
 
 	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCrfocusAuth1DotExampleDotOrg, coresList);
 	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCrfocusAuth1DotExampleDotOrg, coresList);
