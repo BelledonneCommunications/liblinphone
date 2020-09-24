@@ -268,6 +268,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 
 	register_device(marie, &dummy_test_snd_card_desc);
+	register_device(marie, &dummy2_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
