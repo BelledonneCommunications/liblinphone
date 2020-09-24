@@ -129,6 +129,7 @@ private:
 	);
 
 	void sendInvite (std::shared_ptr<CallSession> &session, const std::list<IdentityAddress> & addressList);
+	void setConferenceId (const ConferenceId &conferenceId);
 
 	// TODO: Move me in ClientGroupChatRoomPrivate.
 	// ALL METHODS AFTER THIS POINT.
