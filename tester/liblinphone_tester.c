@@ -381,7 +381,7 @@ int logfile_arg_func(const char *arg) {
 	return 0;
 }
 
-void liblinphone_tester_add_suites() {/*
+void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&setup_test_suite);
 	bc_tester_add_suite(&register_test_suite);
 #ifdef HAVE_ADVANCED_IM
@@ -407,7 +407,7 @@ void liblinphone_tester_add_suites() {/*
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
-	bc_tester_add_suite(&presence_test_suite);*/
+	bc_tester_add_suite(&presence_test_suite);
 	bc_tester_add_suite(&presence_server_test_suite);
 	bc_tester_add_suite(&account_creator_test_suite);
 	bc_tester_add_suite(&stun_test_suite);
