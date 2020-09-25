@@ -452,6 +452,7 @@ void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
 
 bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy);
+void linphone_nat_policy_release(LinphoneNatPolicy *policy);
 void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);

@@ -6166,6 +6166,7 @@ void sip_config_uninit(LinphoneCore *lc)
 		for (elem = config->proxies; elem != NULL; elem = bctbx_list_next(elem)) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)(elem->data);
 			_linphone_proxy_config_unpublish(cfg); /* to unpublish without changing the stored flag enable_publish */
+			if (cfg->nat_policy) linphone_nat_policy_release(cfg->nat_policy);
 
 			/* Do not unregister when push notifications are allowed, otherwise this clears tokens from the SIP server.*/
 			if (!linphone_proxy_config_is_push_notification_allowed(cfg)) {
@@ -6228,6 +6229,8 @@ void sip_config_uninit(LinphoneCore *lc)
 		ms_message("Tunnel destroyed.");
 	}
 #endif
+
+	if (lc->nat_policy) linphone_nat_policy_release(lc->nat_policy);
 
 	lc->sal->iterate(); /*make sure event are purged*/
 	delete lc->sal;

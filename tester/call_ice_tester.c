@@ -404,6 +404,7 @@ static void ice_added_by_reinvite(void){
 	LinphoneNatPolicy *pol;
 	LinphoneCallParams *params;
 	LinphoneCall *c;
+	LinphoneProxyConfig *cfg;
 	bool_t call_ok;
 
 	lp_config_set_int(linphone_core_get_config(marie->lc), "net", "allow_late_ice", 1);
@@ -440,6 +441,19 @@ static void ice_added_by_reinvite(void){
 
 	end_call(pauline, marie);
 
+	/* Opportunistic test: perform a set_network_reachable FALSE/TRUE and call stop() immediately after.
+	 * It was crashing because the DNS resolution of stun server wasn't cancelled before the main loop is destroyed.
+	 */
+	cfg = linphone_core_get_default_proxy_config(pauline->lc);
+	linphone_proxy_config_edit(cfg);
+	linphone_proxy_config_enable_register(cfg, FALSE);
+	linphone_proxy_config_done(cfg);
+	
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneRegistrationCleared,1));
+	
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	linphone_core_stop(pauline->lc);
 end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
