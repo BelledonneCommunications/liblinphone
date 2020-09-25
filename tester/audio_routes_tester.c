@@ -313,7 +313,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
 
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
-	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 	linphone_call_ref(pauline_call);
 
 	// Marie should hear ringback as well
@@ -365,6 +365,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 
 	// After call, unref the sound card
 	linphone_audio_device_unref(current_dev);
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -491,7 +492,7 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
 
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
-	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 	linphone_call_ref(pauline_call);
 
 	// Marie should hear ringback as well
@@ -528,6 +529,7 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
+end:
 	// After call, unref the sound card
 	linphone_audio_device_unref(dev0);
 	linphone_audio_device_unref(dev1);
@@ -681,7 +683,7 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,5000));
 
 	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
-	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 
 	// Marie should hear ringback as well
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
@@ -749,6 +751,7 @@ static void simple_call_with_audio_device_change_during_call_pause_base(bool_t c
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
+end:
 	// After call, unref the sound card
 	linphone_audio_device_unref(marie_dev0);
 	linphone_audio_device_unref(marie_dev1);
@@ -945,7 +948,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallOutgoingProgress,noParticipants,2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
 	LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
-	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 	linphone_call_accept(pauline_call);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,noParticipants,10000));
@@ -975,6 +978,8 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,noParticipants,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,1000));
+
+end:
 	linphone_conference_unref(conf);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
@@ -1180,7 +1185,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 		BC_ASSERT_TRUE(linphone_call_params_get_local_conference_mode(linphone_call_get_current_params((LinphoneCall*)it->data)) == TRUE);
 	}
 
-	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 
 	// wait a bit before changing device
 	wait_for_list(lcs,NULL,0,2000);
@@ -1223,6 +1228,8 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,noParticipants,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallReleased,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,1000));
+
+end:
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card
