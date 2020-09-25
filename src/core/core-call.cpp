@@ -43,8 +43,13 @@ int CorePrivate::addCall (const shared_ptr<Call> &call) {
 	L_ASSERT(call);
 	if (!canWeAddCall())
 		return -1;
-	if (!hasCalls())
+	if (!hasCalls()){
+		/* 
+		 * Free possibly used sound ressources now. Useful for iOS, because CallKit may cause any already running AudioUnit to stop working.
+		 */
+		linphone_core_stop_dtmf_stream(q->getCCore());
 		notifySoundcardUsage(true);
+	}
 	calls.push_back(call);
 	linphone_core_notify_call_created(q->getCCore(), call->toC());
 	return 0;

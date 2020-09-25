@@ -2287,7 +2287,7 @@ static void real_time_text(
 		const bctbx_list_t *elem;
 		for (elem = linphone_core_get_text_payload_types(marie->lc); elem != NULL; elem = elem->next) {
 			PayloadType *pt = (PayloadType*)elem->data;
-			if (strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
+			if (pt->mime_type && strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
 				payload_type_set_number(pt, 99);
 				break;
 			}
@@ -2296,7 +2296,7 @@ static void real_time_text(
 		const bctbx_list_t *elem;
 		for (elem = linphone_core_get_text_payload_types(pauline->lc); elem != NULL; elem = elem->next) {
 			PayloadType *pt = (PayloadType*)elem->data;
-			if (strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
+			if (pt->mime_type && strcasecmp(pt->mime_type, payload_type_t140.mime_type) == 0) {
 				payload_type_set_number(pt, 99);
 				break;
 			}

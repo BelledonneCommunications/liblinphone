@@ -31,7 +31,6 @@
 #include "content/content.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
-#include "db/main-db-chat-message-key.h"
 #include "db/main-db.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
@@ -61,6 +60,9 @@ public:
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
+
+	void setStorageId (long long id);
+	void resetStorageId ();
 
 	void setDirection (ChatMessage::Direction dir);
 
@@ -212,7 +214,7 @@ private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
 
 public:
-	mutable MainDbChatMessageKey dbKey;
+	long long storageId = -1;
 
 protected:
 	bool displayNotificationRequired = true;
