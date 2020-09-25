@@ -228,7 +228,7 @@ void _start_core(LinphoneCoreManager *lcm) {
 }
 
 LinphoneChatMessage *_send_message_ephemeral(LinphoneChatRoom *chatRoom, const char *message, bool_t isEphemeral) {
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(chatRoom, message);
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(chatRoom, message);
 	LinphoneChatMessageCbs *msgCbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(msgCbs, liblinphone_tester_chat_message_msg_state_changed);
 	if (isEphemeral) {
@@ -283,7 +283,7 @@ void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const 
 	linphone_content_unref(content);
 
 	if (text)
-		linphone_chat_message_add_text_content(msg, text);
+		linphone_chat_message_add_utf8_text_content(msg, text);
 
 	if (sendFilepath2) {
 		LinphoneContent *content2 = linphone_core_create_content(linphone_chat_room_get_core(cr));
@@ -325,7 +325,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		
 		if (text) {
 			BC_ASSERT_TRUE(linphone_chat_message_has_text_content(msg));
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text_content(msg), text);
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(msg), text);
 		}
 
 		cbs = linphone_chat_message_get_callbacks(msg);
@@ -1864,7 +1864,7 @@ static void group_chat_room_create_room_with_disconnected_friends_base (bool_t i
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
 	if (initial_message) {
-		LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Salut");
+		LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Salut");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 	}
@@ -2639,7 +2639,7 @@ static void group_chat_room_fallback_to_basic_chat_room (void) {
 	participantsAddresses = NULL;
 
 	// Send a message and check that a basic chat room is created on Pauline's side
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Hey Pauline!");
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Hey Pauline!");
 	linphone_chat_message_send(msg);
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -2762,7 +2762,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & (LinphoneChatRoomCapabilitiesMigratable));
 
 	// Send a message and check that a basic chat room is created on Pauline's side
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Hey Pauline!");
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Hey Pauline!");
 	linphone_chat_message_send(msg);
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -2809,7 +2809,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 		initialPaulineStats = pauline->stat;
 		linphone_core_add_linphone_spec(marie->lc, "groupchat"); //Enable migration now
 		BC_ASSERT_EQUAL(linphone_chat_room_get_capabilities(marieCr), LinphoneChatRoomCapabilitiesBasic | LinphoneChatRoomCapabilitiesProxy | LinphoneChatRoomCapabilitiesMigratable | LinphoneChatRoomCapabilitiesOneToOne, int, "%d");
-		msg = linphone_chat_room_create_message(marieCr, "Did you migrate?");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Did you migrate?");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreationPending, initialMarieStats.number_of_LinphoneChatRoomStateCreationPending + 1, 10000));
@@ -2828,14 +2828,14 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int, "%d");
 
-		msg = linphone_chat_room_create_message(marieCr, "Let's go drink a beer");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Let's go drink a beer");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 3, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 3, int, "%d");
 
-		msg = linphone_chat_room_create_message(paulineCr, "Let's go drink mineral water instead");
+		msg = linphone_chat_room_create_message_from_utf8(paulineCr, "Let's go drink mineral water instead");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -2889,7 +2889,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	participantsAddresses = NULL;
 
 	// Send a message and check that a basic chat room is created on Pauline's side
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Hey Pauline!");
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Hey Pauline!");
 	linphone_chat_message_send(msg);
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -2925,7 +2925,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		initialMarieStats = marie->stat;
 		initialPaulineStats = pauline->stat;
 		BC_ASSERT_EQUAL(linphone_chat_room_get_capabilities(marieCr), LinphoneChatRoomCapabilitiesBasic | LinphoneChatRoomCapabilitiesProxy | LinphoneChatRoomCapabilitiesMigratable | LinphoneChatRoomCapabilitiesOneToOne, int, "%d");
-		msg = linphone_chat_room_create_message(marieCr, "Did you migrate?");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Did you migrate?");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreationPending, initialMarieStats.number_of_LinphoneChatRoomStateCreationPending + 1, 10000));
@@ -2941,14 +2941,14 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int, "%d");
 
-		msg = linphone_chat_room_create_message(marieCr, "Let's go drink a beer");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Let's go drink a beer");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 3, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 3, int, "%d");
 
-		msg = linphone_chat_room_create_message(paulineCr, "Let's go drink mineral water instead");
+		msg = linphone_chat_room_create_message_from_utf8(paulineCr, "Let's go drink mineral water instead");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -2974,7 +2974,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		wait_for_list(coresList, &dummy, 1, 3000);
 		linphone_core_set_network_reachable(pauline->lc, TRUE);
 		wait_for_list(coresList, &dummy, 1, 5000);
-		msg = linphone_chat_room_create_message(marieCr, "And now, did you migrate?");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "And now, did you migrate?");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreationPending, initialMarieStats.number_of_LinphoneChatRoomStateCreationPending + 2, 10000));
@@ -3021,7 +3021,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
 
 	// Send a message and check that a basic chat room is created on Pauline's side
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(marieCr, "Hey Pauline!");
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Hey Pauline!");
 	linphone_chat_message_send(msg);
 	linphone_chat_message_unref(msg);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
@@ -3048,7 +3048,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 		initialMarieStats = marie->stat;
 		initialPaulineStats = pauline->stat;
 		BC_ASSERT_EQUAL(linphone_chat_room_get_capabilities(marieCr), LinphoneChatRoomCapabilitiesBasic | LinphoneChatRoomCapabilitiesOneToOne, int, "%d");
-		msg = linphone_chat_room_create_message(marieCr, "Did you migrate?");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Did you migrate?");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_FALSE(wait_for_list(coresList, &marie->stat.number_of_LinphoneChatRoomStateCreationPending, initialMarieStats.number_of_LinphoneChatRoomStateCreationPending + 1, 10000));
@@ -3064,14 +3064,14 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 2, int, "%d");
 
-		msg = linphone_chat_room_create_message(marieCr, "Let's go drink a beer");
+		msg = linphone_chat_room_create_message_from_utf8(marieCr, "Let's go drink a beer");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 5000));
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 3, int, "%d");
 		BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 3, int, "%d");
 
-		msg = linphone_chat_room_create_message(paulineCr, "Let's go drink mineral water instead");
+		msg = linphone_chat_room_create_message_from_utf8(paulineCr, "Let's go drink mineral water instead");
 		linphone_chat_message_send(msg);
 		linphone_chat_message_unref(msg);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));

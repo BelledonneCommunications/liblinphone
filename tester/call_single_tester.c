@@ -240,7 +240,7 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 				if (content) {
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "somexml");
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), info_content);
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), info_content);
 				}
 				bctbx_list_free_with_data(parts, (void (*)(void *)) linphone_content_unref);
 			}

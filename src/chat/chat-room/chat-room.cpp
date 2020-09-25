@@ -303,7 +303,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	if (message->url && ContentType(message->content_type) == ContentType::ExternalBody) {
 		lInfo() << "Received a message with an external body URL " << message->url;
 		content.setContentType(ContentType::FileTransfer);
-		content.setBody(msg->getPrivate()->createFakeFileTransferFromUrl(message->url));
+		content.setBodyFromUtf8(msg->getPrivate()->createFakeFileTransferFromUrl(message->url));
 	} else {
 		content.setContentType(ContentType(message->content_type));
 		content.setBodyFromUtf8(message->text ? message->text : "");
@@ -558,11 +558,21 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage () {
 	return d->createChatMessage(ChatMessage::Direction::Outgoing);
 }
 
+// Deprecated
 shared_ptr<ChatMessage> ChatRoom::createChatMessage (const string &text) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
 	Content *content = new Content();
 	content->setContentType(ContentType::PlainText);
-	content->setBody(text);
+	content->setBodyFromLocale(text);
+	chatMessage->addContent(content);
+	return chatMessage;
+}
+
+shared_ptr<ChatMessage> ChatRoom::createChatMessageFromUtf8 (const string &text) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+	Content *content = new Content();
+	content->setContentType(ContentType::PlainText);
+	content->setBodyFromUtf8(text);
 	chatMessage->addContent(content);
 	return chatMessage;
 }

@@ -77,39 +77,39 @@ static void check_contents(const bctbx_list_t *contents, bool first_file_transfe
 			textContentCount += 1;
 			if (first_file_transfer && second_file_transfer) {
 				if (third_content) {
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 3");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 3");
 				}
 			} else if (first_file_transfer || second_file_transfer) {
 				if (third_content) {
 					// Order should be maintained
 					if (first_file_transfer) {
 						if (textContentCount == 1) {
-							BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 2");
+							BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 2");
 						} else {
-							BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 3");
+							BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 3");
 						}
 					} else {
 						if (textContentCount == 1) {
-							BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 1");
+							BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 1");
 						} else {
-							BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 3");
+							BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 3");
 						}
 					}
 				} else {
 					if (first_file_transfer) {
-						BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 2");
+						BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 2");
 					} else {
-						BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 1");
+						BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 1");
 					}
 				}
 			} else {
 				// Order should be maintained
 				if (textContentCount == 1) {
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 1");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 1");
 				} else if (textContentCount == 2) {
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 2");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 2");
 				} else {
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), "Hello part 3");
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), "Hello part 3");
 				}
 			}
 		} else {
@@ -155,7 +155,7 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	} else {
 		Content *content = new Content();
 		content->setContentType(ContentType::PlainText);
-		content->setBody("Hello part 1");
+		content->setBodyFromUtf8("Hello part 1");
 		marieMessage->addContent(content);
 	}
 
@@ -170,14 +170,14 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	} else {
 		Content *content = new Content();
 		content->setContentType(ContentType::PlainText);
-		content->setBody("Hello part 2");
+		content->setBodyFromUtf8("Hello part 2");
 		marieMessage->addContent(content);
 	}
 
 	if (third_content) {
 		Content *content = new Content();
 		content->setContentType(ContentType::PlainText);
-		content->setBody("Hello part 3");
+		content->setBodyFromUtf8("Hello part 3");
 		marieMessage->addContent(content);
 	}
 

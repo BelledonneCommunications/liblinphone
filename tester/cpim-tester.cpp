@@ -287,12 +287,12 @@ static void cpim_chat_message_modifier_base (bool useMultipart) {
 	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(paulineAddress);
 	marieRoom->allowCpim(true);
 
-	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessage("Hello CPIM");
+	shared_ptr<ChatMessage> marieMessage = marieRoom->createChatMessageFromUtf8("Hello CPIM");
 	if (useMultipart) {
 		marieRoom->allowMultipart(true);
 		Content *content = new Content();
 		content->setContentType(ContentType::PlainText);
-		content->setBody("Hello Part 2");
+		content->setBodyFromUtf8("Hello Part 2");
 		marieMessage->addContent(content);
 	}
 	marieMessage->send();

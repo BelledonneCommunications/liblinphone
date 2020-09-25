@@ -474,12 +474,50 @@ void ChatMessagePrivate::setText (const string &text) {
 	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
-	internalContent.setBody(text);
+	internalContent.setBodyFromLocale(text);
 
 	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
-			contents.front()->setBody(text);
+			contents.front()->setBodyFromLocale(text);
+	}
+}
+
+const string &ChatMessagePrivate::getUtf8Text () const {
+	loadContentsFromDatabase();
+	if (direction == ChatMessage::Direction::Incoming) {
+		if (hasTextContent()) {
+			cText = getTextContent()->getBodyAsUtf8String();
+		} else if (!contents.empty()) {
+			Content *content = contents.front();
+			cText = content->getBodyAsUtf8String();
+		} else {
+			cText = internalContent.getBodyAsUtf8String();
+		}
+	} else {
+		if (!internalContent.isEmpty()) {
+			cText = internalContent.getBodyAsUtf8String();
+		} else {
+			if (!contents.empty()) {
+				Content *content = contents.front();
+				cText = content->getBodyAsUtf8String();
+			}
+		}
+	}
+	return cText;
+}
+
+void ChatMessagePrivate::setUtf8Text (const string &text) {
+	loadContentsFromDatabase();
+	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+		internalContent.setContentType(contents.front()->getContentType());
+	}
+	internalContent.setBodyFromUtf8(text);
+
+	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+		// if not started yet the sending also alter the first content
+		if (!contents.empty())
+			contents.front()->setBodyFromUtf8(text);
 	}
 }
 
@@ -694,7 +732,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// ---------------------------------------
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getText()
-	internalContent.setBody("");
+	internalContent.setBodyFromUtf8("");
 	internalContent.setContentType(ContentType(""));
 	// Also remove current step so we go through all modifiers if message is re-received (in case of recursive call from a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
@@ -982,7 +1020,7 @@ void ChatMessagePrivate::send () {
 	restoreFileTransferContentAsFileContent();
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
-	internalContent.setBody("");
+	internalContent.setBodyFromUtf8("");
 	internalContent.setContentType(ContentType(""));
 
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING

@@ -116,7 +116,6 @@ set(DAEMON_PIPETEST_SOURCE_FILES
 
 bc_apply_compile_flags(DAEMON_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(DAEMON_PIPETEST_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_C)
-
 add_executable(linphone-daemon ${DAEMON_SOURCE_FILES})
 target_include_directories(linphone-daemon PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${LINPHONE_INCLUDE_DIRS})
 target_link_libraries(linphone-daemon ${LINPHONE_LIBS_FOR_TOOLS} mediastreamer ortp bctoolbox ${XSD_LIBRARIES})

@@ -6382,7 +6382,7 @@ extern "C" void  Java_org_linphone_core_LinphoneInfoMessageImpl_setContent(JNIEn
 	linphone_content_set_subtype(content, tmp = GetStringUTFChars(env, jsubtype));
 	ReleaseStringUTFChars(env, jsubtype, tmp);
 
-	linphone_content_set_string_buffer(content, tmp = GetStringUTFChars(env, jdata));
+	linphone_content_set_utf8_text(content, tmp = GetStringUTFChars(env, jdata));
 	ReleaseStringUTFChars(env, jdata, tmp);
 
 	linphone_info_message_set_content(infomsg, content);

@@ -70,7 +70,7 @@ public:
 
 	void setBody (const std::vector<char> &body);
 	void setBody (std::vector<char> &&body);
-	void setBody (const std::string &body);
+	void setBodyFromLocale (const std::string &body);
 	void setBody (const void *buffer, size_t size);
 	void setBodyFromUtf8 (const std::string &body);
 
