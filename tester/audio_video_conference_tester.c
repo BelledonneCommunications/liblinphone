@@ -1569,6 +1569,13 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 
 		}
 
+		// Wait for first frame if video is enabled
+		if (enable_video) {
+			// Make sure video is received for Pauline and Laure. For Marie we can't because of missing APIs.*/
+			liblinphone_tester_set_next_video_frame_decoded_cb(participant_call);
+			BC_ASSERT_TRUE( wait_for_list(lcs, &m->stat.number_of_IframeDecoded, initial_stats[idx].number_of_IframeDecoded + 1, 5000));
+		}
+
 		// Remote  conference
 		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
 		BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
@@ -1584,16 +1591,11 @@ static void set_video_in_conference(bctbx_list_t* lcs, LinphoneCoreManager* conf
 		LinphoneConference *pconference = linphone_call_get_conference(participant_call);
 		BC_ASSERT_PTR_NOT_NULL(pconference);
 		if (pconference) {
-			bctbx_list_t *participants = linphone_conference_get_participant_list(pconference);
-			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), no_participants, unsigned int, "%u");
-			bctbx_list_free_with_data(participants, (void(*)(void *))linphone_participant_unref);
+			bctbx_list_t *pconf_participants = linphone_conference_get_participant_list(pconference);
+			BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(pconf_participants), no_participants, unsigned int, "%u");
+			bctbx_list_free_with_data(pconf_participants, (void(*)(void *))linphone_participant_unref);
 		}
 
-		if (enable_video) {
-			// Make sure video is received for Pauline and Laure. For Marie we can't because of missing APIs.*/
-			liblinphone_tester_set_next_video_frame_decoded_cb(participant_call);
-			BC_ASSERT_TRUE( wait_for_list(lcs, &m->stat.number_of_IframeDecoded, initial_stats[idx].number_of_IframeDecoded + 1, 5000));
-		}
 
 		idx++;
 
