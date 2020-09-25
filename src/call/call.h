@@ -100,6 +100,7 @@ public:
 	LinphoneStatus deferUpdate ();
 	bool hasTransferPending () const;
 	void oglRender () const;
+	LinphoneStatus initiateRemovalFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus resume ();
