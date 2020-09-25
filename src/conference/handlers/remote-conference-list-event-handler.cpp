@@ -98,7 +98,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 	Xsd::XmlSchema::NamespaceInfomap map;
 	stringstream xmlBody;
 	serializeResourceLists(xmlBody, rl, map);
-	content.setBodyFromLocale(xmlBody.str());
+	content.setBodyFromUtf8(xmlBody.str());
 
 	LinphoneCore *lc = getCore()->getCCore();
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);

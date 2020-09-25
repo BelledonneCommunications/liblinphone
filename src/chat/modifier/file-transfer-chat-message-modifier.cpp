@@ -393,7 +393,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 									char *buffer;
 									int xmlStringLength;
 									xmlDocDumpFormatMemoryEnc(xmlMessageBody, (xmlChar **)&buffer, &xmlStringLength, "UTF-8", 0);
-									currentFileTransferContent->setBodyFromLocale(buffer);
+									currentFileTransferContent->setBodyFromUtf8(buffer);
 									break;
 								}
 								xmlFree(typeAttribute);
@@ -403,7 +403,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 					}
 					xmlFreeDoc(xmlMessageBody);
 				} else { // no encryption key, transfer in plain, just copy the msg sent by server
-					currentFileTransferContent->setBodyFromLocale(body);
+					currentFileTransferContent->setBodyFromUtf8(body);
 				}
 
 				currentFileTransferContent->setFileContent(currentFileContentToTransfer);

@@ -522,7 +522,7 @@ bool ClientGroupChatRoom::addParticipants (
 
 	if (getState() == ChatRoom::State::Instantiated) {
 		Content content;
-		content.setBodyFromLocale(getResourceLists(addressesList));
+		content.setBodyFromUtf8(getResourceLists(addressesList));
 		content.setContentType(ContentType::ResourceLists);
 		content.setContentDisposition(ContentDisposition::RecipientList);
 		if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
