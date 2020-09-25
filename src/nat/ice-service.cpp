@@ -62,7 +62,7 @@ bool IceService::iceFoundInMediaDescription (const SalMediaDescription *md) {
 	return false;
 }
 
-void IceService::checkSession (IceRole role) {
+void IceService::checkSession (IceRole role, bool preferIpv6DefaultCandidates) {
 	LinphoneNatPolicy *natPolicy = getMediaSessionPrivate().getNatPolicy();
 	if (!natPolicy || !linphone_nat_policy_ice_enabled(natPolicy)){
 		return;
@@ -93,6 +93,7 @@ void IceService::checkSession (IceRole role) {
 		types[2] = ICT_CandidateInvalid;
 		ice_session_set_default_candidates_types(mIceSession, types);
 	}
+	ice_sesession_set_default_candidates_ip_version(mIceSession, (bool_t)preferIpv6DefaultCandidates);
 	ice_session_set_role(mIceSession, role);
 }
 
@@ -112,7 +113,7 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 }
 
 void IceService::createStreams(const OfferAnswerContext &params){
-	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled);
+	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled, getMediaSessionPrivate().getAf() == AF_INET6);
 	
 	if (!mIceSession) return;
 	
