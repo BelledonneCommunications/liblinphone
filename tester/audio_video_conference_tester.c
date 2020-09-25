@@ -254,7 +254,6 @@ static void simple_conference(void) {
 }
 
 static void _simple_conference_from_scratch(bool_t with_video){
-#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
@@ -329,15 +328,12 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
-		terminate_conference(new_participants, marie, NULL);
+		terminate_conference(participants, marie, NULL);
 	}
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(marie);
-#else
-	BC_FAIL("Test temporally disabled because of crash");
-#endif
 }
 
 static void simple_conference_from_scratch(void){
