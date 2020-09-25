@@ -152,7 +152,7 @@ if (ENABLE_STATIC)
 	add_library(linphone-coreapi-static OBJECT
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
-	target_include_directories(linphone-coreapi-static SYSTEM PRIVATE ${LINPHONE_INCLUDE_DIRS})
+	target_include_directories(linphone-coreapi-static PRIVATE ${LINPHONE_INCLUDE_DIRS})
 	add_dependencies(linphone-coreapi-static liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
 		add_dependencies(linphone-coreapi-static linphonej)
@@ -163,7 +163,7 @@ if (ENABLE_SHARED)
 	add_library(linphone-coreapi OBJECT
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
-	target_include_directories(linphone-coreapi SYSTEM PRIVATE ${LINPHONE_INCLUDE_DIRS})
+	target_include_directories(linphone-coreapi PRIVATE ${LINPHONE_INCLUDE_DIRS})
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
