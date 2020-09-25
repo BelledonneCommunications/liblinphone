@@ -583,7 +583,7 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setInConference(false);
 
-			err = call->initiateRemovalFromConference();
+			err = call->pauseToInitiateRemovalFromConference();
 		}
 	}
 	
@@ -616,13 +616,13 @@ int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> c
 				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
 				currentParams->getPrivate()->setInConference(FALSE);
 				ms_message("Updating call to notify of conference removal.");
-				err = session->update(currentParams);
+				err = session->updateToInitiateRemovalFromConference(currentParams);
 			} else {
 				// If the local participant is not in, the call is paused as the local participant is busy
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 						L_GET_PRIVATE(params))->setInConference(false);
 
-				err = session->pause();
+				err = session->pauseToInitiateRemovalFromConference();
 			}
 
 			setState(ConferenceInterface::State::TerminationPending);
