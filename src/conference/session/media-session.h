@@ -55,6 +55,7 @@ public:
 	void initiateIncoming () override;
 	bool initiateOutgoing () override;
 	void iterate (time_t currentRealTime, bool oneSecondElapsed) override;
+	LinphoneStatus initiateRemovalFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus resume ();
 	LinphoneStatus sendDtmf (char dtmf);
