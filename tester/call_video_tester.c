@@ -2118,7 +2118,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	linphone_core_manager_destroy(callee);
 }
 
-static test_t call_video_tests[] = {/*
+static test_t call_video_tests[] = {
 	TEST_NO_TAG("Call paused resumed with video", call_paused_resumed_with_video),
 	TEST_NO_TAG("Call paused resumed with video no sdp ack", call_paused_resumed_with_no_sdp_ack),
 	TEST_NO_TAG("Call paused resumed with video no sdk ack using video policy for resume offers", call_paused_resumed_with_no_sdp_ack_using_video_policy),
@@ -2139,7 +2139,7 @@ static test_t call_video_tests[] = {/*
 	TEST_NO_TAG("Simple video call using policy", video_call_using_policy),
 	TEST_NO_TAG("Video call using policy with callee video disabled", video_call_using_policy_with_callee_video_disabled),
 	TEST_NO_TAG("Video call using policy with caller video disabled", video_call_using_policy_with_caller_video_disabled),
-	TEST_NO_TAG("Video call without SDP", video_call_no_sdp),*/
+	TEST_NO_TAG("Video call without SDP", video_call_no_sdp),
 	TEST_ONE_TAG("SRTP ice video call", srtp_video_ice_call, "ICE"),
 	TEST_ONE_TAG("ZRTP ice video call", zrtp_video_ice_call, "ICE"),
 	TEST_NO_TAG("Call with video added", call_with_video_added),
