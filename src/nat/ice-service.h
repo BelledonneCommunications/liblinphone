@@ -118,7 +118,7 @@ private:
 	void updateFromRemoteMediaDescription (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool isOffer);
 	void gatheringFinished();
 	void deleteSession();
-	void checkSession (IceRole role);
+	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);
 	int gatherIceCandidates ();
 	void gatherLocalCandidates();
 	StreamsGroup & mStreamsGroup;
