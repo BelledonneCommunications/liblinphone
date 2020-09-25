@@ -255,8 +255,8 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 
 	if (disable_soundcard) {
 		ms_snd_card_manager_bypass_soundcard_detection(FALSE);
@@ -296,8 +296,8 @@ static void  simple_call_with_no_sip_transport(void){
 	/* restore initial transports for Marie's core in order it be able to unregister */
 	linphone_core_set_sip_transports(marie->lc, &oldTr);
 
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_call_with_udp(void) {
@@ -366,8 +366,8 @@ static void automatic_call_termination(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
 end:
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_timed_out_bye(void) {
@@ -2757,8 +2757,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		ms_warning ("not tested because %s not available", linphone_media_encryption_to_string(mode));
 	}
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc){
@@ -5199,7 +5199,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("IPv6 call over NAT64", v6_call_over_nat_64),
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
 	TEST_NO_TAG("Audio call recording", audio_call_recording_test),
-#if 0 /* not yet activated because not implemented */
+#if 0 // not yet activated because not implemented
 	TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),
 #endif
 	TEST_NO_TAG("Multiple answers to a call with media relay", multiple_answers_call_with_media_relay),

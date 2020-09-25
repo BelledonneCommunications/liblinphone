@@ -268,6 +268,7 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 
 	register_device(marie, &dummy_test_snd_card_desc);
+	register_device(marie, &dummy2_test_snd_card_desc);
 
 	// Choose Marie's audio devices
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
@@ -975,9 +976,9 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,1000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,1000));
 	linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(marie);
 
 	linphone_audio_device_unref(dev0);
 	linphone_audio_device_unref(dev1);
@@ -1225,16 +1226,18 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card
-	linphone_audio_device_unref(marie_dev0);
-	linphone_audio_device_unref(marie_dev1);
-	linphone_audio_device_unref(marie_current_dev);
-	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(laure);
 	linphone_audio_device_unref(pauline_dev0);
 	linphone_audio_device_unref(pauline_dev1);
 	linphone_audio_device_unref(pauline_current_dev);
 	linphone_core_manager_destroy(pauline);
+	linphone_audio_device_unref(marie_dev0);
+	linphone_audio_device_unref(marie_dev1);
+	linphone_audio_device_unref(marie_current_dev);
+	linphone_core_manager_destroy(marie);
 
-	linphone_core_manager_destroy(laure);
+
+
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
