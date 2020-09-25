@@ -386,7 +386,7 @@ bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 	}
 
 	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
-		for (const auto audioVideoConference : q->audioVideoConferenceById) {
+		for (const auto & audioVideoConference : q->audioVideoConferenceById) {
 			audioVideoConference.second->getAudioControlInterface()->setInputDevice(audioDevice);
 		}
 	}
@@ -410,7 +410,7 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 	}
 
 	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
-		for (const auto audioVideoConference : q->audioVideoConferenceById) {
+		for (const auto & audioVideoConference : q->audioVideoConferenceById) {
 			audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
 		}
 	}

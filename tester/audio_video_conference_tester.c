@@ -183,7 +183,12 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			/* Since Laure has been removed, the conference will automatically disapear to let
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
+			stats marie_stat=marie->stat;
+			stats pauline_stat=pauline->stat;
 			linphone_core_pause_call(marie->lc, marie_call_pauline);
+			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausing, marie_stat.number_of_LinphoneCallPausing+1,10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused, marie_stat.number_of_LinphoneCallPaused+1,10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausedByRemote, pauline_stat.number_of_LinphoneCallPausedByRemote+1,10000));
 			remove_participant_from_local_conference(lcs, marie, laure);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
@@ -606,7 +611,6 @@ static void simple_zrtp_conference_with_ice(void) {
 }
 
 static void conference_hang_up_call_on_hold(void) {
-#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
@@ -615,9 +619,6 @@ static void conference_hang_up_call_on_hold(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
-#else
-	BC_FAIL("Test temporally disabled because of missing API");
-#endif
 }
 
 static void eject_from_3_participants_conference(LinphoneCoreManager *marie, LinphoneCoreManager *pauline, LinphoneCoreManager *laure, LinphoneCoreManager *focus) {
@@ -2564,7 +2565,7 @@ static void simple_conference_with_multi_device(void) {
 	destroy_mgr_in_conference(pauline2);
 	destroy_mgr_in_conference(laure);
 #else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
+	BC_FAIL("Test temporally disabled because the feature is not supported yet");
 #endif
 }
 
