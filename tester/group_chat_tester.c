@@ -1628,7 +1628,7 @@ static void group_chat_room_remove_participant_base (bool_t restart) {
 	linphone_address_unref(confAddr);
 
 	// Clean db from chat room
-	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_delete_chat_room(marie->lc, marieCr);
 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
@@ -5954,7 +5954,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Change subject", group_chat_room_change_subject),
 	TEST_NO_TAG("Change subject with a non admin", group_chat_room_change_subject_non_admin),
 	TEST_NO_TAG("Remove participant", group_chat_room_remove_participant),
-	TEST_NO_TAG("Remove participant and restart", group_chat_room_remove_participant_and_restart),
+	TEST_ONE_TAG("Remove participant and restart", group_chat_room_remove_participant_and_restart, "LeaksMemory"), // Due to core restart
 	TEST_NO_TAG("Send message with a participant removed", group_chat_room_send_message_with_participant_removed),
 	TEST_NO_TAG("Leave group chat room", group_chat_room_leave),
 	TEST_NO_TAG("Delete group chat room successful if it's already removed by server", group_chat_room_delete_twice),
