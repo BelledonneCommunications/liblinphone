@@ -2366,7 +2366,7 @@ void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
 }
 
-LinphoneStatus MediaSession::initiateRemovalFromConference () {
+LinphoneStatus MediaSession::pauseToInitiateRemovalFromConference () {
 	L_D();
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
@@ -2550,6 +2550,22 @@ void MediaSession::terminateBecauseOfLostMedia () {
 	d->nonOpError = true;
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonIOError, 503, "Media lost", nullptr);
 	terminate();
+}
+
+LinphoneStatus MediaSession::updateToInitiateRemovalFromConference (const MediaSessionParams *msp, const string &subject) {
+	L_D();
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	updateContactAddress (contactAddress);
+	d->op->setContactAddress(contactAddress.getInternalAddress());
+
+	return update(msp, subject);
 }
 
 LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string &subject) {
