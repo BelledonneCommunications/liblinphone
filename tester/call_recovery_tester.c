@@ -226,6 +226,7 @@ static void recovered_call_on_network_switch_during_reinvite_1(void) {
 
 	outgoing_call = linphone_core_get_current_call(marie->lc);
 	if(!BC_ASSERT_PTR_NOT_NULL(outgoing_call)) goto end;
+	linphone_call_pause(outgoing_call);
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableFalse, 1);
 	linphone_core_set_network_reachable(marie->lc, TRUE);
@@ -270,6 +271,7 @@ static void recovered_call_on_network_switch_during_reinvite_2(void) {
 
 	incoming_call = linphone_core_get_current_call(pauline->lc);
 	if(!BC_ASSERT_PTR_NOT_NULL(incoming_call)) goto end;
+	linphone_call_pause(incoming_call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 
@@ -522,12 +524,14 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 	if (caller_pause) {
 		pauline_call = linphone_core_get_current_call(pauline->lc);
 		if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+		linphone_call_pause(pauline_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 	} else if (callee_pause) {
 		marie_call = linphone_core_get_current_call(marie->lc);
 		if(!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
+		linphone_call_pause(marie_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 1));
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
