@@ -55,7 +55,7 @@ public:
 	void initiateIncoming () override;
 	bool initiateOutgoing () override;
 	void iterate (time_t currentRealTime, bool oneSecondElapsed) override;
-	LinphoneStatus initiateRemovalFromConference ();
+	LinphoneStatus pauseToInitiateRemovalFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus resume ();
 	LinphoneStatus sendDtmf (char dtmf);
@@ -67,6 +67,7 @@ public:
 	void stopRecording ();
 	bool isRecording ();
 	void terminateBecauseOfLostMedia ();
+	LinphoneStatus updateToInitiateRemovalFromConference (const MediaSessionParams *msp, const std::string &subject = "");
 	LinphoneStatus update (const MediaSessionParams *msp, const std::string &subject = "");
 
 	void requestNotifyNextVideoFrameDecoded ();

@@ -410,9 +410,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 				if (!remoteContactAddress.hasParam("isfocus")) {
 					remoteContactAddress.setParam("isfocus");
+					removeFromConference(remoteContactAddress);
 				}
-
-				removeFromConference(remoteContactAddress);
 			}
 		}
 		break;
@@ -446,8 +445,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				} else if (getConference()) {
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						remoteContactAddress.setParam("isfocus");
+						removeFromConference(remoteContactAddress);
 					}
-					removeFromConference(remoteContactAddress);
 				}
 			}
 
@@ -742,8 +741,8 @@ void Call::oglRender () const {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->oglRender();
 }
 
-LinphoneStatus Call::initiateRemovalFromConference () {
-	return static_pointer_cast<MediaSession>(getActiveSession())->initiateRemovalFromConference();
+LinphoneStatus Call::pauseToInitiateRemovalFromConference () {
+	return static_pointer_cast<MediaSession>(getActiveSession())->pauseToInitiateRemovalFromConference();
 }
 
 LinphoneStatus Call::pause () {
@@ -800,6 +799,10 @@ LinphoneStatus Call::transfer (const shared_ptr<Call> &dest) {
 
 LinphoneStatus Call::transfer (const string &dest) {
 	return getActiveSession()->transfer(dest);
+}
+
+LinphoneStatus Call::updateToInitiateRemovalFromConference (const MediaSessionParams *msp) {
+	return static_pointer_cast<MediaSession>(getActiveSession())->updateToInitiateRemovalFromConference(msp);
 }
 
 LinphoneStatus Call::update (const MediaSessionParams *msp) {
