@@ -485,7 +485,6 @@ end:
 }
 
 static void simple_conference_from_scratch_no_answer(void){
-#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
@@ -570,9 +569,6 @@ static void simple_conference_from_scratch_no_answer(void){
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
-#else
-	BC_FAIL("Test temporally disabled as, call.update is performed in stage outgoinginit");
-#endif
 }
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
