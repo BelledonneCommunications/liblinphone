@@ -17,7 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "core/core-p.h"
 #include "db/main-db.h"
+#include "db/main-db-p.h"
+#include "db/main-db-key-p.h"
 #include "event-log-p.h"
 
 // =============================================================================
@@ -26,12 +29,22 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+void EventLogPrivate::resetStorageId () {
+	dbKey.resetStorageId();
+}
+
 EventLog::EventLog () : BaseObject(*new EventLogPrivate) {}
 
 EventLog::EventLog (EventLogPrivate &p, Type type, time_t creationTime) : BaseObject(p) {
 	L_D();
 	d->type = type;
 	d->creationTime = creationTime;
+}
+
+EventLog::~EventLog () {
+	L_D();
+	d->resetStorageId();
+
 }
 
 EventLog::Type EventLog::getType () const {

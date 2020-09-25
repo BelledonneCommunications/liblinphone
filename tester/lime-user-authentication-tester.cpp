@@ -40,7 +40,7 @@ enum class certProvider {
 // Helper to loop on all certificate providing methods availables
 static std::array<certProvider, 3> availCertProv{{certProvider::config_sip, certProvider::config_auth_info_buffer, certProvider::config_auth_info_path}};
 
-static const int x3dhServer_creationTimeout = 5000;
+static const int x3dhServer_creationTimeout = 10000;
 // This function will add proxy and auth info to the core config. The proxy is set as the default one
 static void add_user_to_core_config(LinphoneCore *lc, const char *identity, const char *username, const char *realm, const char * server, const char *password) {
 	// Use the user user_1

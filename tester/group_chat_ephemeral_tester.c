@@ -32,7 +32,7 @@
 #pragma warning(disable : 4996)
 #endif
 
-static const int x3dhServer_creationTimeout = 5000;
+static const int x3dhServer_creationTimeout = 10000;
 
 static void set_ephemeral_cbs (bctbx_list_t *history) {
 	for (bctbx_list_t *item = history; item; item = bctbx_list_next(item)) {

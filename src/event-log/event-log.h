@@ -63,6 +63,7 @@ public:
 	static_assert((int)EventLog::Type::ConferenceEphemeralMessageDisabled == (int)LinphoneEventLogTypeConferenceEphemeralMessageDisabled, "LinphoneEventLogType and EventLog::Type are not synchronized, fix this !");
 
 	EventLog ();
+	virtual ~EventLog ();
 
 	Type getType () const;
 	time_t getCreationTime () const;
