@@ -397,6 +397,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			exitFromConference(session);
 
 			break;
+		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
 			break;
 		case CallSession::State::PausedByRemote:
@@ -739,6 +740,10 @@ bool Call::hasTransferPending () const {
 
 void Call::oglRender () const {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->oglRender();
+}
+
+LinphoneStatus Call::initiateRemovalFromConference () {
+	return static_pointer_cast<MediaSession>(getActiveSession())->initiateRemovalFromConference();
 }
 
 LinphoneStatus Call::pause () {

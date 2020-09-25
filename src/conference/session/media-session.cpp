@@ -743,8 +743,6 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 				getParams()->enableVideo(true);
 			}
 		}
-
-ms_message("%s - end video enabled local %0d remote %0d\n", __func__, getParams()->videoEnabled(), rcp->videoEnabled()); 
 	}
 }
 
@@ -2366,6 +2364,22 @@ bool MediaSession::initiateOutgoing () {
 
 void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
+}
+
+LinphoneStatus MediaSession::initiateRemovalFromConference () {
+	L_D();
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	updateContactAddress (contactAddress);
+	d->op->setContactAddress(contactAddress.getInternalAddress());
+
+	return pause();
 }
 
 LinphoneStatus MediaSession::pause () {
