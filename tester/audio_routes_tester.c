@@ -828,7 +828,6 @@ static void simple_call_with_audio_devices_reload(void) {
 }
 
 static void simple_conference_with_audio_device_change_base(bool_t during_setup, bool_t before_all_join, bool_t after_all_join) {
-#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -962,10 +961,10 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(marie->lc), current_dev);
 	current_dev = change_device(after_all_join, marie, current_dev, dev0, dev1);
 
-	// wait a bit before endign the conference
+	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(lcs, laure, NULL);
+	terminate_conference(participants, laure, NULL);
 
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(marie);
@@ -977,9 +976,6 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	linphone_audio_device_unref(current_dev);
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
-#else
-	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
-#endif
 
 }
 
@@ -1000,7 +996,6 @@ static void simple_conference_with_audio_device_change_pingpong(void) {
 }
 
 static void simple_conference_with_audio_device_change_during_pause_base(bool_t callee, bool_t caller) {
-#if 0
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
@@ -1209,7 +1204,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(lcs, pauline, NULL);
+	terminate_conference(participants, pauline, NULL);
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card
@@ -1226,10 +1221,6 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
-#else
-	BC_FAIL("Test temporally disabled because of missing functionality of the conference sending invites");
-#endif
-
 }
 
 static void simple_conference_with_audio_device_change_during_pause_callee(void) {
