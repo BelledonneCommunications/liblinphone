@@ -428,7 +428,6 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
 	SalMediaDescription *rmd = op->getRemoteMediaDescription();
-ms_message("%s - entering is update %0d\n", __func__, isUpdate); 
 	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
@@ -690,8 +689,6 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 	L_Q();
 	if (!rmd) return;
 
-ms_message("%s - entering rmd %p fromOffer %0d\n", __func__, rmd, fromOffer); 
-
 	updateBiggestDesc(rmd);
 	/* Why disabling implicit_rtcp_fb ? It is a local policy choice actually. It doesn't disturb to propose it again and again
 		* even if the other end apparently doesn't support it.
@@ -702,9 +699,7 @@ ms_message("%s - entering rmd %p fromOffer %0d\n", __func__, rmd, fromOffer);
 		*/
 	/*params.getPrivate()->enableImplicitRtcpFb(params.getPrivate()->implicitRtcpFbEnabled() & sal_media_description_has_implicit_avpf(rmd));*/
 	const MediaSessionParams *rcp = q->getRemoteParams();
-ms_message("%s - remote params %p\n", __func__, rcp); 
 	if (rcp) {
-ms_message("%s - start video enabled local %0d remote %0d\n", __func__, getParams()->videoEnabled(), rcp->videoEnabled()); 
 		if (!fromOffer){
 			/*
 			 * This is to avoid to re-propose again some streams that have just been declined.
