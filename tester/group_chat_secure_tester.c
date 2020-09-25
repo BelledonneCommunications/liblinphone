@@ -32,6 +32,8 @@
 #pragma warning(disable : 4996)
 #endif
 
+static const int x3dhServer_creationTimeout = 10000;
+
 static bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, LinphoneCoreManager *callee, bool_t callerValidation, bool_t calleeValidation) {
 	bool_t call_ok = FALSE;
 	BC_ASSERT_TRUE((call_ok=call(caller, callee)));
@@ -51,7 +53,7 @@ static bool_t simple_zrtp_call_with_sas_validation(LinphoneCoreManager *caller, 
 	return TRUE;
 }
 
-static const int x3dhServer_creationTimeout = 5000;
+
 
 static void group_chat_lime_x3dh_create_lime_user_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
