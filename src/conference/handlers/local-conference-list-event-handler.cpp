@@ -80,7 +80,7 @@ void LocalConferenceListEventHandler::notifyResponseCb (const LinphoneEvent *ev)
 void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, const LinphoneContent *body) {
 	LinphoneSubscriptionState subscriptionState = linphone_event_get_subscription_state(lev);
 
-	const string &xmlBody = string(linphone_content_get_string_buffer(body));
+	const string &xmlBody = string(linphone_content_get_utf8_text(body));
 	if (xmlBody.empty()) {
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 		return;

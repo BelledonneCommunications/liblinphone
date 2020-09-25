@@ -116,7 +116,7 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 	const char *content_type = "text/plain";
 	LinphoneChatRoom *room = linphone_core_get_chat_room(sender->lc, receiver->identity);
 
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(room, text);
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);

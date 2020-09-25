@@ -275,7 +275,7 @@ static const char* part4 = \
 
 void multipart_to_list () {
 	Content multipartContent;
-	multipartContent.setBody(source_multipart);
+	multipartContent.setBodyFromLocale(source_multipart);
 	multipartContent.setContentType(ContentType("multipart", "related"));
 
 	list<Content> contents = ContentManager::multipartToContentList(multipartContent);
@@ -437,7 +437,7 @@ void list_to_multipart () {
 	ContentType contentType = ContentType("application", "rlmi+xml");
 	contentType.addParameter("charset", "\"UTF-8\"");
 	Content content1;
-	content1.setBody(part1);
+	content1.setBodyFromLocale(part1);
 	content1.setContentType(contentType);
 	Header contentId1("Content-Id", "sip:marie@sip.example.org;gr=urn:uuid:6cfdef8a-ae0b-4072-97bc-c0399ab9071b");
 	Header contentDesc1("Content-Description", "Key for Marie");
@@ -447,7 +447,7 @@ void list_to_multipart () {
 	contentType = ContentType("application", "pidf+xml");
 	contentType.addParameter("charset", "\"UTF-8\"");
 	Content content2;
-	content2.setBody(part2);
+	content2.setBodyFromLocale(part2);
 	content2.setContentType(contentType);
 	Header contentId2("Content-Id", "sip:pauline@sip.example.org;gr=urn:uuid:2a9461cb-9014-4022-a21d-875074da7010");
 	Header contentDesc2("Content-Description", "Key for Pauline");
@@ -455,7 +455,7 @@ void list_to_multipart () {
 	content2.addHeader(contentDesc2);
 
 	Content content3;
-	content3.setBody(part3);
+	content3.setBodyFromLocale(part3);
 	content3.setContentType(contentType);
 	Header contentEncoding3("Content-Encoding", "b64");
 	Header contentId3("Content-Id", "sip:laure@sip.example.org;gr=urn:uuid:3789446b-6278-4099-bc1a-6da95858aad2");
@@ -465,7 +465,7 @@ void list_to_multipart () {
 	content3.addHeader(contentDesc3);
 
 	Content content4;
-	content4.setBody(part4);
+	content4.setBodyFromLocale(part4);
 	content4.setContentType(ContentType("application", "pidf+xml"));
 	Header contentDesc4("Content-Description", "Encrypted message");
 	content4.addHeader(contentDesc4);
