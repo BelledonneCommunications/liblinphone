@@ -239,8 +239,8 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	char localip[LINPHONE_IPADDR_SIZE]={0};
 	char localip6[LINPHONE_IPADDR_SIZE]={0};
-	bool_t call_ok;
 	bctbx_list_t *local_addresses = linphone_fetch_local_addresses();
+	LinphoneCall *pauline_call, *marie_call;
 
 	lp_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	lp_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
@@ -248,14 +248,24 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
 	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
 	linphone_core_get_local_ip(marie->lc, AF_INET6, NULL, localip6);
-	call_ok = call(marie, pauline);
-	if (call_ok){
+	
+	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	
+	if (marie_call && pauline_call){
+		linphone_call_accept(pauline_call);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
+		/*check immmediately that the offer has a c line with the expected family.*/
 		if (with_ipv6_prefered){
 			/* the address in the c line shall be an ipv6 one.*/
 			BC_ASSERT_TRUE(strchr(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, ':') != NULL);
 		}else{
 			BC_ASSERT_TRUE(strchr(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, ':') == NULL);
 		}
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, local_addresses));
 		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, local_addresses));
