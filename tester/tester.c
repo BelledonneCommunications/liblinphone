@@ -593,7 +593,7 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 		/*now that stun server resolution is done, we can start registering*/
 		linphone_core_set_network_reachable(mgr->lc, TRUE);
 	}
-
+	wait_for_until(mgr->lc, NULL, NULL, 0, 20);// process events that are in main queue (fix: DNS timeout when loading linphone database)
 }
 
 LinphoneCoreManager* linphone_core_manager_create2(const char* rc_file, const char* phone_alias) {
