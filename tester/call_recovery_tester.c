@@ -271,7 +271,7 @@ static void recovered_call_on_network_switch_during_reinvite_2(void) {
 
 	incoming_call = linphone_core_get_current_call(pauline->lc);
 	if(!BC_ASSERT_PTR_NOT_NULL(incoming_call)) goto end;
-	linphone_call_pause(incoming_call);
+	linphone_call_accept(incoming_call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 
