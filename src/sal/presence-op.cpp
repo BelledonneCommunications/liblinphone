@@ -352,6 +352,7 @@ int SalPresenceOp::subscribe (int expires) {
 	}
 	belle_sip_parameters_remove_parameter(BELLE_SIP_PARAMETERS(mFromAddress), "tag");
 	belle_sip_parameters_remove_parameter(BELLE_SIP_PARAMETERS(mToAddress), "tag");
+	mCallId = "";
 	auto request = buildRequest("SUBSCRIBE");
 	if (request) {
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_HEADER(mEvent));
