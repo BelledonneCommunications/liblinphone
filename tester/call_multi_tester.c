@@ -312,6 +312,9 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
+
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,laure))) goto end;
@@ -607,6 +610,7 @@ static void video_conference_by_merging_calls(void){
 	
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,1,10000));
 	if (BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000))){
+		if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc))) goto end;
 		linphone_call_accept(linphone_core_get_current_call(pauline->lc));
 	}else goto end;
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
@@ -618,6 +622,7 @@ static void video_conference_by_merging_calls(void){
 	
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingProgress,2,10000));
 	if (BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,10000))){
+		if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc))) goto end;
 		linphone_call_accept(linphone_core_get_current_call(laure->lc));
 	}else goto end;
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,2,5000));
@@ -696,9 +701,9 @@ static void video_conference_by_merging_calls(void){
 	
 end:	
 	if (conf) linphone_conference_unref(conf);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 
 	bctbx_list_free(participants);
 	bctbx_list_free(lcs);
@@ -849,6 +854,9 @@ static void simple_call_transfer(void) {
 	BC_ASSERT_TRUE(call(marie,pauline));
 	marie_calling_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_calling_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
+
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
@@ -871,6 +879,7 @@ static void simple_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallOutgoingRinging,1,2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneTransferCallOutgoingProgress,1,2000));
+	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc))) goto end;
 	linphone_call_accept(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,1,2000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,2000));
@@ -911,6 +920,7 @@ static void unattended_call_transfer(void) {
 
 	BC_ASSERT_TRUE(call(marie,pauline));
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
@@ -928,6 +938,7 @@ static void unattended_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallIncomingReceived,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingRinging,1,3000));
+	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(laure->lc))) goto end;
 	linphone_call_accept(linphone_core_get_current_call(laure->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallConnected,1,3000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning,1,3000));
@@ -938,6 +949,7 @@ static void unattended_call_transfer(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,3000));
 
 	end_call(laure, pauline);
+end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
@@ -956,6 +968,8 @@ static void unattended_call_transfer_with_error(void) {
 	BC_ASSERT_TRUE((call_ok=call(marie,pauline)));
 	if (call_ok){
 		pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
+
+		if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 
 		reset_counters(&marie->stat);
 		reset_counters(&pauline->stat);
@@ -979,9 +993,9 @@ static void unattended_call_transfer_with_error(void) {
 
 		end_call(marie, pauline);
 	}
-
-	linphone_core_manager_destroy(marie);
+end:
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1009,6 +1023,8 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 	if (call_ok){
 		marie_call_pauline=linphone_core_get_current_call(marie->lc);
 		pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(marie_call_pauline)) goto end;
+		if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 		/*marie pause pauline*/
 		if (!BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie))) {
 			goto end;
@@ -1030,6 +1046,8 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 
 		marie_call_laure=linphone_core_get_current_call(marie->lc);
 		laure_called_by_marie=linphone_core_get_current_call(laure->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(marie_call_laure)) goto end;
+		if (!BC_ASSERT_PTR_NOT_NULL(laure_called_by_marie)) goto end;
 
 		/*marie pause laure*/
 		BC_ASSERT_TRUE(pause_call_1(marie,marie_call_laure,laure,laure_called_by_marie));
@@ -1078,9 +1096,9 @@ static void call_transfer_existing_call(bool_t outgoing_call, bool_t auto_answer
 		end_call(pauline, laure);
 	}
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1117,6 +1135,8 @@ static void call_transfer_existing_ringing_call(void) {
 	if (call_ok) {
 		marie_call_pauline = linphone_core_get_current_call(marie->lc);
 		pauline_called_by_marie = linphone_core_get_current_call(pauline->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(marie_call_pauline)) goto end;
+		if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 		/* marie pauses pauline */
 		if (!BC_ASSERT_TRUE(pause_call_1(marie, marie_call_pauline, pauline, pauline_called_by_marie))) goto end;
 
@@ -1126,6 +1146,7 @@ static void call_transfer_existing_ringing_call(void) {
 		BC_ASSERT_TRUE(wait_for(marie->lc, laure->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, initial_marie_stats.number_of_LinphoneCallOutgoingRinging + 1));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
 		laure_call = linphone_core_get_current_call(laure->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(laure_call)) goto end;
 		
 		linphone_call_transfer_to_another(marie_call_pauline, marie_call_laure);
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallRefered, 1, 2000));
@@ -1166,9 +1187,9 @@ static void call_transfer_existing_ringing_call(void) {
 	}
 
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1192,6 +1213,8 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 	if (!BC_ASSERT_TRUE(call(marie,pauline))) goto end;
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,laure))) goto end;
@@ -1278,9 +1301,9 @@ static void eject_from_3_participants_local_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 static void eject_from_4_participants_conference(void) {
@@ -1302,6 +1325,8 @@ static void eject_from_4_participants_conference(void) {
 	BC_ASSERT_TRUE(call(marie,pauline));
 	marie_call_pauline=linphone_core_get_current_call(marie->lc);
 	pauline_called_by_marie=linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 	BC_ASSERT_TRUE(pause_call_1(marie,marie_call_pauline,pauline,pauline_called_by_marie));
 
 	if (!BC_ASSERT_TRUE(call(marie,michelle)))
@@ -1362,10 +1387,10 @@ static void eject_from_4_participants_conference(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallEnd, 3, 10000));
 
 end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(michelle);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
 }
 
@@ -1390,10 +1415,10 @@ void simple_remote_conference(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	linphone_core_manager_destroy(laure);
 	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 void simple_remote_conference_shut_down_focus(void) {
@@ -1416,10 +1441,10 @@ void simple_remote_conference_shut_down_focus(void) {
 
 	simple_conference_base(marie, pauline, laure, (LinphoneCoreManager *)focus, FALSE);
 
-	linphone_core_manager_destroy(marie);
+	linphone_conference_server_destroy(focus);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
-	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(marie);
 }
 
 void eject_from_3_participants_remote_conference(void) {
@@ -1442,10 +1467,10 @@ void eject_from_3_participants_remote_conference(void) {
 
 	eject_from_3_participants_conference(marie, pauline, laure, (LinphoneCoreManager *)focus);
 
-	linphone_core_manager_destroy(marie);
+	linphone_conference_server_destroy(focus);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
-	linphone_conference_server_destroy(focus);
+	linphone_core_manager_destroy(marie);
 }
 
 void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
@@ -1465,6 +1490,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 							,&pauline->stat.number_of_LinphoneCallIncomingReceived
 							,1));
 	pauline_called_by_laure=linphone_core_get_current_call(pauline->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_laure)) goto end;
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
@@ -1475,6 +1501,7 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 							,&pauline->stat.number_of_LinphoneCallIncomingReceived
 							,2));
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(pauline_called_by_marie)) goto end;
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 
 	linphone_call_decline(pauline_called_by_laure, LinphoneReasonDeclined);
@@ -1492,10 +1519,10 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,2));
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 2, int, "%d");
-
-	linphone_core_manager_destroy(marie);
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(marie);
 }
 
 void no_auto_answer_on_fake_call_with_replaces_header (void) {

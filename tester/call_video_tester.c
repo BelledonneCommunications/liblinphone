@@ -68,7 +68,8 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 
 	call_pauline = linphone_core_get_current_call(pauline->lc);
 	call_marie = linphone_core_get_current_call(marie->lc);
-
+	if (!BC_ASSERT_PTR_NOT_NULL(call_pauline)) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(call_marie)) goto end;
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	if (resume_in_audio_send_only_video_inactive_first) {
@@ -1214,6 +1215,7 @@ static void call_with_ice_video_and_rtt(void) {
 	BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
 
 	marie_call = linphone_core_get_current_call(marie->lc);
+	if(!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
 	BC_ASSERT_TRUE(linphone_call_params_audio_enabled(linphone_call_get_current_params(marie_call)));
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
 	BC_ASSERT_TRUE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(marie_call)));
@@ -1452,7 +1454,8 @@ static void video_early_media_call(void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline_to_marie = linphone_core_get_current_call(pauline->lc));
 	if(pauline_to_marie) {
 		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(pauline_to_marie, LinphoneStreamTypeVideo);
-		BC_ASSERT_EQUAL(vstream->source->desc->id, MS_MIRE_ID, int, "%d");
+		if(BC_ASSERT_PTR_NOT_NULL(vstream->source))
+		    BC_ASSERT_EQUAL(vstream->source->desc->id, MS_MIRE_ID, int, "%d");
 	}
 
 	end_call(pauline, marie);
@@ -1577,6 +1580,7 @@ static void audio_call_with_ice_with_video_policy_enabled(void){
 
 	linphone_core_invite_address(pauline->lc, marie->identity);
 	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallIncomingReceived, 1))) goto end;
+	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc))) goto end;
 	linphone_call_accept(linphone_core_get_current_call(marie->lc));
 	/*
 	LinphoneCallParams *params;
@@ -1688,6 +1692,7 @@ static void classic_video_entry_phone_setup(void) {
 	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionSendRecv);
 
 	callee_call = linphone_core_get_current_call(callee_mgr->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(callee_call)) goto end;
 	in_call_params = linphone_core_create_call_params(callee_mgr->lc, callee_call);
 	linphone_call_params_set_audio_direction(in_call_params, LinphoneMediaDirectionRecvOnly);
 	linphone_call_params_set_video_direction(in_call_params, LinphoneMediaDirectionSendOnly);
@@ -1699,6 +1704,7 @@ static void classic_video_entry_phone_setup(void) {
 	BC_ASSERT_TRUE(ok);
 	if (!ok) goto end;
 	callee_call = linphone_core_get_current_call(callee_mgr->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(callee_call)) goto end;
 	check_media_direction(callee_mgr, callee_call, lcs, LinphoneMediaDirectionRecvOnly, LinphoneMediaDirectionSendOnly);
 
 	end_call(caller_mgr, callee_mgr);
@@ -2088,6 +2094,7 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	if (callee_call && caller_call) {
 		LinphoneCallCbs *caller_cbs;
 		VideoStream *caller_stream;
+		const MSWebCam * camera;
 
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
 		BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
@@ -2101,7 +2108,9 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 		ms_filter_call_method(caller_stream->source, MS_FILTER_SET_FPS, &fps);
 
 		BC_ASSERT_TRUE(wait_for_until(caller->lc, callee->lc, &caller->stat.number_of_LinphoneCallCameraNotWorking, 1, 10000));
-		BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(video_stream_get_camera(caller_stream)), "Static picture");
+		camera = video_stream_get_camera(caller_stream);
+		if(BC_ASSERT_PTR_NOT_NULL(camera))
+		    BC_ASSERT_STRING_EQUAL(ms_web_cam_get_name(camera), "Static picture");
 	}
 	end_call(caller, callee);
 

@@ -308,7 +308,11 @@ LinphoneChatMessage *linphone_chat_room_get_last_message_in_history(LinphoneChat
 }
 
 LinphoneChatMessage *linphone_chat_room_find_message (LinphoneChatRoom *cr, const char *message_id) {
-	return linphone_chat_message_ref(L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id)));
+        auto cppPtr = L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id));
+        if(cppPtr)
+            return linphone_chat_message_ref(cppPtr);
+        else
+            return nullptr;
 }
 
 LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr) {

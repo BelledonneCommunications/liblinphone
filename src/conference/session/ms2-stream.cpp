@@ -940,7 +940,7 @@ void MS2Stream::dtlsEncryptionChanged(){
 }
 
 void MS2Stream::handleEvents () {
-	MediaStream *ms = getMediaStream();
+	MediaStream *ms = getMediaStream(), *newMs = ms;
 	if (ms) {
 		switch(ms->type){
 			case MSAudio:
@@ -977,7 +977,6 @@ void MS2Stream::handleEvents () {
 			} while (rtcp_next_packet(evd->packet));
 			rtcp_rewind(evd->packet);
 		}
-
 		if (ms)
 			linphone_call_stats_fill(mStats, ms, ev);
 		switch(evt){
@@ -995,6 +994,7 @@ void MS2Stream::handleEvents () {
 			case ORTP_EVENT_ICE_RESTART_NEEDED:
 				/* ICE events are notified directly to the IceService. */
 				getIceService().handleIceEvent(ev);
+				newMs = getMediaStream();// Ice can change the stream and free the old one. Ensure to have an existing stream.
 			break;
 		}
 		notifyStatsUpdated();
@@ -1002,6 +1002,10 @@ void MS2Stream::handleEvents () {
 		/* Let subclass handle the event.*/
 		handleEvent(ev);
 		ortp_event_destroy(ev);
+		if( newMs != ms){// Stream have been changed. Rehandle events with this one
+			handleEvents();
+			return;
+		}
 	}
 }
 

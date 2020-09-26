@@ -412,7 +412,8 @@ static void profile_call_base(bool_t avpf1
 		goto end;
 	}
 
-	BC_ASSERT_TRUE(call(marie, pauline));
+	if(!BC_ASSERT_TRUE(call(marie, pauline)))
+	    goto end;
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000); /*wait 1 second for streams to start flowing*/

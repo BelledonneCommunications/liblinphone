@@ -261,9 +261,11 @@ static LinphoneCoreManager* linphone_core_presence_manager_new(const char * name
 }
 static void linphone_core_presence_manager_destroy(LinphoneCoreManager *mgr) {
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(mgr->lc);
+	bool_t publish_enabled = proxy && linphone_proxy_config_publish_enabled(proxy);
 	int old_number_of_cleared = mgr->stat.number_of_LinphonePublishCleared;
 	linphone_core_manager_stop(mgr);
-	if (proxy && linphone_proxy_config_publish_enabled(proxy)) {
+	if( publish_enabled )
+	{
 		BC_ASSERT_TRUE(wait_for(mgr->lc,mgr->lc,&mgr->stat.number_of_LinphonePublishCleared,old_number_of_cleared+1));
 	}
 	linphone_core_manager_destroy(mgr);

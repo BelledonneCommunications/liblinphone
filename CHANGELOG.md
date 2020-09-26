@@ -26,6 +26,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Magic search bar not looking in all friends lists.
 - Error IMDN in LIME chat rooms not properly sent.
 - Chat message lost during attachment auto download if Core stopped during the process.
+- Windows tests.
 
 ## [4.4.0] 2020-06-16
     

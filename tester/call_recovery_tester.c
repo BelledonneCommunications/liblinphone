@@ -225,6 +225,7 @@ static void recovered_call_on_network_switch_during_reinvite_1(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 	outgoing_call = linphone_core_get_current_call(marie->lc);
+	if(!BC_ASSERT_PTR_NOT_NULL(outgoing_call)) goto end;
 	linphone_call_pause(outgoing_call);
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for(marie->lc, pauline->lc, &marie->stat.number_of_NetworkReachableFalse, 1);
@@ -269,11 +270,13 @@ static void recovered_call_on_network_switch_during_reinvite_2(void) {
 	if (!BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1))) goto end;
 
 	incoming_call = linphone_core_get_current_call(pauline->lc);
+	if(!BC_ASSERT_PTR_NOT_NULL(incoming_call)) goto end;
 	linphone_call_accept(incoming_call);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 
 	outgoing_call = linphone_core_get_current_call(marie->lc);
+	if(!BC_ASSERT_PTR_NOT_NULL(outgoing_call)) goto end;
 	params = linphone_core_create_call_params(marie->lc, outgoing_call);
 	linphone_call_params_enable_video(params, TRUE);
 	linphone_call_update(outgoing_call, params);
@@ -520,12 +523,14 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 
 	if (caller_pause) {
 		pauline_call = linphone_core_get_current_call(pauline->lc);
+		if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 		linphone_call_pause(pauline_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
 	} else if (callee_pause) {
 		marie_call = linphone_core_get_current_call(marie->lc);
+		if(!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
 		linphone_call_pause(marie_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 1));
@@ -777,7 +782,7 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Recovered call on network switch in early state 2", recovered_call_on_network_switch_in_early_state_2, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 3", recovered_call_on_network_switch_in_early_state_3, "CallRecovery"),
 	TEST_ONE_TAG("Recovered call on network switch in early state 4", recovered_call_on_network_switch_in_early_state_4, "CallRecovery"),
-#if 0 /*enable this test when library has support for it*/	
+#if 0 // enable this test when library has support for it
 	TEST_ONE_TAG("Recovered call on socket disconnection in early state", recovered_call_on_socket_disconnection_in_early_state, "CallRecovery"),
 #endif
 	TEST_ONE_TAG("Recovered call on network switch during re-invite 1", recovered_call_on_network_switch_during_reinvite_1, "CallRecovery"),
