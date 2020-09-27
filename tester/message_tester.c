@@ -807,7 +807,8 @@ static void transfer_message_with_download_io_error(void) {
 	transfer_message_base(FALSE, TRUE, FALSE, FALSE, FALSE, TRUE, -1, FALSE, FALSE);
 }
 
-static void transfer_message_upload_error(bool_t cancel) {
+
+static void transfer_message_upload_cancelled(void) {
 	if (transport_supported(LinphoneTransportTls)) {
 		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 		LinphoneChatRoom* chat_room;
@@ -825,14 +826,12 @@ static void transfer_message_upload_error(bool_t cancel) {
 
 		/*wait for file to be 25% uploaded and cancel the transfer */
 		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 60000));
-		if (cancel) {
-			linphone_chat_message_cancel_file_transfer(msg);
+		linphone_chat_message_cancel_file_transfer(msg);
 
-			BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered, 1));
 
-			BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
-			BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
-		}
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageNotDelivered, 1, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful, 0, int, "%d");
 
 		// When C pointer is unreffed first, callbacks will be removed, 
 		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody
@@ -843,12 +842,35 @@ static void transfer_message_upload_error(bool_t cancel) {
 	}
 }
 
-static void transfer_message_upload_cancelled(void) {
-	transfer_message_upload_error(TRUE);
-}
+static void transfer_message_upload_finished_during_stop(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneChatRoom* chat_room;
+		LinphoneChatMessage* msg;
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 
-static void transfer_message_upload_aborted(void) {
-	transfer_message_upload_error(FALSE);
+		/* Globally configure an http file transfer server. */
+		linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
+
+		/* create a chatroom on pauline's side */
+		chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+
+		msg = create_message_from_sintel_trailer(chat_room);
+		linphone_chat_message_send(msg);
+
+		/*wait for file to be 25% uploaded and cancel the transfer */
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.progress_of_LinphoneFileTransfer, 25, 30000));
+		
+		linphone_core_stop_async(pauline->lc);
+		
+		BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived, 1, 60000));
+		// When C pointer is unreffed first, callbacks will be removed, 
+		// potentially during file upload causing issue in FileTransferChatMessageModifier::onSendBody
+		// while the CPP shared ptr is still held by the chat room...
+		linphone_chat_message_unref(msg);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
 }
 
 static void transfer_message_download_cancelled(void) {
@@ -1016,14 +1038,17 @@ static void file_transfer_2_messages_simultaneously(void) {
 		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {
 			linphone_chat_message_send(msg);
 			linphone_chat_message_send(msg2);
-			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 1, 60000))) {
-				LinphoneChatMessage *recvMsg = linphone_chat_message_ref(marie->stat.last_received_chat_message);
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000));
-				LinphoneChatMessage *recvMsg2 = marie->stat.last_received_chat_message;
-				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 1, unsigned int, "%u");
-				if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) != 1) {
-					char * buf = ms_strdup_printf("Found %d rooms instead of 1: ", (int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)));
-					const bctbx_list_t *it = linphone_core_get_chat_rooms(marie->lc);
+			if (BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceivedWithFile, 2, 60000))) {
+				LinphoneChatMessage *recvMsg;
+				LinphoneChatMessage *recvMsg2;
+				bctbx_list_t *history;
+				const bctbx_list_t *chatrooms = linphone_core_get_chat_rooms(marie->lc);
+				LinphoneChatRoom *cr;
+				
+				BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(chatrooms), 1, unsigned int, "%u");
+				if (bctbx_list_size(chatrooms) != 1) {
+					char * buf = ms_strdup_printf("Found %d rooms instead of 1: ", (int)bctbx_list_size(chatrooms));
+					const bctbx_list_t *it = chatrooms;
 					while (it) {
 						const LinphoneAddress * peer = linphone_chat_room_get_peer_address(it->data);
 						buf = ms_strcat_printf(buf, "%s, ", linphone_address_get_username(peer));
@@ -1032,33 +1057,41 @@ static void file_transfer_2_messages_simultaneously(void) {
 					ms_error("%s", buf);
 					ms_free(buf);
 				}
+				
+				cr = chatrooms ? (LinphoneChatRoom*) chatrooms->data : NULL;
+				if (BC_ASSERT_PTR_NOT_NULL(cr)){
+					history = linphone_chat_room_get_history(cr, -1);
+					BC_ASSERT_TRUE(bctbx_list_size(history) == 2);
+					recvMsg = (LinphoneChatMessage*)history->data;
+					recvMsg2 = (LinphoneChatMessage*)history->next->data;
 
-				LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
-				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-				linphone_chat_message_add_callbacks(recvMsg, cbs);
-				linphone_chat_message_cbs_unref(cbs);
-				linphone_chat_message_download_file(recvMsg);
+					LinphoneChatMessageCbs *cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+					linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+					linphone_chat_message_add_callbacks(recvMsg, cbs);
+					linphone_chat_message_cbs_unref(cbs);
+					linphone_chat_message_download_file(recvMsg);
 
-				cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
-				linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-				linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-				linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
-				linphone_chat_message_add_callbacks(recvMsg2, cbs);
-				linphone_chat_message_cbs_unref(cbs);
-				linphone_chat_message_download_file(recvMsg2);
+					cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
+					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+					linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
+					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+					linphone_chat_message_add_callbacks(recvMsg2, cbs);
+					linphone_chat_message_cbs_unref(cbs);
+					linphone_chat_message_download_file(recvMsg2);
 
-				BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,50000));
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,2,50000));
 
-				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
-				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 2, int, "%d");
-				BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 2, int, "%d");
-				compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(recvMsg));
-				remove(linphone_chat_message_get_file_transfer_filepath(recvMsg));
-				remove(linphone_chat_message_get_file_transfer_filepath(recvMsg2));
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferInProgress, 2, int, "%d");
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 2, int, "%d");
+					BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 2, int, "%d");
+					compare_files(send_filepath, linphone_chat_message_get_file_transfer_filepath(recvMsg));
+					remove(linphone_chat_message_get_file_transfer_filepath(recvMsg));
+					remove(linphone_chat_message_get_file_transfer_filepath(recvMsg2));
 
-				linphone_chat_message_unref(recvMsg);
+					bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+				}
 			}
 		}
 		linphone_chat_message_unref(msg);
@@ -1332,6 +1365,7 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
 	composing_addresses = linphone_chat_room_get_composing_addresses(marie_chat_room);
 	BC_ASSERT_EQUAL(bctbx_list_size(composing_addresses), 0, int, "%i");
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 3));
 
 end:
 	linphone_core_manager_destroy(marie);
@@ -3142,7 +3176,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message with upload io error", transfer_message_with_upload_io_error),
 	TEST_NO_TAG("Transfer message with download io error", transfer_message_with_download_io_error),
 	TEST_NO_TAG("Transfer message upload cancelled", transfer_message_upload_cancelled),
-	TEST_NO_TAG("Transfer message upload aborted", transfer_message_upload_aborted),
+	TEST_NO_TAG("Transfer message upload finished during stop", transfer_message_upload_finished_during_stop),
 	TEST_NO_TAG("Transfer message download cancelled", transfer_message_download_cancelled),
 	TEST_NO_TAG("Transfer message auto download aborted", transfer_message_auto_download_aborted),
 	TEST_NO_TAG("Transfer message core stopped async 1", transfer_message_core_stopped_async_1),
