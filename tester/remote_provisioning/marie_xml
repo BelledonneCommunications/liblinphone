@@ -30,6 +30,9 @@
     <entry name="pol">accept</entry>
     <entry name="subscribe">0</entry>
   </section>
+  <section name="net">
+    <entry name="friendlist_subscription_enabled" overwrite="true">0</entry>
+  </section>
   <section name="rtp">
     <entry name="audio_rtp_port">8070</entry>
     <entry name="video_rtp_port">9072</entry>
