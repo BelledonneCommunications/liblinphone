@@ -136,7 +136,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 }
 
 bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
 	if (p) {
 		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 		if (remoteContact) {
@@ -158,10 +158,10 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 	return false;
 }
 
-int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(session);
 	if (p) {
-		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
+		const Address * remoteContact = static_pointer_cast<MediaSession>(session)->getRemoteContactAddress();
 		if (remoteContact) {
 			std::shared_ptr<ParticipantDevice> device = p->findDevice(*remoteContact);
 			// If device is not found, then add it
@@ -179,7 +179,10 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
-				call->removeFromConference(*remoteContact);
+				shared_ptr<Call> call = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+				if (call) {
+					call->removeFromConference(*remoteContact);
+				}
 
 				time_t creationTime = time(nullptr);
 				notifyParticipantDeviceRemoved(creationTime, false, p, device);
@@ -193,8 +196,8 @@ int Conference::removeParticipantDevice(std::shared_ptr<LinphonePrivate::Call> c
 }
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
-	removeParticipantDevice(call);
+	removeParticipantDevice(call->getActiveSession());
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
 	if (!p)
 		return -1;
 	if (p->getDevices().empty()) {
@@ -284,9 +287,9 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	LinphonePrivate::Conference::notifyStateChanged(state);
 }
 
-std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::Call> call) const {
+std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session) const {
 	for (const auto &participant : getParticipants()) {
-		if (participant->getSession() == call->getActiveSession())
+		if (participant->getSession() == session)
 			return participant;
 	}
 
@@ -985,7 +988,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 }
 
 int RemoteConference::removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
 	if (p) {
 		return removeParticipant(p);
 	}
