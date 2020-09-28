@@ -3980,91 +3980,6 @@ static void unsucessfull_call_with_transport_change_after_released(void) {
 	call_with_transport_change_base(FALSE);
 }
 
-#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
-static void completion_cb(void *user_data, int percentage){
-	fprintf(stdout,"%i %% completed\r",percentage);
-	fflush(stdout);
-}
-#endif
-
-static void simple_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo) {
-	LinphoneCoreManager* marie;
-	LinphoneCoreManager* pauline;
-	PayloadType *pt;
-	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
-	char *recordpath = bc_tester_file("stereo-record.wav");
-	bool_t audio_cmp_failed = FALSE;
-
-	unlink(recordpath);
-
-	marie = linphone_core_manager_new( "marie_rc");
-	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-
-	/*make sure we have opus*/
-	pt = linphone_core_find_payload_type(marie->lc, codec_name, clock_rate, 2);
-	if (!pt) {
-		ms_warning("%s not available, stereo with %s not tested.",codec_name, codec_name);
-		goto end;
-	}
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, pt, bitrate_override);
-	pt = linphone_core_find_payload_type(pauline->lc, codec_name, clock_rate, 2);
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, pt, bitrate_override);
-
-	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
-	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
-
-	linphone_core_set_use_files(marie->lc, TRUE);
-	linphone_core_set_play_file(marie->lc, stereo_file);
-	linphone_core_set_use_files(pauline->lc, TRUE);
-	linphone_core_set_record_file(pauline->lc, recordpath);
-
-	/*stereo is supported only without volume control, echo canceller...*/
-	linphone_config_set_string(linphone_core_get_config(marie->lc),"sound","features","REMOTE_PLAYING");
-	linphone_config_set_string(linphone_core_get_config(pauline->lc),"sound","features","REMOTE_PLAYING");
-
-	if (!BC_ASSERT_TRUE(call(pauline,marie))) goto end;
-	wait_for_until(marie->lc, pauline->lc, NULL, 0, 6000);
-	end_call(pauline, marie);
-
-
-	if (clock_rate!=48000) {
-		ms_warning("Similarity checking not implemented for files not having the same sampling rate");
-	}else{
-#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
-		double similar;
-		double min_threshold = .75f; /*should be above 0.8 in best conditions*/
-		double max_threshold = 1.f;
-		if (!stereo){
-			/*when opus doesn't transmit stereo, the cross correlation is around 0.6 : as expected, it is not as good as in full stereo mode*/
-			min_threshold = .4f;
-			max_threshold = .68f;
-		}
-		BC_ASSERT_EQUAL(ms_audio_diff(stereo_file, recordpath,&similar,&audio_cmp_params,completion_cb,NULL), 0, int, "%d");
-		BC_ASSERT_GREATER(similar, min_threshold, double, "%g");
-		BC_ASSERT_LOWER(similar, max_threshold, double, "%g");
-		if (similar<min_threshold || similar>max_threshold){
-			audio_cmp_failed = TRUE;
-		}
-#endif
-	}
-	if (!audio_cmp_failed) unlink(recordpath);
-end:
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-	ms_free(stereo_file);
-	bc_free(recordpath);
-}
-
-static void simple_stereo_call_l16(void){
-	simple_stereo_call("L16", 44100, 0, TRUE);
-}
-
-static void simple_stereo_call_opus(void){
-	simple_stereo_call("opus", 48000, 150, TRUE);
-}
-
 static void call_with_complex_late_offering(void){
 	LinphoneCallParams *params;
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -4180,10 +4095,6 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
-static void simple_mono_call_opus(void){
-	/*actually a call where input/output is made with stereo but opus transmits everything as mono*/
-	simple_stereo_call("opus", 48000, 150, FALSE);
-}
 
 /* because SIP ALG (like in android phones) crash when seing a domain name in SDP, we prefer using SIP/TLS for both participants*/
 static void call_with_fqdn_in_sdp(void) {
@@ -5254,9 +5165,6 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call with generic CN", call_with_generic_cn),
 	TEST_NO_TAG("Call with transport change after released", call_with_transport_change_after_released),
 	TEST_NO_TAG("Unsuccessful call with transport change after released", unsucessfull_call_with_transport_change_after_released),
-	TEST_NO_TAG("Simple stereo call with L16", simple_stereo_call_l16),
-	TEST_NO_TAG("Simple stereo call with opus", simple_stereo_call_opus),
-	TEST_NO_TAG("Simple mono call with opus", simple_mono_call_opus),
 	TEST_NO_TAG("Call with FQDN in SDP", call_with_fqdn_in_sdp),
 	TEST_NO_TAG("Call with RTP IO mode", call_with_rtp_io_mode),
 	TEST_NO_TAG("Call with generic NACK RTCP feedback", call_with_generic_nack_rtcp_feedback),
