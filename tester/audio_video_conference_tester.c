@@ -184,11 +184,11 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 			 * Pauline and Marie communicate directly through a normal Call.
 			 */
 			stats marie_stat=marie->stat;
-			stats pauline_stat=pauline->stat;
-			linphone_core_pause_call(marie->lc, marie_call_pauline);
+			stats laure_stat=laure->stat;
+			linphone_core_pause_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausing, marie_stat.number_of_LinphoneCallPausing+1,10000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPaused, marie_stat.number_of_LinphoneCallPaused+1,10000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallPausedByRemote, pauline_stat.number_of_LinphoneCallPausedByRemote+1,10000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausedByRemote, laure_stat.number_of_LinphoneCallPausedByRemote+1,10000));
 			remove_participant_from_local_conference(lcs, marie, laure);
 			linphone_core_terminate_call(marie->lc, marie_call_laure);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,is_remote_conf?2:1,10000));
