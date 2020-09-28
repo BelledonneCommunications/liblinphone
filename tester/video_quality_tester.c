@@ -646,7 +646,7 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 		BC_ASSERT_TRUE( wait_for(marie->lc,pauline->lc,&marie->stat.number_of_IframeDecoded,1));
 		wait_for_until(pauline->lc, marie->lc, NULL, 0, 14000);
 		ms_message("Number of generic NACK received by Marie: %i", marie->stat.number_of_rtcp_generic_nack);
-		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 50, int, "%d");
+		BC_ASSERT_LOWER(marie->stat.number_of_rtcp_generic_nack, 55, int, "%d");
 	}
 	end_call(pauline, marie);
 
