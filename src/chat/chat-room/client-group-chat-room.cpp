@@ -571,7 +571,7 @@ bool ClientGroupChatRoom::addParticipants (
 
 void ClientGroupChatRoom::sendInvite (std::shared_ptr<CallSession> &session, const list<IdentityAddress> & addressList) {
 		Content content;
-		content.setBody(getConference()->getResourceLists(addressList));
+		content.setBodyFromUtf8(getConference()->getResourceLists(addressList));
 		content.setContentType(ContentType::ResourceLists);
 		content.setContentDisposition(ContentDisposition::RecipientList);
 		if (linphone_core_content_encoding_supported(getCore()->getCCore(), "deflate")) {
