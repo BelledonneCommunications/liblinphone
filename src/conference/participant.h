@@ -87,6 +87,7 @@ public:
 
 	const IdentityAddress &getAddress () const;
 	AbstractChatRoom::SecurityLevel getSecurityLevel () const;
+	AbstractChatRoom::SecurityLevel getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const;
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
 	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu) const;

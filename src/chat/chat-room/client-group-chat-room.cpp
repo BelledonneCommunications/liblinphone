@@ -405,6 +405,10 @@ ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () co
 }
 
 ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
+	return getSecurityLevelExcept(nullptr);
+}
+
+ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
 	L_D();
 	if (!(d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted)) {
 		return AbstractChatRoom::SecurityLevel::ClearText;
@@ -419,7 +423,7 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 	bool isSafe = true;
 	// check other participants
 	for (const auto &participant : getParticipants()) {
-		auto level = participant->getSecurityLevel();
+		auto level = participant->getSecurityLevelExcept(ignoredDevice);
 		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe participant
 		// while we also have a ClearText one
 		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
@@ -442,17 +446,19 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevel () const {
 	// check self other devices
 	for (const auto &selfDevice : getMe()->getDevices()) {
 		if (selfDevice->getAddress() != getLocalAddress()) { // ignore local device
-			auto level = selfDevice->getSecurityLevel();
-			switch (level) {
-				case AbstractChatRoom::SecurityLevel::Unsafe:
-					return level; // if one device is Unsafe the whole participant is Unsafe
-				case AbstractChatRoom::SecurityLevel::ClearText:
-					return level; // if one device is ClearText the whole participant is ClearText
-				case AbstractChatRoom::SecurityLevel::Encrypted:
-					isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-					break;
-				case AbstractChatRoom::SecurityLevel::Safe:
-					break; // if all devices are Safe the whole participant is Safe
+			if (ignoredDevice != selfDevice) {
+				auto level = selfDevice->getSecurityLevel();
+				switch (level) {
+					case AbstractChatRoom::SecurityLevel::Unsafe:
+						return level; // if one device is Unsafe the whole participant is Unsafe
+					case AbstractChatRoom::SecurityLevel::ClearText:
+						return level; // if one device is ClearText the whole participant is ClearText
+					case AbstractChatRoom::SecurityLevel::Encrypted:
+						isSafe = false; // if one device is Encrypted the whole participant is Encrypted
+						break;
+					case AbstractChatRoom::SecurityLevel::Safe:
+						break; // if all devices are Safe the whole participant is Safe
+				}
 			}
 		}
 	}
@@ -862,7 +868,7 @@ void ClientGroupChatRoom::onParticipantDeviceAdded (const shared_ptr<ConferenceP
 
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine) {
-		ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevel();
+		ChatRoom::SecurityLevel currentSecurityLevel = getSecurityLevelExcept(device);
 		securityEvent = encryptionEngine->onDeviceAdded(event->getDeviceAddress(), participant, getSharedFromThis(), currentSecurityLevel);
 	}
 
