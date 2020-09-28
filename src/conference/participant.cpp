@@ -119,24 +119,30 @@ const IdentityAddress& Participant::getAddress () const {
 	return addr;
 }
 
-AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
+AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
+	return getSecurityLevelExcept(nullptr);
+}
+
+AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
 	bool isSafe = true;
 	for (const auto &device : getDevices()) {
-		auto level = device->getSecurityLevel();
-		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
-		// while we also have a ClearText one
-		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
-		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
-		switch (level) {
-			case AbstractChatRoom::SecurityLevel::Unsafe:
-				return level; // if one device is Unsafe the whole participant is Unsafe
-			case AbstractChatRoom::SecurityLevel::ClearText:
-				return level; // if one device is ClearText the whole participant is ClearText
-			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-				break;
-			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all devices are Safe the whole participant is Safe
+		if (ignoredDevice != device) {
+			auto level = device->getSecurityLevel();
+			// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
+			// while we also have a ClearText one
+			// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
+			// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
+			switch (level) {
+				case AbstractChatRoom::SecurityLevel::Unsafe:
+					return level; // if one device is Unsafe the whole participant is Unsafe
+				case AbstractChatRoom::SecurityLevel::ClearText:
+					return level; // if one device is ClearText the whole participant is ClearText
+				case AbstractChatRoom::SecurityLevel::Encrypted:
+					isSafe = false; // if one device is Encrypted the whole participant is Encrypted
+					break;
+				case AbstractChatRoom::SecurityLevel::Safe:
+					break; // if all devices are Safe the whole participant is Safe
+			}
 		}
 	}
 	if (isSafe)
