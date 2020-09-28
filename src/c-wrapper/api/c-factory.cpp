@@ -17,44 +17,11 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "linphone/factory.h"
-#include "factory/factory.h"
-
-// pour call par exemple le .h est dans le même dossier
-// que  faire ici ?
 #include "linphone/api/c-factory.h"
-
+#include "factory/factory.h"
 #include "c-wrapper/c-wrapper.h"
 
-#include "address/address-p.h"
-#include "core/paths/paths.h"
-#include "bctoolbox/vfs_encrypted.hh"
-#include "bctoolbox/crypto.h"
-#include "sqlite3_bctbx_vfs.h"
-
-// TODO: From coreapi. Remove me later.
-#include "private.h"
-
-#ifndef PACKAGE_SOUND_DIR
-	#define PACKAGE_SOUND_DIR "."
-#endif
-#ifndef PACKAGE_RING_DIR
-	#define PACKAGE_RING_DIR "."
-#endif
-
-#ifndef PACKAGE_DATA_DIR
-	#define PACKAGE_DATA_DIR "."
-#endif
-
 using namespace LinphonePrivate;
-
-/*BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
-BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
-	linphone_factory_uninit, // destroy
-	NULL, // clone
-	NULL, // Marshall
-	FALSE
-);*/
 
 LinphoneFactory *linphone_factory_get(void) {
   return Factory::get().get()->toC();

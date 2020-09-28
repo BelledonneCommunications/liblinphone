@@ -22,47 +22,16 @@
 
 #include <belle-sip/object++.hh>
 #include "linphone/api/c-types.h"
-
-#include "linphone/factory.h"
-
 #include "c-wrapper/c-wrapper.h"
-
-#include "address/address-p.h"
-#include "core/paths/paths.h"
-#include "bctoolbox/vfs_encrypted.hh"
-#include "bctoolbox/crypto.h"
-#include "sqlite3_bctbx_vfs.h"
 
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
-#ifndef PACKAGE_SOUND_DIR
-  #define PACKAGE_SOUND_DIR "."
-#endif
-#ifndef PACKAGE_RING_DIR
-  #define PACKAGE_RING_DIR "."
-#endif
-
-#ifndef PACKAGE_DATA_DIR
-  #define PACKAGE_DATA_DIR "."
-#endif
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Factory : public bellesip::HybridObject<LinphoneFactory, Factory> {
 public:
-
-  //BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneFactory);
-  /*BELLE_SIP_INSTANCIATE_VPTR(LinphoneFactory, belle_sip_object_t,
-  	linphone_factory_uninit, // destroy
-  	NULL, // clone
-  	NULL, // Marshall
-  	FALSE
-  );*/
-
-  //static LinphoneFactory *_factory = NULL;
-
-  //static void _linphone_factory_destroying_cb(void);
 
   Factory ();
   ~Factory ();
@@ -175,11 +144,11 @@ public:
 
   LinphoneVideoDefinition * findSupportedVideoDefinitionByName(const char *name) const;
 
-  const std::string getTopResourcesDir() const;
+  const std::string & getTopResourcesDir() const;
 
   void setTopResourcesDir(const char *path);
 
-  const std::string getDataResourcesDir();
+  const std::string & getDataResourcesDir();
 
   void setDataResourcesDir(const char *path);
 
@@ -191,11 +160,11 @@ public:
 
   void setRingResourcesDir(const char *path);
 
-  const std::string getImageResourcesDir();
+  const std::string & getImageResourcesDir();
 
   void setImageResourcesDir(const char *path);
 
-  const std::string getMspluginsDir() const;
+  const std::string & getMspluginsDir() const;
 
   void setMspluginsDir(const char *path);
 
@@ -251,11 +220,11 @@ public:
 
   bool_t isImdnAvailable() const;
 
-  const std::string getConfigDir(void *context);
+  const std::string & getConfigDir(void *context);
 
-  const std::string getDataDir(void *context);
+  const std::string & getDataDir(void *context);
 
-  const std::string getDownloadDir(void *context);
+  const std::string & getDownloadDir(void *context);
 
   void setVfsEncryption(const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize);
 
