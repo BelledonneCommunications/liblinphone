@@ -1951,6 +1951,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 
 	// Create second device for Pauline
 	pauline2 = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	set_lime_curve(curveId,pauline2);
 	stats initialPauline2Stats = pauline2->stat;
 	bctbx_list_t *newCoresManagerList = bctbx_list_append(NULL, pauline2);
 	bctbx_list_t *newCoresList = init_core_for_conference(newCoresManagerList);
@@ -2373,7 +2374,7 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, 0);
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, pauline, &initialLaureStats, confAddr, initialSubject, 2, 0);
+	LinphoneChatRoom *laureCr = check_creation_chat_room_client_side(coresList, laure, &initialLaureStats, confAddr, initialSubject, 2, 0);
 
 	// Marie sends the message
 	const char *marieMessage1 = "Hey !";
@@ -2452,7 +2453,7 @@ end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-// 	linphone_core_manager_delete_chat_room(laure, laureCr, coresList); // TODO crash in c-wrapper because Cpp Object is null
+	linphone_core_manager_delete_chat_room(laure, laureCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
