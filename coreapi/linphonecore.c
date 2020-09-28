@@ -2291,14 +2291,25 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 	linphone_core_notify_configuring_status(lc, state, message);
 
 	if (state == LinphoneConfiguringSuccessful) {
-		if (linphone_core_is_provisioning_transient(lc) == TRUE)
+		if (linphone_core_is_provisioning_transient(lc)) {
 			linphone_core_set_provisioning_uri(lc, NULL);
+		}
+
 		_linphone_core_read_config(lc);
+
+		// Update existing friend list subscribe state after remote provisioning, otherwise change won't be applied until next core creation.
+		bool_t enable_subscribe = !!linphone_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
+		for (const bctbx_list_t *it = linphone_core_get_friends_lists(lc); it; it = bctbx_list_next(it)) {
+			LinphoneFriendList *list = static_cast<LinphoneFriendList *>(bctbx_list_get_data(it));
+			linphone_friend_list_enable_subscriptions(list, enable_subscribe);
+		}
 	}
+
 	if (lc->provisioning_http_listener){
 		belle_sip_object_unref(lc->provisioning_http_listener);
 		lc->provisioning_http_listener = NULL;
 	}
+
 	_linphone_core_apply_transports(lc); // This will create SIP sockets.
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 	linphone_core_set_state(lc, LinphoneGlobalOn, "On");
