@@ -108,8 +108,6 @@ void CorePrivate::init () {
 			loadChatRooms();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
-
-	isFriendListSubscriptionEnabled = !!linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -242,6 +240,7 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 }
 
 void CorePrivate::notifyEnteringBackground () {
+	L_Q();
 	if (isInBackground)
 		return;
 
@@ -250,11 +249,10 @@ void CorePrivate::notifyEnteringBackground () {
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
 
-	if (isFriendListSubscriptionEnabled)
+	if (q->isFriendListSubscriptionEnabled())
 		enableFriendListsSubscription(false);
 
 #if TARGET_OS_IPHONE
-	L_Q();
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	// Stop the video preview
 	linphone_core_enable_video_preview(lc, FALSE);
@@ -280,7 +278,7 @@ void CorePrivate::notifyEnteringForeground () {
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
 
-	if (isFriendListSubscriptionEnabled)
+	if (q->isFriendListSubscriptionEnabled())
 		enableFriendListsSubscription(true);
 
 #if TARGET_OS_IPHONE
@@ -640,16 +638,12 @@ std::string Core::getSpecs() const {
 
 void Core::enableFriendListSubscription (bool enable) {
 	L_D();
-	if (d->isFriendListSubscriptionEnabled != enable) {
-		d->isFriendListSubscriptionEnabled = enable;
-		linphone_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
-	}
+	linphone_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
 	d->enableFriendListsSubscription(enable);
 }
 
 bool Core::isFriendListSubscriptionEnabled () const {
-	L_D();
-	return d->isFriendListSubscriptionEnabled;
+	return !!linphone_config_get_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", 1);
 }
 
 // ---------------------------------------------------------------------------
