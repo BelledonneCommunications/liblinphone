@@ -597,13 +597,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
 				currentParams->getPrivate()->setInConference(FALSE);
 				ms_message("Updating call to notify of conference removal.");
-				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateToInitiateRemovalFromConference(currentParams);
+				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateFromConference(currentParams);
 			} else {
 				/* Kick the session out of the conference by moving to the Paused state. */
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 						L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
 
-				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseToInitiateRemovalFromConference();
+				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseFromConference();
 			}
 		}
 	}
@@ -637,13 +637,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
 				currentParams->getPrivate()->setInConference(FALSE);
 				ms_message("Updating call to notify of conference removal.");
-				err = session->updateToInitiateRemovalFromConference(currentParams);
+				err = session->updateFromConference(currentParams);
 			} else {
 				// If the local participant is not in, the call is paused as the local participant is busy
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 						L_GET_PRIVATE(params))->setInConference(false);
 
-				err = session->pauseToInitiateRemovalFromConference();
+				err = session->pauseFromConference();
 			}
 
 			setState(ConferenceInterface::State::TerminationPending);
@@ -682,11 +682,6 @@ bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::P
 	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
 	if (!callSession)
 		return false;
-	// Delete all devices of a participant
-	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
-		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
-	}
 	return (bool)removeParticipant(callSession);
 }
 
