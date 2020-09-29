@@ -1058,7 +1058,7 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 
 	int participantSize = confListener->participants.size();
 
-	conf->removeParticipant(Call::toCpp(confCall)->getSharedFromThis());
+	conf->removeParticipant(Call::toCpp(confCall)->getSharedFromThis()->getActiveSession());
 	// Remove participant from list of managers
 	*participants_mgrs = bctbx_list_remove(*participants_mgrs, participant_mgr);
 	*removed_mgrs = bctbx_list_append(*removed_mgrs, participant_mgr);
