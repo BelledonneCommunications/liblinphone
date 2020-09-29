@@ -165,4 +165,8 @@ time_t Participant::getCreationTime () const {
 	return creationTime;
 }
 
+bool Participant::getPreserveSession () const {
+	return preserveSession;
+}
+
 LINPHONE_END_NAMESPACE
