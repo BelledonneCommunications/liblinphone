@@ -427,11 +427,13 @@ static void dependent_proxy_dependency_with_core_reloaded(void){
 	linphone_proxy_config_set_server_addr(marie_dependent_cfg, "sip:external.example.org:5068;transport=tcp");
 	linphone_proxy_config_set_route(marie_dependent_cfg, "sip:external.example.org:5068;transport=tcp");
 	linphone_proxy_config_enable_register(marie_dependent_cfg, TRUE);
+	linphone_address_unref(marie_secondary_address);
 	
 	marie_cfg = linphone_core_create_proxy_config(marie->lc);
 	linphone_proxy_config_set_identity_address(marie_cfg, marie_master_address);
 	linphone_proxy_config_set_server_addr(marie_cfg, "sip:sipopen.example.org;transport=tls");
 	linphone_proxy_config_enable_register(marie_cfg, TRUE);
+	linphone_address_unref(marie_master_address);
 
 	/* Now add them to the core: */
 	linphone_core_add_proxy_config(marie->lc, marie_dependent_cfg);
@@ -448,6 +450,9 @@ static void dependent_proxy_dependency_with_core_reloaded(void){
 
 	const LinphoneAddress *marie_cfg_contact = linphone_proxy_config_get_contact(marie_cfg);
 	const LinphoneAddress *marie_dependent_cfg_contact = linphone_proxy_config_get_contact(marie_dependent_cfg);
+
+	linphone_proxy_config_unref(marie_cfg);
+	linphone_proxy_config_unref(marie_dependent_cfg);
 
 	BC_ASSERT_TRUE(linphone_proxy_config_address_equal(marie_cfg_contact, marie_dependent_cfg_contact) == LinphoneProxyConfigAddressEqual);
 
@@ -590,7 +595,9 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	}
 
 	// Third: allow push notification on proxy config
+	linphone_proxy_config_edit(marie_cfg);
 	linphone_proxy_config_set_push_notification_allowed(marie_cfg, TRUE);
+	linphone_proxy_config_done(marie_cfg);
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(uriParams);
@@ -615,7 +622,9 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	}
 
 	if (both_push) {
+		linphone_proxy_config_edit(marie_cfg_2);
 		linphone_proxy_config_set_push_notification_allowed(marie_cfg_2, TRUE);
+		linphone_proxy_config_done(marie_cfg_2);
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 		BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
 		proxy_config_count++;
@@ -628,9 +637,13 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	}
 
 	// Fourth: disallow push notification on proxy config
+	linphone_proxy_config_edit(marie_cfg);
 	linphone_proxy_config_set_push_notification_allowed(marie_cfg, FALSE);
+	linphone_proxy_config_done(marie_cfg);
 	if (both_push) {
+		linphone_proxy_config_edit(marie_cfg_2);
 		linphone_proxy_config_set_push_notification_allowed(marie_cfg_2, FALSE);
+		linphone_proxy_config_done(marie_cfg_2);
 		proxy_config_count++;
 	}
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
@@ -947,7 +960,7 @@ test_t proxy_config_tests[] = {
 	TEST_NO_TAG("Dependent proxy dependency register", proxy_config_dependent_register),
 	TEST_NO_TAG("Dependent proxy state changed", proxy_config_dependent_register_state_changed),
 	TEST_NO_TAG("Dependent proxy dependency removal", dependent_proxy_dependency_removal),
-	TEST_ONE_TAG("Dependent proxy dependency with core reloaded", dependent_proxy_dependency_with_core_reloaded, "LeaksMemory"),
+	TEST_NO_TAG("Dependent proxy dependency with core reloaded", dependent_proxy_dependency_with_core_reloaded),
 	TEST_ONE_TAG("Push notification params", proxy_config_push_notification_params, "Push Notification"),
 	TEST_ONE_TAG("Push notification params 2", proxy_config_push_notification_params_2, "Push Notification"),
 	TEST_ONE_TAG("Push notification params 3", proxy_config_push_notification_params_3, "Push Notification"),
