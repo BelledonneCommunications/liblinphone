@@ -727,14 +727,15 @@ void LocalConference::subscriptionStateChanged (LinphoneEvent *event, LinphoneSu
 
 int LocalConference::terminate () {
 	setState(ConferenceInterface::State::TerminationPending);
-	/*FIXME: very inefficient server side because it iterates on the global call list. */
-	list<shared_ptr<LinphonePrivate::Call>> calls = getCore()->getCalls();
-	for (auto & call : calls) {
-		if (linphone_call_get_conference(call->toC()) == toC()) {
-			call->terminate();
+	for (auto participant : participants){
+		for (const auto & device : participant->getDevices()) {
+			std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(device->getSession());
+			if (session) {
+				lInfo() << "Terminating session of participant " << *participant;
+				session->terminate();
+			}
 		}
 	}
-
 	return 0;
 }
 
