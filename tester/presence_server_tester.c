@@ -617,6 +617,46 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void subscribe_presence_disabled(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_create("marie_rc");
+
+	LinphoneFriendList *list = linphone_core_get_friend_list_by_name(marie->lc, "_default");
+	const char *rls_uri = "sip:rls@sip.example.org";
+	linphone_friend_list_set_rls_uri(list, rls_uri);
+
+	LinphoneFriend *lf = linphone_core_create_friend(marie->lc);
+	LinphoneAddress *addr = linphone_core_interpret_url(marie->lc, "sip:pauline@sip.example.org");
+
+	linphone_friend_set_address(lf, addr);
+	linphone_friend_enable_subscribes(lf, TRUE);
+	linphone_friend_list_add_friend(list, lf);
+	linphone_friend_unref(lf);
+	linphone_address_unref(addr);
+
+	BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(list));
+	BC_ASSERT_TRUE(linphone_core_is_friend_list_subscription_enabled(marie->lc));
+	linphone_core_enable_friend_list_subscription(marie->lc, FALSE);
+	BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(list));
+	BC_ASSERT_FALSE(linphone_core_is_friend_list_subscription_enabled(marie->lc));
+
+	linphone_core_manager_start(marie, TRUE);
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(list));
+	BC_ASSERT_FALSE(linphone_core_is_friend_list_subscription_enabled(marie->lc));
+
+	linphone_core_enter_background(marie->lc);
+	wait_for_until(marie->lc, NULL, NULL, 0, 5000);
+	linphone_core_enter_foreground(marie->lc);
+
+	BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(list));
+	BC_ASSERT_FALSE(linphone_core_is_friend_list_subscription_enabled(marie->lc));
+
+	wait_for_until(marie->lc, NULL, &marie->stat.number_of_NotifyPresenceReceivedForUriOrTel, 1, 5000);
+	BC_ASSERT_EQUAL(marie->stat.number_of_NotifyPresenceReceivedForUriOrTel, 0, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+}
+
 static void test_presence_list(void) {
 	test_presence_list_base(TRUE);
 }
@@ -2263,6 +2303,7 @@ test_t presence_server_tests[] = {
 	TEST_NO_TAG("Simple", simple),
 	TEST_NO_TAG("Fast activity change", fast_activity_change),
 	TEST_NO_TAG("Forked subscribe with late publish", test_forked_subscribe_notify_publish),
+	TEST_NO_TAG("Disabled presence", subscribe_presence_disabled),
 	TEST_NO_TAG("Presence list", test_presence_list),
 	TEST_NO_TAG("Presence list without compression", test_presence_list_without_compression),
 	TEST_NO_TAG("Presence list, subscription expiration for unknown contact",test_presence_list_subscription_expire_for_unknown),
@@ -2290,7 +2331,7 @@ test_t presence_server_tests[] = {
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities", notify_friend_capabilities, "capabilities"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities after PUBLISH", notify_friend_capabilities_after_publish, "capabilities"),
 	TEST_ONE_TAG("Notify LinphoneFriend capabilities with alias", notify_friend_capabilities_with_alias, "capabilities"),
-	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias, "capabilities")
+	TEST_ONE_TAG("Notify search result capabilities with alias", notify_search_result_capabilities_with_alias, "capabilities"),
 #endif
 };
 

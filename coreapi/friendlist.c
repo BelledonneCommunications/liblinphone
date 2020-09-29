@@ -504,8 +504,7 @@ LinphoneFriendList * linphone_core_create_friend_list(LinphoneCore *lc) {
 	LinphoneFriendList *list = linphone_friend_list_new();
 	list->lc = lc;
 	if (lc) { // Will be NULL if created from database
-		// We can't use linphone_core_is_friend_list_subscription_enabled because this will be called before the C++ core is initialized
-		list->enable_subscriptions = !!linphone_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
+		list->enable_subscriptions = linphone_core_is_friend_list_subscription_enabled(lc);
 	}
 	return list;
 }
@@ -1330,8 +1329,10 @@ void linphone_friend_list_enable_subscriptions(LinphoneFriendList *list, bool_t 
 	if (list->enable_subscriptions != enabled) {
 		list->enable_subscriptions = enabled;
 		if (enabled) {
+			ms_message("Updating friend list [%p] subscriptions", list);
 			linphone_friend_list_update_subscriptions(list);
 		} else {
+			ms_message("Closing friend list [%p] subscriptions", list);
 			linphone_friend_list_close_subscriptions(list);
 		}
 
