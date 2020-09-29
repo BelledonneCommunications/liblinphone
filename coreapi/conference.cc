@@ -589,11 +589,22 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	}
 	if (getParticipantCount() >= 2) {
 		if (getState() != ConferenceInterface::State::TerminationPending) {
-			/* Kick the session out of the conference by moving to the Paused state. */
-			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
 
-			err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseToInitiateRemovalFromConference();
+			CallSession::State sessionState = session->getState();
+			if (sessionState == CallSession::State::Paused) {
+				const MediaSessionParams * params = static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams();
+				MediaSessionParams *currentParams = params->clone();
+				// If the local participant is in, then an update is sent in order to notify that the call is exiting the conference
+				currentParams->getPrivate()->setInConference(FALSE);
+				ms_message("Updating call to notify of conference removal.");
+				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->updateToInitiateRemovalFromConference(currentParams);
+			} else {
+				/* Kick the session out of the conference by moving to the Paused state. */
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+						L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
+
+				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseToInitiateRemovalFromConference();
+			}
 		}
 	}
 	
