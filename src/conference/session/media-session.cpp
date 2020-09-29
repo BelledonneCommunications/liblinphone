@@ -2366,7 +2366,7 @@ void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
 }
 
-LinphoneStatus MediaSession::pauseToInitiateRemovalFromConference () {
+LinphoneStatus MediaSession::pauseFromConference () {
 	L_D();
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
@@ -2552,7 +2552,7 @@ void MediaSession::terminateBecauseOfLostMedia () {
 	terminate();
 }
 
-LinphoneStatus MediaSession::updateToInitiateRemovalFromConference (const MediaSessionParams *msp, const string &subject) {
+LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp, const string &subject) {
 	L_D();
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
