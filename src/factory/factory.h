@@ -152,11 +152,11 @@ public:
 
   void setDataResourcesDir(const char *path);
 
-  const std::string getSoundResourcesDir();
+  const std::string & getSoundResourcesDir();
 
   void setSoundResourcesDir(const char *path);
 
-  const std::string getRingResourcesDir();
+  const std::string & getRingResourcesDir();
 
   void setRingResourcesDir(const char *path);
 
@@ -231,6 +231,10 @@ public:
 protected:
   static void _DestroyingCb(void);
   static std::shared_ptr<Factory> instance;
+
+  std::string mPackageSoundDir;
+  std::string mPackageRingDir;
+  std::string mPackageDataDir;
 
 private:
   bctbx_list_t *mSupportedVideoDefinitions;

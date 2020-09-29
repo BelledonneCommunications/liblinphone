@@ -19,8 +19,6 @@
 
 #include "factory.h"
 
-#include "c-wrapper/c-wrapper.h"
-
 #include "address/address-p.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
@@ -52,6 +50,10 @@ Factory::Factory(){
 	since the element is null, bctbx_list_append return the added element directly*/
 	mSupportedVideoDefinitions = nullptr;
 	initializeSupportedVideoDefinitions(this);
+
+	mPackageSoundDir = PACKAGE_SOUND_DIR;
+	mPackageRingDir = PACKAGE_RING_DIR;
+	mPackageDataDir = PACKAGE_DATA_DIR;
 
 	/* register the bctbx sqlite vfs. It is not used by default */
 	/* sqlite3_bctbx_vfs use the default bctbx_vfs, so if encryption is turned on by default, it will apply to sqlte3 db */
@@ -339,21 +341,21 @@ void Factory::setDataResourcesDir(const char *path) {
 	mDataResourcesDir = path;
 }
 
-const std::string Factory::getSoundResourcesDir() {
+const std::string & Factory::getSoundResourcesDir() {
 	if (!mSoundResourcesDir.empty()) return mSoundResourcesDir;
 	if (!mTopResourcesDir.empty()){
 		mCachedDataResourcesDir = mTopResourcesDir;
 		mCachedDataResourcesDir.append("/sounds/linphone");
 		return mCachedDataResourcesDir;
 	}
-	return PACKAGE_SOUND_DIR;
+	return mPackageSoundDir;
 }
 
 void Factory::setSoundResourcesDir(const char *path) {
 	mSoundResourcesDir = path;
 }
 
-const std::string Factory::getRingResourcesDir() {
+const std::string & Factory::getRingResourcesDir() {
 	if (!mRingResourcesDir.empty()) return mRingResourcesDir;
 	if (!mSoundResourcesDir.empty()){
 		mCachedRingResourcesDir = mSoundResourcesDir;
@@ -365,7 +367,7 @@ const std::string Factory::getRingResourcesDir() {
 		mCachedRingResourcesDir.append("/sounds/linphone/rings");
 		return mCachedRingResourcesDir;
 	}
-	return PACKAGE_RING_DIR;
+	return mPackageRingDir;
 }
 
 void Factory::setRingResourcesDir(const char *path) {
