@@ -1208,7 +1208,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(lcs, pauline, NULL);
+	terminate_conference(participants, pauline, NULL);
 
 end:
 
