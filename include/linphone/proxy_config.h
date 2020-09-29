@@ -401,14 +401,6 @@ LINPHONE_PUBLIC SipSetupContext *linphone_proxy_config_get_sip_setup_context(Lin
 LINPHONE_PUBLIC SipSetup *linphone_proxy_config_get_sip_setup(LinphoneProxyConfig *proxy_config);
 
 /**
- * Detect if the given input is a phone number or not.
- * @param proxy_config #LinphoneProxyConfig argument, unused yet but may contain useful data. Can be NULL. @maybenil
- * @param username string to parse. @notnil
- * @return TRUE if input is a phone number, FALSE otherwise.
-**/
-LINPHONE_PUBLIC bool_t linphone_proxy_config_is_phone_number(LinphoneProxyConfig *proxy_config, const char *username);
-
-/**
  * Normalize a human readable phone number into a basic string. 888-444-222 becomes 888444222
  * or +33888444222 depending on the #LinphoneProxyConfig object.
  * This function will always generate a normalized username if input is a phone number.

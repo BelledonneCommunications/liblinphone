@@ -28,6 +28,8 @@
 
 #include "conference_private.h"
 
+#include "sal/refer-op.h"
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "c-wrapper/internal/c-tools.h"
@@ -386,10 +388,10 @@ LocalConference::LocalConference (
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
-	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
+	LinphoneAccount * account = linphone_core_lookup_known_account(core->getCCore(), cAddress);
 	char * contactAddressStr = nullptr;
-	if (proxyCfg && proxyCfg->op) {
-		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	if (account && Account::toCpp(account)->getOp()) {
+		contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
 	} else {
 		contactAddressStr = ms_strdup(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}

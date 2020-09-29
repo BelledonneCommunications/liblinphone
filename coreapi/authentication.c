@@ -39,6 +39,7 @@
 #include "linphone/api/c-auth-info.h"
 #include "c-wrapper/c-wrapper.h"
 #include "auth-info/auth-info.h"
+#include "account/account.h"
 
 
 // TODO: From coreapi. Remove me later.
@@ -241,7 +242,7 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 		ai=(LinphoneAuthInfo*)_linphone_core_find_auth_info(lc, req_sai->realm, req_sai->username, req_sai->domain, req_sai->algorithm, FALSE);
 		if (ai){
 			SalAuthInfo sai;
-			bctbx_list_t* proxy;
+			bctbx_list_t* account;
 			sai.username = (char *) linphone_auth_info_get_username(ai);
 			sai.userid = (char *)linphone_auth_info_get_userid(ai);
 			sai.realm = (char *) linphone_auth_info_get_realm(ai);
@@ -255,10 +256,10 @@ void linphone_core_add_auth_info(LinphoneCore *lc, const LinphoneAuthInfo *info)
 				sal_certificates_chain_parse_file(&sai, linphone_auth_info_get_tls_cert_path(ai), SAL_CERTIFICATE_RAW_FORMAT_PEM);
 				sal_signing_key_parse_file(&sai, linphone_auth_info_get_tls_key_path(ai), "");
 			}
-			/*proxy case*/
-			for (proxy=(bctbx_list_t*)linphone_core_get_proxy_config_list(lc);proxy!=NULL;proxy=proxy->next) {
-				if (proxy->data == op->getUserPointer()) {
-					linphone_proxy_config_set_state((LinphoneProxyConfig*)(proxy->data),LinphoneRegistrationProgress,"Authentication...");
+			/*account case*/
+			for (account=(bctbx_list_t*)linphone_core_get_account_list(lc);account!=NULL;account=account->next) {
+				if (account->data == op->getUserPointer()) {
+					LinphonePrivate::Account::toCpp((LinphoneAccount *)account->data)->setState(LinphoneRegistrationProgress, "Authentication...");
 					break;
 				}
 			}

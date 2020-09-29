@@ -39,6 +39,22 @@ extern "C" {
  */
 
 /**
+ * @brief Gets the list of listener in the account.
+ * @param account #LinphoneAccount object. @notnil
+ * @return The list of #LinphoneAccountCbs. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC const bctbx_list_t *linphone_account_get_callbacks_list(const LinphoneAccount *account);
+
+/**
+ * Sets the current LinphoneAccountCbs.
+ * @param account #LinphoneAccount object. @notnil
+ * @param cbs The #LinphoneAccountCbs object. @maybenil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_account_set_current_callbacks(LinphoneAccount *account, LinphoneAccountCbs *cbs);
+
+/**
  * @brief Gets the list of listener in the core.
  * @param core The #LinphoneCore. @notnil
  * @return The list of #LinphoneCoreCbs. @maybenil

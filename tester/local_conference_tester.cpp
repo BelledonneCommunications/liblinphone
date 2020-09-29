@@ -268,7 +268,10 @@ private:
 		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_empty_chat_rooms", 0);
 		linphone_core_cbs_set_subscription_state_changed(cbs, linphone_subscription_state_change);
 		linphone_core_cbs_set_chat_room_state_changed(cbs, server_core_chat_room_state_changed);
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(getLc());
+		linphone_proxy_config_edit(config);
 		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(getLc()), getIdentity().asString().c_str());
+		linphone_proxy_config_done(config);
 	}
 
 	std::multimap<IdentityAddress,IdentityAddress,std::less<IdentityAddress>> mParticipantDevices;
@@ -538,7 +541,10 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 		});
 		
 		//to avoid creation attempt of a new chatroom
-		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(focus.getLc()), NULL);
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
 		
 		linphone_chat_message_unref(msg);
 		
@@ -751,7 +757,10 @@ static void group_chat_room_bulk_notify_to_participant (void) {
 		});
 		
 		//to avoid creation attempt of a new chatroom
-		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(focus.getLc()), NULL);
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
 		
 		bctbx_list_free(coresList);
 	}
@@ -934,7 +943,10 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 		});
 
 		//to avoid creation attempt of a new chatroom
-		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(focus.getLc()), NULL);
+		LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(focus.getLc());
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_conference_factory_uri(config, NULL);
+		linphone_proxy_config_done(config);
 
 		bctbx_list_free(coresList);
 	}

@@ -389,7 +389,10 @@ static void text_message_with_credential_from_auth_callback(void) {
 static void text_message_with_privacy(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	linphone_proxy_config_set_privacy(linphone_core_get_default_proxy_config(pauline->lc),LinphonePrivacyId);
+	LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(pauline->lc);
+	linphone_proxy_config_edit(config);
+	linphone_proxy_config_set_privacy(config, LinphonePrivacyId);
+	linphone_proxy_config_done(config);
 
 	text_message_base(marie, pauline);
 
@@ -405,12 +408,14 @@ static void text_message_compatibility_mode(void) {
 	char route[256];
 	char*tmp;
 	/*only keep tcp*/
+	linphone_proxy_config_edit(proxy);
 	LCSipTransports transport = {0,-1,0,0};
 	linphone_address_clean(proxy_address);
 	tmp=linphone_address_as_string_uri_only(proxy_address);
 	linphone_proxy_config_set_server_addr(proxy,tmp);
 	sprintf(route,"sip:%s",test_route);
 	linphone_proxy_config_set_route(proxy,route);
+	linphone_proxy_config_done(proxy);
 	ms_free(tmp);
 	linphone_address_unref(proxy_address);
 	linphone_core_set_sip_transports(marie->lc,&transport);

@@ -367,6 +367,10 @@ LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *fac
   return Factory::toCpp(factory)->createTunnelConfig();
 }
 
+LinphoneAccountCbs * linphone_factory_create_account_cbs(LinphoneFactory *factory) {
+  return Factory::toCpp(factory)->createAccountCbs();
+}
+
 LinphoneLoggingServiceCbs *linphone_factory_create_logging_service_cbs(LinphoneFactory *factory) {
   return Factory::toCpp(factory)->createLoggingServiceCbs();
 }

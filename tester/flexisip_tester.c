@@ -432,6 +432,11 @@ static void call_forking_cancelled(void){
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,5000));
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallReleased,1,5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,5000));
+
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(marie2);
@@ -510,9 +515,11 @@ static void call_forking_with_push_notification_single(void){
 
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
 	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
-	linphone_proxy_config_set_contact_uri_parameters(
-		linphone_core_get_default_proxy_config(marie->lc),
+	LinphoneProxyConfig *marie_proxy = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(marie_proxy);
+	linphone_proxy_config_set_contact_uri_parameters(marie_proxy, 
 		"app-id=org.linphonetester;pn-tok=aaabbb;pn-type=apple;pn-msg-str=33;pn-call-str=34;");
+	linphone_proxy_config_done(marie_proxy);
 
 	lcs=bctbx_list_append(NULL,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie->lc);
@@ -570,9 +577,11 @@ static void call_forking_with_push_notification_double_contact(void){
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "unregister_previous_contact", 1);
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
 	linphone_core_set_user_agent(pauline->lc,"Natted Linphone",NULL);
-	linphone_proxy_config_set_contact_uri_parameters(
-		linphone_core_get_default_proxy_config(marie->lc),
+	LinphoneProxyConfig *marie_proxy = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(marie_proxy);
+	linphone_proxy_config_set_contact_uri_parameters(marie_proxy, 
 		"app-id=org.linphonetester;pn-tok=aaabbb;pn-type=apple;pn-msg-str=33;pn-call-str=34;");
+	linphone_proxy_config_done(marie_proxy);
 
 	lcs=bctbx_list_append(NULL,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie->lc);
@@ -970,12 +979,18 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		linphone_core_set_network_reachable(marie->lc, FALSE);
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(marie->lc), "Accept", "application/sdp");
+		LinphoneProxyConfig *config_marie = linphone_core_get_default_proxy_config(marie->lc);
+		linphone_proxy_config_edit(config_marie);
+		linphone_proxy_config_set_custom_header(config_marie, "Accept", "application/sdp");
+		linphone_proxy_config_done(config_marie);
 		linphone_core_set_network_reachable(marie->lc, TRUE);
 		linphone_core_manager_start(marie, TRUE);
 
 
-		linphone_proxy_config_set_custom_header(linphone_core_get_default_proxy_config(pauline->lc), "Accept", "application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml");
+		LinphoneProxyConfig *config_pauline = linphone_core_get_default_proxy_config(pauline->lc);
+		linphone_proxy_config_edit(config_pauline);
+		linphone_proxy_config_set_custom_header(config_pauline, "Accept", "application/sdp, text/plain, application/vnd.gsma.rcs-ft-http+xml");
+		linphone_proxy_config_done(config_pauline);
 		linphone_core_set_network_reachable(pauline->lc, TRUE);
 		linphone_core_manager_start(pauline, TRUE);
 
@@ -1190,10 +1205,16 @@ static void test_publish_unpublish(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	LinphoneProxyConfig* proxy = linphone_core_get_default_proxy_config(marie->lc);
 
+	LinphoneCoreCbs *callbacks = linphone_factory_create_core_cbs(linphone_factory_get());
+
+	linphone_core_cbs_set_publish_state_changed(callbacks, linphone_publish_state_changed);
+	_linphone_core_add_callbacks(marie->lc, callbacks, TRUE);
+	linphone_core_cbs_unref(callbacks);
+
 	setPublish(proxy, TRUE);
-	wait_for(marie->lc, NULL, NULL, 0);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishOk, 1));
 	setPublish(proxy, FALSE);
-	wait_for(marie->lc, NULL, NULL, 0);
+	BC_ASSERT_TRUE(wait_for(marie->lc, NULL, &marie->stat.number_of_LinphonePublishCleared, 1));
 	linphone_core_manager_destroy(marie);
 }
 
@@ -1711,9 +1732,10 @@ void sequential_forking(void) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,pauline->lc);
 
 	/*we don't set marie "q" because it is by default at 1.0 if it is not present (RFC 4596)*/
-	linphone_proxy_config_set_contact_parameters(
-		linphone_core_get_default_proxy_config(marie2->lc),
-		"q=0.5;");
+	LinphoneProxyConfig *marie_proxy = linphone_core_get_default_proxy_config(marie2->lc);
+	linphone_proxy_config_edit(marie_proxy);
+	linphone_proxy_config_set_contact_parameters(marie_proxy, "q=0.5;");
+	linphone_proxy_config_done(marie_proxy);
 
 	linphone_core_manager_start(marie2, TRUE);
 
@@ -1767,13 +1789,16 @@ void sequential_forking_with_timeout_for_highest_priority(void) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,pauline->lc);
 
 	/*we don't set marie "q" because it is by default at 1.0 if it is not present (RFC 4596)*/
-	linphone_proxy_config_set_contact_parameters(
-		linphone_core_get_default_proxy_config(marie2->lc),
-		"q=0.5;");
+	LinphoneProxyConfig *marie2_proxy = linphone_core_get_default_proxy_config(marie2->lc);
+	linphone_proxy_config_edit(marie2_proxy);
+	linphone_proxy_config_set_contact_parameters(marie2_proxy, "q=0.5;");
+	linphone_proxy_config_done(marie2_proxy);
 
-	linphone_proxy_config_set_contact_parameters(
-		linphone_core_get_default_proxy_config(marie3->lc),
-		"q=0.5;");
+
+	LinphoneProxyConfig *marie3_proxy = linphone_core_get_default_proxy_config(marie3->lc);
+	linphone_proxy_config_edit(marie3_proxy);
+	linphone_proxy_config_set_contact_parameters(marie3_proxy, "q=0.5;");
+	linphone_proxy_config_done(marie3_proxy);
 
 	linphone_core_manager_start(marie2, TRUE);
 	linphone_core_manager_start(marie3, TRUE);
@@ -1840,9 +1865,10 @@ void sequential_forking_with_no_response_for_highest_priority(void) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,pauline->lc);
 
 	/*we don't set marie "q" because it is by default at 1.0 if it is not present (RFC 4596)*/
-	linphone_proxy_config_set_contact_parameters(
-		linphone_core_get_default_proxy_config(marie2->lc),
-		"q=0.5;");
+	LinphoneProxyConfig *marie2_proxy = linphone_core_get_default_proxy_config(marie2->lc);
+	linphone_proxy_config_edit(marie2_proxy);
+	linphone_proxy_config_set_contact_parameters(marie2_proxy, "q=0.5;");
+	linphone_proxy_config_done(marie2_proxy);
 
 	linphone_core_manager_start(marie2, TRUE);
 
@@ -1902,9 +1928,10 @@ void sequential_forking_with_insertion_of_higher_priority(void) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,pauline->lc);
 
 	/*we don't set marie "q" because it is by default at 1.0 if it is not present (RFC 4596)*/
-	linphone_proxy_config_set_contact_parameters(
-		linphone_core_get_default_proxy_config(marie2->lc),
-		"q=0.5;");
+	LinphoneProxyConfig *marie2_proxy = linphone_core_get_default_proxy_config(marie2->lc);
+	linphone_proxy_config_edit(marie2_proxy);
+	linphone_proxy_config_set_contact_parameters(marie2_proxy, "q=0.5;");
+	linphone_proxy_config_done(marie2_proxy);
 
 	linphone_core_manager_start(marie2, TRUE);
 
@@ -1975,21 +2002,17 @@ void sequential_forking_with_fallback_route(void) {
 	bctbx_list_t *lcs = bctbx_list_append(NULL, pauline->lc);
 
 	/*we set pauline2 and marie to another test server that is configured with a fallback route*/
-	linphone_proxy_config_set_server_addr(
-		linphone_core_get_default_proxy_config(pauline2->lc),
-		external_server_uri);
+	LinphoneProxyConfig *pauline2_proxy = linphone_core_get_default_proxy_config(pauline2->lc);
+	linphone_proxy_config_edit(pauline2_proxy);
+	linphone_proxy_config_set_server_addr(pauline2_proxy, external_server_uri);
+	linphone_proxy_config_set_route(pauline2_proxy, external_server_uri);
+	linphone_proxy_config_done(pauline2_proxy);
 
-	linphone_proxy_config_set_route(
-		linphone_core_get_default_proxy_config(pauline2->lc),
-		external_server_uri);
-
-	linphone_proxy_config_set_server_addr(
-		linphone_core_get_default_proxy_config(marie->lc),
-		external_server_uri);
-
-	linphone_proxy_config_set_route(
-		linphone_core_get_default_proxy_config(marie->lc),
-		external_server_uri);
+	LinphoneProxyConfig *marie_proxy = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(marie_proxy);
+	linphone_proxy_config_set_server_addr(marie_proxy, external_server_uri);
+	linphone_proxy_config_set_route(marie_proxy, external_server_uri);
+	linphone_proxy_config_done(marie_proxy);
 
 	linphone_core_manager_start(pauline2, TRUE);
 	linphone_core_manager_start(marie, TRUE);

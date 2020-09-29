@@ -224,6 +224,7 @@ set(IOS_RESOURCES_FILES
 
 set(SOURCE_FILES_C
 	account_creator_tester.c
+	account_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
@@ -242,7 +243,7 @@ set(SOURCE_FILES_C
 	eventapi_tester.c
 	external_domain_tester.c
 	flexisip_tester.c
-        group_chat_tester.c
+	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
 	group_chat_tester.c
