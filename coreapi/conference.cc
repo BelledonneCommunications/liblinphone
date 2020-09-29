@@ -196,8 +196,12 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 }
 
 int Conference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
-	removeParticipantDevice(call->getActiveSession());
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
+	return removeParticipant(call->getActiveSession());
+}
+
+int Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session) {
+	removeParticipantDevice(session);
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(session);
 	if (!p)
 		return -1;
 	if (p->getDevices().empty()) {
@@ -573,27 +577,30 @@ bool LocalConference::addParticipant (const IdentityAddress &participantAddress)
 	return success;
 }
 
-int LocalConference::removeParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
+int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session) {
 	int err = 0;
 
-	if (linphone_call_get_conference(call->toC()) != toC()){
-		lError() << "Call " << call->toC() << " is not part of conference " << toC();
-		return -1;
+	shared_ptr<Call> call = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+	if (call) {
+		if (linphone_call_get_conference(call->toC()) != toC()){
+			lError() << "Call " << call->toC() << " is not part of conference " << toC();
+			return -1;
+		}
 	}
 	if (getParticipantCount() >= 2) {
 		if (getState() != ConferenceInterface::State::TerminationPending) {
-			/* Kick the call out of the conference by moving to the Paused state. */
+			/* Kick the session out of the conference by moving to the Paused state. */
 			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
-					L_GET_PRIVATE(call->getParams()))->setInConference(false);
+					L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
 
-			err = call->pauseToInitiateRemovalFromConference();
+			err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseToInitiateRemovalFromConference();
 		}
 	}
 	
 	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
 	if (getParticipantCount() >= 2 || getState() == ConferenceInterface::State::TerminationPending) {
-		Conference::removeParticipant(call);
-		mMixerSession->unjoinStreamsGroup(call->getMediaSession()->getStreamsGroup());
+		Conference::removeParticipant(session);
+		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 
 	}
 
@@ -664,18 +671,12 @@ bool LocalConference::removeParticipant(const std::shared_ptr<LinphonePrivate::P
 	std::shared_ptr<LinphonePrivate::CallSession> callSession = participant->getSession();
 	if (!callSession)
 		return false;
-
-	// Search call that matches participant session
-	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
-	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&] (const std::shared_ptr<Call> & c) {
-		return (c->getActiveSession() == callSession);
-	});
-	bool ret = false;
-	if (callIt != coreCalls.cend()) {
-		std::shared_ptr<Call> call = *callIt;
-		ret = (bool)removeParticipant(call);
+	// Delete all devices of a participant
+	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
+		time_t creationTime = time(nullptr);
+		notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
 	}
-	return ret;
+	return (bool)removeParticipant(callSession);
 }
 
 /* ConferenceInterface */
@@ -987,8 +988,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 	}
 }
 
-int RemoteConference::removeParticipant(std::shared_ptr<LinphonePrivate::Call> call) {
-	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(call->getActiveSession());
+int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session) {
+	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(session);
 	if (p) {
 		return removeParticipant(p);
 	}
