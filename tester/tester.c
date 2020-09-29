@@ -1024,18 +1024,16 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	linphone_core_remove_from_conference(conf_mgr->lc, conf_call);
 
 	// If the conference already put the call in pause, then it will not be put in pause again
-	if (!is_conf_call_paused) {
-		// Calls are paused when removing a participant 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausing,(conf_initial_stats.number_of_LinphoneCallPausing + 1),5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(conf_initial_stats.number_of_LinphoneCallPaused + 1),5000));
-	}
+	// Calls are paused or updated when removing a participant 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausing,(conf_initial_stats.number_of_LinphoneCallPausing + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(conf_initial_stats.number_of_LinphoneCallPaused + 1),5000));
 	// If the conference already put the call in pause, then the participant call is already in the state PausedByRemote
 	// If the participant call was already paused, then it stays in the paused state while accepting the update
-	if (!is_participant_call_paused && !is_conf_call_paused) {
+	if (is_conf_call_paused) {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(participant_initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(participant_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
-		if (is_participant_call_paused) {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPaused,(participant_initial_stats.number_of_LinphoneCallPaused + 1),5000));
-		}
+	} else if (!is_participant_call_paused && !is_conf_call_paused) {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneCallPausedByRemote,(participant_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	}
 
 	check_participant_removal(lcs, conf_mgr, participant_mgr, participants, participant_size, conf_initial_stats, participant_initial_stats, participants_initial_stats, participants_initial_state, local_participant_is_in);
