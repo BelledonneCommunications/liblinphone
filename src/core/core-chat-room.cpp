@@ -85,6 +85,27 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 	return localAddress;
 }
 
+IdentityAddress CorePrivate::getIdentityAddressWithGruu(const IdentityAddress &identityAddress) const {
+	LinphoneCore *cCore = getCCore();
+	LinphoneProxyConfig *proxyConfig = nullptr;
+	IdentityAddress identityAddressWithGruu;
+
+	if (identityAddress.isValid()) {
+		LinphoneAddress *cIdentityAddress = linphone_address_new(identityAddress.asString().c_str());
+		proxyConfig = linphone_core_lookup_known_proxy(cCore, cIdentityAddress);
+		linphone_address_unref(cIdentityAddress);
+
+		if (proxyConfig) {
+			const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxyConfig);
+			char *contact = linphone_address_as_string(contactAddress);
+			identityAddressWithGruu = IdentityAddress(contact);
+			bctbx_free(contact);
+		}
+	}
+
+	return identityAddressWithGruu;
+}
+
 //
 static string getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
 	Address addr(localAddress);
@@ -313,9 +334,21 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 			return nullptr;
 		}
 
+		ConferenceId conferenceId = ConferenceId(IdentityAddress(), localAddr);
+		if (!localAddr.hasGruu()) {
+			lWarning() << "Local identity address [" << localAddr << "] doesn't have a gruu, let's try to find it";
+			IdentityAddress localAddrWithGruu = getIdentityAddressWithGruu(localAddr);
+			if (localAddrWithGruu.isValid()) {
+				lInfo() << "Found matching contact address [" << localAddrWithGruu << "] to use instead";
+				conferenceId = ConferenceId(IdentityAddress(), localAddrWithGruu);
+			} else {
+				lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr << "], client group chat room creation will fail!";
+			}
+		}
+
 		chatRoom = createClientGroupChatRoom(params->getSubject(),
 						     IdentityAddress(conferenceFactoryUri),
-						     ConferenceId(IdentityAddress(), localAddr),
+						     conferenceId,
 						     Content(),
 						     ChatRoomParams::toCapabilities(params),
 						     params,
