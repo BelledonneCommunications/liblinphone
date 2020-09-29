@@ -483,6 +483,14 @@ typedef void (*LinphoneCoreCbsAudioDeviceChangedCb)(LinphoneCore *core, Linphone
 typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
 
 /**
+ * Callback notifying that a #LinphoneAccount has its registration state changed.
+ * @param core The #LinphoneCore object. @notnil
+ * @param account The #LinphoneAccount object which has its registration changed. @notnil
+ * @param state The new state for this account.
+ */
+typedef void (*LinphoneCoreCbsAccountRegistrationStateChangedCb)(LinphoneCore *core, LinphoneAccount *account, LinphoneRegistrationState state);
+
+/**
  * @}
 **/
 

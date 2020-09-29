@@ -39,6 +39,7 @@
 #include <unistd.h>
 #endif
 
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -437,41 +438,41 @@ static void auth_failure(SalOp *op, SalAuthInfo* info) {
 }
 
 static void register_success(SalOp *op, bool_t registered){
-	LinphoneProxyConfig *cfg=(LinphoneProxyConfig *)op->getUserPointer();
-	if (!cfg){
-		ms_message("Registration success for deleted proxy config, ignored");
+	LinphoneAccount *account=(LinphoneAccount *)op->getUserPointer();
+	if (!account){
+		ms_message("Registration success for deleted account, ignored");
 		return;
 	}
-	linphone_proxy_config_set_state(cfg, registered ? LinphoneRegistrationOk : LinphoneRegistrationCleared ,
+	Account::toCpp(account)->setState(registered ? LinphoneRegistrationOk : LinphoneRegistrationCleared ,
 									registered ? "Registration successful" : "Unregistration done");
 }
 
 static void register_failure(SalOp *op){
-	LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)op->getUserPointer();
+	LinphoneAccount *account=(LinphoneAccount*)op->getUserPointer();
 	const SalErrorInfo *ei=op->getErrorInfo();
 	const char *details=ei->full_string;
 
-	if (cfg==NULL){
-		ms_warning("Registration failed for unknown proxy config.");
+	if (account==NULL){
+		ms_warning("Registration failed for unknown account.");
 		return ;
 	}
 	if (details==NULL)
 		details="no response timeout";
 
 	if ((ei->reason == SalReasonServiceUnavailable || ei->reason == SalReasonIOError)
-			&& linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationProgress,"Service unavailable, retrying");
+			&& linphone_account_get_state(account) == LinphoneRegistrationOk) {
+		Account::toCpp(account)->setState(LinphoneRegistrationProgress,"Service unavailable, retrying");
 	} else if (ei->protocol_code == 401 || ei->protocol_code == 407){
 		/* Do nothing. There will be an auth_requested() callback. If the callback doesn't provide an AuthInfo, then
 		 * the proxy config will transition to the failed state.*/
 	} else {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed, details);
+		Account::toCpp(account)->setState(LinphoneRegistrationFailed, details);
 	}
-	if (cfg->presence_publish_event){
+	if (Account::toCpp(account)->getPresencePublishEvent()){
 		/*prevent publish to be sent now until registration gets successful*/
-		linphone_event_terminate(cfg->presence_publish_event);
-		cfg->presence_publish_event=NULL;
-		cfg->send_publish=cfg->publish;
+		linphone_event_terminate(Account::toCpp(account)->getPresencePublishEvent());
+		Account::toCpp(account)->setPresencePublishEvent(NULL);
+		Account::toCpp(account)->setSendPublish(linphone_account_params_get_publish_enabled(linphone_account_get_params(account)));
 	}
 }
 

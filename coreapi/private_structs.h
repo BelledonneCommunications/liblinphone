@@ -82,64 +82,8 @@ struct _PortConfig{
 struct _LinphoneProxyConfig
 {
 	belle_sip_object_t base;
-	void *user_data;
-	struct _LinphoneCore *lc;
-	LinphoneErrorInfo *ei;
-	char *reg_proxy;
-	char *reg_identity;
-	LinphoneAddress* identity_address;
-	LinphoneAddress *contact_address;
-	LinphoneAddress *service_route;
-	LinphoneAddress *contact_address_without_params;
-	bctbx_list_t *reg_routes;
-	char *quality_reporting_collector;
-	char *realm;
-	char *contact_params;
-	char *contact_uri_params;
-	int expires;
-	int publish_expires;
-	LinphonePrivate::SalRegisterOp *op;
-	SalCustomHeader *sent_headers;
-	char *type;
-	struct _SipSetupContext *ssctx;
-	int auth_failures;
-	char *dial_prefix;
-	LinphoneRegistrationState state;
-	LinphoneAVPFMode avpf_mode;
-	LinphoneNatPolicy *nat_policy;
-	int quality_reporting_interval;
-
-	bool_t commit;
-	bool_t reg_sendregister;
-	bool_t publish;
-	bool_t dial_escape_plus;
-
-	bool_t lime_x3dh;
-
-	bool_t send_publish;
-	bool_t quality_reporting_enabled;
-	uint8_t avpf_rr_interval;
-	bool_t register_changed;
-
-	time_t deletion_date;
-	LinphonePrivacyMask privacy;
-	/*use to check if server config has changed  between edit() and done()*/
-	LinphoneAddress *saved_proxy;
-	LinphoneAddress *saved_identity;
-
-	/*---*/
-	LinphoneAddress *pending_contact; /*use to store previous contact in case of network failure*/
-	LinphoneEvent *presence_publish_event;
-	unsigned long long previous_publish_config_hash[2];
-
-	char *refkey;
-	char *sip_etag; /*publish context*/
-	char *depends_on; /* NULL or points to another proxy_config->idkey */
-	LinphoneProxyConfig *dependency; /* Points to another proxy config if depends_on is defined */
-	char *idkey; /* NULL or referenced by another proxy_config->depends_on */
-	char *conference_factory_uri;
-
-	bool_t push_notification_allowed;
+	LinphoneAccount *account;
+	LinphoneAccountParams *edit;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneProxyConfig);
@@ -226,6 +170,8 @@ struct sip_config
 	char *guessed_contact;
 	MSList *proxies;
 	MSList *deleted_proxies;
+	MSList *accounts;
+	MSList *deleted_accounts;
 	int inc_timeout;	/*timeout after an un-answered incoming call is rejected*/
 	int push_incoming_call_timeout;  /*timeout after push incoming received if stream not received*/
 	int in_call_timeout;	/*timeout after a call is hangup */
@@ -768,6 +714,7 @@ namespace LinphonePrivate {
 	ui_config_t ui_conf; \
 	autoreplier_config_t autoreplier_conf; \
 	LinphoneProxyConfig *default_proxy; \
+	LinphoneAccount * default_account; \
 	MSList *friends_lists; \
 	MSList *auth_info; \
 	struct _RingStream *ringstream; \

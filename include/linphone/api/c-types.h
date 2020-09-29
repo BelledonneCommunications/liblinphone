@@ -81,6 +81,28 @@
 typedef struct _LinphoneAuthInfo LinphoneAuthInfo;
 
 // -----------------------------------------------------------------------------
+// Account.
+// -----------------------------------------------------------------------------
+
+/**
+ * Object that represents a Linphone Account.
+ * @ingroup account
+ */
+typedef struct _LinphoneAccount LinphoneAccount;
+
+/**
+ * Object that is used to set the different parameters of a #LinphoneAccount.
+ * @ingroup account
+ */
+typedef struct _LinphoneAccountParams LinphoneAccountParams;
+
+/**
+ * An object to handle the callbacks for the handling of #LinphoneAccount objects.
+ * @ingroup account
+ */
+typedef struct _LinphoneAccountCbs LinphoneAccountCbs;
+
+// -----------------------------------------------------------------------------
 // Address.
 // -----------------------------------------------------------------------------
 
