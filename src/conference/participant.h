@@ -99,6 +99,9 @@ public:
 	inline void setFocus (bool isFocus) { this->isThisFocus = isFocus; }
 	bool isFocus () const;
 
+	inline void setPreserveSession (bool preserve) { this->preserveSession = preserve; }
+	bool getPreserveSession () const;
+
 	time_t getCreationTime() const;
 
 protected:
@@ -128,6 +131,7 @@ private:
 	std::shared_ptr<CallSession> session;
 	std::list<std::shared_ptr<ParticipantDevice>> devices;
 	time_t creationTime;
+	bool preserveSession = false;
 
 	L_DISABLE_COPY(Participant);
 };
