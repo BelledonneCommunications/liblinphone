@@ -205,7 +205,9 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 	linphone_core_enable_conference_server(core, server);
 	char *factoryUri = linphone_address_as_string(factoryAddr);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
+	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
+	linphone_proxy_config_done(proxy);
 	bctbx_free(factoryUri);
 }
 
@@ -4723,7 +4725,9 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				linphone_core_manager_reinit(pauline);
 				// Make sure conference factory URI is preserved
 				LinphoneProxyConfig *lpc = linphone_core_get_default_proxy_config(pauline->lc);
+				linphone_proxy_config_edit(lpc);
 				linphone_proxy_config_set_conference_factory_uri(lpc, sFactoryUri);
+				linphone_proxy_config_done(lpc);
 				linphone_core_manager_start(pauline, TRUE);
 				bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, pauline);
 				init_core_for_conference(tmpCoresManagerList);
@@ -6482,7 +6486,10 @@ static void core_stop_start_with_chat_room_ref (void) {
 	if (pauline1Cr) linphone_chat_room_unref(pauline1Cr);
 
 	//test very early client group chatroom creation, should fail
-	linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(pauline1->lc), sFactoryUri);
+	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(pauline1->lc);
+	linphone_proxy_config_edit(proxy);
+	linphone_proxy_config_set_conference_factory_uri(proxy, sFactoryUri);
+	linphone_proxy_config_done(proxy);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(pauline1->lc);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendFlexisipChat);
 	LinphoneChatRoom *chatRoom = linphone_core_create_chat_room_2(pauline1->lc, params, initialSubject,participantsAddresses);

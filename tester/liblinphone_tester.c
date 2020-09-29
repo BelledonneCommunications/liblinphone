@@ -445,6 +445,7 @@ void liblinphone_tester_add_suites() {
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&multicast_call_test_suite);
 	bc_tester_add_suite(&proxy_config_test_suite);
+	bc_tester_add_suite(&account_test_suite);
 #if HAVE_SIPP
 	bc_tester_add_suite(&complex_sip_call_test_suite);
 #endif

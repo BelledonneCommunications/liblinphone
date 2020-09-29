@@ -423,36 +423,51 @@ void linphone_proxy_config_is_server_config_changed_test(void) {
 	linphone_proxy_config_edit(proxy_config);
 	addr = linphone_address_new("sips:toto@titi");
 	linphone_proxy_config_set_identity_address(proxy_config,addr);
+	linphone_proxy_config_done(proxy_config);
 	if (addr) linphone_address_unref(addr);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
+	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
+	linphone_proxy_config_done(proxy_config);
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:toto.com");
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
+	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
+	linphone_proxy_config_done(proxy_config);
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org:4444");
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
+	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
+	linphone_proxy_config_done(proxy_config);
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org;transport=tcp");
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressDifferent, int, "%d");
 
+	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org");
+	linphone_proxy_config_done(proxy_config);
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_server_addr(proxy_config,"sip:sip.linphone.org;param=blue");
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressWeakEqual, int, "%d");
 
 
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_set_contact_parameters(proxy_config,"blabla=blue");
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressEqual, int, "%d");
 
 	linphone_proxy_config_edit(proxy_config);
 	linphone_proxy_config_enable_register(proxy_config,TRUE);
+	linphone_proxy_config_done(proxy_config);
 	BC_ASSERT_EQUAL(linphone_proxy_config_is_server_config_changed(proxy_config), LinphoneProxyConfigAddressEqual, int, "%d");
 
 	linphone_proxy_config_unref(proxy_config);

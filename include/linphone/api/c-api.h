@@ -22,6 +22,9 @@
 
 #include "linphone/utils/general.h"
 
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-account-cbs.h"
+#include "linphone/api/c-account-params.h"
 #include "linphone/api/c-audio-device.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/api/c-address.h"

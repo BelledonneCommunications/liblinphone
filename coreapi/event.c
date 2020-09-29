@@ -345,17 +345,17 @@ LinphoneStatus linphone_event_notify(LinphoneEvent *lev, const LinphoneContent *
 	return subscribeOp->notify(body_handler);
 }
 
-LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneProxyConfig *cfg, const LinphoneAddress *resource, const char *event, int expires){
+LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires){
 	LinphoneCore *lc = core;
 	LinphoneEvent *lev;
 
-	if (!resource && cfg)
-		resource = linphone_proxy_config_get_identity_address(cfg);
+	if (!resource && account)
+		resource = linphone_account_params_get_identity_address(linphone_account_get_params(account));
 
 	lev = linphone_event_new_with_op(lc, new SalPublishOp(lc->sal), LinphoneSubscriptionInvalidDir, event);
 	lev->expires = expires;
-	if (!cfg) cfg = linphone_core_lookup_known_proxy(lc, resource);
-	linphone_configure_op_with_proxy(lc,lev->op,resource,NULL, !!linphone_config_get_int(lc->config,"sip","publish_msg_with_contact",0),cfg);
+	if (!account) account = linphone_core_lookup_known_account(lc, resource);
+	linphone_configure_op_with_account(lc,lev->op,resource,NULL, !!linphone_config_get_int(lc->config,"sip","publish_msg_with_contact",0),account);
 	lev->op->setManualRefresherMode(!linphone_config_get_int(lc->config,"sip","refresh_generic_publish",1));
 	return lev;
 }

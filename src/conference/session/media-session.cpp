@@ -900,8 +900,8 @@ void MediaSessionPrivate::getLocalIp (const Address &remoteAddr) {
 
 	// If a known proxy was identified for this call, then we may have a chance to take the local ip address
 	// from the socket that connects to this proxy
-	if (destProxy && destProxy->op) {
-		ip = destProxy->op->getLocalAddress(nullptr);
+	if (destProxy && linphone_proxy_config_get_op(destProxy)) {
+		ip = linphone_proxy_config_get_op(destProxy)->getLocalAddress(nullptr);
 		if (ip) {
 			if (strchr(ip, ':') && (af == AF_INET)) {
 				// Case where we've decided to use IPv4 in selectOutgoingIpVersion(), but the signaling local ip address is IPv6.
@@ -979,8 +979,8 @@ void MediaSessionPrivate::runStunTestsIfNeeded () {
 void MediaSessionPrivate::selectIncomingIpVersion () {
 	L_Q();
 	if (linphone_core_ipv6_enabled(q->getCore()->getCCore())) {
-		if (destProxy && destProxy->op)
-			af = destProxy->op->getAddressFamily();
+		if (destProxy && linphone_proxy_config_get_op(destProxy))
+			af = linphone_proxy_config_get_op(destProxy)->getAddressFamily();
 		else
 			af = op->getAddressFamily();
 	} else
@@ -1010,9 +1010,9 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 
 		if (linphone_core_get_local_ip_for(AF_INET6, nullptr, ipv6) == 0)
 			haveIpv6 = true;
-		if (destProxy && destProxy->op) {
+		if (destProxy && linphone_proxy_config_get_op(destProxy)) {
 			// We can determine from the proxy connection whether IPv6 works - this is the most reliable
-			af = destProxy->op->getAddressFamily();
+			af = linphone_proxy_config_get_op(destProxy)->getAddressFamily();
 		} else if (sal_address_is_ipv6(L_GET_CPP_PTR_FROM_C_OBJECT(to)->getInternalAddress())) {
 			af = AF_INET6;
 		}
@@ -2419,8 +2419,8 @@ void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 LinphoneStatus MediaSession::pauseFromConference () {
 	L_D();
 	char * contactAddressStr = nullptr;
-	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
+		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
 	} else {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 	}
@@ -2477,8 +2477,8 @@ LinphoneStatus MediaSession::resume () {
 	}
 
 	char * contactAddressStr = nullptr;
-	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
+		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
 	} else {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 	}
@@ -2636,8 +2636,8 @@ void MediaSession::terminateBecauseOfLostMedia () {
 LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp, const string &subject) {
 	L_D();
 	char * contactAddressStr = nullptr;
-	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	if (d->destProxy && linphone_proxy_config_get_op(d->destProxy)) {
+		contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(d->destProxy)->getContactAddress());
 	} else {
 		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
 	}

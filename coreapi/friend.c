@@ -471,7 +471,7 @@ bool_t linphone_friend_has_phone_number(const LinphoneFriend *lf, const char *ph
 	if (!lf || !phoneNumber) return FALSE;
 
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lf->lc);
-	if (phoneNumber == NULL || !linphone_proxy_config_is_phone_number(cfg, phoneNumber)) {
+	if (phoneNumber == NULL || !linphone_account_is_phone_number(cfg->account, phoneNumber)) {
 		ms_warning("Phone number [%s] isn't valid", phoneNumber);
 		return FALSE;
 	}
@@ -838,7 +838,7 @@ void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_regi
 		const LinphoneAddress *addr = linphone_friend_get_address(fr);
 		if (addr != NULL) {
 			LinphoneProxyConfig *cfg=linphone_core_lookup_known_proxy(fr->lc, addr);
-			if (cfg && cfg->state!=LinphoneRegistrationOk){
+			if (cfg && linphone_proxy_config_get_state(cfg)!=LinphoneRegistrationOk){
 				char *tmp=linphone_address_as_string(addr);
 				ms_message("Friend [%s] belongs to proxy config with identity [%s], but this one isn't registered. Subscription is suspended.",
 					tmp,linphone_proxy_config_get_identity(cfg));

@@ -69,6 +69,7 @@
 
 BELLE_SIP_DECLARE_TYPES_BEGIN(linphone, 10000)
 L_REGISTER_TYPES(L_REGISTER_ID)
+BELLE_SIP_TYPE_ID(LinphoneAccountCbs),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreator),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorCbs),
 BELLE_SIP_TYPE_ID(LinphoneAccountCreatorService),
