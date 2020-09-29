@@ -162,7 +162,6 @@ public:
 
 private:
 	bool isInBackground = false;
-	bool isFriendListSubscriptionEnabled = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;

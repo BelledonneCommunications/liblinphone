@@ -1253,9 +1253,9 @@ static void net_config_read(LinphoneCore *lc) {
 	tmp = linphone_config_get_int(lc->config, "net", "dns_search_enabled", 1);
 	linphone_core_enable_dns_search(lc, !!tmp);
 
-	// Update existing friend list subscribe state after remote provisioning, otherwise change won't be applied until next core creation.
-	bool_t enable_subscribe = !!linphone_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
-	L_GET_PRIVATE_FROM_C_OBJECT(lc)->enableFriendListsSubscription(enable_subscribe);
+	// Update existing friend list subscribe state, otherwise change won't be applied until next core creation.
+	bool subscribe_enabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isFriendListSubscriptionEnabled();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->enableFriendListsSubscription(subscribe_enabled);
 }
 
 static void build_sound_devices_table(LinphoneCore *lc){
