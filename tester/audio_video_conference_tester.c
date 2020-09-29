@@ -812,6 +812,7 @@ static void eject_from_4_participants_conference(void) {
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(marie->lc));
 
 	remove_participant_from_local_conference(lcs, marie, pauline);
+	new_participants=bctbx_list_remove(new_participants,pauline);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
