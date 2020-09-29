@@ -18,6 +18,8 @@
  */
 
 #include "auth-stack.h"
+
+#include "account/account.h"
 #include "core/core-p.h"
 
 #include "private_functions.h"
@@ -65,12 +67,12 @@ void AuthStack::notifyAuthFailures(){
 	for (const auto &op : pendingAuths) {
 		const bctbx_list_t *elem;
 		/*proxy case*/
-		for (elem = linphone_core_get_proxy_config_list(mCore.getCCore()); elem != NULL; elem = elem->next) {
-			LinphoneProxyConfig *pcfg = (LinphoneProxyConfig*)elem->data;
-			if (pcfg == op->getUserPointer()) {
+		for (elem = linphone_core_get_account_list(mCore.getCCore()); elem != NULL; elem = elem->next) {
+			LinphoneAccount *acc = (LinphoneAccount*)elem->data;
+			if (acc == op->getUserPointer()) {
 				const SalErrorInfo *ei=op->getErrorInfo();
 				const char *details=ei->full_string;
-				linphone_proxy_config_set_state(pcfg, LinphoneRegistrationFailed, details);
+				Account::toCpp(acc)->setState(LinphoneRegistrationFailed, details);
 				break;
 			}
 		}
