@@ -146,6 +146,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneCo
  * @param conference A #LinphoneConference @notnil
  * @param participant participant to remove @notnil
  * @warning The passed participant must be one of those returned by linphone_conference_get_participant_list()
+ * @warning This method may destroy the conference if the only remaining participant had an existing call to the local participant before the conference was created
  * @return 0 if succeeded, -1 if failed
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_2(LinphoneConference *conference, LinphoneParticipant *participant);
@@ -154,6 +155,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_2(Linphone
  * @param conference A #LinphoneConference @notnil
  * @param call call to remove @notnil
  * @return 0 if succeeded, -1 if failed
+ * @deprecated 10/07/2020 Use linphone_conference_remove_participant_2() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_3(LinphoneConference *conference, LinphoneCall *call);
 
