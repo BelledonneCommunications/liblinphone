@@ -741,8 +741,8 @@ void Call::oglRender () const {
 	static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->oglRender();
 }
 
-LinphoneStatus Call::pauseToInitiateRemovalFromConference () {
-	return static_pointer_cast<MediaSession>(getActiveSession())->pauseToInitiateRemovalFromConference();
+LinphoneStatus Call::pauseFromConference () {
+	return static_pointer_cast<MediaSession>(getActiveSession())->pauseFromConference();
 }
 
 LinphoneStatus Call::pause () {
@@ -801,8 +801,8 @@ LinphoneStatus Call::transfer (const string &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
-LinphoneStatus Call::updateToInitiateRemovalFromConference (const MediaSessionParams *msp) {
-	return static_pointer_cast<MediaSession>(getActiveSession())->updateToInitiateRemovalFromConference(msp);
+LinphoneStatus Call::updateFromConference (const MediaSessionParams *msp) {
+	return static_pointer_cast<MediaSession>(getActiveSession())->updateFromConference(msp);
 }
 
 LinphoneStatus Call::update (const MediaSessionParams *msp) {

@@ -100,7 +100,7 @@ public:
 	LinphoneStatus deferUpdate ();
 	bool hasTransferPending () const;
 	void oglRender () const;
-	LinphoneStatus pauseToInitiateRemovalFromConference ();
+	LinphoneStatus pauseFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus resume ();
@@ -116,7 +116,7 @@ public:
 	LinphoneStatus transfer (const std::shared_ptr<Call> &dest);
 	LinphoneStatus transfer (const std::string &dest);
 	LinphoneStatus update (const MediaSessionParams *msp = nullptr);
-	LinphoneStatus updateToInitiateRemovalFromConference (const MediaSessionParams *msp = nullptr);
+	LinphoneStatus updateFromConference (const MediaSessionParams *msp = nullptr);
 	void zoomVideo (float zoomFactor, float *cx, float *cy);
 	void zoomVideo (float zoomFactor, float cx, float cy);
 
