@@ -167,7 +167,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	MSAudioDiffParams audioCmpParams = audio_cmp_params;
 
 	// Add jitterBufferMs to the shift
-	audioCmpParams.max_shift_percent = (audioCmpParams.max_shift_percent*sampleLength+jitterBufferMs)/((double)sampleLength+jitterBufferMs);
+        audioCmpParams.max_shift_percent = (int)(audioCmpParams.max_shift_percent*sampleLength+jitterBufferMs)/((double)sampleLength+jitterBufferMs);
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	
@@ -202,7 +202,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
-	simparams.consecutive_loss_probability = 0.000001;// Ensure to have fec in n+1 packets
+        simparams.consecutive_loss_probability = 0.000001f;// Ensure to have fec in n+1 packets
 
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	for(size_t inbandIndex = 0 ; inbandIndex < useinbandfec.size() ; ++inbandIndex){// Loop to test the impact of useinbandfec
