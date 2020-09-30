@@ -484,6 +484,8 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 				linphone_call_params_enable_video(new_params, confParams->videoEnabled());
 			}
 
+			linphone_call_params_set_in_conference(new_params, TRUE);
+
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
 
 			if (!call){
@@ -525,6 +527,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
 			case LinphoneCallIncomingReceived:
+			case LinphoneCallPausing:
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
 			break;
@@ -849,10 +852,21 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
-	if ((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 1)) {
+	bool preserveSession = true;
+	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
+	return (p->getSession() != participant->getSession());
+	});
+	if (participantIt != participants.cend()) {
+		const std::shared_ptr<Participant> & p = *participantIt;
+		preserveSession = p->getPreserveSession();
+	}
+
+	if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 1) || ((getParticipantCount() == 1) && !preserveSession))) {
 		// Increment last notify before notifying participants so that the delta can be calculated correctly
 		++lastNotify;
-		// Do not send notify if only 1 participant is left as the conference is going to be destroyed
+		// Send notify only if it is not in state TerminationPending and:
+		// - there is more than one participant in the conference
+		// - there is only participant and it didn't have a session towards the conference manager preexisting conference
 		return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
 	}
 
@@ -878,12 +892,23 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 }
 
 shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+
+	bool preserveSession = true;
+	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
+	return (p->getSession() != participant->getSession());
+	});
+	if (participantIt != participants.cend()) {
+		const std::shared_ptr<Participant> & p = *participantIt;
+		preserveSession = p->getPreserveSession();
+	}
+
 	// Increment last notify before notifying participants so that the delta can be calculated correctly
-	if (((getState() != ConferenceInterface::State::TerminationPending) && (getParticipantCount() > 2)) || ((getParticipantCount() == 2) && (participant->getDevices().empty() == false))) {
+	if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 2) || ((getParticipantCount() == 2) && ((participant->getDevices().empty() == false) || !preserveSession)))) {
 		++lastNotify;
-		// Send notify only if:
-		// - there are more than two participants in the conference and it is in state TerminationPending
+		// Send notify only if it is not in state TerminationPending and:
+		// - there are more than two participants in the conference
 		// - there are two participants and the list of devices of the current participant is not empty
+		// - there are two participants and the remaining participant didn't have a session towards the conference manager preexisting conference
 		return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 	}
 	return nullptr;
