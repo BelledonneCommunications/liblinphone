@@ -735,14 +735,16 @@ void CallSessionPrivate::setBroken () {
 
 void CallSessionPrivate::setContactOp () {
 	L_Q();
-	SalAddress *salAddress = nullptr;
 	LinphoneAddress *contact = getFixedContact();
 	if (contact) {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
 			linphone_address_set_param(contact, it->first.c_str(), it->second.empty() ? nullptr : it->second.c_str());
-		salAddress = const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress());
-		op->setContactAddress(salAddress);
+		char * contactAddressStr = linphone_address_as_string(contact);
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		q->updateContactAddress (contactAddress);
+		op->setContactAddress(contactAddress.getInternalAddress());
 		linphone_address_unref(contact);
 	}
 }
@@ -783,20 +785,6 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
-
-	char * contactAddressStr = nullptr;
-	if (destProxy && destProxy->op) {
-		contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
-	} else {
-		contactAddressStr = sal_address_as_string(op->getContactAddress());
-	}
-	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	q->updateContactAddress (contactAddress);
-	op->setContactAddress(contactAddress.getInternalAddress());
-	if (destProxy && destProxy->op) {
-		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
-	}
 }
 
 // -----------------------------------------------------------------------------
