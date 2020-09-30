@@ -2206,7 +2206,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 		CallSession::accepting();
 		return 0;
 	}
-	
+
 	LinphoneStatus result = d->checkForAcceptation();
 	if (result < 0) return result;
 
@@ -2215,7 +2215,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 		wasRinging = d->listener->onCallSessionAccepted(getSharedFromThis());
 
 	d->accept(msp, wasRinging);
-	lInfo() << "CallSession accepted";
+	lInfo() << "MediaSession accepted";
 	return 0;
 }
 
@@ -2429,7 +2429,7 @@ LinphoneStatus MediaSession::resume () {
 	}
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
-	updateContactAddress (contactAddress);
+	updateContactAddress(contactAddress);
 	d->op->setContactAddress(contactAddress.getInternalAddress());
 
 	if (d->op->update(subject.c_str(), false) != 0)
