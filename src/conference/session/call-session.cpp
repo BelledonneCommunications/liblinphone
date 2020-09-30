@@ -783,6 +783,20 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
+
+	char * contactAddressStr = nullptr;
+	if (destProxy && destProxy->op) {
+		contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	q->updateContactAddress (contactAddress);
+	op->setContactAddress(contactAddress.getInternalAddress());
+	if (destProxy && destProxy->op) {
+		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
+	}
 }
 
 // -----------------------------------------------------------------------------
