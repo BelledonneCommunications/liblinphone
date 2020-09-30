@@ -6483,7 +6483,7 @@ void sip_config_uninit(LinphoneCore *lc)
 
 	if (lc->nat_policy) linphone_nat_policy_release(lc->nat_policy);
 
-	lc->sal->iterate(); /*make sure event are purged*/
+	for (i = 0; i < 5 ; ++i) lc->sal->iterate(); /*make sure event are purged*/
 	delete lc->sal;
 	lc->sal=NULL;
 
