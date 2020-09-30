@@ -366,9 +366,9 @@ static void simple_conference_not_converted_to_call(void) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallReleased, initial_pauline_stat.number_of_LinphoneCallReleased + 1, 10000));
 
 		// Wait for all conferences to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateTerminationPending, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateTerminated, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneConferenceStateDeleted, pauline->stat.number_of_LinphoneConferenceStateCreated, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_pauline_stat.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated,(initial_pauline_stat.number_of_LinphoneConferenceStateTerminated + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted,(initial_pauline_stat.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneSubscriptionTerminated,initial_pauline_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneSubscriptionTerminated,initial_marie_stat.number_of_LinphoneSubscriptionTerminated + 1,3000));
