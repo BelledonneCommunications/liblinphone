@@ -137,6 +137,7 @@ static void video_call_with_thin_congestion(void){
 
 	/*set the video preset to custom so the video quality controller won't update the video size*/
 	linphone_core_set_video_preset(marie->lc, "custom");
+	linphone_core_set_preferred_framerate(marie->lc, 15);
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 	linphone_core_set_upload_bandwidth(marie->lc, 430); /*It will result in approxy 350kbit/s VP8 output*/
 
