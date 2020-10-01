@@ -295,15 +295,6 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	LinphonePrivate::Conference::notifyStateChanged(state);
 }
 
-std::shared_ptr<LinphonePrivate::Participant> Conference::findParticipant (const std::shared_ptr<LinphonePrivate::CallSession> & session) const {
-	for (const auto &participant : getParticipants()) {
-		if (participant->getSession() == session)
-			return participant;
-	}
-
-	return nullptr;
-}
-
 void Conference::onConferenceTerminated (const IdentityAddress &addr) {
 
 /*
@@ -327,6 +318,10 @@ void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivat
 
 void Conference::join (const IdentityAddress &participantAddress) {
 	
+}
+
+void Conference::join () {
+
 }
 
 bool Conference::removeParticipants (const std::list<std::shared_ptr<LinphonePrivate::Participant>> &participants) {
@@ -1002,6 +997,20 @@ void RemoteConference::finalizeCreation() {
 int RemoteConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	ms_error("RemoteConference::inviteAddresses() not implemented");
 	return -1;
+}
+
+bool RemoteConference::addParticipant (const IdentityAddress &participantAddress) {
+	// Search call that matches participant session
+	const std::list<std::shared_ptr<Call>> &coreCalls = getCore()->getCalls();
+	auto callIt = std::find_if(coreCalls.cbegin(), coreCalls.cend(), [&] (const std::shared_ptr<Call> & c) {
+		return (IdentityAddress(*c->getRemoteAddress()) == participantAddress);
+	});
+	bool ret = false;
+	if (callIt != coreCalls.cend()) {
+		std::shared_ptr<Call> call = *callIt;
+		ret = addParticipant(call);
+	}
+	return ret;
 }
 
 bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
