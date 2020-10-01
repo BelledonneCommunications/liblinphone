@@ -321,7 +321,7 @@ static void quality_reporting_session_report_if_video_stopped (void) {
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishProgress, 0, int, "%d");
 		BC_ASSERT_EQUAL(marie->stat.number_of_LinphonePublishOk, 0, int, "%d");
 
-		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 3000));
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));
 
 		/* Remove video */

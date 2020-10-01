@@ -137,22 +137,27 @@ static void video_call_with_thin_congestion(void){
 
 	/*set the video preset to custom so the video quality controller won't update the video size*/
 	linphone_core_set_video_preset(marie->lc, "custom");
+	linphone_core_set_preferred_framerate(marie->lc, 15);
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 	linphone_core_set_upload_bandwidth(marie->lc, 430); /*It will result in approxy 350kbit/s VP8 output*/
 
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
-	simparams.max_bandwidth = 300000;  /*we limit to 300kbit/s*/
+	simparams.max_bandwidth = 430000;  /*we first limit to 430 kbit/s*/
 	simparams.max_buffer_size = (int)simparams.max_bandwidth;
 	simparams.latency = 60;
 	linphone_core_set_network_simulator_params(marie->lc, &simparams);
 
 	if (BC_ASSERT_TRUE(call(marie, pauline))){
 		LinphoneCall *call = linphone_core_get_current_call(pauline->lc);
-
+		/* Wait ten seconds. The bandwidth estimator will confirm the 430 kbit/s available. */
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 10000);
+		/* Now suddenly limit to 300 kbit/s */
+		simparams.max_bandwidth = 300000;
+		linphone_core_set_network_simulator_params(marie->lc, &simparams);
 		/*A congestion is expected, which will result in a TMMBR to be emitted by pauline*/
 		/*wait for the TMMBR*/
-		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 170000, 280000, 15000));
+		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 170000, 280000, 30000));
 
 		/*another tmmbr with a greater value is expected once the congestion is resolved*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 250000, 50000));
