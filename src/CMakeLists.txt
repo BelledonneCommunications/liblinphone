@@ -27,9 +27,6 @@ set(LINK_LIBS
 	mediastreamer
 	ortp
 )
-if(ENABLE_ADVANCED_IM)
-	list(APPEND LIBS ${LIBXSD_LIBRARIES})
-endif()
 
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
@@ -45,11 +42,14 @@ if(APPLE)
 endif()
 set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
-list(APPEND LINK_LIBS ${XML2_LIBRARIES}	${LIBXSD_LIBRARIES})
-
-if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LIBS "Ws2_32" "Iphlpapi")
+list(APPEND LINK_LIBS ${XML2_LIBRARIES})
+if (ENABLE_ADVANCED_IM)
+	list(APPEND LINK_LIBS ${XercesC_TARGET})
+	if (APPLE AND NOT IOS)
+		list(APPEND APPLE_LIBS "-framework CoreServices")
+	endif()
 endif()
+
 if(LIME_FOUND)
 	list(APPEND INTERFACE_LIBS lime)
 	list(APPEND LINK_LIBS ${LIME_LIBRARIES})

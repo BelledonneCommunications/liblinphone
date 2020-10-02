@@ -1,5 +1,5 @@
 ############################################################################
-# FindLibXsd.cmake
+# CMakeLists.txt
 # Copyright (C) 2017  Belledonne Communications, Grenoble France
 #
 ############################################################################
@@ -16,38 +16,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
-# Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #
 ############################################################################
-#
-# - Find the libxsd library
-#
-#  LIBXSD_FOUND - system has libxsd
-#  LIBXSD_INCLUDE_DIRS - the libxsd include directory
-#  LIBXSD_LIBRARIES - The libraries needed to use libxsd
 
+cmake_minimum_required(VERSION 3.0)
 
-find_package(XercesC)
+project(libxsd VERSION 4.0.0 LANGUAGES NONE)
 
-find_path(LIBXSD_INCLUDE_DIRS
-	NAMES xsd/cxx/config.hxx
-	PATH_SUFFIXES include
+install(DIRECTORY xsd
+	DESTINATION include
 )
 
-if(LIBXSD_INCLUDE_DIRS)
-	list(APPEND LIBXSD_INCLUDE_DIRS ${XercesC_INCLUDE_DIRS})
-endif()
-
-if (APPLE AND NOT IOS)
-	set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES} "-framework CoreServices")
-else()
-	set(LIBXSD_LIBRARIES ${XercesC_LIBRARIES})
-endif()
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(LibXsd
-	DEFAULT_MSG
-	LIBXSD_INCLUDE_DIRS LIBXSD_LIBRARIES
-)
-
-mark_as_advanced(LIBXSD_INCLUDE_DIRS LIBXSD_LIBRARIES)

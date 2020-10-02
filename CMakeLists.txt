@@ -129,8 +129,10 @@ find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
 find_package(belr CONFIG REQUIRED)
 
 if(ENABLE_ADVANCED_IM)
-	find_package(LibXsd REQUIRED)
+	find_package(XercesC REQUIRED)
 	set(HAVE_ADVANCED_IM 1)
+	set(LIBXSD_INCLUDE_DIRS "${PROJECT_SOURCE_DIR}/libxsd")
+	set(XercesC_TARGET "XercesC::XercesC")
 endif()
 
 find_package(Sqlite3 REQUIRED)
