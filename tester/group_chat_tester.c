@@ -1968,6 +1968,7 @@ static void group_chat_room_reinvited_after_removed_base (bool_t offline_when_re
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed + 1, 5000));
 
 	if (offline_when_removed && !offline_when_reinvited) {
+		wait_for_list(coresList,0, 1, 20000); /* see large comment below, also applicable for BYE */
 		linphone_core_manager_configure(laure);
 		linphone_config_set_string(linphone_core_get_config(laure->lc), "misc", "uuid", savedLaureUuid);
 		bctbx_free(savedLaureUuid);
@@ -1992,6 +1993,13 @@ static void group_chat_room_reinvited_after_removed_base (bool_t offline_when_re
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_added, initialMarieStats.number_of_participants_added + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_participants_added, initialPaulineStats.number_of_participants_added + 1, 5000));
 	if (offline_when_reinvited) {
+		/*
+		 * Hack: while we were offline the server sent an INVITE, that will get a 408 timeout after 20 seconds.
+		 * During this time, the REGISTER from Laure won't trigger a new INVITE.
+		 * FIXME: it should be handled at server side.
+		 * However, since the case isn't very real-world probable, we can workaround it in the test by waiting this INVITE to timeout, and then REGISTER.
+		 * */
+		wait_for_list(coresList,0, 1, 20000);
 		linphone_core_manager_configure(laure);
 		linphone_config_set_string(linphone_core_get_config(laure->lc), "misc", "uuid", savedLaureUuid);
 		bctbx_free(savedLaureUuid);

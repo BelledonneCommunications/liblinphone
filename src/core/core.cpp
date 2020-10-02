@@ -99,10 +99,16 @@ void CorePrivate::init () {
 				uri += " charset=utf8mb4";
 			}
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+			auto startMs = bctbx_get_cur_time_ms();
 			if (!mainDb->connect(backend, uri)) {
 				ostringstream os;
 				os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 				throw DatabaseConnectionFailure(os.str());
+			}
+			auto stopMs = bctbx_get_cur_time_ms();
+			auto duration = stopMs - startMs;
+			if (duration >= 1000){
+				lWarning() << "Opening database took " << duration << " ms !";
 			}
 
 			loadChatRooms();
