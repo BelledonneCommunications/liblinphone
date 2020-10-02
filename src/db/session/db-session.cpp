@@ -58,7 +58,7 @@ DbSession::DbSession (const string &uri) : DbSession() {
 					uriArgs.insert(sqlitePos+10, "db="); // insert just after "sqlite3://" position +10, before the opening "
 				}
 			}
-			uriArgs.append(" vfs=").append(BCTBX_SQLITE3_VFS);
+			//uriArgs.append(" vfs=").append(BCTBX_SQLITE3_VFS);
 			d->backendSession = makeUnique<soci::session>(uriArgs);
 		} else {
 			d->backendSession = makeUnique<soci::session>(uri);
