@@ -153,7 +153,7 @@ static void video_call_with_thin_congestion(void){
 
 		/*A congestion is expected, which will result in a TMMBR to be emitted by pauline*/
 		/*wait for the TMMBR*/
-		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 170000, 280000, 15000));
+		BC_ASSERT_TRUE(wait_for_until_interval(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 170000, 280000, 30000));
 
 		/*another tmmbr with a greater value is expected once the congestion is resolved*/
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.last_tmmbr_value_received, 250000, 50000));
