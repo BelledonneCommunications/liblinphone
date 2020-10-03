@@ -74,7 +74,8 @@ const char *lime_server_c448_tlsauth_req_url="https://lime.wildcard1.linphone.or
 const char *lime_server_c25519_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_tlsauth_opt_url="https://lime.wildcard1.linphone.org:8544/lime-server-c448/lime-server.php";
 // Lime server using TLS and digest auth on external-domain
-const char *lime_server_external_url="https://lime.external-domain.org:8643/lime-server/lime-server.php";
+const char *lime_server_c25519_external_url="https://lime.external-domain.org:8643/lime-server-c25519/lime-server.php";
+const char *lime_server_c448_external_url="https://lime.external-domain.org:8643/lime-server-c448/lime-server.php";
 bool_t liblinphonetester_ipv6 = TRUE;
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
