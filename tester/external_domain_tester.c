@@ -48,7 +48,7 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 		linphone_core_set_lime_x3dh_server_url(pauline->lc, lime_server_c25519_tlsauth_opt_url);
 		// claire uses the lime-external one
 		linphone_config_set_string(linphone_core_get_config(claire->lc),"lime","curve","c25519");
-		linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_external_url);
+		linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_c25519_external_url);
 	}
 
 	stats initialMarieStats = marie->stat;
