@@ -175,7 +175,6 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 					linphone_event_cbs_set_user_data(cbs, nullptr);
 					linphone_event_cbs_set_notify_response(cbs, nullptr);
 					linphone_event_terminate(event);
-					device->setConferenceSubscribeEvent(nullptr);
 				}
 
 				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
@@ -228,10 +227,19 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	if (!participant)
 		return false;
 	// Delete all devices of a participant
-	for (list<shared_ptr<ParticipantDevice>>::const_iterator device = participant->getDevices().begin(); device != participant->getDevices().end(); device++) {
+	std::for_each(participant->getDevices().cbegin(), participant->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
+		LinphoneEvent * event = device->getConferenceSubscribeEvent();
+		if (event) {
+			//try to terminate subscription if any, but do not wait for anser.
+			LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
+			linphone_event_cbs_set_user_data(cbs, nullptr);
+			linphone_event_cbs_set_notify_response(cbs, nullptr);
+			linphone_event_terminate(event);
+		}
+
 		time_t creationTime = time(nullptr);
-		notifyParticipantDeviceRemoved(creationTime, false, participant, *device);
-	}
+		notifyParticipantDeviceRemoved(creationTime, false, participant, device);
+	});
 	participant->clearDevices();
 	participants.remove(participant);
 	time_t creationTime = time(nullptr);
@@ -444,7 +452,6 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 	Conference::onConferenceTerminated(addr);
 }
 
-
 void LocalConference::addLocalEndpoint () {
 	if (!confParams->localParticipantEnabled()) return;
 	
@@ -630,7 +637,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	
 	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
 	if (removeParticipantAllowed || getState() == ConferenceInterface::State::TerminationPending) {
-		Conference::removeParticipant(session, preserveSession);
+		std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(session);
+		Conference::removeParticipant(participant);
 		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 
 	}
