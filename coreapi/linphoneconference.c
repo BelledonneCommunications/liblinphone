@@ -166,11 +166,6 @@ float linphone_conference_get_input_volume (const LinphoneConference *conference
 	return aci->getRecordVolume();
 }
 
-/*ConferenceId linphone_conference_get_conference_id(const LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->getConferenceId();
-}
-*/
-
 int linphone_conference_get_participant_count (const LinphoneConference *conference) {
 	return MediaConference::Conference::toCpp(conference)->getParticipantCount();
 }
@@ -317,3 +312,10 @@ bool_t linphone_conference_params_local_participant_enabled(const LinphoneConfer
 	return ConferenceParams::toCpp(params)->localParticipantEnabled();
 }
 
+const char *linphone_conference_get_ID (const LinphoneConference *obj) {
+	return MediaConference::Conference::toCpp(obj)->getID();
+}
+
+void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID) {
+	MediaConference::Conference::toCpp(obj)->setID(conferenceID);
+}
