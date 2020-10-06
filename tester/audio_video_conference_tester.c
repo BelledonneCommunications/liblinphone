@@ -2919,6 +2919,9 @@ void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee) {
 	}
 
 	bctbx_list_free(lcs);
+	if (initial_callers_stats) {
+		ms_free(initial_callers_stats);
+	}
 }
 
 static void initiate_call(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
