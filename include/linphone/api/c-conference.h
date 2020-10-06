@@ -29,7 +29,7 @@
 #endif // ifdef __cplusplus
 
 /**
- * @addtogroup conferencing
+ * @addtogroup conference
  * @{
  */
 

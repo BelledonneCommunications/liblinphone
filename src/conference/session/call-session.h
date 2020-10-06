@@ -36,6 +36,10 @@ class CallSessionPrivate;
 class Content;
 class Core;
 
+namespace MediaConference {
+	class Conference;
+}
+
 class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class Call;
 	friend class ClientGroupChatRoom;
@@ -46,6 +50,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class ServerGroupChatRoomPrivate;
 	friend class ParticipantDevice;
 
+	friend class MediaConference::LocalConference;
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
 
