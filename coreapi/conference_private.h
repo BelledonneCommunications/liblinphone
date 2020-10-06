@@ -151,10 +151,20 @@ public:
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 	void checkIfTerminated();
 
+	void setID(const char *conferenceID) {
+		m_conferenceID = conferenceID;
+	}
+	const char *getID() const {
+		return m_conferenceID.c_str();
+	}
+
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);
 
 protected:
+
+	// Legacy member
+	std::string m_conferenceID;
 
 	LinphoneConferenceStateChangedCb mStateChangedCb = nullptr;
 	// TODO: Delete mUserData

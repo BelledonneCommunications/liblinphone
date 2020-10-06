@@ -242,13 +242,7 @@ LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConf
 LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneConference *conference);
 
 /**
- * Get the conference id
- * @param conference the conference
- */
-//LINPHONE_PUBLIC ConferenceId linphone_conference_get_conference_id(const LinphoneConference *conference);
-
-/**
- * Terlnate conferenceGet the conference id
+ * Terminates conference
  * @param conference The #LinphoneConference object. @notnil
  * @return 0 if the termination is successful, -1 otherwise.
  */
@@ -281,6 +275,19 @@ LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *
  * @param conf The #LinphoneConference object. @notnil
  */
 LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
+/**
+ * Get the conference id as string
+ * @param conf The #LinphoneConference object. @notnil
+ * @return the conference id @maybenil
+ */
+LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *conf);
+
+/**
+ * Set the conference id as string
+ * @param conf The #LinphoneConference object. @notnil
+ * @param conference_id the conference id to set. @notnil
+ */
+LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 
 /************ */
 /* DEPRECATED */
