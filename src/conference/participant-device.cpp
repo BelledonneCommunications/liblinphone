@@ -19,6 +19,7 @@
 
 #include "chat/encryption/encryption-engine.h"
 #include "conference/session/call-session-p.h"
+#include "conference/params/media-session-params.h"
 #include "participant-device.h"
 #include "participant.h"
 #include "core/core.h"
@@ -37,11 +38,17 @@ class Core;
 
 ParticipantDevice::ParticipantDevice () {
 	mTimeOfJoining = time(nullptr);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
 }
 
 ParticipantDevice::ParticipantDevice (Participant *participant, const IdentityAddress &gruu, const string &name)
 	: mParticipant(participant), mGruu(gruu), mName(name) {
 	mTimeOfJoining = time(nullptr);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
+	setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
 }
 
 ParticipantDevice::~ParticipantDevice () {
@@ -114,6 +121,75 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 
 void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities){
 	mCapabilityDescriptor = capabilities;
+}
+
+void ParticipantDevice::setSession (std::shared_ptr<CallSession> session) {
+	mSession = session;
+	updateMedia();
+}
+
+LinphoneMediaDirection ParticipantDevice::getMediaDirection(const ConferenceMediaCapabilities capIdx) const {
+	return static_cast<LinphoneMediaDirection>(mediaCapabilities[static_cast<int>(capIdx)]);
+}
+
+LinphoneMediaDirection ParticipantDevice::getAudioDirection() const {
+	return getMediaDirection(ConferenceMediaCapabilities::Audio);
+}
+
+LinphoneMediaDirection ParticipantDevice::getVideoDirection() const {
+	return getMediaDirection(ConferenceMediaCapabilities::Video);
+}
+
+LinphoneMediaDirection ParticipantDevice::getTextDirection() const {
+	return getMediaDirection(ConferenceMediaCapabilities::Text);
+}
+
+bool ParticipantDevice::setMediaDirection(const LinphoneMediaDirection & direction, const ConferenceMediaCapabilities capIdx) {
+	if (mediaCapabilities[static_cast<int>(capIdx)] != static_cast<int>(direction)) {
+		mediaCapabilities[static_cast<int>(capIdx)] = static_cast<int>(direction);
+		return true;
+	}
+	return false;
+}
+
+bool ParticipantDevice::setAudioDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, ConferenceMediaCapabilities::Audio);
+}
+
+bool ParticipantDevice::setVideoDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, ConferenceMediaCapabilities::Video);
+}
+
+bool ParticipantDevice::setTextDirection(const LinphoneMediaDirection direction) {
+	return setMediaDirection(direction, ConferenceMediaCapabilities::Text);
+}
+
+bool ParticipantDevice::updateMedia() {
+	bool mediaChanged = false;
+	if (mSession) {
+		const auto currentParams = dynamic_cast<MediaSessionParams*>(mSession->getCurrentParams());
+
+		if (currentParams) {
+			const auto & audioEnabled = currentParams->audioEnabled();
+			const auto & audioDir = currentParams->getAudioDirection();
+			mediaChanged |= setAudioDirection((!audioEnabled || (audioDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : audioDir);
+
+			const auto & videoEnabled = currentParams->videoEnabled();
+			const auto & videoDir = currentParams->getVideoDirection();
+			mediaChanged |= setVideoDirection((!videoEnabled || (videoDir == LinphoneMediaDirectionSendOnly)) ? LinphoneMediaDirectionInactive : videoDir);
+
+			const auto & textEnabled = currentParams->realtimeTextEnabled();
+			mediaChanged |= setTextDirection((textEnabled) ? LinphoneMediaDirectionSendRecv : LinphoneMediaDirectionInactive);
+		} else {
+			mediaChanged |= setTextDirection(LinphoneMediaDirectionSendRecv);
+		}
+	} else {
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Audio);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Video);
+			mediaChanged |= setMediaDirection(LinphoneMediaDirectionInactive, ConferenceMediaCapabilities::Text);
+	}
+
+	return mediaChanged;
 }
 
 LINPHONE_END_NAMESPACE

@@ -203,7 +203,8 @@ namespace {
 
 		constexpr auto ConferenceInfoFilter = ConferenceInfoNoDeviceFilter + "," + SqlEventFilterBuilder<
 			EventLog::Type::ConferenceParticipantDeviceAdded,
-			EventLog::Type::ConferenceParticipantDeviceRemoved
+			EventLog::Type::ConferenceParticipantDeviceRemoved,
+			EventLog::Type::ConferenceParticipantDeviceMediaChanged
 		>::get();
 
 		constexpr auto ConferenceChatMessageSecurityFilter = ConferenceChatMessageFilter + "," + SqlEventFilterBuilder<
@@ -692,7 +693,12 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceInfoEvent (
 
 		case EventLog::Type::ConferenceParticipantDeviceAdded:
 		case EventLog::Type::ConferenceParticipantDeviceRemoved:
+		case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			eventLog = selectConferenceParticipantDeviceEvent(conferenceId, type, row);
+			break;
+
+		case EventLog::Type::ConferenceAvailableMediaChanged:
+			eventLog = selectConferenceAvailableMediaEvent(conferenceId, type, row);
 			break;
 
 		case EventLog::Type::ConferenceSubjectChanged:
@@ -853,6 +859,25 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceEphemeralMessageEvent (
 		conferenceId,
 		(long)row.get<double>(22)
 	);
+}
+
+shared_ptr<EventLog> MainDbPrivate::selectConferenceAvailableMediaEvent (
+	const ConferenceId &conferenceId,
+	EventLog::Type type,
+	const soci::row &row
+) const {
+
+	std::map<ConferenceMediaCapabilities, bool> mediaCapabilities;
+	mediaCapabilities[ConferenceMediaCapabilities::Audio] = row.get<int>(16);
+	mediaCapabilities[ConferenceMediaCapabilities::Video] = row.get<int>(16);
+	mediaCapabilities[ConferenceMediaCapabilities::Text] = row.get<int>(16);
+	shared_ptr<ConferenceAvailableMediaEvent> event = make_shared<ConferenceAvailableMediaEvent>(
+		getConferenceEventCreationTimeFromRow(row),
+		conferenceId,
+		mediaCapabilities
+	);
+	event->setNotifyId(getConferenceEventNotifyIdFromRow(row));
+	return event;
 }
 
 shared_ptr<EventLog> MainDbPrivate::selectConferenceSubjectEvent (
@@ -1197,6 +1222,30 @@ long long MainDbPrivate::insertConferenceSecurityEvent (const shared_ptr<EventLo
 	soci::session *session = dbSession.getBackendSession();
 	*session << "INSERT INTO conference_security_event (event_id, security_alert, faulty_device)"
 		" VALUES (:eventId, :securityEventType, :faultyDevice)", soci::use(eventId), soci::use(securityEventType), soci::use(faultyDevice);
+
+	return eventId;
+#else
+	return -1;
+#endif
+}
+
+long long MainDbPrivate::insertConferenceAvailableMediaEvent (const shared_ptr<EventLog> &eventLog) {
+#ifdef HAVE_DB_STORAGE
+	long long chatRoomId;
+	const long long &eventId = insertConferenceNotifiedEvent(eventLog, &chatRoomId);
+	if (eventId < 0)
+		return -1;
+
+	const int audio = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog)->audioEnabled() ? 1 : 0;
+	const int video = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog)->videoEnabled() ? 1 : 0;
+	const int chat = static_pointer_cast<ConferenceAvailableMediaEvent>(eventLog)->chatEnabled() ? 1 : 0;
+
+	soci::session *session = dbSession.getBackendSession();
+	*session << "INSERT INTO conference_available_media_event (event_id, audio, video, chat)"
+		" VALUES (:eventId, :audio, :video, :chat)", soci::use(eventId), soci::use(audio), soci::use(video), soci::use(chat);
+
+	*session << "UPDATE chat_room SET audio = :audio, video = :video, chat = :chat"
+		" WHERE id = :chatRoomId", soci::use(audio), soci::use(video), soci::use(chat), soci::use(chatRoomId);
 
 	return eventId;
 #else
@@ -2263,11 +2312,16 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 				eventId = d->insertConferenceParticipantDeviceEvent(eventLog);
 				break;
 
 			case EventLog::Type::ConferenceSecurityEvent:
 				eventId = d->insertConferenceSecurityEvent(eventLog);
+				break;
+
+			case EventLog::Type::ConferenceAvailableMediaChanged:
+				eventId = d->insertConferenceAvailableMediaEvent(eventLog);
 				break;
 
 			case EventLog::Type::ConferenceSubjectChanged:
@@ -2326,7 +2380,9 @@ bool MainDb::updateEvent (const shared_ptr<EventLog> &eventLog) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin:
 			case EventLog::Type::ConferenceParticipantDeviceAdded:
 			case EventLog::Type::ConferenceParticipantDeviceRemoved:
+			case EventLog::Type::ConferenceParticipantDeviceMediaChanged:
 			case EventLog::Type::ConferenceSecurityEvent:
+			case EventLog::Type::ConferenceAvailableMediaChanged:
 			case EventLog::Type::ConferenceSubjectChanged:
 			case EventLog::Type::ConferenceEphemeralMessageLifetimeChanged:
 			case EventLog::Type::ConferenceEphemeralMessageEnabled:
