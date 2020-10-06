@@ -64,3 +64,15 @@ bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDe
 time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
+
+LinphoneMediaDirection linphone_participant_device_get_audio_direction (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAudioDirection();
+}
+
+LinphoneMediaDirection linphone_participant_device_get_video_direction (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getVideoDirection();
+}
+
+LinphoneMediaDirection linphone_participant_device_get_text_direction (const LinphoneParticipantDevice *participant_device) {
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTextDirection();
+}
