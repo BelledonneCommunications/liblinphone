@@ -475,7 +475,9 @@ void LocalConference::addLocalEndpoint () {
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	for (const auto &address : addresses) {
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
-		Address cppAddress(linphone_address_as_string(address));
+		char *cAddress = linphone_address_as_string(address);
+		Address cppAddress(cAddress);
+		free(cAddress);
 		if (!call) {
 			/* Start a new call by indicating that it has to be put into the conference directly */
 			LinphoneCallParams *new_params;
