@@ -223,6 +223,7 @@ public:
 
 	virtual void notifyFullState () override;
 
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 private:
