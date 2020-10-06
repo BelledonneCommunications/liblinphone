@@ -47,6 +47,7 @@ LINPHONE_BEGIN_NAMESPACE
 namespace MediaConference {
 	class Conference;
 	class LocalConference;
+	class RemoteConference;
 }
 
 class ClientGroupChatRoom;
@@ -60,6 +61,7 @@ class LINPHONE_PUBLIC Participant : public bellesip::HybridObject<LinphonePartic
 	friend class Conference;
 	friend class MediaConference::Conference;
 	friend class MediaConference::LocalConference;
+	friend class MediaConference::RemoteConference;
 	friend class LimeX3dhEncryptionEngine;
 	friend class LocalConference;
 	friend class LocalConferenceEventHandler;
