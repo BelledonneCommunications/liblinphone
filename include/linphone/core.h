@@ -3791,6 +3791,17 @@ LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_param
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
 
+/**
+ * Find a conference.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param params The conference parameters to match #LinphoneConferenceParams or NULL @maybenil
+ * @param localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
+ * @param remoteAddr #LinphoneAddress to search for or NULL @maybenil
+ * @param participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find @maybenil
+ * @return A matching conference or NULL if none matches. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference(const LinphoneCore *core, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
 
 /**
  * Add a participant to the conference. If no conference is going on
