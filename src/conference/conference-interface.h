@@ -112,7 +112,7 @@ public:
 	virtual void setSubject (const std::string &subject) = 0;
 
 	/*
-	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of subject change.
+	 * Change the admin status of a participant of this conference (If not focus,  This operation is only available if the local participant  #getMe() is admin). All participants are notified of change of the admin.
 	 * @param[in] participant The Participant for which to change the admin status
 	 * @param[in] isAdmin A boolean value telling whether the participant should now be an admin or not
 	 */
