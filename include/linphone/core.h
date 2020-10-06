@@ -3972,23 +3972,15 @@ LINPHONE_PUBLIC const char *linphone_core_get_user_certificates_path(LinphoneCor
 LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const char *path);
 
 /**
- * @addtogroup call_control
+ * @addtogroup conference
  * @{
  */
-
-/**
- * Create some default conference parameters for instanciating a a conference with linphone_core_create_conference_with_params().
- * @param core the core @notnil
- * @return conference parameters. @notnil
-**/
-LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *core);
-
 
 /**
  * Create a conference
  * @param core The #LinphoneCore instance where the conference will be created inside. @notnil
  * @param params Parameters of the conference. See #LinphoneConferenceParams. @notnil
- * @return A pointer on the freshly created conference. That object will be automatically
+ * @return A pointer on the freshly created conference #LinphoneConference. That object will be automatically
  * freed by the core after calling linphone_core_terminate_conference(). @maybenil
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
@@ -4000,8 +3992,8 @@ LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(
  * @param params The conference parameters to match #LinphoneConferenceParams or NULL @maybenil
  * @param localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
  * @param remoteAddr #LinphoneAddress to search for or NULL @maybenil
- * @param participants The participants that must be present in the chat room to find. \bctbx_list{LinphoneAddress} @maybenil
- * @return A matching conference or NULL if none matches. @maybenil
+ * @param participants The participants that must be present in the chat room to find \bctbx_list{LinphoneAddress} @maybenil
+ * @return A pointer on #LinphoneConference satisfying the non-NULL function arguments or NULL if none matches @maybenil
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference(const LinphoneCore *core, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
 
@@ -4048,6 +4040,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_conference(LinphoneCore
  * linphone_conference_remove_participant() instead.
  * @param core the linphone core @notnil
  * @return TRUE if the local participant is in a conference, FALSE otherwise.
+ * @deprecated 09/03/2021 Use linphone_conference_is_in() instead.
 */
 LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
 
@@ -4055,6 +4048,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
  * Join the local participant to the running conference
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 09/03/2021 Use linphone_conference_enter() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core);
 
@@ -4062,6 +4056,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core
  * Make the local participant leave the running conference
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 09/03/2021 Use linphone_conference_leave() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_leave_conference(LinphoneCore *core);
 
@@ -4087,9 +4082,16 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_terminate_conference(LinphoneCore *
  * participant is included in the count only if it is in the conference.
  * @param core #LinphoneCore @notnil
  * @return The number of participant
+ * @deprecated 16/04/2021 Use linphone_conference_get_size() instead.
  */
 LINPHONE_PUBLIC int linphone_core_get_conference_size(LinphoneCore *core);
 
+/**
+ * Create some default conference parameters for instanciating a conference with linphone_core_create_conference_with_params().
+ * @param core the #LinphoneCore object @notnil
+ * @return a #LinphoneConferenceParams object. @notnil
+**/
+LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *core);
 /**
  * Start recording the running conference
  * @param core #LinphoneCore @notnil
@@ -4126,6 +4128,16 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_server (LinphoneCore *core,
  * @return A boolean value telling whether the conference server feature is enabled or not
  */
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled (const LinphoneCore *core);
+
+/**
+ * @}
+ */
+
+
+/**
+ * @addtogroup call_control
+ * @{
+ */
 
 /**
  * Empties sound resources to allow a new call to be accepted.

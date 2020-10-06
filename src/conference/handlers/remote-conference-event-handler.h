@@ -22,6 +22,7 @@
 
 #include "linphone/types.h"
 
+#include "xml/conference-info.h"
 #include "conference/conference-id.h"
 #include "core/core-listener.h"
 #include "remote-conference-event-handler-base.h"
@@ -39,6 +40,8 @@ class LINPHONE_PUBLIC RemoteConferenceEventHandler : public RemoteConferenceEven
 	friend class ClientGroupChatRoom;
 
 public:
+
+	static LinphoneMediaDirection mediaStatusToMediaDirection (Xsd::ConferenceInfo::MediaStatusType status);
 	RemoteConferenceEventHandler (Conference *remoteConference, ConferenceListener * listener);
 	~RemoteConferenceEventHandler ();
 
