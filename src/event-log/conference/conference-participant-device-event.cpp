@@ -20,6 +20,7 @@
 #include "conference-participant-device-event.h"
 #include "conference-participant-event.h"
 #include "conference-participant-event-p.h"
+#include "conference/participant-device.h"
 
 // =============================================================================
 
@@ -54,7 +55,8 @@ ConferenceParticipantDeviceEvent::ConferenceParticipantDeviceEvent (
 	L_D();
 	L_ASSERT(
 		type == Type::ConferenceParticipantDeviceAdded ||
-		type == Type::ConferenceParticipantDeviceRemoved
+		type == Type::ConferenceParticipantDeviceRemoved ||
+		type == Type::ConferenceParticipantDeviceMediaChanged
 	);
 	d->deviceAddress = deviceAddress;
 	d->deviceName = name;
