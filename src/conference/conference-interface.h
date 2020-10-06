@@ -29,7 +29,6 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ConferenceAvailableMediaEvent;
 class ConferenceListenerInterface;
 class IdentityAddress;
 class CallSessionParams;
@@ -255,6 +254,13 @@ public:
 	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {}
 
 	/*
+	* This fonction is called each time a participant device changes its available media
+	* @param[in] event informations related to the device's participant.
+	* @param[in] device participant device that changed its media capabilities
+	*/
+	virtual void onParticipantDeviceMediaChanged (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {};
+
+	/*
 	 * This fonction is called each time a new admin is set by the focus after full state notification.
 	 * @param[in] event informations related to the new admin participant. @notnil
 	 * @param[in] participant participant whose admin status changed. @notnil
@@ -350,17 +356,6 @@ class LINPHONE_PUBLIC ConferenceFactoryInterface {
 	*/
 	std::shared_ptr<ConferenceInterface>& createConference(const std::shared_ptr<ConferenceParamsInterface> &params,
 	const std::list<IdentityAddress> &participants);
-};
-
-/*
- * Event used to repport media availability changes from a conference.
- **/
-class ConferenceAvailableMediaEvent :  public EventLog {
-	/*
-	 * Can be audio, video, text
-	 *@return list of available media type for this conference;
-	 */
-	const std::list<std::string> &getAvailableMediaType () const;
 };
 
 std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e);
