@@ -7986,6 +7986,21 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	return conf;
 }
 
+LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
+	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
+		return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+	});
+	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
+	shared_ptr<LinphonePrivate::MediaConference::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress, participantsList);
+	LinphoneConference* c_conference = NULL;
+	if (conf) {
+		c_conference = conf->toC();
+	}
+	return c_conference;
+}
+
 LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *lc){
 	return linphone_conference_params_new(lc);
 }

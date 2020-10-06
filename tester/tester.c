@@ -811,14 +811,18 @@ ms_message("%s - conf_to_focus_call %p\n",  __func__, conf_to_focus_call);
 		// Local conference
 		LinphoneCall * focus_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
-		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(focus_call));
-		BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_call));
+		if (focus_call) {
+			BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(focus_call));
+			BC_ASSERT_TRUE(linphone_call_is_in_conference(focus_call));
+		}
 
 		// Remote  conference
 		LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, focus_mgr->identity);
 		BC_ASSERT_PTR_NOT_NULL(participant_call);
-		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
-		BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+		if (participant_call) {
+			BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
+			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+		}
 
 		counter++;
 	}

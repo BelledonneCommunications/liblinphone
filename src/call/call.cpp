@@ -369,6 +369,14 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	setConference (nullptr);
 }
 
+void Call::changeSubjectInLocalConference(SalCallOp *op) {
+	if (getConference() && sal_custom_header_find(op->getRecvCustomHeaders(), "Subject")) {
+		// Handle subject change
+		lInfo() << this << ": New subject \"" << op->getSubject() << "\"";
+		linphone_conference_set_subject(getConference(), op->getSubject().c_str());
+	}
+}
+
 void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State state, const string &message) {
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
@@ -449,15 +457,19 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 					}
 				} else if (getConference()) {
-					// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
-					if (!remoteContactAddress.hasUriParam("conf-id")) {
-						if (getConferenceId().empty() == false) {
-							remoteContactAddress.setUriParam("conf-id", getConferenceId());
+					if (isInConference()) {
+						changeSubjectInLocalConference(session->getPrivate()->getOp());
+					} else {
+						// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
+						if (!remoteContactAddress.hasUriParam("conf-id")) {
+							if (getConferenceId().empty() == false) {
+								remoteContactAddress.setUriParam("conf-id", getConferenceId());
+							}
 						}
-					}
-					if (!remoteContactAddress.hasParam("isfocus")) {
-						remoteContactAddress.setParam("isfocus");
-						removeFromConference(remoteContactAddress);
+						if (!remoteContactAddress.hasParam("isfocus")) {
+							remoteContactAddress.setParam("isfocus");
+							removeFromConference(remoteContactAddress);
+						}
 					}
 				}
 			}
