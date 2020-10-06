@@ -137,7 +137,7 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
  * @param conference A #LinphoneConference @notnil
- * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil
+ * @return The list of the participants' address active in the conference. \bctbx_list{LinphoneAddress} @maybenil
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference);
@@ -145,7 +145,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_partic
 /**
  * Get list of all participants of one conference
  * @param conference A #LinphoneConference @notnil
- * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil
+ * @return The list of participants of the conference. \bctbx_list{LinphoneParticipant} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
@@ -311,7 +311,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const
  * @deprecated 10/07/2020 Use linphone_conference_set_conference_address() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
-
 
 LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 int linphone_conference_leave(LinphoneConference *conference);
