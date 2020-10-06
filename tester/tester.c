@@ -584,6 +584,13 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 		}
 	}
 
+	if (participants_initial_stats) {
+		ms_free(participants_initial_stats);
+	}
+
+	if (existing_call) {
+		ms_free(existing_call);
+	}
 	return status;
 
 }
