@@ -104,6 +104,9 @@ public:
 
 	time_t getCreationTime() const;
 
+	void * getUserData() const { return userData; };
+	void setUserData(void * ud) { userData = ud; };
+
 protected:
 	std::shared_ptr<Core> getCore () const { return mConference ? mConference->getCore() : nullptr; }
 	Conference *getConference () const { return mConference; }
@@ -132,6 +135,8 @@ private:
 	std::list<std::shared_ptr<ParticipantDevice>> devices;
 	time_t creationTime;
 	bool preserveSession = false;
+
+	void * userData = nullptr;
 
 	L_DISABLE_COPY(Participant);
 };
