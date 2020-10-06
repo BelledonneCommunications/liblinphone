@@ -293,6 +293,7 @@ private:
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
+	void changeSubjectInLocalConference(SalCallOp *op);
 	void removeFromConference(const Address & remoteContactAddress);
 	
 	void *mUserData = nullptr;
