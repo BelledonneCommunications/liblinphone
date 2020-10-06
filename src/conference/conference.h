@@ -58,7 +58,7 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		ConferenceParams(const ConferenceParams& params) = default;
 		ConferenceParams(const LinphoneCore *core = NULL);
 
-		Object *clone()const override{
+		ConferenceParams *clone()const override{
 			return new ConferenceParams(*this);
 		}
 
