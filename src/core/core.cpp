@@ -56,6 +56,7 @@
 
 #include "conference/session/media-session.h"
 #include "conference/session/streams.h"
+#include "conference/participant.h"
 #include "conference_private.h"
 
 // TODO: Remove me later.
@@ -1238,4 +1239,50 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 
 }
 
+shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const {
+
+	const auto it = std::find_if (audioVideoConferenceById.begin(), audioVideoConferenceById.end(), [&] (const auto & p) {
+		// p is of type std::pair<ConferenceId, std::shared_ptr<MediaConference::Conference>
+		const auto &audioVideoConference = p.second;
+		const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+		const IdentityAddress &curLocalAddress = conferenceId.getLocalAddress();
+		if (localAddress.getAddressWithoutGruu() != curLocalAddress.getAddressWithoutGruu())
+			return false;
+		const IdentityAddress &curRemoteAddress = conferenceId.getPeerAddress();
+		if (remoteAddress.isValid() && remoteAddress.getAddressWithoutGruu() != curRemoteAddress.getAddressWithoutGruu())
+			return false;
+
+		// Check parameters only if pointer provided as argument is not null
+		if (params) {
+			const ConferenceParams confParams = audioVideoConference->getCurrentParams();
+			if (!params->getSubject().empty() && (params->getSubject().compare(confParams.getSubject()) != 0))
+				return false;
+			if (params->chatEnabled() != confParams.chatEnabled())
+				return false;
+			if (params->audioEnabled() != confParams.audioEnabled())
+				return false;
+			if (params->videoEnabled() != confParams.videoEnabled())
+				return false;
+			if (params->localParticipantEnabled() != confParams.localParticipantEnabled())
+				return false;
+		}
+
+		// Check participants only if list provided as argument is not empty
+		bool participantListMatch = true;
+		if (participants.empty() == false) {
+			const std::list<std::shared_ptr<Participant>> & confParticipants = audioVideoConference->getParticipants ();
+			participantListMatch = equal(participants.cbegin(), participants.cend(), confParticipants.cbegin(), confParticipants.cend(), [] (const auto & p1, const auto & p2) {
+				return (p2->getAddress().getAddressWithoutGruu() == p1.getAddressWithoutGruu());
+			});
+		}
+		return participantListMatch;
+	});
+
+	shared_ptr<MediaConference::Conference> conference = nullptr;
+	if (it != audioVideoConferenceById.cend()) {
+		conference = it->second;
+	}
+
+	return conference;
+}
 LINPHONE_END_NAMESPACE
