@@ -224,7 +224,7 @@
 **/
 
 /**
- * @defgroup conferencing Conferencing
+ * @defgroup conference Conferencing
  * @brief Making an audio conference.
  *
  * This API allows to create a conference entirely managed by the client. No server capabilities are required.
