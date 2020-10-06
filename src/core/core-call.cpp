@@ -114,7 +114,7 @@ void CorePrivate::notifySoundcardUsage (bool used) {
 	if (useRtpIo && !useRtpIoEnableLocalOutput) return;
 	
 	LinphoneConference *conf_ctx = getCCore()->conf_ctx;
-	if (conf_ctx && linphone_conference_get_size(conf_ctx) >= 1) return;
+	if (conf_ctx && ((linphone_conference_get_participant_count(conf_ctx) >= 1) || linphone_conference_is_in(conf_ctx))) return;
 	if (used) lInfo() << "Notifying sound card that it is going to be used.";
 	else lInfo() << "Notifying sound card that is no longer needed.";
 	ms_snd_card_set_usage_hint(card, used);
@@ -191,24 +191,28 @@ void CorePrivate::setCurrentCall (const std::shared_ptr<Call> &call) {
 bool Core::areSoundResourcesLocked () const {
 	L_D();
 	for (const auto &call : d->calls) {
-		
-		switch (call->getState()) {
-			case CallSession::State::OutgoingInit:
-			case CallSession::State::OutgoingProgress:
-			case CallSession::State::OutgoingRinging:
-			case CallSession::State::OutgoingEarlyMedia:
-			case CallSession::State::Connected:
-			case CallSession::State::Referred:
-			case CallSession::State::IncomingEarlyMedia:
-			case CallSession::State::Updating:
-				lInfo() << "Call " << call << " is locking sound resources";
-				return true;
-			case CallSession::State::StreamsRunning:
-				if (call->mediaInProgress())
+		// Do not check if sound resources are locked by call if it is in a conference
+		if (!call->getConference()) {
+			switch (call->getState()) {
+				case CallSession::State::OutgoingInit:
+				case CallSession::State::OutgoingProgress:
+				case CallSession::State::OutgoingRinging:
+				case CallSession::State::OutgoingEarlyMedia:
+				case CallSession::State::Connected:
+				case CallSession::State::Referred:
+				case CallSession::State::IncomingEarlyMedia:
+				case CallSession::State::Updating:
+					lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState();
 					return true;
-			break;
-			default:
+				case CallSession::State::StreamsRunning:
+					if (call->mediaInProgress()) {
+						lInfo() << "Call " << call << " (local address " << call->getLocalAddress().asString() << " remote address " << call->getRemoteAddress()->asString() << ") is locking sound resources becaue it is state " << call->getState() << " and media is in progress";
+						return true;
+					}
 				break;
+				default:
+					break;
+			}
 		}
 	}
 	return false;
