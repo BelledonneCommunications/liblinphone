@@ -20,6 +20,8 @@
 #ifndef _L_CONFERENCE_H_
 #define _L_CONFERENCE_H_
 
+#include <map>
+
 #include "linphone/types.h"
 #include "linphone/core.h"
 
@@ -111,6 +113,7 @@ class LINPHONE_PUBLIC Conference :
 	friend class ServerGroupChatRoomPrivate;
 	friend class ServerGroupChatRoom;
 public:
+
 	~Conference();
 
 	std::shared_ptr<Participant> getActiveParticipant () const;
@@ -125,6 +128,7 @@ public:
 	/* ConferenceInterface */
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &addr) const override;
 	std::shared_ptr<Participant> getMe () const override;
+	bool isMe (const IdentityAddress &addr) const;
 	bool addParticipant (std::shared_ptr<Call> call) override;
 	bool addParticipant (const IdentityAddress &participantAddress) override;
 	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
@@ -160,8 +164,10 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant);
 	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin);
 	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject);
+	virtual std::shared_ptr<ConferenceAvailableMediaEvent> notifyAvailableMediaChanged (time_t creationTime, const bool isFullState, const std::map<ConferenceMediaCapabilities, bool> mediaCapabilities);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceMediaChanged (time_t creationTime, const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice);
 
 	virtual void notifyFullState ();
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state);
@@ -178,8 +184,6 @@ protected:
 		CallSessionListener *listener,
 		const std::shared_ptr<ConferenceParams> params
 	);
-
-	bool isMe (const IdentityAddress &addr) const;
 
 	std::list<std::shared_ptr<Participant>> participants;
 

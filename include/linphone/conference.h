@@ -89,6 +89,20 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(Linphon
 LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_clone(const LinphoneConferenceParams *params);
 
 /**
+ * Enable audio when starting a conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable If true, audio will be enabled during conference
+ */
+LINPHONE_PUBLIC void linphone_conference_params_enable_audio(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Check whether audio will be enable at conference starting
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return TRUE if the audio will be enable at conference starting, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_params_audio_enabled(const LinphoneConferenceParams *params);
+
+/**
  * Enable video when starting a conference
  * @param params A #LinphoneConferenceParams @notnil
  * @param enable If true, video will be enabled during conference
@@ -101,6 +115,20 @@ LINPHONE_PUBLIC void linphone_conference_params_enable_video(LinphoneConferenceP
  * @return TRUE if the video will be enable at conference starting, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_conference_params_video_enabled(const LinphoneConferenceParams *params);
+
+/**
+ * Enable chat when starting a conference
+ * @param params A #LinphoneConferenceParams @notnil
+ * @param enable If true, chat will be enabled during conference
+ */
+LINPHONE_PUBLIC void linphone_conference_params_enable_chat(LinphoneConferenceParams *params, bool_t enable);
+
+/**
+ * Check whether chat will be enable at conference starting
+ * @param params A #LinphoneConferenceParams @notnil
+ * @return TRUE if the chat will be enable at conference starting, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_params_chat_enabled(const LinphoneConferenceParams *params);
 
 /**
  * Enable local participant to enter the conference.
@@ -137,7 +165,7 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
  * @param conference A #LinphoneConference @notnil
- * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil
+ * @return The list of the participants' address active in the conference. \bctbx_list{LinphoneAddress} @maybenil
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference);
@@ -145,7 +173,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_partic
 /**
  * Get list of all participants of one conference
  * @param conference A #LinphoneConference @notnil
- * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil
+ * @return The list of participants of the conference. \bctbx_list{LinphoneParticipant} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
@@ -242,6 +270,13 @@ LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *confere
 LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
 
 /**
+ * Get number of participants including me if in
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the number of participants including me if in being part of a #LinphoneConference
+ */
+LINPHONE_PUBLIC int linphone_conference_get_size(const LinphoneConference *conference);
+
+/**
  * For a local audio video conference, this function returns the participant hosting the conference
  * For a remote audio video conference, this function returns the focus of the conference
  * @param conference The #LinphoneConference object. @notnil
@@ -292,6 +327,39 @@ LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conferen
  */
 LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t is_admin);
 
+/**
+ * For a local conference, the local participant joins the conference
+ * For a remote conference, the participant rejoins the conference after leaving it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
+
+/**
+ * For a local conference, the local participant leaves the conference
+ * For a remote conference, the participant leaves the conference after joining it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_leave(LinphoneConference *conference);
+
+/**
+ * For a local audio video conference, this function compares the address provided as argument with that of participant hosting the conference
+ * For a remote audio video conference, this function compares the address provided as argument with that of the focus of the conference
+ * @param conference A #LinphoneConference object @notnil
+ * @param uri A #LinphoneAddress object @notnil
+ * @return TRUE if the participant is me, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_me(const LinphoneConference *conference, const LinphoneAddress * uri);
+
+/**
+ * For a local conference, it returns whether the local participant is enabled
+ * For a remote conference, it return whether the remote participant has left the conference without bein removed from it
+ * @param conference A #LinphoneConference object @notnil
+ * @return TRUE if the local participant is in a conference, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -312,17 +380,11 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
 
-
-LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
-int linphone_conference_leave(LinphoneConference *conference);
-LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
-
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
-int linphone_conference_get_size(const LinphoneConference *conference);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);
