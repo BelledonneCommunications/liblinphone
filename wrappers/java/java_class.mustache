@@ -35,7 +35,6 @@ import java.util.List;
 
 import org.linphone.mediastream.Log;
 import org.linphone.mediastream.Version;
-import org.linphone.core.tools.h264.OpenH264DownloadHelper;
 {{/isLinphoneFactory}}
 
 /**
@@ -106,8 +105,6 @@ public {{#isLinphoneFactory}}abstract class{{/isLinphoneFactory}}{{#isNotLinphon
 		}
 		return _Factory;
 	}
-
-    abstract public OpenH264DownloadHelper createOpenH264DownloadHelper(Context context);
 
     /**
       * Gets the LoggingService singleton
@@ -209,14 +206,6 @@ class {{classImplName}} {{#isLinphoneFactory}}extends{{/isLinphoneFactory}}{{#is
 		System.loadLibrary("mediastreamer");
 		System.loadLibrary("linphone");
 		Version.dumpCapabilities();
-	}
-
-    public OpenH264DownloadHelper createOpenH264DownloadHelper(Context context) {
-		if (context == null) {
-			new CoreException("Cannot create OpenH264DownloadHelper");
-			return null;
-		}
-		return new OpenH264DownloadHelper(context);
 	}
 
 	private native Core getCore(long nativePtr, long ptr);
