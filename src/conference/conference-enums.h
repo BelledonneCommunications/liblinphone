@@ -17,15 +17,26 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_EVENTS_H_
-#define _L_EVENTS_H_
+#ifndef CONFERENCE_ENUMS_H
+#define CONFERENCE_ENUMS_H
 
-#include "conference/conference-call-event.h"
-#include "conference/conference-chat-message-event.h"
-#include "conference/conference-participant-device-event.h"
-#include "conference/conference-security-event.h"
-#include "conference/conference-available-media-event.h"
-#include "conference/conference-subject-event.h"
-#include "conference/conference-ephemeral-message-event.h"
+#include "linphone/utils/general.h"
 
-#endif // ifndef _L_EVENTS_H_
+LINPHONE_BEGIN_NAMESPACE
+
+/**
+ * Conference media capabilities.
+ * MediaCapabilities is used to index participant and media capabilities.
+ */
+enum class ConferenceMediaCapabilities {
+	Audio, // Audio text capabilities
+	Video, // Video capabilities
+	Text, // Text capabilities
+	Count // Count of media capabilities
+};
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e);
+
+LINPHONE_END_NAMESPACE
+
+#endif // ifndef CONFERENCE_ENUMS_H
