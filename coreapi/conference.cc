@@ -28,11 +28,12 @@
 
 #include "conference_private.h"
 
+#include "sal/refer-op.h"
 #include "c-wrapper/c-wrapper.h"
-#include "call/call.h"
 #include "c-wrapper/internal/c-tools.h"
-#include "conference/params/media-session-params-p.h"
+#include "call/call.h"
 #include "core/core-p.h"
+#include "conference/params/media-session-params-p.h"
 #include "conference/notify-conference-listener.h"
 #include "conference/conference.h"
 #include "conference/participant.h"
@@ -408,6 +409,8 @@ LocalConference::LocalConference (
 
 	setConferenceId(ConferenceId(contactAddress, contactAddress));
 	setConferenceAddress(contactAddress);
+
+	getMe()->setAdmin(true);
 }
 
 LocalConference::~LocalConference() {
@@ -442,6 +445,15 @@ void LocalConference::subscribeReceived (LinphoneEvent *event) {
 	}
 #endif // HAVE_ADVANCED_IM
 }
+
+void LocalConference::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
+	if (isAdmin != participant->isAdmin()) {
+		participant->setAdmin(isAdmin);
+		time_t creationTime = time(nullptr);
+		notifyParticipantSetAdmin (creationTime, false, participant, isAdmin);
+	}
+}
+
 
 void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 #ifdef HAVE_ADVANCED_IM
@@ -938,6 +950,8 @@ RemoteConference::RemoteConference (
 	linphone_core_cbs_set_user_data(m_coreCbs, this);
 	_linphone_core_add_callbacks(getCore()->getCCore(), m_coreCbs, TRUE);
 
+	getMe()->setAdmin(true);
+
 	confParams->enableLocalParticipant(false);
 
 	setConferenceId(conferenceId);
@@ -1064,41 +1078,55 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 
 int RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::CallSession> & session, const bool preserveSession) {
 	std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(session);
-	if (p) {
-		return removeParticipant(p);
+	if (getMe()->isAdmin()) {
+		if (p) {
+			return removeParticipant(p);
+		}
+	} else {
+		lError() << "Unable to remove participant " << p->getAddress().asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
 	}
 	return -1;
 }
 
 bool RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::Participant> &participant) {
-	return removeParticipant(participant->getAddress());
+	if (getMe()->isAdmin()) {
+		return removeParticipant(participant->getAddress());
+	} else {
+		lError() << "Unable to remove participant " << participant->getAddress().asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
+	}
+	return -1;
 }
 
 int RemoteConference::removeParticipant (const IdentityAddress &addr) {
-	Address refer_to_addr;
-	int res;
+	if (getMe()->isAdmin()) {
+		Address refer_to_addr;
+		int res;
 
-	switch (state) {
-		case ConferenceInterface::State::Created:
-		case ConferenceInterface::State::TerminationPending:
-			if(!findParticipant(addr)) {
-				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
+		switch (state) {
+			case ConferenceInterface::State::Created:
+			case ConferenceInterface::State::TerminationPending:
+				if(!findParticipant(addr)) {
+					ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
+					return -1;
+				}
+				refer_to_addr = Address(addr);
+				linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
+				res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
+				if (res == 0)
+					return Conference::removeParticipant(addr);
+				else {
+					ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
+					return -1;
+				}
+			default:
+				ms_error("Cannot remove %s from conference: Bad conference state (%s)",
+					addr.asString().c_str(), Utils::toString(state).c_str());
 				return -1;
-			}
-			refer_to_addr = Address(addr);
-			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
-			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
-			if (res == 0)
-				return Conference::removeParticipant(addr);
-			else {
-				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
-				return -1;
-			}
-		default:
-			ms_error("Cannot remove %s from conference: Bad conference state (%s)",
-				addr.asString().c_str(), Utils::toString(state).c_str());
-			return -1;
+		}
+	} else {
+		lWarning() << "Unable to remove participant " << addr.asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
 	}
+	return -1;
 }
 
 int RemoteConference::terminate () {
@@ -1348,6 +1376,27 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 
 }
 
+void RemoteConference::setParticipantAdminStatus (const shared_ptr<Participant> &participant, bool isAdmin) {
+	if (isAdmin == participant->isAdmin())
+		return;
+
+	if (!getMe()->isAdmin()) {
+		lError() << "Unable set admin status of participant " << participant->getAddress().asString() << " to " << (isAdmin ? "true" : "false") << " because focus " << getMe()->getAddress().asString() << " is not admin";
+		return;
+	}
+
+	LinphoneCore *cCore = getCore()->getCCore();
+
+	SalReferOp *referOp = new SalReferOp(cCore->sal);
+	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
+	linphone_address_unref(lAddr);
+	Address referToAddr = participant->getAddress();
+	referToAddr.setParam("text");
+	referToAddr.setParam("admin", Utils::toString(isAdmin));
+	referOp->sendRefer(referToAddr.getInternalAddress());
+	referOp->unref();
+}
 }//end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE

@@ -289,6 +289,14 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
  */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 
+/**
+ * Change the admin status of a participant of a conference (you need to be an admin yourself to do this).
+ * @param conference A #LinphoneConference object @notnil
+ * @param participant The Participant for which to change the admin status @notnil
+ * @param is_admin A boolean value telling whether the participant should now be an admin or not
+ */
+LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t is_admin);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
