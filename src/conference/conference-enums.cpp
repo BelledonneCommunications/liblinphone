@@ -17,15 +17,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _L_EVENTS_H_
-#define _L_EVENTS_H_
+#include <iostream>
 
-#include "conference/conference-call-event.h"
-#include "conference/conference-chat-message-event.h"
-#include "conference/conference-participant-device-event.h"
-#include "conference/conference-security-event.h"
-#include "conference/conference-available-media-event.h"
-#include "conference/conference-subject-event.h"
-#include "conference/conference-ephemeral-message-event.h"
+#include "conference/conference-enums.h"
 
-#endif // ifndef _L_EVENTS_H_
+// =============================================================================
+
+using namespace std;
+
+LINPHONE_BEGIN_NAMESPACE
+
+std::ostream& operator<<(std::ostream& lhs, ConferenceMediaCapabilities e) {
+	switch(e) {
+		case ConferenceMediaCapabilities::Audio: lhs << "Audio"; break;
+		case ConferenceMediaCapabilities::Video: lhs << "Video"; break;
+		case ConferenceMediaCapabilities::Text: lhs << "Text"; break;
+		case ConferenceMediaCapabilities::Count: lhs << "Count"; break;
+	}
+	return lhs;
+}
+
+LINPHONE_END_NAMESPACE
