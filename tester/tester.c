@@ -2922,6 +2922,13 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 		case LinphoneCallStreamsRunning:
 			if(linphone_call_get_conference(call) == NULL) {
 				linphone_core_add_to_conference(lc, call);
+				LinphoneConference * conference = linphone_core_get_conference(lc);
+				if (conference) {
+					const LinphoneAddress *uri = linphone_call_get_remote_address(call);
+					LinphoneParticipant * participant = linphone_conference_find_participant(conference, uri);
+					linphone_conference_set_participant_admin_status (conference, participant, TRUE);
+				}
+
 				linphone_core_leave_conference(lc);
 				if(conf_srv->first_call == NULL) conf_srv->first_call = call;
 			}
