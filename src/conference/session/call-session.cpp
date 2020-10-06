@@ -701,6 +701,11 @@ void CallSessionPrivate::terminate () {
 
 void CallSessionPrivate::updateCurrentParams () const {}
 
+void CallSessionPrivate::setDestProxy (LinphoneProxyConfig *proxy){
+	destProxy = proxy;
+	currentParams->setProxyConfig(proxy);
+}
+
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::setBroken () {
@@ -997,13 +1002,12 @@ lInfo() << "Call session " << __func__ << " Call is in state " << Utils::toStrin
 void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg, SalCallOp *op, const Address &from, const Address &to) {
 	L_D();
 	d->direction = direction;
-	d->destProxy = cfg;
-
+	d->setDestProxy(cfg);
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->destProxy = linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr);
+		d->setDestProxy( linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr) );
 	}
 
 	if (d->log) {
