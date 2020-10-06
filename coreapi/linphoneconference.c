@@ -88,9 +88,9 @@ LinphoneConference *linphone_remote_conference_new (LinphoneCore *core, Linphone
 }
 
 LinphoneConference *linphone_remote_conference_new_with_params (LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params) {
-	LinphonePrivate::MediaConference::RemoteConference * conf = new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(focus)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis());
+	LinphonePrivate::MediaConference::RemoteConference * conference = new LinphonePrivate::MediaConference::RemoteConference(L_GET_CPP_PTR_FROM_C_OBJECT(core), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(focus)), ConferenceId(IdentityAddress(), LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))), nullptr, ConferenceParams::toCpp(const_cast<LinphoneConferenceParams *>(params))->getSharedFromThis());
 
-	return conf->toC();
+	return conference->toC();
 }
 
 LinphoneConferenceState linphone_conference_get_state (const LinphoneConference *conference) {
@@ -244,9 +244,14 @@ void linphone_conference_set_state_changed_callback (LinphoneConference *confere
 	MediaConference::Conference::toCpp(conference)->setStateChangedCallback(cb, user_data);
 }
 
-void linphone_conference_preview_ogl_render(LinphoneConference *obj) {
+void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t isAdmin) {
+	shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis();
+	MediaConference::Conference::toCpp(conference)->setParticipantAdminStatus(p, !!isAdmin);
+}
+
+void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
 #ifdef VIDEO_ENABLED
-	MediaConference::Conference *conf = MediaConference::Conference::toCpp(obj);
+	MediaConference::Conference *conf = MediaConference::Conference::toCpp(conference);
 	if (conf->isIn()) {// Ensure to be in conference
 		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
 		if(control) {
@@ -259,9 +264,9 @@ void linphone_conference_preview_ogl_render(LinphoneConference *obj) {
 #endif
 }
 
-void linphone_conference_ogl_render(LinphoneConference *obj) {
+void linphone_conference_ogl_render(LinphoneConference *conference) {
 #ifdef VIDEO_ENABLED
-	MediaConference::Conference *conf = MediaConference::Conference::toCpp(obj);
+	MediaConference::Conference *conf = MediaConference::Conference::toCpp(conference);
 	if (conf->isIn()) {// Ensure to be in conference
 		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
 		if(control) {

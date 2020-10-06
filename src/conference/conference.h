@@ -63,7 +63,7 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 			}
 		}
 
-		Object *clone()const override{
+		ConferenceParams *clone()const override{
 			return new ConferenceParams(*this);
 		}
 
