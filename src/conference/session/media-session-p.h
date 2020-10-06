@@ -111,6 +111,20 @@ public:
 	StreamsGroup & getStreamsGroup()const {
 		return *streamsGroup.get();
 	}
+
+	AudioDevice * getCurrentInputAudioDevice()const {
+		return currentInputAudioDevice;
+	}
+	void setCurrentInputAudioDevice(AudioDevice * audioDevice) {
+		if (currentInputAudioDevice) {
+			currentInputAudioDevice->unref();
+		}
+		currentInputAudioDevice = audioDevice;
+		if (currentInputAudioDevice) {
+			currentInputAudioDevice->ref();
+		}
+	}
+
 	AudioDevice * getCurrentOutputAudioDevice()const {
 		return currentOutputAudioDevice;
 	}
@@ -272,6 +286,7 @@ private:
 	bool incomingIceReinvitePending = false;
 
 	AudioDevice * currentOutputAudioDevice = nullptr;
+	AudioDevice * currentInputAudioDevice = nullptr;
 
 	L_DECLARE_PUBLIC(MediaSession);
 };
