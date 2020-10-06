@@ -166,7 +166,7 @@ bool_t linphone_event_is_internal(LinphoneEvent *lev) {
 }
 
 void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state){
-	if (lev->subscription_state!=state){
+	if (lev && lev->subscription_state!=state){
 		ms_message("LinphoneEvent [%p] moving to subscription state %s",lev,linphone_subscription_state_to_string(state));
 		lev->subscription_state=state;
 		linphone_core_notify_subscription_state_changed(lev->lc,lev,state);
