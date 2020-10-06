@@ -244,6 +244,11 @@ void linphone_conference_set_state_changed_callback (LinphoneConference *confere
 	MediaConference::Conference::toCpp(conference)->setStateChangedCallback(cb, user_data);
 }
 
+void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t isAdmin) {
+	shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis();
+	MediaConference::Conference::toCpp(conference)->setParticipantAdminStatus(p, !!isAdmin);
+}
+
 void linphone_conference_preview_ogl_render(LinphoneConference *obj) {
 #ifdef VIDEO_ENABLED
 	MediaConference::Conference *conf = MediaConference::Conference::toCpp(obj);
