@@ -46,6 +46,7 @@ class AbstractChatRoom;
 class Address;
 class Call;
 class ConferenceId;
+class ConferenceParams;
 class CorePrivate;
 class IdentityAddress;
 class EncryptionEngine;
@@ -169,10 +170,9 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
-
 	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
-
 	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
+	std::shared_ptr<MediaConference::Conference> searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
