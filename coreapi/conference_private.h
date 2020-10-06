@@ -223,6 +223,7 @@ public:
 	virtual void notifyFullState () override;
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 private:
 	void addLocalEndpoint();
@@ -273,6 +274,7 @@ public:
 	void notifyReceived (const std::string &body);
 
 	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
