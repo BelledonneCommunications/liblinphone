@@ -38,8 +38,6 @@ public:
 	virtual void setCreationTime (time_t creationTime) = 0;
 	virtual void setLastUpdateTime (time_t lastUpdateTime) = 0;
 
-	virtual void setState (AbstractChatRoom::State newState) = 0;
-
 	virtual void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 	virtual void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) = 0;
 

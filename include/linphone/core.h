@@ -224,6 +224,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreFriendListRemovedCb friend_list_removed;
 	LinphoneCoreCbsCallCreatedCb call_created;
 	LinphoneCoreCbsVersionUpdateCheckResultReceivedCb version_update_check_result_received;
+	LinphoneCoreCbsConferenceStateChangedCb conference_state_changed;
 	LinphoneCoreCbsChatRoomStateChangedCb chat_room_state_changed;
 	LinphoneCoreCbsQrcodeFoundCb qrcode_found;
 	LinphoneCoreCbsEcCalibrationResultCb ec_calibration_result;
@@ -762,6 +763,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_version_update_check_result_received(
  * @return The current callback
  */
 LINPHONE_PUBLIC LinphoneCoreCbsVersionUpdateCheckResultReceivedCb linphone_core_cbs_get_version_update_check_result_received(LinphoneCoreCbs *cbs);
+
+/**
+ * Get the conference state changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsConferenceStateChangedCb linphone_core_cbs_get_conference_state_changed (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the conference state changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_conference_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceStateChangedCb cb);
 
 /**
  * Get the chat room state changed callback.
@@ -3034,6 +3049,16 @@ LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_core_get_video_activatio
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition(LinphoneCore *core, LinphoneVideoDefinition *video_definition);
+
+/**
+ * Sets the preferred video definition by its name.
+ * Call #linphone_factory_get_supported_video_definitions() to have a list of supported video definitions.
+ *
+ * @ingroup media_parameters
+ * @param core The #LinphoneCore object @notnil
+ * @param name The name of the definition to set @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *core, const char *name);
 
 /**
  * Set the video definition for the captured (preview) video.
@@ -6347,7 +6372,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED char * linphone_core_get_preferred_video_siz
  * that it takes the name of the video resolution as input.
  * Video resolution names are: qcif, svga, cif, vga, 4cif, svga ...
  * @ingroup media_parameters
- * @deprecated 28/03/2017 Use linphone_factory_create_video_definition_from_name() and linphone_core_set_preferred_video_definition() instead
+ * @deprecated 28/03/2017 Use linphone_core_set_preferred_video_definition_by_name() instead
  * @donotwrap
 **/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_core_set_preferred_video_size_by_name(LinphoneCore *core, const char *name);
@@ -6384,10 +6409,10 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC void linphone_core_destroy(LinphoneCore *cor
 /**
  * Get a pointer to the sqlite db holding zrtp/lime cache.
  * @param core #LinphoneCore object. @notnil
- * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed)
+ * @return An sqlite3 pointer cast to a void one or NULL if cache is not available(not enabled at compile or access failed) @maybenil
  * @ingroup initializing
  */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void *linphone_core_get_zrtp_cache_db(LinphoneCore *core);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void* linphone_core_get_zrtp_cache_db(LinphoneCore *core);
 
 /**
  * Returns a null terminated table of strings containing the file format extension supported for call recording.

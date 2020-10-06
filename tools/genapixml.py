@@ -480,6 +480,8 @@ class Project:
 					n = returndesc.find('.//bctbxlist')
 					if n is not None:
 						returnarg.containedType = n.text
+				returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
+				returnarg.notnil = True if returndesc.find('.//notnil') is not None else False
 				returnarg.description = self.__cleanDescription(returndesc)
 			elif returnarg.completeType != 'void':
 				missingDocWarning += "\tReturn value is not documented\n"
@@ -511,6 +513,8 @@ class Project:
 					for arg in argslist.arguments:
 						for paramdesc in paramdescs:
 							if arg.name == paramdesc.find('./parameternamelist').find('./parametername').text:
+								arg.maybenil = True if paramdesc.find('.//maybenil') is not None else False
+								arg.notnil = True if paramdesc.find('.//notnil') is not None else False
 								arg.description = self.__cleanDescription(paramdesc.find('./parameterdescription'))
 					missingDocWarning = ''
 					for arg in argslist.arguments:

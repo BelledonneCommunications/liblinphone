@@ -393,7 +393,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 									char *buffer;
 									int xmlStringLength;
 									xmlDocDumpFormatMemoryEnc(xmlMessageBody, (xmlChar **)&buffer, &xmlStringLength, "UTF-8", 0);
-									currentFileTransferContent->setBody(buffer);
+									currentFileTransferContent->setBodyFromUtf8(buffer);
 									break;
 								}
 								xmlFree(typeAttribute);
@@ -403,7 +403,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 					}
 					xmlFreeDoc(xmlMessageBody);
 				} else { // no encryption key, transfer in plain, just copy the msg sent by server
-					currentFileTransferContent->setBody(body);
+					currentFileTransferContent->setBodyFromUtf8(body);
 				}
 
 				currentFileTransferContent->setFileContent(currentFileContentToTransfer);
@@ -465,13 +465,16 @@ static void _chat_message_process_auth_requested_upload (void *data, belle_sip_a
 	d->processAuthRequestedUpload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedUpload (const belle_sip_auth_event *event) {
+void FileTransferChatMessageModifier::processAuthRequestedUpload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	lError() << "Error during file upload: auth requested for message [" << message << "]";
-	if (!message)
-		return;
-	message->getPrivate()->setState(ChatMessage::State::NotDelivered);
-	releaseHttpRequest();
+	/* extract username and domain from the message local adress */
+	auto address = message->getLocalAdress();
+	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(), address.getDomain().data());
+
 }
 
 int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
@@ -982,10 +985,15 @@ static void _chat_message_process_auth_requested_download (void *data, belle_sip
 	d->processAuthRequestedDownload(event);
 }
 
-void FileTransferChatMessageModifier::processAuthRequestedDownload (const belle_sip_auth_event *event) {
+void FileTransferChatMessageModifier::processAuthRequestedDownload (belle_sip_auth_event *event) {
 	shared_ptr<ChatMessage> message = chatMessage.lock();
-	lError() << "Error during file download : auth requested for message [" << message << "]";
-	onDownloadFailed();
+	/* extract username and domain from the message local adress */
+	auto address = message->getLocalAdress();
+	/* Notes: When connecting to the fileSharing server, the user is already registered on the flexisip server
+	 * the requested auth info shall thus be present in linphone core
+	 * This request will thus not use the auth requested callback to get the information
+	 * - Stored auth information in linphone core are indexed by username/domain */
+	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(), address.getDomain().data());
 }
 
 static void _chat_message_process_io_error_download (void *data, const belle_sip_io_error_event_t *event) {

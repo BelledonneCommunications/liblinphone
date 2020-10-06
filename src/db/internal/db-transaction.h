@@ -99,7 +99,7 @@ public:
 			SmartTransaction tr(session, name);
 			mResult = exec<InternalReturnType>(tr);
 		} catch (const soci::soci_error &e) {
-			lWarning() << "Catched exception in MainDb::" << name << "(" << e.what() << ").";
+			lWarning() << "Caught exception in MainDb::" << name << "(" << e.what() << ").";
 			soci::soci_error::error_category category = e.get_error_category();
 			if (
 				(category == soci::soci_error::connection_error || category == soci::soci_error::unknown) &&

@@ -155,7 +155,7 @@ void Content::setBody (vector<char> &&body) {
 	d->body = move(body);
 }
 
-void Content::setBody (const string &body) {
+void Content::setBodyFromLocale (const string &body) {
 	L_D();
 	string toUtf8 = Utils::localeToUtf8(body);
 	d->body = vector<char>(toUtf8.cbegin(), toUtf8.cend());
@@ -164,7 +164,10 @@ void Content::setBody (const string &body) {
 void Content::setBody (const void *buffer, size_t size) {
 	L_D();
 	const char *start = static_cast<const char *>(buffer);
-	d->body = vector<char>(start, start + size);
+	if(start != nullptr)
+		d->body = vector<char>(start, start + size);
+	else
+		d->body.clear();
 }
 
 void Content::setBodyFromUtf8 (const string &body) {

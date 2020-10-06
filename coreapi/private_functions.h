@@ -40,6 +40,7 @@ extern "C" {
 #endif
 
 LinphoneCallCbs *_linphone_call_cbs_new(void);
+LinphoneConferenceCbs *_linphone_conference_cbs_new(void);
 
 void linphone_call_notify_state_changed(LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_call_notify_dtmf_received(LinphoneCall *call, int dtmf);
@@ -135,6 +136,7 @@ const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
 const LinphoneAuthInfo *_linphone_core_find_indexed_tls_auth_info(LinphoneCore *lc, const char *username, const char *domain);
 const LinphoneAuthInfo *_linphone_core_find_auth_info(LinphoneCore *lc, const char *realm, const char *username, const char *domain, const char *algorithm, bool_t ignore_realm);
 void linphone_auth_info_fill_belle_sip_event(const LinphoneAuthInfo *auth_info, belle_sip_auth_event *event);
+void linphone_core_fill_belle_sip_auth_event(LinphoneCore *lc, belle_sip_auth_event *event, const char *username, const char *domain);
 
 void linphone_core_update_proxy_register(LinphoneCore *lc);
 const char *linphone_core_get_nat_address_resolved(LinphoneCore *lc);
@@ -310,6 +312,15 @@ LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
 void _linphone_proxy_config_release_ops(LinphoneProxyConfig *obj);
 
+/* conference */
+void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant);
+void _linphone_conference_notify_participant_removed(LinphoneConference *conference, const LinphoneParticipant *participant);
+void _linphone_conference_notify_participant_device_added(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_device_removed(LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
+void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
+void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
+
 /*chat*/
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op);
 void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
@@ -338,6 +349,7 @@ void _linphone_chat_room_notify_participants_capabilities_checked(LinphoneChatRo
 void _linphone_chat_room_notify_participant_registration_subscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 void _linphone_chat_room_notify_participant_registration_unsubscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
 void _linphone_chat_room_notify_chat_message_should_be_stored(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(LinphoneChatRoom *cr, LinphoneChatMessage *msg, const LinphoneParticipantImdnState *state);
 void _linphone_chat_room_clear_callbacks (LinphoneChatRoom *cr);
 
 void _linphone_chat_message_notify_msg_state_changed(LinphoneChatMessage* msg, LinphoneChatMessageState state);
@@ -390,7 +402,6 @@ LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc);
 void ec_calibrator_destroy(EcCalibrator *ecc);
 
 int linphone_core_preempt_sound_resources(LinphoneCore *lc);
-int _linphone_call_pause(LinphoneCall *call);
 
 /*conferencing subsystem*/
 void _post_configure_audio_stream(AudioStream *st, LinphoneCore *lc, bool_t muted);
@@ -457,6 +468,7 @@ void linphone_core_invalidate_friend_subscriptions(LinphoneCore *lc);
 void linphone_core_register_offer_answer_providers(LinphoneCore *lc);
 
 bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy);
+void linphone_nat_policy_release(LinphoneNatPolicy *policy);
 void linphone_nat_policy_save_to_config(const LinphoneNatPolicy *policy);
 
 void linphone_core_create_im_notif_policy(LinphoneCore *lc);
@@ -583,6 +595,7 @@ void linphone_core_notify_log_collection_upload_progress_indication(LinphoneCore
 void linphone_core_notify_friend_list_created(LinphoneCore *lc, LinphoneFriendList *list);
 void linphone_core_notify_friend_list_removed(LinphoneCore *lc, LinphoneFriendList *list);
 void linphone_core_notify_call_created(LinphoneCore *lc, LinphoneCall *call);
+void linphone_core_notify_conference_state_changed (LinphoneCore *lc, LinphoneConference *conference, LinphoneConferenceState state);
 void linphone_core_notify_version_update_check_result_received(LinphoneCore *lc, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 void linphone_core_notify_chat_room_state_changed (LinphoneCore *lc, LinphoneChatRoom *cr, LinphoneChatRoomState state);
 void linphone_core_notify_chat_room_subject_changed (LinphoneCore *lc, LinphoneChatRoom *cr);
@@ -642,7 +655,6 @@ void _linphone_core_set_log_handler(OrtpLogFunc logfunc);
 void _linphone_core_set_native_preview_window_id(LinphoneCore *lc, void *id);
 void _linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id);
 void linphone_core_resize_video_preview(LinphoneCore *lc, int width, int height);
-void linphone_core_set_preferred_video_definition_by_name(LinphoneCore *lc, const char *name);
 
 LinphoneAccountCreatorCbs * linphone_account_creator_cbs_new(void);
 void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs);

@@ -47,23 +47,18 @@ if(ENABLE_DOC OR ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAP
 		)
 		set(XML_DIR "${CMAKE_CURRENT_BINARY_DIR}/xml")
 		set(LINPHONE_DOXYGEN_XML_DIR ${XML_DIR} PARENT_SCOPE)
-		add_custom_command(OUTPUT "${XML_DIR}/index.xml"
-			COMMAND ${CMAKE_COMMAND} -E remove -f ${XML_DIR}/*
-			COMMAND ${CMAKE_COMMAND} -E make_directory ${XML_DIR}
-			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-			DEPENDS ${DOC_INPUT_FILES}
-		)
-		add_custom_target(linphone-doc ALL DEPENDS "${XML_DIR}/index.xml")
-
 		set(C_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/c")
 		set(LINPHONE_DOXYGEN_C_HTML_DIR ${C_HTML_DIR} PARENT_SCOPE)
-		add_custom_command(OUTPUT "${C_HTML_DIR}/index.html"
+		add_custom_command(OUTPUT "${XML_DIR}/index.xml" "${C_HTML_DIR}/index.html"
+			COMMAND ${CMAKE_COMMAND} -E remove -f ${XML_DIR}/*
+			COMMAND ${CMAKE_COMMAND} -E make_directory ${XML_DIR}
 			COMMAND ${CMAKE_COMMAND} -E remove -f ${C_HTML_DIR}/*
 			COMMAND ${CMAKE_COMMAND} -E make_directory ${C_HTML_DIR}
 			COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
 			DEPENDS ${DOC_INPUT_FILES}
 		)
-		add_custom_target(linphone-c-html-doc ALL DEPENDS "${C_HTML_DIR}/index.html")
+		add_custom_target(linphone-doc ALL DEPENDS "${XML_DIR}/index.xml" "${C_HTML_DIR}/index.html")
+
 		install(DIRECTORY "${C_HTML_DIR}"
 			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}")
 	endif()

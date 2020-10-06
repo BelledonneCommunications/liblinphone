@@ -368,7 +368,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 						ms_warning("rlmi+xml: Cannot find part with Content-Id: %s", cid);
 					} else {
 						SalPresenceModel *presence = NULL;
-						linphone_notify_parse_presence(linphone_content_get_type(presence_part), linphone_content_get_subtype(presence_part), linphone_content_get_string_buffer(presence_part), &presence);
+						linphone_notify_parse_presence(linphone_content_get_type(presence_part), linphone_content_get_subtype(presence_part), linphone_content_get_utf8_text(presence_part), &presence);
 						if (presence) {
 							// Try to reduce CPU cost of linphone_address_new and find_friend_by_address by only doing it when we know for sure we have a presence to notify
 							LinphoneAddress* addr;
@@ -504,8 +504,7 @@ LinphoneFriendList * linphone_core_create_friend_list(LinphoneCore *lc) {
 	LinphoneFriendList *list = linphone_friend_list_new();
 	list->lc = lc;
 	if (lc) { // Will be NULL if created from database
-		// We can't use linphone_core_is_friend_list_subscription_enabled because this will be called before the C++ core is initialized
-		list->enable_subscriptions = !!linphone_config_get_int(linphone_core_get_config(lc), "net", "friendlist_subscription_enabled", 1);
+		list->enable_subscriptions = linphone_core_is_friend_list_subscription_enabled(lc);
 	}
 	return list;
 }
@@ -1021,7 +1020,7 @@ static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFrien
 		content = linphone_core_create_content(list->lc);
 		linphone_content_set_type(content, "application");
 		linphone_content_set_subtype(content, "resource-lists+xml");
-		linphone_content_set_string_buffer(content, xml_content);
+		linphone_content_set_utf8_text(content, xml_content);
 		if (linphone_core_content_encoding_supported(list->lc, "deflate")) {
 			linphone_content_set_encoding(content, "deflate");
 			linphone_event_add_custom_header(list->event, "Accept-Encoding", "deflate");
@@ -1169,7 +1168,7 @@ void linphone_friend_list_notify_presence_received(LinphoneFriendList *list, Lin
 		return;
 	}
 
-	linphone_friend_list_parse_multipart_related_body(list, body, linphone_content_get_string_buffer(first_part));
+	linphone_friend_list_parse_multipart_related_body(list, body, linphone_content_get_utf8_text(first_part));
 	linphone_content_unref(first_part);
 }
 
@@ -1330,8 +1329,10 @@ void linphone_friend_list_enable_subscriptions(LinphoneFriendList *list, bool_t 
 	if (list->enable_subscriptions != enabled) {
 		list->enable_subscriptions = enabled;
 		if (enabled) {
+			ms_message("Updating friend list [%p] subscriptions", list);
 			linphone_friend_list_update_subscriptions(list);
 		} else {
+			ms_message("Closing friend list [%p] subscriptions", list);
 			linphone_friend_list_close_subscriptions(list);
 		}
 

@@ -29,7 +29,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceNotifiedEventPrivate : public ConferenceEventPrivate {
 private:
-	unsigned int notifyId = 0;
 
 	L_DECLARE_PUBLIC(ConferenceNotifiedEvent);
 };

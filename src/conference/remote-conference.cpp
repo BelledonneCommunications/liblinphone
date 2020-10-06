@@ -25,8 +25,8 @@
 #include "handlers/remote-conference-event-handler.h"
 #endif
 #include "logger/logger.h"
-#include "participant-p.h"
-#include "remote-conference-p.h"
+#include "participant.h"
+#include "remote-conference.h"
 
 // =============================================================================
 
@@ -37,70 +37,112 @@ LINPHONE_BEGIN_NAMESPACE
 RemoteConference::RemoteConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
-	CallSessionListener *listener
-) : Conference(*new RemoteConferencePrivate, core, myAddress, listener) {
+	CallSessionListener *listener,
+	const std::shared_ptr<ConferenceParams> params
+) : Conference(core, myAddress, listener, params) {
+	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
+	// Local conference sets last notify to 1 in its constructor
+	lastNotify = 0;
+	this->confParams->enableLocalParticipant(false);
+
+	// FIXME: Not very nice to have an empty deleter
+	addListener(std::shared_ptr<ConferenceListenerInterface>(static_cast<ConferenceListenerInterface *>(this), [](ConferenceListenerInterface * p){}));
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset(new RemoteConferenceEventHandler(this));
+	eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 #endif
 }
 
 RemoteConference::~RemoteConference () {
-	L_D();
-	d->eventHandler.reset();
+#ifdef HAVE_ADVANCED_IM
+	eventHandler.reset();
+#endif // HAVE_ADVANCED_IM
 }
 
 // -----------------------------------------------------------------------------
 
-bool RemoteConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	L_D();
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (participant) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the RemoteConference";
-		return false;
-	}
-	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
-	d->participants.push_back(participant);
-	if (!d->activeParticipant)
-		d->activeParticipant = participant;
-	return true;
-}
-
-bool RemoteConference::removeParticipant (const shared_ptr<Participant> &participant) {
-	L_D();
-	for (const auto &p : d->participants) {
-		if (participant->getAddress() == p->getAddress()) {
-			d->participants.remove(p);
-			return true;
-		}
-	}
-	return false;
-}
-
-// -----------------------------------------------------------------------------
-
-void RemoteConference::onConferenceCreated (const IdentityAddress &) {}
+void RemoteConference::onConferenceCreated (const ConferenceAddress &) {}
 
 void RemoteConference::onConferenceTerminated (const IdentityAddress &) {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler->unsubscribe();
+	eventHandler->unsubscribe();
 #endif
 }
 
 void RemoteConference::onFirstNotifyReceived (const IdentityAddress &) {}
 
-void RemoteConference::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &, bool) {}
+void RemoteConference::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
-void RemoteConference::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &, bool) {}
+void RemoteConference::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
-void RemoteConference::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &, bool) {}
+void RemoteConference::onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &, const std::shared_ptr<Participant> &) {}
 
-void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &, bool) {}
+void RemoteConference::onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &) {}
 
-void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, bool) {}
+void RemoteConference::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
 
-void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, bool) {}
+void RemoteConference::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &, const std::shared_ptr<ParticipantDevice> &) {}
+
+void RemoteConference::onFullStateReceived() {
+
+	time_t creationTime = time(nullptr);
+
+	// Subject event
+	shared_ptr<ConferenceSubjectEvent> sEvent = make_shared<ConferenceSubjectEvent>(
+		creationTime,
+		conferenceId,
+		getSubject()
+	);
+	sEvent->setFullState(true);
+	sEvent->setNotifyId(lastNotify);
+	for (const auto &l : confListeners) {
+		l->onSubjectChanged(sEvent);
+	}
+
+	// Loop through the participants
+	for (const auto &p : getParticipants()) {
+		shared_ptr<ConferenceParticipantEvent> pEvent = make_shared<ConferenceParticipantEvent>(
+			EventLog::Type::ConferenceParticipantAdded,
+			creationTime,
+			conferenceId,
+			p->getAddress()
+		);
+		pEvent->setFullState(true);
+		pEvent->setNotifyId(lastNotify);
+		for (const auto &l : confListeners) {
+			l->onParticipantAdded(pEvent, p);
+		}
+
+		shared_ptr<ConferenceParticipantEvent> aEvent = make_shared<ConferenceParticipantEvent>(
+			p->isAdmin() ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
+			creationTime,
+			conferenceId,
+			p->getAddress()
+		);
+		aEvent->setFullState(true);
+		aEvent->setNotifyId(lastNotify);
+		for (const auto &l : confListeners) {
+			l->onParticipantSetAdmin(aEvent, p);
+		}
+
+		// Loop through the devices
+		for (const auto &d : p->getDevices()) {
+			shared_ptr<ConferenceParticipantDeviceEvent> dEvent = make_shared<ConferenceParticipantDeviceEvent>(
+				EventLog::Type::ConferenceParticipantDeviceAdded,
+				creationTime,
+				conferenceId,
+				p->getAddress(),
+				d->getAddress(),
+				d->getName()
+			);
+			dEvent->setFullState(true);
+			dEvent->setNotifyId(lastNotify);
+			for (const auto &l : confListeners) {
+				l->onParticipantDeviceAdded(dEvent, d);
+			}
+		}
+	}
+
+}
+
 
 LINPHONE_END_NAMESPACE

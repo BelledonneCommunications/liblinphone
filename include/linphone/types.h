@@ -258,6 +258,12 @@ typedef enum _LinphoneAVPFMode {
 typedef struct _LinphoneBuffer LinphoneBuffer;
 
 /**
+ * Linphone participant device
+ * @ingroup misc
+ */
+typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
+
+/**
  * Enum representing the direction of a call.
  * @ingroup call_logs
 **/
@@ -933,6 +939,7 @@ typedef enum _LinphoneReason{
 	LinphoneReasonNotAnswered, /**< The call was not answered in time (request timeout) */
 	LinphoneReasonBusy, /**< Phone line was busy */
 	LinphoneReasonUnsupportedContent, /**< Unsupported content */
+	LinphoneReasonBadEvent, /**< Bad event */
 	LinphoneReasonIOError, /**< Transport error: connection failures, disconnections etc... */
 	LinphoneReasonDoNotDisturb, /**< Do not disturb reason */
 	LinphoneReasonUnauthorized, /**< Operation is unauthorized because missing credential */

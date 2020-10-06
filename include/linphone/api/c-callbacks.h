@@ -167,7 +167,7 @@ typedef void (*LinphoneChatMessageCbsFileTransferRecvCb)(LinphoneChatMessage *me
  * @param content #LinphoneContent outgoing content @notnil
  * @param offset the offset in the file from where to get the data to be sent
  * @param size the number of bytes expected by the framework
- * @return A #LinphoneBuffer object holding the data written by the application. An empty buffer means end of file. @warning The returned value isn't used, hence the deprecation!
+ * @return A #LinphoneBuffer object holding the data written by the application. An empty buffer means end of file. @maybenil @warning The returned value isn't used, hence the deprecation!
  * @deprecated 17/08/2020 Use #LinphoneChatMessageCbsFileTransferSendChunkCb instead.
  */
 typedef LinphoneBuffer * (*LinphoneChatMessageCbsFileTransferSendCb)(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
@@ -301,21 +301,21 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceRemovedCb) (LinphoneChatRoom 
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
-typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsConferenceJoinedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
  * Callback used to notify a chat room has been left.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
-typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsConferenceLeftCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
  * Callback used to notify a chat room that an ephemeral related event has been generated.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
-typedef void (*LinphoneChatRoomCbsEphemeralEventCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsEphemeralEventCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
  * Callback used to notify a chat room that the lifespan of an ephemeral message before disappearing has started to decrease.
@@ -323,14 +323,14 @@ typedef void (*LinphoneChatRoomCbsEphemeralEventCb) (LinphoneChatRoom *chat_room
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
-typedef void (*LinphoneChatRoomCbsEphemeralMessageTimerStartedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsEphemeralMessageTimerStartedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
  * Callback used to notify a chat room that an ephemeral message has been deleted.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
-typedef void (*LinphoneChatRoomCbsEphemeralMessageDeletedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *eventLog);
+typedef void (*LinphoneChatRoomCbsEphemeralMessageDeletedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
  * Callback used when a group chat room is created server-side to generate the address of the chat room.
@@ -360,6 +360,14 @@ typedef void (*LinphoneChatRoomCbsParticipantRegistrationUnsubscriptionRequested
  */
 typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
+/**
+ * Callback used to notify a participant state has changed in a message of this chat room.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param message The #LinphoneChatMessage for which a participant has it's state changed @notnil
+ * @param state The #LinphoneParticipantImdnState @notnil
+ */
+typedef void (*LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb) (LinphoneChatRoom *chat_room, LinphoneChatMessage *message, const LinphoneParticipantImdnState *state);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -373,6 +381,65 @@ typedef void (*LinphoneChatRoomCbsShouldChatMessageBeStoredCb) (LinphoneChatRoom
  * @donotwrap
  */
 typedef void (*LinphoneChatMessageStateChangedCb)(LinphoneChatMessage* message, LinphoneChatMessageState state, void* user_data);
+
+/**
+ * @}
+**/
+
+
+/**
+ * @addtogroup conference
+ * @{
+ */
+
+/**
+ * Callback used to notify a chat room that a participant has been added.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant that has been added to the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantAddedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
+
+/**
+ * Callback used to notify a chat room that a participant has been removed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant that has been removed to the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantRemovedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
+
+/**
+ * Callback used to notify a chat room that the admin status of a participant has been changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant #LinphoneParticipant whose admin status has changed @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantAdminStatusChangedCb) (LinphoneConference *conference, const LinphoneParticipant *participant);
+
+/**
+ * Callback used to notify a chat room state has changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] newState The new state of the chat room
+ */
+typedef void (*LinphoneConferenceCbsStateChangedCb) (LinphoneConference *conference, LinphoneConferenceState newState);
+
+/**
+ * Callback used to notify that the subject of a chat room has changed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] subject subject of the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsSubjectChangedCb) (LinphoneConference *conference, const char *subject);
+
+/**
+ * Callback used to notify a chat room that a participant has been added.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device #LinphoneParticipantDevice that has been added to the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceAddedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
+
+/**
+ * Callback used to notify a chat room that a participant has been removed.
+ * @param[in] conference #LinphoneConference object @notnil
+ * @param[in] participant_device #LinphoneParticipantDevice that has been removed to the conference @notnil
+ */
+typedef void (*LinphoneConferenceCbsParticipantDeviceRemovedCb) (LinphoneConference *conference, const LinphoneParticipantDevice *participant_device);
 
 /**
  * @}

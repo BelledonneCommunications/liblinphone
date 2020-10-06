@@ -47,6 +47,7 @@
 #include "ortp/b64.h"
 
 #include "db/main-db-key-p.h"
+#include "db/main-db-p.h"
 // =============================================================================
 
 using namespace std;
@@ -58,6 +59,22 @@ LINPHONE_BEGIN_NAMESPACE
 ChatMessagePrivate::ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir):fileTransferChatMessageModifier(cr->getCore()->getCCore()->http_provider) {
 	direction = dir;
 	setChatRoom(cr);
+}
+
+
+void ChatMessagePrivate::setStorageId (long long id) {
+	L_Q();
+
+	if (id < 0) {
+		// Negative IDs invalidate the message therefore it will be deleted from the cache
+		q->deleteChatMessageFromCache();
+	}
+
+	storageId = id;
+}
+
+void ChatMessagePrivate::resetStorageId () {
+	setStorageId(-1);
 }
 
 void ChatMessagePrivate::setDirection (ChatMessage::Direction dir) {
@@ -83,7 +100,7 @@ bool ChatMessagePrivate::isMarkedAsRead () const {
 void ChatMessagePrivate::setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime) {
 	L_Q();
 
-	if (!dbKey.isValid())
+	if (!q->isValid())
 		return;
 
 	if (q->getChatRoom()->getCapabilities().isSet(ChatRoom::Capabilities::Basic)) {
@@ -93,7 +110,7 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	}
 
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 	ChatMessage::State currentState = mainDb->getChatMessageParticipantState(eventLog, participantAddress);
 	if (!isValidStateTransition(currentState, newState))
 		return;
@@ -103,15 +120,21 @@ void ChatMessagePrivate::setParticipantState (const IdentityAddress &participant
 	mainDb->setChatMessageParticipantState(eventLog, participantAddress, newState, stateChangeTime);
 
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(q);
-	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
 	auto participant = q->getChatRoom()->findParticipant(participantAddress);
 	ParticipantImdnState imdnState(participant, newState, stateChangeTime);
+	const LinphoneParticipantImdnState *c_state = _linphone_participant_imdn_state_from_cpp_obj(imdnState);
+
+	// Legacy callbacks, deprecated !
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	if (cbs && linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)) {
 		linphone_chat_message_cbs_get_participant_imdn_state_changed(cbs)(msg,
 			_linphone_participant_imdn_state_from_cpp_obj(imdnState)
 		);
 	}
-	_linphone_chat_message_notify_participant_imdn_state_changed(msg, _linphone_participant_imdn_state_from_cpp_obj(imdnState));
+
+	_linphone_chat_message_notify_participant_imdn_state_changed(msg, c_state);
+	_linphone_chat_room_notify_chat_message_participant_imdn_state_changed(cr, msg, c_state);
 
 	if (linphone_config_get_bool(linphone_core_get_config(q->getChatRoom()->getCore()->getCCore()),
 			"misc", "enable_simple_group_chat_message_state", FALSE
@@ -156,8 +179,11 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	if (!isValidStateTransition(state, newState))
 		return;
 
+	const shared_ptr<ChatMessage>& sharedMessage = q->getSharedFromThis();
+
+
 	// 2. Update state and notify changes.
-	lInfo() << "Chat message " << q->getSharedFromThis() << ": moving from " << Utils::toString(state) <<
+	lInfo() << "Chat message " << sharedMessage << ": moving from " << Utils::toString(state) <<
 		" to " << Utils::toString(newState);
 	ChatMessage::State oldState = state;
 	state = newState;
@@ -172,7 +198,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	if (direction == ChatMessage::Direction::Outgoing) {
 		if (state == ChatMessage::State::NotDelivered || state == ChatMessage::State::Delivered) {
-			q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
+			q->getChatRoom()->getPrivate()->removeTransientChatMessage(sharedMessage);
 		}
 	}
 
@@ -199,7 +225,7 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 
 	// 4. Specific case, upon reception do not attempt to store in db before asking the user if he wants to do so or not
 	if (state == ChatMessage::State::Delivered && oldState == ChatMessage::State::Idle
-		&& direction == ChatMessage::Direction::Incoming && !dbKey.isValid()) {
+		&& direction == ChatMessage::Direction::Incoming && !q->isValid()) {
 		// If we're here it's because message is because we're in the middle of the receive() method and
 		// we won't have a valid dbKey until the chat room callback asking if message should be store will be called
 		// and that's happen in the notifyReceiving() called at the of the receive() method we're in.
@@ -210,20 +236,21 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 	// 5. Send notification
 	if ((state == ChatMessage::State::Displayed) && (direction == ChatMessage::Direction::Incoming)) {
 		// Wait until all files are downloaded before sending displayed IMDN
-		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(q->getSharedFromThis());
+		static_cast<ChatRoomPrivate *>(q->getChatRoom()->getPrivate())->sendDisplayNotification(sharedMessage);
 	}
 
 	// 6. update in database for ephemeral message if necessary.
 	if (isEphemeral && (state == ChatMessage::State::Displayed)) {
 		// set ephemeral message expired time
 		ephemeralExpireTime = ::ms_time(NULL) + (long)ephemeralLifetime;
-		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(dbKey.getPrivate()->storageId, ephemeralExpireTime);
+		q->getChatRoom()->getCore()->getPrivate()->mainDb->updateEphemeralMessageInfos(storageId, ephemeralExpireTime);
 
-		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(q->getSharedFromThis());
+		q->getChatRoom()->getCore()->getPrivate()->updateEphemeralMessages(sharedMessage);
 
 		// notify start !
-		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(dbKey);
 		shared_ptr<AbstractChatRoom> chatRoom = q->getChatRoom();
+		unique_ptr<MainDb> &mainDb = chatRoom->getCore()->getPrivate()->mainDb;
+		shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(mainDb, q->getStorageId());
 		if (chatRoom && event) {
 			_linphone_chat_room_notify_ephemeral_message_timer_started(L_GET_C_BACK_PTR(chatRoom), L_GET_C_BACK_PTR(event));
 			if (cbs && linphone_chat_message_cbs_get_ephemeral_message_timer_started(cbs))
@@ -253,15 +280,15 @@ void ChatMessagePrivate::setHttpRequest (belle_http_request_t *request) {
 void ChatMessagePrivate::disableDeliveryNotificationRequiredInDatabase () {
 	L_Q();
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	if (dbKey.isValid())
-		mainDb->disableDeliveryNotificationRequired(mainDb->getEventFromKey(dbKey));
+	if (q->isValid())
+		mainDb->disableDeliveryNotificationRequired(mainDb->getEvent(mainDb, q->getStorageId()));
 }
 
 void ChatMessagePrivate::disableDisplayNotificationRequiredInDatabase () {
 	L_Q();
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	const std::shared_ptr<const EventLog> &eventLog = mainDb->getEventFromKey(dbKey);
-	if (dbKey.isValid() && eventLog)
+	const std::shared_ptr<const EventLog> &eventLog = mainDb->getEvent(mainDb, q->getStorageId());
+	if (q->isValid() && eventLog)
 		mainDb->disableDisplayNotificationRequired(eventLog);
 }
 
@@ -448,12 +475,50 @@ void ChatMessagePrivate::setText (const string &text) {
 	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
 		internalContent.setContentType(contents.front()->getContentType());
 	}
-	internalContent.setBody(text);
+	internalContent.setBodyFromLocale(text);
 
 	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
-			contents.front()->setBody(text);
+			contents.front()->setBodyFromLocale(text);
+	}
+}
+
+const string &ChatMessagePrivate::getUtf8Text () const {
+	loadContentsFromDatabase();
+	if (direction == ChatMessage::Direction::Incoming) {
+		if (hasTextContent()) {
+			cText = getTextContent()->getBodyAsUtf8String();
+		} else if (!contents.empty()) {
+			Content *content = contents.front();
+			cText = content->getBodyAsUtf8String();
+		} else {
+			cText = internalContent.getBodyAsUtf8String();
+		}
+	} else {
+		if (!internalContent.isEmpty()) {
+			cText = internalContent.getBodyAsUtf8String();
+		} else {
+			if (!contents.empty()) {
+				Content *content = contents.front();
+				cText = content->getBodyAsUtf8String();
+			}
+		}
+	}
+	return cText;
+}
+
+void ChatMessagePrivate::setUtf8Text (const string &text) {
+	loadContentsFromDatabase();
+	if (!contents.empty() && internalContent.getContentType().isEmpty() && internalContent.isEmpty()) {
+		internalContent.setContentType(contents.front()->getContentType());
+	}
+	internalContent.setBodyFromUtf8(text);
+
+	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+		// if not started yet the sending also alter the first content
+		if (!contents.empty())
+			contents.front()->setBodyFromUtf8(text);
 	}
 }
 
@@ -563,7 +628,7 @@ void ChatMessagePrivate::notifyReceiving () {
 	// Legacy.
 	AbstractChatRoomPrivate *dChatRoom = q->getChatRoom()->getPrivate();
 	dChatRoom->notifyChatMessageReceived(q->getSharedFromThis());
-	
+
 	static_cast<ChatRoomPrivate *>(dChatRoom)->sendDeliveryNotification(q->getSharedFromThis());
 }
 
@@ -668,7 +733,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// ---------------------------------------
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getText()
-	internalContent.setBody("");
+	internalContent.setBodyFromUtf8("");
 	internalContent.setContentType(ContentType(""));
 	// Also remove current step so we go through all modifiers if message is re-received (in case of recursive call from a modifier)
 	currentRecvStep = ChatMessagePrivate::Step::None;
@@ -956,9 +1021,9 @@ void ChatMessagePrivate::send () {
 	restoreFileTransferContentAsFileContent();
 
 	// Remove internal content as it is not needed anymore and will confuse some old methods like getContentType()
-	internalContent.setBody("");
+	internalContent.setBodyFromUtf8("");
 	internalContent.setContentType(ContentType(""));
-	
+
 	// Wait for message to be either Sent or NotDelivered unless it is an IMDN or COMPOSING
 	if (getContentType() == ContentType::Imdn || getContentType() == ContentType::ImIsComposing) {
 		q->getChatRoom()->getPrivate()->removeTransientChatMessage(q->getSharedFromThis());
@@ -997,7 +1062,7 @@ void ChatMessagePrivate::storeInDb () {
 	// TODO: store message in the future
 	if (linphone_core_conference_server_enabled(q->getCore()->getCCore())) return;
 
-	if (dbKey.isValid()) {
+	if (q->isValid()) {
 		updateInDb();
 		return;
 	}
@@ -1027,16 +1092,16 @@ void ChatMessagePrivate::storeInDb () {
 void ChatMessagePrivate::updateInDb () {
 	L_Q();
 
-	if (!dbKey.isValid()) {
-		lError() << "Invalid db key [" << &dbKey << "] associated to message [" << q->getSharedFromThis() <<"]";
+	if (!q->isValid()) {
+		lError() << "Invalid storage ID [" << storageId << "] associated to message [" << q->getSharedFromThis() <<"]";
 		return;
 	}
 
 	unique_ptr<MainDb> &mainDb = q->getChatRoom()->getCore()->getPrivate()->mainDb;
-	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(dbKey);
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
 
 	if (!eventLog) {
-		lError() << "cannot find eventLog for db key [" << &dbKey << "] associated to message [" << q->getSharedFromThis() <<"]";
+		lError() << "cannot find eventLog for storage ID [" << storageId << "] associated to message [" << q->getSharedFromThis() <<"]";
 		return;
 	}
 	// Avoid transaction in transaction if contents are not loaded.
@@ -1083,6 +1148,8 @@ ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.get
 ChatMessage::~ChatMessage () {
 	L_D();
 
+	deleteChatMessageFromCache();
+
 	for (Content *content : d->contents) {
 		if (content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
@@ -1097,6 +1164,30 @@ ChatMessage::~ChatMessage () {
 	}
 	if (d->salCustomHeaders)
 		sal_custom_header_unref(d->salCustomHeaders);
+}
+
+bool ChatMessage::isValid () const {
+	std::shared_ptr<Core> core = nullptr;
+	try {
+		core = getCore();
+	} catch (const bad_weak_ptr &) {
+		return false; // Return false if core is destroyed.
+	}
+
+	return (core && (getStorageId() >= 0));
+}
+
+void ChatMessage::deleteChatMessageFromCache () {
+	if (isValid()) {
+		// Delete chat message from the cache
+		unique_ptr<MainDb> &mainDb = getCore()->getPrivate()->mainDb;
+		mainDb->getPrivate()->storageIdToChatMessage.erase(getStorageId());
+	}
+}
+
+long long ChatMessage::getStorageId () const {
+	L_D();
+	return d->storageId;
 }
 
 shared_ptr<AbstractChatRoom> ChatMessage::getChatRoom () const {
@@ -1248,14 +1339,12 @@ void ChatMessage::setToBeStored (bool value) {
 // -----------------------------------------------------------------------------
 
 list<ParticipantImdnState> ChatMessage::getParticipantsByImdnState (ChatMessage::State state) const {
-	L_D();
-
 	list<ParticipantImdnState> result;
-	if (!(getChatRoom()->getCapabilities() & AbstractChatRoom::Capabilities::Conference) || !d->dbKey.isValid())
+	if (!(getChatRoom()->getCapabilities() & AbstractChatRoom::Capabilities::Conference) || !isValid())
 		return result;
 
 	unique_ptr<MainDb> &mainDb = getChatRoom()->getCore()->getPrivate()->mainDb;
-	shared_ptr<EventLog> eventLog = mainDb->getEventFromKey(d->dbKey);
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, getStorageId());
 	list<MainDb::ParticipantState> dbResults = mainDb->getChatMessageParticipantsByImdnState(eventLog, state);
 	for (const auto &dbResult : dbResults) {
 		auto sender = getChatRoom()->findParticipant(getFromAddress());
@@ -1306,30 +1395,6 @@ const Content &ChatMessage::getInternalContent () const {
 void ChatMessage::setInternalContent (const Content &content) {
 	L_D();
 	d->internalContent = content;
-}
-
-string ChatMessage::getCustomHeaderValue (const string &headerName) const {
-	L_D();
-	try {
-		return d->customHeaders.at(headerName);
-	} catch (const exception &) {
-		// Key doesn't exist.
-	}
-	return nullptr;
-}
-
-void ChatMessage::addCustomHeader (const string &headerName, const string &headerValue) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders[headerName] = headerValue;
-}
-
-void ChatMessage::removeCustomHeader (const string &headerName) {
-	L_D();
-	if (d->isReadOnly) return;
-
-	d->customHeaders.erase(headerName);
 }
 
 void ChatMessage::send () {

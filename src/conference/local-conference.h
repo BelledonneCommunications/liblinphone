@@ -20,28 +20,48 @@
 #ifndef _L_LOCAL_CONFERENCE_H_
 #define _L_LOCAL_CONFERENCE_H_
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "conference.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class LocalConferencePrivate;
-
-class LINPHONE_PUBLIC LocalConference : public Conference {
+class LINPHONE_PUBLIC LocalConference :
+	public Conference {
 	friend class ServerGroupChatRoomPrivate;
-
+	friend class ServerGroupChatRoom;
 public:
-	LocalConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
+	LocalConference (	const std::shared_ptr<Core> &core
+					 , const IdentityAddress &myAddress
+					 , CallSessionListener *listener
+					 , const std::shared_ptr<ConferenceParams> params
+					 , ConferenceListener * confListener = nullptr);
 	virtual ~LocalConference ();
 
-	/* ConferenceInterface */
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
+	void subscribeReceived (LinphoneEvent *event);
+
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) override;
+	virtual std::shared_ptr<ConferenceParticipantEvent> notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) override;
+	virtual std::shared_ptr<ConferenceSubjectEvent> notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
+
+	virtual void notifyFullState () override;
+
+protected:
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<LocalConferenceEventHandler> eventHandler;
+#endif
 
 private:
-	L_DECLARE_PRIVATE(LocalConference);
+
 	L_DISABLE_COPY(LocalConference);
+
 };
 
 LINPHONE_END_NAMESPACE

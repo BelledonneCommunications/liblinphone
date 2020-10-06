@@ -34,7 +34,7 @@
 #include <xercesc/util/PlatformUtils.hpp>
 #endif
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "call/call.h"
 #include "chat/encryption/encryption-engine.h"
 #ifdef HAVE_LIME_X3DH
@@ -82,31 +82,38 @@ void CorePrivate::init () {
 		AbstractDb::Backend backend;
 		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
 		if (!uri.empty())
-			backend = strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0
-				? MainDb::Mysql
-				: MainDb::Sqlite3;
+			if (strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
+				backend = MainDb::Mysql;
+			} else {
+				backend = MainDb::Sqlite3;
+				uri = Utils::quotePathIfNeeded(uri);
+			}
 		else {
 			backend = AbstractDb::Sqlite3;
-			uri = q->getDataPath() + LINPHONE_DB;
+			uri = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_DB);
 		}
 
 		if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
-			if (backend == MainDb::Mysql && uri.find("charset") == string::npos) {
+			if (backend == MainDb::Mysql && uri.find("charset=") == string::npos) {
 				lInfo() << "No charset defined forcing utf8 4 bytes specially for conference subjet storage";
 				uri += " charset=utf8mb4";
 			}
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+			auto startMs = bctbx_get_cur_time_ms();
 			if (!mainDb->connect(backend, uri)) {
 				ostringstream os;
 				os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
 				throw DatabaseConnectionFailure(os.str());
 			}
+			auto stopMs = bctbx_get_cur_time_ms();
+			auto duration = stopMs - startMs;
+			if (duration >= 1000){
+				lWarning() << "Opening database took " << duration << " ms !";
+			}
 
 			loadChatRooms();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 	}
-
-	isFriendListSubscriptionEnabled = !!linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "net", "friendlist_subscription_enabled", 1);
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
@@ -184,6 +191,10 @@ void CorePrivate::shutdown() {
 			}
 		}
 	}
+
+	if (pushReceivedBackgroundTaskId != 0) {
+		pushReceivedBackgroundTaskEnded();
+	}
 }
 
 // Called by _linphone_core_stop_async_end() just before going to globalStateOff.
@@ -199,18 +210,24 @@ void CorePrivate::uninit() {
 	}
 
 	chatRoomsById.clear();
-	noCreatedClientGroupChatRooms.clear();
-	listeners.clear();
-	if (q->limeX3dhEnabled()) {
-		q->enableLimeX3dh(false);
+
+	for (const auto &audioVideoConference : q->audioVideoConferenceById) {
+		// Terminate audio video conferences just before core is stopped
+		audioVideoConference.second->terminate();
 	}
 
+	q->audioVideoConferenceById.clear();
+
+	noCreatedClientGroupChatRooms.clear();
+	listeners.clear();
+	pushReceivedBackgroundTaskEnded();
+
 #ifdef HAVE_ADVANCED_IM
-	remoteListEventHandler = nullptr;
-	localListEventHandler = nullptr;
+	remoteListEventHandler.reset();
+	localListEventHandler.reset();
 #endif
 
-	AddressPrivate::clearSipAddressesCache();
+	Address::clearSipAddressesCache();
 	if (mainDb != nullptr) {
 		mainDb->disconnect();
 	}
@@ -237,6 +254,7 @@ void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, Linp
 }
 
 void CorePrivate::notifyEnteringBackground () {
+	L_Q();
 	if (isInBackground)
 		return;
 
@@ -245,11 +263,10 @@ void CorePrivate::notifyEnteringBackground () {
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringBackground();
 
-	if (isFriendListSubscriptionEnabled)
+	if (q->isFriendListSubscriptionEnabled())
 		enableFriendListsSubscription(false);
 
 #if TARGET_OS_IPHONE
-	L_Q();
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 	// Stop the video preview
 	linphone_core_enable_video_preview(lc, FALSE);
@@ -275,7 +292,7 @@ void CorePrivate::notifyEnteringForeground () {
 	for (const auto &listener : listenersCopy)
 		listener->onEnteringForeground();
 
-	if (isFriendListSubscriptionEnabled)
+	if (q->isFriendListSubscriptionEnabled())
 		enableFriendListsSubscription(true);
 
 #if TARGET_OS_IPHONE
@@ -320,7 +337,7 @@ bool CorePrivate::basicToFlexisipChatroomMigrationEnabled()const{
 	return linphone_config_get_bool(linphone_core_get_config(q->getCCore()), "misc", "enable_basic_to_client_group_chat_room_migration", FALSE);
 }
 
-CorePrivate::CorePrivate() : authStack(*this){
+CorePrivate::CorePrivate() : authStack(*this), pushReceivedBackgroundTaskId(0) {
 }
 
 std::shared_ptr<ToneManager> CorePrivate::getToneManager() {
@@ -342,24 +359,25 @@ int CorePrivate::ephemeralMessageTimerExpired (void *data, unsigned int revents)
 void CorePrivate::startEphemeralMessageTimer (time_t expireTime) {
 	double time = difftime(expireTime, ::ms_time(NULL));
 	unsigned int timeoutValueMs = time>0 ? (unsigned int)time*1000 : 10;
-	if (!timer) {
-		timer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
+	if (!ephemeralTimer) {
+		ephemeralTimer = getPublic()->getCCore()->sal->createTimer(ephemeralMessageTimerExpired, this, timeoutValueMs, "ephemeral message handler");
 	} else {
-		belle_sip_source_set_timeout_int64(timer, (int64_t)timeoutValueMs);
+		belle_sip_source_set_timeout_int64(ephemeralTimer, (int64_t)timeoutValueMs);
 	}
 }
 
 void CorePrivate::stopEphemeralMessageTimer () {
-	if (timer) {
+	if (ephemeralTimer) {
 		auto core = getPublic()->getCCore();
 		if (core && core->sal)
-			core->sal->cancelTimer(timer);
-		belle_sip_object_unref(timer);
-		timer = nullptr;
+			core->sal->cancelTimer(ephemeralTimer);
+		belle_sip_object_unref(ephemeralTimer);
+		ephemeralTimer = nullptr;
 	}
 }
 
 bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
+	L_Q();
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
 		return false;
@@ -373,10 +391,17 @@ bool CorePrivate::setInputAudioDevice(AudioDevice *audioDevice) {
 		}
 	}
 
+	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
+		for (const auto & audioVideoConference : q->audioVideoConferenceById) {
+			audioVideoConference.second->getAudioControlInterface()->setInputDevice(audioDevice);
+		}
+	}
+
 	return applied;
 }
 
 bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
+	L_Q();
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
 		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
 		return false;
@@ -387,6 +412,12 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 		for (const auto &call : calls) {
 			call->setOutputAudioDevice(audioDevice);
 			applied = true;
+		}
+	}
+
+	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
+		for (const auto & audioVideoConference : q->audioVideoConferenceById) {
+			audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
 		}
 	}
 
@@ -635,16 +666,12 @@ std::string Core::getSpecs() const {
 
 void Core::enableFriendListSubscription (bool enable) {
 	L_D();
-	if (d->isFriendListSubscriptionEnabled != enable) {
-		d->isFriendListSubscriptionEnabled = enable;
-		linphone_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
-	}
+	linphone_config_set_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", enable ? 1 : 0);
 	d->enableFriendListsSubscription(enable);
 }
 
 bool Core::isFriendListSubscriptionEnabled () const {
-	L_D();
-	return d->isFriendListSubscriptionEnabled;
+	return !!linphone_config_get_int(linphone_core_get_config(getCCore()), "net", "friendlist_subscription_enabled", 1);
 }
 
 // ---------------------------------------------------------------------------
@@ -746,26 +773,42 @@ void Core::setOutputAudioDevice(AudioDevice *audioDevice) {
 }
 
 AudioDevice* Core::getInputAudioDevice() const {
-	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
-	if (call) {
-		return call->getInputAudioDevice();
-	}
 
-	for (const auto &call : getCalls()) {
-		return call->getInputAudioDevice();
+	// If the core in a local conference, then get the audio device of the audio control interface
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		AudioControlInterface *i = conf->getAudioControlInterface();
+		return i->getInputDevice();
+	} else {
+		shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+		if (call) {
+			return call->getInputAudioDevice();
+		}
+		for (const auto &call : getCalls()) {
+			return call->getInputAudioDevice();
+		}
 	}
 
 	return nullptr;
 }
 
 AudioDevice* Core::getOutputAudioDevice() const {
-	shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
-	if (call) {
-		return call->getOutputAudioDevice();
-	}
 
-	for (const auto &call : getCalls()) {
-		return call->getOutputAudioDevice();
+	// If the core in a local conference, then get the audio device of the audio control interface
+	if (getCCore()->conf_ctx){
+		/* There is a local conference.*/
+		MediaConference::Conference *conf = MediaConference::Conference::toCpp(getCCore()->conf_ctx);
+		AudioControlInterface *i = conf->getAudioControlInterface();
+		return i->getOutputDevice();
+	} else {
+		shared_ptr<LinphonePrivate::Call> call = getCurrentCall();
+		if (call) {
+			return call->getOutputAudioDevice();
+		}
+		for (const auto &call : getCalls()) {
+			return call->getOutputAudioDevice();
+		}
 	}
 
 	return nullptr;
@@ -857,19 +900,60 @@ AudioDevice* Core::getDefaultOutputAudioDevice() const {
 // Misc.
 // -----------------------------------------------------------------------------
 
+static void push_received_background_task_ended(CorePrivate *corePrivate) {
+	corePrivate->pushReceivedBackgroundTaskEnded();
+}
+
+void CorePrivate::pushReceivedBackgroundTaskEnded() {
+	L_Q();
+
+	lWarning() << "Ending push received background task [" << pushReceivedBackgroundTaskId << "]";
+	belle_sip_end_background_task(pushReceivedBackgroundTaskId);
+	pushReceivedBackgroundTaskId = 0;
+
+	if (pushTimer) {
+		q->destroyTimer(pushTimer);
+		pushTimer = nullptr;
+	}
+}
+
+void CorePrivate::startPushReceivedBackgroundTask() {
+	L_Q();
+
+	if (pushTimer) {
+		q->destroyTimer(pushTimer);
+		pushTimer = nullptr;
+	}
+
+	if (pushReceivedBackgroundTaskId == 0) {
+		pushReceivedBackgroundTaskId = belle_sip_begin_background_task("Push received",(void (*)(void*))push_received_background_task_ended, this);
+		lInfo() << "Started push notif background task [" << pushReceivedBackgroundTaskId << "]";
+	} else {
+		lWarning() << "Found existing push notif background task [" << pushReceivedBackgroundTaskId << "]";
+	}
+
+	pushTimer = q->createTimer([this]() -> bool {
+		push_received_background_task_ended(this);
+		return false;
+	}, 20000, "push received background task timeout");
+}
 
 /*
  * pushNotificationReceived() is a critical piece of code.
  * When receiving a push notification, we must be absolutely sure that our connections to the SIP servers is up, running and reliable.
  * If not, we must start or restart them.
  */
-void Core::pushNotificationReceived () const {
+void Core::pushNotificationReceived () {
 	L_D();
+
+	lInfo() << "Push notification received";
+
+	// Start a background task for 20 seconds to ensure we have time to process the push
+	d->startPushReceivedBackgroundTask();
+
 	LinphoneCore *lc = getCCore();
 	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
 	bctbx_list_t *it = (bctbx_list_t *)proxies;
-
-	lInfo() << "Push notification received";
 
 	// We can assume network should be reachable when a push notification is received.
 	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
@@ -1017,5 +1101,56 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 	belle_sip_object_unref(timer);
 }
 
+std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
+	Address peerAddress = conferenceId.getPeerAddress();
+	peerAddress.removeUriParam("conf-id");
+	Address localAddress = conferenceId.getLocalAddress();
+	localAddress.removeUriParam("conf-id");
+	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	auto it = audioVideoConferenceById.find(prunedConferenceId);
+	if (it != audioVideoConferenceById.cend()) {
+		lInfo() << "Found audio video conference in RAM for conference ID " << conferenceId << ".";
+		return it->second;
+	}
+
+	if (logIfNotFound)
+		lInfo() << "Unable to find audio video conference in RAM: " << conferenceId << ".";
+	return nullptr;
+}
+
+void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Conference> &audioVideoConference) {
+	L_ASSERT(audioVideoConference);
+
+	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+	Address peerAddress = conferenceId.getPeerAddress();
+	peerAddress.removeUriParam("conf-id");
+	Address localAddress = conferenceId.getLocalAddress();
+	localAddress.removeUriParam("conf-id");
+	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	auto conf = findAudioVideoConference (conferenceId);
+
+	// Conference does not exist or yes but with the same pointer!
+	L_ASSERT(conf == nullptr || conf == audioVideoConference);
+	if (conf == nullptr) {
+		audioVideoConferenceById[prunedConferenceId] = audioVideoConference;
+	}
+}
+
+void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
+	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+	Address peerAddress = conferenceId.getPeerAddress();
+	peerAddress.removeUriParam("conf-id");
+	Address localAddress = conferenceId.getLocalAddress();
+	localAddress.removeUriParam("conf-id");
+	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	auto it = audioVideoConferenceById.find(prunedConferenceId);
+	if (it != audioVideoConferenceById.cend()) {
+		audioVideoConferenceById.erase(it);
+	}
+
+}
 
 LINPHONE_END_NAMESPACE

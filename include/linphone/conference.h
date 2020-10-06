@@ -42,6 +42,11 @@
 extern "C" {
 #endif
 
+typedef enum {
+	LinphoneConferenceClassLocal,
+	LinphoneConferenceClassRemote
+} LinphoneConferenceClass;
+
 /**
  * @addtogroup call_control
  * @{
@@ -112,22 +117,55 @@ LINPHONE_PUBLIC LinphoneConference *linphone_conference_ref(LinphoneConference *
 LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
 
 /**
- * Remove a participant from a conference
- * @param conf A #LinphoneConference @notnil
- * @param uri the #LinphoneAddress of the participant to remove @notnil
- * @warning The passed SIP URI must be one of the URIs returned by linphone_conference_get_participants()
- * @return 0 if succeeded, -1 if failed
- */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conf, const LinphoneAddress *uri);
-
-/**
  * Get URIs of all participants of one conference
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
  * @param conf A #LinphoneConference @notnil
  * @return \bctbx_list{LinphoneAddress} @maybenil
+ * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conf);
+
+/**
+ * Get list of all participants of one conference
+ * @param conf A #LinphoneConference @notnil
+ * @return \bctbx_list{LinphoneParticipant} @maybenil
+ */
+LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conf);
+
+/**
+ * @param conference A #LinphoneConference @notnil
+ * @param uri URI of the participant to remove @notnil
+ * @warning The passed participant uri must be one of those returned by linphone_conference_get_participants()
+ * @return 0 if succeeded, -1 if failed
+ * @deprecated 10/07/2020 Use linphone_conference_remove_participant_2() instead.
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conference, const LinphoneAddress *uri);
+
+/**
+ * @param conference A #LinphoneConference @notnil
+ * @param participant participant to remove @notnil
+ * @warning The passed participant must be one of those returned by linphone_conference_get_participant_list()
+ * @warning This method may destroy the conference if the only remaining participant had an existing call to the local participant before the conference was created
+ * @return 0 if succeeded, -1 if failed
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_2(LinphoneConference *conference, LinphoneParticipant *participant);
+
+/**
+ * @param conference A #LinphoneConference @notnil
+ * @param call call to remove @notnil
+ * @return 0 if succeeded, -1 if failed
+ * @deprecated 10/07/2020 Use linphone_conference_remove_participant_2() instead.
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_3(LinphoneConference *conference, LinphoneCall *call);
+
+/**
+ * Find a participant from a conference
+ * @param conference A #LinphoneConference. @notnil
+ * @param uri SIP URI of the participant to search. @notnil
+ * @return a pointer to the participant found or nullptr. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(LinphoneConference *conference, const LinphoneAddress *uri);
 
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
@@ -142,8 +180,14 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneC
  * @param conf The #LinphoneConference object. @notnil
  * @param call a #LinphoneCall that has to be added to the conference. @notnil
  */
-LINPHONE_PUBLIC int linphone_conference_add_participant(LinphoneConference *conf, LinphoneCall *call);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *conference, LinphoneCall *call);
 
+/**
+ * Join a participant to the conference.
+ * @param conference The #LinphoneConference object. @notnil
+ * @param uri a #LinphoneAddress that has to be added to the conference. @notnil
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_2 (LinphoneConference *conference, const LinphoneAddress *uri);
 
 /**
  * Update parameters of the conference.
@@ -161,18 +205,70 @@ LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *conf, 
 LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conf);
 
 /**
- * Get the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @return the conference id @maybenil
+ * Free a #LinphoneConferenceParams
+ * @param params #LinphoneConferenceParams to free @notnil
+ * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
+ * @donotwrap
  */
-LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *conf);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
 
 /**
- * Set the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @param conference_id the conference id to set. @notnil
+ * Get the conference subject
+ * @param conference The #LinphoneConference object. @notnil
+ * @return conference subject - @maybenil
  */
-LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
+LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *conference);
+
+/**
+ * Set the conference subject
+ * @param conference The #LinphoneConference object. @notnil
+ * @param subject conference subject
+ */
+LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *conference, const char *subject);
+
+/**
+ * Get number of participants
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the number of participants in a #LinphoneConference
+ */
+LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
+
+/**
+ * For a local audio video conference, this function returns the participant hosting the conference
+ * For a remote audio video conference, this function returns the focus of the conference
+ * @param conference The #LinphoneConference object. @notnil
+ * @return a #LinphoneParticipant . @notnil
+ */
+LINPHONE_PUBLIC LinphoneParticipant *linphone_conference_get_me(const LinphoneConference *conference);
+
+/**
+ * Get the conference id
+ * @param conference the conference
+ */
+//LINPHONE_PUBLIC ConferenceId linphone_conference_get_conference_id(const LinphoneConference *conference);
+
+/**
+ * Terlnate conferenceGet the conference id
+ * @param conference The #LinphoneConference object. @notnil
+ * @return 0 if the termination is successful, -1 otherwise.
+ */
+LINPHONE_PUBLIC int linphone_conference_terminate(LinphoneConference *conference);
+
+/**
+ * Retrieves the user pointer that was given to linphone_conference_new()
+ * @param conference #LinphoneConference object @notnil
+ * @return The user data associated with the #LinphoneConference object. @maybenil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void *linphone_conference_get_user_data(const LinphoneConference *conference);
+
+/**
+ * Associate a user pointer to the linphone conference.
+ * @param core #LinphoneConference object @notnil
+ * @param user_data The user data to associate with the #LinphoneConference object. @maybenil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_conference_set_user_data(LinphoneConference *conference, void *user_data);
 
 /**
  * Call generic OpenGL render preview for a given conference
@@ -186,18 +282,38 @@ LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *
  */
 LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
 
-
 /************ */
 /* DEPRECATED */
 /* ********** */
 
-/**
- * Free a #LinphoneConferenceParams
- * @param params #LinphoneConferenceParams to free @notnil
- * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
+LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
+int linphone_conference_leave(LinphoneConference *conference);
+LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
+
+LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
+
+LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
+LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
+LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
+LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
+
+int linphone_conference_get_size(const LinphoneConference *conference);
+
+/* This is actually only used by the ToneManager. TODO: encapsulate this better. */
+AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);
+
+int linphone_conference_mute_microphone(LinphoneConference *conference, bool_t val);
+bool_t linphone_conference_microphone_is_muted(const LinphoneConference *conference);
+float linphone_conference_get_input_volume(const LinphoneConference *conference);
+
+int linphone_conference_start_recording(LinphoneConference *conference, const char *path);
+int linphone_conference_stop_recording(LinphoneConference *conference);
+
+void linphone_conference_on_call_terminating(LinphoneConference *conference, LinphoneCall *call);
+
+LINPHONE_PUBLIC bool_t linphone_conference_check_class(LinphoneConference *conference, LinphoneConferenceClass _class);
+
+
 
 /**
  * @}

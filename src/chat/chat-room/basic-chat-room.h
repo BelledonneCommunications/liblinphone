@@ -41,12 +41,7 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
-	const IdentityAddress &getConferenceAddress () const override;
-
-	bool canHandleParticipants () const override;
-
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	bool addParticipants (const std::list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) override;
+	const ConferenceAddress getConferenceAddress () const override;
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
@@ -62,15 +57,32 @@ public:
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
 
+	// TODO: Delete
+	// Addressing compilation error -Werror=overloaded-virtual
+	using LinphonePrivate::ConferenceInterface::join;
 	void join () override;
 	void leave () override;
 
+	const ConferenceId &getConferenceId () const override;
+
+	bool addParticipant (const IdentityAddress &participantAddress) override;
+	bool addParticipant (std::shared_ptr<Call> call) override;
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	void join (const IdentityAddress &participantAddress) override;
+	bool update(const ConferenceParamsInterface &newParameters) override;
+
+	State getState () const override;
+	void setState (ConferenceInterface::State newState) override;
 
 protected:
 	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 
 private:
 	BasicChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+
+	ConferenceId conferenceId;
+
+	ConferenceInterface::State state = ConferenceInterface::State::None;
 
 	L_DECLARE_PRIVATE(BasicChatRoom);
 	L_DISABLE_COPY(BasicChatRoom);

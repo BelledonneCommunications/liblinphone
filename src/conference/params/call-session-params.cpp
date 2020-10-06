@@ -18,7 +18,6 @@
  */
 
 #include "call-session-params-p.h"
-
 #include "call-session-params.h"
 
 #include "linphone/proxy_config.h"
@@ -135,6 +134,11 @@ void CallSessionParams::setPrivacy (LinphonePrivacyMask privacy) {
 void CallSessionParams::addCustomHeader (const string &headerName, const string &headerValue) {
 	L_D();
 	d->customHeaders = sal_custom_header_append(d->customHeaders, headerName.c_str(), headerValue.c_str());
+}
+
+void CallSessionParams::removeCustomHeader (const string &headerName) {
+	L_D();
+	d->customHeaders = sal_custom_header_remove(d->customHeaders, headerName.c_str());
 }
 
 void CallSessionParams::clearCustomHeaders () {

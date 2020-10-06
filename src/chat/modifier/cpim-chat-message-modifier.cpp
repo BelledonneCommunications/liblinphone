@@ -135,7 +135,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 
 	Content newContent;
 	newContent.setContentType(ContentType::Cpim);
-	newContent.setBody(cpimMessage.asString());
+	newContent.setBodyFromLocale(cpimMessage.asString());
 	message->setInternalContent(newContent);
 
 	return ChatMessageModifier::Result::Done;
@@ -172,7 +172,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 	auto contentDispositionHeader = cpimMessage->getContentHeader("Content-Disposition");
 	if (contentDispositionHeader)
 		newContent.setContentDisposition(ContentDisposition(contentDispositionHeader->getValue()));
-	newContent.setBody(cpimMessage->getContent());
+	newContent.setBodyFromLocale(cpimMessage->getContent());
 
 	message->getPrivate()->setPositiveDeliveryNotificationRequired(false);
 	message->getPrivate()->setNegativeDeliveryNotificationRequired(false);
@@ -275,7 +275,7 @@ Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 
 	Content *cpimContent = new Content();
 	cpimContent->setContentType(ContentType::Cpim);
-	cpimContent->setBody(cpimMessage.asString());
+	cpimContent->setBodyFromLocale(cpimMessage.asString());
 
 	return cpimContent;
 }

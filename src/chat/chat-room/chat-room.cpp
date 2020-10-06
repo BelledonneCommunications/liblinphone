@@ -39,15 +39,6 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-void ChatRoomPrivate::setState (ChatRoom::State newState) {
-	if (state != newState) {
-		state = newState;
-		notifyStateChanged();
-	}
-}
-
-// -----------------------------------------------------------------------------
-
 void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
 
@@ -58,24 +49,19 @@ void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessag
 		dChatMessage->setImdnMessageId("");
 	}
 
-	LinphoneChatRoom *cr = getCChatRoom();
-	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
-	if (!isResend && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
-		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
-		);
-		if (!event) {
-			event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
-		}
-		
-		_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
-		linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
-	}
-
 	dChatMessage->send();
 }
 
 void ChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	LinphoneChatRoom *cr = getCChatRoom();
+	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, chatMessage->getStorageId());
+	
+	_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(eventLog));
+	linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
+
 	if (isComposing) isComposing = false;
 	isComposingHandler->stopIdleTimer();
 	isComposingHandler->stopRefreshTimer();
@@ -150,7 +136,7 @@ shared_ptr<ChatMessage> ChatRoomPrivate::createChatMessage (ChatMessage::Directi
 	L_Q();
 	shared_ptr<ChatMessage> message = shared_ptr<ChatMessage>(new ChatMessage(q->getSharedFromThis(), direction));
 	if (q->ephemeralEnabled() && direction == ChatMessage::Direction::Outgoing) {
-		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime() << " in chat room [" << conferenceId << "]";
+		lDebug() << "Create an outgoing ephemeral message " << message << " with lifetime " << q->getEphemeralLifetime() << " in chat room [" << q->getConferenceId() << "]";
 		message->getPrivate()->enableEphemeralWithTime(q->getEphemeralLifetime());
 	}
 	return message;
@@ -275,12 +261,12 @@ void ChatRoomPrivate::notifyStateChanged () {
 	LinphoneChatRoom *cr = getCChatRoom();
 	// Do not output this log while Core is starting up, a lot of them may happen
 	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
-		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(state);
+		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
 	} else {
-		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << state;
+		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << q->getState();
 	}
-	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)state);
-	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)state);
+	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)q->getState());
+	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)q->getState());
 }
 
 void ChatRoomPrivate::notifyUndecryptableChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) {
@@ -308,7 +294,7 @@ LinphoneReason ChatRoomPrivate::onSipMessageReceived (SalOp *op, const SalMessag
 	if (message->url && ContentType(message->content_type) == ContentType::ExternalBody) {
 		lInfo() << "Received a message with an external body URL " << message->url;
 		content.setContentType(ContentType::FileTransfer);
-		content.setBody(msg->getPrivate()->createFakeFileTransferFromUrl(message->url));
+		content.setBodyFromUtf8(msg->getPrivate()->createFakeFileTransferFromUrl(message->url));
 	} else {
 		content.setContentType(ContentType(message->content_type));
 		content.setBodyFromUtf8(message->text ? message->text : "");
@@ -396,14 +382,15 @@ LinphoneChatRoom *ChatRoomPrivate::getCChatRoom () const {
 
 // =============================================================================
 
-ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params) :
+ChatRoom::ChatRoom (ChatRoomPrivate &p, const shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const shared_ptr<Conference> &conf) :
 	AbstractChatRoom(p, core) {
 	L_D();
 
 	d->params = params;
-	d->conferenceId = conferenceId;
 	d->imdnHandler.reset(new Imdn(this));
 	d->isComposingHandler.reset(new IsComposing(core->getCCore(), d));
+
+	this->conference = conf;
 }
 
 ChatRoom::~ChatRoom () {
@@ -417,19 +404,12 @@ ChatRoom::~ChatRoom () {
 
 // -----------------------------------------------------------------------------
 
-const ConferenceId &ChatRoom::getConferenceId () const {
-	L_D();
-	return d->conferenceId;
-}
-
 const IdentityAddress &ChatRoom::getPeerAddress () const {
-	L_D();
-	return d->conferenceId.getPeerAddress();
+	return getConferenceId().getPeerAddress();
 }
 
 const IdentityAddress &ChatRoom::getLocalAddress () const {
-	L_D();
-	return d->conferenceId.getLocalAddress();
+	return  getConferenceId().getLocalAddress();
 }
 
 // -----------------------------------------------------------------------------
@@ -446,9 +426,12 @@ time_t ChatRoom::getLastUpdateTime () const {
 
 // -----------------------------------------------------------------------------
 
-ChatRoom::State ChatRoom::getState () const {
-	L_D();
-	return d->state;
+ConferenceInterface::State ChatRoom::getState () const {
+	if (conference) {
+		return conference->getState();
+	} else {
+		return ConferenceInterface::State::None;
+	}
 }
 
 ChatRoom::SecurityLevel ChatRoom::getSecurityLevel () const {
@@ -491,11 +474,10 @@ int ChatRoom::getHistorySize () const {
 }
 
 void ChatRoom::deleteFromDb () {
-	L_D();
 	// Keep a ref, otherwise the object might be destroyed before we can set the Deleted state
 	shared_ptr<AbstractChatRoom> ref = this->getSharedFromThis();
 	Core::deleteChatRoom(ref);
-	d->setState(ChatRoom::State::Deleted);
+	setState(ConferenceInterface::State::Deleted);
 }
 
 void ChatRoom::deleteHistory () {
@@ -506,8 +488,9 @@ void ChatRoom::deleteHistory () {
 
 void ChatRoom::deleteMessageFromHistory (const shared_ptr<ChatMessage> &message) {
 	L_D();
-	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEventFromKey(
-		message->getPrivate()->dbKey
+
+	shared_ptr<LinphonePrivate::EventLog> event = LinphonePrivate::MainDb::getEvent(
+		getCore()->getPrivate()->mainDb, message->getStorageId()
 	);
 	if (event) {
 		LinphonePrivate::EventLog::deleteFromDatabase(event);
@@ -562,11 +545,21 @@ shared_ptr<ChatMessage> ChatRoom::createChatMessage () {
 	return d->createChatMessage(ChatMessage::Direction::Outgoing);
 }
 
+// Deprecated
 shared_ptr<ChatMessage> ChatRoom::createChatMessage (const string &text) {
 	shared_ptr<ChatMessage> chatMessage = createChatMessage();
 	Content *content = new Content();
 	content->setContentType(ContentType::PlainText);
-	content->setBody(text);
+	content->setBodyFromLocale(text);
+	chatMessage->addContent(content);
+	return chatMessage;
+}
+
+shared_ptr<ChatMessage> ChatRoom::createChatMessageFromUtf8 (const string &text) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+	Content *content = new Content();
+	content->setContentType(ContentType::PlainText);
+	content->setBodyFromUtf8(text);
 	chatMessage->addContent(content);
 	return chatMessage;
 }
@@ -616,7 +609,7 @@ void ChatRoom::markAsRead () {
 	L_D();
 
 	CorePrivate *dCore = getCore()->getPrivate();
-	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(d->conferenceId)) {
+	for (auto &chatMessage : dCore->mainDb->getUnreadChatMessages(getConferenceId())) {
 		chatMessage->getPrivate()->markAsRead();
 		// Do not set the message state has displayed if it contains a file transfer (to prevent imdn sending)
 		if (!chatMessage->getPrivate()->hasFileTransferContent()) {
@@ -624,7 +617,7 @@ void ChatRoom::markAsRead () {
 		}
 	}
 
-	dCore->mainDb->markChatMessagesAsRead(d->conferenceId);
+	dCore->mainDb->markChatMessagesAsRead(getConferenceId());
 	linphone_core_notify_chat_room_read(getCore()->getCCore(), d->getCChatRoom());
 }
 
@@ -652,6 +645,45 @@ long ChatRoom::getEphemeralLifetime () const {
 
 bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
 	return false;
+}
+
+void ChatRoom::setState (ConferenceInterface::State newState) {
+	L_D();
+
+	if (conference) {
+		if (getState() != newState) {
+			conference->setState(newState);
+			d->notifyStateChanged();
+		}
+	}
+}
+
+void ChatRoom::addListener(std::shared_ptr<ConferenceListenerInterface> listener) {
+	if (conference) {
+		conference->addListener(listener);
+	}
+}
+
+list<IdentityAddress> ChatRoom::parseResourceLists (const Content &content) {
+	return Conference::parseResourceLists(content); 
+}
+
+bool ChatRoom::removeParticipants (const list<shared_ptr<Participant>> &participants) {
+	bool soFarSoGood = true;
+	for (const auto &p : participants)
+		soFarSoGood &= removeParticipant(p);
+	return soFarSoGood;
+}
+
+bool ChatRoom::addParticipants (const std::list<IdentityAddress> &addresses) {
+	list<IdentityAddress> sortedAddresses(addresses);
+	sortedAddresses.sort();
+	sortedAddresses.unique();
+
+	bool soFarSoGood = true;
+	for (const auto &address : sortedAddresses)
+		soFarSoGood &= addParticipant(address);
+	return soFarSoGood;
 }
 
 LINPHONE_END_NAMESPACE

@@ -29,11 +29,18 @@ static void remote_provisioning_skipped(void) {
 }
 
 static void remote_provisioning_http(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_create("marie_remote_rc");
+	LinphoneFriendList *list = linphone_core_get_friend_list_by_name(marie->lc, "_default");
+	BC_ASSERT_TRUE(linphone_friend_list_subscriptions_enabled(list));
+
+	linphone_core_manager_start(marie, FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+
 	/*make sure proxy config is not added in double, one time at core init, next time at configuring successfull*/
 	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(marie->lc)), 1, int,"%i");
+	BC_ASSERT_FALSE(linphone_friend_list_subscriptions_enabled(list));
+
 	linphone_core_manager_destroy(marie);
 }
 

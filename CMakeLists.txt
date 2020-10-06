@@ -72,7 +72,7 @@ option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive 
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_EXTENSIONS NO)
 
 if(NOT CMAKE_BUILD_TYPE)
@@ -279,6 +279,7 @@ if(MSVC)
 	list(APPEND STRICT_OPTIONS_CPP "/wd4995") # Disable "name was marked as #pragma deprecated" warnings
 	list(APPEND STRICT_OPTIONS_CPP "/wd4996") # Disable deprecated function warnings
 	list(APPEND STRICT_OPTIONS_CPP "/wd4800") # Disable warning for cast from bool_t to bool
+	list(APPEND STRICT_OPTIONS_CPP "/wd4251") # Disable warning for missing dll export
 	if(ENABLE_STRICT)
 		list(APPEND STRICT_OPTIONS_CPP "/WX")
 	endif()

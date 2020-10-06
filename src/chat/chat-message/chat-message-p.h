@@ -31,7 +31,6 @@
 #include "content/content.h"
 #include "content/file-content.h"
 #include "content/file-transfer-content.h"
-#include "db/main-db-chat-message-key.h"
 #include "db/main-db.h"
 #include "event-log/conference/conference-chat-message-event.h"
 #include "object/object-p.h"
@@ -62,6 +61,9 @@ public:
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
 
+	void setStorageId (long long id);
+	void resetStorageId ();
+
 	void setDirection (ChatMessage::Direction dir);
 
 	void setParticipantState (const IdentityAddress &participantAddress, ChatMessage::State newState, time_t stateChangeTime);
@@ -80,7 +82,7 @@ public:
 	bool isMarkedAsRead () const;
 
 	void setImdnMessageId (const std::string &imdnMessageId);
-	
+
 	void setForwardInfo (const std::string &fInfo);
 
 	void enableEphemeralWithTime (long time);
@@ -91,7 +93,7 @@ public:
 		this->authenticatedFromAddress = authenticatedFromAddress;
 	}
 
-	void forceFromAddress (const IdentityAddress &fromAddress) {
+	void forceFromAddress (const ConferenceAddress &fromAddress) {
 		this->fromAddress = fromAddress;
 	}
 
@@ -170,8 +172,11 @@ public:
 	const ContentType &getContentType () const;
 	void setContentType (const ContentType &contentType);
 
-	const std::string &getText () const;
-	void setText (const std::string &text);
+	const std::string &getText () const;// Deprecated. Use UTF8
+	void setText (const std::string &text);// Deprecated. Use UTF8
+	
+	const std::string &getUtf8Text () const;
+	void setUtf8Text (const std::string &text);
 
 	const std::string &getFileTransferFilepath () const;
 	void setFileTransferFilepath (const std::string &path);
@@ -212,7 +217,7 @@ private:
 	ChatMessagePrivate(const std::shared_ptr<AbstractChatRoom> &cr, ChatMessage::Direction dir);
 
 public:
-	mutable MainDbChatMessageKey dbKey;
+	long long storageId = -1;
 
 protected:
 	bool displayNotificationRequired = true;
@@ -234,9 +239,6 @@ private:
 	bool isAutoDownloadAttachedFilesInProgress = false;
 	std::string callId;
 
-	// TODO: to replace salCustomheaders
-	std::unordered_map<std::string, std::string> customHeaders;
-
 	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;
 	SalCustomHeader *salCustomHeaders = nullptr;
@@ -255,11 +257,11 @@ private:
 
 	std::weak_ptr<AbstractChatRoom> chatRoom;
 	ConferenceId conferenceId;
-	IdentityAddress fromAddress;
+	ConferenceAddress fromAddress;
 	IdentityAddress authenticatedFromAddress;
 	bool senderAuthenticationEnabled = true;
 	bool unencryptedContentWarning = false;
-	IdentityAddress toAddress;
+	ConferenceAddress toAddress;
 
 	ChatMessage::State state = ChatMessage::State::Idle;
 	ChatMessage::Direction direction = ChatMessage::Direction::Incoming;

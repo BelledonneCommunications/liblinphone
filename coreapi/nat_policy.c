@@ -48,6 +48,15 @@ static void linphone_nat_policy_destroy(LinphoneNatPolicy *policy) {
 	}
 }
 
+/* Simply cancel pending DNS resoltion, as the core is going to shutdown.*/
+void linphone_nat_policy_release(LinphoneNatPolicy *policy){
+	if (policy->stun_resolver_context) {
+		belle_sip_resolver_context_cancel(policy->stun_resolver_context);
+		belle_sip_object_unref(policy->stun_resolver_context);
+		policy->stun_resolver_context = NULL;
+	}
+}
+
 bool_t linphone_nat_policy_stun_server_activated(LinphoneNatPolicy *policy) {
 	const char *server = linphone_nat_policy_get_stun_server(policy);
 	return (server != NULL) && (server[0] != '\0')

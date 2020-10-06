@@ -188,16 +188,16 @@ static void zrtp_call(const uint16_t encryptionModule, const char *random_id, co
 
 	// create user Pauline
 	LinphoneCoreManager* pauline;
-	local_filename = bctbx_strdup_printf("%s_pauline_rc_%s", basename.data(), random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline rc_%s", basename.data(), random_id);
 	auto pauline_rc = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("%s_pauline_ZIDcache_%s", basename.data(), random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline ZIDcache_%s", basename.data(), random_id);
 	auto pauline_zidCache = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("%s_pauline_linphone_%s.db", basename.data(), random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline linphone_%s.db", basename.data(), random_id);
 	auto pauline_linphone_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
-	local_filename = bctbx_strdup_printf("%s_pauline_lime_%s.db", basename.data(), random_id);
+	local_filename = bctbx_strdup_printf("%s_pauline lime_%s.db", basename.data(), random_id);
 	auto pauline_lime_db = bc_tester_file(local_filename);
 	bctbx_free(local_filename);
 	if (createUsers == true) { // creating users, make sure we do not reuse local files

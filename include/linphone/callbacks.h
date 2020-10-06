@@ -256,7 +256,7 @@ typedef LinphoneCoreCbsIsComposingReceivedCb LinphoneCoreIsComposingReceivedCb;
  * @param call the #LinphoneCall that received the dtmf @notnil
  * @param dtmf the ascii code of the dtmf
  */
-typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* lc, LinphoneCall *call, int dtmf);
+typedef void (*LinphoneCoreCbsDtmfReceivedCb)(LinphoneCore* core, LinphoneCall *call, int dtmf);
 
 /**
  * Old name of #LinphoneCoreCbsDtmfReceivedCb.
@@ -278,7 +278,7 @@ typedef LinphoneCoreCbsReferReceivedCb LinphoneCoreReferReceivedCb;
 /** 
  * Callback prototype when using the buddy plugin
  * @param core the #LinphoneCore @notnil
- * @param linphone_friend the #LinphoneFriend that has been updated
+ * @param linphone_friend the #LinphoneFriend that has been updated @notnil
  */ 
 typedef void (*LinphoneCoreCbsBuddyInfoUpdatedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend);
 
@@ -330,7 +330,7 @@ typedef LinphoneCoreCbsInfoReceivedCb LinphoneCoreInfoReceivedCb;
  * Callback prototype for configuring status changes notification
  * @param core the #LinphoneCore @notnil
  * @param status the current #LinphoneConfiguringState
- * @param message informational message. @notnil
+ * @param message informational message. @maybenil
  */
 typedef void (*LinphoneCoreCbsConfiguringStatusCb)(LinphoneCore *core, LinphoneConfiguringState status, const char *message);
 
@@ -410,6 +410,14 @@ typedef LinphoneCoreCbsFriendListRemovedCb LinphoneCoreFriendListRemovedCb;
 typedef void (*LinphoneCoreCbsVersionUpdateCheckResultReceivedCb) (LinphoneCore *core, LinphoneVersionUpdateCheckResult result, const char *version, const char *url);
 
 /**
+ * Callback prototype telling that a #LinphoneConference state has changed.
+ * @param[in] core #LinphoneCore object @notnil
+ * @param[in] conference The #LinphoneConference object for which the state has changed @notnil
+ * @param[in] state the current #LinphoneChatRoomState
+ */
+typedef void (*LinphoneCoreCbsConferenceStateChangedCb) (LinphoneCore * core, LinphoneConference *conference, LinphoneConferenceState state);
+
+/**
  * Callback prototype telling that a #LinphoneChatRoom state has changed.
  * @param core #LinphoneCore object @notnil
  * @param chat_room The #LinphoneChatRoom object for which the state has changed @notnil
@@ -487,9 +495,9 @@ typedef void (*LinphoneCoreCbsAudioDevicesListUpdatedCb)(LinphoneCore *core);
  * Callback prototype for notifying the application about notification received from the network.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
- * @param notified_event  @notnil
+ * @param notified_event The event as string @notnil
  * @param body the #LinphoneContent of the event @notnil
-**/
+ */
 typedef void (*LinphoneCoreCbsNotifyReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *notified_event, const LinphoneContent *body);
 
 /**
@@ -501,9 +509,9 @@ typedef LinphoneCoreCbsNotifyReceivedCb LinphoneCoreNotifyReceivedCb;
  * Callback prototype for notifying the application about subscription received from the network.
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent received @notnil
- * @param subscribe_event @notnil
+ * @param subscribe_event The event as string @notnil
  * @param body the #LinphoneContent of the event @notnil
-**/
+ */
 typedef void (*LinphoneCoreCbsSubscribeReceivedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, const char *subscribe_event, const LinphoneContent *body);
 
 /**
@@ -516,7 +524,7 @@ typedef LinphoneCoreCbsSubscribeReceivedCb LinphoneCoreSubscribeReceivedCb;
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent @notnil
  * @param state the new #LinphoneSubscriptionState
-**/
+ */
 typedef void (*LinphoneCoreCbsSubscriptionStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphoneSubscriptionState state);
 
 /**
@@ -529,7 +537,7 @@ typedef LinphoneCoreCbsSubscriptionStateChangedCb LinphoneCoreSubscriptionStateC
  * @param core #LinphoneCore object @notnil
  * @param linphone_event the #LinphoneEvent @notnil
  * @param state the new #LinphonePublishState
-**/
+ */
 typedef void (*LinphoneCoreCbsPublishStateChangedCb)(LinphoneCore *core, LinphoneEvent *linphone_event, LinphonePublishState state);
 
 /**

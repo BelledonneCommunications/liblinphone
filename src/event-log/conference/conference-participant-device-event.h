@@ -29,14 +29,15 @@
 LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantDeviceEventPrivate;
+class ParticipantDevice;
 
 class LINPHONE_PUBLIC ConferenceParticipantDeviceEvent : public ConferenceParticipantEvent {
+	friend class Conference;
 public:
 	ConferenceParticipantDeviceEvent (
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress,
 		const IdentityAddress &deviceAddress,
 		const std::string &name = ""

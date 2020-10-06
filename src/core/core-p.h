@@ -133,6 +133,7 @@ public:
 							const std::list<IdentityAddress> &participants) const;
 
 	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;
+	IdentityAddress getIdentityAddressWithGruu(const IdentityAddress &identityAddress) const;
 	
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
@@ -157,9 +158,11 @@ public:
 	/* called by linphone_core_set_video_device() to update the video device in the running call or conference.*/
 	void updateVideoDevice();
 
+	void startPushReceivedBackgroundTask ();
+	void pushReceivedBackgroundTaskEnded ();
+
 private:
 	bool isInBackground = false;
-	bool isFriendListSubscriptionEnabled = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;
@@ -181,7 +184,9 @@ private:
 	AuthStack authStack;
 
 	std::list<std::shared_ptr<ChatMessage>> ephemeralMessages;
-	belle_sip_source_t *timer = nullptr;
+	belle_sip_source_t *ephemeralTimer = nullptr;
+	belle_sip_source_t *pushTimer = nullptr;
+	unsigned long pushReceivedBackgroundTaskId;
 
 	std::list<AudioDevice *> audioDevices;
 	L_DECLARE_PUBLIC(Core);

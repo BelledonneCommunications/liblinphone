@@ -22,7 +22,7 @@
 #include "linphone/api/c-content.h"
 #include "linphone/core.h"
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "conference/params/call-session-params-p.h"
@@ -474,6 +474,7 @@ void CallSessionPrivate::updated (bool isUpdate) {
 
 void CallSessionPrivate::updatedByRemote () {
 	L_Q();
+
 	setState(CallSession::State::UpdatedByRemote,"Call updated by remote");
 	if (deferUpdate || deferUpdateInternal) {
 		if (state == CallSession::State::UpdatedByRemote && !deferUpdateInternal){
@@ -666,7 +667,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 	string newSubject(subject);
 	if (newSubject.empty()) {
-		if (q->getParams()->getPrivate()->getInConference())
+		if (isInConference())
 			newSubject = "Conference";
 		else if (q->getParams()->getPrivate()->getInternalCallUpdate())
 			newSubject = "ICE processing concluded";
@@ -677,7 +678,14 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	}
 	if (destProxy && destProxy->op) {
 		/* Give a chance to update the contact address if connectivity has changed */
-		op->setContactAddress(destProxy->op->getContactAddress());
+		char * contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		q->updateContactAddress(contactAddress);
+
+		op->setContactAddress(contactAddress.getInternalAddress());
+		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
 	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());
@@ -732,14 +740,16 @@ void CallSessionPrivate::setBroken () {
 
 void CallSessionPrivate::setContactOp () {
 	L_Q();
-	SalAddress *salAddress = nullptr;
 	LinphoneAddress *contact = getFixedContact();
 	if (contact) {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
 			linphone_address_set_param(contact, it->first.c_str(), it->second.empty() ? nullptr : it->second.c_str());
-		salAddress = const_cast<SalAddress *>(L_GET_PRIVATE_FROM_C_OBJECT(contact)->getInternalAddress());
-		op->setContactAddress(salAddress);
+		char * contactAddressStr = linphone_address_as_string(contact);
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+		q->updateContactAddress (contactAddress);
+		op->setContactAddress(contactAddress.getInternalAddress());
 		linphone_address_unref(contact);
 	}
 }
@@ -981,6 +991,7 @@ void CallSession::accepting () {
 
 LinphoneStatus CallSession::acceptUpdate (const CallSessionParams *csp) {
 	L_D();
+lInfo() << "Call session " << __func__ << " Call is in state " << Utils::toString(d->state) << " csp " << csp;
 	if (d->state != CallSession::State::UpdatedByRemote) {
 		lError() << "CallSession::acceptUpdate(): invalid state " << Utils::toString(d->state) << " to call this method";
 		return -1;
@@ -1161,7 +1172,7 @@ LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	sal_error_info_set(&sei, SalReasonRedirect, "SIP", 0, nullptr, nullptr);
-	d->op->declineWithErrorInfo(&sei, redirectAddr.getPrivate()->getInternalAddress());
+	d->op->declineWithErrorInfo(&sei, redirectAddr.getInternalAddress());
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonMovedPermanently, 302, "Call redirected", nullptr);
 	d->nonOpError = true;
 	d->terminate();
@@ -1351,8 +1362,10 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 
 const Address& CallSession::getLocalAddress () const {
 	L_D();
-	return *L_GET_CPP_PTR_FROM_C_OBJECT((d->direction == LinphoneCallIncoming)
-		? linphone_call_log_get_to_address(d->log) : linphone_call_log_get_from_address(d->log));
+	return (d->direction == LinphoneCallIncoming)
+		? 
+			(linphone_call_log_get_to_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log)) : d->emptyAddress) :
+			(linphone_call_log_get_from_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_from_address(d->log)) : d->emptyAddress);
 }
 
 LinphoneCallLog * CallSession::getLog () const {
@@ -1393,6 +1406,9 @@ const string &CallSession::getRemoteContact () const {
 const Address *CallSession::getRemoteContactAddress () const {
 	L_D();
 	if (!d->op) {
+		return nullptr;
+	}
+	if (!d->op->getRemoteContactAddress()) {
 		return nullptr;
 	}
 	char *addrStr = sal_address_as_string(d->op->getRemoteContactAddress());
@@ -1479,6 +1495,18 @@ CallSessionParams * CallSession::getCurrentParams () const {
 const CallSessionParams * CallSession::getParams () const {
 	L_D();
 	return d->params;
+}
+
+void CallSession::updateContactAddress (Address & contactAddress) const {
+	L_D();
+
+	if (d->isInConference() && (!contactAddress.hasParam("isfocus"))) {
+		// If in conference and contact address doesn't have isfocus
+		contactAddress.setParam("isfocus");
+	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
+		// If not in conference and contact address has isfocus
+		contactAddress.removeParam("isfocus");
+	}
 }
 
 // -----------------------------------------------------------------------------

@@ -21,25 +21,25 @@
 #define _L_IDENTITY_ADDRESS_H_
 
 #include <ostream>
+#include <string>
 
-#include "object/clonable-object.h"
+#include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class Address;
-class IdentityAddressPrivate;
 
-class LINPHONE_PUBLIC IdentityAddress : public ClonableObject {
+class LINPHONE_PUBLIC IdentityAddress {
 public:
 	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
 	IdentityAddress (const IdentityAddress &other);
 	IdentityAddress ();
-	~IdentityAddress () = default;
+	virtual ~IdentityAddress () = default;
 
-	IdentityAddress *clone () const override {
+	virtual IdentityAddress *clone () const {
 		return new IdentityAddress(*this);
 	}
 
@@ -70,13 +70,49 @@ public:
 	virtual std::string asString () const;
 
 private:
-	L_DECLARE_PRIVATE(IdentityAddress);
+	std::string scheme;
+	std::string username;
+	std::string domain;
+	std::string gruu;
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {
 	os << "IdentityAddress(" << identityAddress.asString() << ")";
 	return os;
 }
+class LINPHONE_PUBLIC ConferenceAddress : public IdentityAddress {
+public:
+	ConferenceAddress (const std::string &address);
+	ConferenceAddress (const Address &address);
+	ConferenceAddress (const IdentityAddress &other);
+	ConferenceAddress (const ConferenceAddress &other);
+	ConferenceAddress() : IdentityAddress(){};
+	~ConferenceAddress () = default;
+	
+	ConferenceAddress *clone () const override {
+		return new ConferenceAddress(*this);
+	}
+
+	ConferenceAddress &operator= (const ConferenceAddress &other);
+	ConferenceAddress &operator= (const IdentityAddress &other){
+		mConfId = "";
+		return dynamic_cast<ConferenceAddress&>(IdentityAddress::operator=(other));
+	} ;
+
+	bool operator== (const ConferenceAddress &other) const;
+	bool operator!= (const ConferenceAddress &other) const;
+
+	bool operator< (const ConferenceAddress &other) const;
+
+	virtual std::string asString () const override;
+
+	bool hasConfId () const;
+	const std::string &getConfId () const;
+	void setConfId (const std::string &confId);
+
+private:
+	std::string mConfId;
+};
 
 LINPHONE_END_NAMESPACE
 

@@ -22,9 +22,11 @@
 
 #include <list>
 #include <functional>
+#include <unordered_map>
 
 #include "object/object.h"
 
+#include "conference/conference-id.h"
 #include "linphone/types.h"
 #include "call/audio-device/audio-device.h"
 
@@ -33,6 +35,10 @@
 L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
+
+namespace LinphoneTest {
+	class LocalConferenceTester;
+}
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -46,6 +52,12 @@ class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
+class EventLog;
+
+namespace MediaConference {
+	class RemoteConference;
+	class Conference;
+}
 
 class LINPHONE_PUBLIC Core : public Object {
 	friend class BasicToClientGroupChatRoom;
@@ -60,9 +72,8 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ClientGroupChatRoomPrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
 	friend class Imdn;
-	friend class LocalConferenceEventHandlerPrivate;
+	friend class LocalConferenceEventHandler;
 	friend class MainDb;
-	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
 	friend class MediaSessionPrivate;
 	friend class RealTimeTextChatRoomPrivate;
@@ -72,7 +83,11 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class ServerGroupChatRoomPrivate;
 	friend class CallSessionPrivate;
 	friend class ToneManager;
+	friend class EventLog;
 
+	friend class MediaConference::RemoteConference;
+
+	friend class LinphoneTest::LocalConferenceTester;
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(Core);
 
@@ -80,6 +95,8 @@ public:
 
 	// Return a new Core instance. Entry point of Linphone.
 	static std::shared_ptr<Core> create (LinphoneCore *cCore);
+
+	static std::string getConferenceFactoryUri(const std::shared_ptr<Core> &core, const IdentityAddress &localAddress);
 
 	// ---------------------------------------------------------------------------
 	// Application lifecycle.
@@ -147,6 +164,16 @@ public:
 	static void deleteChatRoom (const std::shared_ptr<const AbstractChatRoom> &chatRoom);
 
 	// ---------------------------------------------------------------------------
+	// Audio Video Conference.
+	// ---------------------------------------------------------------------------
+
+	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
+
+	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
+
+	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
+
+	// ---------------------------------------------------------------------------
 	// Paths.
 	// ---------------------------------------------------------------------------
 
@@ -208,7 +235,7 @@ public:
 	// Misc.
 	// ---------------------------------------------------------------------------
 
-	void pushNotificationReceived () const;
+	void pushNotificationReceived ();
 	int getUnreadChatMessageCount () const;
 	int getUnreadChatMessageCount (const IdentityAddress &localAddress) const;
 	int getUnreadChatMessageCountFromActiveLocals () const;
@@ -231,6 +258,8 @@ public:
 	void destroyTimer(belle_sip_source_t *timer);
 private:
 	Core ();
+
+	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

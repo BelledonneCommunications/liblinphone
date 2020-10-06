@@ -36,7 +36,8 @@ public:
 	CapabilitiesMask getCapabilities () const override;
 
 	std::shared_ptr<ChatMessage> createChatMessage () override;
-	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;
+	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;	// Deprecated. Text is System Locale
+	std::shared_ptr<ChatMessage> createChatMessageFromUtf8 (const std::string &text) override;
 
 	static void migrate (
 		const std::shared_ptr<ClientGroupChatRoom> &clientGroupChatRoom,

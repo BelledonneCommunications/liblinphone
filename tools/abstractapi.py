@@ -377,6 +377,11 @@ class Method(DocumentableObject):
 	def add_arguments(self, arg):
 		self.args.append(arg)
 		arg.parent = self
+
+		if arg.maybenil and arg.notnil:
+			raise Exception("Method " + self.name.to_c() + " argument " + arg.name.to_c() + " pointer can't be both maybenil and notnil !")
+		elif arg.type.isref and not (arg.maybenil or arg.notnil):
+			raise Exception("Method " + self.name.to_c() + " argument " + arg.name.to_c() + " pointer isn't maybenil nor notnil !")
 	
 	@property
 	def returnType(self):
@@ -386,6 +391,11 @@ class Method(DocumentableObject):
 	def returnType(self, returnType):
 		self._returnType = returnType
 		returnType.parent = self
+
+		if self.maybenil and self.notnil:
+			raise Exception("Method " + self.name.to_c() + " returned pointer can't be both maybenil and notnil !")
+		elif returnType.isref and not (self.maybenil or self.notnil):
+			raise Exception("Method " + self.name.to_c() + " returned pointer isn't maybenil nor notnil !")
 
 	@property
 	def returnAllocatedObject(self):
@@ -523,6 +533,7 @@ class CParser(object):
 			'LinphoneCallDir'                            : 'LinphoneCall',
 			'LinphoneCallState'                          : 'LinphoneCall',
 			'LinphoneCallStatus'                         : 'LinphoneCall',
+			'LinphoneConferenceState'                    : 'LinphoneConference',
 			'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
 			'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
 			'LinphoneChatMessageState'                   : 'LinphoneChatMessage',
@@ -854,7 +865,7 @@ class CParser(object):
 		except KeyError:
 			raise ParsingError('invalid event name \'{0}\''.format(eventName))
 		
-		method = Method(methodName)
+		method = Method(methodName, maybenil=event.returnArgument.maybenil, notnil=event.returnArgument.notnil)
 		method.returnType = self.parse_type(event.returnArgument)
 		for arg in event.arguments:
 			argName = metaname.ArgName()

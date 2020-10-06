@@ -240,7 +240,7 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 				if (content) {
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
 					BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "somexml");
-					BC_ASSERT_STRING_EQUAL(linphone_content_get_string_buffer(content), info_content);
+					BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content), info_content);
 				}
 				bctbx_list_free_with_data(parts, (void (*)(void *)) linphone_content_unref);
 			}
@@ -255,8 +255,8 @@ void simple_call_base(bool_t enable_multicast_recv_side, bool_t disable_soundcar
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreLastCallEnded, 1, int, "%d");
 
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 
 	if (disable_soundcard) {
 		ms_snd_card_manager_bypass_soundcard_detection(FALSE);
@@ -296,8 +296,8 @@ static void  simple_call_with_no_sip_transport(void){
 	/* restore initial transports for Marie's core in order it be able to unregister */
 	linphone_core_set_sip_transports(marie->lc, &oldTr);
 
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_call_with_udp(void) {
@@ -366,8 +366,8 @@ static void automatic_call_termination(void) {
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallEnd, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
 end:
-	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_timed_out_bye(void) {
@@ -2795,8 +2795,8 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 		ms_warning ("not tested because %s not available", linphone_media_encryption_to_string(mode));
 	}
 end:
-	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
 }
 
 void call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enable_video,bool_t enable_relay,LinphoneFirewallPolicy policy,bool_t enable_tunnel, const char *marie_rc, const char *pauline_rc){
@@ -2853,8 +2853,8 @@ static void early_media_call_with_ringing_base(bool_t network_change){
 	marie_call = linphone_core_invite_address(marie->lc, pauline->identity);
 	marie_call_log = linphone_call_get_call_log(marie_call);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingbackTone, 1, int, "%d");
 
@@ -2862,8 +2862,8 @@ static void early_media_call_with_ringing_base(bool_t network_change){
 		/* send a 183 to initiate the early media */
 		linphone_call_accept_early_media(linphone_core_get_current_call(pauline->lc));
 
-		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,2000) );
-		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,2000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,5000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,5000) );
 		BC_ASSERT_TRUE(linphone_call_get_all_muted(marie_call));
 
 		bool_t ringWithEarlyMedia = linphone_core_get_ring_during_incoming_early_media(pauline->lc);
@@ -3858,8 +3858,8 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 	linphone_call_params_unref(params);
 	marie_call_log = linphone_call_get_call_log(marie_call);
 
-	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,3000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingRinging,1,5000));
 
 	if (linphone_core_is_incoming_invite_pending(pauline->lc)) {
 		LinphoneCall* pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -3867,8 +3867,8 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 		/* send a 183 to initiate the early media */
 		linphone_call_accept_early_media(pauline_call);
 
-		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,2000) );
-		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,2000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1,5000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1,5000) );
 
 		liblinphone_tester_check_rtcp(marie, pauline);
 
@@ -3878,7 +3878,7 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, 1,5000));
 		connected_time=ms_get_cur_time_ms();
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1,3000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
 
 		BC_ASSERT_PTR_EQUAL(marie_call, linphone_core_get_current_call(marie->lc));
 
@@ -5227,7 +5227,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Simple call with UDP", simple_call_with_udp),
 	TEST_NO_TAG("Simple call without soundcard", simple_call_without_soundcard),
 	TEST_NO_TAG("Simple call with multipart INVITE body", simple_call_with_multipart_invite_body),
-	TEST_ONE_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination, "LeaksMemory"),
+	TEST_NO_TAG("Call terminated automatically by linphone_core_destroy", automatic_call_termination),
 	TEST_NO_TAG("Call with http proxy", call_with_http_proxy),
 	TEST_NO_TAG("Call with timed-out bye", call_with_timed_out_bye),
 	TEST_NO_TAG("Direct call over IPv6", direct_call_over_ipv6),
@@ -5238,7 +5238,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
 	TEST_NO_TAG("Outbound call using different proxies", call_outbound_using_different_proxies),
 	TEST_NO_TAG("Audio call recording", audio_call_recording_test),
-#if 0 /* not yet activated because not implemented */
+#if 0 // not yet activated because not implemented
 	TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),
 #endif
 	TEST_NO_TAG("Multiple answers to a call with media relay", multiple_answers_call_with_media_relay),
@@ -5315,7 +5315,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
-	TEST_ONE_TAG("Async core stop", async_core_stop_after_call, "LeaksMemory")
+	TEST_NO_TAG("Async core stop", async_core_stop_after_call)
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,

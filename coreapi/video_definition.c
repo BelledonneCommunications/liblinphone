@@ -123,5 +123,5 @@ bool_t linphone_video_definition_strict_equals(const LinphoneVideoDefinition *vd
 }
 
 bool_t linphone_video_definition_is_undefined(const LinphoneVideoDefinition *vdef) {
-	return (vdef->width == 0) || (vdef->height == 0);
+	return vdef == NULL || (vdef->width == 0) || (vdef->height == 0);
 }

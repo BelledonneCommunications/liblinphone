@@ -41,8 +41,6 @@ public:
 
 	~ChatRoom ();
 
-	const ConferenceId &getConferenceId () const override;
-
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
 
@@ -50,6 +48,8 @@ public:
 	time_t getLastUpdateTime () const override;
 
 	State getState () const override;
+	void setState (ConferenceInterface::State newState) override;
+
 	SecurityLevel getSecurityLevel () const override;
 
 	std::list<std::shared_ptr<EventLog>> getMessageHistory (int nLast) const override;
@@ -74,6 +74,7 @@ public:
 
 	std::shared_ptr<ChatMessage> createChatMessage () override;
 	std::shared_ptr<ChatMessage> createChatMessage (const std::string &text) override;
+	std::shared_ptr<ChatMessage> createChatMessageFromUtf8 (const std::string &text) override;
 
 	std::shared_ptr<ChatMessage> createFileTransferMessage (FileContent *content) override;
 	std::shared_ptr<ChatMessage> createForwardMessage (const std::shared_ptr<ChatMessage> &msg) override;
@@ -93,8 +94,23 @@ public:
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
+	void addListener(std::shared_ptr<ConferenceListenerInterface> listener) override;
+
+	virtual std::shared_ptr<Conference> getConference () const override {return conference;};
+
+	static std::list<IdentityAddress> parseResourceLists (const Content &content);
+
+	bool addParticipants (const std::list<IdentityAddress> &addresses) override;
+	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
+
+	bool canHandleParticipants () const override {
+		return (getConference() == nullptr);
+	}
+
 protected:
-	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
+	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const std::shared_ptr<Conference> &conf = nullptr);
+
+	std::shared_ptr<Conference> conference = nullptr;
 
 private:
 	L_DECLARE_PRIVATE(ChatRoom);

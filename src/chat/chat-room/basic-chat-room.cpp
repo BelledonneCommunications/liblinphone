@@ -40,11 +40,14 @@ BasicChatRoom::BasicChatRoom (
 	const std::shared_ptr<Core> &core,
 	const ConferenceId &conferenceId,
 	const std::shared_ptr<ChatRoomParams> &params
-) : ChatRoom(p, core, conferenceId, params) {
+) : ChatRoom(p, core, params) {
 	L_D();
 
-	d->me = make_shared<Participant>(nullptr, getLocalAddress());
-	d->participants.push_back(make_shared<Participant>(nullptr, getPeerAddress()));
+	d->me = Participant::create(nullptr, conferenceId.getLocalAddress());
+	d->participants.push_back(Participant::create(nullptr, conferenceId.getPeerAddress()));
+
+	this->conferenceId = conferenceId;
+
 }
 
 void BasicChatRoom::allowCpim (bool value) {
@@ -75,21 +78,28 @@ bool BasicChatRoom::hasBeenLeft () const {
 	return false;
 }
 
-bool BasicChatRoom::canHandleParticipants () const {
-	return false;
-}
-
-const IdentityAddress &BasicChatRoom::getConferenceAddress () const {
+const ConferenceAddress BasicChatRoom::getConferenceAddress () const {
 	lError() << "a BasicChatRoom does not have a conference address";
-	return Utils::getEmptyConstRefObject<IdentityAddress>();
+	return Utils::getEmptyConstRefObject<ConferenceAddress>();
 }
 
-bool BasicChatRoom::addParticipant (const IdentityAddress &, const CallSessionParams *, bool) {
+bool BasicChatRoom::addParticipant (
+	std::shared_ptr<Call> call
+) {
 	lError() << "addParticipant() is not allowed on a BasicChatRoom";
 	return false;
 }
 
-bool BasicChatRoom::addParticipants (const list<IdentityAddress> &, const CallSessionParams *, bool) {
+bool BasicChatRoom::addParticipant (
+	const IdentityAddress &participantAddress
+) {
+	lError() << "addParticipant() is not allowed on a BasicChatRoom";
+	return false;
+}
+
+bool BasicChatRoom::addParticipants (
+	const list<IdentityAddress> &addresses
+) {
 	lError() << "addParticipants() is not allowed on a BasicChatRoom";
 	return false;
 }
@@ -141,8 +151,32 @@ void BasicChatRoom::join () {
 	lError() << "join() is not allowed on a BasicChatRoom";
 }
 
+void BasicChatRoom::join (const IdentityAddress &participantAddress) {
+	lError() << "join() is not allowed on a BasicChatRoom";
+}
+
 void BasicChatRoom::leave () {
 	lError() << "leave() is not allowed on a BasicChatRoom";
 }
 
+const ConferenceId &BasicChatRoom::getConferenceId () const {
+	return conferenceId;
+}
+
+bool BasicChatRoom::update(const ConferenceParamsInterface &newParameters) {
+	return ChatRoom::update(newParameters);
+}
+
+void BasicChatRoom::setState (ConferenceInterface::State newState) {
+	L_D();
+
+	if (getState() != newState) {
+		state = newState;
+		d->notifyStateChanged();
+	}
+}
+
+ConferenceInterface::State BasicChatRoom::getState () const {
+	return state;
+}
 LINPHONE_END_NAMESPACE

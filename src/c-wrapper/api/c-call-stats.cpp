@@ -217,24 +217,25 @@ void linphone_call_stats_update (LinphoneCallStats *stats, MediaStream *stream) 
 void linphone_call_stats_fill (LinphoneCallStats *stats, MediaStream *ms, OrtpEvent *ev) {
 	OrtpEventType evt=ortp_event_get_type(ev);
 	OrtpEventData *evd=ortp_event_get_data(ev);
-
-	if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED) {
-		stats->round_trip_delay = rtp_session_get_round_trip_propagation(ms->sessions.rtp_session);
-		if(stats->received_rtcp != NULL)
-			freemsg(stats->received_rtcp);
-		stats->received_rtcp = evd->packet;
-		stats->rtcp_received_via_mux = evd->info.socket_type == OrtpRTPSocket;
-		evd->packet = NULL;
-		stats->updated = LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE;
-		linphone_call_stats_update(stats,ms);
-	} else if (evt == ORTP_EVENT_RTCP_PACKET_EMITTED) {
-		memcpy(&stats->jitter_stats, rtp_session_get_jitter_stats(ms->sessions.rtp_session), sizeof(jitter_stats_t));
-		if (stats->sent_rtcp != NULL)
-			freemsg(stats->sent_rtcp);
-		stats->sent_rtcp = evd->packet;
-		evd->packet = NULL;
-		stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
-		linphone_call_stats_update(stats,ms);
+	if(ms->sessions.rtp_session){
+		if (evt == ORTP_EVENT_RTCP_PACKET_RECEIVED) {
+			stats->round_trip_delay = rtp_session_get_round_trip_propagation(ms->sessions.rtp_session);
+			if(stats->received_rtcp != NULL)
+				freemsg(stats->received_rtcp);
+			stats->received_rtcp = evd->packet;
+			stats->rtcp_received_via_mux = evd->info.socket_type == OrtpRTPSocket;
+			evd->packet = NULL;
+			stats->updated = LINPHONE_CALL_STATS_RECEIVED_RTCP_UPDATE;
+			linphone_call_stats_update(stats,ms);
+		} else if (evt == ORTP_EVENT_RTCP_PACKET_EMITTED) {
+			memcpy(&stats->jitter_stats, rtp_session_get_jitter_stats(ms->sessions.rtp_session), sizeof(jitter_stats_t));
+			if (stats->sent_rtcp != NULL)
+				freemsg(stats->sent_rtcp);
+			stats->sent_rtcp = evd->packet;
+			evd->packet = NULL;
+			stats->updated = LINPHONE_CALL_STATS_SENT_RTCP_UPDATE;
+			linphone_call_stats_update(stats,ms);
+		}
 	}
 }
 

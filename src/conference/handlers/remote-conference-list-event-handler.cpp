@@ -62,11 +62,7 @@ RemoteConferenceListEventHandler::~RemoteConferenceListEventHandler () {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceListEventHandler::subscribe () {
-	if (lev) {
-		linphone_event_terminate(lev);
-		linphone_event_unref(lev);
-		lev = nullptr;
-	}
+	unsubscribe();
 
 	if (handlers.empty())
 		return;
@@ -98,7 +94,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 	Xsd::XmlSchema::NamespaceInfomap map;
 	stringstream xmlBody;
 	serializeResourceLists(xmlBody, rl, map);
-	content.setBody(xmlBody.str());
+	content.setBodyFromUtf8(xmlBody.str());
 
 	LinphoneCore *lc = getCore()->getCCore();
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(lc);
@@ -114,6 +110,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 	LinphoneAddress *rlsAddr = linphone_address_new(factoryUri);
 
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
+	// FIXME: Take a ref of the event because when linphone_event_release is called upon termination of the subscription. This function unrefs the event causing a dangling pointer to be left to the event handler
 	linphone_event_ref(lev);
 	char *from = linphone_address_as_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
 	lev->op->setFrom(from);
@@ -127,7 +124,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 		content.setContentEncoding("deflate");
 		linphone_event_add_custom_header(lev, "Accept-Encoding", "deflate");
 	}
-	linphone_event_set_user_data(lev, this);
+	belle_sip_object_data_set(BELLE_SIP_OBJECT(lev), "list-event-handler", this, NULL);
 	LinphoneContent *cContent = L_GET_C_BACK_PTR(&content);
 	linphone_event_send_subscribe(lev, cContent);
 }
@@ -140,9 +137,13 @@ void RemoteConferenceListEventHandler::unsubscribe () {
 	}
 }
 
+void RemoteConferenceListEventHandler::invalidateSubscription () {
+	lev = nullptr;
+}
+
 void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyContent) {
 	char *from = linphone_address_as_string(linphone_event_get_from(lev));
-	const IdentityAddress local(from);
+	const ConferenceAddress local(from);
 
 	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
 		// Simple notify received directly from a chat-room
@@ -159,7 +160,7 @@ void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyCont
 			return;
 		}
 
-		IdentityAddress entityAddress(confInfo->getEntity().c_str());
+		ConferenceAddress entityAddress(confInfo->getEntity().c_str());
 		ConferenceId id(entityAddress, local);
 		RemoteConferenceEventHandler *handler = findHandler(id);
 		if (!handler)
@@ -216,25 +217,54 @@ void RemoteConferenceListEventHandler::addHandler (RemoteConferenceEventHandler 
 		lWarning() << "Trying to insert null handler in the remote conference handler list";
 		return;
 	}
-	if (!handler->getConferenceId().isValid()){
+
+	const ConferenceId & conferenceId = handler->getConferenceId();
+
+	if (!conferenceId.isValid()){
 		lError() << "RemoteConferenceListEventHandler::addHandler invalid handler.";
 		return;
 	}
-	
-	if(findHandler(handler->getConferenceId())) {
-		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << handler->getConferenceId();
+
+	if (!isHandlerInSameDomainAsCore(conferenceId)){
+		lError() << "RemoteConferenceListEventHandler::addHandler conference address is in a difference domain than conference factory.";
 		return;
 	}
-	handlers[handler->getConferenceId()] = handler;
+
+	if(findHandler(conferenceId)) {
+		lWarning() << "Trying to insert an already present handler in the remote conference handler list: " << conferenceId;
+		return;
+	}
+	handlers[conferenceId] = handler;
+}
+
+bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const ConferenceId & conferenceId)const {
+	// Ensure that conference and conference factory are in the same domain
+	const ConferenceAddress & localAddress = conferenceId.getLocalAddress();
+	const ConferenceAddress & peerAddress = conferenceId.getPeerAddress();
+	IdentityAddress conferenceFactoryUri = IdentityAddress(Core::getConferenceFactoryUri(getCore(), localAddress));
+
+	if (peerAddress.getDomain() != conferenceFactoryUri.getDomain()) {
+		lWarning() << "Peer address " << peerAddress.asString() << " is not in the same domain as the conference factory URI " << conferenceFactoryUri.asString() << " hence not adding to the list of subscribes";
+		return false;
+	}
+
+	return true;
 }
 
 void RemoteConferenceListEventHandler::removeHandler (RemoteConferenceEventHandler *handler) {
-	if (!handler->getConferenceId().isValid()){
+	const ConferenceId & conferenceId = handler->getConferenceId();
+	if (!conferenceId.isValid()){
 		lError() << "RemoteConferenceListEventHandler::removeHandler() invalid handler.";
 		return;
 	}
+
+	if (!isHandlerInSameDomainAsCore(conferenceId)){
+		lError() << "RemoteConferenceListEventHandler::removeHandler() conference address is in a difference domain than conference factory.";
+		return;
+	}
+
 	if (handler){
-		auto it = handlers.find(handler->getConferenceId());
+		auto it = handlers.find(conferenceId);
 		if (it != handlers.end() && handler == (*it).second){
 			handlers.erase(it);
 			lInfo() << "Handler removed.";

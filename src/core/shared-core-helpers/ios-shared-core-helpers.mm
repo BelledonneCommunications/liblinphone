@@ -331,7 +331,7 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 		NSString *callId = [NSString stringWithUTF8String:linphone_chat_message_get_call_id(msg)];
 
 		NSNumber *isText = [NSNumber numberWithBool:((BOOL) linphone_chat_message_is_text(msg))];
-		const char *cTextContent = linphone_chat_message_get_text_content(msg);
+		const char *cTextContent = linphone_chat_message_get_utf8_text(msg);
 		NSString *textContent = [NSString stringWithUTF8String: cTextContent ? cTextContent : ""];
 		NSString *subject;
 		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(linphone_chat_message_get_chat_room(msg));

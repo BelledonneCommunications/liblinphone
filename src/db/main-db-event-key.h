@@ -26,7 +26,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+class EventLog;
+
 class MainDbEventKey : public MainDbKey {
+	friend class EventLog;
+	friend class EventLogPrivate;
+
 public:
 	MainDbEventKey ();
 	MainDbEventKey (const std::shared_ptr<Core> &core, long long storageId);
@@ -38,6 +43,7 @@ public:
 
 private:
 	L_DECLARE_PRIVATE(MainDbKey);
+	void resetStorageId();
 };
 
 LINPHONE_END_NAMESPACE

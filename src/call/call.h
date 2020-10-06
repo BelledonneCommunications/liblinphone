@@ -30,6 +30,7 @@
 
 #include "object/object-p.h"
 
+//#include "call/audio-device/audio-device.h"
 #include "conference/session/call-session-listener.h"
 #include "utils/background-task.h"
 
@@ -46,7 +47,19 @@ class MediaSessionPrivate;
 class RealTimeTextChatRoom;
 class ConferencePrivate;
 
-class Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
+namespace MediaConference {
+	class Conference;
+}
+
+class LINPHONE_PUBLIC Call : public bellesip::HybridObject<LinphoneCall, Call>, public CoreAccessor, public CallSessionListener {
+	friend class CallSessionPrivate;
+	friend class ChatMessage;
+	friend class ChatMessagePrivate;
+	friend class CorePrivate;
+	friend class MediaSessionPrivate;
+	friend class Stream;
+
+	friend class MediaConference::Conference;
 public:
 	Call (
 		std::shared_ptr<Core> core,
@@ -87,6 +100,7 @@ public:
 	LinphoneStatus deferUpdate ();
 	bool hasTransferPending () const;
 	void oglRender () const;
+	LinphoneStatus pauseFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus redirect (const std::string &redirectUri);
 	LinphoneStatus resume ();
@@ -102,6 +116,7 @@ public:
 	LinphoneStatus transfer (const std::shared_ptr<Call> &dest);
 	LinphoneStatus transfer (const std::string &dest);
 	LinphoneStatus update (const MediaSessionParams *msp = nullptr);
+	LinphoneStatus updateFromConference (const MediaSessionParams *msp = nullptr);
 	void zoomVideo (float zoomFactor, float *cx, float *cy);
 	void zoomVideo (float zoomFactor, float cx, float cy);
 
@@ -238,6 +253,7 @@ public:
 	void onCameraNotWorking (const std::shared_ptr<CallSession> &session, const char *camera_name) override;
 	bool areSoundResourcesAvailable (const std::shared_ptr<CallSession> &session) override;
 	bool isPlayingRingbackTone (const std::shared_ptr<CallSession> &session) override;
+	LinphoneConference *getCallSessionConference (const std::shared_ptr<CallSession> &session) override;
 	void onRealTimeTextCharacterReceived (const std::shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *character) override;
 	void onTmmbrReceived(const std::shared_ptr<CallSession> &session, int streamIndex, int tmmbr) override;
 	void onSnapshotTaken(const std::shared_ptr<CallSession> &session, const char *file_path) override;
@@ -245,6 +261,7 @@ public:
 
 	LinphoneConference *getConference () const;
 	void setConference (LinphoneConference *ref);
+	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bctbx_list_t *getCallbacksList () const;
@@ -265,11 +282,13 @@ private:
 	bool mPlayingRingbackTone = false;
 
 	BackgroundTask mBgTask;
-	
+
 	bctbx_list_t *mCallbacks = nullptr;
 	LinphoneCallCbs *mCurrentCbs = nullptr;
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
+
+	void removeFromConference(const Address & remoteContactAddress);
 	
 	void *mUserData = nullptr;
 };

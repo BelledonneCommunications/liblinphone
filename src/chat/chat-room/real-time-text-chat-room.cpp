@@ -76,8 +76,8 @@ void RealTimeTextChatRoomPrivate::realtimeTextReceived (uint32_t character, cons
 		} else {
 			char *value = Utils::utf8ToChar(character);
 			auto content = pendingMessage->getContents().front();
-			content->setBody(content->getBodyAsString() + string(value));
-			lDebug() << "Received RTT character: " << value << " (" << character << "), pending text is " << content->getBodyAsString();
+			content->setBodyFromUtf8(content->getBodyAsUtf8String() + string(value));
+			lDebug() << "Received RTT character: " << value << " (" << character << "), pending text is " << content->getBodyAsUtf8String();
 			delete[] value;
 		}
 	}
@@ -90,19 +90,17 @@ void RealTimeTextChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage>
 		uint32_t newLine = 0x2028;
 		chatMessage->putCharacter(newLine);
 	}
-
-	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-	shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-		q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
-	);
-	if (!event)
-		event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
-	LinphoneChatRoom *cr = getCChatRoom();
-	_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
 }
 
 void RealTimeTextChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
+	L_Q();
+
+	LinphoneChatRoom *cr = getCChatRoom();
+	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+	shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, chatMessage->getStorageId());
 	
+	_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(eventLog));
+	linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
 }
 
 // =============================================================================

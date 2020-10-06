@@ -109,7 +109,6 @@ endif()
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-	address/address-p.h
 	address/address.h
 	address/identity-address.h
 	address/identity-address-parser.h
@@ -157,9 +156,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-id.h
 	conference/conference-listener.h
-	conference/conference-p.h
+	conference/notify-conference-listener.h
 	conference/conference.h
-	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -168,9 +166,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/participant-device.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
-	conference/participant-p.h
 	conference/participant.h
-	conference/remote-conference-p.h
 	conference/remote-conference.h
 	conference/session/call-session-listener.h
 	conference/session/call-session-p.h
@@ -203,7 +199,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	db/abstract/abstract-db-p.h
 	db/abstract/abstract-db.h
 	db/internal/statements.h
-	db/main-db-chat-message-key.h
 	db/main-db-event-key.h
 	db/main-db-key-p.h
 	db/main-db-key.h
@@ -263,10 +258,10 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
-		conference/handlers/local-conference-event-handler-p.h
+		conference/handlers/local-audio-video-conference-event-handler.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
-		conference/handlers/remote-conference-event-handler-p.h
+		conference/handlers/remote-conference-event-handler-base.h
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h
@@ -303,6 +298,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
 	c-wrapper/api/c-content.cpp
+	c-wrapper/api/c-conference-cbs.cpp
+	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
@@ -342,6 +339,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
+	conference/conference-interface.cpp
+	conference/notify-conference-listener.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
@@ -378,7 +377,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	core/shared-core-helpers/shared-core-helpers.cpp
 	db/abstract/abstract-db.cpp
 	db/internal/statements.cpp
-	db/main-db-chat-message-key.cpp
 	db/main-db-event-key.cpp
 	db/main-db-key.cpp
 	db/main-db.cpp
@@ -437,6 +435,7 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.cpp
 		chat/chat-room/server-group-chat-room.cpp
 		conference/handlers/local-conference-event-handler.cpp
+		conference/handlers/local-audio-video-conference-event-handler.cpp
 		conference/handlers/local-conference-list-event-handler.cpp
 		conference/handlers/remote-conference-event-handler.cpp
 		conference/handlers/remote-conference-list-event-handler.cpp
@@ -498,10 +497,6 @@ endif()
 bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(LINPHONE_OBJC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-	set_property(SOURCE db/main-db.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-stringop-overflow")
-endif()
-
 if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1.0")
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.0.0"))
 	set_property(SOURCE
@@ -552,9 +547,9 @@ if(ENABLE_SHARED)
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
 	) # Keep it relative to current dir to allow CMakeList inclusion
-	
+
 	set_source_files_properties(${SWIFT_MODULE_FILES} PROPERTIES MACOSX_PACKAGE_LOCATION Modules)
-	
+
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
 		$<TARGET_OBJECTS:linphone-coreapi>
@@ -634,7 +629,7 @@ if(ENABLE_SHARED)
 		FRAMEWORK DESTINATION Frameworks
 		PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
 	)
-	
+
 endif()
 
 if(ICONV_FOUND)

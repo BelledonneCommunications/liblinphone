@@ -23,6 +23,8 @@
 #include "call/call.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-id.h"
+#include "conference/participant.h"
+#include "conference/participant-device.h"
 #include "event-log/events.h"
 
 // =============================================================================

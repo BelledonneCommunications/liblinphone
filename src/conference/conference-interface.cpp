@@ -17,10 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "core/core-p.h"
-#include "main-db-chat-message-key.h"
-#include "main-db-key-p.h"
-#include "main-db-p.h"
+#include "conference/conference-interface.h"
 
 // =============================================================================
 
@@ -28,17 +25,19 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-// -----------------------------------------------------------------------------
-
-MainDbChatMessageKey::MainDbChatMessageKey () : MainDbKey() {};
-
-MainDbChatMessageKey::MainDbChatMessageKey (const shared_ptr<Core> &core, long long storageId) : MainDbKey(core, storageId) {}
-
-MainDbChatMessageKey::~MainDbChatMessageKey () {
-	L_D();
-
-	if (isValid())
-		d->core.lock()->getPrivate()->mainDb->getPrivate()->storageIdToChatMessage.erase(d->storageId);
+std::ostream& operator<<(std::ostream& lhs, ConferenceInterface::State e) {
+	switch(e) {
+		case ConferenceInterface::State::None: lhs << "None"; break;
+		case ConferenceInterface::State::Instantiated: lhs << "Instantiated"; break;
+		case ConferenceInterface::State::CreationPending: lhs << "CreationPending"; break;
+		case ConferenceInterface::State::Created: lhs << "Created"; break;
+		case ConferenceInterface::State::CreationFailed: lhs << "CreationFailed"; break;
+		case ConferenceInterface::State::TerminationPending: lhs << "TerminationPending"; break;
+		case ConferenceInterface::State::Terminated: lhs << "Terminated"; break;
+		case ConferenceInterface::State::TerminationFailed: lhs << "TerminationFailed"; break;
+		case ConferenceInterface::State::Deleted: lhs << "Deleted"; break;
+	}
+	return lhs;
 }
 
 LINPHONE_END_NAMESPACE

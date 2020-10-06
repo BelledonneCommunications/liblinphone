@@ -21,7 +21,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include "address/address-p.h"
+#include "address/address.h"
 #include "core/paths/paths.h"
 #include "bctoolbox/vfs_encrypted.hh"
 #include "bctoolbox/crypto.h"
@@ -173,7 +173,7 @@ LinphoneFactory *linphone_factory_get(void) {
 }
 
 void linphone_factory_clean(void){
-	LinphonePrivate::AddressPrivate::clearSipAddressesCache();
+	LinphonePrivate::Address::clearSipAddressesCache();
 	if (_factory){
 		belle_sip_object_unref(_factory);
 		_factory = NULL;
@@ -325,6 +325,10 @@ LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factor
 	return _linphone_call_cbs_new();
 }
 
+LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
+	return _linphone_conference_cbs_new();
+}
+
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
 	return _linphone_chat_room_cbs_new();
 }
@@ -346,7 +350,7 @@ LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(con
 	unsigned int width = 0;
 	unsigned int height = 0;
 	LinphoneVideoDefinition *vdef = linphone_factory_find_supported_video_definition_by_name(factory, name);
-	if (vdef != NULL) return vdef;
+	if (vdef != NULL) return linphone_video_definition_ref(vdef);
 	if (sscanf(name, "%ux%u", &width, &height) == 2) {
 		return linphone_video_definition_new(width, height, NULL);
 	}

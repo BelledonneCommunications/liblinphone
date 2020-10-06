@@ -28,14 +28,18 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ConferenceParticipantEventPrivate;
 class IdentityAddress;
+class Conference;
+class Participant;
 
 class LINPHONE_PUBLIC ConferenceParticipantEvent : public ConferenceNotifiedEvent {
+	friend class RemoteConferenceEventHandler;
+	friend class Conference;
+
 public:
 	ConferenceParticipantEvent (
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);
 
@@ -47,7 +51,6 @@ protected:
 		Type type,
 		time_t creationTime,
 		const ConferenceId &conferenceId,
-		unsigned int notifyId,
 		const IdentityAddress &participantAddress
 	);
 

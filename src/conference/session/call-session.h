@@ -44,6 +44,7 @@ class LINPHONE_PUBLIC CallSession : public Object, public CoreAccessor {
 	friend class CorePrivate;
 	friend class ServerGroupChatRoom;
 	friend class ServerGroupChatRoomPrivate;
+	friend class ParticipantDevice;
 
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(CallSession);
@@ -128,6 +129,8 @@ public:
 	CallSession::State getTransferState () const;
 	std::shared_ptr<CallSession> getTransferTarget () const;
 	const char *getToHeader (const std::string &name) const;
+
+	void updateContactAddress (Address & contactAddress) const;
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();

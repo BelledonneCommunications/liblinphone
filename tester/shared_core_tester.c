@@ -116,7 +116,7 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 	const char *content_type = "text/plain";
 	LinphoneChatRoom *room = linphone_core_get_chat_room(sender->lc, receiver->identity);
 
-	LinphoneChatMessage *msg = linphone_chat_room_create_message(room, text);
+	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
@@ -373,7 +373,7 @@ LinphoneChatRoom *shared_core_create_chat_room(LinphoneCoreManager *sender, Linp
 	linphone_chat_room_params_unref(params);
 	BC_ASSERT_PTR_NOT_NULL(senderCr);
 
-	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneChatRoomStateCreated, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 	LinphoneAddress *senderAddr =
 		linphone_address_new(linphone_proxy_config_get_identity(linphone_core_get_default_proxy_config(sender->lc)));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(linphone_chat_room_get_local_address(senderCr), senderAddr));
@@ -406,8 +406,8 @@ void shared_core_get_new_chat_room_from_addr(LinphoneCoreManager *sender, Linpho
 
 			stats mgrStats = receiver->stat;
 			linphone_core_delete_chat_room(receiver->lc, receiverCr);
-			BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc, &receiver->stat.number_of_LinphoneChatRoomStateDeleted,
-										mgrStats.number_of_LinphoneChatRoomStateDeleted + 1, 10000));
+			BC_ASSERT_TRUE(wait_for_until(receiver->lc, sender->lc, &receiver->stat.number_of_LinphoneConferenceStateDeleted,
+										mgrStats.number_of_LinphoneConferenceStateDeleted + 1, 10000));
 			linphone_chat_room_unref(receiverCr);
 		}
 	}
@@ -518,7 +518,7 @@ static void two_shared_executor_cores_get_message_and_chat_room(void) {
 	}
 
 	linphone_core_delete_chat_room(sender->lc, senderCr);
-	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneChatRoomStateDeleted, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_until(sender->lc, NULL, &sender->stat.number_of_LinphoneConferenceStateDeleted, 1, 10000));
 
 	linphone_core_manager_destroy(receiver);
 	linphone_core_manager_destroy(sender);
