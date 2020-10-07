@@ -31,6 +31,7 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 
+#include "conference_private.h"
 #include "private.h"
 
 using namespace std;
@@ -218,6 +219,14 @@ void CallSessionPrivate::createOp () {
 
 bool CallSessionPrivate::isInConference () const {
 	return params->getPrivate()->getInConference();
+}
+
+const std::string CallSessionPrivate::getConferenceId () const {
+	return params->getPrivate()->getConferenceId();
+}
+
+void CallSessionPrivate::setConferenceId (const std::string id) {
+	params->getPrivate()->setConferenceId(id);
 }
 
 // -----------------------------------------------------------------------------
@@ -682,10 +691,11 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
+
 		q->updateContactAddress(contactAddress);
 
 		op->setContactAddress(contactAddress.getInternalAddress());
-		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
 	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());
@@ -748,6 +758,18 @@ void CallSessionPrivate::setContactOp () {
 		char * contactAddressStr = linphone_address_as_string(contact);
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+		if (isInConference()) {
+			const string confId = getConferenceId();
+			if (confId.empty() == false) {
+				contactAddress.setUriParam("conf-id", confId);
+			}
+			std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+			if (conference) {
+
+				// Change conference address in order to add GRUU to it
+				conference->setConferenceAddress(contactAddress);
+			}
+		}
 		q->updateContactAddress (contactAddress);
 		op->setContactAddress(contactAddress.getInternalAddress());
 		linphone_address_unref(contact);
@@ -1497,15 +1519,29 @@ const CallSessionParams * CallSession::getParams () const {
 	return d->params;
 }
 
-void CallSession::updateContactAddress (Address & contactAddress) const {
+void CallSession::updateContactAddress (Address & contactAddress) {
 	L_D();
 
-	if (d->isInConference() && (!contactAddress.hasParam("isfocus"))) {
-		// If in conference and contact address doesn't have isfocus
-		contactAddress.setParam("isfocus");
-	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
+	if (d->isInConference()) {
+		// Add conference ID
+		if (!contactAddress.hasUriParam("conf-id")) {
+			const string confId = d->getConferenceId();
+			if (confId.empty() == false) {
+				contactAddress.setUriParam("conf-id", confId);
+			}
+		}
+		if (!contactAddress.hasParam("isfocus")) {
+			// If in conference and contact address doesn't have isfocus
+			contactAddress.setParam("isfocus");
+		}
+	} else if (!d->isInConference()) {
 		// If not in conference and contact address has isfocus
-		contactAddress.removeParam("isfocus");
+		if (contactAddress.hasUriParam("conf-id")) {
+			contactAddress.removeUriParam("conf-id");
+		}
+		if (contactAddress.hasParam("isfocus")) {
+			contactAddress.removeParam("isfocus");
+		}
 	}
 }
 
