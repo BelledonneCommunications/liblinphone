@@ -1233,7 +1233,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bctbx_list_t **mgrs, bctbx_list_t **lcs, std::shared_ptr<ConferenceListenerInterfaceTester> & confListener, shared_ptr<MediaConference::LocalConference> & conf, LinphoneCoreManager *conf_mgr, bool_t pause_call) {
 
-	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file);
+	LinphoneCoreManager *mgr = create_mgr_for_conference(rc_file, TRUE);
 	*lcs = bctbx_list_append(*lcs, mgr->lc);
 
 	add_participant_to_conference_through_call(mgrs, *lcs, confListener, conf, conf_mgr, mgr, pause_call);
@@ -1242,7 +1242,7 @@ LinphoneCoreManager * create_core_and_add_to_conference(const char * rc_file, bc
 }
 
 void send_added_notify_through_call() {
-	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager *marie = NULL;
 	LinphoneCoreManager *laure = NULL;
 
@@ -1300,7 +1300,7 @@ void send_added_notify_through_call() {
 }
 
 void send_removed_notify_through_call() {
-	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager *pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", TRUE);
 	LinphoneCoreManager *marie = NULL;
 	LinphoneCoreManager *laure = NULL;
 	LinphoneCoreManager *chloe = NULL;
