@@ -262,6 +262,18 @@ static void simple_conference(void) {
 	destroy_mgr_in_conference(laure);
 }
 
+static void simple_conference_established_before_proxy_config_creation(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new3("marie_rc", FALSE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new3("pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* laure = linphone_core_manager_new3( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", FALSE);
+	simple_conference_base(marie,pauline,laure, NULL, FALSE);
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+
+}
+
 static void simple_conference_not_converted_to_call(void) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
 	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
@@ -3470,6 +3482,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
+	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
