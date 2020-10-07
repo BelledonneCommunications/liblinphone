@@ -26,7 +26,9 @@
 #include "call/call.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
+#ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-audio-video-conference-event-handler.h"
+#endif // HAVE_ADVANCED_IM
 
 #include "belle-sip/object++.hh"
 
