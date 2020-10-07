@@ -291,7 +291,8 @@ using resolveOverload = Private::ResolveOverload<Args...>;
 // Math.
 // -----------------------------------------------------------------------------
 
-// Get the length of one integer.
+// Returns the number of digits of the absolute value of the input number
+// If the number is negative, add one to the length to account for - sign
 constexpr int getIntLength (int n) {
 	return n < 0 ? 1 + getIntLength(-n) : (n < 10 ? 1 : 1 + getIntLength(n / 10));
 }
