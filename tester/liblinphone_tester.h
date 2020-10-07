@@ -563,7 +563,7 @@ int liblinphone_tester_set_log_file(const char *filename);
 bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 
 // Add internal callback for subscriptions and notifications
-LinphoneCoreManager *create_mgr_for_conference(const char * rc_file);
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies);
 void setup_mgr_for_conference(LinphoneCoreManager *mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
