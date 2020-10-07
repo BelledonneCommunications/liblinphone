@@ -130,7 +130,7 @@ public:
 	std::shared_ptr<CallSession> getTransferTarget () const;
 	const char *getToHeader (const std::string &name) const;
 
-	void updateContactAddress (Address & contactAddress) const;
+	void updateContactAddress (Address & contactAddress);
 
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();

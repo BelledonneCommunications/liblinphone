@@ -168,6 +168,8 @@ public:
 	std::shared_ptr<Call> getTransferTarget () const;
 	LinphoneCallStats *getVideoStats () const;
 	bool isInConference () const;
+	std::string getConferenceId () const;
+	void setConferenceId (const std::string & conferenceId);
 	bool mediaInProgress () const;
 	void setAudioRoute (LinphoneAudioRoute route);
 	void setAuthenticationTokenVerified (bool value);
