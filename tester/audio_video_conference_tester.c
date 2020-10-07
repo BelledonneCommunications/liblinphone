@@ -252,33 +252,20 @@ end:
 }
 
 static void simple_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 }
 
-static void simple_conference_established_before_proxy_config_creation(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new3("marie_rc", FALSE);
-	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new3("pauline_tcp_rc", FALSE);
-	LinphoneCoreManager* laure = linphone_core_manager_new3( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", FALSE);
-	simple_conference_base(marie,pauline,laure, NULL, FALSE);
-	destroy_mgr_in_conference(marie);
-	destroy_mgr_in_conference(pauline);
-	destroy_mgr_in_conference(laure);
-
-}
-
-static void simple_conference_not_converted_to_call(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+static void simple_conference_through_inviting_participants(bool_t check_for_proxies) {
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", check_for_proxies);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", check_for_proxies);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", check_for_proxies);
 	LinphoneConference *conf = NULL;
 	bctbx_list_t *participants = NULL;
 	LinphoneConferenceParams *conf_params;
@@ -291,22 +278,38 @@ static void simple_conference_not_converted_to_call(void) {
 	stats initial_laure_stat;
 	stats initial_michelle_stat;
 
-	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 	lcs = bctbx_list_append(lcs, michelle->lc);
 
-	if (!BC_ASSERT_TRUE(call(marie,michelle))) goto end;
-	michelle_call=linphone_core_get_current_call(pauline->lc);
-
-
-	linphone_core_set_play_file(pauline->lc, play_file_pauline);
-	bc_free(play_file_pauline);
-
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", check_for_proxies);
 	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
+	lcs = bctbx_list_append(lcs, marie->lc);
+
+	if (check_for_proxies == FALSE) {
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			LinphoneCoreManager * m = get_manager(c);
+			int proxy_count=(int)bctbx_list_size(linphone_core_get_proxy_config_list(m->lc));
+
+			if (proxy_count > 0){
+	#define REGISTER_TIMEOUT 20 /* seconds per proxy */
+				int success = wait_for_until(m->lc,NULL,&m->stat.number_of_LinphoneRegistrationOk,
+											proxy_count,(REGISTER_TIMEOUT * 1000 * proxy_count));
+				if( !success ){
+					ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
+				}
+			}
+		}
+	}
+
+	if (!BC_ASSERT_TRUE(call(marie,michelle))) goto end;
+
+	linphone_core_set_play_file(pauline->lc, play_file_pauline);
+	bc_free(play_file_pauline);
 
 	participants = bctbx_list_append(participants, laure);
 	participants = bctbx_list_append(participants, pauline);
@@ -459,10 +462,18 @@ end:
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_not_converted_to_call(void) {
+	simple_conference_through_inviting_participants(TRUE);
+}
+
+static void simple_conference_established_before_proxy_config_creation(void) {
+	simple_conference_through_inviting_participants(FALSE);
+}
+
 static void _simple_conference_from_scratch(bool_t with_video){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -572,9 +583,9 @@ static void simple_conference_from_scratch_with_video(void){
 }
 
 static void video_conference_by_merging_calls(void){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf = NULL;
 	LinphoneCallParams *params;
 	LinphoneConferenceParams *conf_params;
@@ -712,9 +723,9 @@ end:
 }
 
 static void simple_conference_from_scratch_no_answer(void){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -799,10 +810,10 @@ static void simple_conference_from_scratch_no_answer(void){
 }
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
@@ -833,10 +844,10 @@ static void simple_zrtp_conference_with_ice(void) {
 }
 
 static void conference_hang_up_call_on_hold(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -956,10 +967,10 @@ end:
 }
 
 static void eject_from_3_participants_local_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
@@ -969,11 +980,11 @@ static void eject_from_3_participants_local_conference(void) {
 }
 
 static void eject_from_4_participants_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1047,11 +1058,11 @@ end:
 }
 
 static void participants_exit_conference_after_pausing(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1169,11 +1180,11 @@ end:
 }
 
 static void add_participant_after_conference_started(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1249,11 +1260,11 @@ end:
 }
 
 static void focus_takes_call_after_conference_started_and_participants_leave(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1356,12 +1367,12 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_conference_ends(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1461,12 +1472,12 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_rejoins_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1595,11 +1606,11 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_michelle;
 	LinphoneCall* michelle_called_by_marie;
@@ -1901,11 +1912,11 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 }
 
 static void toggle_video_settings_during_conference_base(bool_t automatically_video_accept, bool_t defer_update) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2082,11 +2093,11 @@ static void toggle_video_settings_during_conference_without_automatically_accept
 }
 
 static void update_conf_params_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2224,11 +2235,11 @@ end:
 }
 
 static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_video) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2378,11 +2389,11 @@ static void focus_takes_quick_call_after_conference_started(void) {
 }
 
 static void try_to_update_call_params_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2532,11 +2543,11 @@ end:
 }
 
 static void register_again_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	stats initial_marie_stats = marie->stat;
 	stats initial_pauline_stats = pauline->stat;
@@ -2740,11 +2751,11 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 }
 
 static void simple_4_participants_conference_ended_by_terminating_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2760,11 +2771,11 @@ static void simple_4_participants_conference_ended_by_terminating_conference(voi
 }
 
 static void simple_4_participants_conference_ended_by_terminating_calls(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2781,11 +2792,11 @@ static void simple_4_participants_conference_ended_by_terminating_calls(void) {
 
 static void simple_conference_with_multi_device(void) {
 #if 0
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* pauline2 = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* pauline2 = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2804,11 +2815,11 @@ static void simple_conference_with_multi_device(void) {
 }
 
 static void simple_conference_with_participant_with_no_event_log(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_log_enabled",FALSE);
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
 
@@ -2818,9 +2829,9 @@ static void simple_conference_with_participant_with_no_event_log(void) {
 }
 
 void simple_remote_conference(void) {
-	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
-	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -2844,9 +2855,9 @@ void simple_remote_conference(void) {
 }
 
 void simple_remote_conference_shut_down_focus(void) {
-	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
-	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", FALSE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -2870,9 +2881,9 @@ void simple_remote_conference_shut_down_focus(void) {
 }
 
 void eject_from_3_participants_remote_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -3072,17 +3083,17 @@ static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_
 }
 
 static void conference_with_calls_queued_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3105,7 +3116,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3114,7 +3125,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3122,11 +3133,11 @@ static void conference_with_calls_queued_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3148,17 +3159,17 @@ static void conference_with_calls_queued_with_ice(void) {
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3181,7 +3192,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3190,7 +3201,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3198,11 +3209,11 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3224,17 +3235,17 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3257,7 +3268,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3266,7 +3277,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3274,11 +3285,11 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3300,17 +3311,17 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 }
 
 static void back_to_back_conferences(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3343,7 +3354,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 	// Local conference
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3353,7 +3364,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 	bctbx_list_t* ice_participants=NULL;
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3362,7 +3373,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 	ice_participants=bctbx_list_append(ice_participants,pauline);
 
 	// ICE is enabled
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 	linphone_core_set_inc_timeout(chloe->lc, 10000);
 	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
 		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
@@ -3372,12 +3383,12 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 	bctbx_list_t* non_ice_participants=NULL;
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 	non_ice_participants=bctbx_list_append(non_ice_participants,laure);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 	non_ice_participants=bctbx_list_append(non_ice_participants,michelle);
 

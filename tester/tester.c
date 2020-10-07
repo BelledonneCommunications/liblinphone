@@ -3031,8 +3031,8 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
 
 }
 
-LinphoneCoreManager *create_mgr_for_conference(const char * rc_file) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new(rc_file);
+LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies) {
+	LinphoneCoreManager *mgr = linphone_core_manager_new2(rc_file, check_for_proxies);
 
 	setup_mgr_for_conference(mgr);
 
