@@ -180,7 +180,7 @@ LinphoneCallCbs * linphone_factory_create_call_cbs(const LinphoneFactory *factor
   return Factory::toCpp(factory)->createCallCbs();
 }
 
-LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory){
+LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFactory *factory) {
   return Factory::toCpp(factory)->createConferenceCbs();
 }
 
