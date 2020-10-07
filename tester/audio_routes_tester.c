@@ -835,7 +835,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
-	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
@@ -883,14 +883,14 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	lcs=bctbx_list_append(lcs,marie->lc);
 
 	// Pauline is offline
-	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", TRUE);
 	linphone_core_set_network_reachable(pauline->lc,FALSE);
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -1012,7 +1012,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
-	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
@@ -1060,7 +1060,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	lcs=bctbx_list_append(lcs,marie->lc);
 
 	// Pauline is onlineoffline
-	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", TRUE);
 	linphone_core_set_network_reachable(pauline->lc,TRUE);
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
@@ -1110,7 +1110,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_network_reachable(laure->lc,TRUE);
 	lcs=bctbx_list_append(lcs,laure->lc);
 
@@ -1255,7 +1255,7 @@ static void conference_with_simple_audio_device_change(void) {
 	bctbx_list_t *lcs = NULL;
 
 	// Marie is the caller
-	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
@@ -1301,11 +1301,11 @@ static void conference_with_simple_audio_device_change(void) {
 	bctbx_list_free_with_data(marie_audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
 	// Pauline is offline
-	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", TRUE);
 	// Do not allow Pauline to use files as the goal of the test is to test audio routes
 	linphone_core_set_use_files(pauline->lc, FALSE);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(laure->lc);
