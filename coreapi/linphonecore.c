@@ -2431,14 +2431,12 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 		bctbx_free(resourceAddrStr);
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
+		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(
 			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
 			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
-		));
-		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
-		));
+		);
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
+		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 
 		if (chatRoom) {
 			shared_ptr<ClientGroupChatRoom> cgcr;
@@ -2490,14 +2488,15 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-	));
-	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-	));
+	char * resourceAddressStr = linphone_address_as_string(resource);
+	const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
+	bctbx_free(resourceAddressStr);
+	LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(
+		ConferenceAddress(conferenceAddress),
+		ConferenceAddress(conferenceAddress)
+	);
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
+	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 
 	if (chatRoom)
 		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
@@ -2528,14 +2527,15 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 	}else{
 		/* This has to be done only when running as server */
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-		));
-		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
-		));
+		char * resourceAddressStr = linphone_address_as_string(resource);
+		const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
+		bctbx_free(resourceAddressStr);
+		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(
+			ConferenceAddress(conferenceAddress),
+			ConferenceAddress(conferenceAddress)
+		);
+		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(conferenceId);
+		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(conferenceId);
 		if (chatRoom)
 			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
 		else if (audioVideoConference)
@@ -7858,7 +7858,6 @@ int linphone_core_terminate_conference(LinphoneCore *lc) {
 		return -1;
 	}
 	linphone_conference_terminate(lc->conf_ctx);
-	lc->conf_ctx = NULL;
 	return 0;
 }
 

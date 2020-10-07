@@ -46,6 +46,8 @@ public:
 	SalCallOp * getOp () const { return op; }
 	bool isBroken () const { return broken; }
 	bool isInConference () const;
+	const std::string getConferenceId () const;
+	void setConferenceId (const std::string id);
 	void setParams (CallSessionParams *csp);
 	void setReferPending (bool value) { referPending = value; }
 	void setTransferTarget (std::shared_ptr<CallSession> session) { transferTarget = session; }

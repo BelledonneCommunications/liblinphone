@@ -102,7 +102,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	lcs2=bctbx_list_append(lcs2,laure->lc);
 
 	if(!is_remote_conf) {
-		add_calls_to_local_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, NULL, new_participants);
 	} else {
 
 		if(focus_is_up) {
@@ -137,7 +137,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	new_participants=bctbx_list_append(NULL,pauline);
 	if(!is_remote_conf) {
-		add_calls_to_local_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	} else {
 		add_calls_to_remote_conference(lcs, focus, marie, new_participants);
 	}
@@ -211,9 +211,9 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 		bctbx_list_t* participants=bctbx_list_append(NULL,laure);
 		participants=bctbx_list_append(participants,pauline);
 		if (is_remote_conf){
-			terminate_conference(participants, marie, focus);
+			terminate_conference(participants, marie, NULL, focus);
 		} else {
-			terminate_conference(participants, marie, NULL);
+			terminate_conference(participants, marie, NULL, NULL);
 		}
 		bctbx_list_free(participants);
 	}
@@ -252,21 +252,20 @@ end:
 }
 
 static void simple_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 }
 
-static void simple_conference_not_converted_to_call(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+static void simple_conference_through_inviting_participants(bool_t check_for_proxies) {
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", check_for_proxies);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", check_for_proxies);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", check_for_proxies);
 	LinphoneConference *conf = NULL;
 	bctbx_list_t *participants = NULL;
 	LinphoneConferenceParams *conf_params;
@@ -279,22 +278,38 @@ static void simple_conference_not_converted_to_call(void) {
 	stats initial_laure_stat;
 	stats initial_michelle_stat;
 
-	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	lcs = bctbx_list_append(lcs, laure->lc);
 	lcs = bctbx_list_append(lcs, michelle->lc);
 
-	if (!BC_ASSERT_TRUE(call(marie,michelle))) goto end;
-	michelle_call=linphone_core_get_current_call(pauline->lc);
-
-
-	linphone_core_set_play_file(pauline->lc, play_file_pauline);
-	bc_free(play_file_pauline);
-
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", check_for_proxies);
 	//marie creates the conference
 	conf_params = linphone_core_create_conference_params(marie->lc);
 	conf = linphone_core_create_conference_with_params(marie->lc, conf_params);
 	linphone_conference_params_unref(conf_params);
+	lcs = bctbx_list_append(lcs, marie->lc);
+
+	if (check_for_proxies == FALSE) {
+		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
+			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
+			LinphoneCoreManager * m = get_manager(c);
+			int proxy_count=(int)bctbx_list_size(linphone_core_get_proxy_config_list(m->lc));
+
+			if (proxy_count > 0){
+	#define REGISTER_TIMEOUT 20 /* seconds per proxy */
+				int success = wait_for_until(m->lc,NULL,&m->stat.number_of_LinphoneRegistrationOk,
+											proxy_count,(REGISTER_TIMEOUT * 1000 * proxy_count));
+				if( !success ){
+					ms_error("Did not register after %d seconds for %d proxies", REGISTER_TIMEOUT, proxy_count);
+				}
+			}
+		}
+	}
+
+	if (!BC_ASSERT_TRUE(call(marie,michelle))) goto end;
+
+	linphone_core_set_play_file(pauline->lc, play_file_pauline);
+	bc_free(play_file_pauline);
 
 	participants = bctbx_list_append(participants, laure);
 	participants = bctbx_list_append(participants, pauline);
@@ -447,10 +462,18 @@ end:
 	bctbx_list_free(lcs);
 }
 
+static void simple_conference_not_converted_to_call(void) {
+	simple_conference_through_inviting_participants(TRUE);
+}
+
+static void simple_conference_established_before_proxy_config_creation(void) {
+	simple_conference_through_inviting_participants(FALSE);
+}
+
 static void _simple_conference_from_scratch(bool_t with_video){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -543,7 +566,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
-		terminate_conference(participants, marie, NULL);
+		terminate_conference(participants, marie, NULL, NULL);
 	}
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(pauline);
@@ -560,9 +583,9 @@ static void simple_conference_from_scratch_with_video(void){
 }
 
 static void video_conference_by_merging_calls(void){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf = NULL;
 	LinphoneCallParams *params;
 	LinphoneConferenceParams *conf_params;
@@ -636,7 +659,7 @@ static void video_conference_by_merging_calls(void){
 	// She adds Pauline and Laure to the conference. */
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	// Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -684,7 +707,7 @@ static void video_conference_by_merging_calls(void){
 		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
 		wait_for_list(lcs ,NULL, 0, 2000);
 
-		terminate_conference(new_participants, marie, NULL);
+		terminate_conference(new_participants, marie, NULL, NULL);
 
 	}
 	
@@ -700,9 +723,9 @@ end:
 }
 
 static void simple_conference_from_scratch_no_answer(void){
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConference *conf;
 	LinphoneConferenceParams *conf_params;
 	LinphoneCall *pauline_call, *laure_call;
@@ -787,10 +810,10 @@ static void simple_conference_from_scratch_no_answer(void){
 }
 
 static void simple_encrypted_conference_with_ice(LinphoneMediaEncryption mode) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
@@ -821,10 +844,10 @@ static void simple_zrtp_conference_with_ice(void) {
 }
 
 static void conference_hang_up_call_on_hold(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference("marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	simple_conference_base(marie, pauline, laure, NULL, TRUE);
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
@@ -867,7 +890,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		// TODO: Find a way to extract participants managers from conference
 		bctbx_list_t* lcs2=bctbx_list_append(NULL,marie->lc);
 		lcs2=bctbx_list_append(lcs2,laure->lc);
-		add_calls_to_local_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, NULL, new_participants);
 		bctbx_list_free(lcs2);
 		bctbx_list_free(new_participants);
 	} else {
@@ -889,7 +912,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
-		add_calls_to_local_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 		bctbx_list_free(new_participants);
 	} else {
 		linphone_core_add_to_conference(marie->lc,marie_call_pauline);
@@ -944,10 +967,10 @@ end:
 }
 
 static void eject_from_3_participants_local_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	eject_from_3_participants_conference(marie, pauline, laure, NULL);
 
@@ -957,11 +980,11 @@ static void eject_from_3_participants_local_conference(void) {
 }
 
 static void eject_from_4_participants_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -995,7 +1018,7 @@ static void eject_from_4_participants_conference(void) {
 	new_participants=bctbx_list_append(new_participants,laure);
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	/* Wait that the three participants are joined to the local conference, by checking the StreamsRunning states*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
@@ -1020,7 +1043,7 @@ static void eject_from_4_participants_conference(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -1035,11 +1058,11 @@ end:
 }
 
 static void participants_exit_conference_after_pausing(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1073,7 +1096,7 @@ static void participants_exit_conference_after_pausing(void) {
 	new_participants=bctbx_list_append(new_participants,laure);
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	bctbx_list_free(new_participants);
 
 	// Wait that the three participants are joined to the local conference, by checking the StreamsRunning states
@@ -1157,11 +1180,11 @@ end:
 }
 
 static void add_participant_after_conference_started(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1182,7 +1205,7 @@ static void add_participant_after_conference_started(void) {
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
@@ -1200,7 +1223,7 @@ static void add_participant_after_conference_started(void) {
 	bctbx_list_t* additional_participants=NULL;
 	additional_participants=bctbx_list_append(additional_participants,laure);
 	participants=bctbx_list_append(participants,laure);
-	add_calls_to_local_conference(lcs, marie, additional_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, additional_participants);
 	bctbx_list_free(additional_participants);
 
 	// Wait that the three participants are joined to the local conference, by checking the StreamsRunning states
@@ -1216,7 +1239,7 @@ static void add_participant_after_conference_started(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(participants, marie, NULL);
+	terminate_conference(participants, marie, NULL, NULL);
 	bctbx_list_free(participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1237,11 +1260,11 @@ end:
 }
 
 static void focus_takes_call_after_conference_started_and_participants_leave(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1262,7 +1285,7 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1344,12 +1367,12 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_conference_ends(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1381,7 +1404,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -1416,7 +1439,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1449,12 +1472,12 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_rejoins_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1486,7 +1509,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -1559,7 +1582,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1583,11 +1606,11 @@ end:
 }
 
 static void participant_takes_call_after_conference_started_and_rejoins_conference_after_conference_ended(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 
 	LinphoneCall* marie_call_michelle;
 	LinphoneCall* michelle_called_by_marie;
@@ -1610,7 +1633,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1889,11 +1912,11 @@ static void set_video_in_call(LinphoneCoreManager* m1, LinphoneCoreManager* m2, 
 }
 
 static void toggle_video_settings_during_conference_base(bool_t automatically_video_accept, bool_t defer_update) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -1963,7 +1986,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	unsigned int no_participants = (unsigned int)bctbx_list_size(new_participants);
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
@@ -2037,7 +2060,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 		}
 	}
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -2070,11 +2093,11 @@ static void toggle_video_settings_during_conference_without_automatically_accept
 }
 
 static void update_conf_params_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2129,7 +2152,7 @@ static void update_conf_params_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2191,7 +2214,7 @@ static void update_conf_params_during_conference(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -2212,11 +2235,11 @@ end:
 }
 
 static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_video) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2258,7 +2281,7 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -2322,7 +2345,7 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	unsigned int marie_call_no = (unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc));
@@ -2366,11 +2389,11 @@ static void focus_takes_quick_call_after_conference_started(void) {
 }
 
 static void try_to_update_call_params_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	LinphoneCall* marie_call_pauline;
 	LinphoneCall* pauline_called_by_marie;
@@ -2421,7 +2444,7 @@ static void try_to_update_call_params_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2499,7 +2522,7 @@ static void try_to_update_call_params_during_conference(void) {
 
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -2520,11 +2543,11 @@ end:
 }
 
 static void register_again_during_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	stats initial_marie_stats = marie->stat;
 	stats initial_pauline_stats = pauline->stat;
@@ -2562,7 +2585,7 @@ static void register_again_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2609,7 +2632,7 @@ static void register_again_during_conference(void) {
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -2657,7 +2680,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	unsigned int no_unique_participants = (unsigned int)bctbx_list_size(unique_participant_identity);
 	bctbx_list_free(unique_participant_identity);
 
-	add_calls_to_local_conference(lcs, local_conf, participants);
+	add_calls_to_local_conference(lcs, local_conf, NULL, participants);
 
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -2672,7 +2695,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(local_conf->lc));
 
 	if (use_conference_terminate == TRUE) {
-		terminate_conference(participants, local_conf, NULL);
+		terminate_conference(participants, local_conf, NULL, NULL);
 	} else {
 		stats initial_conf_stats = local_conf->stat;
 		int counter = 1;
@@ -2728,11 +2751,11 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 }
 
 static void simple_4_participants_conference_ended_by_terminating_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2748,11 +2771,11 @@ static void simple_4_participants_conference_ended_by_terminating_conference(voi
 }
 
 static void simple_4_participants_conference_ended_by_terminating_calls(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2769,11 +2792,11 @@ static void simple_4_participants_conference_ended_by_terminating_calls(void) {
 
 static void simple_conference_with_multi_device(void) {
 #if 0
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* pauline2 = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* pauline2 = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,laure);
@@ -2792,11 +2815,11 @@ static void simple_conference_with_multi_device(void) {
 }
 
 static void simple_conference_with_participant_with_no_event_log(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "misc", "conference_event_log_enabled",FALSE);
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 
 	simple_conference_base(marie,pauline,laure, NULL, FALSE);
 
@@ -2806,9 +2829,9 @@ static void simple_conference_with_participant_with_no_event_log(void) {
 }
 
 void simple_remote_conference(void) {
-	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
-	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -2832,9 +2855,9 @@ void simple_remote_conference(void) {
 }
 
 void simple_remote_conference_shut_down_focus(void) {
-	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc");
-	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager *marie = create_mgr_for_conference("marie_rc", TRUE);
+	LinphoneCoreManager *pauline = create_mgr_for_conference("pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", FALSE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -2858,9 +2881,9 @@ void simple_remote_conference_shut_down_focus(void) {
 }
 
 void eject_from_3_participants_remote_conference(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	LinphoneConferenceServer *focus = linphone_conference_server_new("conference_focus_rc", TRUE);
 	LpConfig *marie_config = linphone_core_get_config(marie->lc);
 	LinphoneProxyConfig *focus_proxy_config = linphone_core_get_default_proxy_config(((LinphoneCoreManager *)focus)->lc);
@@ -3011,7 +3034,7 @@ static void take_call_to_callee(bctbx_list_t* lcs, LinphoneCoreManager* caller, 
 	bctbx_list_free(caller_list);
 }
 
-static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_list_t* participants, bool_t back_to_back_invite, bool_t back_to_back_accept) {
+static void conference_with_calls_queued(LinphoneCoreManager* local_conf, LinphoneConference * conference, bctbx_list_t* participants, bool_t back_to_back_invite, bool_t back_to_back_accept) {
 	bctbx_list_t* lcs = NULL;
 	lcs=bctbx_list_append(lcs,local_conf->lc);
 
@@ -3052,25 +3075,25 @@ static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_
 
 	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(local_conf->lc));
 
-	add_calls_to_local_conference(lcs, local_conf, participants);
+	add_calls_to_local_conference(lcs, local_conf, conference, participants);
 
-	terminate_conference(participants, local_conf, NULL);
+	terminate_conference(participants, local_conf, conference, NULL);
 
 	bctbx_list_free(lcs);
 }
 
 static void conference_with_calls_queued_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3078,7 +3101,7 @@ static void conference_with_calls_queued_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 
 	bctbx_list_free(participants);
 
@@ -3093,7 +3116,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3102,7 +3125,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3110,11 +3133,11 @@ static void conference_with_calls_queued_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3122,7 +3145,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 
 	bctbx_list_free(participants);
 
@@ -3136,17 +3159,17 @@ static void conference_with_calls_queued_with_ice(void) {
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3154,7 +3177,7 @@ static void conference_with_back_to_back_call_accept_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3169,7 +3192,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3178,7 +3201,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3186,11 +3209,11 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3198,7 +3221,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3212,17 +3235,17 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3230,7 +3253,7 @@ static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, TRUE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, TRUE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3245,7 +3268,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3254,7 +3277,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3262,11 +3285,11 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	}
 
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3274,7 +3297,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, TRUE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, TRUE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3288,17 +3311,17 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 }
 
 static void back_to_back_conferences(void) {
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	bctbx_list_t* participants=NULL;
@@ -3307,7 +3330,7 @@ static void back_to_back_conferences(void) {
 	participants=bctbx_list_append(participants,laure);
 
 	// Marie hosts the conference
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 	bctbx_list_free(participants);
 
 	bctbx_list_t* new_participants=NULL;
@@ -3316,7 +3339,7 @@ static void back_to_back_conferences(void) {
 	new_participants=bctbx_list_append(new_participants,marie);
 
 	// Laure hosts the conference
-	conference_with_calls_queued(laure, new_participants, FALSE, FALSE);
+	conference_with_calls_queued(laure, NULL, new_participants, FALSE, FALSE);
 	bctbx_list_free(new_participants);
 
 	destroy_mgr_in_conference(marie);
@@ -3325,13 +3348,460 @@ static void back_to_back_conferences(void) {
 	destroy_mgr_in_conference(michelle);
 }
 
+static void try_to_create_second_conference_with_local_participant(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,laure);
+	participants=bctbx_list_append(participants,chloe);
+	participants=bctbx_list_append(participants,pauline);
+
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	stats initial_marie_stat = marie->stat;
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs=bctbx_list_append(lcs,c);
+		initiate_call(m, marie);
+	}
+
+	//Let ring calls for a little while
+	wait_for_list(lcs,NULL,0,1000);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, initial_marie_stat.number_of_LinphoneCallPausing, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, initial_marie_stat.number_of_LinphoneCallPaused, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, initial_marie_stat.number_of_LinphoneCallPausedByRemote, int, "%d");
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		take_call_to_callee(lcs, m, marie);
+	}
+
+	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
+
+	add_calls_to_local_conference(lcs, marie, NULL, participants);
+
+	stats* lcm_stats = NULL;
+
+	int counter = 1;
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		// Allocate memory
+		lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+
+		// Append element
+		lcm_stats[counter - 1] = m->stat;
+
+		// Increment counter
+		counter++;
+	}
+
+	lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+	lcm_stats[counter - 1] = marie->stat;
+
+	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+
+	linphone_core_terminate_conference(marie->lc);
+
+	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(new_maries_conference_params));
+	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
+	BC_ASSERT_PTR_NULL(new_maries_conference);
+	linphone_conference_params_unref(new_maries_conference_params);
+
+	int idx = 0;
+	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
+
+	participants=bctbx_list_append(participants,marie);
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+
+		unsigned int no_calls = 0;
+		unsigned int no_conference = 0;
+		if (m == marie) {
+			no_calls = no_participants;
+			no_conference = 1;
+		} else {
+			no_calls = 1;
+			no_conference = 1;
+		}
+
+		// Wait for calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + no_conference, 5000));
+
+		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+		if ((m != marie) && event_log_enabled) {
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + no_conference,10000));
+		}
+
+		LinphoneConference *conference = linphone_core_get_conference(c);
+
+		BC_ASSERT_PTR_NULL(conference);
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
+		if (m != marie) {
+			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
+			BC_ASSERT_PTR_NULL(participant_call);
+			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
+			BC_ASSERT_PTR_NULL(conference_call);
+		}
+
+		idx++;
+	}
+
+	// Verify that a second conference is not created
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 1, int, "%d");
+
+	ms_free(lcm_stats);
+
+	bctbx_list_free(lcs);
+	bctbx_list_free(participants);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(chloe);
+}
+
+static void interleaved_conferences_base(bool_t add_participants_immediately_after_creation) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(michelle->lc, 10000);
+
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	stats initial_marie_stat = marie->stat;
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs=bctbx_list_append(lcs,c);
+		initiate_call(m, marie);
+	}
+
+	//Let ring calls for a little while
+	wait_for_list(lcs,NULL,0,1000);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, initial_marie_stat.number_of_LinphoneCallPausing, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, initial_marie_stat.number_of_LinphoneCallPaused, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, initial_marie_stat.number_of_LinphoneCallPausedByRemote, int, "%d");
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		take_call_to_callee(lcs, m, marie);
+	}
+
+	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
+
+	add_calls_to_local_conference(lcs, marie, NULL, participants);
+
+	stats* lcm_stats = NULL;
+
+	int counter = 1;
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		// Allocate memory
+		lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+
+		// Append element
+		lcm_stats[counter - 1] = m->stat;
+
+		// Increment counter
+		counter++;
+	}
+
+	lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+	lcm_stats[counter - 1] = marie->stat;
+
+	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+
+	linphone_core_terminate_conference(marie->lc);
+
+	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
+	linphone_conference_params_enable_local_participant(new_maries_conference_params, FALSE);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(new_maries_conference_params) == FALSE);
+	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
+	BC_ASSERT_PTR_NOT_NULL(new_maries_conference);
+	linphone_conference_params_unref(new_maries_conference_params);
+
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, 5000));
+
+	bctbx_list_t* new_participants=NULL;
+	new_participants=bctbx_list_append(new_participants,laure);
+	new_participants=bctbx_list_append(new_participants,chloe);
+
+	if (add_participants_immediately_after_creation == TRUE) {
+		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
+	}
+
+	int idx = 0;
+
+	participants=bctbx_list_append(participants,marie);
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+
+		unsigned int no_calls = 0;
+		unsigned int no_conference = 0;
+		if (m == marie) {
+			if (add_participants_immediately_after_creation == TRUE) {
+				no_calls = 4;
+				no_conference = 2;
+			} else {
+				no_calls = 2;
+				no_conference = 1;
+			}
+		} else {
+			no_calls = 1;
+			no_conference = 1;
+		}
+
+		// Wait for calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + no_conference, 5000));
+
+		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+		if ((m != marie) && event_log_enabled) {
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + no_conference,10000));
+		}
+
+		LinphoneConference *conference = linphone_core_get_conference(c);
+
+		if (m != marie) {
+			BC_ASSERT_PTR_NULL(conference);
+			BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
+			BC_ASSERT_PTR_NULL(participant_call);
+			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
+			BC_ASSERT_PTR_NULL(conference_call);
+		} else {
+			if (add_participants_immediately_after_creation == FALSE) {
+				// Marie has a second conferece already started, hence the core should hold it
+				BC_ASSERT_PTR_NOT_NULL(conference);
+				BC_ASSERT_TRUE(linphone_core_is_in_conference(c));
+			} else {
+				BC_ASSERT_PTR_NULL(conference);
+				BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+			}
+		}
+
+		idx++;
+	}
+
+	if (add_participants_immediately_after_creation == FALSE) {
+		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
+	}
+
+	// Verify that a third conference is not created when adidng calls
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 2, int, "%d");
+
+	ms_free(lcm_stats);
+
+	linphone_conference_unref(new_maries_conference);
+
+	bctbx_list_free(lcs);
+	bctbx_list_free(participants);
+	bctbx_list_free(new_participants);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(chloe);
+}
+
+static void interleaved_conference_creation(void) {
+	interleaved_conferences_base(TRUE);
+}
+
+static void interleaved_conference_creation_with_quick_participant_addition(void) {
+	interleaved_conferences_base(TRUE);
+}
+
+static void multiple_conferences_in_server_mode(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(michelle->lc, 10000);
+
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,pauline);
+
+	bctbx_list_t* participants2=NULL;
+	participants2=bctbx_list_append(participants2,laure);
+	participants2=bctbx_list_append(participants2,chloe);
+
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	bctbx_list_t* lcs1 = NULL;
+	lcs1=bctbx_list_append(lcs1,marie->lc);
+
+	stats initial_marie_stat = marie->stat;
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs1=bctbx_list_append(lcs1,c);
+		lcs=bctbx_list_append(lcs,c);
+		initiate_call(m, marie);
+	}
+
+	bctbx_list_t* lcs2 = NULL;
+	lcs2=bctbx_list_append(lcs2,marie->lc);
+
+	for (bctbx_list_t *it = participants2; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs2=bctbx_list_append(lcs2,c);
+		lcs=bctbx_list_append(lcs,c);
+		initiate_call(m, marie);
+	}
+
+	//Let ring calls for a little while
+	wait_for_list(lcs,NULL,0,1000);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, initial_marie_stat.number_of_LinphoneCallPausing, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, initial_marie_stat.number_of_LinphoneCallPaused, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, initial_marie_stat.number_of_LinphoneCallPausedByRemote, int, "%d");
+
+	for (bctbx_list_t *it = participants2; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		take_call_to_callee(lcs, m, marie);
+	}
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		take_call_to_callee(lcs, m, marie);
+	}
+
+	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
+
+	LinphoneConferenceParams * maries_conference_params = linphone_conference_params_new (marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(maries_conference_params);
+	linphone_conference_params_enable_local_participant(maries_conference_params, FALSE);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(maries_conference_params) == FALSE);
+	LinphoneConference * maries_conference = linphone_core_create_conference_with_params(marie->lc, maries_conference_params);
+	BC_ASSERT_PTR_NOT_NULL(maries_conference);
+	linphone_conference_params_unref(maries_conference_params);
+
+	add_calls_to_local_conference(lcs1, marie, maries_conference, participants);
+
+	LinphoneConferenceParams * maries_conference_params2 = linphone_conference_params_new (marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(maries_conference_params2);
+	linphone_conference_params_enable_local_participant(maries_conference_params2, FALSE);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(maries_conference_params2) == FALSE);
+	LinphoneConference * maries_conference2 = linphone_core_create_conference_with_params(marie->lc, maries_conference_params2);
+	BC_ASSERT_PTR_NOT_NULL(maries_conference2);
+	linphone_conference_params_unref(maries_conference_params2);
+
+	add_calls_to_local_conference(lcs2, marie, maries_conference2, participants2);
+
+	terminate_conference(participants2, marie, maries_conference2, NULL);
+	terminate_conference(participants, marie, maries_conference, NULL);
+
+	// Verify that a third conference is not created when adidng calls
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 2, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 2, int, "%d");
+
+	linphone_conference_unref(maries_conference);
+	linphone_conference_unref(maries_conference2);
+
+	bctbx_list_free(lcs);
+	bctbx_list_free(lcs1);
+	bctbx_list_free(lcs2);
+	bctbx_list_free(participants);
+	bctbx_list_free(participants2);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(chloe);
+}
+
 static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 #if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// Local conference
 	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc");
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
 	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
@@ -3341,7 +3811,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 	bctbx_list_t* ice_participants=NULL;
 	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc");
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
 	linphone_core_set_inc_timeout(pauline->lc, 10000);
 	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
@@ -3350,7 +3820,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 	ice_participants=bctbx_list_append(ice_participants,pauline);
 
 	// ICE is enabled
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc");
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
 	linphone_core_set_inc_timeout(chloe->lc, 10000);
 	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
 		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
@@ -3360,12 +3830,12 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 	bctbx_list_t* non_ice_participants=NULL;
 	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 	non_ice_participants=bctbx_list_append(non_ice_participants,laure);
 
 	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 	non_ice_participants=bctbx_list_append(non_ice_participants,michelle);
 
@@ -3470,6 +3940,7 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 
 test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
+	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
 	TEST_NO_TAG("Simple conference with participant with no event log", simple_conference_with_participant_with_no_event_log),
 	TEST_NO_TAG("Simple conference established from scratch", simple_conference_from_scratch),
 	TEST_NO_TAG("Simple conference established from scratch with video", simple_conference_from_scratch_with_video),
@@ -3499,6 +3970,10 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
 	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
 	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
+	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
+	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
+	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
+	TEST_NO_TAG("Multiple conferences in server mode", multiple_conferences_in_server_mode),
 	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
 	TEST_NO_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice),
 	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),

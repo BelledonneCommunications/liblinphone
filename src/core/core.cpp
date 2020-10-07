@@ -417,7 +417,9 @@ bool CorePrivate::setOutputAudioDevice(AudioDevice *audioDevice) {
 
 	if (static_cast<unsigned int>(q->audioVideoConferenceById.size()) > 0) {
 		for (const auto & audioVideoConference : q->audioVideoConferenceById) {
-			audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
+			if (audioVideoConference.second->getAudioControlInterface()) {
+				audioVideoConference.second->getAudioControlInterface()->setOutputDevice(audioDevice);
+			}
 		}
 	}
 
@@ -1101,21 +1103,29 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 	belle_sip_object_unref(timer);
 }
 
-std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
+const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
 	Address peerAddress = conferenceId.getPeerAddress();
-	peerAddress.removeUriParam("conf-id");
+	peerAddress.removeUriParam("gr");
 	Address localAddress = conferenceId.getLocalAddress();
-	localAddress.removeUriParam("conf-id");
+	localAddress.removeUriParam("gr");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	return prunedConferenceId;
+}
+
+
+std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
+
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
 	if (it != audioVideoConferenceById.cend()) {
-		lInfo() << "Found audio video conference in RAM for conference ID " << conferenceId << ".";
+		lInfo() << "Found audio video conference in RAM with conference ID " << conferenceId << ".";
 		return it->second;
 	}
 
 	if (logIfNotFound)
-		lInfo() << "Unable to find audio video conference in RAM: " << conferenceId << ".";
+		lInfo() << "Unable to find audio video conference with conference ID " << conferenceId << " in RAM.";
 	return nullptr;
 }
 
@@ -1123,31 +1133,26 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	L_ASSERT(audioVideoConference);
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
-	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
-	localAddress.removeUriParam("conf-id");
-	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
 	auto conf = findAudioVideoConference (conferenceId);
 
 	// Conference does not exist or yes but with the same pointer!
 	L_ASSERT(conf == nullptr || conf == audioVideoConference);
 	if (conf == nullptr) {
+		lInfo() << "Insert audio video conference in RAM with conference ID " << conferenceId << ".";
+		ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 		audioVideoConferenceById[prunedConferenceId] = audioVideoConference;
 	}
 }
 
 void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
-	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
-	localAddress.removeUriParam("conf-id");
-	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
+
 	if (it != audioVideoConferenceById.cend()) {
+		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
 		audioVideoConferenceById.erase(it);
 	}
 
