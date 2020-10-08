@@ -29,7 +29,12 @@ if(SQLITE3_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${SQLITE3_LIBRARIES})
 endif()
 if(ZLIB_FOUND)
-	list(APPEND OTHER_LIBS_FOR_TESTER ${ZLIB_LIBRARIES})
+	if (ANDROID)
+		# Starting NDK r21, libz.a has issues: https://github.com/android/ndk/issues/1179
+		list(APPEND OTHER_LIBS_FOR_TESTER z)
+	else()
+		list(APPEND OTHER_LIBS_FOR_TESTER ${ZLIB_LIBRARIES})
+	endif()
 endif()
 
 set(SOUND_FILES
