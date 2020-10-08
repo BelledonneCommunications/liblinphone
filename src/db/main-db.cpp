@@ -17,6 +17,12 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#if (__GNUC__ == 9 && __GNUC_MINOR__ >= 1)
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wstringop-overflow"
+#endif
+//static_assert(raw[N-1] == '\0', "Last character of raw is not 0"); 
+
 #include <ctime>
 
 #include "linphone/utils/algorithm.h"

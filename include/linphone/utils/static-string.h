@@ -37,6 +37,14 @@ namespace Private {
 	template<typename S1, typename S2>
 	struct ConcatIndexSequenceImpl;
 
+	// Expand S1 and offset all elements of S2 by the number of elements of S1 so that we get a contiguous sequence of integer numbers
+	// Example:
+	// - S1 = 0 1 2
+	// - S2 = 0 1 2 3
+	// - concatenation is:    0 1 2                    3 4 5 6
+	//                     <-- S1 --> <-- S2 offset by number of elements of S1 -->
+	// https://en.cppreference.com/w/cpp/language/parameter_pack
+	// https://en.cppreference.com/w/cpp/language/sizeof...
 	template<std::size_t... S1, std::size_t... S2>
 	struct ConcatIndexSequenceImpl<IndexSequence<S1...>, IndexSequence<S2...>> :
 		IndexSequence<S1..., (sizeof...(S1) + S2)...> {};
@@ -103,6 +111,7 @@ namespace Private {
 		) : raw{ s1[Index1]..., s2[Index2]... } {}
 	};
 
+	// Add 1 to the number of digits of Value because of terminating \0
 	template<int Value, int N = getIntLength(Value) + 1>
 	class StaticIntStringHelper {
 	public:
@@ -115,10 +124,12 @@ namespace Private {
 		// See: https://stackoverflow.com/questions/41593649/why-wont-visual-studio-let-me-use-a-templatized-constexpr-function-in-enable-i/41597153
 		struct IsNeg { static const bool value = Value < 0; };
 
+		// Subtract 2 from N because powers of 10 must start at 0 and \0 are accounted in the value of N
 		template<std::size_t... Index, typename Int = int, typename std::enable_if<!IsNeg::value, Int>::type* = nullptr>
 		constexpr StaticIntStringHelper (const IndexSequence<Index...> &) :
 			raw{ char('0' + Value / pow10(N - Index - 2) % 10)..., '\0' } {}
 
+		// Subtract 3 from N because powers of 10 must start at 0 and - sign as well as \0 are accounted in the value of N
 		template<std::size_t... Index, typename Int = int, typename std::enable_if<IsNeg::value, Int>::type* = nullptr>
 		constexpr StaticIntStringHelper (const IndexSequence<Index...> &) :
 			raw{ '-', char('0' + abs(Value) / pow10(N - Index - 3) % 10)..., '\0' } {}
