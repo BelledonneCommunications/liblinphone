@@ -306,10 +306,7 @@ void RemoteConferenceEventHandler::subscribe () {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceEventHandler::unsubscribePrivate () {
-	if (lev) {
-		linphone_event_terminate(lev);
-		lev = nullptr;
-	}
+	invalidateSubscription();
 }
 
 void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
@@ -331,8 +328,13 @@ void RemoteConferenceEventHandler::onEnteringForeground () {
 }
 
 void RemoteConferenceEventHandler::invalidateSubscription () {
-	linphone_event_unref(lev);
-	lev = nullptr;
+	if (lev){
+		LinphoneEvent *tmpEv = lev;
+		lev = nullptr;
+		linphone_event_terminate(tmpEv);
+		linphone_event_unref(tmpEv);
+		
+	}
 }
 
 // -----------------------------------------------------------------------------
