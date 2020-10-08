@@ -78,22 +78,23 @@ Conference::~Conference() {
 }
 
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
-	if (!conferenceAddress.isValid()) {
-		shared_ptr<CallSession> session = getMe()->getSession();
-		LinphoneErrorInfo *ei = linphone_error_info_new();
-		linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
-		session->decline(ei);
-		linphone_error_info_unref(ei);
-		setState(ConferenceInterface::State::CreationFailed);
-		return;
-	}
+	if ((getState() == ConferenceInterface::State::Instantiated) || (getState() == ConferenceInterface::State::CreationPending)) {
+		if (!conferenceAddress.isValid()) {
+			shared_ptr<CallSession> session = getMe()->getSession();
+			LinphoneErrorInfo *ei = linphone_error_info_new();
+			linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
+			session->decline(ei);
+			linphone_error_info_unref(ei);
+			setState(ConferenceInterface::State::CreationFailed);
+			return;
+		}
 
-	if (getState() != ConferenceInterface::State::Instantiated) {
+		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
+		lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
+	} else {
 		lError() << "Cannot set the conference address of the Conference in state " << getState();
 		return;
 	}
-	LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
-	lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
 
 }
 
@@ -392,21 +393,32 @@ LocalConference::LocalConference (
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
-	char confId[6];
-	belle_sip_random_token(confId,sizeof(confId));
-
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
 	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
-	char * contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	char * contactAddressStr = nullptr;
+	if (proxyCfg && proxyCfg->op) {
+		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	} else {
+		contactAddressStr = const_cast<char *>(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
+	}
 	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	contactAddress.setUriParam("conf-id",confId);
-	proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
+	if (!contactAddress.hasParam("conf-id")) {
+		char confId[6];
+		belle_sip_random_token(confId,sizeof(confId));
+		contactAddress.setUriParam("conf-id",confId);
+	}
+	if (proxyCfg && proxyCfg->op) {
+		if (contactAddressStr) {
+			ms_free(contactAddressStr);
+		}
+		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
+	}
 	linphone_address_unref(cAddress);
 
 	setConferenceAddress(contactAddress);
+	setState(ConferenceInterface::State::CreationPending);
 }
 
 LocalConference::~LocalConference() {
@@ -421,7 +433,6 @@ LocalConference::~LocalConference() {
 
 void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
 	Conference::setConferenceAddress(conferenceAddress);
-	setState(ConferenceInterface::State::CreationPending);
 }
 
 void LocalConference::finalizeCreation() {
