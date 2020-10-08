@@ -91,6 +91,11 @@ public class CoreService extends Service {
             if (core != null) {
                 Log.i("[Core Service] Core Manager found, adding our listener");
                 core.addListener(mListener);
+
+                if (core.getCallsNb() > 0) {
+                    Log.w("[Core Service] Service started while at least one call active !");
+                    startForeground();
+                }
             }
         }
 
@@ -114,6 +119,15 @@ public class CoreService extends Service {
     @Override
     public synchronized void onDestroy() {
         Log.i("[Core Service] Stopping");
+
+        if (CoreManager.isReady()) {
+            Core core = CoreManager.instance().getCore();
+            if (core != null) {
+                Log.i("[Core Service] Core Manager found, removing our listener");
+                core.removeListener(mListener);
+            }
+        }
+        
         super.onDestroy();
     }
 
