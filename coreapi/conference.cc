@@ -406,7 +406,6 @@ LocalConference::LocalConference (
 	proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
 	linphone_address_unref(cAddress);
 
-	setConferenceId(ConferenceId(contactAddress, contactAddress));
 	setConferenceAddress(contactAddress);
 }
 
@@ -427,6 +426,8 @@ void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceA
 
 void LocalConference::finalizeCreation() {
 	if (getState() == ConferenceInterface::State::CreationPending) {
+		const ConferenceAddress & conferenceAddress = getConferenceAddress ();
+		setConferenceId(ConferenceId(conferenceAddress, conferenceAddress));
 #ifdef HAVE_ADVANCED_IM
 		if (eventHandler) {
 			eventHandler->setConference(this);
