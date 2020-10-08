@@ -1438,7 +1438,12 @@ static int create_friend_list(void *data, int argc, char **argv, char **colName)
 	LinphoneFriendList *lfl = linphone_core_create_friend_list(NULL);
 
 	lfl->storage_id = storage_id;
-	linphone_friend_list_set_display_name(lfl, argv[1]);
+
+//sqlite3_exec return a Locale string and Belcard need to be in UTF8 for parsing
+        string localeBuffer(argv[1]);
+        string utf8Buffer = LinphonePrivate::Utils::localeToUtf8(localeBuffer);
+        linphone_friend_list_set_display_name(lfl,utf8Buffer.c_str());
+
 	linphone_friend_list_set_rls_uri(lfl, argv[2]);
 	linphone_friend_list_set_uri(lfl, argv[3]);
 	lfl->revision = atoi(argv[4]);
@@ -1475,7 +1480,11 @@ static int create_friend(void *data, int argc, char **argv, char **colName) {
 	LinphoneVcard *vcard = NULL;
 	unsigned int storage_id = (unsigned int)atoi(argv[0]);
 
-	vcard = linphone_vcard_context_get_vcard_from_buffer(context, argv[6]);
+//sqlite3_exec return a Locale string and Belcard need to be in UTF8 for parsing
+        string localeBuffer(argv[6]);
+        string utf8Buffer = LinphonePrivate::Utils::localeToUtf8(localeBuffer);
+        vcard = linphone_vcard_context_get_vcard_from_buffer(context, utf8Buffer.c_str());
+
 	if (vcard) {
 		linphone_vcard_set_etag(vcard, argv[7]);
 		linphone_vcard_set_url(vcard, argv[8]);
