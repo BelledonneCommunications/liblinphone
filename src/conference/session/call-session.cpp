@@ -751,14 +751,14 @@ void CallSessionPrivate::setContactOp () {
 		ms_free(contactAddressStr);
 		std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 		if (conference) {
-/*
+
 			Address conferenceAddress = conference->getConferenceAddress();
 			string confId = conferenceAddress.getUriParamValue("conf-id");
 
 			if (!contactAddress.hasParam("conf-id")) {
 				contactAddress.setUriParam("conf-id", confId);
 			}
-*/
+
 			// Change conference address in order to add GRUU to it
 			conference->setConferenceAddress(contactAddress);
 		}
@@ -1514,12 +1514,28 @@ const CallSessionParams * CallSession::getParams () const {
 void CallSession::updateContactAddress (Address & contactAddress) const {
 	L_D();
 
-	if (d->isInConference() && (!contactAddress.hasParam("isfocus"))) {
-		// If in conference and contact address doesn't have isfocus
-		contactAddress.setParam("isfocus");
+	if (d->isInConference()) {
+		// Add conference ID
+		if (!contactAddress.hasUriParam("conf-id")) {
+			std::shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+			if (conference) {
+				Address conferenceAddress = conference->getConferenceAddress();
+				string confId = conferenceAddress.getUriParamValue("conf-id");
+				contactAddress.setUriParam("conf-id", confId);
+			}
+		}
+		if (!contactAddress.hasParam("isfocus")) {
+			// If in conference and contact address doesn't have isfocus
+			contactAddress.setParam("isfocus");
+		}
 	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
 		// If not in conference and contact address has isfocus
-		contactAddress.removeParam("isfocus");
+		if (contactAddress.hasUriParam("conf-id")) {
+			contactAddress.removeUriParam("conf-id");
+		}
+		if (contactAddress.hasParam("isfocus")) {
+			contactAddress.removeParam("isfocus");
+		}
 	}
 }
 
