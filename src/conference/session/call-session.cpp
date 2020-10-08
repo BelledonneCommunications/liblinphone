@@ -31,6 +31,7 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 
+#include "conference_private.h"
 #include "private.h"
 
 using namespace std;
@@ -748,6 +749,19 @@ void CallSessionPrivate::setContactOp () {
 		char * contactAddressStr = linphone_address_as_string(contact);
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+		std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+		if (conference) {
+/*
+			Address conferenceAddress = conference->getConferenceAddress();
+			string confId = conferenceAddress.getUriParamValue("conf-id");
+
+			if (!contactAddress.hasParam("conf-id")) {
+				contactAddress.setUriParam("conf-id", confId);
+			}
+*/
+			// Change conference address in order to add GRUU to it
+			conference->setConferenceAddress(contactAddress);
+		}
 		q->updateContactAddress (contactAddress);
 		op->setContactAddress(contactAddress.getInternalAddress());
 		linphone_address_unref(contact);
