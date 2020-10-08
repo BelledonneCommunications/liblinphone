@@ -1101,12 +1101,21 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 	belle_sip_object_unref(timer);
 }
 
-std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
+const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
 	Address peerAddress = conferenceId.getPeerAddress();
 	peerAddress.removeUriParam("conf-id");
+	peerAddress.removeUriParam("gr");
 	Address localAddress = conferenceId.getLocalAddress();
 	localAddress.removeUriParam("conf-id");
+	localAddress.removeUriParam("gr");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+
+	return prunedConferenceId;
+}
+
+std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
+
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
 	if (it != audioVideoConferenceById.cend()) {
@@ -1123,11 +1132,7 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	L_ASSERT(audioVideoConference);
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
-	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
-	localAddress.removeUriParam("conf-id");
-	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
 	auto conf = findAudioVideoConference (conferenceId);
 
@@ -1140,11 +1145,7 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 
 void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
-	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
-	localAddress.removeUriParam("conf-id");
-	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
 	auto it = audioVideoConferenceById.find(prunedConferenceId);
 	if (it != audioVideoConferenceById.cend()) {
