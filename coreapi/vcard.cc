@@ -24,6 +24,7 @@
 
 #include "linphone/factory.h"
 #include "linphone/wrapper_utils.h"
+#include "linphone/utils/utils.h"
 
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-sal.h"
