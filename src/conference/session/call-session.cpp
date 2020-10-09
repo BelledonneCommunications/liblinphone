@@ -750,7 +750,7 @@ void CallSessionPrivate::setContactOp () {
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 		std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
-		if (conference) {
+		if (conference && isInConference()) {
 
 			Address conferenceAddress = conference->getConferenceAddress();
 			string confId = conferenceAddress.getUriParamValue("conf-id");
@@ -1528,7 +1528,7 @@ void CallSession::updateContactAddress (Address & contactAddress) const {
 			// If in conference and contact address doesn't have isfocus
 			contactAddress.setParam("isfocus");
 		}
-	} else if (!d->isInConference() && contactAddress.hasParam("isfocus")) {
+	} else if (!d->isInConference()) {
 		// If not in conference and contact address has isfocus
 		if (contactAddress.hasUriParam("conf-id")) {
 			contactAddress.removeUriParam("conf-id");
