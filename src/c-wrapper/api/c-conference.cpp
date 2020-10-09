@@ -17,12 +17,15 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <memory>
+
 #include "linphone/api/c-conference-cbs.h"
 #include "linphone/api/c-conference.h"
 #include "linphone/wrapper_utils.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference_private.h"
 
+using namespace std;
 using namespace LinphonePrivate;
 
 // =============================================================================
@@ -86,7 +89,10 @@ LinphoneCore *linphone_conference_get_core (const LinphoneConference *conference
 }
 
 void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address) {
-	MediaConference::Conference::toCpp(conference)->setConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+	std::shared_ptr<LinphonePrivate::MediaConference::LocalConference> localConference = dynamic_pointer_cast<LinphonePrivate::MediaConference::LocalConference>(MediaConference::Conference::toCpp(conference)->getSharedFromThis());
+	if (localConference) {
+		MediaConference::Conference::toCpp(conference)->setConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
+	}
 }
 
 const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference) {

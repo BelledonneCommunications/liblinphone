@@ -132,8 +132,6 @@ public:
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
-	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
-
 	virtual void join () override;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
