@@ -27,6 +27,7 @@
 #include "mediastreamer2/msogl.h"
 
 #include "core/core.h"
+#include "call/call.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/conference.h"
@@ -251,9 +252,9 @@ void linphone_conference_set_participant_admin_status (LinphoneConference *confe
 
 void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
 #ifdef VIDEO_ENABLED
-	MediaConference::Conference *conf = MediaConference::Conference::toCpp(conference);
-	if (conf->isIn()) {// Ensure to be in conference
-		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+	std::shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+	if (cppConference->isIn()) {// Ensure to be in conference
+		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(cppConference->getVideoControlInterface());
 		if(control) {
 			VideoStream *stream = control->getVideoStream();
 			if(stream && stream->output2 && ms_filter_get_id(stream->output2) == MS_OGL_ID) {
@@ -266,9 +267,9 @@ void linphone_conference_preview_ogl_render(LinphoneConference *conference) {
 
 void linphone_conference_ogl_render(LinphoneConference *conference) {
 #ifdef VIDEO_ENABLED
-	MediaConference::Conference *conf = MediaConference::Conference::toCpp(conference);
-	if (conf->isIn()) {// Ensure to be in conference
-		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(conf->getVideoControlInterface());
+	std::shared_ptr<MediaConference::Conference> cppConference = MediaConference::Conference::toCpp(conference)->getSharedFromThis();
+	if (cppConference->isIn()) {// Ensure to be in conference
+		MS2VideoControl *control = dynamic_cast<MS2VideoControl*>(cppConference->getVideoControlInterface());
 		if(control) {
 			VideoStream *stream = control->getVideoStream();
 			if(stream && stream->output && ms_filter_get_id(stream->output) == MS_OGL_ID) {
@@ -317,10 +318,10 @@ bool_t linphone_conference_params_local_participant_enabled(const LinphoneConfer
 	return ConferenceParams::toCpp(params)->localParticipantEnabled();
 }
 
-const char *linphone_conference_get_ID (const LinphoneConference *obj) {
-	return L_STRING_TO_C(MediaConference::Conference::toCpp(obj)->getID());
+const char *linphone_conference_get_ID (const LinphoneConference *conference) {
+	return MediaConference::Conference::toCpp(conference)->getID().c_str();
 }
 
-void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID) {
-	MediaConference::Conference::toCpp(obj)->setID(L_C_TO_STRING(conferenceID));
+void linphone_conference_set_ID(LinphoneConference *conference, const char *conferenceID) {
+	MediaConference::Conference::toCpp(conference)->setID(conferenceID);
 }
