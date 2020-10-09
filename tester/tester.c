@@ -477,7 +477,7 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
+	char * addr_str = linphone_address_as_string(linphone_conference_get_conference_address(conference));
 
 	if (addr_str) {
 		//ms_message("Conference [%s] state changed: %s", addr_str, linphone_conference_state_to_string(newState));
