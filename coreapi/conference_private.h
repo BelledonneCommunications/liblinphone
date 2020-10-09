@@ -20,13 +20,9 @@
 #ifndef CONFERENCE_PRIVATE_H
 #define CONFERENCE_PRIVATE_H
 
-#include <map>
-
 #include "linphone/core.h"
-#include "call/call.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
-#include "conference/handlers/local-audio-video-conference-event-handler.h"
 
 #include "belle-sip/object++.hh"
 
@@ -67,6 +63,7 @@ void linphone_conference_set_state_changed_callback(LinphoneConference *obj, Lin
 LINPHONE_BEGIN_NAMESPACE
 
 class Call;
+class CallSessionListener;
 class Participant;
 class AudioControlInterface;
 class VideoControlInterface;
@@ -75,8 +72,12 @@ class MixerSession;
 class ConferenceFactoryInterface;
 class ConferenceParamsInterface;
 class ConferenceParams;
+class Conference;
 
 class RemoteConferenceEventHandler;
+#ifdef HAVE_ADVANCED_IM
+class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
