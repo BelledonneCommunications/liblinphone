@@ -903,6 +903,23 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneTransferCallConnected,initial_marie_stat.number_of_LinphoneTransferCallConnected+1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,initial_marie_stat.number_of_LinphoneCallEnd+1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallEnd,initial_laure_stat.number_of_LinphoneCallEnd+1,5000));
+
+		LinphoneConference * conference = linphone_core_get_conference(marie->lc);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		const char * new_conference_address_str = "sip:toto@sip.example.org";
+		LinphoneAddress *new_conference_address = linphone_address_new (new_conference_address_str);
+		BC_ASSERT_PTR_NOT_NULL(new_conference_address);
+		linphone_conference_set_conference_address(conference, new_conference_address);
+		linphone_address_unref(new_conference_address);
+
+		//wait a bit for the conference audio processing to run, despite we do not test it for the moment
+		wait_for_list(lcs,NULL,0,5000);
+
+		const LinphoneAddress *current_conference_address = linphone_conference_get_conference_address(conference);
+		char * current_conference_address_str = linphone_address_as_string(current_conference_address);
+		BC_ASSERT_NOT_EQUAL(strcmp(current_conference_address_str,new_conference_address_str), 0, int, "%d");
+		linphone_address_unref((LinphoneAddress *)current_conference_address);
+		ms_free(current_conference_address_str);
 	}
 
 	if (!BC_ASSERT_PTR_NOT_NULL(linphone_core_get_conference(marie->lc))) {
