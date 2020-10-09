@@ -27,6 +27,7 @@
 #include "mediastreamer2/msogl.h"
 
 #include "core/core.h"
+#include "call/call.h"
 #include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/conference.h"
