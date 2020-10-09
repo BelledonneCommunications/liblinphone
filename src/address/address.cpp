@@ -96,7 +96,9 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 }
 
 Address::Address (const ConferenceAddress &conferenceAddress) : Address(IdentityAddress(conferenceAddress)) {
-	setUriParam ("conf-id", conferenceAddress.getConfId());
+	if (conferenceAddress.getConfId().empty() == false) {
+		setUriParam ("conf-id", conferenceAddress.getConfId());
+	}
 }
 
 Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
