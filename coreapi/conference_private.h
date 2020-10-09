@@ -90,7 +90,9 @@ class RemoteConference;
  */
 
 class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+#ifdef HAVE_ADVANCED_IM
 	friend class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference();
