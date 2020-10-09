@@ -20,15 +20,9 @@
 #ifndef CONFERENCE_PRIVATE_H
 #define CONFERENCE_PRIVATE_H
 
-#include <map>
-
 #include "linphone/core.h"
-#include "call/call.h"
 #include "linphone/conference.h"
 #include "conference/conference.h"
-#ifdef HAVE_ADVANCED_IM
-#include "conference/handlers/local-audio-video-conference-event-handler.h"
-#endif // HAVE_ADVANCED_IM
 
 #include "belle-sip/object++.hh"
 
@@ -69,6 +63,7 @@ void linphone_conference_set_state_changed_callback(LinphoneConference *obj, Lin
 LINPHONE_BEGIN_NAMESPACE
 
 class Call;
+class CallSessionListener;
 class Participant;
 class AudioControlInterface;
 class VideoControlInterface;
@@ -77,8 +72,12 @@ class MixerSession;
 class ConferenceFactoryInterface;
 class ConferenceParamsInterface;
 class ConferenceParams;
+class Conference;
 
 class RemoteConferenceEventHandler;
+#ifdef HAVE_ADVANCED_IM
+class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 
 namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
 
@@ -91,7 +90,9 @@ class RemoteConference;
  */
 
 class LINPHONE_PUBLIC Conference : public bellesip::HybridObject<LinphoneConference, Conference>, public LinphonePrivate::Conference {
+#ifdef HAVE_ADVANCED_IM
 	friend class LocalAudioVideoConferenceEventHandler;
+#endif // HAVE_ADVANCED_IM
 public:
 	Conference(const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~Conference();
@@ -134,8 +135,6 @@ public:
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
-	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
-
 	virtual void join () override;
 	virtual void join (const IdentityAddress &participantAddress) override;
 
@@ -159,6 +158,8 @@ public:
 	const std::string& getID() const {
 		return mConferenceID;
 	}
+
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);

@@ -80,6 +80,7 @@ Conference::~Conference() {
 
 void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
 	if ((getState() == ConferenceInterface::State::Instantiated) || (getState() == ConferenceInterface::State::CreationPending)) {
+
 		if (!conferenceAddress.isValid()) {
 			shared_ptr<CallSession> session = getMe()->getSession();
 			LinphoneErrorInfo *ei = linphone_error_info_new();
@@ -91,7 +92,8 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 		}
 
 		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
-		lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
+
+		lInfo() << "The Conference has been given the address " << conferenceAddress.asString();
 	} else {
 		lError() << "Cannot set the conference address of the Conference in state " << getState();
 		return;
@@ -421,10 +423,6 @@ LocalConference::~LocalConference() {
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 	mMixerSession.reset();
-}
-
-void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
-	Conference::setConferenceAddress(conferenceAddress);
 }
 
 void LocalConference::finalizeCreation() {

@@ -285,20 +285,6 @@ LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *
 LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conference);
 
 /**
- * Get the conference id as string
- * @param conference The #LinphoneConference object. @notnil
- * @return the conference id @notnil
- */
-LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *conference);
-
-/**
- * Set the conference id as string
- * @param conference The #LinphoneConference object. @notnil
- * @param conference_id the conference id to set. @notnil
- */
-LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
-
-/**
  * Change the admin status of a participant of a conference (you need to be an admin yourself to do this).
  * @param conference A #LinphoneConference object @notnil
  * @param participant The Participant for which to change the admin status @notnil
@@ -309,6 +295,23 @@ LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status (LinphoneC
 /************ */
 /* DEPRECATED */
 /* ********** */
+
+/**
+ * Get the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference id @maybenil
+ * @deprecated 10/07/2020 Use linphone_conference_get_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const LinphoneConference *conference);
+
+/**
+ * Set the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @param conference_id the conference id to set. @notnil
+ * @deprecated 10/07/2020 Use linphone_conference_set_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
+
 
 LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 int linphone_conference_leave(LinphoneConference *conference);

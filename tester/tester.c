@@ -497,11 +497,13 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
+	const LinphoneAddress * address = linphone_conference_get_conference_address(conference);
+	char * address_str = NULL;
 
-	if (addr_str) {
+	if (address) {
+		address_str = linphone_address_as_string(address);
 		//ms_message("Conference [%s] state changed: %s", addr_str, linphone_conference_state_to_string(newState));
-		ms_message("Conference [%s] state changed: %d", addr_str, newState);
+		ms_message("Conference [%s] state changed: %d", address_str, newState);
 	}
 
 	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) && (newState != LinphoneConferenceStateCreationPending)) {
@@ -538,11 +540,16 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 			manager->stat.number_of_LinphoneConferenceStateDeleted++;
 			break;
 		default:
-			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", addr_str);
+			ms_error("Invalid Conference state for Conference [%s] EndOfEnum is used ONLY as a guard", address_str ? address_str : "Unknown address");
 			break;
 	}
 
-	bctbx_free(addr_str);
+	if (address) {
+		linphone_address_unref((LinphoneAddress *)address);
+	}
+	if (address_str) {
+		bctbx_free(address_str);
+	}
 }
 
 void core_conference_state_changed (LinphoneCore *core, LinphoneConference *conference, LinphoneConferenceState state) {
