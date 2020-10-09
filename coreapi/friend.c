@@ -1476,9 +1476,11 @@ static int create_friend(void *data, int argc, char **argv, char **colName) {
 	unsigned int storage_id = (unsigned int)atoi(argv[0]);
 
 //sqlite3_exec return a Locale string and Belcard need to be in UTF8 for parsing
-        string localeBuffer(argv[6]);
-        string utf8Buffer = LinphonePrivate::Utils::localeToUtf8(localeBuffer);
-        vcard = linphone_vcard_context_get_vcard_from_buffer(context, utf8Buffer.c_str());
+	if (argv[6]) {
+		string localeBuffer(argv[6]);
+		string utf8Buffer = LinphonePrivate::Utils::localeToUtf8(localeBuffer);
+		vcard = linphone_vcard_context_get_vcard_from_buffer(context, utf8Buffer.c_str());
+	}
 
 	if (vcard) {
 		linphone_vcard_set_etag(vcard, argv[7]);
