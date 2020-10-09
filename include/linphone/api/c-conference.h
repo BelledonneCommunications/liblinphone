@@ -74,6 +74,15 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_addres
 LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference);
 
 /**
+ * Set the conference address
+ * @param conference The #LinphoneConference object. @notnil
+ * @param address the conference address to set. @notnil
+ * @warning This is only allowed for a remote conference if it is in state CreationPending or Instantiated
+ */
+LINPHONE_PUBLIC void linphone_conference_set_conference_address(LinphoneConference *conference, LinphoneAddress *address);
+
+
+/**
  * @}
  */
 
