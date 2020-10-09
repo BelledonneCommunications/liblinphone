@@ -650,6 +650,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	// If conference is in termination pending state, all call sessions are about be kicked out of the conference hence unjoin streams
 	if (removeParticipantAllowed || getState() == ConferenceInterface::State::TerminationPending) {
 		std::shared_ptr<LinphonePrivate::Participant> participant = findParticipant(session);
+		if (participant->isAdmin()) setParticipantAdminStatus(participant, false);
 		Conference::removeParticipant(participant);
 		mMixerSession->unjoinStreamsGroup(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getStreamsGroup());
 
@@ -664,13 +665,14 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 		 */
 		if (getParticipantCount() == 1){
-			std::shared_ptr<LinphonePrivate::Participant> remaining_participant = participants.front();
-			const bool lastParticipantPreserveSession = remaining_participant->getPreserveSession();
+			std::shared_ptr<LinphonePrivate::Participant> remainingParticipant = participants.front();
+			if (remainingParticipant->isAdmin()) setParticipantAdminStatus(remainingParticipant, false);
+			const bool lastParticipantPreserveSession = remainingParticipant->getPreserveSession();
 			if (lastParticipantPreserveSession) {
 
-				std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
+				std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remainingParticipant->getSession());
 
-				lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
+				lInfo() << "Participant [" << remainingParticipant << "] with " << session->getRemoteAddress()->asString() << 
 					" is our last call in our conference, we will reconnect directly to it.";
 
 				const MediaSessionParams * params = session->getMediaParams();
@@ -694,11 +696,12 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				leave();
 
 				/* invoke removeParticipant() recursively to remove this last participant. */
-				bool success = Conference::removeParticipant(remaining_participant);
+				bool success = Conference::removeParticipant(remainingParticipant);
 				mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
 				return success;
 			}
 		}
+		chooseAnotherAdminIfNoneInConference();
 	}
 
 	if (getParticipantCount() == 0){
@@ -711,6 +714,19 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	}
 	
 	return err;
+}
+
+void LocalConference::chooseAnotherAdminIfNoneInConference() {
+	if (participants.empty() == false) {
+		const auto & adminParticipant = std::find_if(participants.cbegin(), participants.cend(), [&] (const auto & p) {
+			return (p->isAdmin() == true);
+		});
+		// If not admin participant is found
+		if (adminParticipant == participants.cend()) {
+			setParticipantAdminStatus(participants.front(), true);
+			lInfo() << this << ": New admin designated is " << *(participants.front());
+		}
+	}
 }
 
 int LocalConference::removeParticipant (const IdentityAddress &addr) {

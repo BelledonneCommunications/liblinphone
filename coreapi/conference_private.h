@@ -226,6 +226,8 @@ public:
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
 private:
+
+	void chooseAnotherAdminIfNoneInConference();
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
