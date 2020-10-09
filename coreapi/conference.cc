@@ -1116,7 +1116,7 @@ bool RemoteConference::removeParticipant(const std::shared_ptr<LinphonePrivate::
 	} else {
 		lError() << "Unable to remove participant " << participant->getAddress().asString() << " because focus " << getMe()->getAddress().asString() << " is not admin";
 	}
-	return -1;
+	return false;
 }
 
 int RemoteConference::removeParticipant (const IdentityAddress &addr) {
