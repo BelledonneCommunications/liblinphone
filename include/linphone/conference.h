@@ -312,6 +312,22 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
 
+/**
+ * Get the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference id @notnil
+ * @deprecated 10/07/2020 Use linphone_conference_get_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const LinphoneConference *conference);
+
+/**
+ * Set the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @param conference_id the conference id to set. @notnil
+ * @deprecated 10/07/2020 Use linphone_conference_set_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
+
 LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 int linphone_conference_leave(LinphoneConference *conference);
 LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
