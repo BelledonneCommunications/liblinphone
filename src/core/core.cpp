@@ -1104,8 +1104,10 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
 	Address peerAddress = conferenceId.getPeerAddress();
 	peerAddress.removeUriParam("gr");
+	peerAddress.removeUriParam("conf-id");
 	Address localAddress = conferenceId.getLocalAddress();
 	localAddress.removeUriParam("gr");
+	localAddress.removeUriParam("conf-id");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
 	return prunedConferenceId;
