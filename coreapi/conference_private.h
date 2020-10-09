@@ -277,6 +277,8 @@ public:
 
 	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
+	virtual void setSubject (const std::string &subject) override;
+	virtual bool update(const ConferenceParamsInterface &params) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
