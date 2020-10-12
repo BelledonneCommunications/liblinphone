@@ -391,6 +391,14 @@ void linphone_call_params_set_received_fps (LinphoneCallParams *params, float va
 // Private functions.
 // =============================================================================
 
+const char * linphone_call_params_get_conference_id (const LinphoneCallParams *params) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getConferenceId();
+}
+
+void linphone_call_params_set_conference_id (LinphoneCallParams *params, const char * id) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setConferenceId(L_C_TO_STRING(id));
+}
+
 bool_t linphone_call_params_get_in_conference (const LinphoneCallParams *params) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->getInConference();
 }

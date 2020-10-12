@@ -89,6 +89,8 @@ void linphone_call_params_set_custom_sdp_attributes(LinphoneCallParams *params, 
 void linphone_call_params_set_custom_sdp_media_attributes(LinphoneCallParams *params, LinphoneStreamType type, const SalCustomSdpAttribute *csa);
 bool_t linphone_call_params_get_in_conference(const LinphoneCallParams *params);
 void linphone_call_params_set_in_conference(LinphoneCallParams *params, bool_t value);
+const char * linphone_call_params_get_conference_id (const LinphoneCallParams *params);
+void linphone_call_params_set_conference_id (LinphoneCallParams *params, const char * id);
 bool_t linphone_call_params_get_internal_call_update(const LinphoneCallParams *params);
 void linphone_call_params_set_internal_call_update(LinphoneCallParams *params, bool_t value);
 bool_t linphone_call_params_implicit_rtcp_fb_enabled(const LinphoneCallParams *params);

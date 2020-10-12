@@ -2490,13 +2490,14 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
+	const ConferenceAddress conferenceAddress = ConferenceAddress(linphone_address_as_string(resource));
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		ConferenceAddress(conferenceAddress),
+		ConferenceAddress(conferenceAddress)
 	));
 	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		ConferenceAddress(conferenceAddress),
+		ConferenceAddress(conferenceAddress)
 	));
 
 	if (chatRoom)
