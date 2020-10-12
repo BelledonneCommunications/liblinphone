@@ -1217,7 +1217,7 @@ LinphoneStatus terminate_conference(bctbx_list_t *participants, LinphoneCoreMana
 	}
 
 	ms_free(lcm_stats);
-	bctbx_free(lcs);
+	bctbx_list_free(lcs);
 
 	return 0;
 }
