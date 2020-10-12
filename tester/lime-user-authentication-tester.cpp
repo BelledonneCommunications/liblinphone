@@ -297,6 +297,50 @@ static void TLS_mandatory_No_certificate(void) {
 	create_user_sip_client_cert_chain(448, tls_mandatory, certProvider::config_sip, empty, empty, expect_failure);
 }
 
+/**
+ * Create a user registered on lime on sip.example.org and auth1.example.org using the same lime server
+ */
+static void Digest_Auth_multidomains_curve(const int curveId) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *libtester = linphone_core_manager_create("liblinphone_tester_lime_x3dh_rc");
+	//LinphoneCoreManager *libtester = linphone_core_manager_create(NULL);
+	//add_user_to_core_config(libtester->lc, "sip:liblinphone_tester@auth1.example.org", "liblinphone_tester", "auth1.example.org", "sip:auth1.example.org; transport=tls", "secret");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, libtester);
+
+	if (curveId == 448) {
+		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c448");
+		linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_any_domain_c448_url);
+		linphone_config_set_string(linphone_core_get_config(libtester->lc),"lime","curve","c448");
+		linphone_core_set_lime_x3dh_server_url(libtester->lc, lime_server_any_domain_c448_url);
+	} else {
+		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
+		linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_any_domain_c25519_url);
+		linphone_config_set_string(linphone_core_get_config(libtester->lc),"lime","curve","c25519");
+		linphone_core_set_lime_x3dh_server_url(libtester->lc, lime_server_any_domain_c25519_url);
+	}
+
+	stats initialMarieStats = marie->stat;
+	stats initialLibtesterStats = libtester->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &libtester->stat.number_of_X3dhUserCreationSuccess, initialLibtesterStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(libtester);
+}
+
+static void Digest_Auth_multidomains(void) {
+	Digest_Auth_multidomains_curve(25519);
+	//Digest_Auth_multidomains_curve(448);
+}
+
 
 test_t lime_server_auth_tests[] = {
 	TEST_ONE_TAG("sip:uri in altname DNS", identity_in_altName_one_DNS_entry, "LimeX3DH"),
@@ -307,7 +351,8 @@ test_t lime_server_auth_tests[] = {
 	TEST_ONE_TAG("TLS mandatory, no certificate", TLS_mandatory_No_certificate, "LimeX3DH"),
 	TEST_ONE_TAG("CN and From mismatch on TLS mandatory server", TLS_mandatory_CN_UserId_mismatch, "LimeX3DH"),
 	TEST_ONE_TAG("CN and From mismatch on TLS optional server", TLS_optional_CN_UserId_mismatch, "LimeX3DH"),
-	TEST_ONE_TAG("Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH")
+	TEST_ONE_TAG("Connect two users with client certificate to TLS mandatory server", TLS_mandatory_two_users, "LimeX3DH"),
+	TEST_ONE_TAG("Digest Auth - multiple domains", Digest_Auth_multidomains, "LimeX3DH"),
 };
 
 test_suite_t lime_server_auth_test_suite = {
