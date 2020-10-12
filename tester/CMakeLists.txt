@@ -178,6 +178,7 @@ set(RC_FILES
 	rcfiles/groupchat_rc
 	rcfiles/groupchat_lime_x3dh_rc
 	rcfiles/arthur_rc 
+	rcfiles/liblinphone_tester_lime_x3dh_rc
 )
 
 set(IMAGE_FILES
