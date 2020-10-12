@@ -54,7 +54,7 @@ public:
 		
 		bool_t result;
 		while (!(result = condition()) && (std::chrono::steady_clock::now() - start < timeout)) {
-			for (const std::function<void ()> iterate:mIterateFuncs) {
+			for (const std::function<void ()> &iterate:mIterateFuncs) {
 				iterate();
 			}
 			ms_usleep(100);
@@ -432,7 +432,12 @@ static void group_chat_room_server_deletion_with_rmt_lst_event_handler (void) {
 		return false;
 	});
 	
+	//to avoid creation attempt of a new chatroom
+	linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(focus.getLc()), NULL);
+
 	linphone_chat_message_unref(msg);
+	
+	//Will suceed as "404 not" found is interpreted as succesfull chatroom deletion
 	linphone_core_manager_delete_chat_room(marie.getCMgr(), marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline.getCMgr(), paulineCr, coresList);
 
