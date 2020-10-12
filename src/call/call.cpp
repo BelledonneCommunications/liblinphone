@@ -350,6 +350,7 @@ void Call::removeFromConference(const Address & remoteContactAddress) {
 		if (conference) {
 			conference->setState(ConferenceInterface::State::TerminationPending);
 			setConference(nullptr);
+			setConferenceId("");
 		}
 	}
 }
@@ -408,6 +409,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
+				// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
+				if (!remoteContactAddress.hasUriParam("conf-id")) {
+					if (getConferenceId().empty() == false) {
+						remoteContactAddress.setUriParam("conf-id", getConferenceId());
+					}
+				}
 				if (!remoteContactAddress.hasParam("isfocus")) {
 					remoteContactAddress.setParam("isfocus");
 					removeFromConference(remoteContactAddress);
@@ -436,13 +443,24 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
 					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
-					// Terminate conference is found
-					if (conference == nullptr) {
+					if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
 						// It is expected that the core of the remote conference is the participant one
 						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
+
+						// Record conf-id to be used later when terminating the remote conference
+						if (remoteContactAddress.hasUriParam("conf-id")) {
+							setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+						}
+
 					}
 				} else if (getConference()) {
+					// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
+					if (!remoteContactAddress.hasUriParam("conf-id")) {
+						if (getConferenceId().empty() == false) {
+							remoteContactAddress.setUriParam("conf-id", getConferenceId());
+						}
+					}
 					if (!remoteContactAddress.hasParam("isfocus")) {
 						remoteContactAddress.setParam("isfocus");
 						removeFromConference(remoteContactAddress);
@@ -470,13 +488,17 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
 					shared_ptr<MediaConference::RemoteConference> remoteConf = nullptr;
-
-
 					// Create remote conference if no conference with the expected ID is found in the database
 					if (conference == nullptr) {
 						// It is expected that the core of the remote conference is the participant one
 						remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
 						setConference(remoteConf->toC());
+
+						// Record conf-id to be used later when terminating the remote conference
+						if (remoteContactAddress.hasUriParam("conf-id")) {
+							setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+						}
+
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
@@ -1029,6 +1051,14 @@ LinphoneCallStats *Call::getVideoStats () const {
 // Boolean to state whether it is the focus of a local conference
 bool Call::isInConference () const {
 	return getActiveSession()->getPrivate()->isInConference();
+}
+
+void Call::setConferenceId (const std::string & conferenceId) {
+	return getActiveSession()->getPrivate()->setConferenceId(conferenceId);
+}
+
+std::string Call::getConferenceId () const {
+	return getActiveSession()->getPrivate()->getConferenceId();
 }
 
 bool Call::mediaInProgress () const {

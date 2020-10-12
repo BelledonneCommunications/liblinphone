@@ -221,6 +221,14 @@ bool CallSessionPrivate::isInConference () const {
 	return params->getPrivate()->getInConference();
 }
 
+const std::string CallSessionPrivate::getConferenceId () const {
+	return params->getPrivate()->getConferenceId();
+}
+
+void CallSessionPrivate::setConferenceId (const std::string id) {
+	params->getPrivate()->setConferenceId(id);
+}
+
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::abort (const string &errorMsg) {
@@ -749,18 +757,15 @@ void CallSessionPrivate::setContactOp () {
 		char * contactAddressStr = linphone_address_as_string(contact);
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
-		if (conference && isInConference()) {
+		if (isInConference()) {
+			const string confId = getConferenceId();
+			contactAddress.setUriParam("conf-id", confId);
+			std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+			if (conference) {
 
-			Address conferenceAddress = conference->getConferenceAddress();
-			string confId = conferenceAddress.getUriParamValue("conf-id");
-
-			if (!contactAddress.hasParam("conf-id")) {
-				contactAddress.setUriParam("conf-id", confId);
+				// Change conference address in order to add GRUU to it
+	//			conference->setConferenceAddress(contactAddress);
 			}
-
-			// Change conference address in order to add GRUU to it
-			conference->setConferenceAddress(contactAddress);
 		}
 		q->updateContactAddress (contactAddress);
 		op->setContactAddress(contactAddress.getInternalAddress());
@@ -1511,16 +1516,14 @@ const CallSessionParams * CallSession::getParams () const {
 	return d->params;
 }
 
-void CallSession::updateContactAddress (Address & contactAddress) const {
+void CallSession::updateContactAddress (Address & contactAddress) {
 	L_D();
 
 	if (d->isInConference()) {
 		// Add conference ID
 		if (!contactAddress.hasUriParam("conf-id")) {
-			std::shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
-			if (conference) {
-				Address conferenceAddress = conference->getConferenceAddress();
-				string confId = conferenceAddress.getUriParamValue("conf-id");
+			const string confId = d->getConferenceId();
+			if (confId.empty() == false) {
 				contactAddress.setUriParam("conf-id", confId);
 			}
 		}

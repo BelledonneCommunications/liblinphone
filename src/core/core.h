@@ -260,7 +260,6 @@ private:
 	Core ();
 
 	std::unordered_map<ConferenceId, std::shared_ptr<MediaConference::Conference>> audioVideoConferenceById;
-	const ConferenceId prepareConfereceIdForSearch(const ConferenceId & conferenceId) const;
 
 	L_DECLARE_PRIVATE(Core);
 	L_DISABLE_COPY(Core);

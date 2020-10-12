@@ -270,7 +270,7 @@ int Conference::terminate () {
 	char * contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
-	if (contactAddress.hasParam ("conf-id")) {
+	if (contactAddress.hasUriParam ("conf-id")) {
 		contactAddress.removeUriParam("conf-id");
 		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
 	}
@@ -317,8 +317,11 @@ void Conference::onConferenceTerminated (const IdentityAddress &addr) {
 
 	// Keep a reference to the conference to be able to set the state to Deleted
 	shared_ptr<Conference> ref = getSharedFromThis();
-	getCore()->deleteAudioVideoConference(ref);
 	setState(ConferenceInterface::State::Deleted);
+	// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by Core::uninit()
+	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
+		getCore()->deleteAudioVideoConference(ref);
+	}
 }
 
 void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) {
@@ -404,7 +407,7 @@ LocalConference::LocalConference (
 		contactAddressStr = const_cast<char *>(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
 	Address contactAddress(contactAddressStr);
-	if (!contactAddress.hasParam("conf-id")) {
+	if (!contactAddress.hasUriParam("conf-id")) {
 		char confId[6];
 		belle_sip_random_token(confId,sizeof(confId));
 		contactAddress.setUriParam("conf-id",confId);
@@ -500,6 +503,10 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			linphone_call_params_set_in_conference(new_params, TRUE);
 
+			const Address & conferenceAddress = getConferenceAddress ();
+			const string & confId = conferenceAddress.getUriParamValue("conf-id");
+			linphone_call_params_set_conference_id(new_params, confId.c_str());
+
 			call = linphone_core_invite_address_with_params(getCore()->getCCore(), address, new_params);
 
 			if (!call){
@@ -537,6 +544,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
+		const Address & conferenceAddress = getConferenceAddress ();
+		const string & confId = conferenceAddress.getUriParamValue("conf-id");
+
 		switch(state){
 			case LinphoneCallOutgoingInit:
 			case LinphoneCallOutgoingProgress:
@@ -544,6 +554,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			case LinphoneCallPausing:
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
 			break;
 			case LinphoneCallPaused:
 			{
@@ -553,6 +565,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				 */
 				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 					L_GET_PRIVATE(call->getParams()))->setInConference(true);
+				const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+					L_GET_PRIVATE(call->getParams()))->setConferenceId(confId);
 				const_cast<LinphonePrivate::MediaSessionParams *>(
 					call->getParams())->enableVideo(getCurrentParams().videoEnabled());
 				// Conference resumes call that previously paused in order to add the participant
@@ -565,6 +579,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 				LinphoneCallParams *params = linphone_core_create_call_params(getCore()->getCCore(), call->toC());
 				linphone_call_params_set_in_conference(params, TRUE);
 				linphone_call_params_enable_video(params, getCurrentParams().videoEnabled());
+				linphone_call_params_set_conference_id(params, confId.c_str());
 
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
@@ -952,8 +967,8 @@ RemoteConference::RemoteConference (
 
 	confParams->enableLocalParticipant(false);
 
-	setConferenceId(conferenceId);
-
+	// Store conference ID to retrieve later the local address when the focus call goes to StreamsRunning state
+	this->conferenceId = conferenceId;
 	setConferenceAddress(focus);
 }
 
@@ -1213,19 +1228,29 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 	list<std::shared_ptr<LinphonePrivate::Call>>::iterator it;
 	switch (state) {
 		case LinphoneCallConnected:
-			m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
-			it = m_pendingCalls.begin();
-			while (it != m_pendingCalls.end()) {
-				std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
-				LinphoneCallState pendingCallState = static_cast<LinphoneCallState>(pendingCall->getState());
-				if ((pendingCallState == LinphoneCallStreamsRunning) || (pendingCallState == LinphoneCallPaused)) {
-					it = m_pendingCalls.erase(it);
-					transferToFocus(pendingCall);
-				} else
-					it++;
+		case LinphoneCallUpdatedByRemote:
+		{
+			Address focusContactAddress(m_focusCall->getRemoteContact());
+			ConferenceId confId = getConferenceId();
+			Address peerAddress(confId.getPeerAddress());
+			if ((getState() == ConferenceInterface::State::CreationPending) && (focusContactAddress.hasUriParam("conf-id")) && (!peerAddress.hasUriParam("conf-id"))) {
+				m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
+				it = m_pendingCalls.begin();
+				while (it != m_pendingCalls.end()) {
+					std::shared_ptr<LinphonePrivate::Call> pendingCall = *it;
+					LinphoneCallState pendingCallState = static_cast<LinphoneCallState>(pendingCall->getState());
+					if ((pendingCallState == LinphoneCallStreamsRunning) || (pendingCallState == LinphoneCallPaused)) {
+						it = m_pendingCalls.erase(it);
+						transferToFocus(pendingCall);
+					} else
+						it++;
+				}
+
+				setConferenceId(ConferenceId(ConferenceAddress(m_focusContact), getConferenceId().getLocalAddress()));
+				m_focusCall->setConferenceId(focusContactAddress.getUriParamValue("conf-id"));
+				finalizeCreation();
 			}
-			setConferenceId(ConferenceId(ConferenceAddress(m_focusContact), getConferenceId().getLocalAddress()));
-			finalizeCreation();
+		}
 			break;
 		case LinphoneCallError:
 			reset();

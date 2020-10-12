@@ -32,6 +32,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	sessionName = src->sessionName;
 	privacy = src->privacy;
 	inConference = src->inConference;
+	conferenceId = src->conferenceId;
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
@@ -101,6 +102,7 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
 	d->inConference = false;
+	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
 	setProxyConfig(NULL);
 }
