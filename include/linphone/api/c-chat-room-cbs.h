@@ -247,6 +247,7 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_participant_device_removed (Linp
  * Get the conference joined callback.
  * @param cbs LinphoneChatRoomCbs object. @notnil
  * @return The current conference joined callback.
+ * @deprecated on 13/10/2020
  */
 LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceJoinedCb linphone_chat_room_cbs_get_conference_joined (const LinphoneChatRoomCbs *cbs);
 
@@ -254,6 +255,7 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceJoinedCb linphone_chat_room_cbs_get
  * Set the conference joined callback.
  * @param cbs LinphoneChatRoomCbs object. @notnil
  * @param cb The conference joined callback to be used.
+ * @deprecated on 13/10/2020
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_joined (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceJoinedCb cb);
 
@@ -261,6 +263,7 @@ LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_joined (LinphoneChatR
  * Get the conference left callback.
  * @param cbs LinphoneChatRoomCbs object. @notnil
  * @return The current conference left callback.
+ * @deprecated on 13/10/2020
  */
 LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_conference_left (const LinphoneChatRoomCbs *cbs);
 
@@ -268,6 +271,7 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsConferenceLeftCb linphone_chat_room_cbs_get_c
  * Set the conference left callback.
  * @param cbs LinphoneChatRoomCbs object. @notnil
  * @param cb The conference left callback to be used.
+ * @deprecated on 13/10/2020
  */
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_conference_left (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsConferenceLeftCb cb);
 
