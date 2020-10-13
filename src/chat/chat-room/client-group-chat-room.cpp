@@ -333,7 +333,7 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
 	getConference()->setLastNotify(forceFullState ? 0 : lastNotifyId);
-	lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << conferenceId << "]";
 
 	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(getConference())->eventHandler.get());
@@ -473,7 +473,7 @@ ChatRoom::SecurityLevel ClientGroupChatRoom::getSecurityLevelExcept(const std::s
 }
 
 bool ClientGroupChatRoom::hasBeenLeft () const {
-	return (getState() != State::Created);
+	return (getState() != State::Created && getState() != State::CreationPending);
 }
 
 const ConferenceAddress ClientGroupChatRoom::getConferenceAddress () const {
@@ -535,7 +535,7 @@ bool ClientGroupChatRoom::addParticipants (
 	L_D();
 
 	if ((getState() != ConferenceInterface::State::Instantiated) && (getState() != ConferenceInterface::State::Created)) {
-		lError() << "Cannot add participants to the ClientGroupChatRoom in a state other than Instantiated or Created";
+		lError() << "Cannot add participants to the ClientGroupChatRoom [" << getConferenceId() << "] in a state other than Instantiated or Created: [" << getState() << "]";
 		return false;
 	}
 
@@ -546,13 +546,19 @@ bool ClientGroupChatRoom::addParticipants (
 	}
 	if (getCapabilities() & ClientGroupChatRoom::Capabilities::OneToOne &&
 	    (addressesList.size() > 1 || getParticipantCount() != 0)) {
-		lError() << "Cannot add more than one participant in a one-to-one chatroom";
+		lError() << "Cannot add more than one participant in a one-to-one chat room [" << getConferenceId() << "]";
 		return false;
 	}
 
 	if (getState() == ConferenceInterface::State::Instantiated) {
+		// Set the participants list in the conference to have it before the first notify is received
+		getConference()->addParticipants(addressesList);
+		// Set ourselves as admin as we are creating the chat room otherwise info won't be available until first notify
+		getConference()->getMe()->setAdmin(true);
+		
 		auto session = d->createSession();
 		sendInvite(session, addressesList);
+
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
@@ -618,7 +624,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 		return;
 
 	if (!getMe()->isAdmin()) {
-		lError() << "Cannot change the participant admin status because I am not admin";
+		lError() << "Cannot change the chat room [" << getConferenceId() << "] participant admin status because I am not admin";
 		return;
 	}
 
@@ -643,12 +649,12 @@ void ClientGroupChatRoom::setSubject (const string &subject) {
 	L_D();
 
 	if (getState() != ConferenceInterface::State::Created) {
-		lError() << "Cannot change the ClientGroupChatRoom subject in a state other than Created";
+		lError() << "Cannot change the ClientGroupChatRoom [" << getConferenceId() << "] subject in a state other than Created";
 		return;
 	}
 
 	if (!getMe()->isAdmin()) {
-		lError() << "Cannot change the ClientGroupChatRoom subject because I am not admin";
+		lError() << "Cannot change the ClientGroupChatRoom [" << getConferenceId() << "] subject because I am not admin";
 		return;
 	}
 
@@ -702,6 +708,28 @@ void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 
 	setConferenceId(ConferenceId(addr, getConferenceId().getLocalAddress()));
 	d->chatRoomListener->onChatRoomInsertRequested(getSharedFromThis());
+
+	bool performMigration = false;
+	shared_ptr<AbstractChatRoom> chatRoom;
+	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
+		//ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
+		chatRoom = getCore()->findOneToOneChatRoom(getMe()->getAddress(), getParticipants().front()->getAddress(), true, d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
+
+		if (chatRoom) {
+			auto capabilities = chatRoom->getCapabilities();
+
+			if (getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
+				performMigration = true;
+			}
+		}
+	}
+
+	if (performMigration) {
+		BasicToClientGroupChatRoom::migrate(getSharedFromThis(), chatRoom);
+	} else {
+		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
+	}
+	
 	setState(ConferenceInterface::State::Created);
 }
 
@@ -730,6 +758,7 @@ void ClientGroupChatRoom::onConferenceTerminated (const IdentityAddress &addr) {
 	d->addEvent(event);
 
 	LinphoneChatRoom *cr = d->getCChatRoom();
+	// Deprecated
 	_linphone_chat_room_notify_conference_left(cr, L_GET_C_BACK_PTR(event));
 
 	if (d->deletionOnTerminationEnabled) {
@@ -742,31 +771,9 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 	L_D();
 
 	if (getState() != ConferenceInterface::State::Created) {
-		lWarning() << "First notify received in ClientGroupChatRoom that is not in the Created state ["
+		lWarning() << "First notify received in ClientGroupChatRoom [" << getConferenceId() << "] that is not in the Created state ["
 			<< getState() << "], ignoring it!";
 		return;
-	}
-
-	bool performMigration = false;
-	shared_ptr<AbstractChatRoom> chatRoom;
-	if (getParticipantCount() == 1 && d->capabilities & ClientGroupChatRoom::Capabilities::OneToOne) {
-		//ConferenceId id(getParticipants().front()->getAddress(), getMe()->getAddress());
-		chatRoom = getCore()->findOneToOneChatRoom(getMe()->getAddress(), getParticipants().front()->getAddress(), true, d->capabilities & ClientGroupChatRoom::Capabilities::Encrypted);
-
-		if (chatRoom) {
-			auto capabilities = chatRoom->getCapabilities();
-
-			if (getCore()->getPrivate()->basicToFlexisipChatroomMigrationEnabled() && (capabilities & ChatRoom::Capabilities::Basic) && (capabilities & ChatRoom::Capabilities::Migratable)) {
-				performMigration = true;
-			}
-		}
-	}
-
-	if (performMigration) {
-		BasicToClientGroupChatRoom::migrate(getSharedFromThis(), chatRoom);
-	}
-	else {
-		d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
 	}
 
 	auto event = make_shared<ConferenceEvent>(
@@ -775,11 +782,18 @@ void ClientGroupChatRoom::onFirstNotifyReceived (const IdentityAddress &addr) {
 		getConferenceId()
 	);
 
-	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state",FALSE );
+	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
 	if (!forceFullState) //to avoid this event to be repeated for each full state
 		d->addEvent(event);
 
+	// Insert chat room "again" to update participants & last notify id
+	d->chatRoomListener->onChatRoomInsertInDatabaseRequested(getSharedFromThis());
+
 	LinphoneChatRoom *cr = d->getCChatRoom();
+	getConference()->setDetailsReceived();
+	_linphone_chat_room_notify_conference_details_received(cr);
+
+	// Deprecated
 	_linphone_chat_room_notify_conference_joined(cr, L_GET_C_BACK_PTR(event));
 
 	d->bgTask.stop();

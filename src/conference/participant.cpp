@@ -124,6 +124,11 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
 }
 
 AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
+	// Until participant list & self devices list is populated, don't assume chat room is safe but encrypted
+	if (getDevices().size() == 0) {
+		return AbstractChatRoom::SecurityLevel::Encrypted;
+	}
+
 	bool isSafe = true;
 	for (const auto &device : getDevices()) {
 		if (ignoredDevice != device) {

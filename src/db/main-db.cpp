@@ -383,10 +383,20 @@ long long MainDbPrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &cha
 
 	long long chatRoomId = selectChatRoomId(peerSipAddressId, localSipAddressId);
 	if (chatRoomId >= 0) {
-		// The chat room is already stored in DB, but still update the notify id that might have changed
+		// The chat room is already stored in DB, but still update the notify id & the participants that might have changed
 		lInfo() << "Update chat room in database: " << conferenceId << ".";
 		*dbSession.getBackendSession() << "UPDATE chat_room SET last_notify_id = :lastNotifyId WHERE id = :chatRoomId",
 			soci::use(notifyId), soci::use(chatRoomId);
+
+		for (const auto &participant : chatRoom->getParticipants()) {
+			long long participantId = insertChatRoomParticipant(
+				chatRoomId,
+				insertSipAddress(participant->getAddress().asString()),
+				participant->isAdmin()
+			);
+			for (const auto &device : participant->getDevices())
+				insertChatRoomParticipantDevice(participantId, insertSipAddress(device->getAddress().asString()), device->getName());
+		}
 	} else {
 		
 		lInfo() << "Insert new chat room in database: " << conferenceId << ".";
