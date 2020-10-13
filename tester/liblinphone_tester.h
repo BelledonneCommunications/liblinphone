@@ -226,13 +226,14 @@ typedef struct _stats {
 	int number_of_LinphoneMessageDeliveredToUser;
 	int number_of_LinphoneMessageDisplayed;
 	int number_of_LinphoneMessageSent;
+	int number_of_LinphoneChatMessageSent;
 	int number_of_LinphoneMessageEphemeralTimerStarted;
 	int number_of_LinphoneMessageEphemeralDeleted;
 	int number_of_LinphoneIsComposingActiveReceived;
 	int number_of_LinphoneIsComposingIdleReceived;
 	int progress_of_LinphoneFileTransfer;
 
-	int number_of_LinphoneChatRoomConferenceJoined;
+	int number_of_ChatRoomConferenceDetailsReceived;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
 	int number_of_X3dhUserCreationSuccess;
@@ -501,6 +502,7 @@ const char *liblinphone_tester_get_notify_content(void);
 void liblinphone_tester_chat_message_state_change(LinphoneChatMessage* msg,LinphoneChatMessageState state,void* ud);
 void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg, LinphoneChatMessageState state);
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg);
+void liblinphone_tester_chat_room_chat_message_sent(LinphoneChatRoom *room, const LinphoneEventLog *event_log);
 void liblinphone_tester_chat_message_ephemeral_timer_started(LinphoneChatMessage *msg);
 void liblinphone_tester_chat_message_ephemeral_deleted(LinphoneChatMessage *msg);
 void core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state);

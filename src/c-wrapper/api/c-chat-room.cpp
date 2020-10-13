@@ -551,6 +551,10 @@ void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const Linp
 	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, cr, event_log)
 }
 
+void _linphone_chat_room_notify_conference_details_received(LinphoneChatRoom *cr) {
+	NOTIFY_IF_EXIST(ConferenceDetailsReceived, conference_details_received, cr)
+}
+
 void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
 	NOTIFY_IF_EXIST(ConferenceJoined, conference_joined, cr, eventLog)
 }
