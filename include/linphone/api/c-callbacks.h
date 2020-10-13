@@ -297,6 +297,12 @@ typedef void (*LinphoneChatRoomCbsParticipantDeviceAddedCb) (LinphoneChatRoom *c
 typedef void (*LinphoneChatRoomCbsParticipantDeviceRemovedCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**
+ * Callback used to notify a chat room has received information about participants.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ */
+typedef void (*LinphoneChatRoomCbsConferenceDetailsReceivedCb) (LinphoneChatRoom *chat_room);
+
+/**
  * Callback used to notify a chat room has been joined.
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
