@@ -44,7 +44,7 @@ Conference::Conference (
 	CallSessionListener *listener,
 	const std::shared_ptr<ConferenceParams> params
 ) : CoreAccessor(core) {
-	this->me = Participant::create(this,myAddress);
+	this->me = Participant::create(this, myAddress);
 	this->me->setFocus(true);
 	this->listener = listener;
 	this->update(*params);
