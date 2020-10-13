@@ -54,7 +54,7 @@ public:
 		
 		bool_t result;
 		while (!(result = condition()) && (std::chrono::steady_clock::now() - start < timeout)) {
-			for (const std::function<void ()> iterate:mIterateFuncs) {
+			for (const std::function<void ()>& iterate:mIterateFuncs) {
 				iterate();
 			}
 			ms_usleep(100);
