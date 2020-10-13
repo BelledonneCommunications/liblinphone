@@ -42,12 +42,11 @@ class Content;
 class ParticipantDevice;
 class LocalConferenceEventHandler;
 
-namespace MediaConference{ // They are in a special namespace because of conflict of generic Conference classes in src/conference/*
-
-class Conference;
-class LocalConference;
-class RemoteConference;
-
+namespace MediaConference { 
+	// They are in a special namespace because of conflict of generic Conference classes in src/conference/*
+	class Conference;
+	class LocalConference;
+	class RemoteConference;
 }
 
 class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams, ConferenceParams>, public ConferenceParamsInterface {
@@ -176,6 +175,9 @@ public:
 
 	void clearParticipants();
 
+	bool getDetailsReceived () const;
+	void setDetailsReceived ();
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,
@@ -208,6 +210,7 @@ protected:
 	unsigned int lastNotify = 0;
 
 	ConferenceInterface::State state = ConferenceInterface::State::None;
+	bool detailsReceived = false;
 
 private:
 	L_DISABLE_COPY(Conference);
