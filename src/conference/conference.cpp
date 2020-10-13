@@ -44,7 +44,7 @@ Conference::Conference (
 	CallSessionListener *listener,
 	const std::shared_ptr<ConferenceParams> params
 ) : CoreAccessor(core) {
-	this->me = Participant::create(this,myAddress);
+	this->me = Participant::create(this, myAddress);
 	this->me->setFocus(true);
 	this->listener = listener;
 	this->update(*params);
@@ -63,6 +63,14 @@ shared_ptr<Participant> Conference::getActiveParticipant () const {
 
 void Conference::clearParticipants () {
 	participants.clear();
+}
+
+// Whether first notify has been received or not
+bool Conference::getDetailsReceived () const {
+	return detailsReceived;
+}
+void Conference::setDetailsReceived () {
+	detailsReceived = true;
 }
 
 // -----------------------------------------------------------------------------

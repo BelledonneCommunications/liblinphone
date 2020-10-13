@@ -97,6 +97,10 @@ const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const Linpho
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCurrentParams()->toC();
 }
 
+bool_t linphone_chat_room_get_conference_details_received(const LinphoneChatRoom *chat_room) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(chat_room)->getConference()->getDetailsReceived();
+}
+
 // Deprecated
 void linphone_chat_room_send_message (LinphoneChatRoom *cr, const char *msg) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->createChatMessage(msg)->send();
@@ -549,6 +553,10 @@ void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, const Linph
 
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, cr, event_log)
+}
+
+void _linphone_chat_room_notify_conference_details_received(LinphoneChatRoom *cr) {
+	NOTIFY_IF_EXIST(ConferenceDetailsReceived, conference_details_received, cr)
 }
 
 void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {

@@ -523,6 +523,13 @@ LINPHONE_PUBLIC void linphone_chat_room_notify_participant_device_registration(L
 **/
 LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *chat_room);
 
+/**
+ * Returns wether the chat room first notify has been received with the list of participant, their devices, which one is admin, etc...
+ * @param chat_room the #LinphoneChatRoom object @notnil
+ * @return TRUE if it has been received, FALSE otherwise.
+**/
+LINPHONE_PUBLIC bool_t linphone_chat_room_get_conference_details_received(const LinphoneChatRoom *chat_room);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

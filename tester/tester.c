@@ -2460,6 +2460,12 @@ void liblinphone_tester_chat_message_msg_state_changed(LinphoneChatMessage *msg,
 	ms_error("Unexpected state [%s] for msg [%p]",linphone_chat_message_state_to_string(state), msg);
 }
 
+void liblinphone_tester_chat_room_chat_message_sent(LinphoneChatRoom *room, const LinphoneEventLog *event_log) {
+	LinphoneCore *lc = linphone_chat_room_get_core(room);
+	stats *counters = get_stats(lc);
+	counters->number_of_LinphoneChatMessageSent++;
+}
+
 void liblinphone_tester_chat_room_msg_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *msg) {
 	stats *counters = get_stats(lc);
 	counters->number_of_LinphoneMessageSent++;
