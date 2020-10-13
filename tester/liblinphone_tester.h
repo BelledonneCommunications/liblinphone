@@ -232,7 +232,7 @@ typedef struct _stats {
 	int number_of_LinphoneIsComposingIdleReceived;
 	int progress_of_LinphoneFileTransfer;
 
-	int number_of_LinphoneChatRoomConferenceJoined;
+	int number_of_ChatRoomConferenceDetailsReceived;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
 	int number_of_LinphoneChatRoomEphemeralDeleted;
 	int number_of_X3dhUserCreationSuccess;
