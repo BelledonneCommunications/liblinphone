@@ -304,11 +304,11 @@ void Conference::onConferenceTerminated (const IdentityAddress &addr) {
 
 	// Keep a reference to the conference to be able to set the state to Deleted
 	shared_ptr<Conference> ref = getSharedFromThis();
-	setState(ConferenceInterface::State::Deleted);
 	// If core is in Global Shutdown state, then do not remove it from the map as it will be freed by Core::uninit()
 	if (linphone_core_get_global_state(getCore()->getCCore()) != LinphoneGlobalShutdown) {
 		getCore()->deleteAudioVideoConference(ref);
 	}
+	setState(ConferenceInterface::State::Deleted);
 }
 
 void Conference::setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) {
