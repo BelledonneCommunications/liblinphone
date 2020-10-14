@@ -407,11 +407,10 @@ LocalConference::LocalConference (
 		contactAddressStr = const_cast<char *>(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
 	Address contactAddress(contactAddressStr);
-	if (!contactAddress.hasUriParam("conf-id")) {
-		char confId[6];
-		belle_sip_random_token(confId,sizeof(confId));
-		contactAddress.setUriParam("conf-id",confId);
-	}
+	char confId[6];
+	belle_sip_random_token(confId,sizeof(confId));
+	contactAddress.setUriParam("conf-id",confId);
+	// sal_address_as_string allocates memory hence it has to be freed
 	if (proxyCfg && proxyCfg->op) {
 		if (contactAddressStr) {
 			ms_free(contactAddressStr);
