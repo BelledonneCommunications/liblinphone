@@ -3349,7 +3349,6 @@ static void back_to_back_conferences(void) {
 }
 
 static void interleaved_conferences_base(bool_t add_participants_immediately_after_creation) {
-#if 0
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
 	linphone_core_set_inc_timeout(marie->lc, 10000);
@@ -3515,9 +3514,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because find method ignores conf-id");
-#endif
+	destroy_mgr_in_conference(chloe);
 }
 
 static void interleaved_conference_creation(void) {
