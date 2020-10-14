@@ -3348,6 +3348,150 @@ static void back_to_back_conferences(void) {
 	destroy_mgr_in_conference(michelle);
 }
 
+static void try_to_create_second_conference_with_local_participant(void) {
+	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
+	linphone_core_enable_conference_server(marie->lc,TRUE);
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+
+	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+
+	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+
+	bctbx_list_t* participants=NULL;
+	participants=bctbx_list_append(participants,laure);
+	participants=bctbx_list_append(participants,chloe);
+	participants=bctbx_list_append(participants,pauline);
+
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	stats initial_marie_stat = marie->stat;
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs=bctbx_list_append(lcs,c);
+		initiate_call(m, marie);
+	}
+
+	//Let ring calls for a little while
+	wait_for_list(lcs,NULL,0,1000);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, initial_marie_stat.number_of_LinphoneCallStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausing, initial_marie_stat.number_of_LinphoneCallPausing, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPaused, initial_marie_stat.number_of_LinphoneCallPaused, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallPausedByRemote, initial_marie_stat.number_of_LinphoneCallPausedByRemote, int, "%d");
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		take_call_to_callee(lcs, m, marie);
+	}
+
+	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
+
+	add_calls_to_local_conference(lcs, marie, participants);
+
+	stats* lcm_stats = NULL;
+
+	int counter = 1;
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+
+		// Allocate memory
+		lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+
+		// Append element
+		lcm_stats[counter - 1] = m->stat;
+
+		// Increment counter
+		counter++;
+	}
+
+	lcm_stats = (stats*)realloc(lcm_stats, counter * sizeof(stats));
+	lcm_stats[counter - 1] = marie->stat;
+
+	LinphoneConference *conference = linphone_core_get_conference(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(conference);
+
+	linphone_core_terminate_conference(marie->lc);
+
+	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(new_maries_conference_params));
+	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
+	BC_ASSERT_PTR_NULL(new_maries_conference);
+	linphone_conference_params_unref(new_maries_conference_params);
+
+	int idx = 0;
+	unsigned int no_participants = (unsigned int)bctbx_list_size(participants);
+
+	participants=bctbx_list_append(participants,marie);
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+
+		unsigned int no_calls = 0;
+		unsigned int no_conference = 0;
+		if (m == marie) {
+			no_calls = no_participants;
+			no_conference = 1;
+		} else {
+			no_calls = 1;
+			no_conference = 1;
+		}
+
+		// Wait for calls to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+
+		// Wait for all conferences to be terminated
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminated, lcm_stats[idx].number_of_LinphoneConferenceStateTerminated + no_conference, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateDeleted, lcm_stats[idx].number_of_LinphoneConferenceStateDeleted + no_conference, 5000));
+
+		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+		if ((m != marie) && event_log_enabled) {
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + no_conference,10000));
+		}
+
+		LinphoneConference *conference = linphone_core_get_conference(c);
+
+		BC_ASSERT_PTR_NULL(conference);
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
+		if (m != marie) {
+			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
+			BC_ASSERT_PTR_NULL(participant_call);
+			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
+			BC_ASSERT_PTR_NULL(conference_call);
+		}
+
+		idx++;
+	}
+
+	// Verify that a second conference is not created
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminated, 1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateDeleted, 1, int, "%d");
+
+	ms_free(lcm_stats);
+
+	bctbx_list_free(lcs);
+	bctbx_list_free(participants);
+
+	destroy_mgr_in_conference(marie);
+	destroy_mgr_in_conference(pauline);
+	destroy_mgr_in_conference(laure);
+	destroy_mgr_in_conference(chloe);
+}
+
 static void interleaved_conferences_base(bool_t add_participants_immediately_after_creation) {
 	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
 	linphone_core_enable_conference_server(marie->lc,TRUE);
@@ -3359,7 +3503,8 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "chloe_rc", TRUE);
+//	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
@@ -3424,7 +3569,8 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 
 	LinphoneConferenceParams * new_maries_conference_params = linphone_conference_params_new (marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(new_maries_conference_params);
-	linphone_conference_params_enable_local_participant(new_maries_conference_params, TRUE);
+	linphone_conference_params_enable_local_participant(new_maries_conference_params, FALSE);
+	BC_ASSERT_TRUE(linphone_conference_params_local_participant_enabled(new_maries_conference_params) == FALSE);
 	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
 	BC_ASSERT_PTR_NOT_NULL(new_maries_conference);
 	linphone_conference_params_unref(new_maries_conference_params);
@@ -3703,6 +3849,7 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Toggle video settings during conference with update deferred", toggle_video_settings_during_conference_with_update_deferred),
 	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
 	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
+	TEST_NO_TAG("Try to create second conference with local participant", try_to_create_second_conference_with_local_participant),
 	TEST_NO_TAG("Interleaved conference creation", interleaved_conference_creation),
 	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
 	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
