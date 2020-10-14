@@ -759,12 +759,14 @@ void CallSessionPrivate::setContactOp () {
 		ms_free(contactAddressStr);
 		if (isInConference()) {
 			const string confId = getConferenceId();
-			contactAddress.setUriParam("conf-id", confId);
+			if (confId.empty() == false) {
+				contactAddress.setUriParam("conf-id", confId);
+			}
 			std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
 			if (conference) {
 
 				// Change conference address in order to add GRUU to it
-	//			conference->setConferenceAddress(contactAddress);
+				conference->setConferenceAddress(contactAddress);
 			}
 		}
 		q->updateContactAddress (contactAddress);
