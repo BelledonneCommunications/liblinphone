@@ -691,10 +691,11 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
+		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
+
 		q->updateContactAddress(contactAddress);
 
 		op->setContactAddress(contactAddress.getInternalAddress());
-		destProxy->op->setContactAddress(contactAddress.getInternalAddress());
 	} else
 		op->setContactAddress(nullptr);
 	return op->update(newSubject.c_str(), q->getParams()->getPrivate()->getNoUserConsent());

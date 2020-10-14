@@ -262,19 +262,6 @@ void Conference::checkIfTerminated() {
 }
 
 int Conference::terminate () {
-
-	// Delete conference ID from proxy as the conference was terminated
-	LinphoneAddress * cConferenceAddress = linphone_address_new(getConferenceAddress().asString().c_str());
-	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), cConferenceAddress);
-	linphone_address_unref(cConferenceAddress);
-	char * contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
-	Address contactAddress(contactAddressStr);
-	ms_free(contactAddressStr);
-	if (contactAddress.hasUriParam ("conf-id")) {
-		contactAddress.removeUriParam("conf-id");
-		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
-	}
-
 	participants.clear();
 	return 0;
 }
@@ -404,18 +391,14 @@ LocalConference::LocalConference (
 	if (proxyCfg && proxyCfg->op) {
 		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
 	} else {
-		contactAddressStr = const_cast<char *>(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
+		contactAddressStr = ms_strdup(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
 	Address contactAddress(contactAddressStr);
 	char confId[6];
 	belle_sip_random_token(confId,sizeof(confId));
 	contactAddress.setUriParam("conf-id",confId);
-	// sal_address_as_string allocates memory hence it has to be freed
-	if (proxyCfg && proxyCfg->op) {
-		if (contactAddressStr) {
-			ms_free(contactAddressStr);
-		}
-		proxyCfg->op->setContactAddress(contactAddress.getInternalAddress());
+	if (contactAddressStr) {
+		ms_free(contactAddressStr);
 	}
 	linphone_address_unref(cAddress);
 
