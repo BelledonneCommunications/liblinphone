@@ -43,6 +43,7 @@
 #ifdef HAVE_ADVANCED_IM
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
+#include "conference/participant.h"
 #endif
 #include "core/core-listener.h"
 #include "core/core-p.h"
@@ -206,7 +207,18 @@ void CorePrivate::uninit() {
 	shared_ptr<ChatRoom> cr;
 	for (const auto &chatRoom : chatRooms) {
 		cr = dynamic_pointer_cast<ChatRoom>(chatRoom);
-		if (cr) cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
+		if (cr) {
+			cr->getPrivate()->getImdnHandler()->onLinphoneCoreStop();
+#ifdef HAVE_ADVANCED_IM
+			for (const auto &participant: cr->getParticipants()) {
+				for (std::shared_ptr<ParticipantDevice> device : participant->getDevices() ) {
+					//to make sure no more messages are received after Core:uninit because key components like DB are no longuer available. So it's no more possible to handle any singnaling messages properly.
+					if (device->getSession())
+						device->getSession()->setListener(nullptr);
+				}
+			}
+#endif
+		}
 	}
 
 	chatRoomsById.clear();

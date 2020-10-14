@@ -2730,7 +2730,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
-#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+#if __ANDROID__ || TARGET_OS_IPHONE
 	push_notification_default = TRUE;
 	auto_iterate_default = TRUE;
 #endif
