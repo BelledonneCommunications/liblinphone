@@ -3427,6 +3427,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	linphone_conference_params_enable_local_participant(new_maries_conference_params, TRUE);
 	LinphoneConference * new_maries_conference = linphone_core_create_conference_with_params(marie->lc, new_maries_conference_params);
 	BC_ASSERT_PTR_NOT_NULL(new_maries_conference);
+	linphone_conference_params_unref(new_maries_conference_params);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, 5000));
 
@@ -3505,6 +3506,8 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
 
 	ms_free(lcm_stats);
+
+	linphone_conference_unref(new_maries_conference);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);
