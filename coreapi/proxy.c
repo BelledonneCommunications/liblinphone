@@ -167,7 +167,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->publish = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "publish", FALSE) : FALSE;
 
 	bool_t push_allowed_default = FALSE;
-#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+#if __ANDROID__ || TARGET_OS_IPHONE
 	push_allowed_default = TRUE;
 #endif
 	cfg->push_notification_allowed = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "push_notification_allowed", push_allowed_default) : push_allowed_default;
