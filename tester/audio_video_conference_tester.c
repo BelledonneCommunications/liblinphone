@@ -102,7 +102,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	lcs2=bctbx_list_append(lcs2,laure->lc);
 
 	if(!is_remote_conf) {
-		add_calls_to_local_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, NULL, new_participants);
 	} else {
 
 		if(focus_is_up) {
@@ -137,7 +137,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 
 	new_participants=bctbx_list_append(NULL,pauline);
 	if(!is_remote_conf) {
-		add_calls_to_local_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	} else {
 		add_calls_to_remote_conference(lcs, focus, marie, new_participants);
 	}
@@ -211,9 +211,9 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 		bctbx_list_t* participants=bctbx_list_append(NULL,laure);
 		participants=bctbx_list_append(participants,pauline);
 		if (is_remote_conf){
-			terminate_conference(participants, marie, focus);
+			terminate_conference(participants, marie, NULL, focus);
 		} else {
-			terminate_conference(participants, marie, NULL);
+			terminate_conference(participants, marie, NULL, NULL);
 		}
 		bctbx_list_free(participants);
 	}
@@ -566,7 +566,7 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)) == with_video);
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(laure_call)) == with_video);
 
-		terminate_conference(participants, marie, NULL);
+		terminate_conference(participants, marie, NULL, NULL);
 	}
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(pauline);
@@ -659,7 +659,7 @@ static void video_conference_by_merging_calls(void){
 	// She adds Pauline and Laure to the conference. */
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	// Now check that both Pauline and Laure have video. */
 	pauline_call = linphone_core_get_current_call(pauline->lc);
@@ -707,7 +707,7 @@ static void video_conference_by_merging_calls(void){
 		linphone_core_set_video_device(marie->lc, liblinphone_tester_static_image_id);
 		wait_for_list(lcs ,NULL, 0, 2000);
 
-		terminate_conference(new_participants, marie, NULL);
+		terminate_conference(new_participants, marie, NULL, NULL);
 
 	}
 	
@@ -890,7 +890,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		// TODO: Find a way to extract participants managers from conference
 		bctbx_list_t* lcs2=bctbx_list_append(NULL,marie->lc);
 		lcs2=bctbx_list_append(lcs2,laure->lc);
-		add_calls_to_local_conference(lcs2, marie, new_participants);
+		add_calls_to_local_conference(lcs2, marie, NULL, new_participants);
 		bctbx_list_free(lcs2);
 		bctbx_list_free(new_participants);
 	} else {
@@ -912,7 +912,7 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 
 	if(!is_remote_conf) {
 		bctbx_list_t* new_participants=bctbx_list_append(NULL,pauline);
-		add_calls_to_local_conference(lcs, marie, new_participants);
+		add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 		bctbx_list_free(new_participants);
 	} else {
 		linphone_core_add_to_conference(marie->lc,marie_call_pauline);
@@ -1018,7 +1018,7 @@ static void eject_from_4_participants_conference(void) {
 	new_participants=bctbx_list_append(new_participants,laure);
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	/* Wait that the three participants are joined to the local conference, by checking the StreamsRunning states*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallStreamsRunning, 2, 10000));
@@ -1043,7 +1043,7 @@ static void eject_from_4_participants_conference(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -1096,7 +1096,7 @@ static void participants_exit_conference_after_pausing(void) {
 	new_participants=bctbx_list_append(new_participants,laure);
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	bctbx_list_free(new_participants);
 
 	// Wait that the three participants are joined to the local conference, by checking the StreamsRunning states
@@ -1205,7 +1205,7 @@ static void add_participant_after_conference_started(void) {
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 	participants=bctbx_list_copy(new_participants);
 	bctbx_list_free(new_participants);
 
@@ -1223,7 +1223,7 @@ static void add_participant_after_conference_started(void) {
 	bctbx_list_t* additional_participants=NULL;
 	additional_participants=bctbx_list_append(additional_participants,laure);
 	participants=bctbx_list_append(participants,laure);
-	add_calls_to_local_conference(lcs, marie, additional_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, additional_participants);
 	bctbx_list_free(additional_participants);
 
 	// Wait that the three participants are joined to the local conference, by checking the StreamsRunning states
@@ -1239,7 +1239,7 @@ static void add_participant_after_conference_started(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(participants, marie, NULL);
+	terminate_conference(participants, marie, NULL, NULL);
 	bctbx_list_free(participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1285,7 +1285,7 @@ static void focus_takes_call_after_conference_started_and_participants_leave(voi
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1404,7 +1404,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -1439,7 +1439,7 @@ static void participant_takes_call_after_conference_started_and_conference_ends(
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1509,7 +1509,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -1582,7 +1582,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -1633,7 +1633,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -1986,7 +1986,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	unsigned int no_participants = (unsigned int)bctbx_list_size(new_participants);
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
@@ -2060,7 +2060,7 @@ static void toggle_video_settings_during_conference_base(bool_t automatically_vi
 		}
 	}
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -2152,7 +2152,7 @@ static void update_conf_params_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2214,7 +2214,7 @@ static void update_conf_params_during_conference(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
@@ -2281,7 +2281,7 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 	bctbx_list_t* new_participants=NULL;
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
@@ -2345,7 +2345,7 @@ static void focus_takes_quick_call_after_conference_started_base(bool_t toggle_v
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	unsigned int marie_call_no = (unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc));
@@ -2444,7 +2444,7 @@ static void try_to_update_call_params_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2522,7 +2522,7 @@ static void try_to_update_call_params_during_conference(void) {
 
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -2585,7 +2585,7 @@ static void register_again_during_conference(void) {
 	new_participants=bctbx_list_append(new_participants,michelle);
 	new_participants=bctbx_list_append(new_participants,pauline);
 	new_participants=bctbx_list_append(new_participants,laure);
-	add_calls_to_local_conference(lcs, marie, new_participants);
+	add_calls_to_local_conference(lcs, marie, NULL, new_participants);
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
@@ -2632,7 +2632,7 @@ static void register_again_during_conference(void) {
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),4, int, "%d");
 
-	terminate_conference(new_participants, marie, NULL);
+	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
@@ -2680,7 +2680,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	unsigned int no_unique_participants = (unsigned int)bctbx_list_size(unique_participant_identity);
 	bctbx_list_free(unique_participant_identity);
 
-	add_calls_to_local_conference(lcs, local_conf, participants);
+	add_calls_to_local_conference(lcs, local_conf, NULL, participants);
 
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -2695,7 +2695,7 @@ static void simple_conference_base2(LinphoneCoreManager* local_conf, bctbx_list_
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(local_conf->lc));
 
 	if (use_conference_terminate == TRUE) {
-		terminate_conference(participants, local_conf, NULL);
+		terminate_conference(participants, local_conf, NULL, NULL);
 	} else {
 		stats initial_conf_stats = local_conf->stat;
 		int counter = 1;
@@ -3034,7 +3034,7 @@ static void take_call_to_callee(bctbx_list_t* lcs, LinphoneCoreManager* caller, 
 	bctbx_list_free(caller_list);
 }
 
-static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_list_t* participants, bool_t back_to_back_invite, bool_t back_to_back_accept) {
+static void conference_with_calls_queued(LinphoneCoreManager* local_conf, LinphoneConference * conference, bctbx_list_t* participants, bool_t back_to_back_invite, bool_t back_to_back_accept) {
 	bctbx_list_t* lcs = NULL;
 	lcs=bctbx_list_append(lcs,local_conf->lc);
 
@@ -3075,9 +3075,9 @@ static void conference_with_calls_queued(LinphoneCoreManager* local_conf, bctbx_
 
 	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(local_conf->lc));
 
-	add_calls_to_local_conference(lcs, local_conf, participants);
+	add_calls_to_local_conference(lcs, local_conf, conference, participants);
 
-	terminate_conference(participants, local_conf, NULL);
+	terminate_conference(participants, local_conf, conference, NULL);
 
 	bctbx_list_free(lcs);
 }
@@ -3101,7 +3101,7 @@ static void conference_with_calls_queued_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 
 	bctbx_list_free(participants);
 
@@ -3145,7 +3145,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 
 	bctbx_list_free(participants);
 
@@ -3177,7 +3177,7 @@ static void conference_with_back_to_back_call_accept_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3221,7 +3221,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, FALSE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3253,7 +3253,7 @@ static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, TRUE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, TRUE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3297,7 +3297,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
-	conference_with_calls_queued(marie, participants, TRUE, TRUE);
+	conference_with_calls_queued(marie, NULL, participants, TRUE, TRUE);
 
 	bctbx_list_free(participants);
 
@@ -3330,7 +3330,7 @@ static void back_to_back_conferences(void) {
 	participants=bctbx_list_append(participants,laure);
 
 	// Marie hosts the conference
-	conference_with_calls_queued(marie, participants, FALSE, FALSE);
+	conference_with_calls_queued(marie, NULL, participants, FALSE, FALSE);
 	bctbx_list_free(participants);
 
 	bctbx_list_t* new_participants=NULL;
@@ -3339,7 +3339,7 @@ static void back_to_back_conferences(void) {
 	new_participants=bctbx_list_append(new_participants,marie);
 
 	// Laure hosts the conference
-	conference_with_calls_queued(laure, new_participants, FALSE, FALSE);
+	conference_with_calls_queued(laure, NULL, new_participants, FALSE, FALSE);
 	bctbx_list_free(new_participants);
 
 	destroy_mgr_in_conference(marie);
@@ -3394,7 +3394,7 @@ static void try_to_create_second_conference_with_local_participant(void) {
 
 	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
 
-	add_calls_to_local_conference(lcs, marie, participants);
+	add_calls_to_local_conference(lcs, marie, NULL, participants);
 
 	stats* lcm_stats = NULL;
 
@@ -3503,8 +3503,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
 
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "chloe_rc", TRUE);
-//	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
+	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
 
 	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
@@ -3541,7 +3540,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 
 	BC_ASSERT_FALSE(linphone_core_sound_resources_locked(marie->lc));
 
-	add_calls_to_local_conference(lcs, marie, participants);
+	add_calls_to_local_conference(lcs, marie, NULL, participants);
 
 	stats* lcm_stats = NULL;
 
@@ -3582,7 +3581,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	new_participants=bctbx_list_append(new_participants,chloe);
 
 	if (add_participants_immediately_after_creation == TRUE) {
-		conference_with_calls_queued(marie, new_participants, FALSE, FALSE);
+		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
 	}
 
 	int idx = 0;
@@ -3645,7 +3644,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 	}
 
 	if (add_participants_immediately_after_creation == FALSE) {
-		conference_with_calls_queued(marie, new_participants, FALSE, FALSE);
+		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
 	}
 
 	// Verify that a third conference is not created when adidng calls

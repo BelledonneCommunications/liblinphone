@@ -977,7 +977,7 @@ static void simple_conference_with_audio_device_change_base(bool_t during_setup,
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(participants, laure, NULL);
+	terminate_conference(participants, laure, conf, NULL);
 
 	linphone_conference_unref(conf);
 	destroy_mgr_in_conference(marie);
@@ -1217,7 +1217,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	// wait a bit before ending the conference
 	wait_for_list(lcs,NULL,0,5000);
 
-	terminate_conference(participants, pauline, NULL);
+	terminate_conference(participants, pauline, conf, NULL);
 
 end:
 
@@ -1306,6 +1306,12 @@ static void conference_with_simple_audio_device_change(void) {
 	linphone_core_set_use_files(pauline->lc, FALSE);
 
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
+
+	//Laure creates the conference
+	LinphoneConferenceParams *conf_params = linphone_core_create_conference_params(laure->lc);
+	linphone_conference_params_enable_video(conf_params, FALSE);
+	LinphoneConference *conf = linphone_core_create_conference_with_params(laure->lc, conf_params);
+	linphone_conference_params_unref(conf_params);
 
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(laure->lc);
@@ -1397,7 +1403,7 @@ static void conference_with_simple_audio_device_change(void) {
 		prev_mgr = m;
 	}
 
-	add_calls_to_local_conference(lcs, laure, participants);
+	add_calls_to_local_conference(lcs, laure, conf, participants);
 
 	// wait a bit before Marie changes device
 	wait_for_list(lcs,NULL,0,2000);
@@ -1409,10 +1415,12 @@ static void conference_with_simple_audio_device_change(void) {
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
 	laure_current_dev = change_device(TRUE, laure, laure_current_dev, laure_dev0, laure_dev1);
 
-	terminate_conference(participants, laure, NULL);
+	terminate_conference(participants, laure, conf, NULL);
 
 	bctbx_list_free(lcs);
 	bctbx_list_free(participants);
+
+	linphone_conference_unref(conf);
 
 	linphone_audio_device_unref(marie_dev0);
 	linphone_audio_device_unref(marie_dev1);

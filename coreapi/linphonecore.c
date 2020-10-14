@@ -7858,7 +7858,6 @@ int linphone_core_terminate_conference(LinphoneCore *lc) {
 		return -1;
 	}
 	linphone_conference_terminate(lc->conf_ctx);
-	lc->conf_ctx = NULL;
 	return 0;
 }
 
