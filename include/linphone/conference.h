@@ -52,8 +52,16 @@ typedef enum {
  * @{
  */
 
+
 /**
- * Take a reference on a #LinphoneConferencParams.
+ * Create an object of type a #LinphoneConferenceParams.
+ * @param core The #LinphoneCore to pass to the constructor. @notnil
+ * @return The freshly refed #LinphoneConferenceParams. @notnil
+ */
+LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
+
+/**
+ * Take a reference on a #LinphoneConferenceParams.
  * @param params The #LinphoneConferenceParams to ref. @notnil
  * @return The freshly refed #LinphoneConferenceParams. @notnil
  */
@@ -64,6 +72,14 @@ LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_ref(Linphon
  * @param params The #LinphoneConferenceParams to release. @notnil
  */
 LINPHONE_PUBLIC void linphone_conference_params_unref(LinphoneConferenceParams *params);
+
+/**
+ * Free a #LinphoneConferenceParams
+ * @param params #LinphoneConferenceParams to free @notnil
+ * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
 
 /**
  * Clone a #LinphoneConferenceParams
@@ -205,14 +221,6 @@ LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *conf, 
 LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conf);
 
 /**
- * Free a #LinphoneConferenceParams
- * @param params #LinphoneConferenceParams to free @notnil
- * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.
- * @donotwrap
- */
-LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_params_free(LinphoneConferenceParams *params);
-
-/**
  * Get the conference subject
  * @param conference The #LinphoneConference object. @notnil
  * @return conference subject - @maybenil
@@ -296,8 +304,6 @@ LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const 
 LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
 int linphone_conference_leave(LinphoneConference *conference);
 LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
-
-LinphoneConferenceParams *linphone_conference_params_new(const LinphoneCore *core);
 
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
