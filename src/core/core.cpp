@@ -1147,8 +1147,10 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 
 void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
+	ConferenceId prunedConferenceId = prepareConfereceIdForSearch(conferenceId);
 
-	auto it = audioVideoConferenceById.find(conferenceId);
+	auto it = audioVideoConferenceById.find(prunedConferenceId);
+
 	if (it != audioVideoConferenceById.cend()) {
 		lInfo() << "Delete audio video conference in RAM with conference ID " << conferenceId << ".";
 		audioVideoConferenceById.erase(it);
