@@ -621,8 +621,8 @@ LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreMa
 	BC_ASSERT_TRUE(wait_for_list(lcs, &participant_mgr->stat.number_of_LinphoneConferenceStateCreated, 1, 5000));
 
 	// Check subscriptions
-	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(participant_initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),1000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(participant_initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),5000));
 
 	int* subscription_count = ((int *)(conf_mgr->user_info));
 	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count,(init_subscription_count + 1),5000));
@@ -683,10 +683,10 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		if (event_log_enabled) {
 			// Check subscriptions
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(new_participant_initial_stats[idx].number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + idx - no_participants_without_event_log + 1),1000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(new_participant_initial_stats[idx].number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + idx - no_participants_without_event_log + 1),5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionActive + 1,3000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(conf_initial_stats.number_of_LinphoneSubscriptionActive + idx + 1),1000));
+			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(conf_initial_stats.number_of_LinphoneSubscriptionActive + idx + 1),5000));
 		} else {
 			no_participants_without_event_log++;
 		}
@@ -767,7 +767,7 @@ ms_message("%s - conf_to_focus_call %p\n",  __func__, conf_to_focus_call);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateCreationPending, initial_stats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateCreated, initial_stats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
 //		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(focus_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + counter),1000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,initial_stats.number_of_LinphoneSubscriptionActive + 1,3000));
@@ -801,7 +801,7 @@ ms_message("%s - conf_to_focus_call %p\n",  __func__, conf_to_focus_call);
 	// Remote  conference
 	if (conf_to_focus_call == NULL) {
 		// Asserts to verify that call between focus and confernece manager is correctly set up
-		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(conf_initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),1000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionOutgoingProgress,(conf_initial_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
 //		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(focus_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + counter + 1),1000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneConferenceStateCreationPending, focus_initial_stats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&focus_mgr->stat.number_of_LinphoneConferenceStateCreated, focus_initial_stats.number_of_LinphoneConferenceStateCreated + 1, 5000));

@@ -65,6 +65,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 		}
 		ret = bctbx_list_append(ret, bctbx_strdup(ipaddress));
 	}
+	freeaddrinfo(ai);
 	return ret;
 }
 
