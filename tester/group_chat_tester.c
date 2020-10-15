@@ -379,7 +379,7 @@ void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *rec
 
 // Configure list of core manager for conference and add the listener
 bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri) {
-	LinphoneAddress *factoryAddr = linphone_address_new(sFactoryUri);
+	LinphoneAddress *factoryAddr = linphone_address_new(factoryUri);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))_configure_core_for_conference, (void *) factoryAddr);
 	linphone_address_unref(factoryAddr);
 

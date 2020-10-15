@@ -57,7 +57,7 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 
 	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
 	const char * sFactoryUri = "sip:conference-factory@conf.external-domain.org";
-	bctbx_list_t *externalCoresList = init_core_for_conference_with_factori_uri(externalCoresManagerList, sFactoryUri);
+	bctbx_list_t *externalCoresList = init_core_for_conference_with_factory_uri(externalCoresManagerList, sFactoryUri);
 
 	start_core_for_conference(coresManagerList);
 	start_core_for_conference(externalCoresManagerList);
@@ -90,7 +90,7 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
 
-	BC_ASSERT_TRUE(wait_for_list(coresList, &claire->stat.number_of_LinphoneChatRoomStateCreationPending, initialClaireStats.number_of_LinphoneChatRoomStateCreationPending + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &claire->stat.number_of_LinphoneConferenceStateCreationPending, initialClaireStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 	// Check that the chat room is correctly created on Claire's side and that the participants are added
 	LinphoneChatRoom *claireCr = check_creation_chat_room_client_side(coresList, claire, &initialClaireStats, confAddr, initialSubject, 2, FALSE);
 
