@@ -42,6 +42,7 @@ set(SOUND_FILES
 	ringback.wav
 	dont_wait_too_long.mkv
 	toy-mono.wav
+	silence.mkv
 )
 
 if(ENABLE_ASSETS)

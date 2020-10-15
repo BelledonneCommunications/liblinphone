@@ -1368,6 +1368,11 @@ static void sound_config_read(LinphoneCore *lc) {
 	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
 	tmpbuf = linphone_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
 	if (bctbx_file_exist(tmpbuf) == -1){
+		if(tmpbuf && strstr(tmpbuf, ".wav") != NULL){
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				defaultRemoteRing = soundResource;
+		}
 		tmpbuf = defaultRemoteRing.c_str();
 	}
 	if (strstr(tmpbuf, ".wav") == NULL) {
@@ -1381,7 +1386,11 @@ static void sound_config_read(LinphoneCore *lc) {
 		if (bctbx_file_exist(tmpbuf) == 0) {
 			linphone_core_set_play_file(lc, tmpbuf);
 		} else {
-			ms_warning("'%s' on-hold music file does not exist", tmpbuf);
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				linphone_core_set_play_file(lc, soundResource.c_str());
+			else
+				ms_warning("'%s' on-hold music file does not exist", tmpbuf);
 		}
 	} else {
 		linphone_core_set_play_file(lc, get_default_onhold_music(lc).c_str());

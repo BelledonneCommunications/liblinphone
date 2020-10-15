@@ -4,7 +4,7 @@ SUBDIRS=C fr it ja cs xml
 LINPHONE_ONHOLD_MUSIC= 	toy-mono.wav \
 			dont_wait_too_long.mkv
 
-LINPHONE_SOUNDS=ringback.wav hello8000.wav hello16000.wav incoming_chat.wav $(LINPHONE_ONHOLD_MUSIC)
+LINPHONE_SOUNDS=ringback.wav hello8000.wav hello16000.wav incoming_chat.wav silence.mkv $(LINPHONE_ONHOLD_MUSIC)
 
 LINPHONE_RINGS=		\
 			rings/oldphone-mono.wav \
