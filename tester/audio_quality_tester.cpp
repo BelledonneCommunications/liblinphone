@@ -167,7 +167,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	MSAudioDiffParams audioCmpParams = audio_cmp_params;
 
 	// Add jitterBufferMs to the shift
-        audioCmpParams.max_shift_percent = (int)(double)(audioCmpParams.max_shift_percent*sampleLength+jitterBufferMs)/((double)sampleLength+jitterBufferMs);
+        audioCmpParams.max_shift_percent = (int)(double)((double)audioCmpParams.max_shift_percent*sampleLength+(double)jitterBufferMs)/((double)sampleLength+(double)jitterBufferMs);
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	
