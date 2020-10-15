@@ -1352,7 +1352,11 @@ static void sound_config_read(LinphoneCore *lc) {
 		if (bctbx_file_exist(tmpbuf) == 0) {
 			linphone_core_set_ring(lc, tmpbuf);
 		} else {
-			ms_warning("'%s' ring file does not exist", tmpbuf);
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				linphone_core_set_ring(lc, soundResource.c_str());
+			else
+				ms_warning("'%s' ring file does not exist", tmpbuf);
 		}
 	} else {
 		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
@@ -1374,8 +1378,7 @@ static void sound_config_read(LinphoneCore *lc) {
 				defaultRemoteRing = soundResource;
 		}
 		tmpbuf = defaultRemoteRing.c_str();
-	}
-	if (strstr(tmpbuf, ".wav") == NULL) {
+	}else if (strstr(tmpbuf, ".wav") == NULL) {
 		/* It currently uses old sound files, so replace them */
 		tmpbuf = defaultRemoteRing.c_str();
 	}
