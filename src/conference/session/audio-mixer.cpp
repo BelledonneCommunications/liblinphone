@@ -220,6 +220,10 @@ float MS2AudioMixer::getMicGain(){
 	return 0.0;
 }
 
+const bctbx_list_t* MS2AudioMixer::get_audio_members() {
+	return ms_audio_conference_get_members(mConference);
+}
+
 void MS2AudioMixer::setMicGain(float value){
 }
 

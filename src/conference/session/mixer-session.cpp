@@ -50,7 +50,10 @@ void MixerSession::unjoinStreamsGroup(StreamsGroup &sg){
 void MixerSession::setFocus(StreamsGroup *sg){
 #ifdef VIDEO_ENABLED
 	MS2VideoMixer *mixer = dynamic_cast<MS2VideoMixer*>(mMixers[SalVideo].get());
-	if (mixer) mixer->setFocus(sg);
+	MS2AudioMixer *aMixer = dynamic_cast<MS2AudioMixer*>(mMixers[SalAudio].get());
+	const bctbx_list_t *elem = nullptr;
+	if (aMixer) elem = aMixer->get_audio_members();
+	if (mixer) mixer->setFocus(sg, elem);
 #endif
 }
 

@@ -43,8 +43,9 @@ void MS2VideoMixer::disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint){
 	ms_video_conference_remove_member(mConference, endpoint);
 }
 
-void MS2VideoMixer::setFocus(StreamsGroup *sg){
+void MS2VideoMixer::setFocus(StreamsGroup *sg, const bctbx_list_t *list){
 	MSVideoEndpoint *ep = nullptr;
+	MSAudioEndpoint *audioEp = nullptr;
 	
 	if (sg == nullptr){
 		ep = mLocalEndpoint;
@@ -61,7 +62,18 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	if (ep){
 		ms_video_conference_set_focus(mConference, ep);
 	}else{
-		lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
+		for (; list != nullptr; list = list->next){
+			MSAudioEndpoint *ep_it = (MSAudioEndpoint *)list->data;
+			if (ms_audio_endpoint_get_user_data(ep_it) == sg){
+				audioEp = ep_it;
+				break;
+			}
+		}
+		if (audioEp) {
+			ms_video_conference_set_static_focus(mConference);
+		} else {
+			lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
+		}
 	}
 }
 

@@ -155,6 +155,7 @@ public:
 	virtual void setOutputDevice(AudioDevice *audioDevice) override;
 	virtual AudioDevice* getInputDevice() const override;
 	virtual AudioDevice* getOutputDevice() const override;
+	const bctbx_list_t* get_audio_members();
 	
 	// Used for the tone manager.
 	AudioStream * getAudioStream();
@@ -186,7 +187,7 @@ public:
 	void connectEndpoint(Stream *vs, MSVideoEndpoint *endpoint, bool muted);
 	void disconnectEndpoint(Stream *vs, MSVideoEndpoint *endpoint);
 	virtual void enableLocalParticipant(bool enabled) override;
-	void setFocus(StreamsGroup *sg);
+	void setFocus(StreamsGroup *sg, const bctbx_list_t *list);
 	~MS2VideoMixer();
 protected:
 	virtual void onSnapshotTaken(const std::string &filepath) override;
