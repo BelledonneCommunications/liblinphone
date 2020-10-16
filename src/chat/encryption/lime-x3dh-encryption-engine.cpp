@@ -130,6 +130,7 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	} else {
 		curve = lime::CurveId::c25519;
 	}
+	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine "<<this<<" on server "<<serverUrl;
 	_dbAccess = dbAccess;
 	std::string dbAccessWithParam = std::string("db=\"").append(dbAccess).append("\" vfs=").append(BCTBX_SQLITE3_VFS); // force sqlite3 to use the bctbx_sqlite3_vfs
 	x3dhServerUrl = serverUrl;
@@ -137,6 +138,10 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	if (x3dhServerUrl.empty())
 		lError() << "[LIME] server URL unavailable for encryption engine";
+}
+
+LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
+	lInfo()<<"[LIME] destroy LimeX3dhEncryption engine "<<this;
 }
 
 string LimeX3dhEncryptionEngine::getX3dhServerUrl () const {
