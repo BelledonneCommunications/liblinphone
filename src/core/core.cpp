@@ -170,6 +170,10 @@ void CorePrivate::shutdown() {
 void CorePrivate::uninit() {
 	L_Q();
 
+	if (q->limeX3dhEnabled()) {
+		q->enableLimeX3dh(false);
+	}
+
 	const list<shared_ptr<AbstractChatRoom>> chatRooms = q->getChatRooms();
 	shared_ptr<ChatRoom> cr;
 	for (const auto &chatRoom : chatRooms) {

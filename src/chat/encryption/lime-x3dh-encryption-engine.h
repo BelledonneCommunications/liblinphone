@@ -74,6 +74,8 @@ public:
 		const std::shared_ptr<Core> core
 	);
 
+	~LimeX3dhEncryptionEngine ();
+
 	std::shared_ptr<LimeManager> getLimeManager ();
 	lime::limeCallback setLimeCallback (std::string operation);
 	std::string getX3dhServerUrl () const;

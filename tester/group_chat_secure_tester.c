@@ -323,6 +323,75 @@ static void group_chat_lime_x3dh_encrypted_chatrooms(void) {
 	group_chat_lime_x3dh_encrypted_chatrooms_curve(448);
 }
 
+
+/**
+ * - create users
+ * - stop and start their linphone core
+ * - perform an update
+ */
+static void group_chat_lime_x3dh_stop_start_core_curve(const int curveId) {
+	int dummy=0;
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+
+	stats initialMarieStats = marie->stat;
+
+	set_lime_curve_list(curveId,coresManagerList);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	// Wait for lime users to be created on X3DH server
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+	// Check encryption status for both participants
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+
+	// Set the last time a lime update was performed to an old date
+	LinphoneConfig *config = linphone_core_get_config(marie->lc);
+	time_t oldUpdateTime = ms_time(NULL)-88000; // 24 hours = 86400 ms
+	linphone_config_set_int(config, "lime", "last_update_time", (int)oldUpdateTime);
+
+	// take refs on current proxy and auth
+	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_ref(cfg);
+	LinphoneAuthInfo *auth_info = (LinphoneAuthInfo *)bctbx_list_get_data(linphone_core_get_auth_info_list(marie->lc));
+	linphone_auth_info_ref(auth_info);
+	// Stop/start Core
+	linphone_core_stop(marie->lc);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalShutdown, initialMarieStats.number_of_LinphoneGlobalShutdown + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneGlobalOff, initialMarieStats.number_of_LinphoneGlobalOff + 1, 5000));
+	linphone_core_start(marie->lc);
+
+	// restore dns setup, proxy and auth info
+	linphone_core_manager_setup_dns(marie);
+	linphone_core_remove_proxy_config(marie->lc, linphone_core_get_default_proxy_config(marie->lc));
+	linphone_core_add_proxy_config(marie->lc, cfg);
+	linphone_core_set_default_proxy_config(marie->lc, cfg);
+	linphone_proxy_config_unref(cfg);
+	linphone_core_add_auth_info(marie->lc, auth_info);
+	linphone_auth_info_unref(auth_info);
+
+	// Check if Marie's encryption is still active after restart
+	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+
+	// Wait for update callback
+	wait_for_list(coresList, &dummy, 1, 2000);
+
+	// Check that we correctly performed an update
+	int newUpdateTime = linphone_config_get_int(config, "lime", "last_update_time", -1);
+	BC_ASSERT_GREATER_STRICT(newUpdateTime, (int)oldUpdateTime, int, "%d");
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+}
+
+static void group_chat_lime_x3dh_stop_start_core(void) {
+	group_chat_lime_x3dh_stop_start_core_curve(25519);
+	group_chat_lime_x3dh_stop_start_core_curve(448);
+}
+
 static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
@@ -2968,7 +3037,7 @@ static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
 	// Set the last time a lime update was performed to an recent date
 	LinphoneConfig *config = linphone_core_get_config(marie->lc);
 	time_t recentUpdateTime = ms_time(NULL)-22000; // 6 hours = 21600 ms
-	linphone_config_set_int(config, "misc", "last_update_time", (int)recentUpdateTime);
+	linphone_config_set_int(config, "lime", "last_update_time", (int)recentUpdateTime);
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
@@ -2978,12 +3047,12 @@ static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 
 	// Check that we have not performed an update
-	int newUpdateTime = linphone_config_get_int(config, "misc", "last_update_time", -1);
+	int newUpdateTime = linphone_config_get_int(config, "lime", "last_update_time", -1);
 	BC_ASSERT_EQUAL(newUpdateTime, (int)recentUpdateTime, int, "%d");
 
 	// Set the last time a lime update was performed to an old date
 	time_t oldUpdateTime = ms_time(NULL)-88000; // 24 hours = 86400 ms
-	linphone_config_set_int(config, "misc", "last_update_time", (int)oldUpdateTime);
+	linphone_config_set_int(config, "lime", "last_update_time", (int)oldUpdateTime);
 
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	wait_for_list(coresList, &dummy, 1, 2000);
@@ -2996,8 +3065,8 @@ static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
 	wait_for_list(coresList, &dummy, 1, 2000);
 
 	// Check that we correctly performed an update
-	newUpdateTime = linphone_config_get_int(config, "misc", "last_update_time", -1);
-	BC_ASSERT_GREATER(newUpdateTime, (int)oldUpdateTime, int, "%d");
+	newUpdateTime = linphone_config_get_int(config, "lime", "last_update_time", -1);
+	BC_ASSERT_GREATER_STRICT(newUpdateTime, (int)oldUpdateTime, int, "%d");
 
 end:
 
@@ -3747,7 +3816,6 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
-	TEST_NO_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
 	TEST_ONE_TAG("Unencrypted chat room ephemeral messages", unencrypted_chat_room_ephemeral_message_test, "Ephemeral"),
 	TEST_ONE_TAG("Encrypted chat room ephemeral messages", encrypted_chat_room_ephemeral_message_test, "Ephemeral"),
 	TEST_TWO_TAGS("Chat room remaining ephemeral messages", chat_room_remaining_ephemeral_message_test, "Ephemeral", "LeaksMemory"), /*due to core restart*/
@@ -3755,6 +3823,8 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("Mixed ephemeral messages", mixed_ephemeral_message_test, "Ephemeral"),
 	TEST_TWO_TAGS("Chat room ephemeral settings", chat_room_ephemeral_settings, "Ephemeral", "LeaksMemory") /*due to core restart*/,
 	TEST_ONE_TAG("Send non ephemeral message", send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room, "Ephemeral")
+	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH")
 };
 
 test_suite_t secure_group_chat_test_suite = {

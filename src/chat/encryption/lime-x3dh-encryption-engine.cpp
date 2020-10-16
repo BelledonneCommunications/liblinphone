@@ -128,12 +128,17 @@ LimeX3dhEncryptionEngine::LimeX3dhEncryptionEngine (
 	} else {
 		curve = lime::CurveId::c25519;
 	}
+	lInfo() << "[LIME] instanciate a LimeX3dhEncryption engine "<<this<<" on server "<<serverUrl;
 	_dbAccess = dbAccess;
 	x3dhServerUrl = serverUrl;
 	limeManager = unique_ptr<LimeManager>(new LimeManager(dbAccess, prov, core));
 	lastLimeUpdate = linphone_config_get_int(cCore->config, "lime", "last_update_time", 0);
 	if (x3dhServerUrl.empty())
 		lError() << "[LIME] server URL unavailable for encryption engine";
+}
+
+LimeX3dhEncryptionEngine::~LimeX3dhEncryptionEngine () {
+	lInfo()<<"[LIME] destroy LimeX3dhEncryption engine "<<this;
 }
 
 string LimeX3dhEncryptionEngine::getX3dhServerUrl () const {
