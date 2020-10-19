@@ -418,6 +418,12 @@ static LinphoneChatRoom * check_has_chat_room_client_side(bctbx_list_t *lcs, Lin
         if (!(linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesOneToOne))
             BC_ASSERT(isAdmin == linphone_participant_is_admin(participant));
         BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), subject);
+
+        if (linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesBasic) {
+            BC_ASSERT_FALSE(linphone_chat_room_can_handle_participants(chatRoom));
+        } else {
+            BC_ASSERT_TRUE(linphone_chat_room_can_handle_participants(chatRoom));
+        }
     }
     return chatRoom;
 }
@@ -426,7 +432,7 @@ LinphoneChatRoom * check_creation_chat_room_client_side(bctbx_list_t *lcs, Linph
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreationPending, initialStats->number_of_LinphoneConferenceStateCreationPending + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneConferenceStateCreated, initialStats->number_of_LinphoneConferenceStateCreated + 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &lcm->stat.number_of_LinphoneChatRoomConferenceJoined, initialStats->number_of_LinphoneChatRoomConferenceJoined + 1, 5000));
-    return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
+	return check_has_chat_room_client_side(lcs, lcm, initialStats, confAddr, subject, participantNumber, isAdmin);
 }
 
 LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_participants(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, int expectedParticipantSize, bool_t encrypted) {
@@ -458,6 +464,12 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 	if (participant)
 		BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), initialSubject);
+
+	if (linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesBasic) {
+		BC_ASSERT_FALSE(linphone_chat_room_can_handle_participants(chatRoom));
+	} else {
+		BC_ASSERT_TRUE(linphone_chat_room_can_handle_participants(chatRoom));
+	}
 
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
