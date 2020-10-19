@@ -459,6 +459,12 @@ LinphoneChatRoom * create_chat_room_client_side_with_expected_number_of_particip
 		BC_ASSERT_TRUE(linphone_participant_is_admin(participant));
 	BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(chatRoom), initialSubject);
 
+	if (linphone_chat_room_get_capabilities(chatRoom) & LinphoneChatRoomCapabilitiesBasic) {
+		BC_ASSERT_FALSE(linphone_chat_room_can_handle_participants(chatRoom));
+	} else {
+		BC_ASSERT_TRUE(linphone_chat_room_can_handle_participants(chatRoom));
+	}
+
 	bctbx_list_free_with_data(participantsAddresses, (bctbx_list_free_func)linphone_address_unref);
 	participantsAddresses = NULL;
 
