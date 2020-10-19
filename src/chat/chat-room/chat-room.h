@@ -104,7 +104,7 @@ public:
 	bool removeParticipants (const std::list<std::shared_ptr<Participant>> &participants) override;
 
 	bool canHandleParticipants () const override {
-		return (getConference() == nullptr);
+		return (getConference() != nullptr);
 	}
 
 protected:
