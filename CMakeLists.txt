@@ -21,7 +21,29 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
-project(linphone VERSION 4.4.0 LANGUAGES C CXX)
+set(full_version 4.4.0)
+find_program(GIT_EXECUTABLE git NAMES Git CMAKE_FIND_ROOT_PATH_BOTH)
+if(GIT_EXECUTABLE)
+	execute_process(
+		COMMAND "${GIT_EXECUTABLE}" "describe"
+		OUTPUT_VARIABLE GIT_DESCRIBE_VERSION
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+		ERROR_QUIET
+		WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+	)
+
+	# parse git describe version
+	if (NOT (GIT_DESCRIBE_VERSION MATCHES "^([0-9]+)[.]([0-9]+)[.]([0-9]+)(-alpha|-beta)?(-[0-9]+)?(-g[0-9a-f]+)?$"))
+		message(FATAL_ERROR "invalid git describe version: '${GIT_DESCRIBE_VERSION}'")
+	endif()
+	set(version_major ${CMAKE_MATCH_1})
+	set(version_minor ${CMAKE_MATCH_2})
+	set(version_patch ${CMAKE_MATCH_3})
+
+	# format full version
+	set(full_version "${version_major}.${version_minor}.${version_patch}")
+endif()
+project(linphone VERSION ${full_version} LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
