@@ -5434,9 +5434,9 @@ void linphone_core_clear_call_logs(LinphoneCore *lc) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_history(lc);
 	}
+	bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
+	lc->call_logs = bctbx_list_free(lc->call_logs);
 	if (!call_logs_sqlite_db_found) {
-		bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
-		lc->call_logs = bctbx_list_free(lc->call_logs);
 		call_logs_write_to_config_file(lc);
 	}
 }
