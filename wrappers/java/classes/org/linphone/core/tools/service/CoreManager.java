@@ -20,6 +20,8 @@
 package org.linphone.core.tools.service;
 
 import android.app.Application;
+import android.app.ActivityManager;
+import android.app.ActivityManager.RunningServiceInfo;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -146,6 +148,22 @@ public class CoreManager {
 
         mListener = new CoreListenerStub() {
             @Override
+            public void onFirstCallStarted(Core core) {
+                Log.i("[Core Manager] First call started");
+                // Ensure Service is running. It will take care by itself to start as foreground.
+                if (!isServiceRunning()) {
+                    Log.w("[Core Manager] Service isn't running, let's start it");
+                    try {
+                        startService();
+                    } catch (IllegalStateException ise) {
+                        Log.w("[Core Manager] Failed to start service: ", ise);
+                    }
+                } else {
+                    Log.i("[Core Manager] Service appears to be running, everything is fine");
+                }
+            }
+
+            @Override
             public void onLastCallEnded(Core core) {
                 Log.i("[Core Manager] Last call ended");
                 if (core.isNativeRingingEnabled()) {
@@ -187,8 +205,7 @@ public class CoreManager {
         try {
             mServiceClass = getServiceClass();
             if (mServiceClass == null) mServiceClass = CoreService.class;
-            mContext.startService(new Intent().setClass(mContext, mServiceClass));
-            Log.i("[Core Manager] Starting service ", mServiceClass.getName());
+            //startService();
         } catch (IllegalStateException ise) {
             Log.w("[Core Manager] Failed to start service: ", ise);
             // On Android > 8, if app in background, startService will trigger an IllegalStateException when called from background
@@ -289,6 +306,21 @@ public class CoreManager {
 
         Log.w("[Core Manager] Failed to find a valid Service, continuing without it...");
         return null;
+    }
+
+    private void startService() {
+        mContext.startService(new Intent().setClass(mContext, mServiceClass));
+        Log.i("[Core Manager] Starting service ", mServiceClass.getName());
+    }
+
+    private boolean isServiceRunning() {
+        ActivityManager manager = (ActivityManager) mContext.getSystemService(Context.ACTIVITY_SERVICE);
+        for (RunningServiceInfo service : manager.getRunningServices(Integer.MAX_VALUE)) {
+            if (mServiceClass.getName().equals(service.service.getClassName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isAndroidXMediaAvailable() {
