@@ -444,6 +444,13 @@ void IosPlatformHelpers::networkChangeCallback() {
 		mCurrentFlags = flags;
 	}
 	if (!(flags & kSCNetworkReachabilityFlagsIsWWAN)) {
+/*
+ * CHECK_SSID is undefined by default. Previously we are monitoring SSID changes to notify liblinphone of possible network changes.
+ * Since iOS 12, it requires an annoying location permission. For that reason, the default algorithm just monitors
+ * the default local ip addresses for changes. A bit less reliable since we can change from wifi network but by change obtain the same ip address.
+ * But much less annoying because it doesn't require to ask a permission to the user.
+ */
+#ifdef CHECK_SSID
 		//Only check for wifi changes if current connection type is Wifi
 		string newSSID = getWifiSSID();
 		if (newSSID.empty() || newSSID.compare(mCurrentSSID) != 0) {
@@ -453,6 +460,11 @@ void IosPlatformHelpers::networkChangeCallback() {
 			force = true;
 			ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
 		}
+#else
+        if (reachable){
+            force = checkIpAddressChanged();
+        }
+#endif
 	}
 	getHttpProxySettings();
 	if (mHttpProxyEnabled) {

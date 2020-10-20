@@ -1149,7 +1149,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
-ms_message("%s - entering is update %0d\n", __func__, localIsOfferer); 
+
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;

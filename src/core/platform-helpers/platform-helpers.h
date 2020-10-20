@@ -140,6 +140,7 @@ public:
 	void stopAudioForEchoTestOrCalibration () override;
 
 protected:
+	bool checkIpAddressChanged();
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;
 	std::string mCurrentSSID;
 	std::string mHttpProxyHost;
