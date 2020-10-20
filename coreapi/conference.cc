@@ -124,6 +124,12 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
 		p->setFocus(remoteAddress == getConferenceAddress());
 		p->setPreserveSession(true);
+		// Pass admin information on if it is available in the contact address
+		Address remoteContactAddress(call->getRemoteContact());
+		if (remoteContactAddress.hasParam ("admin")) {
+			bool value = Utils::stob(remoteContactAddress.getParamValue("admin"));
+			p->setAdmin(value);
+		}
 		participants.push_back(p);
 	}
 
@@ -718,7 +724,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 void LocalConference::chooseAnotherAdminIfNoneInConference() {
 	if (participants.empty() == false) {
-		const auto & adminParticipant = std::find_if(participants.cbegin(), participants.cend(), [&] (const auto & p) {
+		const auto adminParticipant = std::find_if(participants.cbegin(), participants.cend(), [&] (const auto & p) {
 			return (p->isAdmin() == true);
 		});
 		// If not admin participant is found
@@ -1065,6 +1071,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 				if (!addr)
 					return false;
 				params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
+				// Participant with the focus call is admin
+				L_GET_CPP_PTR_FROM_C_OBJECT(params)->addCustomContactParameter("admin", Utils::toString(true));
 				linphone_call_params_enable_video(params, confParams->videoEnabled());
 				m_focusCall = Call::toCpp(linphone_core_invite_address_with_params(getCore()->getCCore(), addr, params))->getSharedFromThis();
 				m_focusCall->setConference(toC());
@@ -1227,7 +1235,11 @@ bool RemoteConference::focusIsReady () const {
 }
 
 bool RemoteConference::transferToFocus (std::shared_ptr<LinphonePrivate::Call> call) {
-	if (call->transfer(m_focusContact) == 0) {
+	Address referToAddr(m_focusContact);
+	//std::string referToAddr(m_focusCall->getRemoteContact());
+	std::shared_ptr<Participant> participant = findParticipant(call->getActiveSession());
+	referToAddr.setParam("admin", Utils::toString(participant->isAdmin()));
+	if (call->transfer(referToAddr.asString()) == 0) {
 		m_transferingCalls.push_back(call);
 		return true;
 	} else {
@@ -1286,10 +1298,9 @@ void RemoteConference::onPendingCallStateChanged (std::shared_ptr<LinphonePrivat
 		case LinphoneCallPaused:
 			if (state == ConferenceInterface::State::Created) {
 				// Transfer call only if focus call remote contact address is available (i.e. the call has been correctly established and passed through state StreamsRunning)
-				if (m_focusCall && (m_focusCall->getRemoteContact().empty() == 0)) {
+				if (m_focusCall && (m_focusCall->getRemoteContact().empty() == false)) {
 					m_pendingCalls.remove(call);
-					m_transferingCalls.push_back(call);
-					call->transfer(m_focusCall->getRemoteContact());
+					transferToFocus(call);
 				}
 			}
 			break;
@@ -1309,7 +1320,6 @@ void RemoteConference::onTransferingCallStateChanged (std::shared_ptr<LinphonePr
 	switch (newCallState) {
 		case LinphoneCallConnected:
 			m_transferingCalls.push_back(transfered);
-//			findParticipant(transfered)->m_call = nullptr;
 			break;
 		case LinphoneCallError:
 			m_transferingCalls.remove(transfered);
@@ -1410,11 +1420,10 @@ void RemoteConference::setParticipantAdminStatus (const shared_ptr<Participant> 
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(m_focusCall->getRemoteContact().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = participant->getAddress();
-	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
 	referOp->sendRefer(referToAddr.getInternalAddress());
 	referOp->unref();
@@ -1425,6 +1434,7 @@ void RemoteConference::setSubject (const std::string &subject) {
 		lError() << "Unable to update conference subject because focus " << getMe()->getAddress().asString() << " is not admin";
 		return;
 	}
+
 	Conference::setSubject(subject);
 }
 
@@ -1433,6 +1443,7 @@ bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &
 		lError() << "Unable to update conference parameters because focus " << getMe()->getAddress().asString() << " is not admin";
 		return false;
 	}
+
 	return Conference::update(newParameters);
 }
 
