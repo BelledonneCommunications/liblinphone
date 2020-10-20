@@ -61,7 +61,12 @@ void MS2VideoMixer::setFocus(StreamsGroup *sg){
 	if (ep){
 		ms_video_conference_set_focus(mConference, ep);
 	}else{
-		lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
+		MSVideoEndpoint *video_placeholder_ep = ms_video_conference_get_video_placeholder_member(mConference);
+		if (video_placeholder_ep) {
+			ms_video_conference_set_focus(mConference, video_placeholder_ep);
+		} else {
+			lError() << "MS2VideoMixer: cannot find endpoint requested for focus.";
+		}
 	}
 }
 
