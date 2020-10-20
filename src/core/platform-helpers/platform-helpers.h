@@ -136,6 +136,7 @@ public:
 	std::shared_ptr<SharedCoreHelpers> getSharedCoreHelpers() override;
 
 protected:
+	bool checkIpAddressChanged();
 	std::shared_ptr<SharedCoreHelpers> mSharedCoreHelpers;
 	std::string mCurrentSSID;
 	std::string mHttpProxyHost;

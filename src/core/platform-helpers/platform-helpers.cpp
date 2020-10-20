@@ -145,9 +145,8 @@ void GenericPlatformHelpers::onLinphoneCoreStart (bool monitoringEnabled) {
 void GenericPlatformHelpers::onLinphoneCoreStop () {}
 
 
-int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
-	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
-	LinphoneCore *core = helper->getCore()->getCCore();
+bool GenericPlatformHelpers::checkIpAddressChanged(){
+	LinphoneCore *core = getCore()->getCCore();
 	bool ipv6Enabled = linphone_core_ipv6_enabled(core);
 
 	char newIp4[LINPHONE_IPADDR_SIZE];
@@ -157,8 +156,10 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 		linphone_core_get_local_ip(core, AF_INET6, nullptr, newIp6);
 
 	bool status = strcmp(newIp6,"::1") != 0 || strcmp(newIp4,"127.0.0.1") != 0;
+	bool ipChanged = false;
+	
 	if (status && core->network_last_status){
-		bool ipChanged = false;
+		
 		// Check for IP address changes:
 		if (strcmp(newIp4, core->localip4) != 0) {
 			lInfo() << "IPv4 address change detected";
@@ -168,20 +169,29 @@ int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revent
 			lInfo() << "IPv6 address change detected";
 			ipChanged = true;
 		}
-		if (ipChanged){
-			helper->setNetworkReachable(false);
-			core->network_last_status = FALSE;
-		}
-	}
-
-	strncpy(core->localip4, newIp4, sizeof core->localip4);
-	if (ipv6Enabled) strncpy(core->localip6, newIp6, sizeof core->localip6);
-
-	if (bool_t(status) != core->network_last_status) {
 		if (status) {
 			lInfo() << "Default local ipv4 address is " << core->localip4;
 			if (ipv6Enabled) lInfo() << "Default local ipv6 address is " << core->localip6;
 		}
+	}
+	strncpy(core->localip4, newIp4, sizeof core->localip4);
+	if (ipv6Enabled) strncpy(core->localip6, newIp6, sizeof core->localip6);
+	return ipChanged;
+}
+
+int GenericPlatformHelpers::monitorTimerExpired (void *data, unsigned int revents) {
+	GenericPlatformHelpers *helper = static_cast<GenericPlatformHelpers *>(data);
+	LinphoneCore *core = helper->getCore()->getCCore();
+	
+	bool status = strcmp(core->localip6,"::1") != 0 || strcmp(core->localip4,"127.0.0.1") != 0;
+	bool ipChanged = helper->checkIpAddressChanged();
+	
+	if (ipChanged){
+		helper->setNetworkReachable(false);
+		core->network_last_status = FALSE;
+	}
+
+	if (bool_t(status) != core->network_last_status) {
 		helper->setNetworkReachable(status);
 		core->network_last_status = status;
 	}
