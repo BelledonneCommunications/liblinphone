@@ -2277,15 +2277,21 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 		break;
 		case LinphoneSubscriptionTerminated:
 			counters->number_of_LinphoneSubscriptionTerminated++;
-			mgr->lev=NULL;
+			if (lev == mgr->lev) {
+				mgr->lev=NULL;
+			}
 		break;
 		case LinphoneSubscriptionError:
 			counters->number_of_LinphoneSubscriptionError++;
-			mgr->lev=NULL;
+			if (lev == mgr->lev) {
+				mgr->lev=NULL;
+			}
 		break;
 		case LinphoneSubscriptionExpiring:
 			counters->number_of_LinphoneSubscriptionExpiring++;
-			mgr->lev=NULL;
+			if (lev == mgr->lev) {
+				mgr->lev=NULL;
+			}
 		break;
 	}
 	linphone_content_unref(content);
