@@ -19,9 +19,6 @@
 
 #include <algorithm>
 
-#include "object/object-p.h"
-#include "participant-p.h"
-
 #include "participant.h"
 #include "params/media-session-params.h"
 #include "session/media-session.h"
@@ -32,19 +29,40 @@ LINPHONE_BEGIN_NAMESPACE
 
 // =============================================================================
 
-shared_ptr<CallSession> ParticipantPrivate::createSession (
+Participant::Participant (Conference *conference, const IdentityAddress &address) {
+	configure(conference, address);
+	creationTime = time(nullptr);
+}
+
+Participant::Participant (Conference *conference, const IdentityAddress &address, std::shared_ptr<CallSession> callSession) : Participant(conference, address) {
+	session = callSession;
+}
+
+Participant::Participant () {
+}
+
+void Participant::configure (Conference *conference, const IdentityAddress &address) {
+	mConference = conference;
+	addr = address.getAddressWithoutGruu();
+}
+
+Participant::~Participant() {
+}
+
+// =============================================================================
+
+shared_ptr<CallSession> Participant::createSession (
 	const Conference &conference, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
 ) {
 	session = createSession(conference.getCore(), params, hasMedia, listener);
 	return session;
 }
 
-shared_ptr<CallSession> ParticipantPrivate::createSession (
+shared_ptr<CallSession> Participant::createSession (
 	const std::shared_ptr<Core> &core, const CallSessionParams *params, bool hasMedia, CallSessionListener *listener
 ) {
-	L_Q();
 	if (hasMedia && (!params || dynamic_cast<const MediaSessionParams *>(params))) {
-		session = make_shared<MediaSession>(core, q->getSharedFromThis(), params, listener);
+		session = make_shared<MediaSession>(core, getSharedFromThis(), params, listener);
 	} else {
 		session = make_shared<CallSession>(core, params, listener);
 	}
@@ -53,21 +71,20 @@ shared_ptr<CallSession> ParticipantPrivate::createSession (
 
 // -----------------------------------------------------------------------------
 
-shared_ptr<ParticipantDevice> ParticipantPrivate::addDevice (const IdentityAddress &gruu, const string &name) {
-	L_Q();
+shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
 	shared_ptr<ParticipantDevice> device = findDevice(gruu);
 	if (device)
 		return device;
-	device = make_shared<ParticipantDevice>(q, gruu, name);
+	device = ParticipantDevice::create(this, gruu, name);
 	devices.push_back(device);
 	return device;
 }
 
-void ParticipantPrivate::clearDevices () {
+void Participant::clearDevices () {
 	devices.clear();
 }
 
-shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const IdentityAddress &gruu) const {
+shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu) const {
 	for (const auto &device : devices) {
 		if (device->getAddress() == gruu)
 			return device;
@@ -75,7 +92,7 @@ shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const IdentityAddr
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const shared_ptr<const CallSession> &session) {
+shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session) {
 	for (const auto &device : devices) {
 		if (device->getSession() == session)
 			return device;
@@ -83,11 +100,11 @@ shared_ptr<ParticipantDevice> ParticipantPrivate::findDevice (const shared_ptr<c
 	return nullptr;
 }
 
-const list<shared_ptr<ParticipantDevice>> &ParticipantPrivate::getDevices () const {
+const list<shared_ptr<ParticipantDevice>> &Participant::getDevices () const {
 	return devices;
 }
 
-void ParticipantPrivate::removeDevice (const IdentityAddress &gruu) {
+void Participant::removeDevice (const IdentityAddress &gruu) {
 	for (auto it = devices.begin(); it != devices.end(); it++) {
 		if ((*it)->getAddress() == gruu) {
 			devices.erase(it);
@@ -96,47 +113,36 @@ void ParticipantPrivate::removeDevice (const IdentityAddress &gruu) {
 	}
 }
 
-// =============================================================================
-
-Participant::Participant (Conference *conference, const IdentityAddress &address) : Object(*new ParticipantPrivate) {
-	configure(conference, address);
-}
-
-Participant::Participant () : Object(*new ParticipantPrivate) {
-}
-
-void Participant::configure (Conference *conference, const IdentityAddress &address) {
-	L_D();
-	d->mConference = conference;
-	d->addr = address.getAddressWithoutGruu();
-}
-
 // -----------------------------------------------------------------------------
 
 const IdentityAddress& Participant::getAddress () const {
-	L_D();
-	return d->addr;
+	return addr;
 }
 
-AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
-	L_D();
+AbstractChatRoom::SecurityLevel Participant::getSecurityLevel() const {
+	return getSecurityLevelExcept(nullptr);
+}
+
+AbstractChatRoom::SecurityLevel Participant::getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const {
 	bool isSafe = true;
-	for (const auto &device : d->getDevices()) {
-		auto level = device->getSecurityLevel();
-		// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
-		// while we also have a ClearText one
-		// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
-		// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
-		switch (level) {
-			case AbstractChatRoom::SecurityLevel::Unsafe:
-				return level; // if one device is Unsafe the whole participant is Unsafe
-			case AbstractChatRoom::SecurityLevel::ClearText:
-				return level; // if one device is ClearText the whole participant is ClearText
-			case AbstractChatRoom::SecurityLevel::Encrypted:
-				isSafe = false; // if one device is Encrypted the whole participant is Encrypted
-				break;
-			case AbstractChatRoom::SecurityLevel::Safe:
-				break; // if all devices are Safe the whole participant is Safe
+	for (const auto &device : getDevices()) {
+		if (ignoredDevice != device) {
+			auto level = device->getSecurityLevel();
+			// Note: the algorithm implemented is not actually doing what it says and we may exit on the first Unsafe device
+			// while we also have a ClearText one
+			// It actually never occurs because in a ciphered chatroom, no one can be set as ClearText except the local
+			// device when it turns off lime after joining the chatroom and this status is thus intercepted before landing here.
+			switch (level) {
+				case AbstractChatRoom::SecurityLevel::Unsafe:
+					return level; // if one device is Unsafe the whole participant is Unsafe
+				case AbstractChatRoom::SecurityLevel::ClearText:
+					return level; // if one device is ClearText the whole participant is ClearText
+				case AbstractChatRoom::SecurityLevel::Encrypted:
+					isSafe = false; // if one device is Encrypted the whole participant is Encrypted
+					break;
+				case AbstractChatRoom::SecurityLevel::Safe:
+					break; // if all devices are Safe the whole participant is Safe
+			}
 		}
 	}
 	if (isSafe)
@@ -148,8 +154,19 @@ AbstractChatRoom::SecurityLevel Participant::getSecurityLevel () const {
 // -----------------------------------------------------------------------------
 
 bool Participant::isAdmin () const {
-	L_D();
-	return d->isAdmin;
+	return isThisAdmin;
+}
+
+bool Participant::isFocus () const {
+	return isThisFocus;
+}
+
+time_t Participant::getCreationTime () const {
+	return creationTime;
+}
+
+bool Participant::getPreserveSession () const {
+	return preserveSession;
 }
 
 LINPHONE_END_NAMESPACE

@@ -20,17 +20,19 @@
 #ifndef _L_ADDRESS_H_
 #define _L_ADDRESS_H_
 
+#include <unordered_map>
 #include <ostream>
 
 #include "enums.h"
 #include "object/clonable-object.h"
+#include "c-wrapper/internal/c-sal.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class AddressPrivate;
 class IdentityAddress;
+class ConferenceAddress;
 
 class LINPHONE_PUBLIC Address : public ClonableObject {
 	// TODO: Remove me later.
@@ -44,6 +46,7 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 public:
 	explicit Address (const std::string &address = "");
 	Address (const IdentityAddress &identityAddress);
+	Address (const ConferenceAddress &conferenceAddress);
 	Address (const Address &other);
 	~Address ();
 
@@ -102,6 +105,7 @@ public:
 	const std::string &getParamValue (const std::string &paramName) const;
 	bool setParam (const std::string &paramName, const std::string &paramValue = "");
 	bool setParams (const std::string &params);
+	bool removeParam (const std::string &paramName);
 
 	bool hasUriParam (const std::string &uriParamName) const;
 	const std::string &getUriParamValue (const std::string &uriParamName) const;
@@ -109,8 +113,30 @@ public:
 	bool setUriParams (const std::string &uriParams);
 	bool removeUriParam (const std::string &uriParamName);
 
+	inline const SalAddress *getInternalAddress () const {
+		return internalAddress;
+	}
+	void setInternalAddress (const SalAddress *value);
+
+	static void clearSipAddressesCache ();
+
 private:
-	L_DECLARE_PRIVATE(Address);
+	struct AddressCache {
+		std::string scheme;
+		std::string displayName;
+		std::string username;
+		std::string domain;
+		std::string methodParam;
+		std::string password;
+
+		std::unordered_map<std::string, std::string> headers;
+		std::unordered_map<std::string, std::string> params;
+		std::unordered_map<std::string, std::string> uriParams;
+	};
+
+	SalAddress *internalAddress = nullptr;
+	mutable AddressCache cache;
+
 };
 
 inline std::ostream &operator<< (std::ostream &os, const Address &address) {

@@ -14,8 +14,8 @@ passwd=secret
 realm=sip.example.org
 
 [proxy_0]
-reg_proxy=<sip:sip.example.org:6666;transport=tcp>
-reg_route=<sip:sip.example.org:6666;transport=tcp>
+reg_proxy=<sip:sip.example.org;transport=tcp>
+reg_route=<sip:sip.example.org;transport=tcp>
 reg_identity="Super Marie" <sip:marie@sip.example.org>
 reg_expires=3600
 reg_sendregister=1
@@ -56,7 +56,7 @@ device=StaticImage: Static picture
 echocancellation=0 #to not overload cpu in case of VG
 
 [net]
-dns_srv_enabled=0 #no srv needed in general
+
 stun_server=stun.example.org
 
 #leave this section, which is used by "Codec setup" test of "Setup" suite.

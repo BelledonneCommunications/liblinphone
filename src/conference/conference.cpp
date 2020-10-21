@@ -17,18 +17,20 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "conference-p.h"
+#include "conference.h"
 #include "conference/participant-device.h"
 #include "conference/session/call-session-p.h"
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
 
 #ifdef HAVE_ADVANCED_IM
 #include "xml/resource-lists.h"
 #endif
+
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -37,58 +39,79 @@ using namespace std;
 LINPHONE_BEGIN_NAMESPACE
 
 Conference::Conference (
-	ConferencePrivate &p,
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
-	CallSessionListener *listener
-) : CoreAccessor(core), mPrivate(&p) {
-	L_D();
-	d->mPublic = this;
-	d->me = make_shared<Participant>(this, myAddress);
-	d->listener = listener;
+	CallSessionListener *listener,
+	const std::shared_ptr<ConferenceParams> params
+) : CoreAccessor(core) {
+	this->me = Participant::create(this,myAddress);
+	this->me->setFocus(true);
+	this->listener = listener;
+	this->update(*params);
+	this->confParams->setMe(myAddress);
 }
 
 Conference::~Conference () {
-	delete mPrivate;
+	confListeners.clear();
 }
 
 // -----------------------------------------------------------------------------
 
 shared_ptr<Participant> Conference::getActiveParticipant () const {
-	L_D();
-	return d->activeParticipant;
+	return activeParticipant;
+}
+
+void Conference::clearParticipants () {
+	participants.clear();
 }
 
 // -----------------------------------------------------------------------------
 
-bool Conference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
+bool Conference::addParticipant (std::shared_ptr<Call> call) {
 	lError() << "Conference class does not handle addParticipant() generically";
 	return false;
 }
 
-bool Conference::addParticipants (const list<IdentityAddress> &addresses, const CallSessionParams *params, bool hasMedia) {
+bool Conference::addParticipant (const IdentityAddress &participantAddress) {
+	shared_ptr<Participant> participant = findParticipant(participantAddress);
+	if (participant) {
+		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the Conference";
+		return false;
+	}
+	participant = Participant::create(this,participantAddress);
+	// TODO: Use conference parameters to fill args
+	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
+	participant->setFocus(participantAddress == getConferenceAddress());
+	participant->setPreserveSession(false);
+	participants.push_back(participant);
+	if (!activeParticipant)
+		activeParticipant = participant;
+	return true;
+
+
+}
+
+bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	list<IdentityAddress> sortedAddresses(addresses);
 	sortedAddresses.sort();
 	sortedAddresses.unique();
 
 	bool soFarSoGood = true;
 	for (const auto &address : sortedAddresses)
-		soFarSoGood &= addParticipant(address, params, hasMedia);
+		soFarSoGood &= addParticipant(address);
 	return soFarSoGood;
 }
 
-bool Conference::canHandleParticipants () const {
-	return true;
+const ConferenceAddress Conference::getConferenceAddress () const {
+	return confParams->getConferenceAddress();
 }
 
-const IdentityAddress &Conference::getConferenceAddress () const {
-	L_D();
-	return d->conferenceAddress;
+void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
+	return confParams->setConferenceAddress(conferenceAddress);
 }
 
 shared_ptr<Participant> Conference::getMe () const {
-	L_D();
-	return d->me;
+	return me;
 }
 
 int Conference::getParticipantCount () const {
@@ -96,21 +119,31 @@ int Conference::getParticipantCount () const {
 }
 
 const list<shared_ptr<Participant>> &Conference::getParticipants () const {
-	L_D();
-	return d->participants;
+	return participants;
 }
 
 const string &Conference::getSubject () const {
-	L_D();
-	return d->subject;
+	return confParams->getSubject();
 }
+
+void Conference::join (const IdentityAddress &participantAddress) {}
 
 void Conference::join () {}
 
 void Conference::leave () {}
 
+bool Conference::update(const ConferenceParamsInterface &newParameters) {
+	confParams = ConferenceParams::create(static_cast<const ConferenceParams&>(newParameters));
+	return true;
+};
+
 bool Conference::removeParticipant (const shared_ptr<Participant> &participant) {
-	lError() << "Conference class does not handle removeParticipant() generically";
+	for (const auto &p : participants) {
+		if (participant->getAddress() == p->getAddress()) {
+			participants.remove(p);
+			return true;
+		}
+	}
 	return false;
 }
 
@@ -126,30 +159,28 @@ void Conference::setParticipantAdminStatus (const shared_ptr<Participant> &parti
 }
 
 void Conference::setSubject (const string &subject) {
-	L_D();
-	d->subject = subject;
+	confParams->setSubject(subject);
 }
 
 // -----------------------------------------------------------------------------
 
 shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr) const {
-	L_D();
 
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
-	for (const auto &participant : d->participants) {
-		if (participant->getAddress() == searchedAddr)
+	for (const auto &participant : participants) {
+		if (participant->getAddress() == searchedAddr) {
 			return participant;
+		}
 	}
 
 	return nullptr;
 }
 
 shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const CallSession> &session) const {
-	L_D();
 
-	for (const auto &participant : d->participants) {
-		if (participant->getPrivate()->getSession() == session)
+	for (const auto &participant : participants) {
+		if (participant->getSession() == session)
 			return participant;
 	}
 
@@ -157,10 +188,9 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 }
 
 shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_ptr<const CallSession> &session) const {
-	L_D();
 
-	for (const auto &participant : d->participants) {
-		for (const auto &device : participant->getPrivate()->getDevices()) {
+	for (const auto &participant : participants) {
+		for (const auto &device : participant->getDevices()) {
 			if (device->getSession() == session)
 				return device;
 		}
@@ -172,10 +202,9 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 // -----------------------------------------------------------------------------
 
 bool Conference::isMe (const IdentityAddress &addr) const {
-	L_D();
 	IdentityAddress cleanedAddr(addr);
 	cleanedAddr.setGruu("");
-	IdentityAddress cleanedMeAddr(d->me->getAddress());
+	IdentityAddress cleanedMeAddr(me->getAddress());
 	cleanedMeAddr.setGruu("");
 	return cleanedMeAddr == cleanedAddr;
 }
@@ -230,6 +259,141 @@ list<IdentityAddress> Conference::parseResourceLists (const Content &content) {
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return list<IdentityAddress>();
 #endif
+}
+
+void Conference::setLastNotify (unsigned int lastNotify) {
+	this->lastNotify = lastNotify;
+}
+
+void Conference::setConferenceId (const ConferenceId &conferenceId) {
+	this->conferenceId = conferenceId;
+}
+
+const ConferenceId &Conference::getConferenceId () const {
+	return conferenceId;
+}
+
+void Conference::resetLastNotify () {
+	setLastNotify(0);
+}
+
+void Conference::notifyFullState () {
+	for (const auto &l : confListeners) {
+		l->onFullStateReceived();
+	}
+}
+
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		EventLog::Type::ConferenceParticipantAdded,
+		creationTime,
+		conferenceId,
+		participant->getAddress()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantAdded(event, participant);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		EventLog::Type::ConferenceParticipantRemoved,
+		creationTime,
+		conferenceId,
+		participant->getAddress()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantRemoved(event, participant);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantEvent> Conference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
+	shared_ptr<ConferenceParticipantEvent> event = make_shared<ConferenceParticipantEvent>(
+		isAdmin ? EventLog::Type::ConferenceParticipantSetAdmin : EventLog::Type::ConferenceParticipantUnsetAdmin,
+		creationTime,
+		conferenceId,
+		participant->getAddress()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantSetAdmin(event, participant);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceSubjectEvent> Conference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+	shared_ptr<ConferenceSubjectEvent> event = make_shared<ConferenceSubjectEvent>(
+		creationTime,
+		conferenceId,
+		subject
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onSubjectChanged(event);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceAdded,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceAdded(event, participantDevice);
+	}
+	return event;
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	shared_ptr<ConferenceParticipantDeviceEvent> event = make_shared<ConferenceParticipantDeviceEvent>(
+		EventLog::Type::ConferenceParticipantDeviceRemoved,
+		creationTime,
+		conferenceId,
+		participant->getAddress(),
+		participantDevice->getAddress(),
+		participantDevice->getName()
+	);
+	event->setFullState(isFullState);
+	event->setNotifyId(lastNotify);
+
+	for (const auto &l : confListeners) {
+		l->onParticipantDeviceRemoved(event, participantDevice);
+	}
+	return event;
+}
+
+void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
+	if (this->state != state) {
+		lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		this->state = state;
+		notifyStateChanged(state);
+	}
+}
+
+void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+	for (const auto &l : confListeners) {
+		l->onStateChanged(state);
+	}
 }
 
 LINPHONE_END_NAMESPACE

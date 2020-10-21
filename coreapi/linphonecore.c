@@ -63,7 +63,6 @@
 #include "chat/chat-room/server-group-chat-room-p.h"
 #include "conference/handlers/local-conference-list-event-handler.h"
 #include "conference/handlers/remote-conference-event-handler.h"
-#include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
 #endif
 #include "content/content-manager.h"
@@ -73,7 +72,7 @@
 #include "conference/session/media-session-p.h"
 
 // For migration purpose.
-#include "address/address-p.h"
+#include "address/address.h"
 #include "c-wrapper/c-wrapper.h"
 
 
@@ -483,6 +482,14 @@ LinphoneCoreCbsVersionUpdateCheckResultReceivedCb linphone_core_cbs_get_version_
 
 void linphone_core_cbs_set_version_update_check_result_received(LinphoneCoreCbs *cbs, LinphoneCoreCbsVersionUpdateCheckResultReceivedCb cb) {
 	cbs->vtable->version_update_check_result_received = cb;
+}
+
+LinphoneCoreCbsConferenceStateChangedCb linphone_core_cbs_get_conference_state_changed (LinphoneCoreCbs *cbs) {
+	return cbs->vtable->conference_state_changed;
+}
+
+void linphone_core_cbs_set_conference_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceStateChangedCb cb) {
+	cbs->vtable->conference_state_changed = cb;
 }
 
 LinphoneCoreCbsChatRoomStateChangedCb linphone_core_cbs_get_chat_room_state_changed (LinphoneCoreCbs *cbs) {
@@ -1206,7 +1213,6 @@ void linphone_core_serialize_logs(void) {
 	liblinphone_serialize_logs = TRUE;
 }
 
-
 static void net_config_read(LinphoneCore *lc) {
 	int tmp;
 	const char *tmpstr;
@@ -1253,6 +1259,10 @@ static void net_config_read(LinphoneCore *lc) {
 	linphone_core_enable_dns_srv(lc, !!tmp);
 	tmp = linphone_config_get_int(lc->config, "net", "dns_search_enabled", 1);
 	linphone_core_enable_dns_search(lc, !!tmp);
+
+	// Update existing friend list subscribe state, otherwise change won't be applied until next core creation.
+	bool subscribe_enabled = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isFriendListSubscriptionEnabled();
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->enableFriendListsSubscription(subscribe_enabled);
 }
 
 static void build_sound_devices_table(LinphoneCore *lc){
@@ -2304,14 +2314,18 @@ void linphone_configuring_terminated(LinphoneCore *lc, LinphoneConfiguringState 
 	linphone_core_notify_configuring_status(lc, state, message);
 
 	if (state == LinphoneConfiguringSuccessful) {
-		if (linphone_core_is_provisioning_transient(lc) == TRUE)
+		if (linphone_core_is_provisioning_transient(lc)) {
 			linphone_core_set_provisioning_uri(lc, NULL);
+		}
+
 		_linphone_core_read_config(lc);
 	}
+
 	if (lc->provisioning_http_listener){
 		belle_sip_object_unref(lc->provisioning_http_listener);
 		lc->provisioning_http_listener = NULL;
 	}
+
 	_linphone_core_apply_transports(lc); // This will create SIP sockets.
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->initEphemeralMessages();
 	linphone_core_set_state(lc, LinphoneGlobalOn, "On");
@@ -2431,30 +2445,49 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 
 		const LinphoneAddress *from = linphone_event_get_from(lev);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
 		));
-		if (!chatRoom)
-			return;
+		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(from))
+		));
 
-		shared_ptr<ClientGroupChatRoom> cgcr;
-		if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
-			cgcr = static_pointer_cast<ClientGroupChatRoom>(
-				static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
-		else
-			cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+		if (chatRoom) {
+			shared_ptr<ClientGroupChatRoom> cgcr;
+			if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Proxy)
+				cgcr = static_pointer_cast<ClientGroupChatRoom>(
+					static_pointer_cast<ClientGroupToBasicChatRoom>(chatRoom)->getProxiedChatRoom());
+			else
+				cgcr = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
 
-		if (linphone_content_is_multipart(body)) {
-			// TODO : migrate to c++ 'Content'.
-			int i = 0;
-			LinphoneContent *part = nullptr;
-			while ((part = linphone_content_get_part(body, i))) {
-				i++;
-				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(part));
-				linphone_content_unref(part);
+			if (linphone_content_is_multipart(body)) {
+				// TODO : migrate to c++ 'Content'.
+				int i = 0;
+				LinphoneContent *part = nullptr;
+				while ((part = linphone_content_get_part(body, i))) {
+					i++;
+					L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(part));
+					linphone_content_unref(part);
+				}
+			} else {
+				L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(body));
 			}
-		} else
-			L_GET_PRIVATE(cgcr)->notifyReceived(linphone_content_get_utf8_text(body));
+		} else if (audioVideoConference) {
+			shared_ptr<MediaConference::RemoteConference> conference = static_pointer_cast<MediaConference::RemoteConference>(audioVideoConference);
+			if (linphone_content_is_multipart(body)) {
+				// TODO : migrate to c++ 'Content'.
+				int i = 0;
+				LinphoneContent *part = nullptr;
+				while ((part = linphone_content_get_part(body, i))) {
+					i++;
+					conference->notifyReceived(linphone_content_get_utf8_text(part));
+					linphone_content_unref(part);
+				}
+			} else {
+				conference->notifyReceived(linphone_content_get_utf8_text(body));
+			}
+		}
 #else
 		ms_message("Advanced IM such as group chat is disabled!");
 #endif
@@ -2471,11 +2504,18 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
 	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-		IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 	));
+	shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+		ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+	));
+
 	if (chatRoom)
-		L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscribeReceived(lev);
+		static_pointer_cast<ServerGroupChatRoom>(chatRoom)->subscribeReceived(lev);
+	else if (audioVideoConference)
+		static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscribeReceived(lev);
 	else
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 #else
@@ -2493,19 +2533,26 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 #ifdef HAVE_ADVANCED_IM
 	if (!linphone_core_conference_server_enabled(lc)) {
 		/* Liblinphone in a client application. */
-		RemoteConferenceEventHandlerPrivate * handler = static_cast<RemoteConferenceEventHandlerPrivate*>(
+		RemoteConferenceEventHandler * handler = static_cast<RemoteConferenceEventHandler*>(
 			belle_sip_object_data_get(BELLE_SIP_OBJECT(lev), "event-handler-private"));
 		if (handler && (state == LinphoneSubscriptionError || state == LinphoneSubscriptionTerminated)) {
 			handler->invalidateSubscription();
 		}
 	}else{
+		/* This has to be done only when running as server */
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(LinphonePrivate::ConferenceId(
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
-			IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
+		));
+		shared_ptr<MediaConference::Conference> audioVideoConference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(LinphonePrivate::ConferenceId(
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource)),
+			ConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(resource))
 		));
 		if (chatRoom)
 			L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->subscriptionStateChanged(lev, state);
+		else if (audioVideoConference)
+			static_pointer_cast<MediaConference::LocalConference>(audioVideoConference)->subscriptionStateChanged(lev, state);
 	}
 #else
 	ms_warning("Advanced IM such as group chat is disabled!");
@@ -2696,7 +2743,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 	bool_t push_notification_default = FALSE;
 	bool_t auto_iterate_default = FALSE;
-#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
+#if __ANDROID__ || TARGET_OS_IPHONE
 	push_notification_default = TRUE;
 	auto_iterate_default = TRUE;
 #endif
@@ -3990,7 +4037,7 @@ static bctbx_list_t *make_routes_for_proxy(LinphoneProxyConfig *proxy, const Lin
 		proxy_routes_iterator = bctbx_list_next(proxy_routes_iterator);
 	}
 	if (srv_route){
-		ret = bctbx_list_append(ret, sal_address_clone(L_GET_PRIVATE_FROM_C_OBJECT(srv_route)->getInternalAddress()));
+		ret = bctbx_list_append(ret, sal_address_clone(L_GET_CPP_PTR_FROM_C_OBJECT(srv_route)->getInternalAddress()));
 	}
 	if (ret == NULL) {
 		/*if the proxy address matches the domain part of the destination, then use the same transport
@@ -4147,7 +4194,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 		linphone_transfer_routes_to_op(routes,op);
 	}
 
-	op->setToAddress(L_GET_PRIVATE_FROM_C_OBJECT(dest)->getInternalAddress());
+	op->setToAddress(L_GET_CPP_PTR_FROM_C_OBJECT(dest)->getInternalAddress());
 	op->setFrom(identity);
 	op->setSentCustomHeaders(headers);
 	op->setRealm(L_C_TO_STRING(linphone_proxy_config_get_realm(proxy)));
@@ -4156,7 +4203,7 @@ void linphone_configure_op_with_proxy(LinphoneCore *lc, SalOp *op, const Linphon
 		const LinphoneAddress *contact = linphone_proxy_config_get_contact(proxy);
 		SalAddress *salAddress = nullptr;
 		if (contact)
-			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_PRIVATE_FROM_C_OBJECT(contact)->getInternalAddress()));
+			salAddress = sal_address_clone(const_cast<SalAddress *>(L_GET_CPP_PTR_FROM_C_OBJECT(contact)->getInternalAddress()));
 		op->setContactAddress(salAddress);
 		if (salAddress)
 			sal_address_unref(salAddress);
@@ -4196,8 +4243,10 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
 		return NULL;
 
+	proxy = linphone_call_params_get_proxy_config(params);
+	if( proxy == NULL)
+		proxy=linphone_core_lookup_known_proxy(lc,addr);
 	cp = linphone_call_params_copy(params);
-	proxy=linphone_core_lookup_known_proxy(lc,addr);
 	if (proxy!=NULL) {
 		from=linphone_proxy_config_get_identity(proxy);
 		linphone_call_params_enable_avpf(cp, linphone_proxy_config_avpf_enabled(proxy));
@@ -5398,9 +5447,9 @@ void linphone_core_clear_call_logs(LinphoneCore *lc) {
 		call_logs_sqlite_db_found = TRUE;
 		linphone_core_delete_call_history(lc);
 	}
+	bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
+	lc->call_logs = bctbx_list_free(lc->call_logs);
 	if (!call_logs_sqlite_db_found) {
-		bctbx_list_for_each(lc->call_logs, (void (*)(void*))linphone_call_log_unref);
-		lc->call_logs = bctbx_list_free(lc->call_logs);
 		call_logs_write_to_config_file(lc);
 	}
 }
@@ -6489,7 +6538,7 @@ void sip_config_uninit(LinphoneCore *lc)
 
 	if (lc->nat_policy) linphone_nat_policy_release(lc->nat_policy);
 
-	lc->sal->iterate(); /*make sure event are purged*/
+	for (i = 0; i < 5 ; ++i) lc->sal->iterate(); /*make sure event are purged*/
 	delete lc->sal;
 	lc->sal=NULL;
 
@@ -7732,11 +7781,12 @@ static int _linphone_core_delayed_conference_destruction_cb(void *user_data, uns
 
 static void _linphone_core_conference_state_changed(LinphoneConference *conf, LinphoneConferenceState cstate, void *user_data) {
 	LinphoneCore *lc = (LinphoneCore *)user_data;
-	if(cstate == LinphoneConferenceStartingFailed || cstate == LinphoneConferenceStopped) {
+	if(cstate == LinphoneConferenceStateCreationFailed || cstate == LinphoneConferenceStateDeleted) {
 		linphone_core_queue_task(lc, _linphone_core_delayed_conference_destruction_cb, conf, "Conference destruction task");
 		lc->conf_ctx = NULL;
 	}
 }
+
 
 /*This function sets the "unique" conference object for the LinphoneCore - which is necessary as long as
  * liblinphone is used in a client app. When liblinphone will be used in a server app, this shall not be done anymore.*/
@@ -7752,18 +7802,23 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 	/* In server mode, it is allowed to create multiple conferences. */
 	if (lc->conf_ctx == NULL || serverMode) {
 		LinphoneConferenceParams *params2 = linphone_conference_params_clone(params);
-
 		conf_method_name = linphone_config_get_string(lc->config, "misc", "conference_type", "local");
+		LinphoneAddress *identity = linphone_address_new(linphone_core_get_identity(lc));
 		if (strcasecmp(conf_method_name, "local") == 0) {
-			conf = linphone_local_conference_new_with_params(lc, params2);
+			conf = linphone_local_conference_new_with_params(lc, identity, params2);
 		} else if (!serverMode && strcasecmp(conf_method_name, "remote") == 0) {
-			conf = linphone_remote_conference_new_with_params(lc, params2);
+			const char *uri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
+			LinphoneAddress *factory_uri = linphone_address_new(uri);
+			conf = linphone_remote_conference_new_with_params(lc, factory_uri, identity, params2);
+			linphone_address_unref(factory_uri);
 		} else {
 			ms_error("'%s' is not a valid conference method", conf_method_name);
 			linphone_conference_params_unref(params2);
+			linphone_address_unref(identity);
 			return NULL;
 		}
 		linphone_conference_params_unref(params2);
+		linphone_address_unref(identity);
 		if (!serverMode) {
 			linphone_core_set_conference(lc, conf);
 			linphone_conference_set_state_changed_callback(conf, _linphone_core_conference_state_changed, lc);
@@ -7803,7 +7858,11 @@ LinphoneStatus linphone_core_add_all_to_conference(LinphoneCore *lc) {
 }
 
 LinphoneStatus linphone_core_remove_from_conference(LinphoneCore *lc, LinphoneCall *call) {
-	if(lc->conf_ctx) return linphone_conference_remove_participant_with_call(lc->conf_ctx, call);
+	if(lc->conf_ctx) {
+		const LinphoneAddress *uri = linphone_call_get_remote_address(call);
+		LinphoneParticipant * participant = linphone_conference_find_participant(lc->conf_ctx, uri);
+		return linphone_conference_remove_participant_2(lc->conf_ctx, participant);
+	}
 	else return -1;
 }
 

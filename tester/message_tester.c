@@ -439,7 +439,7 @@ static void text_message_with_send_error(void) {
 void text_message_from_non_default_proxy_config(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_dual_proxy_2_rc", FALSE);
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,2));
 	
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");
@@ -476,7 +476,7 @@ void text_message_from_non_default_proxy_config(void) {
 void text_message_reply_from_non_default_proxy_config(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_dual_proxy_2_rc", FALSE);
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
+	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,2));
 	
 	const bctbx_list_t *proxyConfigs = linphone_core_get_proxy_config_list(marie->lc);
 	BC_ASSERT_EQUAL(bctbx_list_size(proxyConfigs), 2, int, "%d");

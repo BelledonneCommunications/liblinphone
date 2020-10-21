@@ -20,6 +20,8 @@
 #include "call-session-params-p.h"
 #include "call-session-params.h"
 
+#include "linphone/proxy_config.h"
+
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
@@ -42,6 +44,9 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	customContactParameters = src->customContactParameters;
 	referer = src->referer;
 	customContents = src->customContents;
+	proxyConfig = src->proxyConfig;
+	if( proxyConfig)
+		linphone_proxy_config_ref(proxyConfig);
 }
 
 // -----------------------------------------------------------------------------
@@ -63,7 +68,12 @@ void CallSessionParamsPrivate::setCustomHeaders (const SalCustomHeader *ch) {
 
 CallSessionParams::CallSessionParams () : ClonableObject(*new CallSessionParamsPrivate) {}
 
-CallSessionParams::CallSessionParams (CallSessionParamsPrivate &p) : ClonableObject(p) {}
+CallSessionParams::CallSessionParams (CallSessionParamsPrivate &p) : ClonableObject(p) {
+	L_D();
+	d->proxyConfig = p.proxyConfig;
+	if( d->proxyConfig )
+		linphone_proxy_config_ref(d->proxyConfig);
+}
 
 CallSessionParams::CallSessionParams (const CallSessionParams &other)
 	: ClonableObject(*new CallSessionParamsPrivate) {
@@ -75,6 +85,8 @@ CallSessionParams::~CallSessionParams () {
 	L_D();
 	if (d->customHeaders)
 		sal_custom_header_free(d->customHeaders);
+	if( d->proxyConfig )
+		linphone_proxy_config_unref(d->proxyConfig);
 }
 
 CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other) {
@@ -90,6 +102,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	L_D();
 	d->inConference = false;
 	d->privacy = LinphonePrivacyDefault;
+	setProxyConfig(NULL);
 }
 
 // -----------------------------------------------------------------------------
@@ -172,6 +185,22 @@ void CallSessionParams::addCustomContent(const Content& content) {
 const list<Content>& CallSessionParams::getCustomContents() const {
 	L_D();
 	return d->customContents;
+}
+
+// -----------------------------------------------------------------------------
+
+LinphoneProxyConfig *CallSessionParams::getProxyConfig() const {
+	L_D();
+	return d->proxyConfig;
+}
+
+void CallSessionParams::setProxyConfig(LinphoneProxyConfig *proxyConfig) {
+	L_D();
+	if( proxyConfig )
+		linphone_proxy_config_ref(proxyConfig);
+	if( d->proxyConfig )
+		linphone_proxy_config_unref(d->proxyConfig);
+	d->proxyConfig = proxyConfig;
 }
 
 LINPHONE_END_NAMESPACE

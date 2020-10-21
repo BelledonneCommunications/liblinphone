@@ -21,6 +21,7 @@
 #define LINPHONE_PROXY_CONFIG_H
 
 #include "linphone/types.h"
+#include "linphone/sipsetup.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -29,23 +29,31 @@ LINPHONE_BEGIN_NAMESPACE
 class ConferenceNotifiedEventPrivate;
 
 class LINPHONE_PUBLIC ConferenceNotifiedEvent : public ConferenceEvent {
+	friend class MainDbPrivate;
+	friend class ClientGroupChatRoom;
+	friend class RemoteConference;
 public:
 	ConferenceNotifiedEvent (
 		Type type, time_t creationTime,
-		const ConferenceId &conferenceId,
-		unsigned int notifiyId
+		const ConferenceId &conferenceId
 	);
 
 	unsigned int getNotifyId () const;
+	inline bool getFullState () const { return fullState; };
 
 protected:
 	ConferenceNotifiedEvent (
 		ConferenceNotifiedEventPrivate &p,
 		Type type,
 		time_t creationTime,
-		const ConferenceId &conferenceId,
-		unsigned int notifyId
+		const ConferenceId &conferenceId
 	);
+
+	inline void setFullState (const bool fullState) { this->fullState = fullState; };
+	inline void setNotifyId (unsigned int notifyId) { this->notifyId = notifyId; }
+
+	bool fullState = false;
+	unsigned int notifyId = 0;
 
 private:
 	L_DECLARE_PRIVATE(ConferenceNotifiedEvent);

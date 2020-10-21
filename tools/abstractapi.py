@@ -533,6 +533,7 @@ class CParser(object):
 			'LinphoneCallDir'                            : 'LinphoneCall',
 			'LinphoneCallState'                          : 'LinphoneCall',
 			'LinphoneCallStatus'                         : 'LinphoneCall',
+			'LinphoneConferenceState'                    : 'LinphoneConference',
 			'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
 			'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
 			'LinphoneChatMessageState'                   : 'LinphoneChatMessage',

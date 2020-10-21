@@ -40,8 +40,6 @@
 	F(EventLog, EventLog) \
 	F(MagicSearch, MagicSearch) \
 	F(MediaSessionParams, CallParams) \
-	F(Participant, Participant) \
-	F(ParticipantDevice, ParticipantDevice) \
 	F(ParticipantDeviceIdentity, ParticipantDeviceIdentity) \
 	F(ParticipantImdnState, ParticipantImdnState) \
 	F(SearchResult, SearchResult)
@@ -85,6 +83,7 @@ BELLE_SIP_TYPE_ID(LinphoneCallStats),
 BELLE_SIP_TYPE_ID(LinphoneChatMessageCbs),
 BELLE_SIP_TYPE_ID(LinphoneChatRoomCbs),
 BELLE_SIP_TYPE_ID(LinphoneConference),
+BELLE_SIP_TYPE_ID(LinphoneConferenceCbs),
 BELLE_SIP_TYPE_ID(LinphoneConferenceParams),
 BELLE_SIP_TYPE_ID(LinphoneConfig),
 BELLE_SIP_TYPE_ID(LinphoneContactProvider),
@@ -106,6 +105,8 @@ BELLE_SIP_TYPE_ID(LinphoneLDAPContactSearch),
 BELLE_SIP_TYPE_ID(LinphoneLoggingService),
 BELLE_SIP_TYPE_ID(LinphoneLoggingServiceCbs),
 BELLE_SIP_TYPE_ID(LinphoneNatPolicy),
+BELLE_SIP_TYPE_ID(LinphoneParticipant),
+BELLE_SIP_TYPE_ID(LinphoneParticipantDevice),
 BELLE_SIP_TYPE_ID(LinphonePayloadType),
 BELLE_SIP_TYPE_ID(LinphonePlayer),
 BELLE_SIP_TYPE_ID(LinphonePlayerCbs),

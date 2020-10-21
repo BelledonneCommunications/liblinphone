@@ -232,7 +232,7 @@ private:
 	static constexpr const int rtpExtHeaderMidNumber = 1;
 
 	std::weak_ptr<Participant> me;
-	
+
 	std::unique_ptr<StreamsGroup> streamsGroup;
 	int mainAudioStreamIndex = -1;
 	int mainVideoStreamIndex = -1;

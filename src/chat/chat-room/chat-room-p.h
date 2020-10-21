@@ -23,7 +23,6 @@
 #include <ctime>
 
 #include "abstract-chat-room-p.h"
-#include "conference/conference-id.h"
 #include "chat-room.h"
 #include "chat/notification/imdn.h"
 #include "chat/notification/is-composing.h"
@@ -49,8 +48,6 @@ public:
 	inline void setLastUpdateTime (time_t lastUpdateTime) override {
 		this->lastUpdateTime = lastUpdateTime;
 	}
-
-	void setState (ChatRoom::State newState) override;
 
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 	void onChatMessageSent (const std::shared_ptr<ChatMessage> &chatMessage) override;
@@ -103,7 +100,6 @@ public:
 	std::list<std::shared_ptr<EventLog>> transientEvents;
 	std::list<std::shared_ptr<ChatMessage>> transientMessages;
 
-	ConferenceId conferenceId;
 	std::shared_ptr<ChatRoomParams> params;
 
 protected:
@@ -111,7 +107,6 @@ protected:
 	AbstractChatRoom::CapabilitiesMask capabilities;
 
 private:
-	ChatRoom::State state = ChatRoom::State::None;
 
 	time_t creationTime = std::time(nullptr);
 	time_t lastUpdateTime = std::time(nullptr);

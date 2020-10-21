@@ -26,6 +26,7 @@
 #include "linphone/enums/call-enums.h"
 #include "linphone/enums/chat-message-enums.h"
 #include "linphone/enums/chat-room-enums.h"
+#include "linphone/enums/conference-enums.h"
 #include "linphone/enums/encryption-engine-enums.h"
 #include "linphone/enums/event-log-enums.h"
 #include "linphone/enums/security-event-enums.h"
@@ -96,6 +97,20 @@ typedef void (*LinphoneCallCbFunc) (LinphoneCall *call, void *ud);
  * @ingroup call_control
  */
 typedef struct _LinphoneCallCbs LinphoneCallCbs;
+
+// -----------------------------------------------------------------------------
+// ChatRoom.
+// -----------------------------------------------------------------------------
+
+/**
+ * An object to handle the callbacks for the handling a #LinphoneConference objects.
+ *
+ * Use linphone_factory_create_conference_cbs() to create an instance. Then, call the
+ * callback setters on the events you need to monitor and pass the object to
+ * a #LinphoneConferece instance through linphone_conference_add_callbacks().
+ * @ingroup conferencing
+ */
+typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
 
 // -----------------------------------------------------------------------------
 // ChatRoom.
@@ -181,11 +196,6 @@ typedef struct _LinphoneParticipant LinphoneParticipant;
  * @ingroup misc
  */
 typedef struct _LinphoneParticipantImdnState LinphoneParticipantImdnState;
-
-/**
- * @ingroup misc
- */
-typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
 
 /**
  * @ingroup misc

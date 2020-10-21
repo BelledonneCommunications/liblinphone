@@ -65,6 +65,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 		}
 		ret = bctbx_list_append(ret, bctbx_strdup(ipaddress));
 	}
+	freeaddrinfo(ai);
 	return ret;
 }
 
@@ -387,9 +388,10 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&group_chat_test_suite);
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
+	bc_tester_add_suite(&lime_server_auth_test_suite);
 #endif
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
-	bc_tester_add_suite(&lime_server_auth_test_suite);
+	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
 	bc_tester_add_suite(&offeranswer_test_suite);
@@ -404,6 +406,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
 	bc_tester_add_suite(&audio_quality_test_suite);
+	bc_tester_add_suite(&audio_video_conference_test_suite);
 	bc_tester_add_suite(&multi_call_test_suite);
 	bc_tester_add_suite(&message_test_suite);
 	bc_tester_add_suite(&session_timers_test_suite);
@@ -445,6 +448,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_with_rtp_bundle_test_suite);
 	bc_tester_add_suite(&shared_core_test_suite);
 	bc_tester_add_suite(&vfs_encryption_test_suite);
+	bc_tester_add_suite(&external_domain_test_suite);
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {

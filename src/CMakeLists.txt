@@ -27,9 +27,6 @@ set(LINK_LIBS
 	mediastreamer
 	ortp
 )
-if(ENABLE_ADVANCED_IM)
-	list(APPEND LIBS ${LIBXSD_LIBRARIES})
-endif()
 
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
@@ -45,11 +42,14 @@ if(APPLE)
 endif()
 set(INTERFACE_LIBS ${LINK_LIBS} xml2 xsd)
 
-list(APPEND LINK_LIBS ${XML2_LIBRARIES}	${LIBXSD_LIBRARIES})
-
-if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	list(APPEND LIBS "Ws2_32" "Iphlpapi")
+list(APPEND LINK_LIBS ${XML2_LIBRARIES})
+if (ENABLE_ADVANCED_IM)
+	list(APPEND LINK_LIBS ${XercesC_TARGET})
+	if (APPLE AND NOT IOS)
+		list(APPEND APPLE_LIBS "-framework CoreServices")
+	endif()
 endif()
+
 if(LIME_FOUND)
 	list(APPEND INTERFACE_LIBS lime)
 	list(APPEND LINK_LIBS ${LIME_LIBRARIES})
@@ -109,7 +109,6 @@ endif()
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
-	address/address-p.h
 	address/address.h
 	address/identity-address.h
 	address/identity-address-parser.h
@@ -157,9 +156,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/notification/is-composing.h
 	conference/conference-id.h
 	conference/conference-listener.h
-	conference/conference-p.h
+	conference/notify-conference-listener.h
 	conference/conference.h
-	conference/local-conference-p.h
 	conference/local-conference.h
 	conference/params/call-session-params-p.h
 	conference/params/call-session-params.h
@@ -168,9 +166,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	conference/participant-device.h
 	conference/participant-imdn-state-p.h
 	conference/participant-imdn-state.h
-	conference/participant-p.h
 	conference/participant.h
-	conference/remote-conference-p.h
 	conference/remote-conference.h
 	conference/session/call-session-listener.h
 	conference/session/call-session-p.h
@@ -262,10 +258,10 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.h
 		chat/chat-room/server-group-chat-room-p.h
 		chat/chat-room/server-group-chat-room.h
-		conference/handlers/local-conference-event-handler-p.h
+		conference/handlers/local-audio-video-conference-event-handler.h
 		conference/handlers/local-conference-event-handler.h
 		conference/handlers/local-conference-list-event-handler.h
-		conference/handlers/remote-conference-event-handler-p.h
+		conference/handlers/remote-conference-event-handler-base.h
 		conference/handlers/remote-conference-event-handler.h
 		conference/handlers/remote-conference-list-event-handler.h
 		xml/conference-info.h
@@ -302,6 +298,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-chat-room-cbs.cpp
 	c-wrapper/api/c-chat-room.cpp
 	c-wrapper/api/c-content.cpp
+	c-wrapper/api/c-conference-cbs.cpp
+	c-wrapper/api/c-conference.cpp
 	c-wrapper/api/c-core.cpp
 	c-wrapper/api/c-dial-plan.cpp
 	c-wrapper/api/c-event-log.cpp
@@ -341,6 +339,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/notification/is-composing.cpp
 	conference/conference-id.cpp
 	conference/conference.cpp
+	conference/conference-interface.cpp
+	conference/notify-conference-listener.cpp
 	conference/local-conference.cpp
 	conference/params/call-session-params.cpp
 	conference/params/media-session-params.cpp
@@ -435,6 +435,7 @@ if(ENABLE_ADVANCED_IM)
 		chat/chat-room/proxy-chat-room.cpp
 		chat/chat-room/server-group-chat-room.cpp
 		conference/handlers/local-conference-event-handler.cpp
+		conference/handlers/local-audio-video-conference-event-handler.cpp
 		conference/handlers/local-conference-list-event-handler.cpp
 		conference/handlers/remote-conference-event-handler.cpp
 		conference/handlers/remote-conference-list-event-handler.cpp
@@ -495,10 +496,6 @@ if (ANDROID AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
 endif()
 bc_apply_compile_flags(LINPHONE_CXX_OBJECTS_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_CXX)
 bc_apply_compile_flags(LINPHONE_OBJC_SOURCE_FILES STRICT_OPTIONS_CPP STRICT_OPTIONS_OBJC)
-
-if(CMAKE_COMPILER_IS_GNUCC)
-	set_property(SOURCE db/main-db.cpp APPEND_STRING PROPERTY COMPILE_FLAGS " -Wno-stringop-overflow")
-endif()
 
 if ((CMAKE_COMPILER_IS_GNUCC AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "9.1.0")
 		OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang" AND NOT CMAKE_CXX_COMPILER_VERSION VERSION_LESS "10.0.0"))

@@ -224,6 +224,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreFriendListRemovedCb friend_list_removed;
 	LinphoneCoreCbsCallCreatedCb call_created;
 	LinphoneCoreCbsVersionUpdateCheckResultReceivedCb version_update_check_result_received;
+	LinphoneCoreCbsConferenceStateChangedCb conference_state_changed;
 	LinphoneCoreCbsChatRoomStateChangedCb chat_room_state_changed;
 	LinphoneCoreCbsQrcodeFoundCb qrcode_found;
 	LinphoneCoreCbsEcCalibrationResultCb ec_calibration_result;
@@ -764,6 +765,20 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_version_update_check_result_received(
 LINPHONE_PUBLIC LinphoneCoreCbsVersionUpdateCheckResultReceivedCb linphone_core_cbs_get_version_update_check_result_received(LinphoneCoreCbs *cbs);
 
 /**
+ * Get the conference state changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @return The current callback
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsConferenceStateChangedCb linphone_core_cbs_get_conference_state_changed (LinphoneCoreCbs *cbs);
+
+/**
+ * Set the conference state changed callback.
+ * @param[in] cbs #LinphoneCoreCbs object
+ * @param[in] cb The callback to use
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_conference_state_changed (LinphoneCoreCbs *cbs, LinphoneCoreCbsConferenceStateChangedCb cb);
+
+/**
  * Get the chat room state changed callback.
  * @param cbs #LinphoneCoreCbs object @notnil
  * @return The current callback
@@ -1176,6 +1191,7 @@ LINPHONE_PUBLIC LinphoneCall * linphone_core_invite_with_params(LinphoneCore *co
  * created by linphone_core_interpret_url().
  * The application doesn't own a reference to the returned #LinphoneCall object.
  * Use linphone_call_ref() to safely keep the #LinphoneCall pointer valid within your application.
+ * If the proxy is not specified in parameters, the caller proxy will be automatically selected by finding what is the best to reach the destination of the call.
  * @param core #LinphoneCore object @notnil
  * @param addr The destination of the call (sip address). @notnil
  * @param params Call parameters @notnil

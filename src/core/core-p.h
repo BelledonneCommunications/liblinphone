@@ -133,6 +133,7 @@ public:
 							const std::list<IdentityAddress> &participants) const;
 
 	IdentityAddress getDefaultLocalAddress(const IdentityAddress *peerAddress, bool withGruu) const;
+	IdentityAddress getIdentityAddressWithGruu(const IdentityAddress &identityAddress) const;
 	
 	void replaceChatRoom (const std::shared_ptr<AbstractChatRoom> &replacedChatRoom, const std::shared_ptr<AbstractChatRoom> &newChatRoom);
 	void doLater(const std::function<void ()> &something);
@@ -162,7 +163,6 @@ public:
 
 private:
 	bool isInBackground = false;
-	bool isFriendListSubscriptionEnabled = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
 
 	std::list<CoreListener *> listeners;

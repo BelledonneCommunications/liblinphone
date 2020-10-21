@@ -51,6 +51,7 @@ int CorePrivate::addCall (const shared_ptr<Call> &call) {
 		notifySoundcardUsage(true);
 	}
 	calls.push_back(call);
+
 	linphone_core_notify_call_created(q->getCCore(), call->toC());
 	return 0;
 }
@@ -112,6 +113,7 @@ int CorePrivate::removeCall (const shared_ptr<Call> &call) {
 		lWarning() << "Could not find the call to remove";
 		return -1;
 	}
+
 	calls.erase(iter);
 	return 0;
 }

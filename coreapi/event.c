@@ -166,7 +166,7 @@ bool_t linphone_event_is_internal(LinphoneEvent *lev) {
 }
 
 void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState state){
-	if (lev->subscription_state!=state){
+	if (lev && lev->subscription_state!=state){
 		ms_message("LinphoneEvent [%p] moving to subscription state %s",lev,linphone_subscription_state_to_string(state));
 		lev->subscription_state=state;
 		linphone_core_notify_subscription_state_changed(lev->lc,lev,state);
@@ -456,10 +456,14 @@ void linphone_event_terminate(LinphoneEvent *lev){
 	lev->terminating=TRUE;
 	if (lev->dir==LinphoneSubscriptionIncoming){
 		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
-		op->closeNotify();
+		if (op) {
+			op->closeNotify();
+		}
 	}else if (lev->dir==LinphoneSubscriptionOutgoing){
 		auto op = dynamic_cast<SalSubscribeOp *>(lev->op);
-		op->unsubscribe();
+		if (op) {
+			op->unsubscribe();
+		}
 	}
 
 	if (lev->publish_state!=LinphonePublishNone){

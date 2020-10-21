@@ -21,12 +21,19 @@
 #include "config.h"
 #endif
 
+#include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "linphone/event.h"
+
 #ifdef HAVE_ADVANCED_IM
 #include "handlers/local-conference-event-handler.h"
 #endif
-#include "local-conference-p.h"
+#include "local-conference.h"
 #include "logger/logger.h"
-#include "participant-p.h"
+#include "participant.h"
+
+// TODO: Remove me later.
+#include "private.h"
 
 // =============================================================================
 
@@ -34,47 +41,79 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-LocalConference::LocalConference (const shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener)
-	: Conference(*new LocalConferencePrivate, core, myAddress, listener) {
+LocalConference::LocalConference (
+	const shared_ptr<Core> &core,
+	const IdentityAddress &myAddress,
+	CallSessionListener *listener,
+	const std::shared_ptr<ConferenceParams> params ,
+	ConferenceListener *confListener
+	) : Conference(core, myAddress, listener, params) {
+	// Set last notify to 1 in order to ensure that the 1st notify to remote conference is correctly processed
+	// Remote conference sets last notify to 0 in its constructor
+	lastNotify = 1;
+
+	this->confParams->enableLocalParticipant(false);
+
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset(new LocalConferenceEventHandler(this));
+	eventHandler = std::make_shared<LocalConferenceEventHandler>(this, confListener);
+	addListener(eventHandler);
 #endif
 }
 
 LocalConference::~LocalConference () {
 #ifdef HAVE_ADVANCED_IM
-	L_D();
-	d->eventHandler.reset();
+	eventHandler.reset();
 #endif
 }
 
 // -----------------------------------------------------------------------------
 
-bool LocalConference::addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) {
-	L_D();
-	shared_ptr<Participant> participant = findParticipant(addr);
-	if (participant) {
-		lInfo() << "Not adding participant '" << addr.asString() << "' because it is already a participant of the LocalConference";
-		return false;
-	}
-	participant = make_shared<Participant>(this, addr);
-	participant->getPrivate()->createSession(*this, params, hasMedia, d->listener);
-	d->participants.push_back(participant);
-	if (!d->activeParticipant)
-		d->activeParticipant = participant;
-	return true;
+void LocalConference::subscribeReceived (LinphoneEvent *event) {
+#ifdef HAVE_ADVANCED_IM
+	shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(linphone_event_get_core(event))->findChatRoom(conferenceId);
+	eventHandler->subscribeReceived(event, !!(chatRoom->getCapabilities() & AbstractChatRoom::Capabilities::OneToOne));
+#endif
 }
 
-bool LocalConference::removeParticipant (const shared_ptr<Participant> &participant) {
-	L_D();
-	for (const auto &p : d->participants) {
-		if (participant->getAddress() == p->getAddress()) {
-			d->participants.remove(p);
-			return true;
-		}
-	}
-	return false;
+void LocalConference::notifyFullState () {
+	++lastNotify;
+	Conference::notifyFullState();
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantAdded (creationTime,  isFullState, participant);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantRemoved (creationTime,  isFullState, participant);
+}
+
+shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantSetAdmin (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, bool isAdmin) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantSetAdmin (creationTime,  isFullState, participant, isAdmin);
+}
+
+shared_ptr<ConferenceSubjectEvent> LocalConference::notifySubjectChanged (time_t creationTime, const bool isFullState, const std::string subject) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifySubjectChanged (creationTime, isFullState, subject);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceAdded (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceAdded (creationTime,  isFullState, participant, participantDevice);
+}
+
+shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) {
+	// Increment last notify before notifying participants so that the delta can be calculated correctly
+	++lastNotify;
+	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 }
 
 LINPHONE_END_NAMESPACE

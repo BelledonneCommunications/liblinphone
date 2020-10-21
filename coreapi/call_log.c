@@ -585,7 +585,7 @@ const bctbx_list_t *linphone_core_get_call_history(LinphoneCore *lc) {
 	CallLogStorageResult clsres;
 
 	if (!lc || lc->logs_db == NULL) return NULL;
-		if (lc->call_logs != NULL) return lc->call_logs;
+	if (lc->call_logs != NULL) return lc->call_logs;
 
 	if (lc->max_call_logs != LINPHONE_MAX_CALL_HISTORY_UNLIMITED){
 		buf = sqlite3_mprintf("SELECT * FROM call_history ORDER BY id DESC LIMIT %i", lc->max_call_logs);

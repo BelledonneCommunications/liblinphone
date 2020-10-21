@@ -27,33 +27,39 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class RemoteConferencePrivate;
+class RemoteConferenceEventHandler;
 
-class LINPHONE_PUBLIC RemoteConference : public Conference {
+class LINPHONE_PUBLIC RemoteConference :
+	public Conference,
+	public ConferenceListenerInterface {
 	friend class ClientGroupChatRoomPrivate;
+	friend class ClientGroupChatRoom;
 
 public:
-	RemoteConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener);
+	RemoteConference (const std::shared_ptr<Core> &core, const IdentityAddress &myAddress, CallSessionListener *listener, const std::shared_ptr<ConferenceParams> params);
 	virtual ~RemoteConference ();
 
-	/* ConferenceInterface */
-	bool addParticipant (const IdentityAddress &addr, const CallSessionParams *params, bool hasMedia) override;
-	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
-
 protected:
+	std::shared_ptr<Participant> focus;
+#ifdef HAVE_ADVANCED_IM
+	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
+#endif // HAVE_ADVANCED_IM
+
+
 	/* ConferenceListener */
-	void onConferenceCreated (const IdentityAddress &addr) override;
+	void onConferenceCreated (const ConferenceAddress &addr) override;
 	void onConferenceTerminated (const IdentityAddress &addr) override;
 	void onFirstNotifyReceived (const IdentityAddress &addr) override;
-	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) override;
-	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) override;
-	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
-	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) override;
+	void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+	void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	void onFullStateReceived () override;
+
 
 private:
-	L_DECLARE_PRIVATE(RemoteConference);
 	L_DISABLE_COPY(RemoteConference);
 };
 

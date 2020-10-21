@@ -20,11 +20,11 @@
 //#include <iomanip>
 //#include <math.h>
 
-#include "address/address-p.h"
 #include "call/call.h"
+#include "address/address.h"
 #include "chat/chat-room/client-group-chat-room.h"
 #include "conference/params/media-session-params-p.h"
-#include "conference/participant-p.h"
+#include "conference/participant.h"
 #include "conference/session/media-session-p.h"
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
@@ -307,6 +307,7 @@ void MediaSessionPrivate::pausedByRemote () {
 	MediaSessionParams newParams(*getParams());
 	if (linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
 		newParams.setVideoDirection(LinphoneMediaDirectionInactive);
+
 	acceptUpdate(&newParams, CallSession::State::PausedByRemote, "Call paused by remote");
 
 }
@@ -720,11 +721,28 @@ void MediaSessionPrivate::fixCallParams (SalMediaDescription *rmd, bool fromOffe
 		if (!getParams()->realtimeTextEnabled() && rcp->realtimeTextEnabled())
 			getParams()->enableRealtimeText(true);
 
-		if (rcp->videoEnabled() && q->getCore()->getCCore()->video_policy.automatically_accept && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
-			lInfo() << "CallSession [" << q << "]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept";
-			getParams()->enableVideo(true);
-		}
+		bool isInLocalConference = getParams()->getPrivate()->getInConference();
 
+		if (isInLocalConference) {
+			// If the call is in a local conference, then check conference capabilities to know whether the video must be enabled or not
+			bool isConferenceVideoCapabilityOn = false;
+			LinphoneConference * conference = nullptr;
+			if (listener) {
+				conference = listener->getCallSessionConference(q->getSharedFromThis());
+				if (conference) {
+					const LinphoneConferenceParams * params = linphone_conference_get_current_params(conference);
+					isConferenceVideoCapabilityOn = linphone_conference_params_video_enabled(params);
+					if (rcp->videoEnabled() && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+						getParams()->enableVideo(isConferenceVideoCapabilityOn);
+					}
+				}
+			}
+		} else {
+			if (rcp->videoEnabled() && q->getCore()->getCCore()->video_policy.automatically_accept && linphone_core_video_enabled(q->getCore()->getCCore()) && !getParams()->videoEnabled()) {
+				lInfo() << "CallSession [" << q << "]: re-enabling video in our call params because the remote wants it and the policy allows to automatically accept";
+				getParams()->enableVideo(true);
+			}
+		}
 	}
 }
 
@@ -990,7 +1008,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 		if (destProxy && destProxy->op) {
 			// We can determine from the proxy connection whether IPv6 works - this is the most reliable
 			af = destProxy->op->getAddressFamily();
-		} else if (sal_address_is_ipv6(L_GET_PRIVATE_FROM_C_OBJECT(to)->getInternalAddress())) {
+		} else if (sal_address_is_ipv6(L_GET_CPP_PTR_FROM_C_OBJECT(to)->getInternalAddress())) {
 			af = AF_INET6;
 		}
 
@@ -1131,6 +1149,7 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
+
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	SalMediaDescription *md = sal_media_description_new();
 	SalMediaDescription *oldMd = localDesc;
@@ -1607,7 +1626,8 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 	ctx.resultMediaDescription = resultDesc;
 	getStreamsGroup().render(ctx, targetState);
 
-	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1)) {
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1) && !isInLocalConference) {
 		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
 	}
 
@@ -1746,7 +1766,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
 	if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
-		lWarning() << "Cannot pause this MediaSession, it is not active";
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
 	string subject;
@@ -1763,7 +1783,9 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	makeLocalMediaDescription(true);
 	op->update(subject.c_str(), false);
 
-	if (listener)
+	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
+	// Reset current session if we are pausing the current call
+	if (listener && (!currentCall || (currentCall->getActiveSession() == q->getSharedFromThis())))
 		listener->onResetCurrentSession(q->getSharedFromThis());
 
 	stopStreams();
@@ -1943,6 +1965,7 @@ void MediaSessionPrivate::startAccept(){
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.capt_sndcard, localDesc->streams[0].max_rate);
 	}
 
+	linphone_core_preempt_sound_resources(q->getCore()->getCCore());
 	CallSessionPrivate::accept(nullptr);
 	if (!getParams()->getPrivate()->getInConference() && listener){
 		listener->onSetCurrentSession(q->getSharedFromThis());
@@ -2006,6 +2029,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 			getParams()->enableVideoMulticast(false);
 		}
 	}
+	makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true);
 	if (getParams()->videoEnabled() && !linphone_core_video_enabled(q->getCore()->getCCore())) {
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
@@ -2134,7 +2158,7 @@ IceSession *MediaSessionPrivate::getIceSession()const{
 
 // =============================================================================
 
-MediaSession::MediaSession (const shared_ptr<Core> &core, shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener)
+MediaSession::MediaSession (const shared_ptr<Core> &core, std::shared_ptr<Participant> me, const CallSessionParams *params, CallSessionListener *listener)
 	: CallSession(*new MediaSessionPrivate, core) {
 	L_D();
 	d->me = me;
@@ -2182,7 +2206,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 		CallSession::accepting();
 		return 0;
 	}
-	
+
 	LinphoneStatus result = d->checkForAcceptation();
 	if (result < 0) return result;
 
@@ -2191,7 +2215,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 		wasRinging = d->listener->onCallSessionAccepted(getSharedFromThis());
 
 	d->accept(msp, wasRinging);
-	lInfo() << "CallSession accepted";
+	lInfo() << "MediaSession accepted";
 	return 0;
 }
 
@@ -2342,6 +2366,22 @@ void MediaSession::iterate (time_t currentRealTime, bool oneSecondElapsed) {
 	CallSession::iterate(currentRealTime, oneSecondElapsed);
 }
 
+LinphoneStatus MediaSession::pauseFromConference () {
+	L_D();
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	updateContactAddress (contactAddress);
+	d->op->setContactAddress(contactAddress.getInternalAddress());
+
+	return pause();
+}
+
 LinphoneStatus MediaSession::pause () {
 	L_D();
 	LinphoneStatus result = d->pause();
@@ -2353,7 +2393,7 @@ LinphoneStatus MediaSession::pause () {
 LinphoneStatus MediaSession::resume () {
 	L_D();
 	if (d->state != CallSession::State::Paused) {
-		lWarning() << "we cannot resume a call that has not been established and paused before";
+		lWarning() << "we cannot resume a call that has not been established and paused before. Current state: " << Utils::toString(d->state);
 		return -1;
 	}
 	if (!d->getParams()->getPrivate()->getInConference()) {
@@ -2373,11 +2413,25 @@ LinphoneStatus MediaSession::resume () {
 	d->setState(CallSession::State::Resuming, "Resuming");
 	d->makeLocalMediaDescription(true);
 	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
+
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 		d->op->setLocalMediaDescription(nullptr);
 	string subject = "Call resuming";
-	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference())
+	if (d->getParams()->getPrivate()->getInConference() && !getCurrentParams()->getPrivate()->getInConference()) {
 		subject = "Conference";
+	}
+
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	updateContactAddress(contactAddress);
+	d->op->setContactAddress(contactAddress.getInternalAddress());
+
 	if (d->op->update(subject.c_str(), false) != 0)
 		return -1;
 
@@ -2496,6 +2550,22 @@ void MediaSession::terminateBecauseOfLostMedia () {
 	d->nonOpError = true;
 	linphone_error_info_set(d->ei, nullptr, LinphoneReasonIOError, 503, "Media lost", nullptr);
 	terminate();
+}
+
+LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp, const string &subject) {
+	L_D();
+	char * contactAddressStr = nullptr;
+	if (d->destProxy && d->destProxy->op) {
+		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+	} else {
+		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+	}
+	Address contactAddress(contactAddressStr);
+	ms_free(contactAddressStr);
+	updateContactAddress (contactAddress);
+	d->op->setContactAddress(contactAddress.getInternalAddress());
+
+	return update(msp, subject);
 }
 
 LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string &subject) {
@@ -2925,6 +2995,11 @@ void MediaSession::setParams (const MediaSessionParams *msp) {
 	}
 }
 
+StreamsGroup & MediaSession::getStreamsGroup()const{
+	L_D();
+	return d->getStreamsGroup();
+}
+
 void MediaSession::setInputAudioDevice(AudioDevice *audioDevice) {
 	L_D();
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
@@ -2936,11 +3011,6 @@ void MediaSession::setOutputAudioDevice(AudioDevice *audioDevice) {
 	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
 	d->setCurrentOutputAudioDevice(audioDevice);
 	if (i) i->setOutputDevice(audioDevice);
-}
-
-StreamsGroup & MediaSession::getStreamsGroup()const{
-	L_D();
-	return d->getStreamsGroup();
 }
 
 AudioDevice* MediaSession::getInputAudioDevice() const {

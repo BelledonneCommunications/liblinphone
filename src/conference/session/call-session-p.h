@@ -88,6 +88,7 @@ protected:
 	virtual LinphoneStatus startUpdate (const std::string &subject);
 	virtual void terminate ();
 	virtual void updateCurrentParams () const;
+	virtual void setDestProxy (LinphoneProxyConfig *proxy);// Set destProxy and update the proxy of currentParams
 
 	void setBroken ();
 	void setContactOp ();
@@ -126,6 +127,7 @@ protected:
 	LinphoneCallLog *log = nullptr;
 	std::string referTo;
 	std::string emptyString = "";
+	Address emptyAddress = Address();
 
 	SalCallOp *op = nullptr;
 

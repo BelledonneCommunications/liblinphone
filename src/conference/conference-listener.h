@@ -32,19 +32,12 @@ class LINPHONE_PUBLIC ConferenceListener {
 public:
 	virtual ~ConferenceListener () = default;
 
-	virtual void onConferenceCreated (const IdentityAddress &addr) {}
+	virtual void onConferenceCreated (const ConferenceAddress &addr) {}
 	virtual void onConferenceKeywordsChanged (const std::vector<std::string> &keywords) {}
 	virtual void onConferenceTerminated (const IdentityAddress &addr) {}
 	virtual void onSecurityEvent (const std::shared_ptr<ConferenceSecurityEvent> &event) {}
 
 	virtual void onFirstNotifyReceived (const IdentityAddress &addr) {}
-	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {}
-	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {}
-	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, bool isFullState) {}
-	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event, bool isFullState) {}
-	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
-	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, bool isFullState) {}
-
 	virtual void onParticipantsCleared () {}
 };
 

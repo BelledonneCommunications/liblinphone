@@ -308,11 +308,11 @@ LinphoneChatMessage *linphone_chat_room_get_last_message_in_history(LinphoneChat
 }
 
 LinphoneChatMessage *linphone_chat_room_find_message (LinphoneChatRoom *cr, const char *message_id) {
-        auto cppPtr = L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id));
-        if(cppPtr)
-            return linphone_chat_message_ref(cppPtr);
-        else
-            return nullptr;
+	shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findChatMessage(message_id);
+	if (!cppPtr)
+		return nullptr;
+
+	return linphone_chat_message_ref(L_GET_C_BACK_PTR(cppPtr));
 }
 
 LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr) {
@@ -329,7 +329,7 @@ time_t linphone_chat_room_get_last_update_time(const LinphoneChatRoom *cr) {
 
 void linphone_chat_room_add_participant (LinphoneChatRoom *cr, const LinphoneAddress *addr) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipant(
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr)), nullptr, false
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
 	);
 }
 
@@ -338,17 +338,17 @@ bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_li
 	list<LinphonePrivate::IdentityAddress> lIdentAddr;
 	for (const auto &addr : lAddr)
 		lIdentAddr.push_back(LinphonePrivate::IdentityAddress(addr));
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr, nullptr, false);
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->addParticipants(lIdentAddr);
+}
+
+LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
+		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
+	)->toC();
 }
 
 bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->canHandleParticipants();
-}
-
-LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
-		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
-	));
 }
 
 LinphoneChatRoomCapabilitiesMask linphone_chat_room_get_capabilities (const LinphoneChatRoom *cr) {
@@ -372,7 +372,7 @@ const LinphoneAddress *linphone_chat_room_get_conference_address (const Linphone
 }
 
 LinphoneParticipant *linphone_chat_room_get_me (const LinphoneChatRoom *cr) {
-	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe());
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe()->toC();
 }
 
 int linphone_chat_room_get_nb_participants (const LinphoneChatRoom *cr) {
@@ -380,7 +380,7 @@ int linphone_chat_room_get_nb_participants (const LinphoneChatRoom *cr) {
 }
 
 bctbx_list_t *linphone_chat_room_get_participants (const LinphoneChatRoom *cr) {
-	return L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipants());
+	return LinphonePrivate::Participant::getCListFromCppList(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getParticipants());
 }
 
 const char * linphone_chat_room_get_subject (const LinphoneChatRoom *cr) {
@@ -396,15 +396,15 @@ void linphone_chat_room_leave (LinphoneChatRoom *cr) {
 }
 
 void linphone_chat_room_remove_participant (LinphoneChatRoom *cr, LinphoneParticipant *participant) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipant(L_GET_CPP_PTR_FROM_C_OBJECT(participant));
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipant(LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis());
 }
 
 void linphone_chat_room_remove_participants (LinphoneChatRoom *cr, const bctbx_list_t *participants) {
-	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipants(L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(participants, Participant));
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->removeParticipants(LinphonePrivate::Participant::getCppListFromCList(participants));
 }
 
 void linphone_chat_room_set_participant_admin_status (LinphoneChatRoom *cr, LinphoneParticipant *participant, bool_t isAdmin) {
-	shared_ptr<LinphonePrivate::Participant> p = L_GET_CPP_PTR_FROM_C_OBJECT(participant);
+	shared_ptr<LinphonePrivate::Participant> p = LinphonePrivate::Participant::toCpp(participant)->getSharedFromThis();
 	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setParticipantAdminStatus(p, !!isAdmin);
 }
 
@@ -434,7 +434,7 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 	char *addrStr = confAddr ? linphone_address_as_string(confAddr) : nullptr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr) {
-		LinphonePrivate::IdentityAddress idAddr = addrStr ? LinphonePrivate::IdentityAddress(addrStr) : LinphonePrivate::IdentityAddress("");
+		LinphonePrivate::Address idAddr = addrStr ? LinphonePrivate::Address(addrStr) : LinphonePrivate::Address("");
 		sgcr->setConferenceAddress(idAddr);
 	}
 	if (addrStr)
@@ -635,7 +635,7 @@ LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, Linp
 		L_GET_CPP_PTR_FROM_C_OBJECT(core),
 		op
 	));
-	L_GET_PRIVATE_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ChatRoom::State::Instantiated);
+	L_GET_CPP_PTR_FROM_C_OBJECT(cr)->setState(LinphonePrivate::ConferenceInterface::State::Instantiated);
 	L_GET_PRIVATE_FROM_C_OBJECT(cr, ServerGroupChatRoom)->confirmCreation();
 	return cr;
 #else

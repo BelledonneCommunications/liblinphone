@@ -178,8 +178,10 @@ class SwiftTranslator(object):
 
         listenerDict['delegate']['params_public'] = ""
         listenerDict['delegate']['params_private'] = ""
+        listenerDict['delegate']['params_stub'] = ""
         listenerDict['delegate']['params'] = ""
         listenerDict['delegate']['classLists'] = {}
+        listenerDict['delegate']['lastValue'] = False
         namespace = method.find_first_ancestor_by_type(AbsApi.Namespace)
         for arg in method.args:
             referenceType = arg.type.translate(self.langTranslator, namespace = namespace)
@@ -189,6 +191,7 @@ class SwiftTranslator(object):
             if arg != method.args[0]:
                 listenerDict['delegate']['params_public'] += ', '
                 listenerDict['delegate']['params_private'] += ', '
+                listenerDict['delegate']['params_stub'] += ', '
                 listenerDict['delegate']['params'] += ', '
 
                 if normalType == "Bool":
@@ -219,6 +222,7 @@ class SwiftTranslator(object):
 
             listenerDict['delegate']['params_public'] += argName + ": " + normalType
             listenerDict['delegate']['params_private'] += argName
+            listenerDict['delegate']['params_stub'] += normalType
 
         listenerDict['delegate']["c_name_setter"] = c_name_setter
         return listenerDict
@@ -349,6 +353,12 @@ class SwiftTranslator(object):
         interfaceDict['methods'] = []
         for method in interface.instanceMethods:
             interfaceDict['methods'].append(self.translate_listener(interface, method))
+        if len(interface.instanceMethods) > 0:
+            refDict = interfaceDict['methods'][-1]
+            refDict['delegate']['lastValue'] = True
+            interfaceDict['methods'][-1] = refDict
+
+
 
         return interfaceDict
 ###########################################################################################################################################
@@ -582,6 +592,7 @@ if __name__ == '__main__':
         'LinphoneCallDir'                            : 'LinphoneCall',
         'LinphoneCallState'                          : 'LinphoneCall',
         'LinphoneCallStatus'                         : 'LinphoneCall',
+        'LinphoneConferenceState'                    : 'LinphoneConference',
         'LinphoneChatRoomState'                      : 'LinphoneChatRoom',
         'LinphoneChatMessageDirection'               : 'LinphoneChatMessage',
         'LinphoneChatMessageState'                   : 'LinphoneChatMessage',

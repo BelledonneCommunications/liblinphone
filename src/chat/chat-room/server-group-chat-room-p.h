@@ -65,10 +65,8 @@ public:
 	ServerGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
 
 	
-	void setState (ChatRoom::State state) override;
-
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
-	void removeParticipant (const std::shared_ptr<const Participant> &participant);
+	void removeParticipant (const std::shared_ptr<Participant> &participant);
 
 	std::shared_ptr<Participant> findAuthorizedParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
@@ -83,7 +81,6 @@ public:
 	void declineSession (const std::shared_ptr<CallSession> &session, LinphoneReason reason);
 	void dispatchQueuedMessages ();
 
-	void subscribeReceived (LinphoneEvent *event);
 	void subscriptionStateChanged (LinphoneEvent *event, LinphoneSubscriptionState state);
 
 	bool initializeParticipants(const std::shared_ptr<Participant> & initiator, SalCallOp *op);
@@ -92,7 +89,7 @@ public:
 	void unSubscribeRegistrationForParticipant(const IdentityAddress &identAddresses);
 	void handleSubjectChange(SalCallOp *op);
 
-	void setConferenceAddress (const IdentityAddress &conferenceAddress);
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
