@@ -319,7 +319,7 @@ static void simple_conference_with_admin_changed(void) {
 	stats* initial_participants_stats = NULL;
 
 	// Marie change Pauline's status to admin
-	const LinphoneAddress *pauline_uri = linphone_call_get_remote_address(marie_call_pauline);
+	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	LinphoneParticipant * pauline_participant = linphone_conference_find_participant(marie_conference, pauline_uri);
 	BC_ASSERT_PTR_NOT_NULL(pauline_participant);
 	BC_ASSERT_FALSE(linphone_participant_is_admin(pauline_participant));
@@ -357,6 +357,7 @@ static void simple_conference_with_admin_changed(void) {
 	LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(marie_conference);
 	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
 	linphone_address_unref(marie_conference_address);
+	linphone_address_unref(pauline_uri);
 	BC_ASSERT_PTR_NOT_NULL(pauline_conference);
 
 	bctbx_list_t *participants_before_removal = linphone_conference_get_participant_list(marie_conference);
@@ -414,7 +415,7 @@ static void simple_conference_with_admin_changed(void) {
 		counter++;
 	}
 
-	// Call between Marie and Pauline ends therefore Pauline exits the conference
+	// Pauline ends all calls therefore Pauline exits the conference
 	// A new admin must be designated
 	linphone_core_terminate_all_calls(pauline->lc);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,2,10000));
@@ -440,23 +441,39 @@ static void simple_conference_with_admin_changed(void) {
 
 	ms_free(initial_participants_stats);
 
-	bctbx_list_t *participants_after_removal = linphone_conference_get_participant_list(marie_conference);
-	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_after_removal), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+	LinphoneAddress * conference_address = linphone_conference_get_conference_address(marie_conference);
 
-	LinphoneParticipant * marie_me = linphone_conference_get_me(marie_conference);
-	bool_t adminFound = linphone_participant_is_admin(marie_me);
-	bool_t secondAdminFound = FALSE;
+	// Check that there only one admin in each conference and it has the same address for all of them
+	bctbx_list_t* all_manangers_in_conf=bctbx_list_copy(participants);
+	all_manangers_in_conf = bctbx_list_append(all_manangers_in_conf, marie);
+	for (bctbx_list_t *it = all_manangers_in_conf; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-	for (bctbx_list_t *it = participants_after_removal; it; it = bctbx_list_next(it)) {
-		LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(participants_after_removal);
-		if (adminFound) {
-			secondAdminFound |= linphone_participant_is_admin(p);
+		LinphoneAddress *uri = linphone_address_new(linphone_core_get_identity(m->lc));
+		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, uri, conference_address, NULL);
+		BC_ASSERT_PTR_NOT_NULL(conference);
+		linphone_address_unref(uri);
+
+		bctbx_list_t *participants_after_removal = linphone_conference_get_participant_list(conference);
+		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_after_removal), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
+
+		LinphoneParticipant * me = linphone_conference_get_me(conference);
+		bool_t adminFound = linphone_participant_is_admin(me);
+		bool_t secondAdminFound = FALSE;
+
+		for (bctbx_list_t *it = participants_after_removal; it; it = bctbx_list_next(it)) {
+			LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(it);
+			if (adminFound) {
+				secondAdminFound |= linphone_participant_is_admin(p);
+			}
+			adminFound |= linphone_participant_is_admin(p);
 		}
-		adminFound |= linphone_participant_is_admin(p);
+		BC_ASSERT_TRUE(adminFound);
+		BC_ASSERT_FALSE(secondAdminFound);
+		bctbx_list_free_with_data(participants_after_removal, (void(*)(void *))linphone_participant_unref);
 	}
-	BC_ASSERT_TRUE(adminFound);
-	BC_ASSERT_FALSE(secondAdminFound);
-	bctbx_list_free_with_data(participants_after_removal, (void(*)(void *))linphone_participant_unref);
+
+	linphone_address_unref(conference_address);
 
 	terminate_conference(participants, marie, (LinphoneCoreManager *)focus);
 
