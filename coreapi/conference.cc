@@ -1392,7 +1392,7 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 		case ConferenceInterface::State::TerminationFailed:
 			break;
 		case ConferenceInterface::State::Created:
-			if (subject.empty() == false) {
+			if (getMe()->isAdmin() && (subject.empty() == false)) {
 				session = m_focusCall->getActiveSession();
 				if (session) {
 					session->update(nullptr, subject);
