@@ -265,6 +265,13 @@ void Core::soundcardEnableCallkit (bool enabled) {
 	}
 }
 
+void Core::soundcardAudioRouteChanged () {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_notify_audio_route_changed(card);
+	}
+}
+
 LinphoneStatus Core::terminateAllCalls () {
 	L_D();
 	auto calls = d->calls;
