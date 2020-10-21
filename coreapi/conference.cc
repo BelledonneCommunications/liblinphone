@@ -460,7 +460,6 @@ void LocalConference::setParticipantAdminStatus (const shared_ptr<Participant> &
 	}
 }
 
-
 void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 #ifdef HAVE_ADVANCED_IM
 	if (eventHandler) {
@@ -1274,6 +1273,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 				} else
 					it++;
 			}
+
 			setConferenceId(ConferenceId(ConferenceAddress(m_focusContact), getConferenceId().getLocalAddress()));
 			finalizeCreation();
 			break;
@@ -1382,13 +1382,22 @@ void RemoteConference::notifyReceived (const string &body) {
 }
 
 void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::State state) {
+	shared_ptr<CallSession> session = nullptr;
+	string subject = getSubject();
 	switch(state) {
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationPending:
-		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::CreationFailed:
 		case ConferenceInterface::State::TerminationFailed:
+			break;
+		case ConferenceInterface::State::Created:
+			if (subject.empty() == false) {
+				session = m_focusCall->getActiveSession();
+				if (session) {
+					session->update(nullptr, subject);
+				}
+			}
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			#ifdef HAVE_ADVANCED_IM
@@ -1436,6 +1445,17 @@ void RemoteConference::setSubject (const std::string &subject) {
 	}
 
 	Conference::setSubject(subject);
+
+	if (getState() != ConferenceInterface::State::Created) {
+		lInfo() << "Participants will be notified of the conference state changed once the conference is in state created";
+		return;
+	}
+
+
+	shared_ptr<CallSession> session = m_focusCall->getActiveSession();
+	if (session) {
+		session->update(nullptr, subject);
+	}
 }
 
 bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &newParameters){
