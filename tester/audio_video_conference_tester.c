@@ -701,7 +701,14 @@ static void simple_conference_with_participant_addition_from_not_admin(void) {
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants_after_addition), (unsigned int)bctbx_list_size(participants), unsigned int, "%u");
 	bctbx_list_free_with_data(participants_after_addition, (void(*)(void *))linphone_participant_unref);
 
-	end_call(pauline, chloe);
+	stats initial_pauline_stat = pauline->stat;
+	stats initial_chloe_stat = chloe->stat;
+	linphone_call_terminate(chloe_called_by_pauline);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,chloe->lc,&pauline->stat.number_of_LinphoneCallEnd,initial_pauline_stat.number_of_LinphoneCallEnd+1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,chloe->lc,&chloe->stat.number_of_LinphoneCallEnd,initial_chloe_stat.number_of_LinphoneCallEnd+1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,chloe->lc,&pauline->stat.number_of_LinphoneCallReleased,initial_pauline_stat.number_of_LinphoneCallReleased+1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,chloe->lc,&chloe->stat.number_of_LinphoneCallReleased,initial_chloe_stat.number_of_LinphoneCallReleased+1));
+
 	terminate_conference(participants, marie, (LinphoneCoreManager *)focus);
 
 	destroy_mgr_in_conference(pauline);
