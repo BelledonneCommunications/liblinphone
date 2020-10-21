@@ -59,8 +59,6 @@ static void _linphone_core_constructor (LinphoneCore *lc) {
 }
 
 static void _linphone_core_destructor (LinphoneCore *lc) {
-	if (lc->callsCache)
-		bctbx_list_free_with_data(lc->callsCache, (bctbx_list_free_func)linphone_call_unref);
 	lc->cache.~Cache();
 	_linphone_core_uninit(lc);
 }
