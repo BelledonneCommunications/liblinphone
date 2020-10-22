@@ -380,7 +380,7 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	LinphoneCore *cCore = core->getCCore();
 
 	if (chatMessage->getPrivate()->getContentType() == ContentType::ImIsComposing) {
-		onIsComposingReceived(chatMessage->getFromAddress(), chatMessage->getPrivate()->getText());
+		onIsComposingReceived(chatMessage->getFromAddress().asAddress(), chatMessage->getPrivate()->getText());
 		if (linphone_config_get_int(linphone_core_get_config(cCore), "sip", "deliver_imdn", 0) != 1)
 			return;
 	} else if (chatMessage->getPrivate()->getContentType() == ContentType::Imdn) {
@@ -394,7 +394,7 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 		&& (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)
 	) {
 		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
-		notifyIsComposingReceived(fromAddress, false);
+		notifyIsComposingReceived(fromAddress.asAddress(), false);
 	}
 	chatMessage->getPrivate()->notifyReceiving();
 }

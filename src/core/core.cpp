@@ -1119,7 +1119,7 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
 				count += chatRoom->getUnreadChatMessageCount();
 			}
 		}
@@ -1185,12 +1185,11 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 }
 
 const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & conferenceId) const {
-	Address peerAddress = conferenceId.getPeerAddress();
+	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("gr");
-	Address localAddress = conferenceId.getLocalAddress();
+	Address localAddress = conferenceId.getLocalAddress().asAddress();
 	localAddress.removeUriParam("gr");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
-
 	return prunedConferenceId;
 }
 

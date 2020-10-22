@@ -45,8 +45,8 @@ void linphone_participant_device_set_user_data(LinphoneParticipantDevice *partic
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
-	LinphonePrivate::Address addr(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAddress());
-	return linphone_address_new(addr.asString().c_str());
+	const LinphonePrivate::Address & addr = LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getAddress().asAddress();
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 LinphoneChatRoomSecurityLevel linphone_participant_device_get_security_level (const LinphoneParticipantDevice *participant_device) {
