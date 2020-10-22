@@ -1052,7 +1052,7 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
 				count += chatRoom->getUnreadChatMessageCount();
 			}
 		}
@@ -1118,9 +1118,9 @@ void Core::destroyTimer(belle_sip_source_t *timer){
 }
 
 std::shared_ptr<MediaConference::Conference> Core::findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound) const {
-	Address peerAddress = conferenceId.getPeerAddress();
+	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
+	Address localAddress = conferenceId.getLocalAddress().asAddress();
 	localAddress.removeUriParam("conf-id");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
@@ -1139,9 +1139,9 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 	L_ASSERT(audioVideoConference);
 
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
+	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
+	Address localAddress = conferenceId.getLocalAddress().asAddress();
 	localAddress.removeUriParam("conf-id");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
@@ -1156,9 +1156,9 @@ void Core::insertAudioVideoConference (const shared_ptr<MediaConference::Confere
 
 void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Conference> &audioVideoConference) {
 	const ConferenceId &conferenceId = audioVideoConference->getConferenceId();
-	Address peerAddress = conferenceId.getPeerAddress();
+	Address peerAddress = conferenceId.getPeerAddress().asAddress();
 	peerAddress.removeUriParam("conf-id");
-	Address localAddress = conferenceId.getLocalAddress();
+	Address localAddress = conferenceId.getLocalAddress().asAddress();
 	localAddress.removeUriParam("conf-id");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
 
