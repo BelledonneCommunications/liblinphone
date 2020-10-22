@@ -2931,8 +2931,11 @@ void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee) {
 	unsigned int no_callers = (unsigned int)bctbx_list_size(caller);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&callee->stat.number_of_LinphoneCallIncomingReceived,initial_callee_stat.number_of_LinphoneCallIncomingReceived + no_callers,5000));
 
-	LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
-	BC_ASSERT_PTR_NOT_NULL(callee_call);
+	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, m->identity);
+		BC_ASSERT_PTR_NOT_NULL(callee_call);
+	}
 
 	counter = 0;
 	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
@@ -3004,6 +3007,7 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
 
 	int updated_by_remote_count = 0;
+	int call_checked_cnt = 0;
 	bool_t callee_uses_ice = (linphone_core_get_firewall_policy(callee->lc) == LinphonePolicyUseIce);
 	// Wait that all calls but the last one are paused
 	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
@@ -3012,8 +3016,22 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 		if (callee_uses_ice && linphone_core_get_firewall_policy(m->lc) == LinphonePolicyUseIce) {
 			updated_by_remote_count++;
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,1,5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallUpdatedByRemote, initial_callee_stat.number_of_LinphoneCallUpdatedByRemote + updated_by_remote_count, 5000));
+
+			LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, m->identity);
+			LinphoneCall * current_callee_call = linphone_core_get_current_call(callee->lc);
+			if (callee_call == current_callee_call) {
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+			} else {
+				call_checked_cnt++;
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausedByRemote, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + call_checked_cnt, 5000));
+				// If ICE is enabled, calls are paused twice:
+				// - after accepting another call
+				// - after ICE negotiation ends
+				no_call_paused++;
+			}
 			BC_ASSERT_TRUE(check_ice(m,callee,LinphoneIceStateHostConnection));
 			BC_ASSERT_TRUE(check_ice(callee,m,LinphoneIceStateHostConnection));
 		}
@@ -3112,7 +3130,6 @@ static void conference_with_calls_queued_without_ice(void) {
 }
 
 static void conference_with_calls_queued_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3132,13 +3149,21 @@ static void conference_with_calls_queued_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3153,9 +3178,6 @@ static void conference_with_calls_queued_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
@@ -3188,7 +3210,6 @@ static void conference_with_back_to_back_call_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_accept_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3208,13 +3229,21 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3229,9 +3258,6 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
@@ -3264,7 +3290,6 @@ static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3284,13 +3309,21 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3305,9 +3338,6 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void back_to_back_conferences(void) {
@@ -3622,22 +3652,14 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 
+		BC_ASSERT_PTR_NULL(conference);
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
 		if (m != marie) {
-			BC_ASSERT_PTR_NULL(conference);
-			BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
 			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
 			BC_ASSERT_PTR_NULL(participant_call);
 			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
 			BC_ASSERT_PTR_NULL(conference_call);
-		} else {
-			if (add_participants_immediately_after_creation == FALSE) {
-				// Marie has a second conferece already started, hence the core should hold it
-				BC_ASSERT_PTR_NOT_NULL(conference);
-				BC_ASSERT_TRUE(linphone_core_is_in_conference(c));
-			} else {
-				BC_ASSERT_PTR_NULL(conference);
-				BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
-			}
 		}
 
 		idx++;
@@ -3647,7 +3669,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
 	}
 
-	// Verify that a third conference is not created when adidng calls
+	// Verify that a third conference is not created when adding calls
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 2, int, "%d");
@@ -3670,7 +3692,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 }
 
 static void interleaved_conference_creation(void) {
-	interleaved_conferences_base(TRUE);
+	interleaved_conferences_base(FALSE);
 }
 
 static void interleaved_conference_creation_with_quick_participant_addition(void) {
@@ -3795,149 +3817,6 @@ static void multiple_conferences_in_server_mode(void) {
 	destroy_mgr_in_conference(chloe);
 }
 
-static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
-#if 0
-	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
-
-	// Local conference
-	// ICE is enabled
-	LinphoneCoreManager* marie = create_mgr_for_conference( "marie_rc", TRUE);
-	linphone_core_enable_conference_server(marie->lc,TRUE);
-	linphone_core_set_inc_timeout(marie->lc, 10000);
-	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
-		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(marie->lc,mode);
-	}
-
-	bctbx_list_t* ice_participants=NULL;
-	// ICE is enabled
-	LinphoneCoreManager* pauline = create_mgr_for_conference( "pauline_tcp_rc", TRUE);
-	linphone_core_set_inc_timeout(pauline->lc, 10000);
-	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
-		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(pauline->lc,mode);
-	}
-	ice_participants=bctbx_list_append(ice_participants,pauline);
-
-	// ICE is enabled
-	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
-	linphone_core_set_inc_timeout(chloe->lc, 10000);
-	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
-		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(chloe->lc,mode);
-	}
-	ice_participants=bctbx_list_append(ice_participants,chloe);
-
-	bctbx_list_t* non_ice_participants=NULL;
-	// ICE is disabled
-	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(laure->lc, 10000);
-	non_ice_participants=bctbx_list_append(non_ice_participants,laure);
-
-	// ICE is disabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(michelle->lc, 10000);
-	non_ice_participants=bctbx_list_append(non_ice_participants,michelle);
-
-	bctbx_list_t* lcs = NULL;
-	lcs=bctbx_list_append(lcs,marie->lc);
-
-	initiate_calls(non_ice_participants, marie);
-	initiate_calls(ice_participants, marie);
-
-	unsigned int no_ice_callers = (unsigned int)bctbx_list_size(ice_participants);
-	unsigned int no_non_ice_callers = (unsigned int)bctbx_list_size(non_ice_participants);
-	unsigned int no_calls = no_ice_callers + no_non_ice_callers;
-
-	bctbx_list_t* participants = NULL;
-	participants=bctbx_list_append(participants,chloe);
-	participants=bctbx_list_append(participants,laure);
-	participants=bctbx_list_append(participants,pauline);
-	participants=bctbx_list_append(participants,michelle);
-	bool_t callee_uses_ice = (linphone_core_get_firewall_policy(marie->lc) == LinphonePolicyUseIce);
-
-	unsigned int no_calls_paused_by_remote = 0;
-
-	LinphoneCoreManager * pm = NULL;
-	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		LinphoneCore * c = m->lc;
-		lcs=bctbx_list_append(lcs,c);
-		const LinphoneAddress *caller_uri = m->identity;
-		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
-		BC_ASSERT_PTR_NOT_NULL(marie_call);
-
-		// Take call - ringing ends
-		linphone_call_accept(marie_call);
-
-		if (pm && callee_uses_ice && linphone_core_get_firewall_policy(pm->lc) == LinphonePolicyUseIce) {
-			BC_ASSERT_TRUE(wait_for_until(pm->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, no_calls_paused_by_remote, 5000));
-		}
-
-
-		BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallConnected, 1, 5000));
-		BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
-
-		if (m && callee_uses_ice && linphone_core_get_firewall_policy(m->lc) == LinphonePolicyUseIce) {
-			no_calls_paused_by_remote++;
-			BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallUpdating,1,5000));
-		}
-		pm = m;
-	}
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, no_calls, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, no_calls, 5000));
-
-	for (bctbx_list_t *it = ice_participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
-		BC_ASSERT_TRUE(check_ice(m,marie,LinphoneIceStateHostConnection));
-		BC_ASSERT_TRUE(check_ice(marie,m,LinphoneIceStateHostConnection));
-	}
-	// Calls whose core enables ICE send a reINVITE hence they go twice to stream running
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, (2*no_ice_callers) +  no_non_ice_callers, 5000));
-
-	// Only one call is not paused
-	unsigned int no_call_paused = no_ice_callers + no_non_ice_callers - 1;
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, no_call_paused, 5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
-
-	unsigned int no_paused_by_remote = 0;
-	for (bctbx_list_t *it = ice_participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
-	}
-
-	for (bctbx_list_t *it = non_ice_participants; it; it = bctbx_list_next(it)) {
-		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
-	}
-
-	BC_ASSERT_EQUAL(no_paused_by_remote,no_call_paused, int, "%d");
-
-	int no_active_calls_stream_running = 0;
-	bctbx_list_t *calls = bctbx_list_copy(linphone_core_get_calls(marie->lc));
-	for (bctbx_list_t *it = calls; it; it = bctbx_list_next(it)) {
-		LinphoneCall *call = (LinphoneCall *)bctbx_list_get_data(it);
-		no_active_calls_stream_running += (linphone_call_get_state(call) == LinphoneCallStreamsRunning) ? 1 : 0;
-	}
-	bctbx_list_free(calls);
-
-	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");
-
-	bctbx_list_free(non_ice_participants);
-	bctbx_list_free(ice_participants);
-	bctbx_list_free(lcs);
-
-	destroy_mgr_in_conference(marie);
-	destroy_mgr_in_conference(pauline);
-	destroy_mgr_in_conference(laure);
-	destroy_mgr_in_conference(michelle);
-	destroy_mgr_in_conference(chloe);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
-}
-
 test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Simple conference", simple_conference),
 	TEST_NO_TAG("Simple conference estblished before proxy config is created", simple_conference_established_before_proxy_config_creation),
@@ -3975,12 +3854,11 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Interleaved conference creation with participant added before the first one ends", interleaved_conference_creation_with_quick_participant_addition),
 	TEST_NO_TAG("Multiple conferences in server mode", multiple_conferences_in_server_mode),
 	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
-	TEST_NO_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice),
+	TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
 	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),
-	TEST_NO_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice),
+	TEST_ONE_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),
 	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
-	TEST_NO_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice),
-	TEST_NO_TAG("Conference with ICE negotiations ending while accepting call", conference_with_ice_negotiations_ending_while_accepting_call),
+	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
