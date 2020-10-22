@@ -79,7 +79,7 @@ LINPHONE_BEGIN_NAMESPACE
 // Debug.
 // -----------------------------------------------------------------------------
 
-void lAssert (const char *condition, const char *file, int line);
+LINPHONE_PUBLIC void lAssert (const char *condition, const char *file, int line);
 
 #ifdef DEBUG
 	#define L_ASSERT(CONDITION) ((CONDITION) ? static_cast<void>(0) : LinphonePrivate::lAssert(#CONDITION, __FILE__, __LINE__))

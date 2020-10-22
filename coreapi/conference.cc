@@ -122,7 +122,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
-		p->setFocus(remoteAddress == getConferenceAddress());
+		p->setFocus(false);
 		p->setPreserveSession(true);
 		participants.push_back(p);
 	}
@@ -487,7 +487,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			linphone_call_params_set_in_conference(new_params, TRUE);
 
-			const Address & conferenceAddress = getConferenceAddress ();
+			const Address & conferenceAddress = getConferenceAddress().asAddress();
 			const string & confId = conferenceAddress.getUriParamValue("conf-id");
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
 
@@ -528,7 +528,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
-		const Address & conferenceAddress = getConferenceAddress ();
+		const Address & conferenceAddress = getConferenceAddress().asAddress();
 		const string & confId = conferenceAddress.getUriParamValue("conf-id");
 
 		switch(state){
@@ -1096,7 +1096,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
 				return -1;
 			}
-			refer_to_addr = Address(addr);
+			refer_to_addr = addr.asAddress();
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
 			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)
@@ -1216,7 +1216,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 		{
 			Address focusContactAddress(m_focusCall->getRemoteContact());
 			ConferenceId confId = getConferenceId();
-			Address peerAddress(confId.getPeerAddress());
+			Address peerAddress(confId.getPeerAddress().asAddress());
 			if ((getState() == ConferenceInterface::State::CreationPending) && (focusContactAddress.hasUriParam("conf-id")) && (!peerAddress.hasUriParam("conf-id"))) {
 				m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
 				it = m_pendingCalls.begin();
