@@ -29,6 +29,7 @@
 #include <map>
 
 #include "linphone/utils/enum-generator.h"
+#include "address/address.h"
 
 // =============================================================================
 
@@ -128,7 +129,15 @@ namespace Utils {
 	}
 	LINPHONE_PUBLIC std::string trim (const std::string &str);
 
-	template<typename T>
+	template<typename T, typename std::enable_if<std::is_base_of<Address, T>::value>::type* = nullptr>
+	inline const T &getEmptyConstRefObject () {
+		static const T object{};
+		object.removeFromLeakDetector();
+		return object;
+	}
+
+	template<typename T, typename std::enable_if<!std::is_base_of<Address, T>::value>::type* = nullptr>
+
 	inline const T &getEmptyConstRefObject () {
 		static const T object{};
 		return object;

@@ -766,7 +766,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && Address(chatRoom->getLocalAddress()).weakEqual(fromAddress)) {
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
 		setDirection(ChatMessage::Direction::Outgoing);
 	}
 
