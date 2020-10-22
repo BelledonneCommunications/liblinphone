@@ -86,7 +86,7 @@ LinphoneCore *linphone_conference_get_core (const LinphoneConference *conference
 }
 
 const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference) {
-	const LinphonePrivate::Address address = MediaConference::Conference::toCpp(conference)->getConferenceAddress();
+	const LinphonePrivate::Address & address = MediaConference::Conference::toCpp(conference)->getConferenceAddress().asAddress();
 	return address.isValid() ? L_GET_C_BACK_PTR(&address) : nullptr;
 }
 
