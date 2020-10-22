@@ -133,7 +133,24 @@ IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
 }
 
 string IdentityAddress::asString () const {
-	return internalAddress.asString();
+	ostringstream res;
+	res << getScheme() << ":";
+	if (!getUsername().empty()){
+		char *tmp = belle_sip_uri_to_escaped_username(getUsername().c_str());
+		res << tmp << "@";
+		ms_free(tmp);
+	}
+
+	if (getDomain().find(":") != string::npos) {
+		res << "[" << getDomain() << "]";
+	} else {
+		res << getDomain();
+	}
+
+	if (!getGruu().empty()){
+		res << ";gr=" << getGruu();
+	}
+	return res.str();
 }
 
 const Address & IdentityAddress::asAddress() const {
@@ -175,6 +192,14 @@ bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
 		diff = getConfId().compare(other.getConfId());
 	}
 	return diff < 0;
+}
+
+string ConferenceAddress::asString () const {
+	if (hasConfId())
+		return IdentityAddress::asString() + ";conf-id="+getConfId();
+	else {
+		return IdentityAddress::asString();
+	}
 }
 
 const string &ConferenceAddress::getConfId () const {
