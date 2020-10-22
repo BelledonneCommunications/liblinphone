@@ -54,12 +54,6 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 
 	struct Cache {
 		~Cache () {
-			if (from)
-				linphone_address_unref(from);
-			if (to)
-				linphone_address_unref(to);
-			if (local)
-				linphone_address_unref(local);
 			if (contents)
 				bctbx_list_free(contents);
 		}
@@ -67,10 +61,6 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 		string contentType;
 		string textContentBody;
 		string customHeaderValue;
-
-		LinphoneAddress *from = nullptr;
-		LinphoneAddress *to = nullptr;
-		LinphoneAddress *local = nullptr;
 
 		bctbx_list_t *contents = nullptr;
 	} mutable cache;
@@ -235,17 +225,13 @@ void linphone_chat_message_set_appdata (LinphoneChatMessage *msg, const char *da
 }
 
 const LinphoneAddress *linphone_chat_message_get_from_address (const LinphoneChatMessage *msg) {
-	if (msg->cache.from)
-		linphone_address_unref(msg->cache.from);
-	msg->cache.from = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().asString().c_str());
-	return msg->cache.from;
+	const LinphonePrivate::Address & addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().asAddress();
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 const LinphoneAddress *linphone_chat_message_get_to_address (const LinphoneChatMessage *msg) {
-	if (msg->cache.to)
-		linphone_address_unref(msg->cache.to);
-	msg->cache.to = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress().asString().c_str());
-	return msg->cache.to;
+	const LinphonePrivate::Address & addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress().asAddress();
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 const char *linphone_chat_message_get_file_transfer_filepath (const LinphoneChatMessage *msg) {
@@ -472,10 +458,8 @@ const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneCha
 }
 
 const LinphoneAddress *linphone_chat_message_get_local_address (const LinphoneChatMessage *msg) {
-	if (msg->cache.local)
-		linphone_address_unref(msg->cache.local);
-	msg->cache.local = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().asString().c_str());
-	return msg->cache.local;
+	const LinphonePrivate::Address & addr = L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().asAddress();
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 LinphoneReason linphone_chat_message_get_reason (const LinphoneChatMessage *msg) {
