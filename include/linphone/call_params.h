@@ -343,6 +343,7 @@ LINPHONE_PUBLIC void linphone_call_params_set_video_direction(LinphoneCallParams
 int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *params);
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
+bool_t linphone_call_params_has_avpf_enabled_been_set(const LinphoneCallParams *params);
 void linphone_call_params_enable_avpf(LinphoneCallParams *params, bool_t enable);
 bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
 void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);

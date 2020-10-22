@@ -85,6 +85,7 @@ public:
 	unsigned int realtimeTextKeepaliveInterval () const;
 
 	bool avpfEnabled () const;
+	bool hasAvpfEnabledBeenSet () const;
 	void enableAvpf (bool value);
 	uint16_t getAvpfRrInterval () const;
 	void setAvpfRrInterval (uint16_t value);

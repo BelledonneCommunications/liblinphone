@@ -350,6 +350,9 @@ bool_t linphone_call_params_real_early_media_enabled (const LinphoneCallParams *
 bool_t linphone_call_params_avpf_enabled (const LinphoneCallParams *params) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->avpfEnabled();
 }
+bool_t linphone_call_params_has_avpf_enabled_been_set (const LinphoneCallParams *params) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(params)->hasAvpfEnabledBeenSet();
+}
 
 void linphone_call_params_enable_avpf (LinphoneCallParams *params, bool_t enable) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableAvpf(!!enable);
