@@ -22,8 +22,8 @@ publish=0
 dial_escape_plus=0
 
 [rtp]
-audio_rtp_port=9010-9390
-video_rtp_port=9410-9910
+audio_rtp_port=-1--1
+video_rtp_port=-1--1
 
 [video]
 display=0

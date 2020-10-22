@@ -300,16 +300,6 @@ void Call::onCallSessionAccepting (const std::shared_ptr<CallSession> &session) 
 	accept();
 }
 
-bool Call::onCallSessionAccepted (const shared_ptr<CallSession> &session) {
-	LinphoneCore *lc = getCore()->getCCore();
-	bool wasRinging = false;
-
-	if (getCore()->getCurrentCall() != getSharedFromThis())
-		linphone_core_preempt_sound_resources(lc);
-
-	return wasRinging;
-}
-
 void Call::onCallSessionEarlyFailed (const shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) {
 	LinphoneCallLog *log = session->getLog();
 	linphone_core_report_early_failed_call(getCore()->getCCore(),

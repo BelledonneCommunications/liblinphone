@@ -1350,11 +1350,11 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived,1,DEFAULT_WAIT_FOR));
 
-	{
-		char* remote_uri = linphone_address_as_string_uri_only(pauline->identity);
-		call = linphone_core_find_call_from_uri(marie->lc,remote_uri);
-		ms_free(remote_uri);
-	}
+	char* remote_uri = linphone_address_as_string_uri_only(pauline->identity);
+	call = linphone_core_find_call_from_uri(marie->lc,remote_uri);
+
+	stats initial_marie_stats = marie->stat;
+	stats initial_pauline_stats = pauline->stat;
 
 	if  (call) {
 		params=linphone_core_create_call_params(marie->lc, NULL);
@@ -1363,21 +1363,36 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		linphone_call_accept_with_params(call,params);
 		linphone_call_params_unref(params);
 
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_find_call_from_uri(marie->lc,remote_uri));
+
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,1,DEFAULT_WAIT_FOR));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote,1,DEFAULT_WAIT_FOR));
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallError,initial_marie_stats.number_of_LinphoneCallError, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallEnd,initial_marie_stats.number_of_LinphoneCallEnd, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallReleased,initial_marie_stats.number_of_LinphoneCallReleased, int, "%d");
 
-		check_media_direction(marie,call,lcs,LinphoneMediaDirectionSendOnly,LinphoneMediaDirectionSendOnly);
+		// if the call is ended, released or in error state, the CPP pointer may have freed and the C pointer became dangling
+		if ((marie->stat.number_of_LinphoneCallEnd == initial_marie_stats.number_of_LinphoneCallEnd) &&
+		    (marie->stat.number_of_LinphoneCallReleased == initial_marie_stats.number_of_LinphoneCallReleased) &&
+		    (marie->stat.number_of_LinphoneCallError == initial_marie_stats.number_of_LinphoneCallError)) {
+			check_media_direction(marie,call,lcs,LinphoneMediaDirectionSendOnly,LinphoneMediaDirectionSendOnly);
+			float quality = linphone_call_get_current_quality(call);
+			BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+			wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
+			quality = linphone_call_get_current_quality(call);
+			BC_ASSERT_GREATER(quality, 1.0, float, "%f");
+		}
 
-		float quality = linphone_call_get_current_quality(call);
-		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
-		wait_for_until(marie->lc, pauline->lc, &dummy, 1, 3000);
-		quality = linphone_call_get_current_quality(call);
-		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 	}
 
 
 	call=linphone_core_get_current_call(pauline->lc);
-	if  (call) {
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallError,initial_pauline_stats.number_of_LinphoneCallError, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallEnd,initial_pauline_stats.number_of_LinphoneCallEnd, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallReleased,initial_pauline_stats.number_of_LinphoneCallReleased, int, "%d");
+
+	if (call) {
 		check_media_direction(pauline,call,lcs,LinphoneMediaDirectionRecvOnly,LinphoneMediaDirectionRecvOnly);
 
 		float quality = linphone_call_get_current_quality(call);
@@ -1387,6 +1402,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 	}
 
+	ms_free(remote_uri);
 }
 static void accept_call_in_send_base(bool_t caller_has_ice) {
 	LinphoneCoreManager *pauline, *marie;
@@ -1434,6 +1450,16 @@ void two_accepted_call_in_send_only(void) {
 
 	reset_counters(&marie->stat);
 	accept_call_in_send_only_base(laure,marie,lcs);
+
+	int no_active_calls_stream_running = 0;
+	bctbx_list_t *calls = bctbx_list_copy(linphone_core_get_calls(marie->lc));
+	for (bctbx_list_t *it = calls; it; it = bctbx_list_next(it)) {
+		LinphoneCall *call = (LinphoneCall *)bctbx_list_get_data(it);
+		no_active_calls_stream_running += (linphone_call_get_state(call) == LinphoneCallStreamsRunning) ? 1 : 0;
+	}
+	bctbx_list_free(calls);
+
+	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");
 
 	end_call(pauline, marie);
 	end_call(laure, marie);
