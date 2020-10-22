@@ -138,12 +138,6 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
 
 	// mSharedCoreHelpers->setupSharedCore(core->getCCore()->config);
 
-	string identityPath = getResourceDirPath(Framework, "identity_grammar");
-	if (!identityPath.empty())
-		belr::GrammarLoader::get().addPath(identityPath);
-	else
-		ms_error("IosPlatformHelpers did not find identity grammar resource directory...");
-
 #ifdef VCARD_ENABLED
 	string vcardPath = getResourceDirPath("org.linphone.belcard", "vcard_grammar");
 	if (!vcardPath.empty())
