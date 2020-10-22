@@ -3089,7 +3089,6 @@ static void conference_with_calls_queued_without_ice(void) {
 }
 
 static void conference_with_calls_queued_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3109,13 +3108,21 @@ static void conference_with_calls_queued_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3130,9 +3137,6 @@ static void conference_with_calls_queued_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
@@ -3165,7 +3169,6 @@ static void conference_with_back_to_back_call_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_accept_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3185,13 +3188,21 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3206,9 +3217,6 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
@@ -3241,7 +3249,6 @@ static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
 }
 
 static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// ICE is enabled
@@ -3261,13 +3268,21 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 		linphone_core_set_media_encryption(pauline->lc,mode);
 	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* laure = create_mgr_for_conference( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
 	linphone_core_set_inc_timeout(laure->lc, 10000);
+	if (linphone_core_media_encryption_supported(laure->lc,mode)) {
+		linphone_core_set_firewall_policy(laure->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(laure->lc,mode);
+	}
 
-	// ICE is disabled
+	// ICE is enabled
 	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp");
 	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
+		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(michelle->lc,mode);
+	}
 
 	bctbx_list_t* participants=NULL;
 	participants=bctbx_list_append(participants,michelle);
@@ -3282,9 +3297,6 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 static void back_to_back_conferences(void) {
@@ -3326,7 +3338,6 @@ static void back_to_back_conferences(void) {
 }
 
 static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
-#if 0
 	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
 
 	// Local conference
@@ -3463,9 +3474,6 @@ static void conference_with_ice_negotiations_ending_while_accepting_call(void) {
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(michelle);
 	destroy_mgr_in_conference(chloe);
-#else
-	BC_FAIL("Test temporally disabled because the issue has not been addresses yet");
-#endif
 }
 
 test_t audio_video_conference_tests[] = {
@@ -3500,12 +3508,12 @@ test_t audio_video_conference_tests[] = {
 	TEST_NO_TAG("Enable video during conference and take another call", enable_video_during_conference_and_take_another_call),
 	TEST_NO_TAG("Back to back conferences", back_to_back_conferences),
 	TEST_NO_TAG("Conference with calls queued without ICE", conference_with_calls_queued_without_ice),
-	TEST_NO_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice),
+	TEST_ONE_TAG("Conference with calls queued with ICE", conference_with_calls_queued_with_ice, "ICE"),
 	TEST_NO_TAG("Conference with back to back call accept without ICE", conference_with_back_to_back_call_accept_without_ice),
-	TEST_NO_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice),
+	TEST_ONE_TAG("Conference with back to back call accept with ICE", conference_with_back_to_back_call_accept_with_ice, "ICE"),
 	TEST_NO_TAG("Conference with back to back call invite and accept without ICE", conference_with_back_to_back_call_invite_accept_without_ice),
-	TEST_NO_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice),
-	TEST_NO_TAG("Conference with ICE negotiations ending while accepting call", conference_with_ice_negotiations_ending_while_accepting_call),
+	TEST_ONE_TAG("Conference with back to back call invite and accept with ICE", conference_with_back_to_back_call_invite_accept_with_ice, "ICE"),
+	TEST_ONE_TAG("Conference with ICE negotiations ending while accepting call", conference_with_ice_negotiations_ending_while_accepting_call, "ICE"),
 	TEST_NO_TAG("Simple remote conference", simple_remote_conference),
 	TEST_NO_TAG("Simple remote conference with shut down focus", simple_remote_conference_shut_down_focus),
 	TEST_NO_TAG("Eject from 3 participants in remote conference", eject_from_3_participants_remote_conference),
