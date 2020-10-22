@@ -50,10 +50,10 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 	Cpim::Message cpimMessage;
 
 	cpimMessage.addMessageHeader(
-		Cpim::FromHeader(cpimAddressUri(message->getFromAddress()), cpimAddressDisplayName(message->getFromAddress()))
+		Cpim::FromHeader(cpimAddressUri(message->getFromAddress().asAddress()), cpimAddressDisplayName(message->getFromAddress().asAddress()))
 	);
 	cpimMessage.addMessageHeader(
-		Cpim::ToHeader(cpimAddressUri(message->getToAddress()), cpimAddressDisplayName(message->getToAddress()))
+		Cpim::ToHeader(cpimAddressUri(message->getToAddress().asAddress()), cpimAddressDisplayName(message->getToAddress().asAddress()))
 	);
 	cpimMessage.addMessageHeader(
 		Cpim::DateTimeHeader(message->getTime())
@@ -238,7 +238,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 
 	// Discard message if sender authentication is enabled and failed
 	if (message->getPrivate()->senderAuthenticationEnabled) {
-		if (cpimFromAddress == message->getAuthenticatedFromAddress()) {
+		if (cpimFromAddress == message->getAuthenticatedFromAddress().asAddress()) {
 			lInfo() << "[CPIM] Sender authentication successful";
 		} else {
 			lWarning() << "[CPIM] Sender authentication failed";
@@ -268,7 +268,7 @@ Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 	const string &localDeviceId = chatRoom->getLocalAddress().asString();
 
 	Cpim::Message cpimMessage;
-	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));
+	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress().asAddress())));
 	cpimMessage.addMessageHeader(Cpim::NsHeader(imdnNamespaceUrn, imdnNamespace));
 	cpimMessage.addMessageHeader(Cpim::GenericHeader(imdnNamespace + "." + imdnMessageIdHeader, message->getImdnMessageId()));
 	cpimMessage.addContentHeader(Cpim::GenericHeader("Content-Type", ContentType::PlainText.getMediaType()));
