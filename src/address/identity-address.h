@@ -23,15 +23,14 @@
 #include <ostream>
 #include <string>
 
+#include "address.h"
 #include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Address;
-
-class LINPHONE_PUBLIC IdentityAddress {
+class LINPHONE_PUBLIC IdentityAddress : protected Address {
 public:
 	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
@@ -69,11 +68,11 @@ public:
 
 	virtual std::string asString () const;
 
+	const Address & asAddress() const;
+
+	Address internalAddress;
+
 private:
-	std::string scheme;
-	std::string username;
-	std::string domain;
-	std::string gruu;
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {
@@ -95,23 +94,22 @@ public:
 
 	ConferenceAddress &operator= (const ConferenceAddress &other);
 	ConferenceAddress &operator= (const IdentityAddress &other){
-		mConfId = "";
-		return dynamic_cast<ConferenceAddress&>(IdentityAddress::operator=(other));
+		if (this != &other) {
+			IdentityAddress::operator=(other);
+		}
+		return *this;
 	} ;
 
-	bool operator== (const ConferenceAddress &other) const;
-	bool operator!= (const ConferenceAddress &other) const;
+	bool operator== (const IdentityAddress &other) const;
+	bool operator!= (const IdentityAddress &other) const;
 
 	bool operator< (const ConferenceAddress &other) const;
-
-	virtual std::string asString () const override;
 
 	bool hasConfId () const;
 	const std::string &getConfId () const;
 	void setConfId (const std::string &confId);
 
 private:
-	std::string mConfId;
 };
 
 LINPHONE_END_NAMESPACE

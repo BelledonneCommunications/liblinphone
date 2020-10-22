@@ -420,8 +420,8 @@ const bctbx_list_t *linphone_chat_room_get_composing_addresses (LinphoneChatRoom
 		list<LinphonePrivate::IdentityAddress> addresses = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getComposingAddresses();
 		transform(
 			addresses.cbegin(), addresses.cend(),
-			back_inserter(composingAddresses), [](const LinphonePrivate::Address &address) {
-				return LinphonePrivate::IdentityAddress(address);
+			back_inserter(composingAddresses), [](const LinphonePrivate::IdentityAddress &address) {
+				return address.asAddress();
 			}
 		);
 	}
