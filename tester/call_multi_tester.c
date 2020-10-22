@@ -731,10 +731,9 @@ void no_auto_answer_on_fake_call_with_replaces_header (void) {
 }
 
 static void call_accepted_while_another_one_is_updating(bool_t update_from_callee) {
-#if 0
 	int call_ring_timeout = 10000000;
 
-	// Local conference
+	// Core that is called by other cores
 	// ICE is enabled
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
 	linphone_core_set_inc_timeout(marie->lc, call_ring_timeout);
@@ -900,9 +899,6 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(chloe);
-#else
-	BC_FAIL("Test temporally disabled because of missing API");
-#endif
 }
 
 static void call_accepted_while_callee_is_updating_another_one(void) {
@@ -913,6 +909,191 @@ static void call_accepted_while_caller_is_updating_to_same_callee(void) {
 	call_accepted_while_another_one_is_updating(FALSE);
 }
 
+static void call_with_ice_negotiations_ending_while_accepting_call_base(bool_t back_to_back_accept) {
+	LinphoneMediaEncryption mode = LinphoneMediaEncryptionNone;
+
+	// Core that is called by other cores
+	// ICE is enabled
+	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+	linphone_core_set_inc_timeout(marie->lc, 10000);
+	if (linphone_core_media_encryption_supported(marie->lc,mode)) {
+		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(marie->lc,mode);
+	}
+
+	bctbx_list_t* ice_participants=NULL;
+	// ICE is enabled
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	linphone_core_set_inc_timeout(pauline->lc, 10000);
+	if (linphone_core_media_encryption_supported(pauline->lc,mode)) {
+		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(pauline->lc,mode);
+	}
+	ice_participants=bctbx_list_append(ice_participants,pauline);
+
+	// ICE is enabled
+	LinphoneCoreManager* chloe = linphone_core_manager_new( "chloe_rc");
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
+		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(chloe->lc,mode);
+	}
+	ice_participants=bctbx_list_append(ice_participants,chloe);
+
+	bctbx_list_t* non_ice_participants=NULL;
+	// ICE is disabled
+	LinphoneCoreManager* laure = linphone_core_manager_new( liblinphone_tester_ipv6_available() ? "laure_tcp_rc" : "laure_rc_udp");
+	linphone_core_set_inc_timeout(laure->lc, 10000);
+	non_ice_participants=bctbx_list_append(non_ice_participants,laure);
+
+	// ICE is disabled
+	LinphoneCoreManager* michelle = linphone_core_manager_new( "michelle_rc_udp");
+	linphone_core_set_inc_timeout(michelle->lc, 10000);
+	non_ice_participants=bctbx_list_append(non_ice_participants,michelle);
+
+	bctbx_list_t* lcs = NULL;
+	lcs=bctbx_list_append(lcs,marie->lc);
+
+	initiate_calls(non_ice_participants, marie);
+	initiate_calls(ice_participants, marie);
+
+	unsigned int no_ice_callers = (unsigned int)bctbx_list_size(ice_participants);
+	unsigned int no_non_ice_callers = (unsigned int)bctbx_list_size(non_ice_participants);
+	unsigned int no_calls = no_ice_callers + no_non_ice_callers;
+
+	bctbx_list_t* participants = NULL;
+	participants=bctbx_list_append(participants,laure);
+	participants=bctbx_list_append(participants,pauline);
+	participants=bctbx_list_append(participants,michelle);
+
+	bool_t callee_uses_ice = (linphone_core_get_firewall_policy(marie->lc) == LinphonePolicyUseIce);
+	unsigned int no_calls_paused_by_remote = 0;
+	LinphoneCoreManager * pm = NULL;
+
+	if (back_to_back_accept) {
+		lcs=bctbx_list_append(lcs,chloe->lc);
+		const LinphoneAddress *chloe_uri = chloe->identity;
+		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, chloe_uri);
+		BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+		// Take call - ringing ends
+		linphone_call_accept(marie_call);
+
+		BC_ASSERT_TRUE(wait_for_until(chloe->lc,marie->lc, &chloe->stat.number_of_LinphoneCallConnected, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_until(chloe->lc,marie->lc, &chloe->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
+
+		if (chloe && callee_uses_ice && linphone_core_get_firewall_policy(chloe->lc) == LinphonePolicyUseIce) {
+			no_calls_paused_by_remote++;
+			BC_ASSERT_TRUE(wait_for_until(chloe->lc,marie->lc, &chloe->stat.number_of_LinphoneCallUpdating,1,5000));
+		}
+		pm = chloe;
+
+		for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+			const LinphoneAddress *caller_uri = m->identity;
+			LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
+			BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+			// Take call - ringing ends
+			linphone_call_accept(marie_call);
+		}
+	} else {
+		participants=bctbx_list_prepend(participants,chloe);
+	}
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+		lcs=bctbx_list_append(lcs,c);
+		if (!back_to_back_accept) {
+			const LinphoneAddress *caller_uri = m->identity;
+			LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
+			BC_ASSERT_PTR_NOT_NULL(marie_call);
+
+			// Take call - ringing ends
+			linphone_call_accept(marie_call);
+		}
+
+		if (pm) {
+			BC_ASSERT_TRUE(wait_for_until(pm->lc,marie->lc, &marie->stat.number_of_LinphoneCallPaused, no_calls_paused_by_remote, 5000));
+			BC_ASSERT_TRUE(wait_for_until(pm->lc,marie->lc, &pm->stat.number_of_LinphoneCallPausedByRemote,1,5000));
+		}
+
+		BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallConnected, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallStreamsRunning, 1, 5000));
+
+		if (m && callee_uses_ice && linphone_core_get_firewall_policy(m->lc) == LinphonePolicyUseIce) {
+			no_calls_paused_by_remote++;
+			BC_ASSERT_TRUE(wait_for_until(m->lc,marie->lc, &m->stat.number_of_LinphoneCallUpdating,1,5000));
+		}
+		pm = m;
+	}
+
+	if (pm && callee_uses_ice && linphone_core_get_firewall_policy(pm->lc) == LinphonePolicyUseIce) {
+		BC_ASSERT_TRUE(wait_for_until(pm->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdatedByRemote, no_calls_paused_by_remote, 5000));
+	}
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallConnected, no_calls, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, no_calls, 5000));
+
+	for (bctbx_list_t *it = ice_participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
+		BC_ASSERT_TRUE(check_ice(m,marie,LinphoneIceStateHostConnection));
+		BC_ASSERT_TRUE(check_ice(marie,m,LinphoneIceStateHostConnection));
+	}
+	// Calls whose core enables ICE send a reINVITE hence they go twice to stream running
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, (2*no_ice_callers) +  no_non_ice_callers, 5000));
+printf("%s - streqms running %0d - ice callers %0d non ice callers %0d\n", __func__, marie->stat.number_of_LinphoneCallStreamsRunning, no_ice_callers, no_non_ice_callers);
+
+	// Only one call is not paused
+	unsigned int no_call_paused = no_ice_callers + no_non_ice_callers - 1;
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, no_call_paused, 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
+
+	unsigned int no_paused_by_remote = 0;
+	for (bctbx_list_t *it = ice_participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
+	}
+
+	for (bctbx_list_t *it = non_ice_participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		no_paused_by_remote += m->stat.number_of_LinphoneCallPausedByRemote;
+	}
+
+	BC_ASSERT_EQUAL(no_paused_by_remote,no_call_paused, int, "%d");
+
+	int no_active_calls_stream_running = 0;
+	bctbx_list_t *calls = bctbx_list_copy(linphone_core_get_calls(marie->lc));
+	for (bctbx_list_t *it = calls; it; it = bctbx_list_next(it)) {
+		LinphoneCall *call = (LinphoneCall *)bctbx_list_get_data(it);
+		no_active_calls_stream_running += (linphone_call_get_state(call) == LinphoneCallStreamsRunning) ? 1 : 0;
+	}
+	bctbx_list_free(calls);
+
+	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");
+
+	bctbx_list_free(participants);
+	bctbx_list_free(non_ice_participants);
+	bctbx_list_free(ice_participants);
+	bctbx_list_free(lcs);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(michelle);
+	linphone_core_manager_destroy(chloe);
+}
+
+static void call_with_ice_negotiations_ending_while_accepting_call(void) {
+	call_with_ice_negotiations_ending_while_accepting_call_base(FALSE);
+}
+
+static void call_with_ice_negotiations_ending_while_accepting_call_back_to_back(void) {
+	call_with_ice_negotiations_ending_while_accepting_call_base(TRUE);
+}
+
+
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -921,8 +1102,10 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in progress", incoming_call_accepted_when_outgoing_call_in_progress),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
-	TEST_NO_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one),
-	TEST_NO_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee),
+	TEST_ONE_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one, "ICE"),
+	TEST_ONE_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee, "ICE"),
+	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call", call_with_ice_negotiations_ending_while_accepting_call, "ICE"),
+	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call back to back", call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
 	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
 	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
 	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
