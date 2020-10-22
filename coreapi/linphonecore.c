@@ -4431,7 +4431,8 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 	}
 
 	current_call=linphone_core_get_current_call(lc);
-	if(current_call != NULL){
+	// If current call is not answered, do not try to pause it as user may take another one in the list of ringing calls
+	if((current_call != NULL) && (!linphone_core_is_incoming_invite_pending(lc))){
 		ms_message("Pausing automatically the current call.");
 		err = Call::toCpp(current_call)->pause();
 	}
