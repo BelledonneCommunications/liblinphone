@@ -20,7 +20,6 @@
 #include <belle-sip/utils.h>
 #include "linphone/utils/utils.h"
 
-#include "address.h"
 #include "identity-address-parser.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -36,39 +35,39 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 IdentityAddress::IdentityAddress (const string &address) {
+
 	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
 	if (parsedAddress != nullptr) {
 		char *tmp;
-		scheme = parsedAddress->getScheme();
+		setScheme(parsedAddress->getScheme());
 		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
-		username = tmp;
+		setUsername(tmp);
 		ms_free(tmp);
-		domain = parsedAddress->getDomain();
-		gruu = parsedAddress->getGruu();
+		setDomain(parsedAddress->getDomain());
+		setGruu(parsedAddress->getGruu());
 	} else {
 		Address tmpAddress(address);
-		if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
-			scheme = tmpAddress.getScheme();
-			username = tmpAddress.getUsername();
-			domain = tmpAddress.getDomain();
-			gruu = tmpAddress.getUriParamValue("gr");
-		}
+		fillFromAddress(tmpAddress);
 	}
 }
 
 IdentityAddress::IdentityAddress (const Address &address) {
-	scheme = address.getScheme();
-	username = address.getUsername();
-	domain = address.getDomain();
-	if (address.hasUriParam("gr"))
-		gruu = address.getUriParamValue("gr");
+	fillFromAddress(address);
 }
 
-IdentityAddress::IdentityAddress (const IdentityAddress &other) {
-	scheme = other.getScheme();
-	username = other.getUsername();
-	domain = other.getDomain();
-	gruu = other.getGruu();
+void IdentityAddress::fillFromAddress(const Address &address) {
+	if (address.isValid() && ((address.getScheme() == "sip") || (address.getScheme() == "sips"))) {
+		setScheme(address.getScheme());
+		setUsername(address.getUsername());
+		setDomain(address.getDomain());
+		if (address.hasUriParam("gr")) {
+			setGruu(address.getUriParamValue("gr"));
+		}
+	}
+}
+
+IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address(other) {
+
 }
 
 IdentityAddress::IdentityAddress () {
@@ -77,17 +76,14 @@ IdentityAddress::IdentityAddress () {
 
 IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
-		scheme = other.getScheme();
-		username = other.getUsername();
-		domain = other.getDomain();
-		gruu = other.getGruu();
+		Address::operator= (other);
 	}
 	return *this;
 }
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {
 	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	return username == other.getUsername() && domain == other.getDomain() && gruu == other.getGruu();
+	return getUsername() == other.getUsername() && getDomain() == other.getDomain() && getGruu() == other.getGruu();
 }
 
 bool IdentityAddress::operator!= (const IdentityAddress &other) const {
@@ -95,135 +91,225 @@ bool IdentityAddress::operator!= (const IdentityAddress &other) const {
 }
 
 bool IdentityAddress::operator< (const IdentityAddress &other) const {
-	int diff = username.compare(other.getUsername());
+	int diff = getUsername().compare(other.getUsername());
 	if (diff == 0){
-		diff = domain.compare(other.getDomain());
+		diff = getDomain().compare(other.getDomain());
 		if (diff == 0){
-			diff = gruu.compare(other.getGruu());
+			diff = getGruu().compare(other.getGruu());
 		}
 	}
 	return diff < 0;
 }
 
 bool IdentityAddress::isValid () const {
-	return !scheme.empty() && !domain.empty();
+	return !getScheme().empty() && !getDomain().empty();
 }
 
 const string &IdentityAddress::getScheme () const {
-	return scheme;
+	return Address::getScheme();
 }
 
 void IdentityAddress::setScheme (const string &scheme) {
-	this->scheme = scheme;
+	Address::setSecure (scheme.compare("sips") == 0);
 }
 
 const string &IdentityAddress::getUsername () const {
-	return username;
+	return Address::getUsername();
 }
 
 void IdentityAddress::setUsername (const string &username) {
-	this->username = username;
+	Address::setUsername(username);
 }
 
 const string &IdentityAddress::getDomain () const {
-	return domain;
+	return Address::getDomain();
 }
 
 void IdentityAddress::setDomain (const string &domain) {
-	this->domain = domain;
+	Address::setDomain(domain);
 }
 
 bool IdentityAddress::hasGruu () const {
-	return !gruu.empty();
+	return hasUriParam("gr");
 }
 
 const string &IdentityAddress::getGruu () const {
-	return gruu;
+	return getUriParamValue("gr");
 }
 
 void IdentityAddress::setGruu (const string &gruu) {
-	this->gruu = gruu;
+	if (gruu.empty() == true) {
+		removeUriParam ("gr");
+	} else {
+		setUriParam("gr",gruu);
+	}
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	IdentityAddress address(*this);
-	address.setGruu("");
+	Address address(*this);
+	address.removeUriParam("gr");
 	return address;
 }
 
 string IdentityAddress::asString () const {
 	ostringstream res;
-	res << scheme << ":";
-	if (!username.empty()){
-		char *tmp = belle_sip_uri_to_escaped_username(username.c_str());
+	res << getScheme() << ":";
+	if (!getUsername().empty()){
+		char *tmp = belle_sip_uri_to_escaped_username(getUsername().c_str());
 		res << tmp << "@";
 		ms_free(tmp);
 	}
-	
-	if (domain.find(":") != string::npos) {
-		res << "[" << domain << "]";
+
+	if (getDomain().find(":") != string::npos) {
+		res << "[" << getDomain() << "]";
 	} else {
-		res << domain;
+		res << getDomain();
 	}
-	
-	if (!gruu.empty()){
-		res << ";gr=" << gruu;
+
+	if (!getGruu().empty()){
+		res << ";gr=" << getGruu();
 	}
 	return res.str();
 }
 
+const Address & IdentityAddress::asAddress() const {
+	return *this;
+}
+
+void IdentityAddress::removeFromLeakDetector() const {
+	Address::removeFromLeakDetector();
+}
+
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
-	mConfId= address.getUriParamValue("conf-id");
+	fillUriParams(address);
 };
 ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
 }
 ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
-	mConfId = other.mConfId;
+	fillUriParams(other);
 }
+
 ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
+
 }
 ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
-		mConfId = other.mConfId;
+		fillUriParams(other);
 	}
 	return *this;
 }
 
 bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
-	return IdentityAddress::operator==(other) && mConfId == other.mConfId;
-};
-bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
-	return !operator==(other);
+	bool equal = IdentityAddress::operator==(other);
+	if (equal) {
+		const bctbx_map_t* otherUriParamMap = other.getUriParams();
+		equal = (compareUriParams(otherUriParamMap) == 0);
+	}
+	// If this is not smaller than other and other is not smaller than this, it means that they are identical
+	return equal;
 }
+
+bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
+	return !(*this == other);
+}
+
 bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+	// Operator < ignores scheme
 	int diff = IdentityAddress::operator<(other);
+	const bctbx_map_t* otherUriParamMap = other.getUriParams();
+	
 	if (diff == 0){
-		diff = mConfId.compare(other.mConfId);
+		diff = compareUriParams(otherUriParamMap);
 	}
 	return diff < 0;
 }
 
-std::string ConferenceAddress::asString () const {
-	if (mConfId.empty())
-		return IdentityAddress::asString();
-	else {
-		return IdentityAddress::asString() + ";conf-id="+mConfId;
+string ConferenceAddress::asString () const {
+	std::string addressStr = IdentityAddress::asString();
+	const bctbx_map_t* uriParamMap = getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		// GRUU is already added by Identity address asString() function
+		if (strcmp(key, "gr") != 0) {
+			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			addressStr = addressStr + ";" + key;
+			if (value) {
+				addressStr = addressStr  + "=" + value;
+			}
+		}
 	}
+	return addressStr;
 }
 
 const string &ConferenceAddress::getConfId () const {
-	return mConfId;
+	return getUriParamValue("conf-id");
 }
 
 void ConferenceAddress::setConfId (const string &confId) {
-	this->mConfId = confId;
+	setUriParam("conf-id", confId);
 }
 
 bool ConferenceAddress::hasConfId () const {
-	return !mConfId.empty();
+	return hasUriParam("conf-id");
 }
 
+void ConferenceAddress::fillUriParams (const Address &address) {
+	const bctbx_map_t* uriParamMap = address.getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+		if (value) {
+			setUriParam(key, value);
+		} else {
+			setUriParams(key);
+		}
+	}
+}
 
+int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) const {
+	const bctbx_map_t* thisUriParamMap = getUriParams();
+	// Check that this and other uri parameter maps have the same number of elements
+	size_t thisMapSize = bctbx_map_cchar_size(thisUriParamMap);
+	size_t otherMapSize = bctbx_map_cchar_size(otherUriParamMap);
+	int diff = (int)(thisMapSize - otherMapSize);
 
+	bctbx_iterator_t * thisUriParamMapEnd = bctbx_map_cchar_end(thisUriParamMap);
+	bctbx_iterator_t * otherUriParamMapEnd = bctbx_map_cchar_end(otherUriParamMap);
+
+	bctbx_iterator_t * thisIt = bctbx_map_cchar_begin(thisUriParamMap);
+
+	// Loop through URI parameter map until:
+	// - diff is 0
+	// - end of map has not been reached
+	while((diff == 0) && (!bctbx_iterator_cchar_equals(thisIt, thisUriParamMapEnd))) {
+		bctbx_pair_t *thisPair = bctbx_iterator_cchar_get_pair(thisIt);
+		const char * thisKey = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(thisPair));
+		const char * thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
+
+		bctbx_iterator_t * otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
+		// Test that key exists
+		if (!bctbx_iterator_cchar_equals(otherIt, otherUriParamMapEnd)) {
+			bctbx_pair_t *otherPair = bctbx_iterator_cchar_get_pair(otherIt);
+			const char * otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
+			if ((otherValue == NULL) || (thisValue == NULL)) {
+				// keep diff at 0 if both other and this value are NULL
+				diff = ((otherValue == NULL) && (thisValue == NULL)) ? 0 : -1;
+			} else {
+				diff = strcmp(thisValue, otherValue);
+			}
+		} else {
+			diff = -1;
+		}
+
+		thisIt = bctbx_iterator_cchar_get_next(thisIt);
+	}
+
+	return diff;
+}
 LINPHONE_END_NAMESPACE
