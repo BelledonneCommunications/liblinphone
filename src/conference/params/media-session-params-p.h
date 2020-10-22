@@ -97,6 +97,7 @@ public:
 
 	bool realtimeTextEnabled = false;
 	bool avpfEnabled = false;
+	bool hasAvpfEnabledBeenSet = false;
 	uint16_t avpfRrInterval = 0; /* In milliseconds */
 
 	bool lowBandwidthEnabled = false;
