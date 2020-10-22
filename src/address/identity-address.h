@@ -23,15 +23,14 @@
 #include <ostream>
 #include <string>
 
+#include "address.h"
 #include "linphone/utils/general.h"
 
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
-class Address;
-
-class LINPHONE_PUBLIC IdentityAddress {
+class LINPHONE_PUBLIC IdentityAddress : protected Address {
 public:
 	explicit IdentityAddress (const std::string &address);
 	IdentityAddress (const Address &address);
@@ -39,7 +38,7 @@ public:
 	IdentityAddress ();
 	virtual ~IdentityAddress () = default;
 
-	virtual IdentityAddress *clone () const {
+	virtual IdentityAddress *clone () const override {
 		return new IdentityAddress(*this);
 	}
 
@@ -69,11 +68,13 @@ public:
 
 	virtual std::string asString () const;
 
+	const Address & asAddress() const;
+
+	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
+	void removeFromLeakDetector() const;
+
 private:
-	std::string scheme;
-	std::string username;
-	std::string domain;
-	std::string gruu;
+	void fillFromAddress(const Address &address);
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {
@@ -87,7 +88,7 @@ public:
 	ConferenceAddress (const IdentityAddress &other);
 	ConferenceAddress (const ConferenceAddress &other);
 	ConferenceAddress() : IdentityAddress(){};
-	~ConferenceAddress () = default;
+	virtual ~ConferenceAddress () = default;
 	
 	ConferenceAddress *clone () const override {
 		return new ConferenceAddress(*this);
@@ -95,8 +96,10 @@ public:
 
 	ConferenceAddress &operator= (const ConferenceAddress &other);
 	ConferenceAddress &operator= (const IdentityAddress &other){
-		mConfId = "";
-		return dynamic_cast<ConferenceAddress&>(IdentityAddress::operator=(other));
+		if (this != &other) {
+			IdentityAddress::operator=(other);
+		}
+		return *this;
 	} ;
 
 	bool operator== (const ConferenceAddress &other) const;
@@ -111,7 +114,8 @@ public:
 	void setConfId (const std::string &confId);
 
 private:
-	std::string mConfId;
+	void fillUriParams (const Address &address);
+	int compareUriParams (const bctbx_map_t* otherUriParamMap) const;
 };
 
 LINPHONE_END_NAMESPACE

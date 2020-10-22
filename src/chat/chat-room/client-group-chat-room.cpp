@@ -75,12 +75,12 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo (Address ses
 	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
 		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
-	Address myCleanedAddress(q->getMe()->getAddress());
-	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
-
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
-	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, sessionTo);
+	Address meCleanedAddress(q->getMe()->getAddress().asAddress());
+	meCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
+
+	session->configure(LinphoneCallOutgoing, nullptr, nullptr, meCleanedAddress, sessionTo);
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
 
@@ -91,7 +91,7 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	L_Q();
 	const ConferenceAddress & peerAddress(q->getConferenceId().getPeerAddress());
 	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
-	const Address sessionTo = peerAddress.isValid() ? peerAddress : focus->getAddress();
+	const Address sessionTo = peerAddress.isValid() ? peerAddress.asAddress() : focus->getAddress().asAddress();
 	return createSessionTo(sessionTo);
 }
 
@@ -535,7 +535,7 @@ bool ClientGroupChatRoom::hasBeenLeft () const {
 	return (getState() != State::Created);
 }
 
-const ConferenceAddress ClientGroupChatRoom::getConferenceAddress () const {
+const ConferenceAddress &ClientGroupChatRoom::getConferenceAddress () const {
 	return getConference()->getConferenceAddress();
 }
 
@@ -615,11 +615,10 @@ bool ClientGroupChatRoom::addParticipants (
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-		LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+		LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
-		linphone_address_unref(lAddr);
 		for (const auto &addr : addresses) {
-			Address referToAddr = addr;
+			Address referToAddr = addr.asAddress();
 			referToAddr.setParam("text");
 			referOp->sendRefer(referToAddr.getInternalAddress());
 		}
@@ -644,10 +643,9 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 
 	//TODO handle one-to-one case ?
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
-	Address referToAddr = participant->getAddress();
+	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
 	referOp->sendRefer(referToAddr.getInternalAddress());
@@ -684,10 +682,9 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
-	Address referToAddr = participant->getAddress();
+	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
 	referOp->sendRefer(referToAddr.getInternalAddress());

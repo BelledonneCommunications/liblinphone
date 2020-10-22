@@ -761,7 +761,7 @@ shared_ptr<EventLog> MainDbPrivate::selectConferenceChatMessageEvent (
 		dChatMessage->forceState(messageState);
 
 		dChatMessage->forceFromAddress(IdentityAddress(row.get<string>(3)));
-		dChatMessage->forceToAddress(IdentityAddress(row.get<string>(4)));
+		dChatMessage->forceToAddress(ConferenceAddress(row.get<string>(4)));
 
 		dChatMessage->setTime(dbSession.getTime(row, 5));
 		dChatMessage->setImdnMessageId(row.get<string>(6));
