@@ -38,7 +38,7 @@ public:
 	IdentityAddress ();
 	virtual ~IdentityAddress () = default;
 
-	virtual IdentityAddress *clone () const {
+	virtual IdentityAddress *clone () const override {
 		return new IdentityAddress(*this);
 	}
 
