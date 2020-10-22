@@ -20,7 +20,6 @@
 #include <belle-sip/utils.h>
 #include "linphone/utils/utils.h"
 
-#include "address.h"
 #include "identity-address-parser.h"
 
 #include "c-wrapper/c-wrapper.h"
@@ -35,40 +34,23 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-IdentityAddress::IdentityAddress (const string &address) {
-	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
-	if (parsedAddress != nullptr) {
-		char *tmp;
-		scheme = parsedAddress->getScheme();
-		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
-		username = tmp;
-		ms_free(tmp);
-		domain = parsedAddress->getDomain();
-		gruu = parsedAddress->getGruu();
-	} else {
-		Address tmpAddress(address);
-		if (tmpAddress.isValid() && ((tmpAddress.getScheme() == "sip") || (tmpAddress.getScheme() == "sips"))) {
-			scheme = tmpAddress.getScheme();
-			username = tmpAddress.getUsername();
-			domain = tmpAddress.getDomain();
-			gruu = tmpAddress.getUriParamValue("gr");
+IdentityAddress::IdentityAddress (const string &address) : IdentityAddress(Address(address)) {
+
+}
+
+IdentityAddress::IdentityAddress (const Address &address) {
+	if (address.isValid() && ((address.getScheme() == "sip") || (address.getScheme() == "sips"))) {
+		setScheme(address.getScheme());
+		setUsername(address.getUsername());
+		setDomain(address.getDomain());
+		if (address.hasUriParam("gr")) {
+			setGruu(address.getUriParamValue("gr"));
 		}
 	}
 }
 
-IdentityAddress::IdentityAddress (const Address &address) {
-	scheme = address.getScheme();
-	username = address.getUsername();
-	domain = address.getDomain();
-	if (address.hasUriParam("gr"))
-		gruu = address.getUriParamValue("gr");
-}
-
-IdentityAddress::IdentityAddress (const IdentityAddress &other) {
-	scheme = other.getScheme();
-	username = other.getUsername();
-	domain = other.getDomain();
-	gruu = other.getGruu();
+IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address() {
+	internalAddress = other.asAddress();
 }
 
 IdentityAddress::IdentityAddress () {
@@ -77,17 +59,16 @@ IdentityAddress::IdentityAddress () {
 
 IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
-		scheme = other.getScheme();
-		username = other.getUsername();
-		domain = other.getDomain();
-		gruu = other.getGruu();
+		internalAddress = other.asAddress();
 	}
 	return *this;
 }
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {
 	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	return username == other.getUsername() && domain == other.getDomain() && gruu == other.getGruu();
+	// Operator < ignores scheme
+	// If this is not smaller than other and other is not smaller than this, it means that they are identical
+	return !(*this < other) && !(other < *this);
 }
 
 bool IdentityAddress::operator!= (const IdentityAddress &other) const {
@@ -95,135 +76,117 @@ bool IdentityAddress::operator!= (const IdentityAddress &other) const {
 }
 
 bool IdentityAddress::operator< (const IdentityAddress &other) const {
-	int diff = username.compare(other.getUsername());
+	int diff = getUsername().compare(other.getUsername());
 	if (diff == 0){
-		diff = domain.compare(other.getDomain());
+		diff = getDomain().compare(other.getDomain());
 		if (diff == 0){
-			diff = gruu.compare(other.getGruu());
+			diff = getGruu().compare(other.getGruu());
 		}
 	}
 	return diff < 0;
 }
 
 bool IdentityAddress::isValid () const {
-	return !scheme.empty() && !domain.empty();
+	return !getScheme().empty() && !getDomain().empty();
 }
 
 const string &IdentityAddress::getScheme () const {
-	return scheme;
+	return internalAddress.getScheme();
 }
 
 void IdentityAddress::setScheme (const string &scheme) {
-	this->scheme = scheme;
+	internalAddress.setSecure (scheme.compare("sips") == 0);
 }
 
 const string &IdentityAddress::getUsername () const {
-	return username;
+	return internalAddress.getUsername();
 }
 
 void IdentityAddress::setUsername (const string &username) {
-	this->username = username;
+	internalAddress.setUsername(username);
 }
 
 const string &IdentityAddress::getDomain () const {
-	return domain;
+	return internalAddress.getDomain();
 }
 
 void IdentityAddress::setDomain (const string &domain) {
-	this->domain = domain;
+	internalAddress.setDomain(domain);
 }
 
 bool IdentityAddress::hasGruu () const {
-	return !gruu.empty();
+	return internalAddress.hasUriParam("gr");
 }
 
 const string &IdentityAddress::getGruu () const {
-	return gruu;
+	return internalAddress.getUriParamValue("gr");
 }
 
 void IdentityAddress::setGruu (const string &gruu) {
-	this->gruu = gruu;
+	internalAddress.setUriParam("gr",gruu);
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	IdentityAddress address(*this);
+	IdentityAddress address(internalAddress);
 	address.setGruu("");
 	return address;
 }
 
 string IdentityAddress::asString () const {
-	ostringstream res;
-	res << scheme << ":";
-	if (!username.empty()){
-		char *tmp = belle_sip_uri_to_escaped_username(username.c_str());
-		res << tmp << "@";
-		ms_free(tmp);
-	}
-	
-	if (domain.find(":") != string::npos) {
-		res << "[" << domain << "]";
-	} else {
-		res << domain;
-	}
-	
-	if (!gruu.empty()){
-		res << ";gr=" << gruu;
-	}
-	return res.str();
+	return internalAddress.asString();
+}
+
+const Address & IdentityAddress::asAddress() const {
+	return internalAddress;
 }
 
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
-	mConfId= address.getUriParamValue("conf-id");
+	setConfId(address.getUriParamValue("conf-id"));
 };
 ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
 }
 ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
-	mConfId = other.mConfId;
+	setConfId(other.getConfId());
 }
 ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
 }
 ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
-		mConfId = other.mConfId;
+		setConfId(other.getConfId());
 	}
 	return *this;
 }
 
-bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
-	return IdentityAddress::operator==(other) && mConfId == other.mConfId;
-};
-bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
-	return !operator==(other);
+bool ConferenceAddress::operator== (const IdentityAddress &other) const {
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+	// Operator < ignores scheme
+	// If this is not smaller than other and other is not smaller than this, it means that they are identical
+	return !(*this < other) && !(other < *this);
 }
+
+bool ConferenceAddress::operator!= (const IdentityAddress &other) const {
+	return !(*this == other);
+}
+
 bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
 	int diff = IdentityAddress::operator<(other);
 	if (diff == 0){
-		diff = mConfId.compare(other.mConfId);
+		diff = getConfId().compare(other.getConfId());
 	}
 	return diff < 0;
 }
 
-std::string ConferenceAddress::asString () const {
-	if (mConfId.empty())
-		return IdentityAddress::asString();
-	else {
-		return IdentityAddress::asString() + ";conf-id="+mConfId;
-	}
-}
-
 const string &ConferenceAddress::getConfId () const {
-	return mConfId;
+	return internalAddress.getUriParamValue("conf-id");
 }
 
 void ConferenceAddress::setConfId (const string &confId) {
-	this->mConfId = confId;
+	internalAddress.setUriParam("conf-id", confId);
 }
 
 bool ConferenceAddress::hasConfId () const {
-	return !mConfId.empty();
+	return internalAddress.hasUriParam("conf-id");
 }
-
-
 
 LINPHONE_END_NAMESPACE

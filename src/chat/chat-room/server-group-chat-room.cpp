@@ -259,9 +259,9 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 		CallSessionParams params;
 		//params.addCustomContactParameter("isfocus");
 		session = participant->createSession(*q->getConference().get(), &params, false, this);
-		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress(), Address(op->getTo()));
+		session->configure(LinphoneCallIncoming, nullptr, op, participant->getAddress().asAddress(), Address(op->getTo()));
 		session->startIncomingNotification(false);
-		Address addr = q->getConference()->getConferenceAddress();
+		Address addr = q->getConference()->getConferenceAddress().asAddress();
 		addr.setParam("isfocus");
 		//to force is focus to be added
 		session->getPrivate()->getOp()->setContactAddress(addr.getInternalAddress());
@@ -293,7 +293,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	L_Q();
 
-	auto participant = q->findParticipant(Address(op->getFrom()));
+	auto participant = q->findParticipant(IdentityAddress(op->getFrom()));
 	if (!participant){
 		lError() << q << " bug - " << op->getFrom() << " is not a participant.";
 		op->decline(SalReasonInternalError, "");
@@ -303,7 +303,7 @@ void ServerGroupChatRoomPrivate::confirmRecreation (SalCallOp *op) {
 	IdentityAddress confAddr(q->getConference()->getConferenceAddress());
 
 	lInfo() << q << " is re-joined by " << participant->getAddress();
-	Address addr(confAddr);
+	Address addr(confAddr.asAddress());
 	addr.setParam("isfocus");
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->createSession(*q->getConference().get(), nullptr, false, this);
@@ -749,7 +749,7 @@ void ServerGroupChatRoomPrivate::finalizeCreation () {
 	// Let the SIP stack set the domain and the port
 	shared_ptr<Participant> me = q->getMe();
 	me->setAddress(confAddr);
-	Address addr(confAddr);
+	Address addr(confAddr.asAddress());
 	addr.setParam("isfocus");
 	shared_ptr<CallSession> session = me->getSession();
 	if (session->getState() == CallSession::State::Idle) {
@@ -792,12 +792,12 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 		//csp.addCustomContactParameter("text");
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		session = participant->createSession(*q->getConference().get(), &csp, false, this);
-		session->configure(LinphoneCallOutgoing, nullptr, nullptr, q->getConference()->getConferenceAddress(), device->getAddress());
+		session->configure(LinphoneCallOutgoing, nullptr, nullptr, q->getConference()->getConferenceAddress().asAddress(), device->getAddress().asAddress());
 		device->setSession(session);
 		session->initiateOutgoing();
 		session->getPrivate()->createOp();
 		//FIXME jehan check conference server  potential impact
-		Address contactAddr(q->getConference()->getConferenceAddress());
+		Address contactAddr(q->getConference()->getConferenceAddress().asAddress());
 		contactAddr.setParam("isfocus");
 		contactAddr.setParam("text");
 		session->getPrivate()->getOp()->setContactAddress(contactAddr.getInternalAddress());

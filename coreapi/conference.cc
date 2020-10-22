@@ -122,7 +122,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
-		p->setFocus(remoteAddress == getConferenceAddress());
+		p->setFocus(false);
 		p->setPreserveSession(true);
 		participants.push_back(p);
 	}
@@ -1096,7 +1096,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
 				return -1;
 			}
-			refer_to_addr = Address(addr);
+			refer_to_addr = addr.asAddress();
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
 			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)

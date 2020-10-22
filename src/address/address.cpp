@@ -83,22 +83,6 @@ Address::Address (const string &address) : ClonableObject(*new ClonableObjectPri
 	}
 }
 
-Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new ClonableObjectPrivate) {
-	const string &username = identityAddress.getUsername();
-	if (username.empty())
-		return;
-	const string &domain = identityAddress.getDomain();
-	if (domain.empty())
-		return;
-
-	string uri = identityAddress.asString();
-	internalAddress = getSalAddressFromCache(uri);
-}
-
-Address::Address (const ConferenceAddress &conferenceAddress) : Address(IdentityAddress(conferenceAddress)) {
-	setUriParam ("conf-id", conferenceAddress.getConfId());
-}
-
 Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
 	SalAddress *salAddress = other.internalAddress;
 	if (salAddress)

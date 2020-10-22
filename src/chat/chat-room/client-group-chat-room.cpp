@@ -75,10 +75,10 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 
 	shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
-	Address myCleanedAddress(q->getMe()->getAddress());
+	Address myCleanedAddress(q->getMe()->getAddress().asAddress());
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
 	const ConferenceAddress & peerAddress(q->getConferenceId().getPeerAddress());
-	const Address sessionTo = peerAddress.isValid() ? peerAddress : focus->getAddress();
+	const Address sessionTo = peerAddress.isValid() ? peerAddress.asAddress() : focus->getAddress().asAddress();
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, sessionTo);
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
@@ -560,7 +560,7 @@ bool ClientGroupChatRoom::addParticipants (
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
 		linphone_address_unref(lAddr);
 		for (const auto &addr : addresses) {
-			Address referToAddr = addr;
+			Address referToAddr = addr.asAddress();
 			referToAddr.setParam("text");
 			referOp->sendRefer(referToAddr.getInternalAddress());
 		}
@@ -588,7 +588,7 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
-	Address referToAddr = participant->getAddress();
+	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
 	referOp->sendRefer(referToAddr.getInternalAddress());
@@ -628,7 +628,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
-	Address referToAddr = participant->getAddress();
+	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
 	referOp->sendRefer(referToAddr.getInternalAddress());

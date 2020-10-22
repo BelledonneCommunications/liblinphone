@@ -1054,7 +1054,7 @@ int Core::getUnreadChatMessageCountFromActiveLocals () const {
 		for (auto it = linphone_core_get_proxy_config_list(getCCore()); it != NULL; it = it->next) {
 			LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 			const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+			if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
 				count += chatRoom->getUnreadChatMessageCount();
 			}
 		}
@@ -1125,8 +1125,7 @@ const ConferenceId Core::prepareConfereceIdForSearch(const ConferenceId & confer
 	Address localAddress = conferenceId.getLocalAddress();
 	localAddress.removeUriParam("gr");
 	ConferenceId prunedConferenceId = ConferenceId(ConferenceAddress(peerAddress), ConferenceAddress(localAddress));
-
-	return prunedConferenceId;
+rreturn prunedConferenceId;
 }
 
 
