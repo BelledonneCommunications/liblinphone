@@ -95,6 +95,7 @@ void linphone_core_notify_global_state_changed(LinphoneCore *lc, LinphoneGlobalS
 }
 
 void linphone_core_notify_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message){
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->notifyCallStateChanged(call, cstate, message);
 	NOTIFY_IF_EXIST(call_state_changed, lc,call,cstate,message);
 	cleanup_dead_vtable_refs(lc);
 }

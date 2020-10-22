@@ -299,6 +299,12 @@ void CorePrivate::notifyNetworkReachable (bool sipNetworkReachable, bool mediaNe
 		listener->onNetworkReachable(sipNetworkReachable, mediaNetworkReachable);
 }
 
+void CorePrivate::notifyCallStateChanged (LinphoneCall *call, LinphoneCallState state, const string &message) {
+	auto listenersCopy = listeners; // Allow removal of a listener in its own call
+	for (const auto &listener : listenersCopy)
+		listener->onCallStateChanged(call, state, message);
+}
+
 void CorePrivate::notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const string &message) {
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)

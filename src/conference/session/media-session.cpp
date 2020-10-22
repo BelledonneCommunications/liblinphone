@@ -1767,10 +1767,17 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
-	if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
+	if (state == CallSession::State::Paused) {
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already paused";
+		return 0;
+	} else if (state == CallSession::State::Pausing) {
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already in the process of being paused";
+		return 0;
+	} else if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
+
 	string subject;
 	if (sal_media_description_has_dir(resultDesc, SalStreamSendRecv))
 		subject = "Call on hold";
@@ -1958,6 +1965,30 @@ void MediaSessionPrivate::updateCurrentParams () const {
 
 void MediaSessionPrivate::startAccept(){
 	L_Q();
+
+	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
+lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis().get() << " current call session " << (currentCall ? currentCall->getActiveSession().get() : nullptr);
+	// If the core in a call, request to empty sound resources only if this call is not the call the core is currently in
+	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
+
+	bool isCoreInLocalConference = linphone_core_is_in_conference(q->getCore()->getCCore());
+	LinphoneConference * callConference = nullptr;
+	if (listener) {
+		callConference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	LinphoneConference * coreConference = linphone_core_get_conference(q->getCore()->getCCore());
+	// If the core in a conference, request to empty sound resources only if the call is in a difference conference or the call is not part of a conference
+	bool isThisNotCurrentConference = isCoreInLocalConference && (!callConference || (callConference != coreConference));
+
+	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
+	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
+		if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
+			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
+			pendingActions.push([this] {this->startAccept();});
+			return;
+		}
+	}
+
 	/* Give a chance a set card prefered sampling frequency */
 	if (localDesc->streams[0].max_rate > 0) {
 		lInfo() << "Configuring prefered card sampling rate to [" << localDesc->streams[0].max_rate << "]";
@@ -1967,7 +1998,6 @@ void MediaSessionPrivate::startAccept(){
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.capt_sndcard, localDesc->streams[0].max_rate);
 	}
 
-	linphone_core_preempt_sound_resources(q->getCore()->getCCore());
 	CallSessionPrivate::accept(nullptr);
 	if (!getParams()->getPrivate()->getInConference() && listener){
 		listener->onSetCurrentSession(q->getSharedFromThis());
@@ -2406,6 +2436,11 @@ LinphoneStatus MediaSession::resume () {
 			return -1;
 		}
 		linphone_core_preempt_sound_resources(getCore()->getCCore());
+/*		if (linphone_core_preempt_sound_resources(getCore()->getCCore()) != 0) {
+			lInfo() << "Delaying call to " << __func__ << " because sound resources cannot be preempted";
+			d->pendingActions.push([this] {this->resume();});
+			return -1;
+		}*/
 		lInfo() << "Resuming MediaSession " << this;
 	}
 	d->automaticallyPaused = false;

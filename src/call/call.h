@@ -230,7 +230,6 @@ public:
 	void onBackgroundTaskToBeStarted (const std::shared_ptr<CallSession> &session) override;
 	void onBackgroundTaskToBeStopped (const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionAccepting (const std::shared_ptr<CallSession> &session) override;
-	bool onCallSessionAccepted (const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionEarlyFailed (const std::shared_ptr<CallSession> &session, LinphoneErrorInfo *ei) override;
 	void onCallSessionSetReleased (const std::shared_ptr<CallSession> &session) override;
 	void onCallSessionSetTerminated (const std::shared_ptr<CallSession> &session) override;

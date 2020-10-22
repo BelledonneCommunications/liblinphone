@@ -139,8 +139,26 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 		}
 		if (listener)
 			listener->onCallSessionStateChanged(q->getSharedFromThis(), newState, message);
-		if (newState == CallSession::State::Released)
+
+		if (newState == CallSession::State::Released) {
 			setReleased(); /* Shall be performed after app notification */
+		}
+	}
+}
+
+void CallSessionPrivate::onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) {
+	this->executePendingActions();
+}
+
+void CallSessionPrivate::executePendingActions() {
+	if ((state != CallSession::State::End) && (state != CallSession::State::Released) && (state != CallSession::State::Error)) {
+		while (pendingActions.empty() == false) {
+			// Store std::function in a temporary variable in order to take it out of the queue before executing it
+			const auto f = pendingActions.front();
+			pendingActions.pop();
+			// Execute method
+			f();
+		}
 	}
 }
 
@@ -648,6 +666,9 @@ void CallSessionPrivate::setReleased () {
 	}
 	referer = nullptr;
 	transferTarget = nullptr;
+	while (pendingActions.empty() == false) {
+		pendingActions.pop();
+	}
 
 	q->getCore()->getPrivate()->getToneManager()->removeSession(q->getSharedFromThis());
 
