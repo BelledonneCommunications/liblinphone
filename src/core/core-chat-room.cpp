@@ -607,7 +607,7 @@ static bool compare_chat_room (const shared_ptr<AbstractChatRoom>& first, const 
 
 //
 string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const IdentityAddress &localAddress) {
-	Address addr(localAddress);
+	Address addr(localAddress.asAddress());
 	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
 
 	if (!proxy) {
@@ -646,7 +646,7 @@ list<shared_ptr<AbstractChatRoom>> Core::getChatRooms () const {
 			for (it = linphone_core_get_proxy_config_list(lc); it != NULL; it = it->next) {
 				LinphoneProxyConfig *cfg = (LinphoneProxyConfig *)it->data;
 				const LinphoneAddress *identityAddr = linphone_proxy_config_get_identity_address(cfg);
-				if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress())) {
+				if (L_GET_CPP_PTR_FROM_C_OBJECT(identityAddr)->weakEqual(chatRoom->getLocalAddress().asAddress())) {
 					found = true;
 					break;
 				}
