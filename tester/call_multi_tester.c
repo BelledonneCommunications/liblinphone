@@ -731,7 +731,6 @@ void no_auto_answer_on_fake_call_with_replaces_header (void) {
 }
 
 static void call_accepted_while_another_one_is_updating(bool_t update_from_callee) {
-#if 0
 	int call_ring_timeout = 10000000;
 
 	// Local conference
@@ -900,9 +899,6 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
 	linphone_core_manager_destroy(chloe);
-#else
-	BC_FAIL("Test temporally disabled because of missing API");
-#endif
 }
 
 static void call_accepted_while_callee_is_updating_another_one(void) {
