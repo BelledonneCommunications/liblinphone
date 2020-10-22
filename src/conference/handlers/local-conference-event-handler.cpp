@@ -328,6 +328,7 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const 
 
 	EndpointType endpoint = EndpointType();
 	endpoint.setEntity(dAddress.asStringUriOnly());
+
 	endpoint.setState(StateType::deleted);
 	user.getEndpoint().push_back(endpoint);
 

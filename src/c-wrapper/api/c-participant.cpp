@@ -48,7 +48,7 @@ void linphone_participant_set_user_data(LinphoneParticipant *participant, void *
 }
 
 const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipant *participant) {
-	LinphonePrivate::Address addr(LinphonePrivate::Participant::toCpp(participant)->getAddress());
+	LinphonePrivate::Address addr(LinphonePrivate::Participant::toCpp(participant)->getAddress().asAddress());
 	return linphone_address_new(addr.asString().c_str());
 }
 

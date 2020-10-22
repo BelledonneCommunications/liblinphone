@@ -45,10 +45,8 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 
 public:
 	explicit Address (const std::string &address = "");
-	Address (const IdentityAddress &identityAddress);
-	Address (const ConferenceAddress &conferenceAddress);
 	Address (const Address &other);
-	~Address ();
+	virtual ~Address ();
 
 	Address* clone () const override {
 		return new Address(*this);
@@ -118,7 +116,12 @@ public:
 	}
 	void setInternalAddress (const SalAddress *value);
 
+	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
+	void removeFromLeakDetector() const;
 	static void clearSipAddressesCache ();
+
+protected:
+	SalAddress *internalAddress = nullptr;
 
 private:
 	struct AddressCache {
@@ -134,7 +137,6 @@ private:
 		std::unordered_map<std::string, std::string> uriParams;
 	};
 
-	SalAddress *internalAddress = nullptr;
 	mutable AddressCache cache;
 
 };

@@ -89,7 +89,7 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	participant = Participant::create(this,participantAddress);
 	// TODO: Use conference parameters to fill args
 	participant->createSession(*this, nullptr, (confParams->chatEnabled() == false), listener);
-	participant->setFocus(participantAddress == getConferenceAddress());
+	participant->setFocus(false);
 	participant->setPreserveSession(false);
 	participants.push_back(participant);
 	if (!activeParticipant)
@@ -110,7 +110,7 @@ bool Conference::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
-const ConferenceAddress Conference::getConferenceAddress () const {
+const ConferenceAddress & Conference::getConferenceAddress () const {
 	return confParams->getConferenceAddress();
 }
 
