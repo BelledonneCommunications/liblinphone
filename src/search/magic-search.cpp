@@ -252,7 +252,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 			bctbx_list_t *participants = linphone_chat_room_get_participants(room);
 			for (const bctbx_list_t *p = participants ; p != nullptr ; p = bctbx_list_next(p)) {
 				LinphoneParticipant *participant = static_cast<LinphoneParticipant*>(p->data);
-				const LinphoneAddress *addr = linphone_participant_get_address(participant);
+				const LinphoneAddress *addr = linphone_address_clone(linphone_participant_get_address(participant));
 				if (filter.empty()) {
 					if (findAddress(currentList, addr)) continue;
 					resultList.push_back(SearchResult(0, addr, "", nullptr));
@@ -269,7 +269,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 			}
 			bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 		} else if (linphone_chat_room_get_capabilities(room) & LinphoneChatRoomCapabilitiesBasic) {
-			const LinphoneAddress *addr = linphone_chat_room_get_peer_address(room);
+			LinphoneAddress *addr = linphone_address_clone(linphone_chat_room_get_peer_address(room));
 			if (filter.empty()) {
 				if (findAddress(currentList, addr)) continue;
 				resultList.push_back(SearchResult(0, addr, "", nullptr));
@@ -280,6 +280,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 					resultList.push_back(SearchResult(weight, addr, "", nullptr));
 				}
 			}
+			linphone_address_unref(addr);
 		}
 	}
 

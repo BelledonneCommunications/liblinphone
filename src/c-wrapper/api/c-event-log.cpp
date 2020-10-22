@@ -31,31 +31,7 @@
 
 using namespace std;
 
-static void _linphone_event_log_constructor (LinphoneEventLog *event_log);
-static void _linphone_event_log_destructor (LinphoneEventLog *event_log);
-
-L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(
-	EventLog,
-	_linphone_event_log_constructor,
-	_linphone_event_log_destructor,
-	mutable LinphoneAddress *peerAddressCache;
-	mutable LinphoneAddress *localAddressCache;
-	mutable LinphoneAddress *participantAddressCache;
-	mutable LinphoneAddress *deviceAddressCache;
-);
-
-void _linphone_event_log_constructor (LinphoneEventLog *) {}
-
-void _linphone_event_log_destructor (LinphoneEventLog *event_log) {
-	if (event_log->peerAddressCache)
-		linphone_address_unref(event_log->peerAddressCache);
-	if (event_log->localAddressCache)
-		linphone_address_unref(event_log->localAddressCache);
-	if (event_log->participantAddressCache)
-		linphone_address_unref(event_log->participantAddressCache);
-	if (event_log->deviceAddressCache)
-		linphone_address_unref(event_log->deviceAddressCache);
-}
+L_DECLARE_C_OBJECT_IMPL(EventLog);
 
 // -----------------------------------------------------------------------------
 // Helpers.
@@ -225,28 +201,24 @@ const LinphoneAddress *linphone_event_log_get_peer_address (const LinphoneEventL
 	if (!isConferenceType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	if (!event_log->peerAddressCache)
-		event_log->peerAddressCache = linphone_address_new(
-			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
-				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getConferenceId().getPeerAddress().asString().c_str()
-		);
+	const LinphonePrivate::Address & addr =
+		static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getConferenceId().getPeerAddress().asAddress();
 
-	return event_log->peerAddressCache;
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEventLog *event_log) {
 	if (!isConferenceType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	if (!event_log->localAddressCache)
-		event_log->localAddressCache = linphone_address_new(
-			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
-				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getConferenceId().getLocalAddress().asString().c_str()
-		);
+	const LinphonePrivate::Address & addr =
+		static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getConferenceId().getLocalAddress().asAddress();
 
-	return event_log->localAddressCache;
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 // -----------------------------------------------------------------------------
@@ -302,14 +274,12 @@ const LinphoneAddress *linphone_event_log_get_participant_address (const Linphon
 	if (!isConferenceParticipantType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	if (!event_log->participantAddressCache)
-		event_log->participantAddressCache = linphone_address_new(
-			static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(
-				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getParticipantAddress().asString().c_str()
-		);
+	const LinphonePrivate::Address & addr =
+		static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getParticipantAddress().asAddress();
 
-	return event_log->participantAddressCache;
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 // -----------------------------------------------------------------------------
@@ -320,14 +290,12 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 	if (!isConferenceParticipantDeviceType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	if (!event_log->deviceAddressCache)
-		event_log->deviceAddressCache = linphone_address_new(
-			static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
-				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getDeviceAddress().asString().c_str()
-		);
+	const LinphonePrivate::Address & addr =
+		static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
+			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
+		)->getDeviceAddress().asAddress();
 
-	return event_log->deviceAddressCache;
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 // -----------------------------------------------------------------------------

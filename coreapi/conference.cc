@@ -122,7 +122,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	// Add a new participant only if it is not in the conference
 	if (p == nullptr) {
 		p = Participant::create(this,remoteAddress, call->getActiveSession());
-		p->setFocus(remoteAddress == getConferenceAddress());
+		p->setFocus(false);
 		p->setPreserveSession(true);
 		participants.push_back(p);
 	}
@@ -385,7 +385,7 @@ LocalConference::LocalConference (
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
-	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
+	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(myAddress.asAddress()));
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
 	char * contactAddressStr = nullptr;
 	if (proxyCfg && proxyCfg->op) {
@@ -400,7 +400,6 @@ LocalConference::LocalConference (
 	if (contactAddressStr) {
 		ms_free(contactAddressStr);
 	}
-	linphone_address_unref(cAddress);
 
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
@@ -487,7 +486,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			linphone_call_params_set_in_conference(new_params, TRUE);
 
-			const Address & conferenceAddress = getConferenceAddress ();
+			const Address & conferenceAddress = getConferenceAddress().asAddress();
 			const string & confId = conferenceAddress.getUriParamValue("conf-id");
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
 
@@ -528,7 +527,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
-		const Address & conferenceAddress = getConferenceAddress ();
+		const Address & conferenceAddress = getConferenceAddress().asAddress();
 		const string & confId = conferenceAddress.getUriParamValue("conf-id");
 
 		switch(state){
@@ -1041,7 +1040,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
 			ms_message("Calling the conference focus (%s)", getConferenceAddress().asString().c_str());
-			addr = linphone_address_new(getConferenceAddress().asString().c_str());
+			addr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 			if (!addr)
 				return false;
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
@@ -1051,7 +1050,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			m_pendingCalls.push_back(call);
 			callLog = m_focusCall->getLog();
 			callLog->was_conference = TRUE;
-			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
 			setState(ConferenceInterface::State::CreationPending);
 			Conference::addParticipant(call);
@@ -1096,7 +1094,7 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
 				return -1;
 			}
-			refer_to_addr = Address(addr);
+			refer_to_addr = addr.asAddress();
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
 			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
 			if (res == 0)
@@ -1216,7 +1214,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 		{
 			Address focusContactAddress(m_focusCall->getRemoteContact());
 			ConferenceId confId = getConferenceId();
-			Address peerAddress(confId.getPeerAddress());
+			Address peerAddress(confId.getPeerAddress().asAddress());
 			if ((getState() == ConferenceInterface::State::CreationPending) && (focusContactAddress.hasUriParam("conf-id")) && (!peerAddress.hasUriParam("conf-id"))) {
 				m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
 				it = m_pendingCalls.begin();
