@@ -17,16 +17,19 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+
 #include <algorithm>
+#define _WINSOCKAPI_
 #include <comutil.h>
+#undef _WINSOCKAPI_
 #include <ShlObj.h>
 
 #pragma comment(lib, "comsuppw.lib")
 #pragma comment(lib, "kernel32.lib")
 
+#include "linphone/utils/utils.h"
 #include "paths-windows.h"
 #include "config.h"
-#include "linphone/utils/utils.h"
 
 // =============================================================================
 #include <ppltasks.h>
