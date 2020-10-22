@@ -142,6 +142,9 @@ const char* linphone_vcard_get_organization(const LinphoneVcard *vCard) {
 	return NULL;
 }
 
+void linphone_vcard_remove_organization(LinphoneVcard *vCard) {
+}
+
 bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard) {
 	return FALSE;
 }

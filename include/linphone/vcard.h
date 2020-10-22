@@ -184,6 +184,12 @@ LINPHONE_PUBLIC void linphone_vcard_set_organization(LinphoneVcard *vCard, const
 LINPHONE_PUBLIC const char* linphone_vcard_get_organization(const LinphoneVcard *vCard);
 
 /**
+ * Removes the Organization field of the vCard
+ * @param vCard the #LinphoneVcard @notnil
+ */
+LINPHONE_PUBLIC void linphone_vcard_remove_organization(LinphoneVcard *vCard);
+
+/**
  * Generates a random unique id for the vCard.
  * If is required to be able to synchronize the vCard with a CardDAV server
  * @param vCard the #LinphoneVcard @notnil

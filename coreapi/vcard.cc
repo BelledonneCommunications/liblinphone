@@ -346,7 +346,9 @@ bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard) {
 void linphone_vcard_set_organization(LinphoneVcard *vCard, const char *organization) {
 	if (!vCard) return;
 
-	if (vCard->belCard->getOrganizations().size() > 0) {
+	if (!organization) {
+		linphone_vcard_remove_organization(vCard);
+	} else if (vCard->belCard->getOrganizations().size() > 0) {
 		const shared_ptr<belcard::BelCardOrganization> org = vCard->belCard->getOrganizations().front();
 		org->setValue(organization);
 	} else {
@@ -363,6 +365,15 @@ const char* linphone_vcard_get_organization(const LinphoneVcard *vCard) {
 	}
 
 	return NULL;
+}
+
+void linphone_vcard_remove_organization(LinphoneVcard *vCard) {
+	if (!vCard) return;
+
+	if (vCard->belCard->getOrganizations().size() > 0) {
+		const shared_ptr<belcard::BelCardOrganization> org = vCard->belCard->getOrganizations().front();
+		vCard->belCard->removeOrganization(org);
+	}
 }
 
 bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard) {
