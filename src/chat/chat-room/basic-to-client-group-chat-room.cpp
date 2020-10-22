@@ -89,7 +89,7 @@ public:
 		if (subject.empty()) subject = "basic to client group migrated";
 		auto params = ChatRoomParams::create(subject, chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted, false, ChatRoomParams::ChatRoomBackend::FlexisipChat);
 		//make sure to have a one2one chatroom
-		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(chatRoom->getCore()->getPrivate()->createChatRoom(params, localAddress, subject, {Address(chatRoom->getPeerAddress())}));
+		clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(chatRoom->getCore()->getPrivate()->createChatRoom(params, localAddress, subject, {chatRoom->getPeerAddress().asAddress()}));
 		clientGroupChatRoom->getPrivate()->setCallSessionListener(this);
 		clientGroupChatRoom->getPrivate()->setChatRoomListener(this);
 	}
