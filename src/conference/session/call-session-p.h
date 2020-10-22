@@ -20,6 +20,9 @@
 #ifndef _L_CALL_SESSION_P_H_
 #define _L_CALL_SESSION_P_H_
 
+#include <queue>
+#include <functional>
+
 #include "object/object-p.h"
 
 #include "call-session.h"
@@ -73,7 +76,6 @@ public:
 		return listener;
 	}
 
-protected:
 	void init ();
 
 	void accept (const CallSessionParams *params);
@@ -101,14 +103,7 @@ protected:
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
 	void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const std::string &message) override;
-
-private:
-	void completeLog ();
-	void createOpTo (const LinphoneAddress *to);
-
-	LinphoneAddress * getFixedContact () const;
-
-	void repairIfBroken ();
+	void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) override;
 
 protected:
 	CallSessionListener *listener = nullptr;
@@ -150,8 +145,18 @@ protected:
 	bool notifyRinging = true;
 	bool referPending = false;
 	bool reinviteOnCancelResponseRequested = false;
+	std::queue<std::function<void()>> pendingActions;
 
 private:
+	void completeLog ();
+	void createOpTo (const LinphoneAddress *to);
+	void executePendingActions();
+
+	LinphoneAddress * getFixedContact () const;
+
+	void repairIfBroken ();
+
+
 	L_DECLARE_PUBLIC(CallSession);
 };
 
