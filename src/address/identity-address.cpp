@@ -20,8 +20,6 @@
 #include <belle-sip/utils.h>
 #include "linphone/utils/utils.h"
 
-#include "identity-address-parser.h"
-
 #include "c-wrapper/c-wrapper.h"
 #include "identity-address.h"
 #include "logger/logger.h"
