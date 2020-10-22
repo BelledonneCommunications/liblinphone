@@ -248,7 +248,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const std::sha
 	}
 
 	user.setRoles(roles);
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(participant->getAddress().asAddress().asStringUriOnly());
 	user.getRoles()->getEntry().push_back("participant");
 	user.setState(StateType::full);
 
@@ -266,7 +266,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (c
 	UserType user = UserType();
 	UserRolesType roles;
 	user.setRoles(roles);
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(participant->getAddress().asAddress().asStringUriOnly());
 	user.getRoles()->getEntry().push_back(isAdmin ? "admin" : "participant");
 	user.setState(StateType::partial);
 	confInfo.getUsers()->getUser().push_back(user);
@@ -281,7 +281,7 @@ string LocalConferenceEventHandler::createNotifyParticipantRemoved (const std::s
 	confInfo.setUsers(users);
 
 	UserType user = UserType();
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(participant->getAddress().asAddress().asStringUriOnly());
 	user.setState(StateType::deleted);
 	confInfo.getUsers()->getUser().push_back(user);
 
@@ -297,11 +297,11 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const st
 	Participant *participant = participantDevice->getParticipant();
 	UserType user = UserType();
 	UserType::EndpointSequence endpoints;
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(participant->getAddress().asAddress().asStringUriOnly());
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(Address(participantDevice->getAddress()).asStringUriOnly());
+	endpoint.setEntity(participantDevice->getAddress().asAddress().asStringUriOnly());
 	if (participant) {
 		if (participantDevice) {
 			const string &displayName = participantDevice->getName();
@@ -326,11 +326,11 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const 
 	Participant *participant = participantDevice->getParticipant();
 	UserType user = UserType();
 	UserType::EndpointSequence endpoints;
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(participant->getAddress().asAddress().asStringUriOnly());
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(Address(participantDevice->getAddress()).asStringUriOnly());
+	endpoint.setEntity(participantDevice->getAddress().asAddress().asStringUriOnly());
 	endpoint.setState(StateType::deleted);
 	user.getEndpoint().push_back(endpoint);
 
