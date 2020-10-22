@@ -158,19 +158,25 @@ const Address & IdentityAddress::asAddress() const {
 }
 
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
-	setConfId(address.getUriParamValue("conf-id"));
+	if (address.hasUriParam("conf-id")) {
+		setConfId(address.getUriParamValue("conf-id"));
+	}
 };
 ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
 }
 ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
-	setConfId(other.getConfId());
+	if (other.getConfId().empty() == false) {
+		setConfId(other.getConfId());
+	}
 }
 ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
 }
 ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
-		setConfId(other.getConfId());
+		if (other.getConfId().empty() == false) {
+			setConfId(other.getConfId());
+		}
 	}
 	return *this;
 }
