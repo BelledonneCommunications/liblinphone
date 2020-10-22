@@ -86,7 +86,7 @@ public:
 	long getEphemeralLifetime () const override;
 	bool ephemeralSupportedByAllParticipants () const override;
 
-	const ConferenceAddress getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 	std::shared_ptr<Conference> getConference () const override;
 	bool canHandleParticipants () const override;
 
