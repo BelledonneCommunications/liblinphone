@@ -112,9 +112,9 @@ public:
 	const std::string &getImdnMessageId () const;
 
 	const IdentityAddress &getAuthenticatedFromAddress () const;
-	const IdentityAddress &getFromAddress () const;
-	const IdentityAddress &getToAddress () const;
-	const IdentityAddress &getLocalAdress () const;
+	const ConferenceAddress &getFromAddress () const;
+	const ConferenceAddress &getToAddress () const;
+	const ConferenceAddress &getLocalAdress () const;
 	const std::string &getForwardInfo () const;
 
 	bool isEphemeral () const;

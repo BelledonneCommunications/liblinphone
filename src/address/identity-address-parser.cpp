@@ -76,6 +76,8 @@ shared_ptr<IdentityAddress> IdentityAddressParser::parseAddress (const string &i
             lDebug() << "Unable to parse identity address from " << input;
             return nullptr;
         }
+        // Remove identity address from leak detector as the IdentityAddressParser is a used as static variable
+        identityAddress->removeFromLeakDetector();
         d->cache[input] = identityAddress;
         return identityAddress;
     } else {
