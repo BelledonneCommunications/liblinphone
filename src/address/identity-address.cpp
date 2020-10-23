@@ -47,7 +47,7 @@ IdentityAddress::IdentityAddress (const Address &address) {
 	}
 }
 
-IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address() {
+IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address(other) {
 	internalAddress = other.asAddress();
 }
 
@@ -57,6 +57,7 @@ IdentityAddress::IdentityAddress () {
 
 IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
+		Address::operator= (other);
 		internalAddress = other.asAddress();
 	}
 	return *this;
