@@ -159,6 +159,8 @@ public:
 		return mConferenceID.c_str();
 	}
 
+	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);
 
@@ -220,8 +222,6 @@ public:
 	virtual std::shared_ptr<ConferenceParticipantDeviceEvent> notifyParticipantDeviceRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDevice> &participantDevice) override;
 
 	virtual void notifyFullState () override;
-
-	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
 private:
 	void addLocalEndpoint();

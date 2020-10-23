@@ -77,6 +77,29 @@ Conference::~Conference() {
 	bctbx_list_free_with_data(mCallbacks, (void(*)(void *))belle_sip_object_unref);
 }
 
+void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
+	if ((getState() == ConferenceInterface::State::Instantiated) || (getState() == ConferenceInterface::State::CreationPending)) {
+
+		if (!conferenceAddress.isValid()) {
+			shared_ptr<CallSession> session = getMe()->getSession();
+			LinphoneErrorInfo *ei = linphone_error_info_new();
+			linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
+			session->decline(ei);
+			linphone_error_info_unref(ei);
+			setState(ConferenceInterface::State::CreationFailed);
+			return;
+		}
+
+		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
+
+		lInfo() << "The Conference has been given the address " << conferenceAddress.asString();
+	} else {
+		lError() << "Cannot set the conference address of the Conference in state " << getState();
+		return;
+	}
+
+}
+
 void Conference::setConferenceId (const ConferenceId &conferenceId) {
 	LinphonePrivate::Conference::setConferenceId(conferenceId);
 	getCore()->insertAudioVideoConference(getSharedFromThis());
@@ -393,20 +416,6 @@ LocalConference::~LocalConference() {
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 	mMixerSession.reset();
-}
-
-void LocalConference::setConferenceAddress (const ConferenceAddress &conferenceAddress) {
-	if (!conferenceAddress.isValid()) {
-		shared_ptr<CallSession> session = getMe()->getSession();
-		LinphoneErrorInfo *ei = linphone_error_info_new();
-		linphone_error_info_set(ei, "SIP", LinphoneReasonUnknown, 500, "Server internal error", NULL);
-		session->decline(ei);
-		linphone_error_info_unref(ei);
-		setState(ConferenceInterface::State::CreationFailed);
-		return;
-	}
-
-	Conference::setConferenceAddress(conferenceAddress);
 }
 
 void LocalConference::finalizeCreation() {
