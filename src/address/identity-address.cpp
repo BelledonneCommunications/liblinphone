@@ -125,8 +125,8 @@ void IdentityAddress::setGruu (const string &gruu) {
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	IdentityAddress address(internalAddress);
-	address.removeParam("gr");
+	Address address(internalAddress);
+	address.removeUriParam("gr");
 	return address;
 }
 

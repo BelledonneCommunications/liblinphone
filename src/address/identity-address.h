@@ -86,7 +86,7 @@ public:
 	ConferenceAddress (const IdentityAddress &other);
 	ConferenceAddress (const ConferenceAddress &other);
 	ConferenceAddress() : IdentityAddress(){};
-	~ConferenceAddress () = default;
+	virtual ~ConferenceAddress () = default;
 	
 	ConferenceAddress *clone () const override {
 		return new ConferenceAddress(*this);
