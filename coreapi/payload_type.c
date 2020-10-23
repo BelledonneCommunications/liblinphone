@@ -254,6 +254,7 @@ void linphone_payload_type_set_recv_fmtp(LinphonePayloadType *pt, const char *re
 	if (pt->pt->recv_fmtp != NULL) bctbx_free(pt->pt->recv_fmtp);
 	if (recv_fmtp != NULL) pt->pt->recv_fmtp = bctbx_strdup(recv_fmtp);
 	else recv_fmtp = NULL;
+	_linphone_core_codec_config_write(pt->lc);
 }
 
 const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *pt) {

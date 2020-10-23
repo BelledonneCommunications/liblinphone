@@ -1362,7 +1362,11 @@ static void sound_config_read(LinphoneCore *lc) {
 		if (bctbx_file_exist(tmpbuf) == 0) {
 			linphone_core_set_ring(lc, tmpbuf);
 		} else {
-			ms_warning("'%s' ring file does not exist", tmpbuf);
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				linphone_core_set_ring(lc, soundResource.c_str());
+			else
+				ms_warning("'%s' ring file does not exist", tmpbuf);
 		}
 	} else {
 		linphone_core_set_ring(lc, get_default_local_ring(lc).c_str());
@@ -1378,9 +1382,13 @@ static void sound_config_read(LinphoneCore *lc) {
 	string defaultRemoteRing = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(REMOTE_RING_WAV);
 	tmpbuf = linphone_config_get_string(lc->config, "sound", "remote_ring", defaultRemoteRing.c_str());
 	if (bctbx_file_exist(tmpbuf) == -1){
+		if(tmpbuf && strstr(tmpbuf, ".wav") != NULL){
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				defaultRemoteRing = soundResource;
+		}
 		tmpbuf = defaultRemoteRing.c_str();
-	}
-	if (strstr(tmpbuf, ".wav") == NULL) {
+	}else if (strstr(tmpbuf, ".wav") == NULL) {
 		/* It currently uses old sound files, so replace them */
 		tmpbuf = defaultRemoteRing.c_str();
 	}
@@ -1391,7 +1399,11 @@ static void sound_config_read(LinphoneCore *lc) {
 		if (bctbx_file_exist(tmpbuf) == 0) {
 			linphone_core_set_play_file(lc, tmpbuf);
 		} else {
-			ms_warning("'%s' on-hold music file does not exist", tmpbuf);
+			string soundResource = static_cast<PlatformHelpers *>(lc->platform_helper)->getSoundResource(tmpbuf);
+			if( bctbx_file_exist(soundResource.c_str()) == 0)
+				linphone_core_set_play_file(lc, soundResource.c_str());
+			else
+				ms_warning("'%s' on-hold music file does not exist", tmpbuf);
 		}
 	} else {
 		linphone_core_set_play_file(lc, get_default_onhold_music(lc).c_str());
@@ -1836,6 +1848,7 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 	fmtp=linphone_config_get_string(config,codeckey,"recv_fmtp",NULL);
 	channels=linphone_config_get_int(config,codeckey,"channels",0);
 	enabled=linphone_config_get_int(config,codeckey,"enabled",1);
+	mime=linphone_config_get_string(config,codeckey,"mime",NULL);
 	if (!linphone_core_codec_supported(lc, type, mime)){
 		ms_warning("Codec %s/%i read from conf is not supported by mediastreamer2, ignored.",mime,rate);
 		return TRUE;
@@ -6625,6 +6638,7 @@ void _linphone_core_codec_config_write(LinphoneCore *lc){
 			linphone_config_set_int(lc->config,key,"rate",pt->clock_rate);
 			linphone_config_set_int(lc->config,key,"channels",pt->channels);
 			linphone_config_set_int(lc->config,key,"enabled",payload_type_enabled(pt));
+			linphone_config_set_string(lc->config,key,"recv_fmtp",pt->recv_fmtp);
 			index++;
 		}
 		sprintf(key,"audio_codec_%i",index);
