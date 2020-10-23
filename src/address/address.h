@@ -46,7 +46,7 @@ class LINPHONE_PUBLIC Address : public ClonableObject {
 public:
 	explicit Address (const std::string &address = "");
 	Address (const Address &other);
-	~Address ();
+	virtual ~Address ();
 
 	Address* clone () const override {
 		return new Address(*this);
