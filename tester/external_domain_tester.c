@@ -117,7 +117,10 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 
 	// Sender (Pauline or Claire - external domain -) begins composing a message
 	const char *senderTextMessage = "Hello";
-	LinphoneChatMessage *senderMessage = _send_message(senderCr, senderTextMessage);
+	LinphoneChatMessage *senderMessage = NULL;
+	if (!BC_ASSERT_PTR_NOT_NULL(senderCr))
+		goto end;
+	senderMessage = _send_message(senderCr, senderTextMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient1CoreManager->stat.number_of_LinphoneMessageReceived, recipient1InitialStats->number_of_LinphoneMessageReceived + 1, 5000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient2CoreManager->stat.number_of_LinphoneMessageReceived, recipient2InitialStats->number_of_LinphoneMessageReceived + 1, 5000));
 	LinphoneChatMessage *recipient1LastMsg = recipient1CoreManager->stat.last_received_chat_message;
@@ -131,7 +134,9 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient2LastMsg), senderTextMessage);
 
 end:
-	linphone_chat_message_unref(senderMessage);
+	if (senderMessage) {
+		linphone_chat_message_unref(senderMessage);
+	}
 
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -139,6 +144,7 @@ end:
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
+	bctbx_list_free(externalCoresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(claire);
