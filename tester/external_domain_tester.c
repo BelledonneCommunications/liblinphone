@@ -146,6 +146,8 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 		recipients = bctbx_list_append(recipients, claire);
 	}
 
+	if (!BC_ASSERT_PTR_NOT_NULL(senderCr))
+		goto end;
 	const char *msgText = "Hello";
 	send_chat_message_to_group_chat_room(coresList, senderCr, recipients, msgText);
 
@@ -200,6 +202,7 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	recipients2 = bctbx_list_append(recipients2, marie);
 
 	// Sender (Pauline or Claire - external domain -) begins composing a message
+<<<<<<< HEAD
 	if (external_sender == TRUE) { // Claire is the sender
 		if (restart_external_participant) {
 			senderCr2 = restartedManagerCr;
@@ -212,6 +215,8 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 		recipients2 = bctbx_list_append(recipients2, claire);
 	}
 
+	if (!BC_ASSERT_PTR_NOT_NULL(senderCr2))
+		goto end;
 	const char *msgText2 = "Hello again";
 	send_chat_message_to_group_chat_room(coresList, senderCr2, recipients2, msgText2);
 
@@ -228,6 +233,7 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
+	bctbx_list_free(externalCoresManagerList);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(claire);
