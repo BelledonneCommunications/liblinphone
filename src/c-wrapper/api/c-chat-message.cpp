@@ -54,6 +54,14 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 
 	struct Cache {
 		~Cache () {
+			if (from)
+				linphone_address_unref(from);
+			if (reply_from)
+				linphone_address_unref(reply_from);
+			if (to)
+				linphone_address_unref(to);
+			if (local)
+				linphone_address_unref(local);
 			if (contents)
 				bctbx_list_free(contents);
 		}
@@ -61,6 +69,11 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 		string contentType;
 		string textContentBody;
 		string customHeaderValue;
+
+		LinphoneAddress *from = nullptr;
+		LinphoneAddress *reply_from = nullptr;
+		LinphoneAddress *to = nullptr;
+		LinphoneAddress *local = nullptr;
 
 		bctbx_list_t *contents = nullptr;
 	} mutable cache;
@@ -248,6 +261,30 @@ bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg) {
 
 const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
+}
+
+bool_t linphone_chat_message_is_reply (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isReply();
+}
+
+const char *linphone_chat_message_get_reply_message_id(LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToMessageId());
+}
+
+LinphoneAddress *linphone_chat_message_get_reply_message_sender_address(LinphoneChatMessage *msg) {
+	if (msg->cache.reply_from)
+		linphone_address_unref(msg->cache.reply_from);
+	msg->cache.reply_from = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToSenderAddress().asString().c_str());
+	return msg->cache.reply_from;
+}
+
+LinphoneChatMessage* linphone_chat_message_get_reply_message(LinphoneChatMessage *message) {
+	if (linphone_chat_message_is_reply(message)) {
+		shared_ptr<LinphonePrivate::ChatMessage> cppPtr = L_GET_CPP_PTR_FROM_C_OBJECT(message)->getReplyToMessage();
+		if (!cppPtr) return NULL;
+		return linphone_chat_message_ref(L_GET_C_BACK_PTR(cppPtr));
+	}
+	return NULL;
 }
 
 bool_t linphone_chat_message_is_ephemeral (const LinphoneChatMessage *msg) {
