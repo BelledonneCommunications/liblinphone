@@ -312,6 +312,34 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_forward (LinphoneChatMessage *me
 LINPHONE_PUBLIC const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *message);
 
 /**
+ * Returns wether the chat message is a reply message or not.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return TRUE if it is a reply message, FALSE otherwise
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_is_reply (LinphoneChatMessage *message);
+
+/**
+ * Returns the ID of the message this is a reply to.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return the original message id. @maybenil
+ */
+LINPHONE_PUBLIC const char* linphone_chat_message_get_reply_message_id(LinphoneChatMessage *message);
+
+/**
+ * Returns the ID of the message this is a reply to.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return the original message sender #LinphoneAddress. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneAddress* linphone_chat_message_get_reply_message_sender_address(LinphoneChatMessage *message);
+
+/**
+ * Returns the #LinphoneChatMessage this message is a reply to.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return the original message #LinphoneChatMessage. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_message_get_reply_message(LinphoneChatMessage *message);
+
+/**
  * Returns wether the chat message is an ephemeral message or not.
  * An ephemeral message will automatically disappear from the recipient's screen after the message has been viewed.
  * @param message #LinphoneChatMessage object. @notnil
