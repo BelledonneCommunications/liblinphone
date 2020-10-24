@@ -38,6 +38,7 @@
 #include "conference/participant.h"
 #include "conference/participant-imdn-state.h"
 #include "content/content-disposition.h"
+#include "content/content-manager.h"
 #include "content/header/header-param.h"
 #include "core/core.h"
 #include "core/core-p.h"
@@ -1158,6 +1159,10 @@ ChatMessage::~ChatMessage () {
 		delete content;
 	}
 
+	for (Content *content : d->replyingToContents) {
+		delete content;
+	}
+
 	if (d->salOp) {
 		d->salOp->setUserPointer(nullptr);
 		d->salOp->unref();
@@ -1246,6 +1251,42 @@ void ChatMessagePrivate::setCallId (const string &id) {
 
 void ChatMessagePrivate::setForwardInfo (const string &fInfo) {
 	forwardInfo = fInfo;
+}
+
+void ChatMessagePrivate::setReplyToMessageIdAndSenderAddress (const string &id, const IdentityAddress& sender) {
+	replyingToMessageId = id;
+	replyingToMessageSender = sender;
+}
+
+bool ChatMessage::isReply () const {
+	L_D();
+	return !d->replyingToMessageId.empty();
+}
+
+const string& ChatMessage::getReplyToMessageId () const {
+	L_D();
+	return d->replyingToMessageId;
+}
+
+const IdentityAddress& ChatMessage::getReplyToSenderAddress () const {
+	L_D();
+	return d->replyingToMessageSender;
+}
+
+const std::list<Content *>& ChatMessage::getReplyToContents () {
+	L_D();
+	if (d->replyingToContents.size() == 0 && !d->replyingToMessageId.empty()) {
+		for (Content *c : d->contents) {
+			if (c->getContentType() == ContentType::Multipart) {
+				list<Content> contents = ContentManager::multipartToContentList(*c);
+				for (Content content: contents) {
+					d->replyingToContents.push_back(content.clone());
+				}
+				break;
+			}
+		}
+	}
+	return d->replyingToContents;
 }
 
 void ChatMessagePrivate::enableEphemeralWithTime (long time) {

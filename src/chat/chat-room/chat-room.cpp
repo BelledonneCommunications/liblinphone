@@ -28,6 +28,7 @@
 #include "chat/chat-message/is-composing-message.h"
 #include "chat/chat-message/notification-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "content/content-manager.h"
 #include "core/core-p.h"
 #include "logger/logger.h"
 
@@ -589,6 +590,38 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 
 	return chatMessage;
 }
+
+shared_ptr<ChatMessage> ChatRoom::createReplyMessage (const shared_ptr<ChatMessage> &msg) {
+	shared_ptr<ChatMessage> chatMessage = createChatMessage();
+
+	if (canHandleMultipart()) {
+		list<Content *> contents;
+
+		for (Content *c : msg->getContents()) {
+			// When replying to a reply, don't include Contents from first message
+			if (c->getContentType() != ContentType::Multipart) {
+				// Currently only quote the plain/text part of original message
+				if (c->getContentType() == ContentType::PlainText) {
+					// contentListToMultipart will handle the cloning
+					contents.push_back(c);
+				}
+			}
+		}
+
+		if (contents.size() > 0) {
+			string boundary = "---------------------------15479354214789365412589743684";
+			Content multipart = ContentManager::contentListToMultipart(contents, boundary);
+			chatMessage->addContent(multipart.clone());
+		} else {
+			lError() << "Chat message doesn't have a valid content to quote in the reply, creating empty message!";
+			return chatMessage;
+		}
+	}
+	chatMessage->getPrivate()->setReplyToMessageIdAndSenderAddress(msg->getImdnMessageId(), msg->getFromAddress().getAddressWithoutGruu());
+
+	return chatMessage;
+}
+
 // -----------------------------------------------------------------------------
 
 shared_ptr<ChatMessage> ChatRoom::findChatMessage (const string &messageId) const {

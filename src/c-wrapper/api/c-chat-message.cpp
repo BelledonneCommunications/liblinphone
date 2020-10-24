@@ -57,12 +57,16 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 		~Cache () {
 			if (from)
 				linphone_address_unref(from);
+			if (reply_from)
+				linphone_address_unref(reply_from);
 			if (to)
 				linphone_address_unref(to);
 			if (local)
 				linphone_address_unref(local);
 			if (contents)
 				bctbx_list_free(contents);
+			if (reply_contents)
+				bctbx_list_free(reply_contents);
 		}
 
 		string contentType;
@@ -70,10 +74,12 @@ L_DECLARE_C_OBJECT_IMPL_WITH_XTORS(ChatMessage,
 		string customHeaderValue;
 
 		LinphoneAddress *from = nullptr;
+		LinphoneAddress *reply_from = nullptr;
 		LinphoneAddress *to = nullptr;
 		LinphoneAddress *local = nullptr;
 
 		bctbx_list_t *contents = nullptr;
+		bctbx_list_t *reply_contents = nullptr;
 	} mutable cache;
 )
 
@@ -263,6 +269,28 @@ bool_t linphone_chat_message_is_forward(LinphoneChatMessage *msg) {
 
 const char *linphone_chat_message_get_forward_info (const LinphoneChatMessage *msg) {
 	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getForwardInfo());
+}
+
+bool_t linphone_chat_message_is_reply (LinphoneChatMessage *msg) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(msg)->isReply();
+}
+
+const char *linphone_chat_message_get_reply_message_id(LinphoneChatMessage *msg) {
+	return L_STRING_TO_C(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToMessageId());
+}
+
+LinphoneAddress *linphone_chat_message_get_reply_message_sender_address(LinphoneChatMessage *msg) {
+	if (msg->cache.reply_from)
+		linphone_address_unref(msg->cache.reply_from);
+	msg->cache.reply_from = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToSenderAddress().asString().c_str());
+	return msg->cache.reply_from;
+}
+
+bctbx_list_t *linphone_chat_message_get_reply_message_contents(LinphoneChatMessage *msg) {
+	if (msg->cache.reply_contents)
+		bctbx_free(msg->cache.reply_contents);
+	msg->cache.reply_contents = L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getReplyToContents());
+	return msg->cache.reply_contents;
 }
 
 bool_t linphone_chat_message_is_ephemeral (const LinphoneChatMessage *msg) {

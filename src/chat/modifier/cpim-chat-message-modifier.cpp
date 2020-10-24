@@ -45,6 +45,8 @@ const string imdnNamespace = "imdn";
 const string imdnMessageIdHeader = "Message-ID";
 const string imdnForwardInfoHeader = "Forward-Info";
 const string imdnDispositionNotificationHeader = "Disposition-Notification";
+const string imdnReplyingToMessageIdHeader = "Replying-To-Message-ID";
+const string imdnReplyingToMessageSenderHeader = "Replying-To-Sender";
 
 ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, int &errorCode) {
 	Cpim::Message cpimMessage;
@@ -90,6 +92,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		if (!forwardInfo.empty()) {
 			cpimMessage.addMessageHeader(
 				Cpim::GenericHeader(imdnNamespace + "." + imdnForwardInfoHeader, forwardInfo)
+			);
+		}
+
+		const string &replyToMessageId = message->getReplyToMessageId();
+		if (!replyToMessageId.empty()) {
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader(imdnNamespace + "." + imdnReplyingToMessageIdHeader, replyToMessageId)
+			);
+			const IdentityAddress& senderAddress = message->getReplyToSenderAddress();
+			string address = senderAddress.asString();
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader(imdnNamespace + "." + imdnReplyingToMessageSenderHeader, address)
 			);
 		}
 
@@ -224,6 +238,12 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		auto forwardInfoHeader = cpimMessage->getMessageHeader(imdnForwardInfoHeader, imdnNsName);
 		if (forwardInfoHeader) {
 			message->getPrivate()->setForwardInfo(forwardInfoHeader->getValue());
+		}
+
+		auto replyToMessageIdHeader = cpimMessage->getMessageHeader(imdnReplyingToMessageIdHeader, imdnNsName);
+		auto replyToSenderHeader = cpimMessage->getMessageHeader(imdnReplyingToMessageSenderHeader, imdnNsName);
+		if (replyToMessageIdHeader && replyToSenderHeader) {
+			message->getPrivate()->setReplyToMessageIdAndSenderAddress(replyToMessageIdHeader->getValue(), IdentityAddress(replyToSenderHeader->getValue()));
 		}
 	}
 

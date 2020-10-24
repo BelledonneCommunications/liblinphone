@@ -116,6 +116,10 @@ public:
 	const IdentityAddress &getToAddress () const;
 	const IdentityAddress &getLocalAdress () const;
 	const std::string &getForwardInfo () const;
+	bool isReply () const;
+	const std::string &getReplyToMessageId () const;
+	const IdentityAddress& getReplyToSenderAddress () const;
+	const std::list<Content *> &getReplyToContents ();
 
 	bool isEphemeral () const;
 	long getEphemeralLifetime () const;
