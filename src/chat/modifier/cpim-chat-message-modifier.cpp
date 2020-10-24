@@ -39,6 +39,8 @@ LINPHONE_BEGIN_NAMESPACE
 const string linphoneNamespaceTag = "tag:linphone.org,2020:params:groupchat";
 const string linphoneNamespace = "linphone";
 const string linphoneEphemeralHeader = "Ephemeral-Time";
+const string linphoneReplyingToMessageIdHeader = "Replying-To-Message-ID";
+const string linphoneReplyingToMessageSenderHeader = "Replying-To-Sender";
 
 const string imdnNamespaceUrn = "urn:ietf:params:imdn";
 const string imdnNamespace = "imdn";
@@ -90,6 +92,18 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 		if (!forwardInfo.empty()) {
 			cpimMessage.addMessageHeader(
 				Cpim::GenericHeader(imdnNamespace + "." + imdnForwardInfoHeader, forwardInfo)
+			);
+		}
+
+		const string &replyToMessageId = message->getReplyToMessageId();
+		if (!replyToMessageId.empty()) {
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageIdHeader, replyToMessageId)
+			);
+			const IdentityAddress& senderAddress = message->getReplyToSenderAddress();
+			string address = senderAddress.asString();
+			cpimMessage.addMessageHeader(
+				Cpim::GenericHeader(linphoneNamespace + "." + linphoneReplyingToMessageSenderHeader, address)
 			);
 		}
 
@@ -231,6 +245,12 @@ ChatMessageModifier::Result CpimChatMessageModifier::decode (const shared_ptr<Ch
 		auto timeHeader = cpimMessage->getMessageHeader(linphoneEphemeralHeader, linphoneNsName);
 		long time = (long)Utils::stod(timeHeader->getValue());
 		message->getPrivate()->enableEphemeralWithTime(time);
+
+		auto replyToMessageIdHeader = cpimMessage->getMessageHeader(linphoneReplyingToMessageIdHeader, linphoneNsName);
+		auto replyToSenderHeader = cpimMessage->getMessageHeader(linphoneReplyingToMessageSenderHeader, linphoneNsName);
+		if (replyToMessageIdHeader && replyToSenderHeader) {
+			message->getPrivate()->setReplyToMessageIdAndSenderAddress(replyToMessageIdHeader->getValue(), IdentityAddress(replyToSenderHeader->getValue()));
+		}
 	}
 
 	if (messageIdHeader)
