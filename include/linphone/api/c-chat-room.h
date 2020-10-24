@@ -92,6 +92,14 @@ LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_file_transfer_mes
  */
 LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_forward_message (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
+ /**
+ * Creates a reply message attached to the given chat room with a particular message.
+ * @param chat_room the #LinphoneChatRoom object. @notnil
+ * @param message #LinphoneChatMessage message to reply to. @notnil
+ * @return a new #LinphoneChatMessage @notnil
+ */
+LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_reply_message (LinphoneChatRoom *cr, LinphoneChatMessage *message);
+
 /**
  * Get the peer address associated to this chat room.
  * @param chat_room #LinphoneChatRoom object. @notnil
