@@ -3004,6 +3004,7 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 	BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + no_call_paused, 5000));
 
 	int updated_by_remote_count = 0;
+	int call_checked_cnt = 0;
 	bool_t callee_uses_ice = (linphone_core_get_firewall_policy(callee->lc) == LinphonePolicyUseIce);
 	// Wait that all calls but the last one are paused
 	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
@@ -3012,8 +3013,22 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 		if (callee_uses_ice && linphone_core_get_firewall_policy(m->lc) == LinphonePolicyUseIce) {
 			updated_by_remote_count++;
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdating,1,5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallUpdatedByRemote, initial_callee_stat.number_of_LinphoneCallUpdatedByRemote + updated_by_remote_count, 5000));
+
+			LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, m->identity);
+			LinphoneCall * current_callee_call = linphone_core_get_current_call(callee->lc);
+			if (callee_call == current_callee_call) {
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+			} else {
+				call_checked_cnt++;
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausedByRemote, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallPaused, initial_callee_stat.number_of_LinphoneCallPaused + call_checked_cnt, 5000));
+				// If ICE is enabled, calls are paused twice:
+				// - after accepting another call
+				// - after ICE negotiation ends
+				no_call_paused++;
+			}
 			BC_ASSERT_TRUE(check_ice(m,callee,LinphoneIceStateHostConnection));
 			BC_ASSERT_TRUE(check_ice(callee,m,LinphoneIceStateHostConnection));
 		}
