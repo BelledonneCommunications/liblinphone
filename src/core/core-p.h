@@ -58,6 +58,7 @@ public:
 
 	void notifyGlobalStateChanged (LinphoneGlobalState state);
 	void notifyNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable);
+	void notifyCallStateChanged (LinphoneCall *cfg, LinphoneCallState state, const std::string &message);
 	void notifyRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message);
 	void notifyEnteringBackground ();
 	void notifyEnteringForeground ();

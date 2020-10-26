@@ -1966,7 +1966,12 @@ void MediaSessionPrivate::startAccept(){
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.capt_sndcard, localDesc->streams[0].max_rate);
 	}
 
-	linphone_core_preempt_sound_resources(q->getCore()->getCCore());
+	if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
+		lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
+		pendingActions.push([this] {this->startAccept();});
+		return;
+	}
+
 	CallSessionPrivate::accept(nullptr);
 	if (!getParams()->getPrivate()->getInConference() && listener){
 		listener->onSetCurrentSession(q->getSharedFromThis());
@@ -2405,6 +2410,11 @@ LinphoneStatus MediaSession::resume () {
 			return -1;
 		}
 		linphone_core_preempt_sound_resources(getCore()->getCCore());
+/*		if (linphone_core_preempt_sound_resources(getCore()->getCCore()) != 0) {
+			lInfo() << "Delaying call to " << __func__ << " because sound resources cannot be preempted";
+			d->pendingActions.push([this] {this->resume();});
+			return -1;
+		}*/
 		lInfo() << "Resuming MediaSession " << this;
 	}
 	d->automaticallyPaused = false;

@@ -35,6 +35,7 @@ public:
 	virtual void onGlobalStateChanged (LinphoneGlobalState state) {}
 	virtual void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {}
 	virtual void onRegistrationStateChanged (LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const std::string &message) {}
+	virtual void onCallStateChanged (LinphoneCall *call, LinphoneCallState state, const std::string &message) {}
 	virtual void onEnteringBackground () {}
 	virtual void onEnteringForeground () {}
 };
