@@ -428,7 +428,6 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 void MediaSessionPrivate::updating(bool isUpdate) {
 	L_Q();
 	SalMediaDescription *rmd = op->getRemoteMediaDescription();
-	fixCallParams(rmd, true);
 	if (state != CallSession::State::Paused) {
 		/* Refresh the local description, but in paused state, we don't change anything. */
 		if (!rmd && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "sdp_200_ack_follow_video_policy", 0)) {
@@ -440,6 +439,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 
 		makeLocalMediaDescription(rmd == nullptr);
 	}
+	// Fix local parameter after creating new local media description
+	fixCallParams(rmd, true);
 	if (rmd) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
