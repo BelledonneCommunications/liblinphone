@@ -775,6 +775,10 @@ LinphoneStatus Call::redirect (const string &redirectUri) {
 	return getActiveSession()->redirect(redirectUri);
 }
 
+LinphoneStatus Call::redirect (const Address &redirectAddress) {
+	return getActiveSession()->redirect(redirectAddress);
+}
+
 LinphoneStatus Call::resume () {
 	return static_pointer_cast<MediaSession>(getActiveSession())->resume();
 }
@@ -820,6 +824,10 @@ LinphoneStatus Call::transfer (const shared_ptr<Call> &dest) {
 }
 
 LinphoneStatus Call::transfer (const string &dest) {
+	return getActiveSession()->transfer(dest);
+}
+
+LinphoneStatus Call::transfer (const Address &dest) {
 	return getActiveSession()->transfer(dest);
 }
 
@@ -968,6 +976,10 @@ shared_ptr<Call> Call::getReferer () const {
 
 const string &Call::getReferTo () const {
 	return getActiveSession()->getReferTo();
+}
+
+const Address &Call::getReferToAddress () const {
+	return getActiveSession()->getReferToAddress();
 }
 
 const Address *Call::getRemoteAddress () const {

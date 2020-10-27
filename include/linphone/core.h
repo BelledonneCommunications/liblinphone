@@ -1268,11 +1268,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_pause_all_calls(LinphoneCore *core)
 LINPHONE_PUBLIC LinphoneCallParams *linphone_core_create_call_params(LinphoneCore *core, LinphoneCall *call);
 
 /**
- * Get the call with the remote_address specified
+ * Get the call with the specified #LinphoneAddress.
  * @param core the #LinphoneCore @notnil
  * @param remote_address the #LinphoneAddress for which the call remote address must match @notnil
  * @return the #LinphoneCall of the call if found. @maybenil
- *
  * @ingroup call_control
  */
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_remote_address2(const LinphoneCore *core, const LinphoneAddress *remote_address);
@@ -3770,15 +3769,6 @@ LINPHONE_PUBLIC const char *linphone_core_get_user_certificates_path(LinphoneCor
 LINPHONE_PUBLIC void linphone_core_reload_ms_plugins(LinphoneCore *core, const char *path);
 
 /**
- * Search from the list of current calls if a remote address match uri
- * @ingroup call_control
- * @param core the #LinphoneCore object. @notnil
- * @param uri which should match call remote uri @notnil
- * @return #LinphoneCall or NULL is no match is found. @maybenil
- */
-LINPHONE_PUBLIC LinphoneCall* linphone_core_find_call_from_uri(const LinphoneCore *core, const char *uri);
-
-/**
  * @addtogroup call_control
  * @{
  */
@@ -5341,6 +5331,16 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audi
 /************ */
 /* DEPRECATED */
 /* ********** */
+
+/**
+ * Search from the list of current calls if a remote address match uri
+ * @ingroup call_control
+ * @param core the #LinphoneCore object. @notnil
+ * @param uri which should match call remote uri @notnil
+ * @return #LinphoneCall or NULL is no match is found. @maybenil
+ * @deprecated 27/10/2020. Use linphone_core_get_call_by_remote_address2() instead.
+ */
+LINPHONE_PUBLIC LinphoneCall* linphone_core_find_call_from_uri(const LinphoneCore *core, const char *uri);
 
 /**
  * @brief Define a log handler.
