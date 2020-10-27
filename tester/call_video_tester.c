@@ -1435,6 +1435,16 @@ void two_accepted_call_in_send_only(void) {
 	reset_counters(&marie->stat);
 	accept_call_in_send_only_base(laure,marie,lcs);
 
+	int no_active_calls_stream_running = 0;
+	bctbx_list_t *calls = bctbx_list_copy(linphone_core_get_calls(marie->lc));
+	for (bctbx_list_t *it = calls; it; it = bctbx_list_next(it)) {
+		LinphoneCall *call = (LinphoneCall *)bctbx_list_get_data(it);
+		no_active_calls_stream_running += (linphone_call_get_state(call) == LinphoneCallStreamsRunning) ? 1 : 0;
+	}
+	bctbx_list_free(calls);
+
+	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");
+
 	end_call(pauline, marie);
 	end_call(laure, marie);
 
