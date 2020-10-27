@@ -151,12 +151,14 @@ void CallSessionPrivate::onCallStateChanged (LinphoneCall *call, LinphoneCallSta
 }
 
 void CallSessionPrivate::executePendingActions() {
-	while (pendingActions.empty() == false) {
-		// Store std::function in a temporary variable in order to take it out of the queue before executing it
-		const auto f = pendingActions.front();
-		pendingActions.pop();
-		// Execute method
-		f();
+	if ((state != CallSession::State::End) && (state != CallSession::State::Released) && (state != CallSession::State::Error)) {
+		while (pendingActions.empty() == false) {
+			// Store std::function in a temporary variable in order to take it out of the queue before executing it
+			const auto f = pendingActions.front();
+			pendingActions.pop();
+			// Execute method
+			f();
+		}
 	}
 }
 
