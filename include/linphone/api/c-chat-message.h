@@ -337,7 +337,8 @@ LINPHONE_PUBLIC long linphone_chat_message_get_ephemeral_lifetime (const Linphon
 LINPHONE_PUBLIC time_t linphone_chat_message_get_ephemeral_expire_time (const LinphoneChatMessage *message);
 
 /**
- * Fulfill a chat message char by char. Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
+ * Fulfill a chat message char by char. 
+ * Message linked to a Real Time Text Call send char in realtime following RFC 4103/T.140
  * To commit a message, use linphone_chat_room_send_message()
  * @param message #LinphoneChatMessage object. @notnil
  * @param character T.140 char
@@ -396,13 +397,6 @@ LINPHONE_PUBLIC void linphone_chat_message_remove_content (LinphoneChatMessage *
 LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_contents(const LinphoneChatMessage *message);
 
 /**
- * Returns wether the chat message has a text content or not.
- * @param message #LinphoneChatMessage object. @notnil
- * @return TRUE if it has one, FALSE otherwise
- */
-LINPHONE_PUBLIC bool_t linphone_chat_message_has_text_content (const LinphoneChatMessage *message);
-
-/**
  * Gets whether or not a file is currently being downloaded or uploaded
  * @param message #LinphoneChatMessage object. @notnil
  * @return TRUE if download or upload is in progress, FALSE otherwise
@@ -431,6 +425,14 @@ LINPHONE_PUBLIC const char *linphone_chat_message_get_call_id(const LinphoneChat
 /************ */
 /* DEPRECATED */
 /* ********** */
+
+/**
+ * Returns wether the chat message has a text content or not.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @return TRUE if it has one, FALSE otherwise.
+ * @deprecated 27/10/2020. Check if linphone_chat_message_get_contents() contains a #LinphoneContent for which it's content type is PlainText.
+ */
+LINPHONE_PUBLIC bool_t linphone_chat_message_has_text_content (const LinphoneChatMessage *message);
 
 /**
  * Get text part of this message
@@ -536,7 +538,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_file_transfe
  * Return whether or not a chat message is a text.
  * @param message #LinphoneChatMessage object. @notnil
  * @return Whether or not the message is a text
- * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type..
+ * @deprecated 06/07/2020 check if linphone_chat_message_get_contents() contains a #LinphoneContent with a PlainText content type.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
 

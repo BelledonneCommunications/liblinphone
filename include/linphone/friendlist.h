@@ -79,6 +79,7 @@ LINPHONE_PUBLIC void linphone_friend_list_set_display_name(LinphoneFriendList *f
  * Get the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
  * @param friend_list #LinphoneFriendList object. @notnil
  * @return The RLS URI associated with the friend list. @maybenil
+ * @deprecated 27/10/2020. Use linphone_friend_list_get_rls_address() instead.
 **/
 LINPHONE_PUBLIC const char * linphone_friend_list_get_rls_uri(const LinphoneFriendList *friend_list);
 
@@ -86,6 +87,7 @@ LINPHONE_PUBLIC const char * linphone_friend_list_get_rls_uri(const LinphoneFrie
  * Set the RLS (Resource List Server) URI associated with the friend list to subscribe to these friends presence.
  * @param friend_list #LinphoneFriendList object. @notnil
  * @param rls_uri The RLS URI to associate with the friend list. @maybenil
+ * @deprecated 27/10/2020. Use linphone_friend_list_set_rls_address() instead.
 **/
 LINPHONE_PUBLIC void linphone_friend_list_set_rls_uri(LinphoneFriendList *friend_list, const char *rls_uri);
 

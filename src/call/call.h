@@ -103,6 +103,7 @@ public:
 	LinphoneStatus pauseFromConference ();
 	LinphoneStatus pause ();
 	LinphoneStatus redirect (const std::string &redirectUri);
+	LinphoneStatus redirect (const Address &redirectAddress);
 	LinphoneStatus resume ();
 	LinphoneStatus sendDtmf (char dtmf);
 	LinphoneStatus sendDtmfs (const std::string &dtmfs);
@@ -114,6 +115,7 @@ public:
 	LinphoneStatus takeVideoSnapshot (const std::string &file);
 	LinphoneStatus terminate (const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer (const std::shared_ptr<Call> &dest);
+	LinphoneStatus transfer (const Address &dest);
 	LinphoneStatus transfer (const std::string &dest);
 	LinphoneStatus update (const MediaSessionParams *msp = nullptr);
 	LinphoneStatus updateFromConference (const MediaSessionParams *msp = nullptr);
@@ -150,6 +152,7 @@ public:
 	float getRecordVolume () const;
 	std::shared_ptr<Call> getReferer () const;
 	const std::string &getReferTo () const;
+	const Address &getReferToAddress () const;
 	const Address *getRemoteAddress () const;
 	const std::string &getRemoteContact ();
 	const MediaSessionParams *getRemoteParams () const;

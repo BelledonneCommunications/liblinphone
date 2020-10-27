@@ -196,6 +196,11 @@ const char *linphone_call_get_refer_to (const LinphoneCall *call) {
 	return L_STRING_TO_C(Call::toCpp(call)->getReferTo());
 }
 
+LinphoneAddress *linphone_call_get_refer_to_address (const LinphoneCall *call) {
+	const LinphonePrivate::Address &referToAddress = Call::toCpp(call)->getReferToAddress();
+	return referToAddress.isValid() ? L_GET_C_BACK_PTR(&referToAddress) : nullptr;
+}
+
 bool_t linphone_call_has_transfer_pending (const LinphoneCall *call) {
 	return Call::toCpp(call)->hasTransferPending();
 }
@@ -372,6 +377,10 @@ LinphoneStatus linphone_call_redirect (LinphoneCall *call, const char *redirect_
 	return Call::toCpp(call)->redirect(redirect_uri);
 }
 
+LinphoneStatus linphone_call_redirect_to (LinphoneCall *call, const LinphoneAddress *redirect_address) {
+	return Call::toCpp(call)->redirect(*L_GET_CPP_PTR_FROM_C_OBJECT(redirect_address));
+}
+
 LinphoneStatus linphone_call_decline (LinphoneCall *call, LinphoneReason reason) {
 	return Call::toCpp(call)->decline(reason);
 }
@@ -410,6 +419,10 @@ LinphoneStatus linphone_call_accept_update (LinphoneCall *call, const LinphoneCa
 
 LinphoneStatus linphone_call_transfer (LinphoneCall *call, const char *referTo) {
 	return Call::toCpp(call)->transfer(referTo);
+}
+
+LinphoneStatus linphone_call_transfer_to (LinphoneCall *call, const LinphoneAddress *referTo) {
+	return Call::toCpp(call)->transfer(*L_GET_CPP_PTR_FROM_C_OBJECT(referTo));
 }
 
 LinphoneStatus linphone_call_transfer_to_another (LinphoneCall *call, LinphoneCall *dest) {
