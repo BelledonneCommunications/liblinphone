@@ -1956,6 +1956,18 @@ void MediaSessionPrivate::updateCurrentParams () const {
 
 void MediaSessionPrivate::startAccept(){
 	L_Q();
+
+	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
+lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis().get() << " current call session " << (currentCall ? currentCall->getActiveSession().get() : nullptr);
+
+	if (currentCall && (currentCall->getActiveSession() != q->getSharedFromThis())) {
+		if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
+			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
+			pendingActions.push([this] {this->startAccept();});
+			return;
+		}
+	}
+
 	/* Give a chance a set card prefered sampling frequency */
 	if (localDesc->streams[0].max_rate > 0) {
 		lInfo() << "Configuring prefered card sampling rate to [" << localDesc->streams[0].max_rate << "]";
@@ -1963,12 +1975,6 @@ void MediaSessionPrivate::startAccept(){
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.play_sndcard, localDesc->streams[0].max_rate);
 		if (q->getCore()->getCCore()->sound_conf.capt_sndcard)
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.capt_sndcard, localDesc->streams[0].max_rate);
-	}
-
-	if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
-		lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
-		pendingActions.push([this] {this->startAccept();});
-		return;
 	}
 
 	CallSessionPrivate::accept(nullptr);
