@@ -104,6 +104,7 @@ public:
 	virtual int startInvite (const Address *destination, const std::string &subject = "", const Content *content = nullptr);
 	LinphoneStatus terminate (const LinphoneErrorInfo *ei = nullptr);
 	LinphoneStatus transfer (const std::shared_ptr<CallSession> &dest);
+	LinphoneStatus transfer (const Address &dest);
 	LinphoneStatus transfer (const std::string &dest);
 	LinphoneStatus update (const CallSessionParams *csp, const std::string &subject = "", const Content *content = nullptr);
 
@@ -118,6 +119,7 @@ public:
 	LinphoneReason getReason () const;
 	std::shared_ptr<CallSession> getReferer () const;
 	const std::string &getReferTo () const;
+	const Address &getReferToAddress () const;
 	const Address *getRemoteAddress () const;
 	const std::string &getRemoteContact () const;
 	const Address *getRemoteContactAddress () const;
