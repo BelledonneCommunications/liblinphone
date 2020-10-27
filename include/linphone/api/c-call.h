@@ -421,12 +421,12 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_resume (LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneStatus linphone_call_terminate_with_error_info (LinphoneCall *call, const LinphoneErrorInfo *ei);
 
 /**
- * Redirect the specified call to the given redirect URI.
+ * Redirect the specified call to the given redirect Address.
  * @param call The #LinphoneCall object @notnil
- * @param redirect_uri The URI to redirect the call to @notnil
+ * @param redirect_address The #LinphoneAddress to redirect the call to @notnil
  * @return 0 if successful, -1 on error.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect (LinphoneCall *call, const char *redirect_uri);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect_to (LinphoneCall *call, const LinphoneAddress *redirect_address);
 
 /**
  * Decline a pending incoming call, with a reason.
@@ -551,10 +551,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_accept_update (LinphoneCall *call, 
  * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
  * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
  * @param call The call to be transfered @notnil
- * @param refer_to The destination the call is to be refered to. @notnil
+ * @param refer_to The #LinphoneAddress the call is to be refered to. @notnil
  * @return 0 on success, -1 on failure
 **/
-LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer (LinphoneCall *call, const char *refer_to);
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer_to (LinphoneCall *call, const LinphoneAddress *refer_to);
 
 /**
  * Transfers a call to destination of another running call. This is used for "attended transfer" scenarios.
@@ -905,6 +905,29 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device
 /************ */
 /* DEPRECATED */
 /* ********** */
+
+/**
+ * Redirect the specified call to the given redirect URI.
+ * @param call The #LinphoneCall object @notnil
+ * @param redirect_uri The URI to redirect the call to @notnil
+ * @return 0 if successful, -1 on error.
+ * @deprecated 27/10/2020. Use linphone_call_redirect_to() instead.
+ */
+LINPHONE_PUBLIC LinphoneStatus linphone_call_redirect (LinphoneCall *call, const char *redirect_uri);
+
+/**
+ * Performs a simple call transfer to the specified destination.
+ * The remote endpoint is expected to issue a new call to the specified destination.
+ * The current call remains active and thus can be later paused or terminated.
+ * It is possible to follow the progress of the transfer provided that transferee sends notification about it.
+ * In this case, the transfer_state_changed callback of the #LinphoneCoreVTable is invoked to notify of the state of the new call at the other party.
+ * The notified states are #LinphoneCallOutgoingInit , #LinphoneCallOutgoingProgress, #LinphoneCallOutgoingRinging and #LinphoneCallConnected.
+ * @param call The call to be transfered @notnil
+ * @param refer_to The destination the call is to be refered to. @notnil
+ * @return 0 on success, -1 on failure
+ * @deprecated 27/10/2020. Use linphone_call_transfer_to() instead.
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_call_transfer (LinphoneCall *call, const char *refer_to);
 
 /**
  * Returns the remote address associated to this call as a string.

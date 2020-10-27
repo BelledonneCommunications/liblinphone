@@ -128,6 +128,7 @@ protected:
 	LinphoneErrorInfo *ei = nullptr;
 	LinphoneCallLog *log = nullptr;
 	std::string referTo;
+	mutable Address referToAddress;
 	std::string emptyString = "";
 	Address emptyAddress = Address();
 

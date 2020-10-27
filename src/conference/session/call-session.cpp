@@ -350,6 +350,7 @@ void CallSessionPrivate::pingReply () {
 
 void CallSessionPrivate::referred (const Address &referToAddr) {
 	L_Q();
+	referToAddress = referToAddr;
 	referTo = referToAddr.asString();
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
@@ -1315,14 +1316,18 @@ LinphoneStatus CallSession::transfer (const shared_ptr<CallSession> &dest) {
 	return result;
 }
 
-LinphoneStatus CallSession::transfer (const string &dest) {
+LinphoneStatus CallSession::transfer (const Address &address) {
 	L_D();
-	Address address(getCore()->interpretUrl(dest));
 	if (!address.isValid())
 		return -1;
 	d->op->refer(address.asString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;
+}
+
+LinphoneStatus CallSession::transfer (const string &dest) {
+	Address address(getCore()->interpretUrl(dest));
+	return transfer(address);
 }
 
 LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &subject, const Content *content) {
@@ -1407,6 +1412,11 @@ shared_ptr<CallSession> CallSession::getReferer () const {
 const string &CallSession::getReferTo () const {
 	L_D();
 	return d->referTo;
+}
+
+const Address &CallSession::getReferToAddress () const {
+	L_D();
+	return d->referToAddress;
 }
 
 const Address *CallSession::getRemoteAddress () const {
