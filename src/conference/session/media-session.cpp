@@ -1765,11 +1765,13 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
-	if (state == CallSession::State::Pausing) {
+	if (state == CallSession::State::Paused) {
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already paused";
+		return 0;
+	} else if (state == CallSession::State::Pausing) {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already in the process of being paused";
 		return 0;
-	}
-	if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
+	} else if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
