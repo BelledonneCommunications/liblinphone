@@ -623,7 +623,13 @@ static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendL
 			ms_error("linphone_friend_list_add_friend(): invalid friend, already in list");
 		return status;
 	}
+	
 	addr = linphone_friend_get_address(lf);
+	if (addr == NULL && linphone_friend_get_vcard(lf) == NULL && linphone_friend_get_phone_numbers(lf) == NULL) {
+		ms_error("linphone_friend_list_add_friend(): invalid friend, no vCard, SIP URI or phone number");
+		return status;
+	}
+
 	bool_t present = FALSE;
 	if (lf->refkey) {
 		present = linphone_friend_list_find_friend_by_ref_key(list, lf->refkey) != NULL;
