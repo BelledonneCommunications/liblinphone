@@ -820,6 +820,18 @@ class CParser(object):
 		if cproperty.getter is not None:
 			method = self.parse_method(cproperty.getter, namespace=namespace, type=methodType)
 			aproperty.getter = method
+		if cproperty.getter is not None and cproperty.setter is not None:
+			getter_maybenil = cproperty.getter.returnArgument.maybenil
+			getter_notnil = cproperty.getter.returnArgument.notnil
+			setter_maybenil = cproperty.setter.arguments[0].maybenil
+			setter_notnil = cproperty.setter.arguments[0].notnil
+			setter_argname = cproperty.setter.arguments[0].name
+			if methodType == Method.Type.Instance:
+				setter_maybenil = cproperty.setter.arguments[1].maybenil
+				setter_notnil = cproperty.setter.arguments[1].notnil
+				setter_argname = cproperty.setter.arguments[1].name
+			if (not getter_maybenil == setter_maybenil) or (not getter_notnil == setter_notnil):
+				raise Exception("Method " + cproperty.getter.name + " returned value and " + cproperty.setter.name + "(" + setter_argname + ") don't have the same maybenil/notnil tags !")
 		return aproperty
 	
 	

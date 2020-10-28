@@ -233,7 +233,7 @@ const char *linphone_conference_get_subject (const LinphoneConference *conferenc
 }
 
 void linphone_conference_set_subject(LinphoneConference *conference, const char *subject) {
-	MediaConference::Conference::toCpp(conference)->setSubject(subject);
+	MediaConference::Conference::toCpp(conference)->setSubject(L_C_TO_STRING(subject));
 }
 
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference){
@@ -313,9 +313,9 @@ bool_t linphone_conference_params_local_participant_enabled(const LinphoneConfer
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *obj) {
-	return MediaConference::Conference::toCpp(obj)->getID();
+	return L_STRING_TO_C(MediaConference::Conference::toCpp(obj)->getID());
 }
 
 void linphone_conference_set_ID(LinphoneConference *obj, const char *conferenceID) {
-	MediaConference::Conference::toCpp(obj)->setID(conferenceID);
+	MediaConference::Conference::toCpp(obj)->setID(L_C_TO_STRING(conferenceID));
 }

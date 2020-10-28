@@ -154,7 +154,7 @@ LINPHONE_PUBLIC void linphone_logging_service_set_log_file(const LinphoneLogging
 /**
  * @brief Set the domain where application logs are written (for example with #linphone_logging_service_message()).
  * @param log_service the #LinphoneLoggingService object @notnil
- * @param domain The domain. @notnil
+ * @param domain The domain. @maybenil
  * @note The domain is mandatory to write logs. This needs to be set before setting the log level.
  */
 LINPHONE_PUBLIC void linphone_logging_service_set_domain(LinphoneLoggingService *log_service, const char *domain);
@@ -162,6 +162,7 @@ LINPHONE_PUBLIC void linphone_logging_service_set_domain(LinphoneLoggingService 
 /**
  * @brief Get the domain where application logs are written (for example with #linphone_logging_service_message()).
  * @param log_service the #LinphoneLoggingService object @maybenil
+ * @return The domain where application logs are written. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_logging_service_get_domain(LinphoneLoggingService *log_service);
 

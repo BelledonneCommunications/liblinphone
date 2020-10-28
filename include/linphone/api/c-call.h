@@ -106,6 +106,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_call_get_to_address (const Linph
  * @param call #LinphoneCall object. @notnil
  * @param header_name the name of the header to check. @notnil
  * @return the value of the header if exists. @maybenil
+ * @deprecated 27/10/2020. Use linphone_call_params_get_custom_header() on linphone_call_get_remote_params() instead.
 **/
 LINPHONE_PUBLIC const char *linphone_call_get_to_header (const LinphoneCall *call, const char *header_name);
 

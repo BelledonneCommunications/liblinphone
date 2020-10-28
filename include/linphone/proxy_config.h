@@ -66,6 +66,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_user_data(LinphoneProxyConfig *pr
  * - IP address: sip:87.98.157.38
  * - IP address with port: sip:87.98.157.38:5062
  * - hostnames : sip:sip.example.net
+ * 
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param server_address the proxy address to set. @maybenil
 **/
@@ -75,11 +76,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_server_addr(LinphonePro
  * Sets the user identity as a SIP address.
  *
  * This identity is normally formed with display name, username and domain, such
- * as:
- * Alice <sip:alice@example.net>
+ * as: Alice <sip:alice@example.net>
  * The REGISTER messages will have from and to set to this identity.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param identity the #LinphoneAddress of the identity to set @notnil
+ * @param identity the #LinphoneAddress of the identity to set @maybenil
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *proxy_config, const LinphoneAddress *identity);
 
@@ -168,7 +168,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_dial_escape_plus(LinphoneProxyCon
  * linphone_core_invite();
  * This dialing prefix shall usually be the country code of the country where the user is living, without "+".
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @param prefix the prefix to set (withouth the +)
+ * @param prefix the prefix to set (withouth the +) @maybenil
 **/
 LINPHONE_PUBLIC void linphone_proxy_config_set_dial_prefix(LinphoneProxyConfig *proxy_config, const char *prefix);
 

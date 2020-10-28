@@ -35,7 +35,7 @@ extern "C" {
 /**
  * Set #LinphoneAddress for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
- * @param address the #LinphoneAddress to set @notnil
+ * @param address the #LinphoneAddress to set @maybenil
  * return 0 if successfull, -1 otherwise
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_friend_set_address(LinphoneFriend *fr, const LinphoneAddress* address);
@@ -195,7 +195,7 @@ LINPHONE_PUBLIC const LinphonePresenceModel * linphone_friend_get_presence_model
 /**
  * Set the presence model of a friend
  * @param linphone_friend A #LinphoneFriend object @notnil
- * @param presence The #LinphonePresenceModel object to set for the friend @notnil
+ * @param presence The #LinphonePresenceModel object to set for the friend @maybenil
  */
 LINPHONE_PUBLIC void linphone_friend_set_presence_model(LinphoneFriend *linphone_friend, LinphonePresenceModel *presence);
 
@@ -203,7 +203,7 @@ LINPHONE_PUBLIC void linphone_friend_set_presence_model(LinphoneFriend *linphone
  * Set the presence model for a specific SIP URI or phone number of a friend
  * @param linphone_friend A #LinphoneFriend object @notnil
  * @param uri_or_tel The SIP URI or phone number for which to set the presence model @notnil
- * @param presence The #LinphonePresenceModel object to set @notnil
+ * @param presence The #LinphonePresenceModel object to set @maybenil
  */
 LINPHONE_PUBLIC void linphone_friend_set_presence_model_for_uri_or_tel(LinphoneFriend *linphone_friend, const char *uri_or_tel, LinphonePresenceModel *presence);
 

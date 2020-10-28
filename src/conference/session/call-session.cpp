@@ -1496,7 +1496,10 @@ shared_ptr<CallSession> CallSession::getTransferTarget () const {
 
 const char *CallSession::getToHeader (const string &name) const {
 	L_D();
-	return sal_custom_header_find(d->op->getRecvCustomHeaders(), name.c_str());
+	if (d->op) {
+		return sal_custom_header_find(d->op->getRecvCustomHeaders(), name.c_str());
+	}
+	return NULL;
 }
 
 // -----------------------------------------------------------------------------
