@@ -98,7 +98,8 @@ const char *linphone_info_message_get_header(const LinphoneInfoMessage *im, cons
 void linphone_info_message_set_content (LinphoneInfoMessage *im, const LinphoneContent *content) {
 	if (im->content)
 		linphone_content_unref(im->content);
-	im->content = linphone_content_copy(content);
+	if (content)
+		im->content = linphone_content_copy(content);
 }
 
 const LinphoneContent * linphone_info_message_get_content(const LinphoneInfoMessage *im){

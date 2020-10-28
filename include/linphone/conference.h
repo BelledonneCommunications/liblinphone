@@ -223,14 +223,14 @@ LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current
 /**
  * Get the conference subject
  * @param conference The #LinphoneConference object. @notnil
- * @return conference subject - @maybenil
+ * @return conference subject. @maybenil
  */
 LINPHONE_PUBLIC const char *linphone_conference_get_subject(const LinphoneConference *conference);
 
 /**
  * Set the conference subject
  * @param conference The #LinphoneConference object. @notnil
- * @param subject conference subject
+ * @param subject conference subject @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *conference, const char *subject);
 
@@ -293,7 +293,7 @@ LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference 
 /**
  * Set the conference id as string
  * @param conf The #LinphoneConference object. @notnil
- * @param conference_id the conference id to set. @notnil
+ * @param conference_id the conference id to set. @maybenil
  */
 LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
 

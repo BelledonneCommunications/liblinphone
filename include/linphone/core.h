@@ -2393,7 +2393,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *co
  * Set the policy to use to pass through NATs/firewalls.
  * It may be overridden by a NAT policy for a specific proxy config.
  * @param core #LinphoneCore object @notnil
- * @param policy #LinphoneNatPolicy object @notnil
+ * @param policy #LinphoneNatPolicy object @maybenil
  * @ingroup network_parameters
  * @see linphone_proxy_config_set_nat_policy()
  */
@@ -3065,7 +3065,7 @@ LINPHONE_PUBLIC void linphone_core_set_preferred_video_definition_by_name(Linpho
  * This allows for example to have the preview window in High Definition  even if due to bandwidth constraint the sent video definition is small.
  * Using this feature increases the CPU consumption, since a rescaling will be done internally.
  * @param core #LinphoneCore object @notnil
- * @param video_definition #LinphoneVideoDefinition object @notnil
+ * @param video_definition #LinphoneVideoDefinition object @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_preview_video_definition(LinphoneCore *core, LinphoneVideoDefinition *video_definition);
@@ -4854,7 +4854,7 @@ LINPHONE_PUBLIC LinphoneFriend * linphone_core_create_friend_with_address(Linpho
 /**
  * Set my presence model
  * @param core #LinphoneCore object @notnil
- * @param presence #LinphonePresenceModel @notnil
+ * @param presence #LinphonePresenceModel @maybenil
  */
 LINPHONE_PUBLIC void linphone_core_set_presence_model(LinphoneCore *core, LinphonePresenceModel *presence);
 

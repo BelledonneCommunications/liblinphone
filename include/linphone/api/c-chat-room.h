@@ -492,7 +492,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_chat_room_get_composing_addresses(
  * #LinphoneChatRoomCbsConferenceAddressGenerationCb callback and only there.
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @param conference_address The conference #LinphoneAddress to be used by the group chat room @notnil
+ * @param conference_address The conference #LinphoneAddress to be used by the group chat room @maybenil
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom *chat_room, const LinphoneAddress *conference_address);
 

@@ -153,11 +153,11 @@ public:
 	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 	void checkIfTerminated();
 
-	void setID(const char *conferenceID) {
+	void setID(const std::string &conferenceID) {
 		mConferenceID = conferenceID;
 	}
-	const char *getID() const {
-		return mConferenceID.c_str();
+	const std::string& getID() const {
+		return mConferenceID;
 	}
 
 protected:

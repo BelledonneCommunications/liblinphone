@@ -156,7 +156,7 @@ static LinphoneFriendPresence * find_presence_model_for_uri_or_tel(const Linphon
 static void add_presence_model_for_uri_or_tel(LinphoneFriend *lf, const char *uri_or_tel, LinphonePresenceModel *presence) {
 	LinphoneFriendPresence *lfp = ms_new0(LinphoneFriendPresence, 1);
 	lfp->uri_or_tel = ms_strdup(uri_or_tel);
-	lfp->presence = linphone_presence_model_ref(presence);
+	if (presence) lfp->presence = linphone_presence_model_ref(presence);
 	lf->presence_models = bctbx_list_append(lf->presence_models, lfp);
 }
 
@@ -803,8 +803,11 @@ void linphone_friend_set_presence_model(LinphoneFriend *lf, LinphonePresenceMode
 void linphone_friend_set_presence_model_for_uri_or_tel(LinphoneFriend *lf, const char *uri_or_tel, LinphonePresenceModel *presence) {
 	LinphoneFriendPresence *lfp = find_presence_model_for_uri_or_tel(lf, uri_or_tel);
 	if (lfp) {
-		if (lfp->presence) linphone_presence_model_unref(lfp->presence);
-		lfp->presence = linphone_presence_model_ref(presence);
+		if (lfp->presence) {
+			linphone_presence_model_unref(lfp->presence);
+			lfp->presence = NULL;
+		}
+		if (presence) lfp->presence = linphone_presence_model_ref(presence);
 	} else {
 		add_presence_model_for_uri_or_tel(lf, uri_or_tel, presence);
 	}
