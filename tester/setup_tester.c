@@ -609,12 +609,14 @@ static void search_friend_in_alphabetical_order(void) {
 	LinphoneFriend *friend3 = linphone_core_create_friend(manager->lc);
 	LinphoneFriend *friend4 = linphone_core_create_friend(manager->lc);
 	LinphoneFriend *friend5 = linphone_core_create_friend(manager->lc);
+	LinphoneFriend *friend6 = linphone_core_create_friend(manager->lc);
 
 	LinphoneVcard *vcard1 = linphone_factory_create_vcard(linphone_factory_get());
 	LinphoneVcard *vcard2 = linphone_factory_create_vcard(linphone_factory_get());
 	LinphoneVcard *vcard3 = linphone_factory_create_vcard(linphone_factory_get());
 	LinphoneVcard *vcard4 = linphone_factory_create_vcard(linphone_factory_get());
 	LinphoneVcard *vcard5 = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *vcard6 = linphone_factory_create_vcard(linphone_factory_get());
 
 	const char *name1 = {"STEPHANIE delarue"};
 	const char *name2 = {"alias delarue"};
@@ -652,6 +654,9 @@ static void search_friend_in_alphabetical_order(void) {
 	linphone_friend_set_vcard(friend5, vcard5);
 	linphone_core_add_friend(manager->lc, friend5);
 
+	linphone_friend_set_vcard(friend6, vcard6);
+	linphone_core_add_friend(manager->lc, friend6);
+
 	magicSearch = linphone_magic_search_new(manager->lc);
 
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
@@ -673,18 +678,21 @@ static void search_friend_in_alphabetical_order(void) {
 	linphone_friend_list_remove_friend(lfl, friend3);
 	linphone_friend_list_remove_friend(lfl, friend4);
 	linphone_friend_list_remove_friend(lfl, friend5);
+	linphone_friend_list_remove_friend(lfl, friend6);
 
 	if (friend1) linphone_friend_unref(friend1);
 	if (friend2) linphone_friend_unref(friend2);
 	if (friend3) linphone_friend_unref(friend3);
 	if (friend4) linphone_friend_unref(friend4);
 	if (friend5) linphone_friend_unref(friend5);
+	if (friend5) linphone_friend_unref(friend6);
 
 	if (vcard1) linphone_vcard_unref(vcard1);
 	if (vcard2) linphone_vcard_unref(vcard2);
 	if (vcard3) linphone_vcard_unref(vcard3);
 	if (vcard4) linphone_vcard_unref(vcard4);
 	if (vcard5) linphone_vcard_unref(vcard5);
+	if (vcard5) linphone_vcard_unref(vcard6);
 
 	linphone_magic_search_unref(magicSearch);
 	linphone_core_manager_destroy(manager);
