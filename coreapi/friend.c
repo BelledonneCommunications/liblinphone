@@ -515,7 +515,7 @@ void linphone_friend_remove_phone_number(LinphoneFriend *lf, const char *phone) 
 	}
 }
 
-LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name){
+LinphoneStatus linphone_friend_set_name(LinphoneFriend *lf, const char *name) {
 	if (linphone_core_vcard_supported()) {
 		if (!lf->vcard) linphone_friend_create_vcard(lf, name);
 		linphone_vcard_set_full_name(lf->vcard, name);
@@ -654,12 +654,16 @@ static belle_sip_error_code _linphone_friend_marshall(belle_sip_object_t *obj, c
 const char * linphone_friend_get_name(const LinphoneFriend *lf) {
 	if (!lf) return NULL;
 
+	const char *fullname = NULL;
 	if (linphone_core_vcard_supported()) {
-		if (lf->vcard) return linphone_vcard_get_full_name(lf->vcard);
-	} else if (lf->uri) {
-		return linphone_address_get_display_name(lf->uri);
+		if (lf->vcard) {
+			fullname = linphone_vcard_get_full_name(lf->vcard);
+		}
 	}
-	return NULL;
+	if (!fullname && lf->uri) {
+		fullname = linphone_address_get_display_name(lf->uri);
+	}
+	return fullname;
 }
 
 bool_t linphone_friend_get_send_subscribe(const LinphoneFriend *lf){
