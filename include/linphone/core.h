@@ -3236,7 +3236,7 @@ LINPHONE_PUBLIC const char *linphone_core_get_video_device(const LinphoneCore *c
 /**
  * Set the path to the image file to stream when "Static picture" is set as the video device.
  * @param core #LinphoneCore object. @notnil
- * @param path The path to the image file to use. @notnil
+ * @param path The path to the image file to use. @maybenil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_set_static_picture(LinphoneCore *core, const char *path);
