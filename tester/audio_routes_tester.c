@@ -589,7 +589,15 @@ LinphoneAudioDevice* pause_call_changing_device(bool_t enable, bctbx_list_t *lcs
 
 	// Check output device
 	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(mgr_change_device->lc), next_dev);
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr_change_device->lc), next_dev);
+	LinphoneAudioDevice *expected_input_dev = NULL;
+	if (enable || linphone_core_is_in_conference(mgr_change_device->lc)) {
+		// If the call is paused, input soundcard is not used but as it is changed, the getter returns the new sound card
+		expected_input_dev = next_dev;
+	} else {
+		// If call is paused, input soundcard is not used therefore the current one is NULL
+		expected_input_dev = NULL;
+	}
+	BC_ASSERT_PTR_EQUAL(linphone_core_get_input_audio_device(mgr_change_device->lc), expected_input_dev);
 
 	//stay in pause a little while in order to generate traffic
 	wait_for_until(mgr_pausing->lc, mgr_paused->lc, NULL, 5, 2000);
