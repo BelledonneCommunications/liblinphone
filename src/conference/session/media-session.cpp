@@ -1775,6 +1775,8 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
+
+		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state);
 	string subject;
 	if (sal_media_description_has_dir(resultDesc, SalStreamSendRecv))
 		subject = "Call on hold";
@@ -1782,7 +1784,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
-		return -1;
+		return 0;
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
@@ -1965,8 +1967,20 @@ void MediaSessionPrivate::startAccept(){
 
 	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
 lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis().get() << " current call session " << (currentCall ? currentCall->getActiveSession().get() : nullptr);
+	// If the core in a call, request to empty sound resources only if this call is not the call the core is currently in
+	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
 
-	if (currentCall && (currentCall->getActiveSession() != q->getSharedFromThis())) {
+	bool isCoreInLocalConference = linphone_core_is_in_conference(q->getCore()->getCCore());
+	LinphoneConference * callConference = nullptr;
+	if (listener) {
+		callConference = listener->getCallSessionConference(q->getSharedFromThis());
+	}
+	LinphoneConference * coreConference = linphone_core_get_conference(q->getCore()->getCCore());
+	// If the core in a conference, request to empty sound resources only if the call is in a difference conference or the call is not part of a conference
+	bool isThisNotCurrentConference = isCoreInLocalConference && (!callConference || (callConference != coreConference));
+
+	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
+	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
 		if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
 			pendingActions.push([this] {this->startAccept();});
