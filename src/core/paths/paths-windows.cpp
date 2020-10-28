@@ -26,6 +26,7 @@
 
 #include "paths-windows.h"
 #include "config.h"
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 #include <ppltasks.h>
@@ -57,9 +58,9 @@ static string getPath (const GUID &id) {
 	string strPath;
 	LPWSTR path;
 	if (SHGetKnownFolderPath(id, KF_FLAG_DONT_VERIFY, 0, &path) == S_OK) {
-		strPath = _bstr_t(path);
+                strPath = LinphonePrivate::Utils::localeToUtf8(string(_bstr_t(path)));
 		replace(strPath.begin(), strPath.end(), '\\', '/');
-		CoTaskMemFree(path);
+                CoTaskMemFree(path);
 	}
 
 	strPath = strPath.append("/linphone/");
