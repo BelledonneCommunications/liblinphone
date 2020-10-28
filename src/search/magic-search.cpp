@@ -117,16 +117,19 @@ void MagicSearch::resetSearchCache () const {
 }
 
 static string getDisplayNameFromSearchResult (const SearchResult &sr) {
-	string name;
+	const char *name;
 	if (sr.getFriend()) {
 		name = linphone_friend_get_name(sr.getFriend());
-	} else if (sr.getAddress()){
+	}
+	if (!name && sr.getAddress()){
 		name = linphone_address_get_display_name(sr.getAddress()) ?
 			linphone_address_get_display_name(sr.getAddress()) : linphone_address_get_username(sr.getAddress());
-	} else {
+	}
+	if (!name) {
 		name = sr.getPhoneNumber();
 	}
-	return name;
+	if (name != NULL) return name;
+	return "";
 }
 
 list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain) const {
