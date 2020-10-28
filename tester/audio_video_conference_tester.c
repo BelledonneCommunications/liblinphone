@@ -2931,8 +2931,11 @@ void initiate_calls(bctbx_list_t* caller, LinphoneCoreManager* callee) {
 	unsigned int no_callers = (unsigned int)bctbx_list_size(caller);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&callee->stat.number_of_LinphoneCallIncomingReceived,initial_callee_stat.number_of_LinphoneCallIncomingReceived + no_callers,5000));
 
-	LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
-	BC_ASSERT_PTR_NOT_NULL(callee_call);
+	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, m->identity);
+		BC_ASSERT_PTR_NOT_NULL(callee_call);
+	}
 
 	counter = 0;
 	for (bctbx_list_t *it = caller; it; it = bctbx_list_next(it)) {
