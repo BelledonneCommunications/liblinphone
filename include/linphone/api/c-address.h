@@ -92,7 +92,7 @@ LINPHONE_PUBLIC const char *linphone_address_get_username (const LinphoneAddress
 /**
  * Sets the username.
  * @param address a #LinphoneAddress object. @notnil
- * @param display_name the username to set. @maybenil
+ * @param username the username to set. @maybenil
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_address_set_username (LinphoneAddress *address, const char *username);
 
@@ -106,7 +106,7 @@ LINPHONE_PUBLIC const char *linphone_address_get_domain (const LinphoneAddress *
 /**
  * Sets the domain.
  * @param address a #LinphoneAddress object. @notnil
- * @param display_name the domain to set. @maybenil
+ * @param domain the domain to set. @maybenil
  **/
 LINPHONE_PUBLIC LinphoneStatus linphone_address_set_domain (LinphoneAddress *address, const char *domain);
 

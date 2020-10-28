@@ -4599,10 +4599,12 @@ void linphone_core_send_presence(LinphoneCore *lc, LinphonePresenceModel *presen
 }
 
 void linphone_core_set_presence_model(LinphoneCore *lc, LinphonePresenceModel *presence) {
-	linphone_presence_model_ref(presence);
 	linphone_core_send_presence(lc, presence);
-	if (lc->presence_model != NULL) linphone_presence_model_unref(lc->presence_model);
-	lc->presence_model = presence;
+	if (lc->presence_model != NULL) {
+		linphone_presence_model_unref(lc->presence_model);
+		lc->presence_model = NULL;
+	}
+	if (presence) lc->presence_model = linphone_presence_model_ref(presence);
 }
 
 LinphoneOnlineStatus linphone_core_get_presence_info(const LinphoneCore *lc){

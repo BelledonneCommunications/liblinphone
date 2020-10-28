@@ -67,7 +67,7 @@ LINPHONE_PUBLIC const char* linphone_vcard_as_vcard4_string(LinphoneVcard *vCard
 /**
  * Sets the FN attribute of the vCard (which is mandatory).
  * @param vCard the #LinphoneVcard @notnil
- * @param name the display name to set for the vCard @notnil
+ * @param name the display name to set for the vCard @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_full_name(LinphoneVcard *vCard, const char *name);
 
@@ -200,7 +200,7 @@ LINPHONE_PUBLIC bool_t linphone_vcard_generate_unique_id(LinphoneVcard *vCard);
 /**
  * Sets the unique ID of the vCard
  * @param vCard the #LinphoneVcard @notnil
- * @param uid the unique id @notnil
+ * @param uid the unique id @maybenil
  */
 LINPHONE_PUBLIC void linphone_vcard_set_uid(LinphoneVcard *vCard, const char *uid);
 

@@ -125,7 +125,7 @@ LINPHONE_PUBLIC const char *linphone_content_get_utf8_text(const LinphoneContent
 /**
  * Get the string content data buffer. Introduced in 01/07/2020
  * @param content #LinphoneContent object. @notnil
- * @param The string content data buffer in UTF8. @maybenil
+ * @param buffer The string content data buffer in UTF8. @maybenil
  */
 LINPHONE_PUBLIC void linphone_content_set_utf8_text (LinphoneContent *content, const char *buffer);
 
