@@ -1784,7 +1784,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
-		return 0;
+		return -1;
 	}
 	broken = false;
 	setState(CallSession::State::Pausing, "Pausing call");
