@@ -255,12 +255,12 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	else if (stream->dir == SalStreamSendRecv)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
 
-	AudioDevice *audioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
+	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
 	MSSndCard *playcard = nullptr;
 
 	// try to get currently used playcard if it was already set
-	if (audioDevice) {
-		playcard = audioDevice->getSoundCard();
+	if (outputAudioDevice) {
+		playcard = outputAudioDevice->getSoundCard();
 	}
 
 	// If stream doesn't have a playcard associated with it, then use the default values
@@ -269,7 +269,18 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 	if (!playcard)
 		lWarning() << "No card defined for playback!";
-	MSSndCard *captcard = getCCore()->sound_conf.capt_sndcard;
+
+	AudioDevice *inputAudioDevice = getMediaSessionPrivate().getCurrentInputAudioDevice();
+	MSSndCard *captcard = nullptr;
+	// try to get currently used playcard if it was already set
+	if (inputAudioDevice) {
+		captcard = inputAudioDevice->getSoundCard();
+	}
+
+	// If stream doesn't have a playcard associated with it, then use the default values
+	if (!captcard)
+		captcard = getCCore()->sound_conf.capt_sndcard;
+
 	if (!captcard)
 		lWarning() << "No card defined for capture!";
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
