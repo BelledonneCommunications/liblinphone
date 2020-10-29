@@ -40,6 +40,7 @@ class LINPHONE_PUBLIC BaseObject {
 
 public:
 	virtual ~BaseObject ();
+	virtual std::string toString() const;
 
 protected:
 	explicit BaseObject (BaseObjectPrivate &p);
@@ -50,6 +51,8 @@ private:
 	L_DECLARE_PRIVATE(BaseObject);
 	L_DISABLE_COPY(BaseObject);
 };
+
+std::ostream &operator<< (std::ostream &stream, const BaseObject &obj);
 
 LINPHONE_END_NAMESPACE
 
