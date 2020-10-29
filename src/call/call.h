@@ -277,7 +277,8 @@ public:
 	
 	void *getUserData () const;
 	void setUserData (void *ud);
-	
+
+	virtual std::string toString() const override;
 
 private:
 	std::shared_ptr<Participant> mParticipant;
