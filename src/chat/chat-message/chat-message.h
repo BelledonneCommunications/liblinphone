@@ -143,6 +143,8 @@ public:
 	bool downloadFile (FileTransferContent *content);
 	bool isFileTransferInProgress () const;
 
+	virtual std::string toString() const override;
+
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);
 
