@@ -275,7 +275,8 @@ public:
 	
 	void *getUserData () const;
 	void setUserData (void *ud);
-	
+
+	virtual std::string toString() const override;
 
 	bool canSoundResourcesBeFreed () const;
 

@@ -231,7 +231,7 @@ void Call::startRemoteRing () {
 }
 
 void Call::terminateBecauseOfLostMedia () {
-	lInfo() << "Call [" << this << "]: Media connectivity with " << getRemoteAddress()->asString()
+	lInfo() << *this << ": Media connectivity with " << *getRemoteAddress()
 		<< " is lost, call is going to be terminated";
 	static_pointer_cast<MediaSession>(getActiveSession())->terminateBecauseOfLostMedia();
 	getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallLost);
@@ -521,8 +521,8 @@ void Call::onCheckForAcceptation (const shared_ptr<CallSession> &session) {
 			case CallSession::State::OutgoingProgress:
 			case CallSession::State::OutgoingRinging:
 			case CallSession::State::OutgoingEarlyMedia:
-				lInfo() << "Already existing call [" << call << "] in state [" << Utils::toString(call->getState())
-					<< "], canceling it before accepting new call [" << currentCall << "]";
+				lInfo() << "Already existing " << *call
+					<< ", canceling it before accepting " << *currentCall;
 				call->terminate();
 				break;
 			default:
@@ -1195,6 +1195,13 @@ void *Call::getUserData () const{
 
 void Call::setUserData (void *ud) {
 	mUserData = ud;
+}
+
+std::string Call::toString () const {
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "Call " << voidThis << " with " << *static_pointer_cast<MediaSession>(getActiveSession()) << " in state " << Utils::toString(getState());
+	return ss.str();
 }
 
 LINPHONE_END_NAMESPACE
