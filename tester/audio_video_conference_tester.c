@@ -1633,7 +1633,6 @@ static void eject_from_3_participants_conference(LinphoneCoreManager *marie, Lin
 		const LinphoneAddress *current_conference_address = linphone_conference_get_conference_address(conference);
 		char * current_conference_address_str = linphone_address_as_string(current_conference_address);
 		BC_ASSERT_NOT_EQUAL(strcmp(current_conference_address_str,new_conference_address_str), 0, int, "%d");
-		linphone_address_unref((LinphoneAddress *)current_conference_address);
 		ms_free(current_conference_address_str);
 	}
 

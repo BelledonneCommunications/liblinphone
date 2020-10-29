@@ -544,9 +544,6 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 			break;
 	}
 
-	if (address) {
-		linphone_address_unref((LinphoneAddress *)address);
-	}
 	if (address_str) {
 		bctbx_free(address_str);
 	}

@@ -319,7 +319,7 @@ bool_t linphone_conference_params_local_participant_enabled(const LinphoneConfer
 }
 
 const char *linphone_conference_get_ID (const LinphoneConference *conference) {
-	return MediaConference::Conference::toCpp(conference)->getID();
+	return MediaConference::Conference::toCpp(conference)->getID().c_str();
 }
 
 void linphone_conference_set_ID(LinphoneConference *conference, const char *conferenceID) {
