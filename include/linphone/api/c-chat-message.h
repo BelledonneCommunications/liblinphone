@@ -543,6 +543,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_file_transfe
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const LinphoneChatMessage *message);
 
 /**
+ * Returns the chat message as a string.
+ * The result string must be freed by user using ms_free().
+ * @param msg #LinphoneChatMessage object. @notnil
+ * @return the chat message as a string. @maybenil
+**/
+LINPHONE_PUBLIC const char *linphone_chat_message_to_string (const LinphoneChatMessage *msg);
+
+/**
  * @}
  */
 
