@@ -3623,8 +3623,8 @@ bool MainDb::import (Backend, const string &parameters) {
 #ifdef HAVE_DB_STORAGE
 	L_D();
 
-	// Backend is useless, it's sqlite3. (Only available legacy backend.)
-	const string uri = "sqlite3://" + parameters;
+        // Backend is useless, it's sqlite3. (Only available legacy backend.)
+        const string uri = "sqlite3://" + LinphonePrivate::Utils::localeToUtf8(parameters);
 	DbSession inDbSession(uri);
 
 	if (!inDbSession) {
