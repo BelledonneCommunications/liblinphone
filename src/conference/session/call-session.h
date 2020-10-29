@@ -137,6 +137,8 @@ public:
 	static bool isEarlyState (CallSession::State state);
 	void accepting ();
 
+	virtual std::string toString() const override;
+
 protected:
 	explicit CallSession (CallSessionPrivate &p, const std::shared_ptr<Core> &core);
 	CallSession::State getPreviousState () const;
@@ -148,6 +150,11 @@ private:
 	L_DECLARE_PRIVATE(CallSession);
 	L_DISABLE_COPY(CallSession);
 };
+
+inline std::ostream & operator << (std::ostream & str, const CallSession & session){
+	return str << session.toString();
+
+}
 
 inline std::ostream & operator << (std::ostream & str, CallSession::State state){
 	str << linphone_call_state_to_string(static_cast<LinphoneCallState>(state));
