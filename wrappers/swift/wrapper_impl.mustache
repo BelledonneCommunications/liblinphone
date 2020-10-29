@@ -45,7 +45,7 @@ public struct {{enumName}}:OptionSet
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+	public static let {{name}} = {{enumName}}({{#firstValue}}[]{{/firstValue}}{{^firstValue}}rawValue: {{{value}}}{{/firstValue}})
 	{{/values}}
 }
 {{/isFlag}}
@@ -413,7 +413,13 @@ public class {{className}} : LinphoneObject
 			{{/is_callbacks}}
 			{{^is_callbacks}}
 			{{#is_string}}
-			return charArrayToString(charPointer: {{getter_c_name}}({{cPtr}}))
+			let cPointer = {{getter_c_name}}({{cPtr}})
+			{{#maybenil}}
+			if (cPointer == nil) {
+				return nil
+			}
+			{{/maybenil}}
+			return charArrayToString(charPointer: cPointer)
 			{{/is_string}}
 			{{#is_bool}}
 			return {{getter_c_name}}({{cPtr}}) != 0

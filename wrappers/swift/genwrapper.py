@@ -56,6 +56,7 @@ class SwiftTranslator(object):
         methodDict['is_generic'] = False
         methodDict['takeRef'] = 'true'
         methodDict['listener'] = False
+        methodDict['maybenil'] = False
         return methodDict
 
     def get_class_array_type(self, name):
@@ -269,6 +270,7 @@ class SwiftTranslator(object):
             enumValDict = {}
             enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
             enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+            enumValDict['firstValue'] = i==0
             if isinstance(enumValue.value, int):
                 lastValue = enumValue.value
                 enumValDict['value'] = str(enumValue.value)
@@ -398,8 +400,9 @@ class SwiftTranslator(object):
         methodDict['static'] = 'static ' if static else ''
         methodDict['isNotConst'] = not prop.returnType.isconst
         methodDict['isFlag'] = methodDict['is_enum'] and prop.returnType.desc.isFlag
+        methodDict['maybenil'] = prop.maybenil and not methodDict['is_string_list'] and not ['is_class_list']
 
-        if (methodDict['is_class'] and name != "get") or methodDict['is_void']:
+        if (methodDict['is_class'] and name != "get") or methodDict['is_void'] or methodDict['maybenil']:
             methodDict['return_default'] = "?"
 
         return methodDict
