@@ -1509,7 +1509,9 @@ static void sip_config_read(LinphoneCore *lc) {
 		#else
 			system_username = getenv("USER");
 		#endif // if defined _WIN32
-		system_username = belle_sip_uri_to_escaped_username(system_username);// Currently, only Windows can have special characters but we try escaping in all case to be plateform independent
+		char *utf8_username = bctbx_locale_to_utf8(system_username);
+		system_username = belle_sip_uri_to_escaped_username(utf8_username);// Currently, only Windows can have special characters but we try escaping in all case to be plateform independent
+		bctbx_free(utf8_username);
 		username = system_username;
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
