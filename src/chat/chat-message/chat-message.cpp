@@ -1487,6 +1487,14 @@ int ChatMessage::putCharacter (uint32_t character) {
 	return 0;
 }
 
+std::string ChatMessage::toString () const {
+	L_D();
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "ChatMessage " << voidThis << " in state "  << Utils::toString(d->state);
+	return ss.str();
+}
+
 std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e) {
 	switch(e) {
 		case ChatMessage::State::Idle: lhs << "Idle"; break;
