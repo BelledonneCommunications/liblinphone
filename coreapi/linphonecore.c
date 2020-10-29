@@ -1573,14 +1573,19 @@ static void sip_config_read(LinphoneCore *lc) {
 	if (tmpstr==NULL || linphone_core_set_primary_contact(lc,tmpstr)==-1) {
 		const char *hostname=NULL;
 		const char *username=NULL;
+		char * system_username=NULL;
 #if !defined(LINPHONE_WINDOWS_UNIVERSAL) && !defined(LINPHONE_WINDOWS_PHONE) // Using getenv is forbidden on Windows 10 and Windows Phone
 		hostname=getenv("HOST");
 
 		#if defined _WIN32
-			username = getenv("USERNAME");
+			system_username = getenv("USERNAME");
 		#else
-			username = getenv("USER");
+			system_username = getenv("USER");
 		#endif // if defined _WIN32
+		char *utf8_username = bctbx_locale_to_utf8(system_username);
+		system_username = belle_sip_uri_to_escaped_username(utf8_username);// Currently, only Windows can have special characters but we try escaping in all case to be plateform independent
+		bctbx_free(utf8_username);
+		username = system_username;
 		if (hostname==NULL) hostname=getenv("HOSTNAME");
 #endif
 		if (hostname==NULL)
@@ -1591,6 +1596,7 @@ static void sip_config_read(LinphoneCore *lc) {
 		contact=ortp_strdup_printf("sip:%s@%s",username,hostname);
 		linphone_core_set_primary_contact(lc,contact);
 		ms_free(contact);
+		bctbx_free(system_username);
 	}
 
 	tmp=linphone_config_get_int(lc->config,"sip","guess_hostname",1);
