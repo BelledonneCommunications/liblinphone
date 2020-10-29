@@ -239,7 +239,7 @@ void Call::terminateBecauseOfLostMedia () {
 
 void Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Record)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Record capability";
+		lError() << "Audio device [" << *audioDevice << "] doesn't have Record capability";
 		return;
 	}
 
@@ -249,7 +249,7 @@ void Call::setInputAudioDevicePrivate(AudioDevice *audioDevice) {
 
 void Call::setOutputAudioDevicePrivate(AudioDevice *audioDevice) {
 	if ((audioDevice->getCapabilities() & static_cast<int>(AudioDevice::Capabilities::Play)) == 0) {
-		lError() << "Audio device [" << audioDevice << "] doesn't have Play capability";
+		lError() << "Audio device [" << *audioDevice << "] doesn't have Play capability";
 		return;
 	}
 

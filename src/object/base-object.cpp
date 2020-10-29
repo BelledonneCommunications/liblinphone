@@ -36,4 +36,15 @@ BaseObject::~BaseObject () {
 	delete mPrivate;
 }
 
+std::string BaseObject::toString () const {
+	const void * voidThis = static_cast<const void*>(this);
+	std::stringstream ss;
+	ss << belle_sip_object_to_string(this) << " " << voidThis;
+	return ss.str();
+}
+
+std::ostream &operator<< (std::ostream &stream, const BaseObject &obj) {
+	return stream << obj.toString();
+}
+
 LINPHONE_END_NAMESPACE
