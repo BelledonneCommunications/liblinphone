@@ -895,6 +895,14 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_input_audio_device(
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device(const LinphoneCall *call);
 
+/**
+ * Returns the call as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneCall object. @notnil
+ * @return the call as a string. @maybenil
+**/
+LINPHONE_PUBLIC const char *linphone_call_to_string (const LinphoneCall *call);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
