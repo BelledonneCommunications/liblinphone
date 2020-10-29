@@ -77,10 +77,10 @@ void CallSessionPrivate::setState (CallSession::State newState, const string &me
 				return;
 			}
 		} else if ((newState == CallSession::State::Released) && (prevState != CallSession::State::Error) && (prevState != CallSession::State::End)) {
-			lFatal() << "Attempt to move CallSession [" << q << "] to Released state while it was not previously in Error or End state, aborting";
+			lFatal() << "Attempt to move " << *q << " to Released state while it was not previously in Error or End state, aborting";
 			return;
 		}
-		lInfo() << "CallSession [" << q << "] moving from state " << Utils::toString(state) << " to " << Utils::toString(newState);
+		lInfo() << *q << " is moving from state " << Utils::toString(state) << " to " << Utils::toString(newState);
 
 		if (newState != CallSession::State::Referred) {
 			// CallSession::State::Referred is rather an event, not a state.
@@ -166,7 +166,7 @@ void CallSessionPrivate::setTransferState (CallSession::State newState) {
 	L_Q();
 	if (newState == transferState)
 		return;
-	lInfo() << "Transfer state for CallSession [" << q << "] changed from ["
+	lInfo() << "Transfer state for " << *q << " changed from ["
 		<< Utils::toString(transferState) << "] to [" << Utils::toString(newState) << "]";
 	transferState = newState;
 	if (listener)
@@ -298,7 +298,7 @@ bool CallSessionPrivate::failure () {
 				const SalAddress *redirectionTo = op->getRemoteContactAddress();
 				if (redirectionTo) {
 					char *url = sal_address_as_string(redirectionTo);
-					lWarning() << "Redirecting CallSession [" << q << "] to " << url;
+					lWarning() << "Redirecting " << *q << " to " << url;
 					if (log->to)
 						linphone_address_unref(log->to);
 					log->to = linphone_address_new(url);
@@ -506,7 +506,7 @@ void CallSessionPrivate::updatedByRemote () {
 	setState(CallSession::State::UpdatedByRemote,"Call updated by remote");
 	if (deferUpdate || deferUpdateInternal) {
 		if (state == CallSession::State::UpdatedByRemote && !deferUpdateInternal){
-			lInfo() << "CallSession [" << q << "]: UpdatedByRemoted was signaled but defered. LinphoneCore expects the application to call linphone_call_accept_update() later";
+			lInfo() << *q << ": UpdatedByRemoted was signaled but defered. LinphoneCore expects the application to call linphone_call_accept_update() later";
 		}
 	} else {
 		if (state == CallSession::State::UpdatedByRemote)
@@ -578,7 +578,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 		case CallSession::State::IncomingEarlyMedia:
 			break;
 		default:
-			lError() << "checkForAcceptation() CallSession [" << q << "] is in state [" << Utils::toString(state) << "], operation not permitted";
+			lError() << "checkForAcceptation() " << *q << " is in state [" << Utils::toString(state) << "], operation not permitted";
 			return -1;
 	}
 	if (listener)
@@ -589,7 +589,7 @@ LinphoneStatus CallSessionPrivate::checkForAcceptation () {
 	if (replaced) {
 		CallSession *session = reinterpret_cast<CallSession *>(replaced->getUserPointer());
 		if (session) {
-			lInfo() << "CallSession " << q << " replaces CallSession " << session << ". This last one is going to be terminated automatically";
+			lInfo() << *q << " replaces " << *session << ". This last one is going to be terminated automatically";
 			session->terminate();
 		}
 	}
@@ -880,13 +880,13 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 
 void CallSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	L_Q();
-	lInfo() << "CallSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
+	lInfo() << *q << " is going to be updated (reINVITE) in order to recover from lost connectivity";
 	q->update(params);
 }
 
 void CallSessionPrivate::repairByInviteWithReplaces () {
 	L_Q();
-	lInfo() << "CallSession [" << q << "] is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
+	lInfo() << *q << " is going to have a new INVITE replacing the previous one in order to recover from lost connectivity";
 	string callId = op->getCallId();
 	const char *fromTag = op->getLocalTag();
 	const char *toTag = op->getRemoteTag();
@@ -985,7 +985,7 @@ CallSession::CallSession (const shared_ptr<Core> &core, const CallSessionParams 
 	if (params)
 		d->setParams(new CallSessionParams(*params));
 	d->init();
-	lInfo() << "New CallSession [" << this << "] initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
+	lInfo() << *this << " initialized (LinphoneCore version: " << linphone_core_get_version() << ")";
 }
 
 CallSession::CallSession (CallSessionPrivate &p, const shared_ptr<Core> &core) : Object(p), CoreAccessor(core) {
@@ -1111,7 +1111,7 @@ LinphoneStatus CallSession::decline (LinphoneReason reason) {
 LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 	L_D();
 	if (d->state == CallSession::State::PushIncomingReceived && !d->op) {
-		lInfo() << "CallSession declining";
+		lInfo() << "Declining " << *this;
 		mIsDeclining = true;
 		if (ei) {
 			mErrorCache = linphone_error_info_new();
@@ -1130,7 +1130,7 @@ LinphoneStatus CallSession::decline (const LinphoneErrorInfo *ei) {
 	memset(&sub_sei, 0, sizeof(sub_sei));
 	sei.sub_sei = &sub_sei;
 	if ((d->state != CallSession::State::IncomingReceived) && (d->state != CallSession::State::IncomingEarlyMedia)) {
-		lError() << "Cannot decline a CallSession that is in state " << Utils::toString(d->state);
+		lError() << "Cannot decline " << *this << " that is in state " << Utils::toString(d->state);
 		return -1;
 	}
 	if (ei) {
@@ -1216,7 +1216,7 @@ LinphoneStatus CallSession::redirect (const string &redirectUri) {
 LinphoneStatus CallSession::redirect (const Address &redirectAddr) {
 	L_D();
 	if (d->state != CallSession::State::IncomingReceived && d->state != CallSession::State::PushIncomingReceived) {
-		lError() << "Bad state for CallSession redirection";
+		lError() << "Bad state for " << *this << " redirection";
 		return -1;
 	}
 	SalErrorInfo sei;
@@ -1304,14 +1304,14 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 
 LinphoneStatus CallSession::terminate (const LinphoneErrorInfo *ei) {
 	L_D();
-	lInfo() << "Terminate CallSession [" << this << "] which is currently in state [" << Utils::toString(d->state) << "]";
+	lInfo() << "Terminate " << *this << " which is currently in state [" << Utils::toString(d->state) << "]";
 	SalErrorInfo sei;
 	memset(&sei, 0, sizeof(sei));
 	switch (d->state) {
 		case CallSession::State::Released:
 		case CallSession::State::End:
 		case CallSession::State::Error:
-			lWarning() << "No need to terminate CallSession [" << this << "] in state [" << Utils::toString(d->state) << "]";
+			lWarning() << "No need to terminate " << *this << " in state [" << Utils::toString(d->state) << "]";
 			return -1;
 		case CallSession::State::IncomingReceived:
 		case CallSession::State::PushIncomingReceived:
@@ -1376,6 +1376,14 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 	return result;
 }
 
+std::string CallSession::toString () const {
+	L_D();
+	std::stringstream ss; 
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "Session [" << voidThis << "] (local address " << getLocalAddress() << " remote address " << (getRemoteAddress() ? *getRemoteAddress() : d->emptyAddress) << ")";
+	return ss.str();
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneCallDir CallSession::getDirection () const {
@@ -1416,10 +1424,11 @@ const LinphoneErrorInfo * CallSession::getErrorInfo () const {
 
 const Address& CallSession::getLocalAddress () const {
 	L_D();
-	return (d->direction == LinphoneCallIncoming)
-		? 
+	return d->log ?
+		((d->direction == LinphoneCallIncoming) ?
 			(linphone_call_log_get_to_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_to_address(d->log)) : d->emptyAddress) :
-			(linphone_call_log_get_from_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_from_address(d->log)) : d->emptyAddress);
+			(linphone_call_log_get_from_address(d->log) ? *L_GET_CPP_PTR_FROM_C_OBJECT(linphone_call_log_get_from_address(d->log)) : d->emptyAddress)) :
+		d->emptyAddress;
 }
 
 LinphoneCallLog * CallSession::getLog () const {
@@ -1448,8 +1457,11 @@ const Address &CallSession::getReferToAddress () const {
 
 const Address *CallSession::getRemoteAddress () const {
 	L_D();
-	const LinphoneAddress *address = (d->direction == LinphoneCallIncoming)
-	? linphone_call_log_get_from_address(d->log) : linphone_call_log_get_to_address(d->log);
+	const LinphoneAddress *address = nullptr;
+	if (d->log) {
+		address = (d->direction == LinphoneCallIncoming) ?
+			linphone_call_log_get_from_address(d->log) : linphone_call_log_get_to_address(d->log);
+	}
 	return address? L_GET_CPP_PTR_FROM_C_OBJECT(address) : nullptr;
 }
 
