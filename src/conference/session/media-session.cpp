@@ -297,7 +297,7 @@ bool MediaSessionPrivate::failure () {
 
 void MediaSessionPrivate::pauseForTransfer () {
 	L_Q();
-	lInfo() << "Automatically pausing current MediaSession to accept transfer";
+	lInfo() << "Automatically pausing current " << *q << " to accept transfer";
 	q->pause();
 	automaticallyPaused = true;
 }
@@ -1767,7 +1767,7 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
 	if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
-		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
+		lWarning() << *q << " is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}
 	string subject;
@@ -2060,7 +2060,7 @@ void MediaSessionPrivate::refreshSockets () {
 
 void MediaSessionPrivate::reinviteToRecoverFromConnectionLoss () {
 	L_Q();
-	lInfo() << "MediaSession [" << q << "] is going to be updated (reINVITE) in order to recover from lost connectivity";
+	lInfo() << *q << " is going to be updated (reINVITE) in order to recover from lost connectivity";
 	getStreamsGroup().getIceService().resetSession();
 	q->update(getParams());
 }
@@ -2173,7 +2173,7 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, std::shared_ptr<Partic
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->streamsGroup->getIceService().setListener(d);
 
-	lInfo() << "New MediaSession [" << this << "] initialized (liblinphone version: " << linphone_core_get_version() << ")";
+	lInfo() << *this << " initialized (liblinphone version: " << linphone_core_get_version() << ")";
 }
 
 MediaSession::~MediaSession () {
@@ -2218,7 +2218,7 @@ LinphoneStatus MediaSession::accept (const MediaSessionParams *msp) {
 		wasRinging = d->listener->onCallSessionAccepted(getSharedFromThis());
 
 	d->accept(msp, wasRinging);
-	lInfo() << "MediaSession accepted";
+	lInfo() << *this << " accepted";
 	return 0;
 }
 
@@ -2401,11 +2401,11 @@ LinphoneStatus MediaSession::resume () {
 	}
 	if (!d->getParams()->getPrivate()->getInConference()) {
 		if (linphone_core_sound_resources_locked(getCore()->getCCore())) {
-			lWarning() << "Cannot resume MediaSession " << this << " because another call is locking the sound resources";
+			lWarning() << "Cannot resume " << *this << " because another call is locking the sound resources";
 			return -1;
 		}
 		linphone_core_preempt_sound_resources(getCore()->getCCore());
-		lInfo() << "Resuming MediaSession " << this;
+		lInfo() << "Resuming " << *this;
 	}
 	d->automaticallyPaused = false;
 	d->broken = false;
