@@ -44,6 +44,8 @@ public:
 		const std::list<IdentityAddress> &addresses
 	) override;
 
+	virtual std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(ClientGroupToBasicChatRoom);
 	L_DISABLE_COPY(ClientGroupToBasicChatRoom);
