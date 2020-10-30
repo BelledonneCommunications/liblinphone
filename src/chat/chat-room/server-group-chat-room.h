@@ -92,12 +92,12 @@ public:
 	void setState (ConferenceInterface::State state) override;
 	void subscribeReceived (LinphoneEvent *event);
 
+	virtual std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
 };
-
-std::ostream &operator<< (std::ostream &stream, const ServerGroupChatRoom *chatRoom);
 
 LINPHONE_END_NAMESPACE
 
