@@ -43,8 +43,7 @@ std::ostream &operator<< (std::ostream &stream, const EncryptionEngine::EngineTy
 
 std::string EncryptionEngine::toString() const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << " Encryption Engine " << voidThis << " of type " << engineType;
+	ss << " Encryption Engine [" << this << "] of type " << engineType;
 	return ss.str();
 }
 

@@ -46,8 +46,7 @@ IsComposingMessage::IsComposingMessage (
 
 std::string IsComposingMessage::toString () const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "IsComposingMessage " << voidThis << " in state "  << Utils::toString(getState());
+	ss << "IsComposingMessage [" << this << "] in state "  << Utils::toString(getState());
 	return ss.str();
 }
 
