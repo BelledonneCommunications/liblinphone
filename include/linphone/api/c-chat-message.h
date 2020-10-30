@@ -548,7 +548,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_chat_message_is_text (const 
  * @param msg #LinphoneChatMessage object. @notnil
  * @return the chat message as a string. @maybenil
 **/
-LINPHONE_PUBLIC const char *linphone_chat_message_to_string (const LinphoneChatMessage *msg);
+LINPHONE_PUBLIC char *linphone_chat_message_to_string (const LinphoneChatMessage *msg);
 
 /**
  * @}

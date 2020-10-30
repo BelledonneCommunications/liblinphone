@@ -463,7 +463,7 @@ bool_t linphone_chat_message_download_file (LinphoneChatMessage *msg) {
 	return !!L_GET_PRIVATE_FROM_C_OBJECT(msg)->downloadFile();
 }
 
-const char *linphone_chat_message_to_string (const LinphoneChatMessage *msg) {
+char *linphone_chat_message_to_string (const LinphoneChatMessage *msg) {
 	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->toString().c_str());
 }
 
