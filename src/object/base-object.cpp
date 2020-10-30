@@ -37,9 +37,8 @@ BaseObject::~BaseObject () {
 }
 
 std::string BaseObject::toString () const {
-	const void * voidThis = static_cast<const void*>(this);
 	std::stringstream ss;
-	ss << "BaseObject pointer " << voidThis;
+	ss << "BaseObject pointer [" << this << "]";
 	return ss.str();
 }
 
