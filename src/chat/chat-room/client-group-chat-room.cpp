@@ -960,4 +960,10 @@ bool ClientGroupChatRoom::ephemeralSupportedByAllParticipants () const {
 	return false;
 }
 
+std::string ClientGroupChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Client Group " << ChatRoom::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

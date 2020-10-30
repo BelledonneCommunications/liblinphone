@@ -107,6 +107,8 @@ public:
 		return (getConference() != nullptr);
 	}
 
+	virtual std::string toString() const override;
+
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const std::shared_ptr<ChatRoomParams> &params, const std::shared_ptr<Conference> &conf = nullptr);
 

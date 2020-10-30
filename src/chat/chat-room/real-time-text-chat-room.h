@@ -40,6 +40,8 @@ public:
 	uint32_t getChar () const;
 	std::shared_ptr<Call> getCall () const;
 
+	virtual std::string toString() const override;
+
 private:
 	RealTimeTextChatRoom (const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 

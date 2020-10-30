@@ -74,6 +74,8 @@ public:
 	State getState () const override;
 	void setState (ConferenceInterface::State newState) override;
 
+	virtual std::string toString() const override;
+
 protected:
 	explicit BasicChatRoom (BasicChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 
