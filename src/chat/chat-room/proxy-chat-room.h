@@ -131,6 +131,8 @@ public:
 
 	void setState (ConferenceInterface::State state) override;
 
+	virtual std::string toString() const override;
+
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
 
