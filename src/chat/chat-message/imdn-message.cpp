@@ -90,4 +90,12 @@ ImdnMessage::ImdnMessage (const Context &context) : NotificationMessage(*new Imd
 		d->setEncryptionPrevented(true);
 }
 
+std::string ImdnMessage::toString () const {
+	L_D();
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "ImdnMessage " << voidThis << " in state "  << Utils::toString(d->state);
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
