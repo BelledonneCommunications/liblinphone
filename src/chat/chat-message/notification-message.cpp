@@ -46,8 +46,7 @@ void NotificationMessage::setToBeStored (bool value) {
 
 std::string NotificationMessage::toString () const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "NotificationMessage " << voidThis << " in state "  << Utils::toString(getState());
+	ss << "NotificationMessage [" << this << "] in state "  << Utils::toString(getState());
 	return ss.str();
 }
 
