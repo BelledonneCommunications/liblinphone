@@ -169,4 +169,13 @@ bool Participant::getPreserveSession () const {
 	return preserveSession;
 }
 
+std::string Participant::toString() const {
+	std::stringstream ss;
+	ss << "Participant [" << this << "] created at " << ctime(&creationTime);
+	ss << " is " << (isThisAdmin ? "" : "not") << " admin";
+	ss << " and is " << (isThisFocus ? "" : "not") << " focus";
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

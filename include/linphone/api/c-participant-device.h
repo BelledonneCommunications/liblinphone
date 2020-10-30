@@ -98,6 +98,14 @@ LINPHONE_PUBLIC bool_t linphone_participant_device_is_in_conference (const Linph
 LINPHONE_PUBLIC time_t linphone_participant_device_get_time_of_joining(const LinphoneParticipantDevice *participant_device);
 
 /**
+ * Returns the participant device as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneParticipantDevice object. @notnil
+ * @return the participant device as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_participant_device_to_string (const LinphoneParticipantDevice *participant_device);
+
+/**
  * @}
  */
 

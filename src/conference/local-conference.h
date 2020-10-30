@@ -53,6 +53,8 @@ public:
 
 	virtual void notifyFullState () override;
 
+	virtual std::string toString() const override;
+
 protected:
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalConferenceEventHandler> eventHandler;

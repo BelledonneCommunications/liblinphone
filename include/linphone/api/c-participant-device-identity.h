@@ -62,6 +62,14 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_i
 LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *device_identity);
 
 /**
+ * Returns the participant device identity as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneParticipantDeviceIdentity object. @notnil
+ * @return the participant device identity as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_participant_device_identity_to_string (const LinphoneParticipantDeviceIdentity *device_identity);
+
+/**
  * @}
  */
 

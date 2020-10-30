@@ -116,4 +116,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> LocalConference::notifyParticipantD
 	return Conference::notifyParticipantDeviceRemoved (creationTime,  isFullState, participant, participantDevice);
 }
 
+std::string LocalConference::toString() const {
+	std::stringstream ss;
+	ss << "Local " << Conference::toString();
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
