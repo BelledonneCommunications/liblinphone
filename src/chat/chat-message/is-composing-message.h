@@ -35,6 +35,8 @@ public:
 
 	virtual ~IsComposingMessage () = default;
 
+	virtual std::string toString() const override;
+
 private:
 	IsComposingMessage (
 		const std::shared_ptr<AbstractChatRoom> &chatRoom,

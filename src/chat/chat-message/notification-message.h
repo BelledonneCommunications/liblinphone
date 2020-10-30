@@ -38,6 +38,8 @@ public:
 
 	void setToBeStored (bool value) override;
 
+	virtual std::string toString() const override;
+
 protected:
 	explicit NotificationMessage (NotificationMessagePrivate &p);
 
