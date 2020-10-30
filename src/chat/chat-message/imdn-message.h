@@ -38,6 +38,8 @@ public:
 
 	virtual ~ImdnMessage () = default;
 
+	virtual std::string toString() const override;
+
 private:
 	struct Context {
 		Context (
