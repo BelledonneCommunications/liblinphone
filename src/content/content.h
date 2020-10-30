@@ -93,12 +93,16 @@ public:
 	void setUserData(const Variant &userData);
 	Variant getUserData() const;
 
+	std::string toString () const override;
+
 protected:
 	explicit Content (ContentPrivate &p);
 
 private:
 	L_DECLARE_PRIVATE(Content);
 };
+
+std::ostream &operator<< (std::ostream &os, const Content& content);
 
 LINPHONE_END_NAMESPACE
 
