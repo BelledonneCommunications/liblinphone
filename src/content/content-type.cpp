@@ -233,9 +233,17 @@ string ContentType::getMediaType () const {
 	return toString.str();
 }
 
-ostream &operator<< (ostream &os, const ContentType& contentType) {
-	os << contentType.getMediaType();
-	return os;
+string ContentType::toString () const {
+	std::stringstream ss:
+	ss << getMediaType();
+
+	return ss.str();
 }
+
+/*
+ostream &operator<< (ostream &os, const ContentType& contentType) {
+	return os << contentType.toString();
+}
+*/
 
 LINPHONE_END_NAMESPACE

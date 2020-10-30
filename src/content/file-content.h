@@ -63,6 +63,8 @@ public:
 	 */
 	const std::string getPlainFilePath () const;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(FileContent);
 };
