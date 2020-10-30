@@ -206,7 +206,7 @@ public:
 	
 	// -----------------------------------------------------------------------------
 	std::shared_ptr<CallSession> getActiveSession () const;
-	std::shared_ptr<RealTimeTextChatRoom> getChatRoom ();
+	std::shared_ptr<AbstractChatRoom> getChatRoom ();
 	LinphoneProxyConfig *getDestProxy () const;
 	IceSession *getIceSession () const;
 	unsigned int getAudioStartCount () const;
@@ -283,7 +283,7 @@ private:
 	std::shared_ptr<Participant> mParticipant;
 	mutable LinphonePlayer *mPlayer = nullptr;
 	CallCallbackObj mNextVideoFrameDecoded;
-	mutable std::shared_ptr<RealTimeTextChatRoom> mChatRoom = nullptr;
+	mutable std::shared_ptr<AbstractChatRoom> mChatRoom = nullptr;
 	bool mPlayingRingbackTone = false;
 
 	BackgroundTask mBgTask;
