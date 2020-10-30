@@ -1392,11 +1392,10 @@ void ServerGroupChatRoom::subscribeReceived (LinphoneEvent *event) {
 	static_pointer_cast<LocalConference>(getConference())->subscribeReceived(event);
 }
 
-// -----------------------------------------------------------------------------
-
-ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
-	// TODO: Is conference ID needed to be stored in both remote conference and chat room base classes?
-	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().toString() << "]";
+std::string ServerGroupChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Server Group " << ChatRoom::toString();
+	return ss.str();
 }
 
 LINPHONE_END_NAMESPACE

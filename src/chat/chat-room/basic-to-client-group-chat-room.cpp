@@ -168,4 +168,10 @@ void BasicToClientGroupChatRoom::migrate(const std::shared_ptr<ClientGroupChatRo
 	}
 }
 
+std::string BasicToClientGroupChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Basic to Client Group " << ProxyChatRoom::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

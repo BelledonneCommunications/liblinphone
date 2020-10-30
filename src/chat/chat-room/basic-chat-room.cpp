@@ -184,4 +184,11 @@ void BasicChatRoom::setState (ConferenceInterface::State newState) {
 ConferenceInterface::State BasicChatRoom::getState () const {
 	return state;
 }
+
+std::string BasicChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Basic " << ChatRoom::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

@@ -44,6 +44,8 @@ public:
 		const std::shared_ptr<AbstractChatRoom> &chatRoom
 	);
 
+	virtual std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(BasicToClientGroupChatRoom);
 	L_DISABLE_COPY(BasicToClientGroupChatRoom);

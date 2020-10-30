@@ -124,4 +124,10 @@ bool ClientGroupToBasicChatRoom::addParticipants (
 	return ProxyChatRoom::addParticipants(addresses);
 }
 
+std::string ClientGroupToBasicChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Client Group To Basic " << ProxyChatRoom::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

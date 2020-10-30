@@ -22,6 +22,7 @@
 #include "content/content-disposition.h"
 #include "logger/logger.h"
 #include "sip-tools/sip-headers.h"
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -91,10 +92,9 @@ ImdnMessage::ImdnMessage (const Context &context) : NotificationMessage(*new Imd
 }
 
 std::string ImdnMessage::toString () const {
-	L_D();
 	std::stringstream ss;
 	const void * voidThis = static_cast<const void*>(this);
-	ss << "ImdnMessage " << voidThis << " in state "  << Utils::toString(d->state);
+	ss << "ImdnMessage " << voidThis << " in state "  << Utils::toString(getState());
 	return ss.str();
 }
 

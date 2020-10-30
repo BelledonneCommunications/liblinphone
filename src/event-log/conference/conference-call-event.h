@@ -35,6 +35,8 @@ public:
 
 	std::shared_ptr<Call> getCall () const;
 
+	virtual std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceCallEvent);
 	L_DISABLE_COPY(ConferenceCallEvent);
