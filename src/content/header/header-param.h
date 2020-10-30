@@ -60,6 +60,8 @@ private:
 	L_DECLARE_PRIVATE(HeaderParam);
 };
 
+std::ostream &operator<< (std::ostream &os, const HeaderParam& headerParam);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_HEADER_PARAM_H_
