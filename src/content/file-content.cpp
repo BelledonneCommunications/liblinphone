@@ -197,4 +197,15 @@ const string FileContent::getPlainFilePath() const {
 	return plainPath;
 }
 
+std::string FileContent::toString () const {
+	L_D();
+	std::stringstream ss:
+	ss << "File " << Content::toString();
+	ss << " filepath: " << d->filePath;
+	ss << " filename: " << d->fileName;
+	ss << " file size: " << d->fileSize;
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
