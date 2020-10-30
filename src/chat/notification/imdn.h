@@ -55,7 +55,7 @@ public:
 	};
 
 	Imdn (ChatRoom *chatRoom);
-	~Imdn ();
+	virtual ~Imdn ();
 
 	void notifyDelivery (const std::shared_ptr<ChatMessage> &message);
 	void notifyDeliveryError (const std::shared_ptr<ChatMessage> &message, LinphoneReason reason);
@@ -74,6 +74,8 @@ public:
 	static void parse (const std::shared_ptr<ChatMessage> &chatMessage);
 	static bool isError (const std::shared_ptr<ChatMessage> &chatMessage);
 
+	virtual std::string toString() const;
+
 private:
 	LinphoneProxyConfig *getRelatedProxyConfig();
 	static int timerExpired (void *data, unsigned int revents);
@@ -82,7 +84,6 @@ private:
 	void startTimer ();
 	void stopTimer ();
 
-private:
 	ChatRoom *chatRoom = nullptr;
 	std::list<std::shared_ptr<ChatMessage>> deliveredMessages;
 	std::list<std::shared_ptr<ChatMessage>> displayedMessages;
