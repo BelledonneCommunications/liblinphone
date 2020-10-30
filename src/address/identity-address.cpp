@@ -151,7 +151,7 @@ IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
 	return address;
 }
 
-string IdentityAddress::asString () const {
+string IdentityAddress::toString () const {
 	ostringstream res;
 	res << scheme << ":";
 	if (!username.empty()){
@@ -204,11 +204,11 @@ bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
 	return diff < 0;
 }
 
-std::string ConferenceAddress::asString () const {
+std::string ConferenceAddress::toString () const {
 	if (mConfId.empty())
-		return IdentityAddress::asString();
+		return IdentityAddress::toString();
 	else {
-		return IdentityAddress::asString() + ";conf-id="+mConfId;
+		return IdentityAddress::toString() + ";conf-id="+mConfId;
 	}
 }
 

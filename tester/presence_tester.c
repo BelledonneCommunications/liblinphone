@@ -33,7 +33,7 @@ static LinphoneCoreManager* presence_linphone_core_manager_new_with_rc_name(char
 	mgr->identity= linphone_core_get_primary_contact_parsed(mgr->lc);
 	linphone_address_set_username(mgr->identity,username);
 	linphone_address_set_port(mgr->identity, tr.udp_port);
-	identity_char=linphone_address_as_string(mgr->identity);
+	identity_char=linphone_address_to_string(mgr->identity);
 	linphone_core_set_primary_contact(mgr->lc,identity_char);
 	ms_free(identity_char);
 	return mgr;
@@ -47,7 +47,7 @@ static bool_t subscribe_to_callee_presence(LinphoneCoreManager* caller_mgr,Linph
 	stats initial_caller=caller_mgr->stat;
 	stats initial_callee=callee_mgr->stat;
 	bool_t result=FALSE;
-	char* identity=linphone_address_as_string(callee_mgr->identity);
+	char* identity=linphone_address_to_string(callee_mgr->identity);
 
 
 	LinphoneFriend* friend=linphone_core_create_friend_with_address(caller_mgr->lc,identity);
@@ -81,7 +81,7 @@ static void subscribe_failure_handle_by_app(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 	LinphoneProxyConfig* config;
 	LinphoneFriend* lf;
-	char* lf_identity=linphone_address_as_string_uri_only(pauline->identity);
+	char* lf_identity=linphone_address_to_string_uri_only(pauline->identity);
 
 	config = linphone_core_get_default_proxy_config(marie->lc);
 
@@ -132,7 +132,7 @@ static void simple_subscribe_with_early_notify(void) {
 	LinphoneAddress *marie_identity_addr = linphone_address_clone(marie->identity);
 	LpConfig *pauline_lp;
 
-	char* pauline_identity=linphone_address_as_string_uri_only(pauline->identity);
+	char* pauline_identity=linphone_address_to_string_uri_only(pauline->identity);
 	char* marie_identity;
 
 	LinphoneFriend* pauline_s_friend;
@@ -151,7 +151,7 @@ static void simple_subscribe_with_early_notify(void) {
 	/*to simulate pending state.*/
 
 	linphone_address_set_port(marie_identity_addr, 0); /*we remove the port because friends aren't supposed to have port numbers*/
-	marie_identity=linphone_address_as_string_uri_only(marie_identity_addr);
+	marie_identity=linphone_address_to_string_uri_only(marie_identity_addr);
 	pauline_s_friend=linphone_core_create_friend_with_address(pauline->lc,marie_identity);
 	linphone_friend_enable_subscribes(pauline_s_friend, FALSE);
 	linphone_core_add_friend(pauline->lc,pauline_s_friend);

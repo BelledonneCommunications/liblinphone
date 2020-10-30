@@ -250,7 +250,7 @@ static void linphone_interpret_url_test(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_scheme(address), "sip");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_username(address), "#24");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(address), "sip.linphone.org");
-	tmp = linphone_address_as_string(address);
+	tmp = linphone_address_to_string(address);
 	BC_ASSERT_TRUE(strcmp (tmp,"sip:%2324@sip.linphone.org") == 0);
 	linphone_address_unref(address);
 
@@ -266,7 +266,7 @@ static void linphone_interpret_url_test(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_scheme(address), "sip");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_username(address), "paul ine");
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(address), "sip.linphone.org");
-	tmp = linphone_address_as_string(address);
+	tmp = linphone_address_to_string(address);
 	BC_ASSERT_TRUE(strcmp (tmp,"sip:paul%20ine@sip.linphone.org") == 0);
 	linphone_address_unref(address);
 
@@ -1719,7 +1719,7 @@ static void search_friend_chat_room_remote(void) {
 	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
 	BC_ASSERT_PTR_NOT_NULL(room);
 
-	char *addr = linphone_address_as_string_uri_only(pauline->identity);
+	char *addr = linphone_address_to_string_uri_only(pauline->identity);
 	magicSearch = linphone_magic_search_new(marie->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {

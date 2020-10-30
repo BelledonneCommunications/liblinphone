@@ -365,7 +365,7 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	} else {
 		// Searching remote conference to terminate it
 		if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+			char * remoteContactAddressStr = sal_address_to_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
 
@@ -405,7 +405,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		{
 			// If it is not in a conference, the remote conference must be terminated if it exists
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				char * remoteContactAddressStr = sal_address_to_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
@@ -434,7 +434,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::UpdatedByRemote:
 		{
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				char * remoteContactAddressStr = sal_address_to_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
@@ -479,7 +479,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			}
 
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				char * remoteContactAddressStr = sal_address_to_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 

@@ -137,7 +137,7 @@ static void chat_message_multipart_modifier_base(bool first_file_transfer, bool 
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
 
-	char *paulineUriStr = linphone_address_as_string_uri_only(pauline->identity);
+	char *paulineUriStr = linphone_address_to_string_uri_only(pauline->identity);
 	IdentityAddress paulineAddress(paulineUriStr);
 	bctbx_free(paulineUriStr);
 	shared_ptr<AbstractChatRoom> marieRoom = marie->lc->cppPtr->getOrCreateBasicChatRoom(paulineAddress);

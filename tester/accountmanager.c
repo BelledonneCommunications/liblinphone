@@ -173,7 +173,7 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_address_set_password(tmp_identity,account->password);
 	linphone_address_set_header(tmp_identity,"X-Create-Account","yes");
 	if (phone_alias) linphone_address_set_header(tmp_identity, "X-Phone-Alias", phone_alias);
-	tmp=linphone_address_as_string(tmp_identity);
+	tmp=linphone_address_to_string(tmp_identity);
 	linphone_proxy_config_set_identity_address(cfg,tmp_identity);
 	ms_free(tmp);
 	linphone_address_unref(tmp_identity);
@@ -182,7 +182,7 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_address_set_secure(server_addr, FALSE);
 	linphone_address_set_transport(server_addr,LinphoneTransportTcp); // use tcp for account creation, we may not have certificates configured at this stage
 	linphone_address_set_port(server_addr,0);
-	tmp=linphone_address_as_string(server_addr);
+	tmp=linphone_address_to_string(server_addr);
 	linphone_proxy_config_set_server_addr(cfg,tmp);
 	ms_free(tmp);
 	linphone_address_unref(server_addr);
@@ -199,7 +199,7 @@ void account_create_on_server(Account *account, const LinphoneProxyConfig *refcf
 	linphone_proxy_config_edit(cfg);
 	tmp_identity=linphone_address_clone(account->modified_identity);
 	linphone_address_set_secure(tmp_identity, FALSE);
-	tmp=linphone_address_as_string(tmp_identity);
+	tmp=linphone_address_to_string(tmp_identity);
 	linphone_proxy_config_set_identity_address(cfg,tmp_identity); // remove the X-Create-Account header
 	linphone_address_unref(tmp_identity);
 	ms_free(tmp);

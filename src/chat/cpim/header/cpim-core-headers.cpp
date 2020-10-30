@@ -82,7 +82,7 @@ string Cpim::ContactHeader::getValue () const {
 	return result;
 }
 
-string Cpim::ContactHeader::asString () const {
+string Cpim::ContactHeader::toString () const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -169,7 +169,7 @@ string Cpim::DateTimeHeader::getValue () const {
  	return ss.str();
 }
 
-string Cpim::DateTimeHeader::asString () const {
+string Cpim::DateTimeHeader::toString () const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -233,7 +233,7 @@ string Cpim::NsHeader::getValue () const {
 	return ns + "<" + d->uri + ">";
 }
 
-string Cpim::NsHeader::asString () const {
+string Cpim::NsHeader::toString () const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -280,7 +280,7 @@ string Cpim::RequireHeader::getValue () const {
 	return requires;
 }
 
-string Cpim::RequireHeader::asString () const {
+string Cpim::RequireHeader::toString () const {
 	return getName() + ": " + getValue() + "\r\n";
 }
 
@@ -329,7 +329,7 @@ string Cpim::SubjectHeader::getValue () const {
 	return languageParam + " " + d->subject;
 }
 
-string Cpim::SubjectHeader::asString () const {
+string Cpim::SubjectHeader::toString () const {
 	return getName() + ":" + getValue() + "\r\n";
 }
 

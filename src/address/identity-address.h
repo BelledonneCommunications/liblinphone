@@ -67,7 +67,7 @@ public:
 
 	IdentityAddress getAddressWithoutGruu () const;
 
-	virtual std::string asString () const;
+	virtual std::string toString () const;
 
 private:
 	std::string scheme;
@@ -77,7 +77,7 @@ private:
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {
-	os << "IdentityAddress(" << identityAddress.asString() << ")";
+	os << "IdentityAddress(" << identityAddress.toString() << ")";
 	return os;
 }
 class LINPHONE_PUBLIC ConferenceAddress : public IdentityAddress {
@@ -104,7 +104,7 @@ public:
 
 	bool operator< (const ConferenceAddress &other) const;
 
-	virtual std::string asString () const override;
+	virtual std::string toString () const override;
 
 	bool hasConfId () const;
 	const std::string &getConfId () const;
@@ -122,7 +122,7 @@ namespace std {
 	struct hash<LinphonePrivate::IdentityAddress> {
 		std::size_t operator() (const LinphonePrivate::IdentityAddress &identityAddress) const {
 			if (!identityAddress.isValid()) return std::size_t(-1);
-			return hash<string>()(identityAddress.asString());
+			return hash<string>()(identityAddress.toString());
 		}
 	};
 }
