@@ -275,8 +275,8 @@ class JavaTranslator(object):
         methodDict['hasListReturn'] = methodDict['return'] == 'jobjectArray'
         methodDict['hasByteArrayReturn'] = methodDict['return'] == 'jbyteArray'
         methodDict['hasReturn'] = not methodDict['return'] == 'void' and not methodDict['hasListReturn'] and not methodDict['hasByteArrayReturn']
-        methodDict['hasStringReturn'] = methodDict['return'] == 'jstring'
-        methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['hasStringReturn'] and not methodDict['hasByteArrayReturn']
+        methodDict['htoStringReturn'] = methodDict['return'] == 'jstring'
+        methodDict['hasNormalReturn'] = not methodDict['hasListReturn'] and not methodDict['htoStringReturn'] and not methodDict['hasByteArrayReturn']
         methodDict['name'] = 'Java_' + self.jni_package + className + 'Impl_' + _method.name.translate(self.nameTranslator)
         methodDict['notStatic'] = not static
         methodDict['isConst'] = _method.returnType.isconst

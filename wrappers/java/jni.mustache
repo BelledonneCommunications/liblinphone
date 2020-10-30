@@ -612,11 +612,11 @@ JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	jbyteArray array = env->NewByteArray((int)jni_result_length);
 	env->SetByteArrayRegion(array, 0, (int)jni_result_length, (const jbyte*)jni_result);
 	return array;
-	{{/hasByteArrayReturn}}{{#hasStringReturn}}
+	{{/hasByteArrayReturn}}{{#htoStringReturn}}
 	{{#isConst}}const {{/isConst}}char *c_string = {{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}){{/returnObject}};
 	jstring jni_result = (c_string != nullptr) ? get_jstring_from_char(env, c_string) : nullptr;
 	{{#isNotConst}}bctbx_free(c_string);{{/isNotConst}}
-	{{/hasStringReturn}}{{#hasNormalReturn}}
+	{{/htoStringReturn}}{{#hasNormalReturn}}
 	{{#hasReturn}}{{return}} jni_result = ({{return}}){{#returnObject}}get{{returnClassName}}(env, (Linphone{{returnClassName}} *){{/returnObject}}{{/hasReturn}}{{c_name}}({{#notStatic}}cptr{{/notStatic}}{{params_impl}}){{#returnObject}}, {{takeRefOnReturnedObject}}){{/returnObject}};
 	{{/hasNormalReturn}}{{#strings}}
 	ReleaseStringUTFChars(env, {{string}}, c_{{string}});

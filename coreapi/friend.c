@@ -277,7 +277,7 @@ void linphone_core_interpret_friend_uri(LinphoneCore *lc, const char *uri, char 
 			if ((id!=NULL) && (uri[0] != '\0')){
 				linphone_address_set_display_name(id,NULL);
 				linphone_address_set_username(id,uri);
-				*result=linphone_address_as_string(id);
+				*result=linphone_address_to_string(id);
 				linphone_address_unref(id);
 			}
 		}
@@ -288,7 +288,7 @@ void linphone_core_interpret_friend_uri(LinphoneCore *lc, const char *uri, char 
 			ms_warning("Fail to interpret friend uri %s",uri);
 		}
 	}else {
-		*result=linphone_address_as_string(fr);
+		*result=linphone_address_to_string(fr);
 		linphone_address_unref(fr);
 	}
 }
@@ -364,12 +364,12 @@ LinphoneStatus linphone_friend_set_address(LinphoneFriend *lf, const LinphoneAdd
 	char *address;
 	const LinphoneAddress *mAddr = linphone_friend_get_address(lf);
 	if (mAddr && lf->friend_list) {
-		char *mainAddress = linphone_address_as_string_uri_only(mAddr);
+		char *mainAddress = linphone_address_to_string_uri_only(mAddr);
 		remove_friend_from_list_map_if_already_in_it(lf, mainAddress);
 	}
 	linphone_address_clean(fr);
 
-	address = linphone_address_as_string_uri_only(fr);
+	address = linphone_address_to_string_uri_only(fr);
 	if (lf->friend_list) {
 		add_friend_to_list_map_if_not_in_it_yet(lf, address);
 	}
@@ -398,7 +398,7 @@ void linphone_friend_add_address(LinphoneFriend *lf, const LinphoneAddress *addr
 	fr = linphone_address_clone(addr);
 	linphone_address_clean(fr);
 
-	uri = linphone_address_as_string_uri_only(fr);
+	uri = linphone_address_to_string_uri_only(fr);
 	if (lf->friend_list) {
 		add_friend_to_list_map_if_not_in_it_yet(lf, uri);
 	}
@@ -431,7 +431,7 @@ void linphone_friend_remove_address(LinphoneFriend *lf, const LinphoneAddress *a
 	char *address ;
 	if (!lf || !addr || !lf->vcard) return;
 
-	address = linphone_address_as_string_uri_only(addr);
+	address = linphone_address_to_string_uri_only(addr);
 	if (lf->friend_list) {
 		remove_friend_from_list_map_if_already_in_it(lf, address);
 	}
@@ -544,7 +544,7 @@ void linphone_friend_notify(LinphoneFriend *lf, LinphonePresenceModel *presence)
 	if (lf->insubs){
 		const LinphoneAddress *addr = linphone_friend_get_address(lf);
 		if (addr) {
-			char *addr_str = linphone_address_as_string(addr);
+			char *addr_str = linphone_address_to_string(addr);
 			ms_message("Want to notify %s", addr_str);
 			ms_free(addr_str);
 		}
@@ -644,7 +644,7 @@ static belle_sip_error_code _linphone_friend_marshall(belle_sip_object_t *obj, c
 	LinphoneFriend *lf = (LinphoneFriend*)obj;
 	belle_sip_error_code err = BELLE_SIP_OK;
 	if (lf->uri){
-		char *tmp = linphone_address_as_string(lf->uri);
+		char *tmp = linphone_address_to_string(lf->uri);
 		err = belle_sip_snprintf(buff, buff_size, offset, "%s", tmp);
 		ms_free(tmp);
 	}
@@ -689,7 +689,7 @@ LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *lf){
 		if (nb_activities > 1) {
 			char *tmp = NULL;
 			const LinphoneAddress *addr = linphone_friend_get_address(lf);
-			if (addr) tmp = linphone_address_as_string(addr);
+			if (addr) tmp = linphone_address_to_string(addr);
 			ms_warning("Friend %s has several activities, get status from the first one", tmp ? tmp : "unknown");
 			if (tmp) {
 				ms_free(tmp);
@@ -767,7 +767,7 @@ const LinphonePresenceModel * linphone_friend_get_presence_model(const LinphoneF
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(const_lf, uri);
 		ms_free(uri);
 		if (presence) break;
@@ -798,7 +798,7 @@ const LinphonePresenceModel * linphone_friend_get_presence_model_for_uri_or_tel(
 void linphone_friend_set_presence_model(LinphoneFriend *lf, LinphonePresenceModel *presence) {
 	const LinphoneAddress *addr = linphone_friend_get_address(lf);
 	if (addr) {
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		linphone_friend_set_presence_model_for_uri_or_tel(lf, uri, presence);
 		ms_free(uri);
 	}
@@ -839,7 +839,7 @@ void linphone_friend_update_subscribes(LinphoneFriend *fr, bool_t only_when_regi
 		if (addr != NULL) {
 			LinphoneProxyConfig *cfg=linphone_core_lookup_known_proxy(fr->lc, addr);
 			if (cfg && cfg->state!=LinphoneRegistrationOk){
-				char *tmp=linphone_address_as_string(addr);
+				char *tmp=linphone_address_to_string(addr);
 				ms_message("Friend [%s] belongs to proxy config with identity [%s], but this one isn't registered. Subscription is suspended.",
 					tmp,linphone_proxy_config_get_identity(cfg));
 				ms_free(tmp);
@@ -1574,7 +1574,7 @@ void linphone_core_store_friend_in_db(LinphoneCore *lc, LinphoneFriend *lf) {
 
 		if (linphone_core_vcard_supported()) vcard = linphone_friend_get_vcard(lf);
 		addr = linphone_friend_get_address(lf);
-		if (addr != NULL) addr_str = linphone_address_as_string(addr);
+		if (addr != NULL) addr_str = linphone_address_to_string(addr);
 		if (lf->storage_id > 0) {
 			buf = sqlite3_mprintf("UPDATE friends SET friend_list_id=%u,sip_uri=%Q,subscribe_policy=%i,send_subscribe=%i,ref_key=%Q,vCard=%Q,vCard_etag=%Q,vCard_url=%Q,presence_received=%i WHERE (id = %u);",
 				lf->friend_list->storage_id,
@@ -1703,7 +1703,7 @@ void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, Lin
 	iterator = (bctbx_list_t *)addresses;
 	while (iterator) {
 		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
-		char *uri = linphone_address_as_string_uri_only(lfaddr);
+		char *uri = linphone_address_to_string_uri_only(lfaddr);
 		if (uri) {
 			add_friend_to_list_map_if_not_in_it_yet(lf, uri);
 			ms_free(uri);
@@ -1857,7 +1857,7 @@ int linphone_friend_get_capabilities(const LinphoneFriend *lf) {
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
 		ms_free(uri);
 
@@ -1888,7 +1888,7 @@ bool_t linphone_friend_has_capability_with_version(const LinphoneFriend *lf, con
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
 		ms_free(uri);
 
@@ -1915,7 +1915,7 @@ bool_t linphone_friend_has_capability_with_version_or_more(const LinphoneFriend 
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
 		ms_free(uri);
 
@@ -1942,7 +1942,7 @@ float linphone_friend_get_capability_version(const LinphoneFriend *lf, const Lin
 
 	for (it = (bctbx_list_t *)addrs; it!= NULL; it = it->next) {
 		LinphoneAddress *addr = (LinphoneAddress*)it->data;
-		char *uri = linphone_address_as_string_uri_only(addr);
+		char *uri = linphone_address_to_string_uri_only(addr);
 		presence = linphone_friend_get_presence_model_for_uri_or_tel(lf, uri);
 		ms_free(uri);
 

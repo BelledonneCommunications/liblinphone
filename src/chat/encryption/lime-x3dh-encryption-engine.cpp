@@ -159,9 +159,9 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	// We use a shared_ptr here due to non synchronism with the lambda in the encrypt method
 	shared_ptr<ChatMessageModifier::Result> result =  make_shared<ChatMessageModifier::Result>(ChatMessageModifier::Result::Suspended);
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress().asString();
+	const string &localDeviceId = chatRoom->getLocalAddress().toString();
 	const IdentityAddress &peerAddress = chatRoom->getPeerAddress();
-	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().asString());
+	shared_ptr<const string> recipientUserId = make_shared<const string>(peerAddress.getAddressWithoutGruu().toString());
 
 	// Check if chatroom is encrypted or not
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
@@ -189,7 +189,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 		int nbDevice = 0;
 		const list<shared_ptr<ParticipantDevice>> devices = participant->getDevices();
 		for (const shared_ptr<ParticipantDevice> &device : devices) {
-			recipients->emplace_back(device->getAddress().asString());
+			recipients->emplace_back(device->getAddress().toString());
 			nbDevice++;
 		}
 		if (nbDevice > maxNbDevicePerParticipant) tooManyDevices = TRUE;
@@ -200,7 +200,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processOutgoingMessage (
 	const list<shared_ptr<ParticipantDevice>> senderDevices = chatRoom->getMe()->getDevices();
 	for (const auto &senderDevice : senderDevices) {
 		if (senderDevice->getAddress() != chatRoom->getLocalAddress()) {
-			recipients->emplace_back(senderDevice->getAddress().asString());
+			recipients->emplace_back(senderDevice->getAddress().toString());
 			nbDevice++;
 		}
 	}
@@ -338,8 +338,8 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 	int &errorCode
 ) {
 	const shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress().asString();
-	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().asString();
+	const string &localDeviceId = chatRoom->getLocalAddress().toString();
+	const string &recipientUserId = chatRoom->getPeerAddress().getAddressWithoutGruu().toString();
 
 	// Check if chatroom is encrypted or not
 	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Encrypted) {
@@ -385,7 +385,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		senderDeviceId = ccmm.parseMinimalCpimContentInLimeMessage(message, content);
 		if (senderDeviceId != "") {
 			IdentityAddress tmpIdentityAddress(senderDeviceId);
-			senderDeviceId = tmpIdentityAddress.asString();
+			senderDeviceId = tmpIdentityAddress.toString();
 			cpimFound = true;
 		}
 	}
@@ -403,7 +403,7 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 			size_t contactPosition = senderDeviceId.find(toErase);
 			if (contactPosition != string::npos) senderDeviceId.erase(contactPosition, toErase.length());
 			IdentityAddress tmpIdentityAddress(senderDeviceId);
-			senderDeviceId = tmpIdentityAddress.asString();
+			senderDeviceId = tmpIdentityAddress.toString();
 		}
 	}
 
@@ -635,10 +635,10 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 		lWarning() << "[LIME] No contactAddress available, unable to setup identity key for ZRTP auxiliary shared secret";
 		return {};
 	}
-	char *identity = linphone_address_as_string(contactAddress);
+	char *identity = linphone_address_to_string(contactAddress);
 	IdentityAddress identityAddress = IdentityAddress(identity);
 	ms_free(identity);
-	string localDeviceId = identityAddress.asString();
+	string localDeviceId = identityAddress.toString();
 	vector<uint8_t> Ik;
 
 	try {
@@ -844,7 +844,7 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 	const shared_ptr<AbstractChatRoom> &chatRoom,
 	ChatRoom::SecurityLevel currentSecurityLevel
 ) {
-	lime::PeerDeviceStatus newDeviceStatus = limeManager->get_peerDeviceStatus(newDeviceAddr.asString());
+	lime::PeerDeviceStatus newDeviceStatus = limeManager->get_peerDeviceStatus(newDeviceAddr.toString());
 	int maxNbDevicesPerParticipant = linphone_config_get_int(linphone_core_get_config(L_GET_C_BACK_PTR(getCore())), "lime", "max_nb_device_per_participant", INT_MAX);
 	int nbDevice = int(participant->getDevices().size());
 	shared_ptr<ConferenceSecurityEvent> securityEvent = nullptr;
@@ -858,13 +858,13 @@ shared_ptr<ConferenceSecurityEvent> LimeX3dhEncryptionEngine::onDeviceAdded (
 			ConferenceSecurityEvent::SecurityEventType::ParticipantMaxDeviceCountExceeded,
 			newDeviceAddr
 		);
-		limeManager->set_peerDeviceStatus(newDeviceAddr.asString(), lime::PeerDeviceStatus::unsafe);
+		limeManager->set_peerDeviceStatus(newDeviceAddr.toString(), lime::PeerDeviceStatus::unsafe);
 	}
 
 	// Otherwise if the chatroom security level was degraded a corresponding security event is created
 	else {
 		if ((currentSecurityLevel == ChatRoom::SecurityLevel::Safe) && (newDeviceStatus != lime::PeerDeviceStatus::trusted)) {
-			lInfo() << "[LIME] chat room security level degraded by " << newDeviceAddr.asString();
+			lInfo() << "[LIME] chat room security level degraded by " << newDeviceAddr.toString();
 			securityEvent = make_shared<ConferenceSecurityEvent>(
 				time(nullptr),
 				chatRoom->getConferenceId(),
@@ -910,9 +910,9 @@ void LimeX3dhEncryptionEngine::onRegistrationStateChanged (
 		return;
 	}
 
-	char *contactAddress = linphone_address_as_string_uri_only(linphone_proxy_config_get_contact(cfg));
+	char *contactAddress = linphone_address_to_string_uri_only(linphone_proxy_config_get_contact(cfg));
 	IdentityAddress identityAddress = IdentityAddress(contactAddress);
-	string localDeviceId = identityAddress.asString();
+	string localDeviceId = identityAddress.toString();
 	if (contactAddress)
 		ms_free(contactAddress);
 

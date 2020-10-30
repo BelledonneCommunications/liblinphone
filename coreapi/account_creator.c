@@ -126,7 +126,7 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 			}
 		}
 
-		identity = linphone_address_as_string(addr);
+		identity = linphone_address_to_string(addr);
 		linphone_address_unref(addr);
 		end:
 		linphone_proxy_config_unref(proxy);
@@ -165,7 +165,7 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 		LinphoneAddress *proxy_addr = linphone_address_new(url);
 		if (proxy_addr) {
 			linphone_address_set_transport(proxy_addr, creator->transport);
-			linphone_proxy_config_set_server_addr(cfg, linphone_address_as_string_uri_only(proxy_addr));
+			linphone_proxy_config_set_server_addr(cfg, linphone_address_to_string_uri_only(proxy_addr));
 			linphone_address_unref(proxy_addr);
 		} else {
 			linphone_proxy_config_set_server_addr(cfg, creator->domain);

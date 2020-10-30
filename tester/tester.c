@@ -495,7 +495,7 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
 	LinphoneCore *core = linphone_conference_get_core(conference);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
-	char * addr_str = linphone_conference_get_conference_address_as_string(conference);
+	char * addr_str = linphone_conference_get_conference_address_to_string(conference);
 
 	if (addr_str) {
 		//ms_message("Conference [%s] state changed: %s", addr_str, linphone_conference_state_to_string(newState));
@@ -2001,8 +2001,8 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 
 	if (linphone_call_is_op_configured(call)) {
 		LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-		char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
-		char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
+		char* to=linphone_address_to_string(linphone_call_log_get_to_address(calllog));
+		char* from=linphone_address_to_string(linphone_call_log_get_from_address(calllog));
 
 		const LinphoneAddress *to_addr = linphone_call_get_to_address(call);
 		const LinphoneAddress *remote_addr = linphone_call_get_remote_address(call);
@@ -2048,7 +2048,7 @@ void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState 
 }
 
 void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage* msg) {
-	char* from=linphone_address_as_string(linphone_chat_message_get_from_address(msg));
+	char* from=linphone_address_to_string(linphone_chat_message_get_from_address(msg));
 	stats* counters;
 	const char *text=linphone_chat_message_get_text(msg);
 	const char *external_body_url=linphone_chat_message_get_external_body_url(msg);
@@ -2091,7 +2091,7 @@ void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char
 	char *ipaddr;
 
 	if (addr != NULL) {
-		char* from=linphone_address_as_string(addr);
+		char* from=linphone_address_to_string(addr);
 		ms_message("New subscription request from [%s] url [%s]",from,url);
 		ms_free(from);
 	}
@@ -2120,7 +2120,7 @@ void notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	unsigned int i;
 	const LinphoneAddress *addr = linphone_friend_get_address(lf);
 	if (addr != NULL) {
-		char* from=linphone_address_as_string(addr);
+		char* from=linphone_address_to_string(addr);
 		ms_message("New Notify request from [%s] ",from);
 		ms_free(from);
 	}
@@ -2219,7 +2219,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 		const LinphoneAddress *la = (linphone_search_result_get_address(sr)) ?
 			linphone_search_result_get_address(sr) : linphone_friend_get_address(lf);
 		if (la) {
-			char* fa = linphone_address_as_string(la);
+			char* fa = linphone_address_to_string(la);
 			BC_ASSERT_STRING_EQUAL(fa , uri);
 			free(fa);
 			return;
@@ -2240,7 +2240,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 			const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallIncoming) ?
 			linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
 			if (addr) {
-				char *addrUri = linphone_address_as_string_uri_only(addr);
+				char *addrUri = linphone_address_to_string_uri_only(addr);
 				if (addrUri && strcmp(addrUri, uri) == 0) {
 					bctbx_free(addrUri);
 					return;
@@ -2255,8 +2255,8 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
-	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* to=linphone_address_to_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_to_string(linphone_call_log_get_to_address(clog));
 	stats* counters;
 	ms_message("Transferred call from [%s] to [%s], new state is [%s]",from,to,linphone_call_state_to_string(new_call_state));
 	ms_free(to);
@@ -2291,9 +2291,9 @@ void linphone_subscription_state_change(LinphoneCore *lc, LinphoneEvent *lev, Li
 	LinphoneCoreManager *mgr=get_manager(lc);
 	LinphoneContent* content;
 	const LinphoneAddress* from_addr = linphone_event_get_from(lev);
-	char* from = linphone_address_as_string(from_addr);
+	char* from = linphone_address_to_string(from_addr);
 	const LinphoneAddress* to_addr = linphone_event_get_to(lev);
-	char* to = linphone_address_as_string(to_addr);
+	char* to = linphone_address_to_string(to_addr);
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content,"application");
 	linphone_content_set_subtype(content,"somexml2");
@@ -2372,7 +2372,7 @@ void linphone_subscribe_received(LinphoneCore *lc, LinphoneEvent *lev, const cha
 void linphone_publish_state_changed(LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
 	stats* counters = get_stats(lc);
 	const LinphoneAddress* from_addr = linphone_event_get_from(ev);
-	char* from = linphone_address_as_string(from_addr);
+	char* from = linphone_address_to_string(from_addr);
 	ms_message("Publish state [%s] from [%s]",linphone_publish_state_to_string(state),from);
 	ms_free(from);
 	switch(state){
@@ -2407,8 +2407,8 @@ void linphone_configuration_status(LinphoneCore *lc, LinphoneConfiguringState st
 
 void linphone_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token) {
 	LinphoneCallLog *calllog = linphone_call_get_call_log(call);
-	char* to=linphone_address_as_string(linphone_call_log_get_to_address(calllog));
-	char* from=linphone_address_as_string(linphone_call_log_get_from_address(calllog));
+	char* to=linphone_address_to_string(linphone_call_log_get_to_address(calllog));
+	char* from=linphone_address_to_string(linphone_call_log_get_from_address(calllog));
 	stats* counters;
 	ms_message(" %s call from [%s] to [%s], is now [%s]",linphone_call_log_get_dir(calllog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 		   ,from
@@ -2621,7 +2621,7 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	int progress = (int)((offset * 100)/total);
 	LinphoneCore *lc = linphone_chat_message_get_core(msg);
 	stats *counters = get_stats(lc);
-	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+	char *address = linphone_address_to_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
@@ -3015,7 +3015,7 @@ static void linphone_conference_server_refer_received(LinphoneCore *core, const 
 	method[sizeof(method) - 1] = '\0';
 	if(strcmp(method, "BYE") == 0) {
 		linphone_address_clean(refer_to_addr);
-		uri = linphone_address_as_string_uri_only(refer_to_addr);
+		uri = linphone_address_to_string_uri_only(refer_to_addr);
 		call = linphone_core_find_call_from_uri(core, uri);
 		if(call) linphone_call_terminate(call);
 		ms_free(uri);

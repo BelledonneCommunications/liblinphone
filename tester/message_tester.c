@@ -345,7 +345,7 @@ static void text_message_compatibility_mode(void) {
 	/*only keep tcp*/
 	LCSipTransports transport = {0,-1,0,0};
 	linphone_address_clean(proxy_address);
-	tmp=linphone_address_as_string_uri_only(proxy_address);
+	tmp=linphone_address_to_string_uri_only(proxy_address);
 	linphone_proxy_config_set_server_addr(proxy,tmp);
 	sprintf(route,"sip:%s",test_route);
 	linphone_proxy_config_set_route(proxy,route);
@@ -1540,8 +1540,8 @@ static int enable_lime_for_message_test(LinphoneCoreManager *marie, LinphoneCore
 	bc_free(filepath);
 
 	/* caches are empty, populate them */
-	paulineUri =  linphone_address_as_string_uri_only(pauline->identity);
-	marieUri = linphone_address_as_string_uri_only(marie->identity);
+	paulineUri =  linphone_address_to_string_uri_only(pauline->identity);
+	marieUri = linphone_address_to_string_uri_only(marie->identity);
 
 	stmt = sqlite3_mprintf(marie_zid_sqlcache, marieUri, marieUri, paulineUri);
 	ret = sqlite3_exec(linphone_core_get_zrtp_cache_db(marie->lc),stmt,NULL,NULL,&errmsg);
@@ -1590,8 +1590,8 @@ static void _is_composing_notification(bool_t lime_enabled) {
 	BC_ASSERT_GREATER(bctbx_list_size(composing_addresses), 0, int, "%i");
 	if (bctbx_list_size(composing_addresses) > 0) {
 		LinphoneAddress *addr = (LinphoneAddress *)bctbx_list_get_data(composing_addresses);
-		char *address_string = linphone_address_as_string(addr);
-		char *pauline_address = linphone_address_as_string(pauline->identity);
+		char *address_string = linphone_address_to_string(addr);
+		char *pauline_address = linphone_address_to_string(pauline->identity);
 		BC_ASSERT_STRING_EQUAL(address_string, pauline_address);
 		bctbx_free(address_string);
 		bctbx_free(pauline_address);
@@ -2246,7 +2246,7 @@ static void lime_cache_migration(void) {
 		/*short check*/
 		limeKey_t associatedKey={0};
 
-		char * selfURI = linphone_address_as_string_uri_only(new_identity);
+		char * selfURI = linphone_address_to_string_uri_only(new_identity);
 		linphone_address_unref(new_identity);
 		bctbx_str_to_uint8(associatedKey.peerZID, (const uint8_t *)"0987654321fedcba5a5a5a5a", (uint16_t)strlen("0987654321fedcba5a5a5a5a"));
 		/* 0987654321fedcba5a5a5a5a is the only one with pvs=1*/

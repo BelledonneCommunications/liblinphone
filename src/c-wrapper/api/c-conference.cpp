@@ -91,5 +91,9 @@ const LinphoneAddress *linphone_conference_get_conference_address (const Linphon
 }
 
 char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference) {
-	return ms_strdup(MediaConference::Conference::toCpp(conference)->getConferenceAddress().asString().c_str());
+	return linphone_conference_get_conference_address_to_string (conference);
+}
+
+char *linphone_conference_get_conference_address_to_string (const LinphoneConference *conference) {
+	return ms_strdup(MediaConference::Conference::toCpp(conference)->getConferenceAddress().toString().c_str());
 }

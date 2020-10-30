@@ -185,11 +185,11 @@ void shared_core_get_message_from_user_defaults(LinphoneCoreManager *sender_mgr,
 
 		if (received_msg != NULL) {
 			const LinphoneAddress *local_addr = linphone_push_notification_message_get_local_addr(received_msg);
-			BC_ASSERT_STRING_EQUAL(linphone_address_as_string(local_addr), "sip:local.addr");
+			BC_ASSERT_STRING_EQUAL(linphone_address_to_string(local_addr), "sip:local.addr");
 			linphone_address_unref((LinphoneAddress *)local_addr);
 
 			const LinphoneAddress *from_addr = linphone_push_notification_message_get_from_addr(received_msg);
-			BC_ASSERT_STRING_EQUAL(linphone_address_as_string(from_addr), "sip:from.addr");
+			BC_ASSERT_STRING_EQUAL(linphone_address_to_string(from_addr), "sip:from.addr");
 			linphone_address_unref((LinphoneAddress *)from_addr);
 
 			BC_ASSERT_STRING_EQUAL(linphone_push_notification_message_get_text_content(received_msg), "textContent");

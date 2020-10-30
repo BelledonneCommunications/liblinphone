@@ -320,9 +320,9 @@ static void friends_sqlite_storage(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_vcard_get_etag(linphone_friend_get_vcard(lf2)), linphone_vcard_get_etag(linphone_friend_get_vcard(lf)));
 	BC_ASSERT_STRING_EQUAL(linphone_vcard_get_url(linphone_friend_get_vcard(lf2)), linphone_vcard_get_url(linphone_friend_get_vcard(lf)));
 	laddress = linphone_friend_get_address(lf);
-	address = linphone_address_as_string(laddress);
+	address = linphone_address_to_string(laddress);
 	laddress2 = linphone_friend_get_address(lf2);
-	address2 = linphone_address_as_string(laddress2);
+	address2 = linphone_address_to_string(laddress2);
 	BC_ASSERT_STRING_EQUAL(address2, address);
 
 	ms_free(address);
@@ -789,7 +789,7 @@ static void carddav_integration(void) {
 	linphone_friend_unref(lf2);
 	addr = linphone_friend_get_address(lf);
 	BC_ASSERT_PTR_NOT_NULL(addr);
-	address = linphone_address_as_string_uri_only(addr);
+	address = linphone_address_to_string_uri_only(addr);
 	BC_ASSERT_STRING_EQUAL(address, "sip:sylvain@sip.linphone.org");
 	ms_free(address);
 
@@ -952,7 +952,7 @@ static void find_friend_by_ref_key_test(void) {
 		goto end;
 	}
 	addr = linphone_friend_get_address(lf2);
-	char *uri_addr = linphone_address_as_string_uri_only(addr);
+	char *uri_addr = linphone_address_to_string_uri_only(addr);
 	BC_ASSERT_STRING_EQUAL(uri_addr, "sip:toto@sip.linphone.org");
 	bctbx_free(uri_addr);
 	BC_ASSERT_EQUAL(lf2, lf, void*, "%p");

@@ -160,7 +160,7 @@
  * 	const LinphoneAddress* friend_address = linphone_friend_get_address(friend);
  * 	printf("New state state [%s] for user id [%s] \n"
  * 				,linphone_online_status_to_string(linphone_friend_get_status(friend))
- * 				,linphone_address_as_string (friend_address));
+ * 				,linphone_address_to_string (friend_address));
  * }
  * \endcode
  * <br>Once created a buddy can be added to the buddy list using function linphone_core_add_friend() . Added friends will be notified about \link linphone_core_set_presence_info() local status changes \endlink
@@ -203,7 +203,7 @@
  * <br>Incoming message are received from call back LinphoneCoreVTable.text_received
  * \code
  * void text_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message) {
- * 	printf(" Message [%s] received from [%s] \n",message,linphone_address_as_string (from));
+ * 	printf(" Message [%s] received from [%s] \n",message,linphone_address_to_string (from));
  * }
  * \endcode
  * <br> A complete tutorial can be found at : \ref chatroom_tuto "Chat room tutorial"
