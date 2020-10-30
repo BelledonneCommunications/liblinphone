@@ -36,7 +36,7 @@ LINPHONE_BEGIN_NAMESPACE
 class IsComposing {
 public:
 	IsComposing (LinphoneCore *core, IsComposingListener *listener);
-	~IsComposing ();
+	virtual ~IsComposing ();
 
 	std::string createXml (bool isComposing);
 	void parse (const Address &remoteAddr, const std::string &content);
@@ -47,10 +47,12 @@ public:
 	void stopRemoteRefreshTimer (const std::string &uri);
 	void stopTimers ();
 
+	virtual std::string toString() const;
+
 private:
-	unsigned int getIdleTimerDuration ();
-	unsigned int getRefreshTimerDuration ();
-	unsigned int getRemoteRefreshTimerDuration ();
+	unsigned int getIdleTimerDuration () const;
+	unsigned int getRefreshTimerDuration () const;
+	unsigned int getRemoteRefreshTimerDuration () const;
 	int idleTimerExpired ();
 	int refreshTimerExpired ();
 	int remoteRefreshTimerExpired (const std::string &uri);
@@ -62,7 +64,6 @@ private:
 	static int refreshTimerExpired (void *data, unsigned int revents);
 	static int remoteRefreshTimerExpired (void *data, unsigned int revents);
 
-private:
 	static const int defaultIdleTimeout = 15;
 	static const int defaultRefreshTimeout = 60;
 	static const int defaultRemoteRefreshTimeout = 120;
