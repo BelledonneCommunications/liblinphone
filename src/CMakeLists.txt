@@ -329,6 +329,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/cpim/header/cpim-header.cpp
 	chat/cpim/message/cpim-message.cpp
 	chat/cpim/parser/cpim-parser.cpp
+	chat/encryption/encryption-engine.cpp
 	chat/encryption/legacy-encryption-engine.cpp
 	chat/modifier/cpim-chat-message-modifier.cpp
 	chat/modifier/encryption-chat-message-modifier.cpp
