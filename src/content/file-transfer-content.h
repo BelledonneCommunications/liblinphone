@@ -72,6 +72,8 @@ public:
 	bool isFile () const override;
 	bool isFileTransfer () const override;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(FileTransferContent);
 };

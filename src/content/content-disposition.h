@@ -64,6 +64,8 @@ private:
 	L_DECLARE_PRIVATE(ContentDisposition);
 };
 
+std::ostream &operator<< (std::ostream &os, const ContentDisposition& contentDisposition);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_CONTENT_DISPOSITION_H_

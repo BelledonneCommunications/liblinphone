@@ -205,4 +205,17 @@ bool FileTransferContent::isFileTransfer () const {
 	return true;
 }
 
+std::string FileContent::toString () const {
+	L_D();
+	std::stringstream ss:
+	ss << "File Transfer " << Content::toString();
+	ss << " file URL: " << d->fileUrl;
+	ss << " filepath: " << d->filePath;
+	ss << " filename: " << d->fileName;
+	ss << " file size: " << d->fileSize;
+
+	return ss.str();
+}
+
+
 LINPHONE_END_NAMESPACE
