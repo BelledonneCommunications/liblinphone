@@ -112,6 +112,14 @@ LINPHONE_PUBLIC LinphoneParticipantDevice *linphone_participant_find_device (con
 LINPHONE_PUBLIC time_t linphone_participant_get_creation_time(const LinphoneParticipant *participant);
 
 /**
+ * Returns the participant as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneParticipant object. @notnil
+ * @return the participant as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_participant_to_string (const LinphoneParticipant *participant);
+
+/**
  * @}
  */
 

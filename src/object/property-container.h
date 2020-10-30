@@ -40,6 +40,8 @@ public:
 	void setProperty (const std::string &name, const Variant &value);
 	void setProperty (const std::string &name, Variant &&value);
 
+	virtual std::string toString() const;
+
 private:
 	PropertyContainerPrivate *mPrivate;
 };

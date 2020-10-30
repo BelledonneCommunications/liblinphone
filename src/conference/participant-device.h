@@ -80,6 +80,8 @@ public:
 
 	time_t getTimeOfJoining() const;
 
+	virtual std::string toString() const override;
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
