@@ -50,6 +50,8 @@ public:
 
 	bool isValid () const;
 
+	virtual std::string toString() const;
+
 private:
 
 	ConferenceAddress peerAddress;
@@ -58,8 +60,7 @@ private:
 };
 
 inline std::ostream &operator<< (std::ostream &os, const ConferenceId &conferenceId) {
-	os << "ConferenceId(peer=" << conferenceId.getPeerAddress() << ", local=" << conferenceId.getLocalAddress() << ")";
-	return os;
+	return os << conferenceId.toString();
 }
 
 LINPHONE_END_NAMESPACE

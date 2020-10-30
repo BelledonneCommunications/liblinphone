@@ -64,3 +64,7 @@ bool_t linphone_participant_device_is_in_conference (const LinphoneParticipantDe
 time_t linphone_participant_device_get_time_of_joining (const LinphoneParticipantDevice *participant_device) {
 	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getTimeOfJoining();
 }
+
+char * linphone_participant_device_to_string (const LinphoneParticipantDevice *participant_device) {
+	return ms_strdup(LinphonePrivate::ParticipantDevice::toCpp(participant_device)->toString().c_str());
+}

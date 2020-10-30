@@ -18,6 +18,7 @@
  */
 
 #include <unordered_map>
+#include <sstream>
 
 #include "property-container.h"
 
@@ -71,6 +72,12 @@ void PropertyContainer::setProperty (const string &name, Variant &&value) {
 	if (!mPrivate)
 		mPrivate = new PropertyContainerPrivate();
 	mPrivate->properties[name] = move(value);
+}
+
+std::string PropertyContainer::toString () const {
+	std::stringstream ss;
+	ss << "PropertyContainer pointer [" << this << "]";
+	return ss.str();
 }
 
 LINPHONE_END_NAMESPACE

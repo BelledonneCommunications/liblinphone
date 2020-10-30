@@ -146,6 +146,8 @@ public:
 	virtual uint32_t getChar () = 0;
 	virtual std::shared_ptr<Call> getCall () const = 0;
 
+	virtual std::string toString() const override = 0;
+
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 

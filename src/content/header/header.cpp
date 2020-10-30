@@ -184,9 +184,4 @@ string Header::toString () const {
 	return toString.str();
 }
 
-ostream &operator<< (ostream &os, const Header& header) {
-	os << header.toString();
-	return os;
-}
-
 LINPHONE_END_NAMESPACE

@@ -61,3 +61,7 @@ time_t linphone_participant_imdn_state_get_state_change_time (const LinphonePart
 const LinphoneParticipantImdnState *_linphone_participant_imdn_state_from_cpp_obj (const LinphonePrivate::ParticipantImdnState &state) {
 	return L_GET_C_BACK_PTR(&state);
 }
+
+char * linphone_participant_imdn_state_to_string (const LinphoneParticipantImdnState *state) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(state)->toString().c_str());
+}

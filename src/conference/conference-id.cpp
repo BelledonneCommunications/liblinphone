@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include<sstream>
+
 #include "conference-id.h"
 
 // =============================================================================
@@ -69,6 +71,13 @@ const ConferenceAddress &ConferenceId::getLocalAddress () const {
 
 bool ConferenceId::isValid () const {
 	return peerAddress.isValid() && localAddress.isValid();
+}
+
+std::string ConferenceId::toString() const {
+	std::stringstream ss;
+	ss << "ConferenceId(peer=" << getPeerAddress() << ", local=" << getLocalAddress() << ")";
+
+	return ss.str();
 }
 
 LINPHONE_END_NAMESPACE
