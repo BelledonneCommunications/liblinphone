@@ -132,4 +132,10 @@ int LegacyEncryptionEngine::uploadingFile (const shared_ptr<ChatMessage> &messag
 	return -1;
 }
 
+std::string LegacyEncryptionEngine::toString() const {
+	std::stringstream ss;
+	ss << EncryptionEngine::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
