@@ -901,7 +901,7 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_call_get_output_audio_device
  * @param call #LinphoneCall object. @notnil
  * @return the call as a string. @maybenil
 **/
-LINPHONE_PUBLIC const char *linphone_call_to_string (const LinphoneCall *call);
+LINPHONE_PUBLIC char *linphone_call_to_string (const LinphoneCall *call);
 
 /************ */
 /* DEPRECATED */
