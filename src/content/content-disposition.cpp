@@ -108,4 +108,7 @@ string ContentDisposition::toString () const {
 	return "";
 }
 
+ostream &operator<< (ostream &os, const ContentDisposition& contentDisposition) {
+	return os << contentDisposition.toString();
+}
 LINPHONE_END_NAMESPACE
