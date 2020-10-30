@@ -105,4 +105,9 @@ string HeaderParam::toString () const {
 	return toString;
 }
 
+ostream &operator<< (ostream &os, const HeaderParam& headerParam) {
+	return os << header.toString();
+}
+
+
 LINPHONE_END_NAMESPACE

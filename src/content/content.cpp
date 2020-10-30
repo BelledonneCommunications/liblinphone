@@ -251,4 +251,15 @@ Variant Content::getUserData() const {
 	return getProperty("LinphonePrivate::Content::userData");
 }
 
+std:string Content::toString() const {
+	std::stringstream ss;
+	ss << "Content [" << this << "] has "  << getContentType () << " and encoded as " << getContentEncoding () << " disposition " << getContentDisposition ();
+
+	return ss.str();
+}
+
+ostream &operator<< (ostream &os, const Content& content) {
+	return os << content.toString();
+}
+
 LINPHONE_END_NAMESPACE

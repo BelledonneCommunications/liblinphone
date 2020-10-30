@@ -73,6 +73,8 @@ private:
 	L_DECLARE_PRIVATE(Header);
 };
 
+std::ostream &operator<< (std::ostream &os, const Header& header);
+
 LINPHONE_END_NAMESPACE
 
 #endif // ifndef _L_HEADER_H_
