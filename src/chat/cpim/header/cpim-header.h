@@ -37,7 +37,7 @@ namespace Cpim {
 
 		virtual std::string getValue () const = 0;
 
-		virtual std::string toString () const = 0;
+		virtual std::string toString () const override = 0;
 
 	protected:
 		explicit Header (HeaderPrivate &p);
