@@ -148,17 +148,17 @@ void IsComposing::stopRemoteRefreshTimer (const string &uri) {
 
 // -----------------------------------------------------------------------------
 
-unsigned int IsComposing::getIdleTimerDuration () {
+unsigned int IsComposing::getIdleTimerDuration () const {
 	int idleTimerDuration = linphone_config_get_int(core->config, "sip", "composing_idle_timeout", defaultIdleTimeout);
 	return idleTimerDuration < 0 ? 0 : static_cast<unsigned int>(idleTimerDuration);
 }
 
-unsigned int IsComposing::getRefreshTimerDuration () {
+unsigned int IsComposing::getRefreshTimerDuration () const {
 	int refreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_refresh_timeout", defaultRefreshTimeout);
 	return refreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(refreshTimerDuration);
 }
 
-unsigned int IsComposing::getRemoteRefreshTimerDuration () {
+unsigned int IsComposing::getRemoteRefreshTimerDuration() const {
 	int remoteRefreshTimerDuration = linphone_config_get_int(core->config, "sip", "composing_remote_refresh_timeout", defaultRemoteRefreshTimeout);
 	return remoteRefreshTimerDuration < 0 ? 0 : static_cast<unsigned int>(remoteRefreshTimerDuration);
 }
@@ -225,6 +225,17 @@ int IsComposing::remoteRefreshTimerExpired (void *data, unsigned int revents) {
 	IsRemoteComposingData *d = reinterpret_cast<IsRemoteComposingData *>(data);
 	int result = d->isComposingHandler->remoteRefreshTimerExpired(d->uri);
 	return result;
+}
+
+std::string IsComposing::toString() const {
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "IsComposing " << voidThis;
+	ss << " Idle Timer Duration " << getIdleTimerDuration();
+	ss << ", Refresh Timer Duration " << getRefreshTimerDuration();
+	ss << ", Remote Refresh Timer Duration " << getRemoteRefreshTimerDuration();
+
+	return ss.str();
 }
 
 LINPHONE_END_NAMESPACE
