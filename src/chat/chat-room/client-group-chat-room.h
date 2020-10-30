@@ -98,6 +98,8 @@ public:
 
 	const ConferenceId &getConferenceId () const override { return getConference()->getConferenceId(); };
 
+	virtual std::string toString() const override;
+
 private:
 	ClientGroupChatRoom (
 		const std::shared_ptr<Core> &core,

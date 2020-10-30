@@ -94,6 +94,8 @@ public:
 	void setState (ConferenceInterface::State state) override;
 	void subscribeReceived (LinphoneEvent *event);
 
+	virtual std::string toString() const override;
+
 private:
 
 	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that habe been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
@@ -101,8 +103,6 @@ private:
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
 };
-
-std::ostream &operator<< (std::ostream &stream, const ServerGroupChatRoom *chatRoom);
 
 LINPHONE_END_NAMESPACE
 

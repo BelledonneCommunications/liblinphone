@@ -407,4 +407,11 @@ std::shared_ptr<Call> ProxyChatRoom::getCall () const {
 	return d->chatRoom->getCall();
 }
 
+std::string ProxyChatRoom::toString() const {
+	L_D();
+	std::stringstream ss;
+	ss << "Proxy " << d->chatRoom->toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

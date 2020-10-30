@@ -20,6 +20,7 @@
 #include "chat/chat-message/notification-message-p.h"
 #include "chat/chat-message/is-composing-message.h"
 #include "sip-tools/sip-headers.h"
+#include "linphone/utils/utils.h"
 
 // =============================================================================
 
@@ -44,10 +45,9 @@ IsComposingMessage::IsComposingMessage (
 }
 
 std::string IsComposingMessage::toString () const {
-	L_D();
 	std::stringstream ss;
 	const void * voidThis = static_cast<const void*>(this);
-	ss << "IsComposingMessage " << voidThis << " in state "  << Utils::toString(d->state);
+	ss << "IsComposingMessage " << voidThis << " in state "  << Utils::toString(getState());
 	return ss.str();
 }
 
