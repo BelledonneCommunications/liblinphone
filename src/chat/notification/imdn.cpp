@@ -366,4 +366,16 @@ void Imdn::stopTimer () {
 	bgTask.stop();
 }
 
+std::string Imdn::toString() const {
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "IMDN " << voidThis;
+	ss << " number of delivered messages " << deliveredMessages.size();
+	ss << " number of non delivered messages " << nonDeliveredMessages.size();
+	ss << " number of displayed messages " << displayedMessages.size();
+	ss << " number of IMDN sent " << sentImdnMessages.size();
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
