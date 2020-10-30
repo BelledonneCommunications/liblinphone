@@ -166,6 +166,8 @@ public:
 		const std::string &message
 	) override;
 
+	virtual std::string toString() const override;
+
 private:
 	std::shared_ptr<LimeManager> limeManager;
 	std::time_t lastLimeUpdate;

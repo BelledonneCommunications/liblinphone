@@ -121,11 +121,17 @@ public:
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
 	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
+	virtual std::string toString() const;
+
 protected:
 	EncryptionEngine (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
 
 	EngineType engineType;
 };
+
+std::ostream &operator<< (std::ostream &stream, const EncryptionEngine & engine);
+
+std::ostream &operator<< (std::ostream &stream, const EncryptionEngine::EngineType & engineType);
 
 LINPHONE_END_NAMESPACE
 
