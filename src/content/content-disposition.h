@@ -54,7 +54,7 @@ public:
 	const std::string &getParameter () const;
 	void setParameter (const std::string &parameter);
 
-	std::string toString () const;
+	std::string toString () const override;
 
 	static const ContentDisposition Notification;
 	static const ContentDisposition RecipientList;

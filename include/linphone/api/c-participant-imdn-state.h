@@ -84,6 +84,14 @@ LINPHONE_PUBLIC LinphoneChatMessageState linphone_participant_imdn_state_get_sta
 LINPHONE_PUBLIC time_t linphone_participant_imdn_state_get_state_change_time (const LinphoneParticipantImdnState *state);
 
 /**
+ * Returns the participant imdn state as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneParticipantImdnState object. @notnil
+ * @return the participant imdn state as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_participant_imdn_state_to_string (const LinphoneParticipantImdnState *state);
+
+/**
  * @}
  */
 

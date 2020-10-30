@@ -54,7 +54,7 @@ public:
 	const std::string &getValue () const;
 	bool setValue (const std::string &value);
 
-	std::string toString () const;
+	std::string toString () const override;
 
 private:
 	L_DECLARE_PRIVATE(HeaderParam);
