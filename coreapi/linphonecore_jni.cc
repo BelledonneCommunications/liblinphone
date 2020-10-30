@@ -1812,7 +1812,7 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_setPrimaryContact2(JNIEn
 
 extern "C" jstring Java_org_linphone_core_LinphoneCoreImpl_getPrimaryContact(JNIEnv* env, jobject  thiz, jlong lc) {
 	LinphoneAddress* identity = linphone_core_get_primary_contact_parsed((LinphoneCore*)lc);
-	return identity ? env->NewStringUTF(linphone_address_as_string(identity)) : NULL;
+	return identity ? env->NewStringUTF(linphone_address_to_string(identity)) : NULL;
 }
 
 
@@ -1824,7 +1824,7 @@ extern "C" void Java_org_linphone_core_LinphoneCoreImpl_setPrimaryContact(JNIEnv
 	if (parsed != NULL) {
 		linphone_address_set_display_name(parsed, displayname);
 		linphone_address_set_username(parsed, username);
-		char *contact = linphone_address_as_string(parsed);
+		char *contact = linphone_address_to_string(parsed);
 		linphone_core_set_primary_contact((LinphoneCore*)lc, contact);
 	}
 
@@ -3412,7 +3412,7 @@ extern "C" jint Java_org_linphone_core_LinphoneAddressImpl_getPort(JNIEnv*  env
 extern "C" jstring Java_org_linphone_core_LinphoneAddressImpl_toString(JNIEnv*  env
 																		,jobject  thiz
 																		,jlong ptr) {
-	char* uri = linphone_address_as_string((LinphoneAddress*)ptr);
+	char* uri = linphone_address_to_string((LinphoneAddress*)ptr);
 	jstring juri =env->NewStringUTF(uri);
 	ms_free(uri);
 	return juri;
@@ -3420,7 +3420,7 @@ extern "C" jstring Java_org_linphone_core_LinphoneAddressImpl_toString(JNIEnv*  
 extern "C" jstring Java_org_linphone_core_LinphoneAddressImpl_toUri(JNIEnv*  env
 																		,jobject  thiz
 																		,jlong ptr) {
-	char* uri = linphone_address_as_string_uri_only((LinphoneAddress*)ptr);
+	char* uri = linphone_address_to_string_uri_only((LinphoneAddress*)ptr);
 	jstring juri =env->NewStringUTF(uri);
 	ms_free(uri);
 	return juri;

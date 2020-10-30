@@ -477,7 +477,7 @@ SalBodyHandler *sal_body_handler_from_content (const LinphoneContent *content, b
 	}
 
 	for (const auto &header : L_GET_CPP_PTR_FROM_C_OBJECT(content)->getHeaders()) {
-		belle_sip_header_t *additionalHeader = belle_sip_header_parse(header.asString().c_str());
+		belle_sip_header_t *additionalHeader = belle_sip_header_parse(header.toString().c_str());
 		belle_sip_body_handler_add_header(BELLE_SIP_BODY_HANDLER(bodyHandler), additionalHeader);
 	}
 

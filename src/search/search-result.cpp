@@ -50,7 +50,7 @@ void SearchResultPrivate::updateCapabilities () {
 	const LinphonePresenceModel *presenceModel = nullptr;
 
 	if (mAddress) {
-		char *addressString = linphone_address_as_string_uri_only(mAddress);
+		char *addressString = linphone_address_to_string_uri_only(mAddress);
 		presenceModel = linphone_friend_get_presence_model_for_uri_or_tel(mFriend, addressString);
 		bctbx_free(addressString);
 	}

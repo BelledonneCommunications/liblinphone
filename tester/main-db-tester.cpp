@@ -158,8 +158,8 @@ static void get_conference_notified_events (void) {
 	if (!BC_ASSERT_TRUE(event->getType() == EventLog::Type::ConferenceParticipantRemoved)) return;
 	{
 		shared_ptr<ConferenceParticipantEvent> participantEvent = static_pointer_cast<ConferenceParticipantEvent>(event);
-		BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(participantEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
+		BC_ASSERT_TRUE(participantEvent->getConferenceId().getPeerAddress().toString() == "sip:test-44@sip.linphone.org");
+		BC_ASSERT_TRUE(participantEvent->getParticipantAddress().toString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(participantEvent->getNotifyId() == 2);
 	}
 
@@ -169,10 +169,10 @@ static void get_conference_notified_events (void) {
 		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = static_pointer_cast<
 			ConferenceParticipantDeviceEvent
 		>(event);
-		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().toString() == "sip:test-44@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().toString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 3);
-		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress().asString() == "sip:test-47@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress().toString() == "sip:test-47@sip.linphone.org");
 	}
 
 	event = *++it;
@@ -181,10 +181,10 @@ static void get_conference_notified_events (void) {
 		shared_ptr<ConferenceParticipantDeviceEvent> deviceEvent = static_pointer_cast<
 			ConferenceParticipantDeviceEvent
 		>(event);
-		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().asString() == "sip:test-44@sip.linphone.org");
-		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().asString() == "sip:test-11@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getConferenceId().getPeerAddress().toString() == "sip:test-44@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getParticipantAddress().toString() == "sip:test-11@sip.linphone.org");
 		BC_ASSERT_TRUE(deviceEvent->getNotifyId() == 4);
-		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress().asString() == "sip:test-47@sip.linphone.org");
+		BC_ASSERT_TRUE(deviceEvent->getDeviceAddress().toString() == "sip:test-47@sip.linphone.org");
 	}
 }
 

@@ -786,7 +786,7 @@ static void proxy_transport_change(void){
 	} else {
 		linphone_address_set_transport(addr,LinphoneTransportTcp);
 	}
-	linphone_proxy_config_set_server_addr(proxy_config,addr_as_string=linphone_address_as_string(addr));
+	linphone_proxy_config_set_server_addr(proxy_config,addr_as_string=linphone_address_to_string(addr));
 
 	linphone_proxy_config_done(proxy_config);
 
@@ -1337,7 +1337,7 @@ static void register_get_gruu(void) {
 	if(cfg) {
 		const LinphoneAddress *addr = linphone_proxy_config_get_contact(cfg);
 		BC_ASSERT_PTR_NOT_NULL(addr);
-		char *addrStr = linphone_address_as_string_uri_only(addr);
+		char *addrStr = linphone_address_to_string_uri_only(addr);
 		BC_ASSERT_PTR_NOT_NULL(strstr(addrStr, "gr"));
 		bctbx_free(addrStr);
 	}

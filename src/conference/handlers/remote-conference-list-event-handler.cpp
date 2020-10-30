@@ -86,7 +86,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 
 		Address addr = conferenceId.getPeerAddress();
 		addr.setUriParam("Last-Notify", Utils::toString(handler->getLastNotify()));
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asStringUriOnly());
+		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.toStringUriOnly());
 		l.getEntry().push_back(entry);
 	}
 	rl.getList().push_back(l);
@@ -112,7 +112,7 @@ void RemoteConferenceListEventHandler::subscribe () {
 	lev = linphone_core_create_subscribe(lc, rlsAddr, "conference", 600);
 	// FIXME: Take a ref of the event because when linphone_event_release is called upon termination of the subscription. This function unrefs the event causing a dangling pointer to be left to the event handler
 	linphone_event_ref(lev);
-	char *from = linphone_address_as_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
+	char *from = linphone_address_to_string(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(getCore()->getCCore())));
 	lev->op->setFrom(from);
 	bctbx_free(from);
 	linphone_address_unref(rlsAddr);
@@ -142,7 +142,7 @@ void RemoteConferenceListEventHandler::invalidateSubscription () {
 }
 
 void RemoteConferenceListEventHandler::notifyReceived (const Content *notifyContent) {
-	char *from = linphone_address_as_string(linphone_event_get_from(lev));
+	char *from = linphone_address_to_string(linphone_event_get_from(lev));
 	const ConferenceAddress local(from);
 
 	if (notifyContent->getContentType() == ContentType::ConferenceInfo) {
@@ -244,7 +244,7 @@ bool RemoteConferenceListEventHandler::isHandlerInSameDomainAsCore(const Confere
 	IdentityAddress conferenceFactoryUri = IdentityAddress(Core::getConferenceFactoryUri(getCore(), localAddress));
 
 	if (peerAddress.getDomain() != conferenceFactoryUri.getDomain()) {
-		lWarning() << "Peer address " << peerAddress.asString() << " is not in the same domain as the conference factory URI " << conferenceFactoryUri.asString() << " hence not adding to the list of subscribes";
+		lWarning() << "Peer address " << peerAddress.toString() << " is not in the same domain as the conference factory URI " << conferenceFactoryUri.toString() << " hence not adding to the list of subscribes";
 		return false;
 	}
 

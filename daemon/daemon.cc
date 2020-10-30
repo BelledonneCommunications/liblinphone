@@ -129,7 +129,7 @@ void *Daemon::iterateThread(void *arg) {
 CallEvent::CallEvent(Daemon *daemon, LinphoneCall *call, LinphoneCallState state) : Event("call-state-changed") {
 	LinphoneCallLog *callLog = linphone_call_get_call_log(call);
 	const LinphoneAddress *fromAddr = linphone_call_log_get_from_address(callLog);
-	char *fromStr = linphone_address_as_string(fromAddr);
+	char *fromStr = linphone_address_to_string(fromAddr);
 
 	ostringstream ostr;
 	ostr << "Event: " << linphone_call_state_to_string(state) << "\n";

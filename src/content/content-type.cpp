@@ -225,12 +225,12 @@ bool ContentType::isFile (const ContentType &contentType) {
 }
 
 string ContentType::getMediaType () const {
-	stringstream asString;
-	asString << getValue();
+	stringstream toString;
+	toString << getValue();
 	for (const auto &param : getParameters())
-		asString << param.asString();
+		toString << param.toString();
 
-	return asString.str();
+	return toString.str();
 }
 
 ostream &operator<< (ostream &os, const ContentType& contentType) {
