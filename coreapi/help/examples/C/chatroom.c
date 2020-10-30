@@ -42,7 +42,7 @@ static void stop(int signum){
 	running=FALSE;
 }
 void text_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message) {
-	printf(" Message [%s] received from [%s] \n",message,linphone_address_as_string (from));
+	printf(" Message [%s] received from [%s] \n",message,linphone_address_to_string (from));
 }
 
 

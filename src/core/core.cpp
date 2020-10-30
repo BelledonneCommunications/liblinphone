@@ -1161,7 +1161,7 @@ Address Core::interpretUrl (const std::string &url) const {
 	LinphoneAddress *cAddress = linphone_core_interpret_url(getCCore(), url.c_str());
 	if (!cAddress) return Address();
 
-	char *str = linphone_address_as_string(cAddress);
+	char *str = linphone_address_to_string(cAddress);
 	linphone_address_unref(cAddress);
 
 	Address address(str);

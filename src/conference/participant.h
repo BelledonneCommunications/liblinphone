@@ -142,7 +142,7 @@ private:
 };
 
 inline std::ostream &operator<< (std::ostream &os, const Participant &participant) {
-	return os << participant.getAddress().asString();
+	return os << participant.getAddress().toString();
 	return os;
 }
 

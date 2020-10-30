@@ -273,7 +273,7 @@ void ChatRoomPrivate::notifyChatMessageReceived (const shared_ptr<ChatMessage> &
 	LinphoneChatRoom *cr = getCChatRoom();
 	if (!chatMessage->getPrivate()->getText().empty()) {
 		/* Legacy API */
-		LinphoneAddress *fromAddress = linphone_address_new(chatMessage->getFromAddress().asString().c_str());
+		LinphoneAddress *fromAddress = linphone_address_new(chatMessage->getFromAddress().toString().c_str());
 		linphone_core_notify_text_message_received(
 			q->getCore()->getCCore(),
 			cr,
@@ -298,7 +298,7 @@ void ChatRoomPrivate::notifyIsComposingReceived (const Address &remoteAddress, b
 	}
 
 	LinphoneChatRoom *cr = getCChatRoom();
-	LinphoneAddress *lAddr = linphone_address_new(remoteAddress.asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(remoteAddress.toString().c_str());
 	_linphone_chat_room_notify_is_composing_received(cr, lAddr, !!isComposing);
 	linphone_address_unref(lAddr);
 	// Legacy notification
@@ -393,7 +393,7 @@ void ChatRoomPrivate::onChatMessageReceived (const shared_ptr<ChatMessage> &chat
 	if ((chatMessage->getPrivate()->getContentType() != ContentType::ImIsComposing)
 		&& (chatMessage->getPrivate()->getContentType() != ContentType::Imdn)
 	) {
-		isComposingHandler->stopRemoteRefreshTimer(fromAddress.asString());
+		isComposingHandler->stopRemoteRefreshTimer(fromAddress.toString());
 		notifyIsComposingReceived(fromAddress, false);
 	}
 	chatMessage->getPrivate()->notifyReceiving();
@@ -632,7 +632,7 @@ shared_ptr<ChatMessage> ChatRoom::createForwardMessage (const shared_ptr<ChatMes
 	if (hidden) {
 		fInfo = "Anonymous";
 	} else {
-		fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().asString():msg->getForwardInfo();
+		fInfo = msg->getForwardInfo().empty()? msg->getFromAddress().toString():msg->getForwardInfo();
 	}
 
 	chatMessage->getPrivate()->setForwardInfo(fInfo);

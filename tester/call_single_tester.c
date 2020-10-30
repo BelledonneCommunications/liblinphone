@@ -45,8 +45,8 @@ extern void libmsopenh264_init(MSFactory *factory);
 
 static void linphone_call_next_video_frame_decoded_cb(LinphoneCall *call) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(call);
-	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* to=linphone_address_to_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_to_string(linphone_call_log_get_to_address(clog));
 	stats* counters;
 	LinphoneCore* lc = linphone_call_get_core(call);
 	ms_message("call from [%s] to [%s] receive iFrame",from,to);
@@ -178,7 +178,7 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 		LinphoneAddress* marie_addr = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_cfg));
 		char* marie_tmp_id = NULL;
 		linphone_address_set_display_name(marie_addr, "Super Marie");
-		marie_tmp_id = linphone_address_as_string(marie_addr);
+		marie_tmp_id = linphone_address_to_string(marie_addr);
 
 		linphone_proxy_config_edit(marie_cfg);
 		linphone_proxy_config_set_identity_address(marie_cfg, marie_addr);
@@ -322,7 +322,7 @@ static void simple_call_with_udp(void) {
 		LinphoneAddress* michelle_addr = linphone_address_clone(linphone_proxy_config_get_identity_address(michelle_cfg));
 		char* michelle_tmp_id = NULL;
 		linphone_address_set_display_name(michelle_addr, "Super michelle");
-		michelle_tmp_id = linphone_address_as_string(michelle_addr);
+		michelle_tmp_id = linphone_address_to_string(michelle_addr);
 
 		linphone_proxy_config_edit(michelle_cfg);
 		linphone_proxy_config_set_identity_address(michelle_cfg,michelle_addr);
@@ -856,7 +856,7 @@ static void simple_call_compatibility_mode(void) {
 
 	proxy_address=linphone_address_new(linphone_proxy_config_get_addr(proxy));
 	linphone_address_clean(proxy_address);
-	tmp=linphone_address_as_string_uri_only(proxy_address);
+	tmp=linphone_address_to_string_uri_only(proxy_address);
 	linphone_proxy_config_set_server_addr(proxy,tmp);
 	sprintf(route,"sip:%s",test_route);
 	linphone_proxy_config_set_route(proxy,route);
@@ -1673,7 +1673,7 @@ static void call_with_custom_headers(void) {
 				*marie_remote_contact,
 				*marie_remote_contact_header;
 	LinphoneAddress* marie_identity;
-	char* tmp=linphone_address_as_string_uri_only(marie->identity);
+	char* tmp=linphone_address_to_string_uri_only(marie->identity);
 	char tmp2[256];
 	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
@@ -3240,7 +3240,7 @@ static void call_redirect(void){
 	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived,1,6000));
 
 	if (linphone_core_get_current_call(pauline->lc)){
-		laure_url = linphone_address_as_string(laure->identity);
+		laure_url = linphone_address_to_string(laure->identity);
 		linphone_call_redirect(linphone_core_get_current_call(pauline->lc), laure_url);
 		ms_free(laure_url);
 
@@ -3974,8 +3974,8 @@ static void call_state_changed_2(LinphoneCore *lc, LinphoneCall *call, LinphoneC
 static void call_state_changed_3(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
 /*just to check multi listener in such situation*/
 	LinphoneCallLog *clog = linphone_call_get_call_log(call);
-	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_from_address(clog));
+	char* to=linphone_address_to_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_to_string(linphone_call_log_get_from_address(clog));
 	ms_message("Third call listener reports: %s call from [%s] to [%s], new state is [%s]"	,linphone_call_log_get_dir(clog)==LinphoneCallIncoming?"Incoming":"Outgoing"
 																,from
 																,to
@@ -5032,8 +5032,8 @@ static void simple_call_with_gruu(void) {
 	BC_ASSERT_STRING_EQUAL(linphone_address_get_domain(marie_addr),"sip.example.org");
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(pauline_call));
 	if (!BC_ASSERT_TRUE(linphone_address_equal(contact_addr, marie_addr))) {
-		char* expected = linphone_address_as_string(marie_addr);
-		char* result = linphone_address_as_string(contact_addr);
+		char* expected = linphone_address_to_string(marie_addr);
+		char* result = linphone_address_to_string(contact_addr);
 		ms_error("Expected contact is [%s], result is [%s]",expected,result);
 		ms_free(expected);
 		ms_free(result);
@@ -5047,8 +5047,8 @@ static void simple_call_with_gruu(void) {
 
 	contact_addr = linphone_address_new(linphone_call_get_remote_contact(marie_call));
 	if (!BC_ASSERT_TRUE(linphone_address_equal(contact_addr, pauline_addr))) {
-		char* expected = linphone_address_as_string(pauline_addr);
-		char* result = linphone_address_as_string(contact_addr);
+		char* expected = linphone_address_to_string(pauline_addr);
+		char* result = linphone_address_to_string(contact_addr);
 		ms_error("Expected contact is [%s], result is [%s]",expected,result);
 		ms_free(expected);
 		ms_free(result);
@@ -5094,12 +5094,12 @@ static void simple_call_with_gruu_only_one_device_ring(void) {
 	pauline_cfg = linphone_core_get_default_proxy_config(pauline->lc);
 	pauline_addr = linphone_proxy_config_get_contact(pauline_cfg);
 	BC_ASSERT_PTR_NOT_NULL(pauline_addr);
-	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_as_string_uri_only(pauline_addr), "gr"));
+	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_to_string_uri_only(pauline_addr), "gr"));
 	pauline_cfg2 = linphone_core_get_default_proxy_config(pauline2->lc);
 	pauline_addr2 = linphone_proxy_config_get_contact(pauline_cfg2);
 	BC_ASSERT_PTR_NOT_NULL(pauline_addr2);
-	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_as_string_uri_only(pauline_addr2), "gr"));
-	BC_ASSERT_NOT_EQUAL(linphone_address_as_string_uri_only(pauline_addr), linphone_address_as_string_uri_only(pauline_addr2), char*, "%s"); // Not same GRUU
+	BC_ASSERT_PTR_NOT_NULL(strstr(linphone_address_to_string_uri_only(pauline_addr2), "gr"));
+	BC_ASSERT_NOT_EQUAL(linphone_address_to_string_uri_only(pauline_addr), linphone_address_to_string_uri_only(pauline_addr2), char*, "%s"); // Not same GRUU
 
 	marie_call = linphone_core_invite_address(marie->lc, pauline_addr);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);

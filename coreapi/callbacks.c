@@ -258,7 +258,7 @@ static void call_received(SalCallOp *h) {
 		else
 			ms_warning("Hidden from identity, don't know if it's me");
 		if (fromAddressToSearchIfMe && L_GET_PRIVATE_FROM_C_OBJECT(lc)->isAlreadyInCallWithAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(fromAddressToSearchIfMe))) {
-			char *addr = linphone_address_as_string(fromAddr);
+			char *addr = linphone_address_to_string(fromAddr);
 			ms_warning("Receiving a call while one with same address [%s] is initiated, refusing this one with busy message", addr);
 			h->decline(SalReasonBusy);
 			LinphoneErrorInfo *ei = linphone_error_info_new();
@@ -500,7 +500,7 @@ static void dtmf_received(SalOp *op, char dtmf) {
 
 static void call_refer_received(SalOp *op, const SalAddress *referTo) {
 	LinphonePrivate::CallSession *session = reinterpret_cast<LinphonePrivate::CallSession *>(op->getUserPointer());
-	char *addrStr = sal_address_as_string_uri_only(referTo);
+	char *addrStr = sal_address_to_string_uri_only(referTo);
 	Address referToAddr(addrStr);
 	string method;
 	if (referToAddr.isValid())
@@ -873,7 +873,7 @@ static void on_notify_response(SalOp *op){
 
 static void refer_received(SalOp *op, const SalAddress *refer_to){
 	if (sal_address_has_param(refer_to, "text")) {
-		char *refer_uri = sal_address_as_string(refer_to);
+		char *refer_uri = sal_address_to_string(refer_to);
 		LinphonePrivate::Address addr(refer_uri);
 		bctbx_free(refer_uri);
 		if (addr.isValid()) {

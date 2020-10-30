@@ -110,12 +110,11 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 
 void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
 	L_Q();
-
 	// Do not change state of participants if the core is shutting down.
 	// If a participant is about to leave and its call session state is End, it will be released during shutdown event though the participant may not be notified yet as it is offline
 	if (linphone_core_get_global_state(q->getCore()->getCCore()) ==  LinphoneGlobalOn) {
-		string address(device->getAddress().asString());
-		lInfo() << q << ": Set participant device '" << address << "' state to " << state;
+		string address(device->getAddress().toString());
+		lInfo() << *q << ": Set participant device '" << address << "' state to " << state;
 		device->setState(state);
 		q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
 		switch (state){
@@ -198,7 +197,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 
 	Address contactAddr(op->getRemoteContact());
 	if (contactAddr.getUriParamValue("gr").empty()) {
-		lError() << q << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << contactAddr.asString() << "]";
+		lError() << q << ": Declining INVITE because the contact does not have a 'gr' uri parameter [" << contactAddr.toString() << "]";
 		op->decline(SalReasonDeclined, "");
 		joiningPendingAfterCreation = false;
 		return;
@@ -318,7 +317,7 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 
 		for (const auto &device : participant->getDevices()) {
 
-			string uri(device->getAddress().asString());
+			string uri(device->getAddress().toString());
 			auto & msgQueue = queuedMessages[uri];
 
 			if (!msgQueue.empty()){
@@ -362,7 +361,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 		}
 	}
 
-	queuedMessages.erase(participant->getAddress().asString());
+	queuedMessages.erase(participant->getAddress().toString());
 
 	q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
 
@@ -398,7 +397,7 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std:
 
 	// Subscribe to the registration events from the proxy
 	for (const auto &addr : identAddresses) {
-		if (registrationSubscriptions.find(addr.asString()) == registrationSubscriptions.end()){
+		if (registrationSubscriptions.find(addr.toString()) == registrationSubscriptions.end()){
 			requestedAddresses.emplace_back(addr);
 			if (newInvited) invitedParticipants.emplace_back(addr);
 			unnotifiedRegistrationSubscriptions++;
@@ -408,8 +407,8 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std:
 
 	for (const auto &addr : requestedAddresses){
 		LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-		LinphoneAddress *laddr = linphone_address_new(addr.asString().c_str());
-		registrationSubscriptions[addr.asString()].context = nullptr; // we 'll put here later a context pointer returned by the callback.
+		LinphoneAddress *laddr = linphone_address_new(addr.toString().c_str());
+		registrationSubscriptions[addr.toString()].context = nullptr; // we 'll put here later a context pointer returned by the callback.
 		CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested, participant_registration_subscription_requested, cr, laddr);
 		linphone_address_unref(laddr);
 	}
@@ -418,7 +417,7 @@ bool ServerGroupChatRoomPrivate::subscribeRegistrationForParticipants(const std:
 
 void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const IdentityAddress &identAddress){
 	L_Q();
-	auto p = registrationSubscriptions.find(identAddress.asString());
+	auto p = registrationSubscriptions.find(identAddress.toString());
 	if (p == registrationSubscriptions.end()){
 		lError() << q << " no active subscription for " << identAddress;
 		return;
@@ -426,7 +425,7 @@ void ServerGroupChatRoomPrivate::unSubscribeRegistrationForParticipant(const Ide
 	registrationSubscriptions.erase(p);
 
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
-	LinphoneAddress *laddr = linphone_address_new(identAddress.asString().c_str());
+	LinphoneAddress *laddr = linphone_address_new(identAddress.toString().c_str());
 	CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationUnsubscriptionRequested, participant_registration_unsubscription_requested, cr, laddr);
 	linphone_address_unref(laddr);
 }
@@ -500,7 +499,7 @@ void ServerGroupChatRoomPrivate::setConferenceAddress (const ConferenceAddress &
 		return;
 	}
 	q->getConference()->confParams->setConferenceAddress(conferenceAddress);
-	lInfo() << "The ServerGroupChatRoom has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
+	lInfo() << "The ServerGroupChatRoom has been given the address " << conferenceAddress.toString() << ", now finalizing its creation";
 	finalizeCreation();
 }
 
@@ -509,7 +508,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 	L_Q();
 	bool newParticipantReginfo = false;
 
-	auto it = registrationSubscriptions.find(participantAddress.asString());
+	auto it = registrationSubscriptions.find(participantAddress.toString());
 
 	/*
 	* For security, since registration information might come from outside, make sure that the device list we are asked to add
@@ -546,7 +545,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 		lError() << q << " participant devices updated for unknown participant, ignored.";
 		return;
 	}
-	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << participantAddress.asString();
+	lInfo() << q << ": Setting " << devices.size() << " participant device(s) for " << participantAddress.toString();
 
 	// Remove devices that are in the chatroom but no longer in the given list
 	list<shared_ptr<ParticipantDevice>> devicesToRemove;
@@ -819,7 +818,7 @@ shared_ptr<CallSession> ServerGroupChatRoomPrivate::makeSession(const std::share
 void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
-	lInfo() << q << ": Inviting device '" << device->getAddress().asString() << "'";
+	lInfo() << q << ": Inviting device '" << device->getAddress().toString() << "'";
 	shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 	shared_ptr<CallSession> session = makeSession(device);
 	if (device->getState() == ParticipantDevice::State::Joining && (
@@ -857,7 +856,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 void ServerGroupChatRoomPrivate::byeDevice (const std::shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
-	lInfo() << q << ": Asking device '" << device->getAddress().asString() << "' to leave";
+	lInfo() << q << ": Asking device '" << device->getAddress().toString() << "' to leave";
 	setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
 	shared_ptr<CallSession> session = makeSession(device);
 	switch(session->getState()){
@@ -915,7 +914,7 @@ void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg) {
 
 void ServerGroupChatRoomPrivate::queueMessage (const shared_ptr<Message> &msg, const IdentityAddress &deviceAddress) {
 	chrono::system_clock::time_point timestamp = chrono::system_clock::now();
-	string uri(deviceAddress.asString());
+	string uri(deviceAddress.toString());
 	// Remove queued messages older than one week
 	while (!queuedMessages[uri].empty()) {
 		shared_ptr<Message> m = queuedMessages[uri].front();
@@ -965,12 +964,12 @@ bool ServerGroupChatRoomPrivate::allDevicesLeft(const std::shared_ptr<Participan
 void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
-	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
+	lInfo() << q << ": Participant device '" << device->getAddress().toString() << "' left";
 
 	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) || protocolVersion >= Utils::Version(1, 1)){
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		if (allDevicesLeft(participant) && q->findParticipant(participant->getAddress()) == nullptr) {
-			lInfo() << q << ": Participant '" << participant->getAddress().asString() << "'removed and last device left, unsubscribing";
+			lInfo() << q << ": Participant '" << participant->getAddress().toString() << "'removed and last device left, unsubscribing";
 			unSubscribeRegistrationForParticipant(participant->getAddress());
 			q->getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
 		}
@@ -1085,7 +1084,7 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 		break;
 		case CallSession::State::End:
 			if (device->getState() == ParticipantDevice::State::Present){
-				lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
+				lInfo() << q << ": "<< device->getParticipant()->getAddress().toString() << " is leaving the chatroom.";
 				onBye(device);
 			}
 		break;
@@ -1268,19 +1267,19 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddr
 	L_D();
 
 	if (participantAddress.hasGruu()){
-		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because it is a gruu address.";
+		lInfo() << this << ": Not adding participant '" << participantAddress.toString() << "' because it is a gruu address.";
 		return false;
 	}
 
 	if (findParticipant(participantAddress)) {
-		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because it is already a participant";
+		lInfo() << this << ": Not adding participant '" << participantAddress.toString() << "' because it is already a participant";
 		return false;
 	}
 
 	shared_ptr<Participant> participant = findCachedParticipant(participantAddress);
 
 	if (participant == nullptr && (d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && getParticipantCount() == 2) {
-		lInfo() << this << ": Not adding participant '" << participantAddress.asString() << "' because this OneToOne chat room already has 2 participants";
+		lInfo() << this << ": Not adding participant '" << participantAddress.toString() << "' because this OneToOne chat room already has 2 participants";
 		return false;
 	}
 
@@ -1292,7 +1291,7 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddr
 	if (participant){
 		d->resumeParticipant(participant);
 	}else{
-		lInfo() << this << ": Requested to add participant '" << participantAddress.asString() << "', checking capabilities first.";
+		lInfo() << this << ": Requested to add participant '" << participantAddress.toString() << "', checking capabilities first.";
 		list<IdentityAddress> participantsList;
 		participantsList.push_back(participantAddress);
 		d->subscribeRegistrationForParticipants(participantsList, true);
@@ -1425,7 +1424,7 @@ void ServerGroupChatRoom::subscribeReceived (LinphoneEvent *event) {
 
 ostream &operator<< (ostream &stream, const ServerGroupChatRoom *chatRoom) {
 	// TODO: Is conference ID needed to be stored in both remote conference and chat room base classes?
-	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().asString() << "]";
+	return stream << "ServerGroupChatRoom [" << chatRoom->getConferenceId().getPeerAddress().toString() << "]";
 }
 
 LINPHONE_END_NAMESPACE

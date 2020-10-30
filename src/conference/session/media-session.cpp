@@ -1225,7 +1225,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				md->streams[mainAudioStreamIndex].ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
 			md->streams[mainAudioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
 			md->streams[mainAudioStreamIndex].payloads = l;
-			strncpy(md->streams[mainAudioStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainAudioStreamIndex].rtcp_cname));
+			strncpy(md->streams[mainAudioStreamIndex].rtcp_cname, getMe()->getAddress().toString().c_str(), sizeof(md->streams[mainAudioStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainAudioStreamIndex], "as");
 
 			if (getParams()->audioMulticastEnabled()) {
@@ -1255,7 +1255,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[mainVideoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			strncpy(md->streams[mainVideoStreamIndex].name, "Video", sizeof(md->streams[mainVideoStreamIndex].name) - 1);
 			md->streams[mainVideoStreamIndex].payloads = l;
-			strncpy(md->streams[mainVideoStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainVideoStreamIndex].rtcp_cname));
+			strncpy(md->streams[mainVideoStreamIndex].rtcp_cname, getMe()->getAddress().toString().c_str(), sizeof(md->streams[mainVideoStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainVideoStreamIndex], "vs");
 
 			if (getParams()->videoMulticastEnabled()) {
@@ -1286,7 +1286,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[mainTextStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
 			strncpy(md->streams[mainTextStreamIndex].name, "Text", sizeof(md->streams[mainTextStreamIndex].name) - 1);
 			md->streams[mainTextStreamIndex].payloads = l;
-			strncpy(md->streams[mainTextStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainTextStreamIndex].rtcp_cname));
+			strncpy(md->streams[mainTextStreamIndex].rtcp_cname, getMe()->getAddress().toString().c_str(), sizeof(md->streams[mainTextStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainTextStreamIndex], "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
@@ -1689,7 +1689,7 @@ void MediaSessionPrivate::propagateEncryptionChanged () {
 			auto encryptionEngine = q->getCore()->getEncryptionEngine();
 			if (encryptionEngine && authTokenVerified) {
 				const SalAddress *remoteAddress = getOp()->getRemoteContactAddress();
-				peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+				peerDeviceId = sal_address_to_string_uri_only(remoteAddress);
 				Stream *stream = mainAudioStreamIndex != -1 ? getStreamsGroup().getStream(mainAudioStreamIndex) : nullptr;
 				if (stream){
 					MS2Stream *ms2s = dynamic_cast<MS2Stream*>(stream);
@@ -2408,9 +2408,9 @@ LinphoneStatus MediaSession::pauseFromConference () {
 	L_D();
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->destProxy->op->getContactAddress());
 	} else {
-		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->op->getContactAddress());
 	}
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
@@ -2466,9 +2466,9 @@ LinphoneStatus MediaSession::resume () {
 
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->destProxy->op->getContactAddress());
 	} else {
-		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->op->getContactAddress());
 	}
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
@@ -2625,9 +2625,9 @@ LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp
 	L_D();
 	char * contactAddressStr = nullptr;
 	if (d->destProxy && d->destProxy->op) {
-		contactAddressStr = sal_address_as_string(d->destProxy->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->destProxy->op->getContactAddress());
 	} else {
-		contactAddressStr = sal_address_as_string(d->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(d->op->getContactAddress());
 	}
 	Address contactAddress(contactAddressStr);
 	ms_free(contactAddressStr);
@@ -3032,7 +3032,7 @@ void MediaSession::setAuthenticationTokenVerified (bool value) {
 		auto encryptionEngine = getCore()->getEncryptionEngine();
 		if (encryptionEngine) { //inform lime that zrtp no longuer guaranty the trust
 			const SalAddress *remoteAddress = d->getOp()->getRemoteContactAddress();
-			peerDeviceId = sal_address_as_string_uri_only(remoteAddress);
+			peerDeviceId = sal_address_to_string_uri_only(remoteAddress);
 			encryptionEngine->authenticationRejected(peerDeviceId);
 			ms_free(peerDeviceId);
 		}

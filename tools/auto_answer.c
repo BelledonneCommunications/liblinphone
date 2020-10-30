@@ -175,7 +175,7 @@ int main(int argc, char *argv[]){
 	linphone_core_set_sip_transports(lc,&tp);
 	linphone_core_set_audio_port_range(lc,1024,65000);
 	linphone_core_set_video_port_range(lc,1024,65000);
-	linphone_core_set_primary_contact(lc,tmp=linphone_address_as_string(addr));
+	linphone_core_set_primary_contact(lc,tmp=linphone_address_to_string(addr));
 	ms_free(tmp);
 
 	/* main loop for receiving notifications and doing background linphonecore work: */

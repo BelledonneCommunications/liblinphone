@@ -352,7 +352,7 @@ static void quality_reporting_session_report_if_video_stopped (void) {
 
 static void publish_report_with_route_state_changed (LinphoneCore *lc, LinphoneEvent *ev, LinphonePublishState state) {
 	if (state == LinphonePublishProgress) {
-		char *uri = linphone_address_as_string(linphone_event_get_resource(ev));
+		char *uri = linphone_address_to_string(linphone_event_get_resource(ev));
 		BC_ASSERT_STRING_EQUAL(uri, linphone_proxy_config_get_quality_reporting_collector(linphone_core_get_default_proxy_config(lc)));
 		bctbx_free(uri);
 	}

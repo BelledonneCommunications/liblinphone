@@ -200,8 +200,26 @@ LINPHONE_PUBLIC void linphone_address_clean (LinphoneAddress *address);
  * The returned char * must be freed by the application. Use ms_free().
  * @param address a #LinphoneAddress object. @notnil
  * @return a string representation of the address. @notnil
+ * @deprecated 30/10/20 Use linphone_address_to_string() instead
  **/
-LINPHONE_PUBLIC char *linphone_address_as_string (const LinphoneAddress *address);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_address_as_string (const LinphoneAddress *address);
+
+/**
+ * Returns the address as a string.
+ * The returned char * must be freed by the application. Use ms_free().
+ * @param address a #LinphoneAddress object. @notnil
+ * @return a string representation of the address. @notnil
+ **/
+LINPHONE_PUBLIC char *linphone_address_to_string (const LinphoneAddress *address);
+
+/**
+ * Returns the SIP uri only as a string, that is display name is removed.
+ * The returned char * must be freed by the application. Use ms_free().
+ * @param address a #LinphoneAddress object. @notnil
+ * @return a string representation of the address. @notnil
+ * @deprecated 30/10/20 Use linphone_address_to_string_uri_only() instead
+ **/
+LINPHONE_PUBLIC LINPHONE_DEPRECATED char *linphone_address_as_string_uri_only (const LinphoneAddress *address);
 
 /**
  * Returns the SIP uri only as a string, that is display name is removed.
@@ -209,7 +227,7 @@ LINPHONE_PUBLIC char *linphone_address_as_string (const LinphoneAddress *address
  * @param address a #LinphoneAddress object. @notnil
  * @return a string representation of the address. @notnil
  **/
-LINPHONE_PUBLIC char *linphone_address_as_string_uri_only (const LinphoneAddress *address);
+LINPHONE_PUBLIC char *linphone_address_to_string_uri_only (const LinphoneAddress *address);
 
 /**
  * Compare two #LinphoneAddress ignoring tags and headers, basically just domain, username, and port.

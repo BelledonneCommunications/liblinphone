@@ -284,7 +284,7 @@ static void subscribe_with_late_publish(void) {
 	linphone_core_set_user_agent(marie->lc, "full-presence-support-bypass", NULL);
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);
 	pauline_lp = linphone_core_get_config(pauline->lc);
-	lf_identity=linphone_address_as_string_uri_only(marie->identity);
+	lf_identity=linphone_address_to_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 
 	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",10);
@@ -376,7 +376,7 @@ static void test_forked_subscribe_notify_publish(void) {
 
 
 	pauline_lp = linphone_core_get_config(pauline->lc);
-	lf_identity=linphone_address_as_string_uri_only(marie->identity);
+	lf_identity=linphone_address_to_string_uri_only(marie->identity);
 	lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 
 	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
@@ -995,9 +995,9 @@ static void long_term_presence_phone_alias2(void) {
 	char* marie_e164;
 	LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, marie_e164 = generate_random_e164_phone());
 	linphone_core_set_user_agent(marie->lc, "bypass", NULL);
-	char * identity = linphone_address_as_string_uri_only(marie->identity);
+	char * identity = linphone_address_to_string_uri_only(marie->identity);
 	LinphoneAddress * phone_addr = linphone_core_interpret_url(marie->lc, marie->phone_alias);
-	char *phone_addr_uri = linphone_address_as_string(phone_addr);
+	char *phone_addr_uri = linphone_address_to_string(phone_addr);
 	long_term_presence_base(phone_addr_uri, TRUE, identity);
 	ms_free(identity);
 	ms_free(phone_addr_uri);
@@ -1071,9 +1071,9 @@ static void long_term_presence_with_e164_phone_without_sip_base(bool_t backgroun
 		char* marie_e164;
 		LinphoneCoreManager *marie = linphone_core_manager_new3("marie_rc", TRUE, marie_e164 = generate_random_e164_phone());
 		linphone_core_set_user_agent(marie->lc, "bypass", NULL);
-		char * identity = linphone_address_as_string_uri_only(marie->identity);
+		char * identity = linphone_address_to_string_uri_only(marie->identity);
 		LinphoneAddress * phone_addr = linphone_core_interpret_url(marie->lc, marie->phone_alias);
-		char *phone_addr_uri = linphone_address_as_string(phone_addr);
+		char *phone_addr_uri = linphone_address_to_string(phone_addr);
 
 		LinphoneFriend* friend2;
 		char *presence_contact;
@@ -1155,7 +1155,7 @@ static void long_term_presence_with_phone_without_sip(void) {
 
 		marie = linphone_core_manager_new3("marie_rc", TRUE, e164);
 		linphone_core_set_user_agent(marie->lc, "bypass", NULL);
-		identity = linphone_address_as_string_uri_only(marie->identity);
+		identity = linphone_address_to_string_uri_only(marie->identity);
 
 		LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 		linphone_core_set_user_agent(pauline->lc, "full-presence-support-bypass", NULL);

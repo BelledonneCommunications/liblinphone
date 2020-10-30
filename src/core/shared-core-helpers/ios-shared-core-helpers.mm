@@ -345,9 +345,9 @@ void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
 		const LinphoneAddress *cFromAddr = linphone_chat_message_get_from_address(msg);
 		const LinphoneAddress *cLocalAddr = linphone_chat_message_get_local_address(msg);
 		const LinphoneAddress *cPeerAddr = linphone_chat_message_get_peer_address(msg);
-		NSString *fromAddr = [NSString stringWithUTF8String:linphone_address_as_string(cFromAddr)];
-		NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
-		NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
+		NSString *fromAddr = [NSString stringWithUTF8String:linphone_address_to_string(cFromAddr)];
+		NSString *localAddr = [NSString stringWithUTF8String:linphone_address_to_string(cLocalAddr)];
+		NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_to_string(cPeerAddr)];
 		NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
 
 		NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, nil]

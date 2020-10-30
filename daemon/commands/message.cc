@@ -88,8 +88,8 @@ IncomingMessageEvent::IncomingMessageEvent(LinphoneChatMessage *msg) : Event("me
 	ostringstream ostr;
 	const LinphoneAddress *from = linphone_chat_message_get_from_address(msg);
 	const LinphoneAddress *to = linphone_chat_message_get_to_address(msg);
-	char *fromstr = linphone_address_as_string(from);
-	char *tostr = linphone_address_as_string(to);
+	char *fromstr = linphone_address_to_string(from);
+	char *tostr = linphone_address_to_string(to);
 	ostr << "From: "<< fromstr << "\n";
 	ostr << "To: "<< tostr << "\n";
 	ostr << "Id: "<< linphone_chat_message_get_message_id(msg) << "\n";

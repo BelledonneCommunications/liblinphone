@@ -93,8 +93,8 @@ public:
 
 	bool clean ();
 
-	std::string asString () const;
-	std::string asStringUriOnly () const;
+	std::string toString () const;
+	std::string toStringUriOnly () const;
 
 	bool weakEqual (const Address &address) const;
 
@@ -140,7 +140,7 @@ private:
 };
 
 inline std::ostream &operator<< (std::ostream &os, const Address &address) {
-	os << "Address(" << address.asString() << ")";
+	os << "Address(" << address.toString() << ")";
 	return os;
 }
 

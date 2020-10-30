@@ -52,7 +52,7 @@ namespace Cpim {
 		void addParameter (const std::string &key, const std::string &value);
 		void removeParameter (const std::string &key, const std::string &value);
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		L_DECLARE_PRIVATE(GenericHeader);

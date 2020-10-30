@@ -237,14 +237,14 @@ void linphone_chat_message_set_appdata (LinphoneChatMessage *msg, const char *da
 const LinphoneAddress *linphone_chat_message_get_from_address (const LinphoneChatMessage *msg) {
 	if (msg->cache.from)
 		linphone_address_unref(msg->cache.from);
-	msg->cache.from = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().asString().c_str());
+	msg->cache.from = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getFromAddress().toString().c_str());
 	return msg->cache.from;
 }
 
 const LinphoneAddress *linphone_chat_message_get_to_address (const LinphoneChatMessage *msg) {
 	if (msg->cache.to)
 		linphone_address_unref(msg->cache.to);
-	msg->cache.to = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress().asString().c_str());
+	msg->cache.to = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getToAddress().toString().c_str());
 	return msg->cache.to;
 }
 
@@ -478,7 +478,7 @@ const LinphoneAddress *linphone_chat_message_get_peer_address (const LinphoneCha
 const LinphoneAddress *linphone_chat_message_get_local_address (const LinphoneChatMessage *msg) {
 	if (msg->cache.local)
 		linphone_address_unref(msg->cache.local);
-	msg->cache.local = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().asString().c_str());
+	msg->cache.local = linphone_address_new(L_GET_CPP_PTR_FROM_C_OBJECT(msg)->getLocalAdress().toString().c_str());
 	return msg->cache.local;
 }
 

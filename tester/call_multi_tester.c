@@ -286,7 +286,7 @@ static void simple_call_transfer(void) {
 	LinphoneCall *marie_calling_pauline;
 	LinphoneCall *marie_calling_laure;
 
-	char* laure_identity=linphone_address_as_string(laure->identity);
+	char* laure_identity=linphone_address_to_string(laure->identity);
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -353,7 +353,7 @@ static void unattended_call_transfer(void) {
 	LinphoneCoreManager* laure = linphone_core_manager_new( get_laure_rc());
 	LinphoneCall* pauline_called_by_marie;
 
-	char* laure_identity=linphone_address_as_string(laure->identity);
+	char* laure_identity=linphone_address_to_string(laure->identity);
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,laure->lc);
@@ -788,7 +788,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		linphone_core_enable_video_display(c, TRUE);
 
 		const LinphoneAddress *caller_uri = m->identity;
-		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
+		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_to_string(caller_uri));
 		BC_ASSERT_PTR_NOT_NULL(marie_call);
 
 		// Take call - ringing ends
@@ -807,7 +807,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 			LinphoneCall * call_to_update = NULL;
 			if (update_from_callee) {
 				const LinphoneAddress *caller_uri = m->identity;
-				call_to_update = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
+				call_to_update = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_to_string(caller_uri));
 			} else {
 				call_to_update = linphone_core_get_current_call(c);
 			}
@@ -863,8 +863,8 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		}
 	}
 
-	char* p_remote_address = pcall ? linphone_call_get_remote_address_as_string(pcall) : "Unknown Call";
-	BC_ASSERT_EQUAL(strcmp(p_remote_address,linphone_address_as_string(marie->identity)), 0, int, "%d");
+	char* p_remote_address = pcall ? linphone_call_get_remote_address_to_string(pcall) : "Unknown Call";
+	BC_ASSERT_EQUAL(strcmp(p_remote_address,linphone_address_to_string(marie->identity)), 0, int, "%d");
 	BC_ASSERT_EQUAL(no_paused_by_remote,no_call_paused, int, "%d");
 
 	LinphoneCall * hcall = NULL;
@@ -882,8 +882,8 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	}
 	bctbx_list_free(calls);
 
-	char* h_remote_address = hcall ? linphone_call_get_remote_address_as_string(hcall) : "Unknown remote address";
-	char* pm_address = pm ? linphone_address_as_string(pm->identity) : "Unknown participant address";
+	char* h_remote_address = hcall ? linphone_call_get_remote_address_to_string(hcall) : "Unknown remote address";
+	char* pm_address = pm ? linphone_address_to_string(pm->identity) : "Unknown participant address";
 	BC_ASSERT_EQUAL(strcmp(h_remote_address, pm_address), 0, int, "%d");
 	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");
 

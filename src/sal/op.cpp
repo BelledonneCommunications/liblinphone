@@ -125,7 +125,7 @@ void SalOp::setRoute (const string &value) {
 	} else {
 		auto address = sal_address_new(value.c_str());
 		mRouteAddresses.push_back(address);
-		char *routeStr = sal_address_as_string(address);
+		char *routeStr = sal_address_to_string(address);
 		mRoute = routeStr;
 		ms_free(routeStr);
 	}
@@ -133,7 +133,7 @@ void SalOp::setRoute (const string &value) {
 
 void SalOp::setRouteAddress (const SalAddress *value) {
 	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
+	char *addressStr = sal_address_to_string(value);
 	setRoute(addressStr);
 	ms_free(addressStr);
 }
@@ -148,7 +148,7 @@ void SalOp::addRouteAddress (const SalAddress *address) {
 void SalOp::setFrom (const string &value) {
 	assignAddress(&mFromAddress, value);
 	if (mFromAddress) {
-		char *valueStr = sal_address_as_string(mFromAddress);
+		char *valueStr = sal_address_to_string(mFromAddress);
 		mFrom = valueStr;
 		ms_free(valueStr);
 	} else {
@@ -158,7 +158,7 @@ void SalOp::setFrom (const string &value) {
 
 void SalOp::setFromAddress (const SalAddress *value) {
 	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
+	char *addressStr = sal_address_to_string(value);
 	setFrom(addressStr);
 	ms_free(addressStr);
 }
@@ -166,7 +166,7 @@ void SalOp::setFromAddress (const SalAddress *value) {
 void SalOp::setTo (const string &value) {
 	assignAddress(&mToAddress, value);
 	if (mToAddress) {
-		char *valueStr = sal_address_as_string(mToAddress);
+		char *valueStr = sal_address_to_string(mToAddress);
 		mTo = valueStr;
 		ms_free(valueStr);
 	} else {
@@ -176,7 +176,7 @@ void SalOp::setTo (const string &value) {
 
 void SalOp::setToAddress (const SalAddress *value) {
 	// Can probably be optimized
-	char *addressStr = sal_address_as_string(value);
+	char *addressStr = sal_address_to_string(value);
 	setTo(addressStr);
 	ms_free(addressStr);
 }
@@ -822,7 +822,7 @@ void SalOp::setRemoteContact (const string &value) {
 void SalOp::setNetworkOrigin (const string &value) {
 	assignAddress(&mOriginAddress, value);
 	if (mOriginAddress) {
-		char *valueStr = sal_address_as_string(mOriginAddress);
+		char *valueStr = sal_address_to_string(mOriginAddress);
 		mOrigin = valueStr;
 		ms_free(valueStr);
 	} else {
@@ -832,7 +832,7 @@ void SalOp::setNetworkOrigin (const string &value) {
 
 void SalOp::setNetworkOriginAddress (SalAddress *value) {
 	// Can probably be optimized
-	char *valueStr = sal_address_as_string(value);
+	char *valueStr = sal_address_to_string(value);
 	setNetworkOrigin(valueStr);
 	ms_free(valueStr);
 }
@@ -964,12 +964,12 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 	}
 
 	if (contentType.isValid()) {
-		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_parse(contentType.asString().c_str());
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_parse(contentType.toString().c_str());
 		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
 	}
 	if (contentDisposition.isValid()) {
 		belle_sip_header_content_disposition_t *contentDispositionHeader = belle_sip_header_content_disposition_create(
-			contentDisposition.asString().c_str()
+			contentDisposition.toString().c_str()
 		);
 		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(contentDispositionHeader));
 	}
