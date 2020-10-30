@@ -87,6 +87,8 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
+	virtual std::string toString() const override;
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;

@@ -144,5 +144,11 @@ void RemoteConference::onFullStateReceived() {
 
 }
 
+std::string RemoteConference::toString() const {
+	std::stringstream ss;
+	ss << "Remote " << Conference::toString();
+
+	return ss.str();
+}
 
 LINPHONE_END_NAMESPACE

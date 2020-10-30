@@ -93,7 +93,7 @@ public:
 
 	bool clean ();
 
-	std::string toString () const;
+	std::string toString () const override;
 	std::string toStringUriOnly () const;
 
 	bool weakEqual (const Address &address) const;
