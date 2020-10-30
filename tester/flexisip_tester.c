@@ -1109,7 +1109,7 @@ static void test_subscribe_notify_with_sipp_publisher(void) {
 	LinphoneAddress *sip_example_org;
 	const LinphoneAuthInfo	*marie_auth = linphone_core_find_auth_info(marie->lc, NULL, linphone_address_get_username(marie->identity), NULL);
 	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
-	char* lf_identity=linphone_address_as_string_uri_only(marie->identity);
+	char* lf_identity=linphone_address_to_string_uri_only(marie->identity);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 
 	linphone_core_set_user_agent(marie->lc, "full-presence-support", NULL);
@@ -1156,7 +1156,7 @@ static void test_subscribe_notify_with_sipp_publisher_double_publish(void) {
 	linphone_core_set_user_agent(pauline->lc, "full-presence-support", NULL);
 
 	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
-	char* lf_identity=linphone_address_as_string_uri_only(marie->identity);
+	char* lf_identity=linphone_address_to_string_uri_only(marie->identity);
 	LinphoneFriend *lf = linphone_core_create_friend_with_address(pauline->lc,lf_identity);
 	ms_free(lf_identity);
 	linphone_config_set_int(pauline_lp,"sip","subscribe_expires",5);
@@ -1215,8 +1215,8 @@ static void test_list_subscribe (void) {
 
 	LinphoneEvent *lev;
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
-	char * pauline_uri=linphone_address_as_string_uri_only(pauline->identity);
-	char * laure_uri=linphone_address_as_string_uri_only(laure->identity);
+	char * pauline_uri=linphone_address_to_string_uri_only(pauline->identity);
+	char * laure_uri=linphone_address_to_string_uri_only(laure->identity);
 	char * subscribe_content = ms_strdup_printf(list,pauline_uri,laure_uri);
 	LinphoneContent* content = linphone_core_create_content(marie->lc);
 	LinphoneAddress *list_name = linphone_address_new("sip:mescops@sip.example.org");
@@ -1537,7 +1537,7 @@ static void register_without_regid(void) {
 	LinphoneProxyConfig *cfg=linphone_core_get_default_proxy_config(marie->lc);
 	if(cfg) {
 		const LinphoneAddress *addr = linphone_proxy_config_get_contact(cfg);
-		char *addrStr = linphone_address_as_string_uri_only(addr);
+		char *addrStr = linphone_address_to_string_uri_only(addr);
 		BC_ASSERT_PTR_NOT_NULL(addr);
 		BC_ASSERT_PTR_NULL(strstr(addrStr, "regid"));
 		if (addrStr) ms_free(addrStr);
@@ -1663,9 +1663,9 @@ void resend_refer_other_devices(void) {
 	sal_set_call_refer_callback(pauline_sal, on_refer_received);
 
 
-	char *marie_address = linphone_address_as_string(marie->identity);
-	char *pauline_address = linphone_address_as_string(pauline->identity);
-	char *laure_address = linphone_address_as_string(laure->identity);
+	char *marie_address = linphone_address_to_string(marie->identity);
+	char *pauline_address = linphone_address_to_string(pauline->identity);
+	char *laure_address = linphone_address_to_string(laure->identity);
 
 	/* Then we create a refer from marie to pauline that refers to laure */
 	SalOp *op = sal_create_refer_op(linphone_core_get_sal(marie->lc));

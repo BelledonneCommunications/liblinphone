@@ -131,11 +131,19 @@ void linphone_address_clean (LinphoneAddress *address) {
 }
 
 char *linphone_address_as_string (const LinphoneAddress *address) {
-	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(address)->asString().c_str());
+	return linphone_address_to_string (address);
+}
+
+char *linphone_address_to_string (const LinphoneAddress *address) {
+	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(address)->toString().c_str());
 }
 
 char *linphone_address_as_string_uri_only (const LinphoneAddress *address) {
-	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(address)->asStringUriOnly().c_str());
+	return linphone_address_to_string_uri_only (address);
+}
+
+char *linphone_address_to_string_uri_only (const LinphoneAddress *address) {
+	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(address)->toStringUriOnly().c_str());
 }
 
 bool_t linphone_address_weak_equal (const LinphoneAddress *address1, const LinphoneAddress *address2) {

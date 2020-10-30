@@ -150,7 +150,7 @@ bool Cpim::Message::setContent (const string &content) {
 
 // -----------------------------------------------------------------------------
 
-string Cpim::Message::asString () const {
+string Cpim::Message::toString () const {
 	L_D();
 
 	string output;
@@ -160,7 +160,7 @@ string Cpim::Message::asString () const {
 			for (const auto &messageHeader : *list) {
 				if (entry.first != "")
 					output += entry.first + ".";
-				output += messageHeader->asString();
+				output += messageHeader->toString();
 			}
 		}
 
@@ -168,7 +168,7 @@ string Cpim::Message::asString () const {
 	}
 
 	for (const auto &contentHeaders : *d->contentHeaders)
-		output += contentHeaders->asString();
+		output += contentHeaders->toString();
 		
 	output += "\r\n";
 

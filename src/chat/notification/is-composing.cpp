@@ -83,10 +83,10 @@ void IsComposing::parse (const Address &remoteAddr, const string &text) {
 		unsigned long long refresh = 0;
 		if (node->getRefresh().present())
 			refresh = node->getRefresh().get();
-		startRemoteRefreshTimer(remoteAddr.asStringUriOnly(), refresh);
+		startRemoteRefreshTimer(remoteAddr.toStringUriOnly(), refresh);
 		listener->onIsRemoteComposingStateChanged(remoteAddr, true);
 	} else if (node->getState() == "idle") {
-		stopRemoteRefreshTimer(remoteAddr.asStringUriOnly());
+		stopRemoteRefreshTimer(remoteAddr.toStringUriOnly());
 		listener->onIsRemoteComposingStateChanged(remoteAddr, false);
 	}
 #else

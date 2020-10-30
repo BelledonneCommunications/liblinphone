@@ -90,7 +90,7 @@ void Conference::setConferenceAddress (const ConferenceAddress &conferenceAddres
 		}
 
 		LinphonePrivate::Conference::setConferenceAddress(conferenceAddress);
-		lInfo() << "The Conference has been given the address " << conferenceAddress.asString() << ", now finalizing its creation";
+		lInfo() << "The Conference has been given the address " << conferenceAddress.toString() << ", now finalizing its creation";
 	} else {
 		lError() << "Cannot set the conference address of the Conference in state " << getState();
 		return;
@@ -144,7 +144,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		if (remoteContact) {
 			// If device is not found, then add it
 			if (p->findDevice(*remoteContact) == nullptr) {
-				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
+				lInfo() << "Adding device with address " << remoteContact->toString() << " to participant " << p.get();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				_linphone_call_set_conf_ref(call->toC(), toC());
 				device->setSession(call->getActiveSession());
@@ -178,7 +178,7 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 					linphone_event_terminate(event);
 				}
 
-				lInfo() << "Removing device with address " << remoteContact->asString() << " to participant " << p.get();
+				lInfo() << "Removing device with address " << remoteContact->toString() << " to participant " << p.get();
 				p->removeDevice(*remoteContact);
 				shared_ptr<Call> call = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
 				if (call) {
@@ -385,11 +385,11 @@ LocalConference::LocalConference (
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
-	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
+	LinphoneAddress * cAddress = linphone_address_new(myAddress.toString().c_str());
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
 	char * contactAddressStr = nullptr;
 	if (proxyCfg && proxyCfg->op) {
-		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+		contactAddressStr = sal_address_to_string(proxyCfg->op->getContactAddress());
 	} else {
 		contactAddressStr = ms_strdup(linphone_core_find_best_identity(core->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
@@ -472,7 +472,7 @@ void LocalConference::addLocalEndpoint () {
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
 	for (const auto &address : addresses) {
 		LinphoneCall *call = linphone_core_get_call_by_remote_address2(getCore()->getCCore(), address);
-		char *cAddress = linphone_address_as_string(address);
+		char *cAddress = linphone_address_to_string(address);
 		Address cppAddress(cAddress);
 		free(cAddress);
 		if (!call) {
@@ -669,7 +669,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 				std::shared_ptr<LinphonePrivate::MediaSession> session = static_pointer_cast<LinphonePrivate::MediaSession>(remaining_participant->getSession());
 
-				lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->asString() << 
+				lInfo() << "Participant [" << remaining_participant << "] with " << session->getRemoteAddress()->toString() << 
 					" is our last call in our conference, we will reconnect directly to it.";
 
 				const MediaSessionParams * params = session->getMediaParams();
@@ -797,7 +797,7 @@ bool LocalConference::update(const LinphonePrivate::ConferenceParamsInterface &n
 				MediaSessionParams *currentParams = params->clone();
 
 				if ((!!currentParams->videoEnabled()) != newConfParams.videoEnabled()){
-					lInfo() << "Re-INVITing participant " << participant->getAddress().asString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
+					lInfo() << "Re-INVITing participant " << participant->getAddress().toString() << " to " << (newConfParams.videoEnabled() ? "start" : "stop") << " video.";
 					currentParams->enableVideo(newConfParams.videoEnabled());
 					session->update(currentParams);
 				}
@@ -1040,8 +1040,8 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
-			ms_message("Calling the conference focus (%s)", getConferenceAddress().asString().c_str());
-			addr = linphone_address_new(getConferenceAddress().asString().c_str());
+			ms_message("Calling the conference focus (%s)", getConferenceAddress().toString().c_str());
+			addr = linphone_address_new(getConferenceAddress().toString().c_str());
 			if (!addr)
 				return false;
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
@@ -1093,21 +1093,21 @@ int RemoteConference::removeParticipant (const IdentityAddress &addr) {
 		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::TerminationPending:
 			if(!findParticipant(addr)) {
-				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.asString().c_str());
+				ms_error("Conference: could not remove participant '%s': not in the participants list", addr.toString().c_str());
 				return -1;
 			}
 			refer_to_addr = Address(addr);
 			linphone_address_set_method_param(L_GET_C_BACK_PTR(&refer_to_addr), "BYE");
-			res = m_focusCall->getOp()->refer(refer_to_addr.asString().c_str());
+			res = m_focusCall->getOp()->refer(refer_to_addr.toString().c_str());
 			if (res == 0)
 				return Conference::removeParticipant(addr);
 			else {
-				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.asString().c_str());
+				ms_error("Conference: could not remove participant '%s': REFER with BYE has failed", addr.toString().c_str());
 				return -1;
 			}
 		default:
 			ms_error("Cannot remove %s from conference: Bad conference state (%s)",
-				addr.asString().c_str(), Utils::toString(state).c_str());
+				addr.toString().c_str(), Utils::toString(state).c_str());
 			return -1;
 	}
 }

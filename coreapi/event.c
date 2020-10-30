@@ -520,7 +520,7 @@ const char *linphone_event_get_name(const LinphoneEvent *lev){
 static const LinphoneAddress *_linphone_event_cache_to (const LinphoneEvent *lev) {
 	if (lev->to_address)
 		linphone_address_unref(lev->to_address);
-	char *buf = sal_address_as_string(lev->op->getToAddress());
+	char *buf = sal_address_to_string(lev->op->getToAddress());
 	((LinphoneEvent *)lev)->to_address = linphone_address_new(buf);
 	ms_free(buf);
 	return lev->to_address;
@@ -529,7 +529,7 @@ static const LinphoneAddress *_linphone_event_cache_to (const LinphoneEvent *lev
 static const LinphoneAddress *_linphone_event_cache_from (const LinphoneEvent *lev) {
 	if (lev->from_address)
 		linphone_address_unref(lev->from_address);
-	char *buf = sal_address_as_string(lev->op->getFromAddress());
+	char *buf = sal_address_to_string(lev->op->getFromAddress());
 	((LinphoneEvent *)lev)->from_address = linphone_address_new(buf);
 	ms_free(buf);
 	return lev->from_address;
@@ -538,7 +538,7 @@ static const LinphoneAddress *_linphone_event_cache_from (const LinphoneEvent *l
 static const LinphoneAddress *_linphone_event_cache_remote_contact (const LinphoneEvent *lev) {
 	if (lev->remote_contact_address)
 		linphone_address_unref(lev->remote_contact_address);
-	char *buf = sal_address_as_string(lev->op->getRemoteContactAddress());
+	char *buf = sal_address_to_string(lev->op->getRemoteContactAddress());
 	((LinphoneEvent *)lev)->remote_contact_address = linphone_address_new(buf);
 	ms_free(buf);
 	return lev->remote_contact_address;

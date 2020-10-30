@@ -71,14 +71,14 @@ const char *linphone_push_notification_message_get_subject(const LinphonePushNot
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_from_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getFromAddr()->asString().c_str());
+	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getFromAddr()->toString().c_str());
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_local_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getLocalAddr()->asString().c_str());
+	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getLocalAddr()->toString().c_str());
 }
 
 const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *msg) {
-	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->asString().c_str());
+	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->toString().c_str());
 	;
 }

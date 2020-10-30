@@ -274,7 +274,7 @@ void wait_participants(LinphoneCoreManager *mgr, bctbx_list_t* coresList, bctbx_
 
 	for (i = 1; i < nb_instances; ++i) {
 		LinphoneAddress *addr = bctbx_list_nth_data(participantsAddresses, i * nb_instance_participants);
-		char *identity = linphone_address_as_string_uri_only(addr);
+		char *identity = linphone_address_to_string_uri_only(addr);
 		LinphoneFriend* friend = linphone_core_create_friend_with_address(mgr->lc, identity);
 		linphone_friend_edit(friend);
 		linphone_friend_enable_subscribes(friend, TRUE);
@@ -298,7 +298,7 @@ void wait_creator(LinphoneCoreManager *mgr, bctbx_list_t* coresList) {
 
 	for (it = participants;	it; it = it->next) {
 		LinphoneAddress *addr = bctbx_list_get_data(it);
-		char *identity = linphone_address_as_string_uri_only(addr);
+		char *identity = linphone_address_to_string_uri_only(addr);
 		LinphoneFriend* friend = linphone_core_create_friend_with_address(mgr->lc, identity);
 		linphone_friend_edit(friend);
 		linphone_friend_enable_subscribes(friend, TRUE);
@@ -400,7 +400,7 @@ void send_messages(LinphoneCoreManager *mgr, bctbx_list_t *coresList, uint32_t m
 		}
 		linphone_chat_room_compose(it->data);
 
-		const char *localCrAddr = linphone_address_as_string(linphone_chat_room_get_local_address(it->data));
+		const char *localCrAddr = linphone_address_to_string(linphone_chat_room_get_local_address(it->data));
 
 		messagesList = NULL;
 

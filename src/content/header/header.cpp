@@ -113,7 +113,7 @@ std::string Header::getValueWithParams () const {
 	stringstream returnValue;
 	returnValue << getValue();
 	for (const auto &param : getParameters())
-		returnValue << param.asString();
+		returnValue << param.toString();
 
 	return returnValue.str();
 }
@@ -172,20 +172,20 @@ const HeaderParam &Header::getParameter (const string &paramName) const {
 	return Utils::getEmptyConstRefObject<HeaderParam>();
 }
 
-string Header::asString () const {
-	stringstream asString;
+string Header::toString () const {
+	stringstream toString;
 	if (!getName().empty())
-		asString << getName() << ":";
+		toString << getName() << ":";
 
-	asString << getValue();
+	toString << getValue();
 	for (const auto &param : getParameters())
-		asString << param.asString();
+		toString << param.toString();
 
-	return asString.str();
+	return toString.str();
 }
 
 ostream &operator<< (ostream &os, const Header& header) {
-	os << header.asString();
+	os << header.toString();
 	return os;
 }
 

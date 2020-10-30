@@ -70,7 +70,7 @@ void CallStatusCommand::exec(Daemon *app, const string& args) {
 	case LinphoneCallStreamsRunning:
 	case LinphoneCallConnected:
 	case LinphoneCallIncomingReceived:
-		ostr << "From: " << linphone_address_as_string(remoteAddress) << "\n";
+		ostr << "From: " << linphone_address_to_string(remoteAddress) << "\n";
 		break;
 	default:
 		break;

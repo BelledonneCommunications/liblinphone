@@ -1729,7 +1729,7 @@ void linphone_core_add_subscriber(LinphoneCore *lc, const char *subscriber, SalO
 
 	addr = linphone_friend_get_address(fl);
 	if (addr != NULL) {
-		tmp = linphone_address_as_string(addr);
+		tmp = linphone_address_to_string(addr);
 		linphone_core_notify_new_subscription_requested(lc,fl,tmp);
 		ms_free(tmp);
 	}
@@ -1765,7 +1765,7 @@ void linphone_subscription_new(LinphoneCore *lc, SalSubscribeOp *op, const char 
 
 	uri=linphone_address_new(from);
 	linphone_address_clean(uri);
-	tmp=linphone_address_as_string(uri);
+	tmp=linphone_address_to_string(uri);
 	ms_message("Receiving new subscription from %s.",from);
 
 	/* check if we answer to this subscription */
@@ -2051,7 +2051,7 @@ char *linphone_presence_model_to_xml(LinphonePresenceModel *model) {
 	char * content = NULL;
 
 	if (model->presentity) {
-		contact = linphone_address_as_string_uri_only(model->presentity);
+		contact = linphone_address_to_string_uri_only(model->presentity);
 	} else {
 		ms_error("Cannot convert presence model [%p] to xml because no presentity set", model);
 		goto  end;
@@ -2148,7 +2148,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 	if (linphone_core_get_default_friend_list(lc) != NULL)
 		lf=linphone_core_find_friend_by_out_subscribe(lc, op);
 	if (lf==NULL && linphone_config_get_int(lc->config,"sip","allow_out_of_subscribe_presence",0)){
-		char *buf = sal_address_as_string_uri_only(op->getFromAddress());
+		char *buf = sal_address_to_string_uri_only(op->getFromAddress());
 		LinphoneAddress *addr = linphone_address_new(buf);
 		lf = linphone_core_find_friend(lc, addr);
 		ms_free(buf);
@@ -2160,7 +2160,7 @@ void linphone_notify_recv(LinphoneCore *lc, SalOp *op, SalSubscribeStatus ss, Sa
 		activity = linphone_presence_model_get_activity(presence);
 		lfa=linphone_friend_get_address(lf);
 		if (lfa != NULL) {
-			tmp=linphone_address_as_string(lfa);
+			tmp=linphone_address_to_string(lfa);
 			if (activity == NULL) {
 				activity_str = linphone_presence_basic_status_to_string(linphone_presence_model_get_basic_status(presence));
 			} else {

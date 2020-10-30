@@ -47,7 +47,7 @@ static void stop(int signum){
 static void file_transfer_progress_indication(LinphoneChatMessage *message, const LinphoneContent* content, size_t offset, size_t total) {
 	const LinphoneAddress* from_address = linphone_chat_message_get_from_address(message);
 	const LinphoneAddress* to_address = linphone_chat_message_get_to_address(message);
-	char *address = linphone_chat_message_is_outgoing(message)?linphone_address_as_string(to_address):linphone_address_as_string(from_address);
+	char *address = linphone_chat_message_is_outgoing(message)?linphone_address_to_string(to_address):linphone_address_to_string(from_address);
 	printf(" File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n", (int)((offset *100)/total)
 																	,(linphone_chat_message_is_outgoing(message)?"sent":"received")
 																	, linphone_content_get_type(content)
@@ -96,7 +96,7 @@ static LinphoneBuffer * file_transfer_send(LinphoneChatMessage *message, const L
  * */
 static void linphone_file_transfer_state_changed(LinphoneChatMessage* msg,LinphoneChatMessageState state) {
 	const LinphoneAddress* to_address = linphone_chat_message_get_to_address(msg);
-	char *to = linphone_address_as_string(to_address);
+	char *to = linphone_address_to_string(to_address);
 	printf("File transfer sent to [%s] delivery status is [%s] \n"	, to
 																	, linphone_chat_message_state_to_string(state));
 	free(to);

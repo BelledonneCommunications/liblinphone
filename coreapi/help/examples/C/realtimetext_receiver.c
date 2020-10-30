@@ -59,7 +59,7 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
  * Completed message received
  */
 static void  message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message) {
-	char *from=linphone_address_as_string(linphone_chat_room_get_peer_address(room));
+	char *from=linphone_address_to_string(linphone_chat_room_get_peer_address(room));
 	printf(" Message [%s] received from [%s] \n",linphone_chat_message_get_text(message),from);
 	ms_free(from);
 }

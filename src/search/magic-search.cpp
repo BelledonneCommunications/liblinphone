@@ -507,7 +507,7 @@ unsigned int MagicSearch::getWeight (const string &stringWords, const string &fi
 
 bool MagicSearch::checkDomain (const LinphoneFriend *lFriend, const LinphoneAddress *lAddress, const string &withDomain) const {
 	bool onlyOneDomain = !withDomain.empty() && withDomain != "*";
-	char *addr = linphone_address_as_string_uri_only(lAddress);
+	char *addr = linphone_address_to_string_uri_only(lAddress);
 	const LinphonePresenceModel *presenceModel = lFriend ? linphone_friend_get_presence_model_for_uri_or_tel(lFriend, addr) : nullptr;
 	char *contactPresence = presenceModel ? linphone_presence_model_get_contact(presenceModel) : nullptr;
 

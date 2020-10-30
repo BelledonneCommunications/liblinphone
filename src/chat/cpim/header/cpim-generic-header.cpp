@@ -95,7 +95,7 @@ void Cpim::GenericHeader::removeParameter (const string &key, const string &valu
 	d->parameters->remove(make_pair(key, value));
 }
 
-string Cpim::GenericHeader::asString () const {
+string Cpim::GenericHeader::toString () const {
 	L_D();
 
 	string parameters;
