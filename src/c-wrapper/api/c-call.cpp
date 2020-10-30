@@ -147,7 +147,7 @@ void linphone_call_notify_audio_device_changed(LinphoneCall *call, LinphoneAudio
 // Public functions.
 // =============================================================================
 
-const char *linphone_call_to_string (const LinphoneCall *call) {
+char *linphone_call_to_string (const LinphoneCall *call) {
 	return ms_strdup(Call::toCpp(call)->toString().c_str());
 }
 
