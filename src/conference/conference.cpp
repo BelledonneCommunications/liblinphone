@@ -404,4 +404,11 @@ void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State
 	}
 }
 
+std::string Conference::toString() const {
+	std::stringstream ss;
+	ss << "Conference [" << this << "] with conference ID " << getConferenceId() << " and conference address " << getConferenceAddress();
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

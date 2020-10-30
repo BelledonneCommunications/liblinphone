@@ -171,6 +171,8 @@ public:
 
 	void clearParticipants();
 
+	virtual std::string toString() const;
+
 protected:
 	explicit Conference (
 		const std::shared_ptr<Core> &core,

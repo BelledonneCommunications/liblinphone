@@ -79,6 +79,14 @@ LINPHONE_PUBLIC const char* linphone_participant_device_identity_get_capability_
 LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity);
 
 /**
+ * Returns the participant device identity as a string.
+ * The result string must be freed by user using ms_free().
+ * @param call #LinphoneParticipantDeviceIdentity object. @notnil
+ * @return the participant device identity as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_participant_device_identity_to_string (const LinphoneParticipantDeviceIdentity *device_identity);
+
+/**
  * @}
  */
 

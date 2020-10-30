@@ -107,6 +107,8 @@ public:
 	void *getUserData () const;
 	void setUserData (void *ud);
 
+	virtual std::string toString() const override;
+
 protected:
 	std::shared_ptr<Core> getCore () const { return mConference ? mConference->getCore() : nullptr; }
 	Conference *getConference () const { return mConference; }
@@ -140,11 +142,6 @@ private:
 
 	L_DISABLE_COPY(Participant);
 };
-
-inline std::ostream &operator<< (std::ostream &os, const Participant &participant) {
-	return os << participant.getAddress().toString();
-	return os;
-}
 
 LINPHONE_END_NAMESPACE
 

@@ -64,9 +64,7 @@ public:
 	std::list<HeaderParam>::const_iterator findParameter (const std::string &paramName) const;
 	const HeaderParam &getParameter (const std::string &paramName) const;
 
-	std::string toString () const;
-
-	LINPHONE_PUBLIC friend std::ostream &operator<< (std::ostream &os, const Header &header);
+	std::string toString () const override;
 
 protected:
 	explicit Header (HeaderPrivate &p);

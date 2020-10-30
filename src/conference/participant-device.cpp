@@ -94,6 +94,14 @@ void ParticipantDevice::setUserData (void *ud) {
 	mUserData = ud;
 }
 
+std::string ParticipantDevice::toString() const {
+	std::stringstream ss;
+	ss << "Participant Device [" << this << "] named " << mName << " joined conference at " << ctime(&mTimeOfJoining);
+	ss << " is in state " << mState;
+
+	return ss.str();
+}
+
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
