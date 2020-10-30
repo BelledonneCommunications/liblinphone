@@ -763,8 +763,7 @@ std::string ChatRoom::toString() const {
 	L_D();
 	std::stringstream ss;
 
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "Chat Room [" << voidThis << "] with conferenceId " << getConferenceId() << " created at " << ctime(&d->creationTime) << " with " << getChatMessageCount();
+	ss << "Chat Room [" << this << "] with conferenceId " << getConferenceId() << " created at " << ctime(&d->creationTime) << " with " << getChatMessageCount();
 	if (ephemeralEnabled()) {
 		ss << " ephemeral ";
 	}

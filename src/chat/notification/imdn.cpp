@@ -368,8 +368,7 @@ void Imdn::stopTimer () {
 
 std::string Imdn::toString() const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "IMDN " << voidThis;
+	ss << "IMDN [" << this << "]";
 	ss << " number of delivered messages " << deliveredMessages.size();
 	ss << " number of non delivered messages " << nonDeliveredMessages.size();
 	ss << " number of displayed messages " << displayedMessages.size();
