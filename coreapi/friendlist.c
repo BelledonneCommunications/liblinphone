@@ -384,7 +384,7 @@ static void linphone_friend_list_parse_multipart_related_body(LinphoneFriendList
 							if (linphone_address_has_uri_param(addr, "gr")) {
 								linphone_address_remove_uri_param(addr, "gr");
 							}
-							uri = linphone_address_as_string_uri_only(addr);
+							uri = linphone_address_to_string_uri_only(addr);
 							linphone_address_unref(addr);
 
 							bctbx_iterator_t *it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
@@ -596,7 +596,7 @@ void linphone_friend_list_set_rls_address(LinphoneFriendList *list, const Linpho
 		list->rls_uri = NULL;
 	}
 	if (list->rls_addr){
-		list->rls_uri = linphone_address_as_string(list->rls_addr);
+		list->rls_uri = linphone_address_to_string(list->rls_addr);
 		linphone_core_store_friends_list_in_db(list->lc, list);
 	}
 }
@@ -637,7 +637,7 @@ static LinphoneFriendListStatus _linphone_friend_list_add_friend(LinphoneFriendL
 	}
 	if (present) {
 		char *tmp = NULL;
-		if (addr) tmp = linphone_address_as_string(addr);
+		if (addr) tmp = linphone_address_to_string(addr);
 		ms_warning("Friend %s already in list [%s], ignored.", tmp ? tmp : "unknown", list->display_name);
 		if (tmp) ms_free(tmp);
 	} else {
@@ -758,7 +758,7 @@ static LinphoneFriendListStatus _linphone_friend_list_remove_friend(LinphoneFrie
 	iterator = (bctbx_list_t *)addresses;
 	while (iterator) {
 		LinphoneAddress *lfaddr = (LinphoneAddress *)bctbx_list_get_data(iterator);
-		char *uri = linphone_address_as_string_uri_only(lfaddr);
+		char *uri = linphone_address_to_string_uri_only(lfaddr);
 		if (uri) {
 			bctbx_iterator_t * it = bctbx_map_cchar_find_key(list->friends_map_uri, uri);
 			bctbx_iterator_t * end = bctbx_map_cchar_end(list->friends_map_uri);
@@ -875,7 +875,7 @@ LinphoneFriend * linphone_friend_list_find_friend_by_address(const LinphoneFrien
 	if (linphone_address_has_uri_param(clean_addr, "gr")) {
 		linphone_address_remove_uri_param(clean_addr, "gr");
 	}
-	char *uri = linphone_address_as_string_uri_only(clean_addr);
+	char *uri = linphone_address_to_string_uri_only(clean_addr);
 	lf = linphone_friend_list_find_friend_by_uri(list, uri);
 	bctbx_free(uri);
 	linphone_address_unref(clean_addr);
@@ -903,7 +903,7 @@ bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriend
 	if (linphone_address_has_uri_param(clean_addr, "gr")) {
 		linphone_address_remove_uri_param(clean_addr, "gr");
 	}
-	char *uri = linphone_address_as_string_uri_only(clean_addr);
+	char *uri = linphone_address_to_string_uri_only(clean_addr);
 	result = linphone_friend_list_find_friends_by_uri(list, uri);
 	bctbx_free(uri);
 	linphone_address_unref(clean_addr);

@@ -535,7 +535,7 @@ void linphone_xml_rpc_session_send_request(LinphoneXmlRpcSession *session, Linph
 
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(session->core);
 	if (cfg) {
-		char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+		char *addr = linphone_address_to_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 		req = belle_http_request_create("POST", uri,
 			belle_sip_header_content_type_create("text", "xml"),
 			belle_http_header_create("From", addr),

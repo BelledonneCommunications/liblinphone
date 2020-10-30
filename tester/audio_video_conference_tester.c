@@ -2970,7 +2970,7 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 		for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 			LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 			LinphoneCoreManager * m = get_manager(c);
-			char * identity_string = linphone_address_as_string(m->identity);
+			char * identity_string = linphone_address_to_string(m->identity);
 			bool_t manager_found = (strcmp(remote_address_string, identity_string) == 0);
 			ms_free(identity_string);
 			if (manager_found == TRUE) {

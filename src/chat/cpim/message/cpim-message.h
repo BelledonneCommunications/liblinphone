@@ -49,7 +49,7 @@ namespace Cpim {
 		std::string getContent () const;
 		bool setContent (const std::string &content);
 
-		std::string asString () const;
+		std::string toString () const;
 
 		static std::shared_ptr<const Message> createFromString (const std::string &str);
 

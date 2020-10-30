@@ -84,7 +84,7 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 	const LinphoneAddress *addr = linphone_chat_room_get_conference_address(cr);
 
 	if (addr) {
-		char *addr_str = linphone_address_as_string(addr);
+		char *addr_str = linphone_address_to_string(addr);
 		ms_message("ChatRoom [%s] state changed: %d", addr_str, newState);
 		bctbx_free(addr_str);
 	}
@@ -116,7 +116,7 @@ static void chat_room_state_changed (LinphoneChatRoom *cr, LinphoneChatRoomState
 			manager->stat.number_of_LinphoneConferenceStateDeleted++;
 			break;
 		default:
-			ms_error("Invalid ChatRoom state for Chatroom [%s] EndOfEnum is used ONLY as a guard", linphone_address_as_string(addr));
+			ms_error("Invalid ChatRoom state for Chatroom [%s] EndOfEnum is used ONLY as a guard", linphone_address_to_string(addr));
 			break;
 	}
 }
@@ -202,12 +202,12 @@ void configure_core_for_conference (LinphoneCore *core, const char* username, co
 		new_username = linphone_address_get_username(addr);
 	}
 	linphone_address_set_username(addr, (username) ? username : new_username);
-	char *newIdentity = linphone_address_as_string_uri_only(addr);
+	char *newIdentity = linphone_address_to_string_uri_only(addr);
 	linphone_address_unref(addr);
 	linphone_core_set_primary_contact(core, newIdentity);
 	bctbx_free(newIdentity);
 	linphone_core_enable_conference_server(core, server);
-	char *factoryUri = linphone_address_as_string(factoryAddr);
+	char *factoryUri = linphone_address_to_string(factoryAddr);
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(core);
 	linphone_proxy_config_set_conference_factory_uri(proxy, factoryUri);
 	bctbx_free(factoryUri);
@@ -3423,7 +3423,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 
 			LinphoneChatMessage *msg = linphone_chat_room_create_forward_message(paulineCr, recv_msg);
 			const LinphoneAddress *forwarded_from_address = linphone_chat_message_get_from_address(recv_msg);
-			char *forwarded_from = linphone_address_as_string_uri_only(forwarded_from_address);
+			char *forwarded_from = linphone_address_to_string_uri_only(forwarded_from_address);
 
 			bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 
@@ -4842,8 +4842,8 @@ static void search_friend_chat_room_participants(void) {
 	LinphoneProxyConfig *mariePC = linphone_core_get_default_proxy_config(marie->lc);
 	const LinphoneAddress *laureIdentity = linphone_proxy_config_get_identity_address(laurePC);
 	const LinphoneAddress *marieIdentity = linphone_proxy_config_get_identity_address(mariePC);
-	char *laureI = linphone_address_as_string_uri_only(laureIdentity);
-	char *marieI = linphone_address_as_string_uri_only(marieIdentity);
+	char *laureI = linphone_address_to_string_uri_only(laureIdentity);
+	char *marieI = linphone_address_to_string_uri_only(marieIdentity);
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
 

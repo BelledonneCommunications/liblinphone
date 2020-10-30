@@ -179,7 +179,7 @@ const char *linphone_call_get_to_header (const LinphoneCall *call, const char *n
 }
 
 char *linphone_call_get_remote_address_as_string (const LinphoneCall *call) {
-	return Call::toCpp(call)->getRemoteAddress()? ms_strdup(Call::toCpp(call)->getRemoteAddress()->asString().c_str()) : nullptr;
+	return Call::toCpp(call)->getRemoteAddress()? ms_strdup(Call::toCpp(call)->getRemoteAddress()->toString().c_str()) : nullptr;
 }
 
 const LinphoneAddress *linphone_call_get_diversion_address (const LinphoneCall *call) {

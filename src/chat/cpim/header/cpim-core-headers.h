@@ -64,7 +64,7 @@ namespace Cpim {
 
 		std::string getValue () const override;
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		L_DECLARE_PRIVATE(ContactHeader);
@@ -104,7 +104,7 @@ namespace Cpim {
 
 		std::string getValue () const override;
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		tm getTimeStruct () const;
@@ -139,7 +139,7 @@ namespace Cpim {
 
 		std::string getValue () const override;
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		L_DECLARE_PRIVATE(NsHeader);
@@ -168,7 +168,7 @@ namespace Cpim {
 
 		std::string getValue () const override;
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		L_DECLARE_PRIVATE(RequireHeader);
@@ -199,7 +199,7 @@ namespace Cpim {
 
 		std::string getValue () const override;
 
-		std::string asString () const override;
+		std::string toString () const override;
 
 	private:
 		L_DECLARE_PRIVATE(SubjectHeader);

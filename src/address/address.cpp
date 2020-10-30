@@ -91,7 +91,7 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 	if (domain.empty())
 		return;
 
-	string uri = identityAddress.asString();
+	string uri = identityAddress.toString();
 	internalAddress = getSalAddressFromCache(uri);
 }
 
@@ -122,7 +122,7 @@ Address &Address::operator= (const Address &other) {
 }
 
 bool Address::operator== (const Address &other) const {
-	return asString() == other.asString();
+	return toString() == other.toString();
 }
 
 bool Address::operator!= (const Address &other) const {
@@ -130,7 +130,7 @@ bool Address::operator!= (const Address &other) const {
 }
 
 bool Address::operator< (const Address &other) const {
-	return asString() < other.asString();
+	return toString() < other.toString();
 }
 
 // -----------------------------------------------------------------------------
@@ -297,21 +297,21 @@ bool Address::clean () {
 	return true;
 }
 
-string Address::asString () const {
+string Address::toString () const {
 	if (!internalAddress)
 		return "";
 
-	char *buf = sal_address_as_string(internalAddress);
+	char *buf = sal_address_to_string(internalAddress);
 	string out = buf;
 	ms_free(buf);
 	return out;
 }
 
-string Address::asStringUriOnly () const {
+string Address::toStringUriOnly () const {
 	if (!internalAddress)
 		return "";
 
-	char *buf = sal_address_as_string_uri_only(internalAddress);
+	char *buf = sal_address_to_string_uri_only(internalAddress);
 	string out = buf;
 	ms_free(buf);
 	return out;

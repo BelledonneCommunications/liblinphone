@@ -382,11 +382,11 @@ void ClientGroupChatRoom::setConferenceId (const ConferenceId &conferenceId) {
 			if (sessionLog->to) linphone_address_unref(sessionLog->to);
 			if (conferenceId.getPeerAddress().isValid()) {
 				// Use the peer address of the conference ID because it has also the conf-id param hence the To field can be used to search in the map of chat rooms
-				sessionLog->to = linphone_address_new(conferenceId.getPeerAddress().asString().c_str());
+				sessionLog->to = linphone_address_new(conferenceId.getPeerAddress().toString().c_str());
 			} else {
 				// If the conference ID peer address is not valid, use the address of the focus
 				shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(getConference())->focus;
-				sessionLog->to = linphone_address_new(focus->getAddress().asString().c_str());
+				sessionLog->to = linphone_address_new(focus->getAddress().toString().c_str());
 			}
 		}
 	}
@@ -575,7 +575,7 @@ bool ClientGroupChatRoom::addParticipants (
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-		LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+		LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().toString().c_str());
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
 		linphone_address_unref(lAddr);
 		for (const auto &addr : addresses) {
@@ -604,7 +604,7 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 
 	//TODO handle one-to-one case ?
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().toString().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = participant->getAddress();
@@ -644,7 +644,7 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().toString().c_str());
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
 	linphone_address_unref(lAddr);
 	Address referToAddr = participant->getAddress();

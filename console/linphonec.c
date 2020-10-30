@@ -249,7 +249,7 @@ linphonec_notify_presence_received(LinphoneCore *lc,LinphoneFriend *fid)
 {
 	const LinphoneAddress *addr = linphone_friend_get_address(fid);
 	if (addr) {
-		char *tmp=linphone_address_as_string(addr);
+		char *tmp=linphone_address_to_string(addr);
 		printf("Friend %s is %s\n", tmp, linphone_online_status_to_string(linphone_friend_get_status(fid)));
 		ms_free(tmp);
 	}
@@ -363,7 +363,7 @@ static void
 linphonec_text_received(LinphoneCore *lc, LinphoneChatRoom *cr,
 		const LinphoneAddress *from, const char *msg)
 {
-	linphonec_out("Message received from %s: %s\n", linphone_address_as_string(from), msg);
+	linphonec_out("Message received from %s: %s\n", linphone_address_to_string(from), msg);
 	// TODO: provide mechanism for answering.. ('say' command?)
 }
 

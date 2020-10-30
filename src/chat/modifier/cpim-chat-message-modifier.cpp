@@ -122,7 +122,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 	const string contentBody = content->getBodyAsString();
 	if (content->getContentDisposition().isValid()) {
 		cpimMessage.addContentHeader(
-			Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().asString())
+			Cpim::GenericHeader("Content-Disposition", content->getContentDisposition().toString())
 		);
 	}
 	cpimMessage.addContentHeader(
@@ -135,7 +135,7 @@ ChatMessageModifier::Result CpimChatMessageModifier::encode (const shared_ptr<Ch
 
 	Content newContent;
 	newContent.setContentType(ContentType::Cpim);
-	newContent.setBodyFromLocale(cpimMessage.asString());
+	newContent.setBodyFromLocale(cpimMessage.toString());
 	message->setInternalContent(newContent);
 
 	return ChatMessageModifier::Result::Done;
@@ -260,12 +260,12 @@ string CpimChatMessageModifier::cpimAddressDisplayName (const Address &addr) con
 }
 
 string CpimChatMessageModifier::cpimAddressUri (const Address &addr) const {
-	return addr.asStringUriOnly();
+	return addr.toStringUriOnly();
 }
 
 Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const shared_ptr<ChatMessage> &message) const {
 	shared_ptr<AbstractChatRoom> chatRoom = message->getChatRoom();
-	const string &localDeviceId = chatRoom->getLocalAddress().asString();
+	const string &localDeviceId = chatRoom->getLocalAddress().toString();
 
 	Cpim::Message cpimMessage;
 	cpimMessage.addMessageHeader(Cpim::FromHeader(localDeviceId, cpimAddressDisplayName(message->getToAddress())));
@@ -275,7 +275,7 @@ Content* CpimChatMessageModifier::createMinimalCpimContentForLimeMessage(const s
 
 	Content *cpimContent = new Content();
 	cpimContent->setContentType(ContentType::Cpim);
-	cpimContent->setBodyFromLocale(cpimMessage.asString());
+	cpimContent->setBodyFromLocale(cpimMessage.toString());
 
 	return cpimContent;
 }

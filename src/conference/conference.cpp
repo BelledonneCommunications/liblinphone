@@ -83,7 +83,7 @@ bool Conference::addParticipant (std::shared_ptr<Call> call) {
 bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	shared_ptr<Participant> participant = findParticipant(participantAddress);
 	if (participant) {
-		lInfo() << "Not adding participant '" << participantAddress.asString() << "' because it is already a participant of the Conference";
+		lInfo() << "Not adding participant '" << participantAddress.toString() << "' because it is already a participant of the Conference";
 		return false;
 	}
 	participant = Participant::create(this,participantAddress);
@@ -224,7 +224,7 @@ string Conference::getResourceLists (const list<IdentityAddress> &addresses) con
 	Xsd::ResourceLists::ResourceLists rl = Xsd::ResourceLists::ResourceLists();
 	Xsd::ResourceLists::ListType l = Xsd::ResourceLists::ListType();
 	for (const auto &addr : addresses) {
-		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.asString());
+		Xsd::ResourceLists::EntryType entry = Xsd::ResourceLists::EntryType(addr.toString());
 		l.getEntry().push_back(entry);
 	}
 	rl.getList().push_back(l);

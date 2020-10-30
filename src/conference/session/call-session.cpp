@@ -211,8 +211,8 @@ bool CallSessionPrivate::startPing () {
 			pingOp->setRoute(op->getNetworkOrigin());
 			pingOp->ping(from.c_str(), to.c_str());
 		} else if (direction == LinphoneCallOutgoing) {
-			char *from = linphone_address_as_string(log->from);
-			char *to = linphone_address_as_string(log->to);
+			char *from = linphone_address_to_string(log->from);
+			char *to = linphone_address_to_string(log->to);
 			pingOp->ping(from, to);
 			ms_free(from);
 			ms_free(to);
@@ -297,7 +297,7 @@ bool CallSessionPrivate::failure () {
 				|| (state == CallSession::State::OutgoingRinging) /* Push notification case */ || (state == CallSession::State::OutgoingEarlyMedia)) {
 				const SalAddress *redirectionTo = op->getRemoteContactAddress();
 				if (redirectionTo) {
-					char *url = sal_address_as_string(redirectionTo);
+					char *url = sal_address_to_string(redirectionTo);
 					lWarning() << "Redirecting " << *q << " to " << url;
 					if (log->to)
 						linphone_address_unref(log->to);
@@ -709,7 +709,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 	}
 	if (destProxy && destProxy->op) {
 		/* Give a chance to update the contact address if connectivity has changed */
-		char * contactAddressStr = sal_address_as_string(destProxy->op->getContactAddress());
+		char * contactAddressStr = sal_address_to_string(destProxy->op->getContactAddress());
 
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
@@ -777,7 +777,7 @@ void CallSessionPrivate::setContactOp () {
 		auto contactParams = q->getParams()->getPrivate()->getCustomContactParameters();
 		for (auto it = contactParams.begin(); it != contactParams.end(); it++)
 			linphone_address_set_param(contact, it->first.c_str(), it->second.empty() ? nullptr : it->second.c_str());
-		char * contactAddressStr = linphone_address_as_string(contact);
+		char * contactAddressStr = linphone_address_to_string(contact);
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
 		// Do not try to set contact address if it is not valid
@@ -853,7 +853,7 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 	} else if (pingOp && pingOp->getContactAddress()) {
 		/* If the ping OPTIONS request succeeded use the contact guessed from the received, rport */
 		lInfo() << "Contact has been fixed using OPTIONS";
-		char *addr = sal_address_as_string(pingOp->getContactAddress());
+		char *addr = sal_address_to_string(pingOp->getContactAddress());
 		result = linphone_address_new(addr);
 		ms_free(addr);
 		return result;
@@ -1053,8 +1053,8 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	L_D();
 	d->direction = direction;
 	d->setDestProxy(cfg);
-	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
-	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
+	LinphoneAddress *fromAddr = linphone_address_new(from.toString().c_str());
+	LinphoneAddress *toAddr = linphone_address_new(to.toString().c_str());
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
 		d->setDestProxy( linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr) );
@@ -1270,13 +1270,13 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	string destinationStr;
 	char *realUrl = nullptr;
 	if (destination)
-		destinationStr = destination->asString();
+		destinationStr = destination->toString();
 	else {
-		realUrl = linphone_address_as_string(d->log->to);
+		realUrl = linphone_address_to_string(d->log->to);
 		destinationStr = realUrl;
 		ms_free(realUrl);
 	}
-	char *from = linphone_address_as_string(d->log->from);
+	char *from = linphone_address_to_string(d->log->from);
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
 	if (content)
@@ -1347,7 +1347,7 @@ LinphoneStatus CallSession::transfer (const Address &address) {
 	L_D();
 	if (!address.isValid())
 		return -1;
-	d->op->refer(address.asString().c_str());
+	d->op->refer(address.toString().c_str());
 	d->setTransferState(CallSession::State::OutgoingInit);
 	return 0;
 }
@@ -1394,7 +1394,7 @@ LinphoneCallDir CallSession::getDirection () const {
 const Address& CallSession::getDiversionAddress () const {
 	L_D();
 	if (d->op && d->op->getDiversionAddress()) {
-		char *addrStr = sal_address_as_string(d->op->getDiversionAddress());
+		char *addrStr = sal_address_to_string(d->op->getDiversionAddress());
 		d->diversionAddress = Address(addrStr);
 		bctbx_free(addrStr);
 	} else {
@@ -1482,7 +1482,7 @@ const Address *CallSession::getRemoteContactAddress () const {
 	if (!d->op->getRemoteContactAddress()) {
 		return nullptr;
 	}
-	char *addrStr = sal_address_as_string(d->op->getRemoteContactAddress());
+	char *addrStr = sal_address_to_string(d->op->getRemoteContactAddress());
 	d->remoteContactAddress = Address(addrStr);
 	bctbx_free(addrStr);
 	return &d->remoteContactAddress;

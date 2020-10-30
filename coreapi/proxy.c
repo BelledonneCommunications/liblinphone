@@ -152,7 +152,7 @@ static void linphone_proxy_config_init(LinphoneCore* lc, LinphoneProxyConfig *cf
 	cfg->dial_escape_plus = lc ? !!linphone_config_get_default_int(lc->config, "proxy", "dial_escape_plus", 0) : 0;
 	cfg->privacy = lc ? (LinphonePrivacyMask)linphone_config_get_default_int(lc->config, "proxy", "privacy", LinphonePrivacyDefault) : (LinphonePrivacyMask)LinphonePrivacyDefault;
 	cfg->identity_address = identity ? linphone_address_new(identity) : NULL;
-	cfg->reg_identity = cfg->identity_address ? linphone_address_as_string(cfg->identity_address) : NULL;
+	cfg->reg_identity = cfg->identity_address ? linphone_address_to_string(cfg->identity_address) : NULL;
 	cfg->reg_proxy = proxy ? ms_strdup(proxy) : NULL;
 	cfg->reg_routes = route ? bctbx_list_append(cfg->reg_routes, ms_strdup(route)) : NULL; //TODO get list directly
 	cfg->realm = realm ? ms_strdup(realm) : NULL;
@@ -195,7 +195,7 @@ static char * append_linphone_address(LinphoneAddress *addr,char *out) {
 	char *res = out;
 	if (addr) {
 		char *tmp;
-		tmp = linphone_address_as_string(addr);
+		tmp = linphone_address_to_string(addr);
 		res = ms_strcat_printf(out, "%s",tmp);
 		ms_free(tmp);
 	}
@@ -339,7 +339,7 @@ LinphoneStatus linphone_proxy_config_set_server_addr(LinphoneProxyConfig *cfg, c
 		if (addr==NULL)
 			addr=linphone_address_new(server_addr);
 		if (addr){
-			cfg->reg_proxy=linphone_address_as_string(addr);
+			cfg->reg_proxy=linphone_address_to_string(addr);
 			linphone_address_unref(addr);
 		}else{
 			ms_warning("Could not parse %s",server_addr);
@@ -351,7 +351,7 @@ LinphoneStatus linphone_proxy_config_set_server_addr(LinphoneProxyConfig *cfg, c
 
 LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *cfg, const LinphoneAddress *addr){
 	if (!addr || linphone_address_get_username(addr)==NULL){
-		char* as_string = addr ? linphone_address_as_string(addr) : ms_strdup("NULL");
+		char* as_string = addr ? linphone_address_to_string(addr) : ms_strdup("NULL");
 		ms_warning("Invalid sip identity: %s", as_string);
 		ms_free(as_string);
 		return -1;
@@ -364,7 +364,7 @@ LinphoneStatus linphone_proxy_config_set_identity_address(LinphoneProxyConfig *c
 	if (cfg->reg_identity!=NULL) {
 		ms_free(cfg->reg_identity);
 	}
-	cfg->reg_identity= linphone_address_as_string(cfg->identity_address);
+	cfg->reg_identity= linphone_address_to_string(cfg->identity_address);
 	return 0;
 }
 
@@ -519,7 +519,7 @@ void linphone_proxy_config_stop_refreshing(LinphoneProxyConfig * cfg){
 	LinphoneAddress *contact_addr = NULL;
 	const SalAddress *sal_addr = cfg->op && cfg->state == LinphoneRegistrationOk ? cfg->op->getContactAddress() : NULL;
 	if (sal_addr) {
-		char *buf = sal_address_as_string(sal_addr);
+		char *buf = sal_address_to_string(sal_addr);
 		contact_addr = buf ? linphone_address_new(buf) : NULL;
 		ms_free(buf);
 	}
@@ -581,9 +581,9 @@ static void linphone_proxy_config_register(LinphoneProxyConfig *cfg){
 	if (cfg->reg_sendregister) {
 		LinphoneAddress* proxy = linphone_address_new(cfg->reg_proxy);
 		char *proxy_string;
-		char *from = linphone_address_as_string(cfg->identity_address);
+		char *from = linphone_address_to_string(cfg->identity_address);
 		ms_message("LinphoneProxyConfig [%p] about to register (LinphoneCore version: %s)",cfg,linphone_core_get_version());
-		proxy_string=linphone_address_as_string_uri_only(proxy);
+		proxy_string=linphone_address_to_string_uri_only(proxy);
 		linphone_address_unref(proxy);
 		if (cfg->op)
 			cfg->op->release();
@@ -1533,7 +1533,7 @@ void _linphone_update_dependent_proxy_config(LinphoneProxyConfig *cfg, LinphoneR
 					if (tmp->contact_address) {
 						linphone_address_unref(tmp->contact_address);
 					}
-					char *sal_addr = sal_address_as_string(salAddr);
+					char *sal_addr = sal_address_to_string(salAddr);
 					tmp->contact_address = linphone_address_new(sal_addr);
 					bctbx_free(sal_addr);
 				}
@@ -1626,7 +1626,7 @@ const LinphoneAddress* linphone_proxy_config_get_service_route(const LinphonePro
 	if (cfg->service_route)
 		L_GET_CPP_PTR_FROM_C_OBJECT(cfg->service_route)->setInternalAddress(const_cast<SalAddress *>(salAddr));
 	else {
-		char *buf = sal_address_as_string(salAddr);
+		char *buf = sal_address_to_string(salAddr);
 		const_cast<LinphoneProxyConfig *>(cfg)->service_route = linphone_address_new(buf);
 		ms_free(buf);
 	}

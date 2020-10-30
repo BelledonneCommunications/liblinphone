@@ -146,7 +146,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 		if (state == StateType::deleted) {
 			if (!participant) {
-				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
+				lWarning() << "Participant " << address.toString() << " removed but not in the list of participants!";
 			} else {
 				conf->participants.remove(participant);
 
@@ -164,7 +164,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 		if (state == StateType::full) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address.asString() << " is me.";
+				lInfo() << "Participant " << address.toString() << " is me.";
 			} else if (participant) {
 				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {
@@ -188,7 +188,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			participant = conf->findParticipant(address);
 
 		if (!participant) {
-			lWarning() << "Participant " << address.asString() << " is not in the list of participants however it is trying to change the list of devices or change role!";
+			lWarning() << "Participant " << address.toString() << " is not in the list of participants however it is trying to change the list of devices or change role!";
 		} else {
 
 			auto &roles = user.getRoles();
@@ -275,8 +275,8 @@ void RemoteConferenceEventHandler::subscribe () {
 		return; // Already subscribed or application did not request subscription
 
 
-	const string &peerAddress = getConferenceId().getPeerAddress().asString();
-	const string &localAddress = getConferenceId().getLocalAddress().asString();
+	const string &peerAddress = getConferenceId().getPeerAddress().toString();
+	const string &localAddress = getConferenceId().getLocalAddress().toString();
 
 	LinphoneAddress *lAddr = linphone_address_new(localAddress.c_str());
 	LinphoneAddress *peerAddr = linphone_address_new(peerAddress.c_str());

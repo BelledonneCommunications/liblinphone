@@ -62,7 +62,7 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 	LinphoneProxyConfig *proxy = nullptr;
 
 	if (peerAddress) {
-		LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress->asString().c_str());
+		LinphoneAddress *cPeerAddress = linphone_address_new(peerAddress->toString().c_str());
 		if (cPeerAddress) {
 			proxy = linphone_core_lookup_known_proxy(cCore, cPeerAddress);
 			linphone_address_unref(cPeerAddress);
@@ -74,7 +74,7 @@ IdentityAddress CorePrivate::getDefaultLocalAddress(const IdentityAddress *peerA
 
 	IdentityAddress localAddress;
 	if (proxy) {
-		char *identity = linphone_address_as_string(
+		char *identity = linphone_address_to_string(
 			(withGruu && linphone_proxy_config_get_contact(proxy))? linphone_proxy_config_get_contact(proxy) : linphone_proxy_config_get_identity_address(proxy));
 		localAddress = IdentityAddress(identity);
 		bctbx_free(identity);
@@ -90,14 +90,14 @@ IdentityAddress CorePrivate::getIdentityAddressWithGruu(const IdentityAddress &i
 	IdentityAddress identityAddressWithGruu;
 
 	if (identityAddress.isValid()) {
-		LinphoneAddress *cIdentityAddress = linphone_address_new(identityAddress.asString().c_str());
+		LinphoneAddress *cIdentityAddress = linphone_address_new(identityAddress.toString().c_str());
 		proxyConfig = linphone_core_lookup_known_proxy(cCore, cIdentityAddress);
 		linphone_address_unref(cIdentityAddress);
 
 		if (proxyConfig) {
 			const LinphoneAddress *contactAddress = linphone_proxy_config_get_contact(proxyConfig);
 			if (contactAddress) {
-				char *contact = linphone_address_as_string(contactAddress);
+				char *contact = linphone_address_to_string(contactAddress);
 				identityAddressWithGruu = IdentityAddress(contact);
 				bctbx_free(contact);
 			}
@@ -580,7 +580,7 @@ string Core::getConferenceFactoryUri(const shared_ptr<Core> &core, const Identit
 	LinphoneProxyConfig *proxy = linphone_core_lookup_proxy_by_identity(core->getCCore(), L_GET_C_BACK_PTR(&addr));
 
 	if (!proxy) {
-		lWarning() << "No proxy configuration found for local address: [" << localAddress.asString() << "]";
+		lWarning() << "No proxy configuration found for local address: [" << localAddress.toString() << "]";
 		return string();
 	}
 	const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
