@@ -521,6 +521,68 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void text_message_in_call_chat_room(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCall *pauline_call, *marie_call;
+	LinphoneChatRoom *pauline_chat_room, *marie_chat_room;
+
+	if (BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, marie_params))){
+		pauline_call = linphone_core_get_current_call(pauline->lc);
+		marie_call = linphone_core_get_current_call(marie->lc);
+		BC_ASSERT_FALSE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
+		BC_ASSERT_EQUAL(linphone_call_get_state(pauline_call), LinphoneCallStateStreamsRunning, int, "%d");
+		BC_ASSERT_EQUAL(linphone_call_get_state(marie_call), LinphoneCallStateStreamsRunning, int, "%d");
+
+		pauline_chat_room = linphone_call_get_chat_room(pauline_call);
+		BC_ASSERT_PTR_NOT_NULL(pauline_chat_room);
+		BC_ASSERT_EQUAL(linphone_chat_room_get_state(pauline_chat_room), LinphoneChatRoomStateCreated, int, "%d");
+		marie_chat_room = linphone_call_get_chat_room(marie_call);
+		BC_ASSERT_PTR_NOT_NULL(marie_chat_room);
+		BC_ASSERT_EQUAL(linphone_chat_room_get_state(marie_chat_room), LinphoneChatRoomStateCreated, int, "%d");
+
+		if (pauline_chat_room && marie_chat_room) {
+			const char *pauline_text_message = "Hello marie!";
+			LinphoneChatMessage* pauline_message = linphone_chat_room_create_message(pauline_chat_room, pauline_text_message);
+			BC_ASSERT_PTR_NOT_NULL(pauline_message);
+			linphone_chat_message_send(pauline_message);
+
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageSent, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
+			{
+				LinphoneChatMessage * msg = marie->stat.last_received_chat_message;
+				BC_ASSERT_PTR_NOT_NULL(msg);
+				if (msg) {
+					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), pauline_text_message);
+				}
+			}
+
+			const char *marie_text_message = "Hi pauline :)";
+			LinphoneChatMessage* marie_message = linphone_chat_room_create_message(marie_chat_room, marie_text_message);
+			BC_ASSERT_PTR_NOT_NULL(marie_message);
+			linphone_chat_message_send(marie_message);
+
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageSent, 1));
+			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+			{
+				LinphoneChatMessage * msg = pauline->stat.last_received_chat_message;
+				BC_ASSERT_PTR_NOT_NULL(msg);
+				if (msg) {
+					BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(msg), marie_text_message);
+				}
+			}
+
+			linphone_chat_message_unref(pauline_message);
+			linphone_chat_message_unref(marie_message);
+		}
+		end_call(marie, pauline);
+	}
+	linphone_call_params_unref(marie_params);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
 							int auto_download, bool_t two_files, bool_t legacy) {
@@ -3162,6 +3224,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Text message with send error", text_message_with_send_error),
 	TEST_NO_TAG("Text message from non default proxy config", text_message_from_non_default_proxy_config),
 	TEST_NO_TAG("Text message reply from non default proxy config", text_message_reply_from_non_default_proxy_config),
+	TEST_NO_TAG("Text message in call chat room", text_message_in_call_chat_room),
 	TEST_NO_TAG("Transfer message", transfer_message),
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),

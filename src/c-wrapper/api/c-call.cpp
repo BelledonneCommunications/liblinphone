@@ -516,7 +516,7 @@ bool_t linphone_call_echo_limiter_enabled (const LinphoneCall *call) {
 }
 
 LinphoneChatRoom *linphone_call_get_chat_room (LinphoneCall *call) {
-	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> acr = L_GET_PRIVATE_FROM_C_OBJECT(call)->getChatRoom();
+	shared_ptr<LinphonePrivate::AbstractChatRoom> acr = L_GET_PRIVATE_FROM_C_OBJECT(call)->getChatRoom();
 	if (acr)
 		return L_GET_C_BACK_PTR(acr);
 	return nullptr;

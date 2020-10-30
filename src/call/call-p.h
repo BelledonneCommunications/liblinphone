@@ -48,7 +48,7 @@ public:
 	std::shared_ptr<Call> startReferredCall (const MediaSessionParams *params);
 
 	virtual std::shared_ptr<CallSession> getActiveSession () const { return nullptr; }
-	std::shared_ptr<RealTimeTextChatRoom> getChatRoom ();
+	std::shared_ptr<AbstractChatRoom> getChatRoom ();
 
 	LinphoneProxyConfig *getDestProxy () const;
 	IceSession *getIceSession () const;
@@ -123,7 +123,7 @@ private:
 
 	BackgroundTask bgTask;
 
-	mutable std::shared_ptr<RealTimeTextChatRoom> chatRoom;
+	mutable std::shared_ptr<AbstractChatRoom> chatRoom;
 
 	L_DECLARE_PUBLIC(Call);
 };
