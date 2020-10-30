@@ -43,4 +43,12 @@ IsComposingMessage::IsComposingMessage (
 	d->addSalCustomHeader("Expires", "0");
 }
 
+std::string IsComposingMessage::toString () const {
+	L_D();
+	std::stringstream ss;
+	const void * voidThis = static_cast<const void*>(this);
+	ss << "IsComposingMessage " << voidThis << " in state "  << Utils::toString(d->state);
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
