@@ -229,8 +229,7 @@ int IsComposing::remoteRefreshTimerExpired (void *data, unsigned int revents) {
 
 std::string IsComposing::toString() const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "IsComposing " << voidThis;
+	ss << "IsComposing [" << this << "]";
 	ss << " Idle Timer Duration " << getIdleTimerDuration();
 	ss << ", Refresh Timer Duration " << getRefreshTimerDuration();
 	ss << ", Remote Refresh Timer Duration " << getRemoteRefreshTimerDuration();
