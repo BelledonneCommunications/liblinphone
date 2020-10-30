@@ -131,4 +131,10 @@ shared_ptr<Call> RealTimeTextChatRoom::getCall () const {
 	return getCore()->getCallByCallId(d->callId);
 }
 
+std::string RealTimeTextChatRoom::toString() const {
+	std::stringstream ss;
+	ss << "Real Time Text " << ChatRoom::toString();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

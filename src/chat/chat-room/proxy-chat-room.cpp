@@ -397,5 +397,11 @@ bool ProxyChatRoom::canHandleParticipants () const {
 	return d->chatRoom->canHandleParticipants();
 }
 
+std::string ProxyChatRoom::toString() const {
+	L_D();
+	std::stringstream ss;
+	ss << "Proxy " << d->chatRoom->toString();
+	return ss.str();
+}
 
 LINPHONE_END_NAMESPACE
