@@ -69,7 +69,7 @@ void ParticipantDevice::setConferenceSubscribeEvent (LinphoneEvent *ev) {
 AbstractChatRoom::SecurityLevel ParticipantDevice::getSecurityLevel () const {
 	auto encryptionEngine = getCore()->getEncryptionEngine();
 	if (encryptionEngine)
-		return encryptionEngine->getSecurityLevel(mGruu.asString());
+		return encryptionEngine->getSecurityLevel(mGruu.toString());
 	lWarning() << "Asking device security level but there is no encryption engine enabled";
 	return AbstractChatRoom::SecurityLevel::ClearText;
 }

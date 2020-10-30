@@ -538,12 +538,12 @@ void linphone_reporting_update_media_info(LinphoneCall * call, int stats_type) {
 
 
 	if (Call::toCpp(call)->getDirection() == LinphoneCallIncoming) {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->from));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->to));
+		STR_REASSIGN(report->info.remote_addr.id, linphone_address_to_string(log->from));
+		STR_REASSIGN(report->info.local_addr.id, linphone_address_to_string(log->to));
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.remote_addr.id));
 	} else {
-		STR_REASSIGN(report->info.remote_addr.id, linphone_address_as_string(log->to));
-		STR_REASSIGN(report->info.local_addr.id, linphone_address_as_string(log->from));
+		STR_REASSIGN(report->info.remote_addr.id, linphone_address_to_string(log->to));
+		STR_REASSIGN(report->info.local_addr.id, linphone_address_to_string(log->from));
 		STR_REASSIGN(report->info.orig_id, ms_strdup(report->info.local_addr.id));
 	}
 

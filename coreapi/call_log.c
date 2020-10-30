@@ -94,10 +94,10 @@ void call_logs_write_to_config_file(LinphoneCore *lc){
 		linphone_config_clean_section(cfg,logsection);
 		linphone_config_set_int(cfg,logsection,"dir",cl->dir);
 		linphone_config_set_int(cfg,logsection,"status",cl->status);
-		tmp=linphone_address_as_string(cl->from);
+		tmp=linphone_address_to_string(cl->from);
 		linphone_config_set_string(cfg,logsection,"from",tmp);
 		ms_free(tmp);
-		tmp=linphone_address_as_string(cl->to);
+		tmp=linphone_address_to_string(cl->to);
 		linphone_config_set_string(cfg,logsection,"to",tmp);
 		ms_free(tmp);
 		if (cl->start_date_time)
@@ -252,8 +252,8 @@ void linphone_call_log_set_ref_key(LinphoneCallLog *cl, const char *refkey){
 char * linphone_call_log_to_str(const LinphoneCallLog *cl){
 	const char *status;
 	char *tmp;
-	char *from=linphone_address_as_string (cl->from);
-	char *to=linphone_address_as_string (cl->to);
+	char *from=linphone_address_to_string (cl->from);
+	char *to=linphone_address_to_string (cl->to);
 	switch(cl->status){
 		case LinphoneCallAborted:
 			status="aborted";
@@ -553,6 +553,7 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 
 		if (log->from) from = linphone_address_as_string(log->from);
 		if (log->to) to = linphone_address_as_string(log->to);
+O
 		buf = sqlite3_mprintf("INSERT INTO call_history VALUES(NULL,%Q,%Q,%i,%i,%lld,%lld,%i,%i,%f,%Q,%Q);",
 						from,
 						to,
@@ -668,7 +669,7 @@ bctbx_list_t * linphone_core_get_call_history_for_address(LinphoneCore *lc, cons
 	if (!lc || lc->logs_db == NULL || addr == NULL) return NULL;
 
 	/*since we want to append query parameters depending on arguments given, we use malloc instead of sqlite3_mprintf*/
-	sipAddress = linphone_address_as_string_uri_only(addr);
+	sipAddress = linphone_address_to_string_uri_only(addr);
 	buf = sqlite3_mprintf("SELECT * FROM call_history WHERE caller LIKE '%%%q%%' OR callee LIKE '%%%q%%' ORDER BY id DESC", sipAddress, sipAddress); // The '%%%q%%' takes care of the eventual presence of a display name
 
 	clsres.core = lc;
@@ -696,8 +697,8 @@ bctbx_list_t *linphone_core_get_call_history_2(
 
 	if (!lc || !lc->logs_db || !peer_addr || !local_addr) return NULL;
 
-	peer_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)->asStringUriOnly().c_str());
-	local_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)->asStringUriOnly().c_str());
+	peer_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(peer_addr)->toStringUriOnly().c_str());
+	local_addr_str = bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(local_addr)->toStringUriOnly().c_str());
 	buf = sqlite3_mprintf(
 		"SELECT * FROM call_history WHERE "
 		"(caller LIKE '%%%q%%' AND callee LIKE '%%%q%%' AND direction = 0) OR "

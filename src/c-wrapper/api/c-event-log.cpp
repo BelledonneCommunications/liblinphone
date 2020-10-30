@@ -229,7 +229,7 @@ const LinphoneAddress *linphone_event_log_get_peer_address (const LinphoneEventL
 		event_log->peerAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getConferenceId().getPeerAddress().asString().c_str()
+			)->getConferenceId().getPeerAddress().toString().c_str()
 		);
 
 	return event_log->peerAddressCache;
@@ -243,7 +243,7 @@ const LinphoneAddress *linphone_event_log_get_local_address (const LinphoneEvent
 		event_log->localAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getConferenceId().getLocalAddress().asString().c_str()
+			)->getConferenceId().getLocalAddress().toString().c_str()
 		);
 
 	return event_log->localAddressCache;
@@ -302,7 +302,7 @@ const LinphoneAddress *linphone_event_log_get_participant_address (const Linphon
 		event_log->participantAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceParticipantEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getParticipantAddress().asString().c_str()
+			)->getParticipantAddress().toString().c_str()
 		);
 
 	return event_log->participantAddressCache;
@@ -320,7 +320,7 @@ const LinphoneAddress *linphone_event_log_get_device_address (const LinphoneEven
 		event_log->deviceAddressCache = linphone_address_new(
 			static_pointer_cast<const LinphonePrivate::ConferenceParticipantDeviceEvent>(
 				L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-			)->getDeviceAddress().asString().c_str()
+			)->getDeviceAddress().toString().c_str()
 		);
 
 	return event_log->deviceAddressCache;
@@ -347,7 +347,7 @@ LINPHONE_PUBLIC LinphoneAddress *linphone_event_log_get_security_event_faulty_de
 	return linphone_address_new(
 		static_pointer_cast<const LinphonePrivate::ConferenceSecurityEvent>(
 			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getFaultyDeviceAddress().asString().c_str()
+		)->getFaultyDeviceAddress().toString().c_str()
 	);
 }
 

@@ -1762,7 +1762,7 @@ static void
 linphonec_proxy_display(LinphoneProxyConfig *cfg)
 {
 	const char *route=linphone_proxy_config_get_route(cfg);
-	char *identity=linphone_address_as_string(linphone_proxy_config_get_identity_address(cfg));
+	char *identity=linphone_address_to_string(linphone_proxy_config_get_identity_address(cfg));
 	linphonec_out("sip address: %s\nroute: %s\nidentity: %s\nregister: %s\nexpires: %i\nregistered: %s\n",
 			linphone_proxy_config_get_addr(cfg),
 			(route!=NULL)? route:"",
@@ -1842,7 +1842,7 @@ linphonec_friend_display(LinphoneFriend *fr)
 	char *str = NULL;
 
 	linphonec_out("name: %s\n", linphone_friend_get_name(fr));
-	if (addr) str = linphone_address_as_string_uri_only(addr);
+	if (addr) str = linphone_address_to_string_uri_only(addr);
 	linphonec_out("address: %s\n", str);
 	if (str) ms_free(str);
 }
@@ -1886,7 +1886,7 @@ linphonec_friend_call(LinphoneCore *lc, unsigned int num)
 			int ret;
 			const LinphoneAddress *addr = linphone_friend_get_address((LinphoneFriend*)friend->data);
 			if (addr) {
-				addr_str = linphone_address_as_string(addr);
+				addr_str = linphone_address_to_string(addr);
 				ret=lpc_cmd_call(lc, addr_str);
 				ms_free(addr_str);
 				return ret;

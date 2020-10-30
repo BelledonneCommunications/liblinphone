@@ -190,7 +190,7 @@ char * linphone_core_get_device_identity(LinphoneCore *lc) {
 	if (proxy) {
 		const LinphoneAddress *contactAddr = linphone_proxy_config_get_contact(proxy);
 		if (contactAddr)
-			identity = linphone_address_as_string(contactAddr);
+			identity = linphone_address_to_string(contactAddr);
 		else
 			identity = bctbx_strdup(linphone_proxy_config_get_identity(proxy));
 	} else {

@@ -2442,7 +2442,7 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 	} else if (strcmp(notified_event, "conference") == 0) {
 #ifdef HAVE_ADVANCED_IM
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
+		char *resourceAddrStr = linphone_address_to_string_uri_only(resource);
 		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
 		if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
 			bctbx_free(resourceAddrStr);
@@ -2509,7 +2509,7 @@ static void _linphone_core_conference_subscribe_received(LinphoneCore *lc, Linph
 	}
 
 	const LinphoneAddress *resource = linphone_event_get_resource(lev);
-	char * resourceAddressStr = linphone_address_as_string(resource);
+	char * resourceAddressStr = linphone_address_to_string(resource);
 	const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
 	bctbx_free(resourceAddressStr);
 	LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(
@@ -2548,7 +2548,7 @@ static void _linphone_core_conference_subscription_state_changed (LinphoneCore *
 	}else{
 		/* This has to be done only when running as server */
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
-		char * resourceAddressStr = linphone_address_as_string(resource);
+		char * resourceAddressStr = linphone_address_to_string(resource);
 		const ConferenceAddress conferenceAddress = ConferenceAddress(resourceAddressStr);
 		bctbx_free(resourceAddressStr);
 		LinphonePrivate::ConferenceId conferenceId = LinphonePrivate::ConferenceId(
@@ -3096,7 +3096,7 @@ static void update_primary_contact(LinphoneCore *lc){
 	port = linphone_core_get_sip_port(lc);
 	if (port > 0) linphone_address_set_port(url, port); /*if there is no listening socket the primary contact is somewhat useless,
 		it won't work. But we prefer to return something in all cases. It at least shows username and ip address.*/
-	guessed=linphone_address_as_string(url);
+	guessed=linphone_address_to_string(url);
 	lc->sip_conf.guessed_contact=guessed;
 	linphone_address_unref(url);
 }
@@ -3846,7 +3846,7 @@ static void linphone_core_grab_buddy_infos(LinphoneCore *lc, LinphoneProxyConfig
 			if (linphone_core_lookup_known_proxy(lc,lf->uri)==cfg){
 				if (linphone_address_get_username(lf->uri)!=NULL){
 					BuddyLookupRequest *req;
-					char *tmp=linphone_address_as_string_uri_only(lf->uri);
+					char *tmp=linphone_address_to_string_uri_only(lf->uri);
 					req=sip_setup_context_create_buddy_lookup_request(ctx);
 					buddy_lookup_request_set_key(req,tmp);
 					buddy_lookup_request_set_max_results(req,1);

@@ -46,7 +46,7 @@ static void parse_minimal_message () {
 	shared_ptr<const Cpim::Message> message = Cpim::Message::createFromString(str);
 	if (!BC_ASSERT_PTR_NOT_NULL(message)) return;
 
-	const string str2 = message->asString();
+	const string str2 = message->toString();
 	BC_ASSERT_STRING_EQUAL(str2.c_str(), str.c_str());
 
 	const string content = message->getContent();
@@ -112,7 +112,7 @@ static void parse_rfc_example () {
 	shared_ptr<const Cpim::Message> message = Cpim::Message::createFromString(str);
 	if (!BC_ASSERT_PTR_NOT_NULL(message)) return;
 
-	const string str2 = message->asString();
+	const string str2 = message->toString();
 	BC_ASSERT_STRING_EQUAL(str2.c_str(), str.c_str());
 
 	string content = message->getContent();
@@ -144,7 +144,7 @@ static void parse_message_with_generic_header_parameters () {
 	shared_ptr<const Cpim::Message> message = Cpim::Message::createFromString(str);
 	if (!BC_ASSERT_PTR_NOT_NULL(message)) return;
 
-	const string str2 = message->asString();
+	const string str2 = message->toString();
 	BC_ASSERT_STRING_EQUAL(str2.c_str(), str.c_str());
 
 	string content = message->getContent();
@@ -223,7 +223,7 @@ static void build_message () {
 
 	BC_ASSERT_TRUE(message.setContent(content));
 
-	const string strMessage = message.asString();
+	const string strMessage = message.toString();
 	const string expectedMessage = "From: \"MR SANDERS\"<im:piglet@100akerwood.com>\r\n"
 		"To: \"Depressed Donkey\"<im:eeyore@100akerwood.com>\r\n"
 		"DateTime: 2000-12-13T05:40:00Z\r\n"
@@ -280,7 +280,7 @@ static void cpim_chat_message_modifier_base (bool useMultipart) {
 	linphone_core_set_im_encryption_engine(marie->lc, marie_imee);
 	linphone_core_set_im_encryption_engine(pauline->lc, pauline_imee);
 
-	char *paulineUri = linphone_address_as_string_uri_only(pauline->identity);
+	char *paulineUri = linphone_address_to_string_uri_only(pauline->identity);
 	IdentityAddress paulineAddress(paulineUri);
 	bctbx_free(paulineUri);
 

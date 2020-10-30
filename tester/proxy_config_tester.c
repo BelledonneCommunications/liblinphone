@@ -184,7 +184,7 @@ static void phone_normalization_with_dial_escape_plus(void){
 		linphone_proxy_config_set_identity_address(proxy, addr); \
 		if (addr) linphone_address_unref(addr); \
 		res  = linphone_proxy_config_normalize_sip_uri(proxy, actual); \
-		actual_str = linphone_address_as_string_uri_only(res); \
+		actual_str = linphone_address_to_string_uri_only(res); \
 		BC_ASSERT_STRING_EQUAL(actual_str, expected); \
 		ms_free(actual_str); \
 		linphone_address_unref(res); \

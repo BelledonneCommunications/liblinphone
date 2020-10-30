@@ -97,12 +97,12 @@ bool HeaderParam::setValue (const string &value) {
 	return true;
 }
 
-string HeaderParam::asString () const {
+string HeaderParam::toString () const {
 	L_D();
-	string asString = ";" + d->name;
+	string toString = ";" + d->name;
 	if (!d->value.empty())
-		asString += "=" + d->value;
-	return asString;
+		toString += "=" + d->value;
+	return toString;
 }
 
 LINPHONE_END_NAMESPACE

@@ -53,7 +53,7 @@ ContentDisposition::ContentDisposition (const string &disposition) : ClonableObj
 }
 
 ContentDisposition::ContentDisposition (const ContentDisposition &other)
-	: ContentDisposition(other.asString()) {}
+	: ContentDisposition(other.toString()) {}
 
 ContentDisposition &ContentDisposition::operator= (const ContentDisposition &other) {
 	L_D();
@@ -97,13 +97,13 @@ void ContentDisposition::setParameter (const string &parameter) {
 	d->parameter = parameter;
 }
 
-string ContentDisposition::asString () const {
+string ContentDisposition::toString () const {
 	L_D();
 	if (isValid()) {
-		string asString = d->disposition;
+		string toString = d->disposition;
 		if (!d->parameter.empty())
-			asString += ";" + d->parameter;
-		return asString;
+			toString += ";" + d->parameter;
+		return toString;
 	}
 	return "";
 }

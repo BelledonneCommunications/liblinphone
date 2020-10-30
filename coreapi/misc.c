@@ -536,14 +536,14 @@ static void linphone_core_migrate_proxy_config(LinphoneCore *lc, LinphoneTranspo
 		if (route) route_addr=linphone_address_new(route);
 		if (proxy_addr){
 			linphone_address_set_transport(proxy_addr,type);
-			tmp=linphone_address_as_string(proxy_addr);
+			tmp=linphone_address_to_string(proxy_addr);
 			linphone_proxy_config_set_server_addr(cfg,tmp);
 			ms_free(tmp);
 			linphone_address_unref(proxy_addr);
 		}
 		if (route_addr){
 			linphone_address_set_transport(route_addr,type);
-			tmp=linphone_address_as_string(route_addr);
+			tmp=linphone_address_to_string(route_addr);
 			linphone_proxy_config_set_route(cfg,tmp);
 			ms_free(tmp);
 			linphone_address_unref(route_addr);

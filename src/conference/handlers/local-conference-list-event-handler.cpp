@@ -95,12 +95,12 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 		return;
 
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
-	char *addrStr = linphone_address_as_string(lAddr);
+	char *addrStr = linphone_address_to_string(lAddr);
 	IdentityAddress participantAddr(addrStr);
 	bctbx_free(addrStr);
 
 	const LinphoneAddress *lDeviceAddr = linphone_event_get_remote_contact(lev);
-	char *deviceAddrStr = linphone_address_as_string(lDeviceAddr);
+	char *deviceAddrStr = linphone_address_to_string(lDeviceAddr);
 	IdentityAddress deviceAddr(deviceAddrStr);
 	bctbx_free(deviceAddrStr);
 
@@ -173,7 +173,7 @@ void LocalConferenceListEventHandler::subscribeReceived (LinphoneEvent *lev, con
 			contents.push_back(move(content));
 
 			// Add entry into the Rlmi content of the notify body
-			Xsd::Rlmi::Resource resource(addr.asStringUriOnly());
+			Xsd::Rlmi::Resource resource(addr.toStringUriOnly());
 			Xsd::Rlmi::Resource::InstanceSequence instances;
 			Xsd::Rlmi::Instance instance(token, Xsd::Rlmi::State::Value::active);
 			instances.push_back(instance);

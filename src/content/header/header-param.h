@@ -54,7 +54,7 @@ public:
 	const std::string &getValue () const;
 	bool setValue (const std::string &value);
 
-	std::string asString () const;
+	std::string toString () const;
 
 private:
 	L_DECLARE_PRIVATE(HeaderParam);

@@ -269,7 +269,7 @@ bool Imdn::aggregationEnabled () const {
 }
 
 LinphoneProxyConfig * Imdn::getRelatedProxyConfig(){
-	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().asString().c_str());
+	LinphoneAddress *addr = linphone_address_new(chatRoom->getLocalAddress().toString().c_str());
 	if (!addr) {
 		return NULL;
 	}

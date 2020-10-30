@@ -49,7 +49,7 @@ void linphone_participant_set_user_data(LinphoneParticipant *participant, void *
 
 const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipant *participant) {
 	LinphonePrivate::Address addr(LinphonePrivate::Participant::toCpp(participant)->getAddress());
-	return linphone_address_new(addr.asString().c_str());
+	return linphone_address_new(addr.toString().c_str());
 }
 
 bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {
@@ -69,7 +69,7 @@ bctbx_list_t *linphone_participant_get_devices (const LinphoneParticipant *parti
 }
 
 LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParticipant *participant, const LinphoneAddress *address) {
-	char *addrStr = linphone_address_as_string(address);
+	char *addrStr = linphone_address_to_string(address);
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
 	return linphone_participant_device_ref (LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress)->toC());

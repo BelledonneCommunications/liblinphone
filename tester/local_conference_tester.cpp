@@ -183,7 +183,7 @@ public:
 		linphone_config_set_int(linphone_core_get_config(getLc()), "misc", "hide_empty_chat_rooms", 0);
 		linphone_core_enable_conference_server(getLc(),TRUE);
 		linphone_core_cbs_set_chat_room_state_changed(linphone_core_get_first_callbacks(getLc()), server_core_chat_room_state_changed);
-		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(getLc()), getIdentity().asString().c_str());
+		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(getLc()), getIdentity().toString().c_str());
 	}
 	~Focus(){
 		CoreManagerAssert({*this}).waitUntil(chrono::seconds(1),[] {
@@ -231,7 +231,7 @@ private:
 		bctbx_list_t * devices = NULL;
 		auto participantRange = focus->mParticipantDevices.equal_range(participant);
 		for (auto participantIt = participantRange.first; participantIt != participantRange.second; participantIt++ ) {
-			LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.asString().c_str());
+			LinphoneAddress *deviceAddr = linphone_address_new(participantIt->second.toString().c_str());
 			devices = bctbx_list_append(devices, linphone_factory_create_participant_device_identity(linphone_factory_get(),deviceAddr,""));
 			linphone_address_unref(deviceAddr);
 		}

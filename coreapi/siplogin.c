@@ -63,7 +63,7 @@ static int sip_login_do_login(SipSetupContext * ctx, const char *uri, const char
 	if (linphone_address_get_display_name(parsed_uri)!=NULL){
 		guess_display_name(parsed_uri);
 	}
-	tmp=linphone_address_as_string(parsed_uri);
+	tmp=linphone_address_to_string(parsed_uri);
 	linphone_proxy_config_set_identity_address(cfg,parsed_uri);
 	if (passwd ) {
 		auth=linphone_auth_info_new(linphone_address_get_username(parsed_uri),userid,passwd,NULL,NULL,

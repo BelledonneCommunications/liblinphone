@@ -1350,7 +1350,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived,1,DEFAULT_WAIT_FOR));
 
-	char* remote_uri = linphone_address_as_string_uri_only(pauline->identity);
+	char* remote_uri = linphone_address_to_string_uri_only(pauline->identity);
 	call = linphone_core_find_call_from_uri(marie->lc,remote_uri);
 
 	stats initial_marie_stats = marie->stat;

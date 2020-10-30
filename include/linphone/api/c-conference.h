@@ -71,6 +71,7 @@ LINPHONE_PUBLIC LinphoneCore* linphone_conference_get_core(const LinphoneConfere
  * @return The conference address of the conference or NULL if it is unknown. @maybenil
  */
 LINPHONE_PUBLIC const LinphoneAddress *linphone_conference_get_conference_address (const LinphoneConference *conference);
+LINPHONE_PUBLIC char *linphone_conference_get_conference_address_to_string (const LinphoneConference *conference);
 LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (const LinphoneConference *conference);
 
 /**
