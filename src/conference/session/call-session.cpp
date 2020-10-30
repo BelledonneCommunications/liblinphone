@@ -1379,8 +1379,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 std::string CallSession::toString () const {
 	L_D();
 	std::stringstream ss; 
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "Session [" << voidThis << "] (local address " << getLocalAddress() << " remote address " << (getRemoteAddress() ? *getRemoteAddress() : d->emptyAddress) << ")";
+	ss << "Session [" << this << "] (local address " << getLocalAddress() << " remote address " << (getRemoteAddress() ? *getRemoteAddress() : d->emptyAddress) << ")";
 	return ss.str();
 }
 

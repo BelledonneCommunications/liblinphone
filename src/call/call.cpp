@@ -1195,8 +1195,7 @@ void Call::setUserData (void *ud) {
 
 std::string Call::toString () const {
 	std::stringstream ss;
-	const void * voidThis = static_cast<const void*>(this);
-	ss << "Call " << voidThis << " with " << *static_pointer_cast<MediaSession>(getActiveSession()) << " in state " << Utils::toString(getState());
+	ss << "Call [" << this << "] with " << *static_pointer_cast<MediaSession>(getActiveSession()) << " in state " << Utils::toString(getState());
 	return ss.str();
 }
 
