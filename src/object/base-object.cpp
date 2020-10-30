@@ -39,7 +39,7 @@ BaseObject::~BaseObject () {
 std::string BaseObject::toString () const {
 	const void * voidThis = static_cast<const void*>(this);
 	std::stringstream ss;
-	ss << belle_sip_object_to_string(this) << " " << voidThis;
+	ss << "BaseObject pointer " << voidThis;
 	return ss.str();
 }
 
