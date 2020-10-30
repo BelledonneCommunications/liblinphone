@@ -43,6 +43,8 @@ public:
 	ChatMessage::State getState () const;
 	time_t getStateChangeTime () const;
 
+	virtual std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(ParticipantImdnState);
 };

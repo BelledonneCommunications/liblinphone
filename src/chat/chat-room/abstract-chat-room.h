@@ -142,6 +142,7 @@ public:
 	virtual bool canHandleParticipants () const = 0;
 	virtual std::shared_ptr<Conference> getConference () const = 0;
 
+	virtual std::string toString() const override = 0;
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
 

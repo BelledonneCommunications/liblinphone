@@ -58,4 +58,12 @@ time_t ParticipantImdnState::getStateChangeTime () const {
 	return d->stateChangeTime;
 }
 
+std::string ParticipantImdnState::toString() const {
+	std::stringstream ss;
+	ss << "Participant Idmn State [" << this << "] for participant " << getParticipant();
+
+	return ss.str();
+}
+
+
 LINPHONE_END_NAMESPACE
