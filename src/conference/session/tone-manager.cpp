@@ -605,6 +605,7 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 	/*these are french tones, excepted the failed one, which is USA congestion tone (does not exist in France)*/
 	switch(toneId) {
 		case LinphoneToneCallOnHold:
+			def.repeat_count=3;
 		case LinphoneToneCallWaiting:
 			def.duration=300;
 			def.frequencies[0]=440;
