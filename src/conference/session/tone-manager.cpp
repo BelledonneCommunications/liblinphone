@@ -606,6 +606,10 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 	switch(toneId) {
 		case LinphoneToneCallOnHold:
 			def.repeat_count=3;
+			def.duration=300;
+			def.frequencies[0]=440;
+			def.interval=2000;
+		break;
 		case LinphoneToneCallWaiting:
 			def.duration=300;
 			def.frequencies[0]=440;
