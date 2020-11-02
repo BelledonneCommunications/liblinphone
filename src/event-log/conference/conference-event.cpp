@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include "conference-event-p.h"
 
 // =============================================================================
@@ -49,10 +51,10 @@ const ConferenceId &ConferenceEvent::getConferenceId () const {
 	return d->conferenceId;
 }
 
-std::string ConferenceCallEvent::toString () const {
+std::string ConferenceEvent::toString () const {
 	std::stringstream ss;
 	ss << EventLog::toString();
-	ss << " for conference ID " << *getConferenceId();
+	ss << " for conference ID " << getConferenceId();
 	return ss.str();
 }
 

@@ -388,7 +388,7 @@ std::string DialPlan::toString() const {
 	std::stringstream ss;
 	ss << "Dial Plan [" << this << "]";
 	ss << " Country " << country;
-	ss << " ISO Country Code " << isCountryCode;
+	ss << " ISO Country Code " << isoCountryCode;
 	ss << " Maximum number length " << nationalNumberLength;
 	ss << " International Call Prefix " << internationalCallPrefix;
 	ss << " Country Calling Code " << countryCallingCode;

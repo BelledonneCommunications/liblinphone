@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include "chat/chat-message/chat-message.h"
 #include "chat/chat-room/chat-room.h"
 #include "conference-chat-message-event.h"
