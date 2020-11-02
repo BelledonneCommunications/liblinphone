@@ -36,12 +36,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 shared_ptr<AbstractChatRoom> CallPrivate::getChatRoom () {
 	L_Q();
-	if (!chatRoom && (q->getState() != CallSession::State::End) && (q->getState() != CallSession::State::Released)) {
+	if ((q->getState() != CallSession::State::End) && (q->getState() != CallSession::State::Released)) {
 		bool rtt = q->getCurrentParams()->realtimeTextEnabled();
 		chatRoom = q->getCore()->getOrCreateBasicChatRoom(q->getRemoteAddress(), rtt);
 		if (chatRoom && rtt) {
 			shared_ptr<RealTimeTextChatRoom> rttChatRoom = static_pointer_cast<RealTimeTextChatRoom>(chatRoom);
-			rttChatRoom->getPrivate()->setCall(q->getSharedFromThis());
+			shared_ptr<Call> call = q->getSharedFromThis();
+			lInfo() << "Setting call [" << call << "]to RealTimeTextChatRoom [" << rttChatRoom << "]";
+			rttChatRoom->getPrivate()->setCall(call);
 		}
 	}
 	return chatRoom;

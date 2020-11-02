@@ -1388,17 +1388,23 @@ int ChatMessage::putCharacter (uint32_t character) {
 	constexpr uint32_t lf = 0x0A;
 
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
-	if (!(chatRoom->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
+	if (!(chatRoom->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText)) {
+		lError() << "Chat room [" << chatRoom << "] that created the message doesn't have RealTimeText capability";
 		return -1;
+	}
 
 	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> rttcr =
 		static_pointer_cast<LinphonePrivate::RealTimeTextChatRoom>(chatRoom);
-	if (!rttcr)
+	if (!rttcr) {
+		lError() << "Chat room [" << chatRoom << "] that created the message can't be cast to RealTimeTextChatRoom";
 		return -1;
+	}
 
 	shared_ptr<Call> call = rttcr->getCall();
-	if (!call || !call->getPrivate()->getMediaStream(LinphoneStreamTypeText))
+	if (!call || !call->getPrivate()->getMediaStream(LinphoneStreamTypeText)) {
+		lError() << "Failed to find Text stream from call [" << call << "]";
 		return -1;
+	}
 
 	if (character == newLine || character == crlf || character == lf) {
 		shared_ptr<Core> core = getCore();
@@ -1420,6 +1426,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 		reinterpret_cast<TextStream *>(call->getPrivate()->getMediaStream(LinphoneStreamTypeText)),
 		character
 	);
+
 	return 0;
 }
 
