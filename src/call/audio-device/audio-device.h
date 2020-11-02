@@ -59,11 +59,6 @@ public:
 
     std::string toString() const override;
 
-    std::ostream& operator << (std::ostream& str) {
-        str << this->toString();
-        return str;
-    }
-
 private:
     MSSndCard *soundCard;
     std::string deviceId;
