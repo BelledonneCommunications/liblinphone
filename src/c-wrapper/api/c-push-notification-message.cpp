@@ -82,3 +82,7 @@ const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const Li
 	return linphone_address_new(PushNotificationMessage::toCpp(msg)->getPeerAddr()->toString().c_str());
 	;
 }
+
+char *linphone_push_notification_message_to_string (const LinphonePushNotificationMessage *msg) {
+	return ms_strdup(PushNotificationMessage::toCpp(msg)->toString().c_str());
+}
