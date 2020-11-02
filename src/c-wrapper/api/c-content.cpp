@@ -388,6 +388,7 @@ bool_t linphone_content_is_file_encrypted (const LinphoneContent *content) {
 char *linphone_content_to_string (const LinphoneContent *content) {
 	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(content)->toString().c_str());
 }
+
 // =============================================================================
 // Private functions.
 // =============================================================================

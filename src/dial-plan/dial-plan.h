@@ -62,6 +62,8 @@ public:
 	static std::shared_ptr<DialPlan> findByCcc (const std::string &ccc);
 	static const std::list<std::shared_ptr<DialPlan>> &getAllDialPlans ();
 
+	std::string toString() const override;
+
 private:
 	std::string country;
 	std::string isoCountryCode; // ISO 3166-1 alpha-2 code, ex: FR for France.
