@@ -257,6 +257,9 @@ public:
 	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
 	void destroyTimer(belle_sip_source_t *timer);
+
+	void toString() const override;
+
 private:
 	Core ();
 
