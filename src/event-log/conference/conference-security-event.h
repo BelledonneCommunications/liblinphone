@@ -65,6 +65,8 @@ public:
 	SecurityEventType getSecurityEventType () const;
 	const IdentityAddress &getFaultyDeviceAddress () const;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceSecurityEvent);
 	L_DISABLE_COPY(ConferenceSecurityEvent);

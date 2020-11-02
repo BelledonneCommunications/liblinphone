@@ -48,4 +48,11 @@ shared_ptr<Call> ConferenceCallEvent::getCall () const {
 	return d->call;
 }
 
+std::string ConferenceCallEvent::toString () const {
+	std::stringstream ss;
+	ss << EventLog::toString();
+	ss << " and call " << *getCall();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

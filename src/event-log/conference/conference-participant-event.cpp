@@ -70,4 +70,11 @@ const IdentityAddress &ConferenceParticipantEvent::getParticipantAddress () cons
 	return d->participantAddress;
 }
 
+std::string ConferenceParticipantEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceNotifiedEvent::toString();
+	ss << " and participant " << getParticipantAddress();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
