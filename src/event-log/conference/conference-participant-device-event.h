@@ -46,6 +46,8 @@ public:
 	const IdentityAddress &getDeviceAddress () const;
 	const std::string &getDeviceName () const;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceParticipantDeviceEvent);
 	L_DISABLE_COPY(ConferenceParticipantDeviceEvent);

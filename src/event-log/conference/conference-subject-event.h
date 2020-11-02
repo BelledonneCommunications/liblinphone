@@ -41,6 +41,8 @@ public:
 
 	const std::string &getSubject () const;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceSubjectEvent);
 	L_DISABLE_COPY(ConferenceSubjectEvent);

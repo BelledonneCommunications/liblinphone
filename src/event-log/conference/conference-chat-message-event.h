@@ -35,6 +35,8 @@ public:
 
 	std::shared_ptr<ChatMessage> getChatMessage () const;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceChatMessageEvent);
 	L_DISABLE_COPY(ConferenceChatMessageEvent);
