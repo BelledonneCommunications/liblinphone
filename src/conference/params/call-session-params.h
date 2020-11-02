@@ -74,6 +74,8 @@ public:
 	LinphoneProxyConfig *getProxyConfig() const;
 	void setProxyConfig(LinphoneProxyConfig *proxyConfig);
 
+	std::string toString() const override;
+
 protected:
 	explicit CallSessionParams (CallSessionParamsPrivate &p);
 
