@@ -70,6 +70,8 @@ public:
 
 	static void deleteFromDatabase (const std::shared_ptr<const EventLog> &eventLog);
 
+	std::string toString () const override;
+
 protected:
 	EventLog (EventLogPrivate &p, Type type, time_t creationTime);
 
