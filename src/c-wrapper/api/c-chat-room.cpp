@@ -599,6 +599,10 @@ void _linphone_chat_room_notify_chat_message_participant_imdn_state_changed(Linp
 	NOTIFY_IF_EXIST(ChatMessageParticipantImdnStateChanged, chat_message_participant_imdn_state_changed, cr, msg, state)
 }
 
+char *linphone_chat_room_to_string (const LinphoneChatRoom *cr) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->toString().c_str());
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================
