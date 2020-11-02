@@ -153,17 +153,19 @@ static void audio_mono_call_opus(void){
 }
 
 static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold ) {
-	LinphoneCoreManager *marie, *pauline;
-	PayloadType *mariePt, *paulinePt;
+	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
+	char *recordPath = nullptr;
 	char *referenceFile = bc_tester_res("sounds/vrroom.wav");
+
+#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
+	OrtpNetworkSimulatorParams simparams = { 0 };
+	PayloadType *mariePt, *paulinePt;
 	int sampleLength = 6000;
 	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
-	char *recordPath = nullptr;
 	FmtpManager marieFmtp, paulineFmtp;
 	std::vector<std::string> useinbandfec = {"1"};
 	std::vector<float> lossRates = {50};
 	std::vector<std::string> packetLossPercentage = {"50","100"};
-	OrtpNetworkSimulatorParams simparams = { 0 };
 	MSAudioDiffParams audioCmpParams = audio_cmp_params;
 
 	// Add jitterBufferMs to the shift
@@ -199,12 +201,10 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "jitter_buffer_min_size", jitterBufferMs);
 	linphone_core_set_audio_jittcomp(pauline->lc, jitterBufferMs);
 	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); // We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms
-	
+
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
         simparams.consecutive_loss_probability = 0.000001f;// Ensure to have fec in n+1 packets
-
-#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	for(size_t inbandIndex = 0 ; inbandIndex < useinbandfec.size() ; ++inbandIndex){// Loop to test the impact of useinbandfec
 		marieFmtp.setFmtp("useinbandfec", useinbandfec[inbandIndex]);
 		for(size_t lossRateIndex = 0 ; lossRateIndex < lossRates.size() ; ++lossRateIndex){// Loop to test the impact of loosing packets
@@ -256,9 +256,9 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 			}
 		}
 	}
-#endif
-	
+
 end:
+#endif
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bc_free(recordPath);
