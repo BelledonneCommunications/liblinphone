@@ -523,13 +523,17 @@ static void text_message_in_call_chat_room(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	LinphoneCall *pauline_call, *marie_call;
 	LinphoneChatRoom *pauline_chat_room, *marie_chat_room;
 
-	if (BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, marie_params))){
+	linphone_call_params_enable_realtime_text(marie_params, TRUE);
+	linphone_call_params_enable_realtime_text(pauline_params, FALSE);
+	if (BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params))){
 		pauline_call = linphone_core_get_current_call(pauline->lc);
 		marie_call = linphone_core_get_current_call(marie->lc);
 		BC_ASSERT_FALSE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
+		BC_ASSERT_FALSE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(marie_call)));
 		BC_ASSERT_EQUAL(linphone_call_get_state(pauline_call), LinphoneCallStateStreamsRunning, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_state(marie_call), LinphoneCallStateStreamsRunning, int, "%d");
 
