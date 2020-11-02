@@ -517,6 +517,14 @@ LINPHONE_PUBLIC bool_t linphone_call_params_rtp_bundle_enabled(const LinphoneCal
  */
 LINPHONE_PUBLIC void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t value);
 
+/**
+ * Returns the call parameters as a string.
+ * The result string must be freed by user using ms_free().
+ * @param params #LinphoneCallParams object. @notnil
+ * @return the call parameters as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_call_params_to_string (const LinphoneCallParams *params);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
