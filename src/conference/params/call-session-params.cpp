@@ -205,4 +205,18 @@ void CallSessionParams::setProxyConfig(LinphoneProxyConfig *proxyConfig) {
 	d->proxyConfig = proxyConfig;
 }
 
+std::string CallSessionParams::toString() const {
+	L_D();
+	std::stringstream ss;
+	ss << "Session Parameters [" << this << "]";
+	ss << " in local conference: " << ((d->inConference) ? "true" : "false");
+	if (d->conferenceId.empty() == false) {
+		ss << " conference ID: " << d->conferenceId;
+	}
+	if (d->sessionName.empty() == false) {
+		ss << " session name: " << d->sessionName;
+	}
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

@@ -540,6 +540,10 @@ void linphone_call_params_enable_rtp_bundle(LinphoneCallParams *params, bool_t v
 	L_GET_CPP_PTR_FROM_C_OBJECT(params)->enableRtpBundle(!!value);
 }
 
+char *linphone_call_params_to_string (const LinphoneCallParams *params) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(params)->toString().c_str());
+}
+
 // =============================================================================
 // Reference and user data handling functions.
 // =============================================================================
