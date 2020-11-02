@@ -88,6 +88,14 @@ LINPHONE_PUBLIC LinphoneAudioDevice *linphone_audio_device_ref(LinphoneAudioDevi
 LINPHONE_PUBLIC void linphone_audio_device_unref(LinphoneAudioDevice *audio_device);
 
 /**
+ * Returns the audio device as a string.
+ * The returned char * must be freed by the application. Use ms_free().
+ * @param audio_device a #LinphoneAudioDevice object. @notnil
+ * @return a string representation of the audio device. @notnil
+ **/
+LINPHONE_PUBLIC char *linphone_audio_device_to_string (const LinphoneAudioDevice *address);
+
+/**
  * @}
  */
 
