@@ -60,4 +60,11 @@ shared_ptr<ChatMessage> ConferenceChatMessageEvent::getChatMessage () const {
 	return d->chatMessage;
 }
 
+std::string ConferenceChatMessageEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceEvent::toString();
+	ss << " and chat message " << *getChatMessage();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

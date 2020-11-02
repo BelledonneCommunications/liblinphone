@@ -61,6 +61,14 @@ void EventLog::deleteFromDatabase (const shared_ptr<const EventLog> &eventLog) {
 	MainDb::deleteEvent(eventLog);
 }
 
+std::string EventLog::toString () const {
+	std::stringstream ss;
+	ss << "Event Log [" << this << "]";
+	ss << " created on " << ctime(&getCreation());
+	ss << " of type type " << getType();
+	return ss.str();
+}
+
 std::ostream& operator<<(std::ostream& lhs, EventLog::Type e) {
 	switch(e) {
 		case EventLog::Type::None:

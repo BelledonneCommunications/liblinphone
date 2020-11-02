@@ -54,4 +54,11 @@ const string &ConferenceSubjectEvent::getSubject () const {
 	return d->subject;
 }
 
+std::string ConferenceSubjectEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceNotifiedEvent::toString();
+	ss << " and subject " << getSubject();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

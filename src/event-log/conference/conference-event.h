@@ -35,6 +35,8 @@ public:
 
 	const ConferenceId &getConferenceId () const;
 
+	std::string toString () const override;
+
 protected:
 	ConferenceEvent (ConferenceEventPrivate &p, Type type, time_t creationTime, const ConferenceId &conferenceId);
 
