@@ -8069,3 +8069,7 @@ bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {
 	if (sound_description->flags & DEVICE_HAS_CRAPPY_OPENGL) return TRUE;
 	return FALSE;
 }
+
+char * linphone_core_to_string(LinphoneCore *lc) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->toString().c_str());
+}

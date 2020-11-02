@@ -5329,6 +5329,14 @@ LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_input_audio
  */
 LINPHONE_PUBLIC const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const LinphoneCore *core);
 
+/**
+ * Returns the core as a string.
+ * The result string must be freed by user using ms_free().
+ * @param core #LinphoneCore object. @notnil
+ * @return the core as a string. @maybenil
+**/
+LINPHONE_PUBLIC char* linphone_core_to_string(const LinphoneCore *core);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
