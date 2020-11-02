@@ -158,6 +158,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	char *referenceFile = bc_tester_res("sounds/vrroom.wav");
 
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
+	OrtpNetworkSimulatorParams simparams = { 0 };
 	PayloadType *mariePt, *paulinePt;
 	int sampleLength = 6000;
 	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
@@ -201,8 +202,6 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	linphone_core_set_audio_jittcomp(pauline->lc, jitterBufferMs);
 	linphone_core_enable_adaptive_rate_control(marie->lc, FALSE); // We don't want adaptive rate control here, in order to not interfere with loss recovery algorithms
 
-
-	OrtpNetworkSimulatorParams simparams = { 0 };
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
         simparams.consecutive_loss_probability = 0.000001f;// Ensure to have fec in n+1 packets
