@@ -110,3 +110,7 @@ bctbx_list_t *linphone_magic_search_get_contact_list_from_filter (
 		L_C_TO_STRING(filter), L_C_TO_STRING(domain)
 	));
 }
+
+char *linphone_magic_search_to_string (const LinphoneMagicSearch *magic_search) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(magic_search)->toString().c_str());
+}
