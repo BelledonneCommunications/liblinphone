@@ -384,4 +384,17 @@ const list<shared_ptr<DialPlan>> &DialPlan::getAllDialPlans () {
 	return DialPlans;
 }
 
+std::string DialPlan::toString() const {
+	std::stringstream ss;
+	ss << "Dial Plan [" << this << "]";
+	ss << " Country " << country;
+	ss << " ISO Country Code " << isCountryCode;
+	ss << " Maximum number length " << nationalNumberLength;
+	ss << " International Call Prefix " << internationalCallPrefix;
+	ss << " Country Calling Code " << countryCallingCode;
+
+	return ss.str();
+}
+
+
 LINPHONE_END_NAMESPACE
