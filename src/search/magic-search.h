@@ -125,6 +125,12 @@ public:
 	 **/
 	std::list<SearchResult> getContactListFromFilter (const std::string &filter, const std::string &withDomain = "") const;
 
+	/**
+	 * Prints a string with magic search informations
+	 * @return string with informations
+	 **/
+	std::string toString() const override;
+
 private:
 
 	/**
