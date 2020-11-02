@@ -121,6 +121,14 @@ LINPHONE_PUBLIC const LinphoneDialPlan* linphone_dial_plan_by_ccc_as_int(int ccc
 **/
 LINPHONE_PUBLIC bool_t linphone_dial_plan_is_generic(const LinphoneDialPlan *ccc);
 
+/**
+ * Returns the dial plan as a string.
+ * The result string must be freed by user using ms_free().
+ * @param ccc #LinphoneDialPlan object. @notnil
+ * @return the dial plan as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_dial_plan_to_string (const LinphoneDialPlan *ccc);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
