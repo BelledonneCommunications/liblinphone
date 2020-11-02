@@ -234,7 +234,7 @@ string ContentType::getMediaType () const {
 }
 
 string ContentType::toString () const {
-	std::stringstream ss:
+	std::stringstream ss;
 	ss << getMediaType();
 
 	return ss.str();
