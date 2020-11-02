@@ -45,6 +45,8 @@ public:
 
 	const IdentityAddress &getParticipantAddress () const;
 
+	std::string toString () const override;
+
 protected:
 	ConferenceParticipantEvent (
 		ConferenceParticipantEventPrivate &p,

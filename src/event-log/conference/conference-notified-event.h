@@ -55,6 +55,8 @@ protected:
 	bool fullState = false;
 	unsigned int notifyId = 0;
 
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceNotifiedEvent);
 	L_DISABLE_COPY(ConferenceNotifiedEvent);
