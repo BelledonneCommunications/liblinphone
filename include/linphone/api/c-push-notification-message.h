@@ -109,6 +109,14 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_lo
 LINPHONE_PUBLIC const LinphoneAddress *linphone_push_notification_message_get_peer_addr(const LinphonePushNotificationMessage *message);
 
 /**
+ * Returns the magic search as a string.
+ * The result string must be freed by user using ms_free().
+ * @param message #LinphonePushNotificationMessage object. @notnil
+ * @return the magic search as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_push_notification_message_to_string (const LinphonePushNotificationMessage *message);
+
+/**
  * @}
  */
 

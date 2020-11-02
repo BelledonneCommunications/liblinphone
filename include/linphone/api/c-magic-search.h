@@ -164,6 +164,14 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_magic_search_get_contact_list_from_filter
 );
 
 /**
+ * Returns the magic search as a string.
+ * The result string must be freed by user using ms_free().
+ * @param magic_search #LinphoneMagicSearch object. @notnil
+ * @return the magic search as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_magic_search_to_string (const LinphoneMagicSearch *magic_search);
+
+/**
  * @}
  */
 

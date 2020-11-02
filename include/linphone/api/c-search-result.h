@@ -88,6 +88,14 @@ LINPHONE_PUBLIC bool_t linphone_search_result_has_capability(const LinphoneSearc
 LINPHONE_PUBLIC unsigned int linphone_search_result_get_weight(const LinphoneSearchResult *search_result);
 
 /**
+ * Returns the search result as a string.
+ * The result string must be freed by user using ms_free().
+ * @param search_result #LinphoneSearchResult object. @notnil
+ * @return the search result as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_search_result_to_string (const LinphoneSearchResult *search_result);
+
+/**
  * @}
  */
 

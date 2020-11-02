@@ -369,7 +369,7 @@ void CallSessionPrivate::pingReply () {
 void CallSessionPrivate::referred (const Address &referToAddr) {
 	L_Q();
 	referToAddress = referToAddr;
-	referTo = referToAddr.asString();
+	referTo = referToAddr.toString();
 	referPending = true;
 	setState(CallSession::State::Referred, "Referred");
 	if (referPending && listener)
