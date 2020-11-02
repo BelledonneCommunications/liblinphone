@@ -145,4 +145,13 @@ unsigned int SearchResult::getWeight () const {
 	return d->mWeight;
 }
 
+std::string SearchResult::toString() const {
+	std::stringstream ss;
+	ss << "Search Result [" << this << "]";
+	ss << " address " << getAddress();
+	ss << " phone number " << getPhoneNumber();
+	ss << " weight " << getWeight();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE

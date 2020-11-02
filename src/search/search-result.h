@@ -77,6 +77,12 @@ public:
 	 **/
 	unsigned int getWeight () const;
 
+	/**
+	 * Prints a string with search result informations
+	 * @return string with informations
+	 **/
+	std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(SearchResult);
 };
