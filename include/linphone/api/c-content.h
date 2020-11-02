@@ -313,6 +313,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_content_set_string_buffer (Lin
 LINPHONE_PUBLIC bool_t linphone_content_is_file_encrypted (const LinphoneContent *content);
 
 /**
+ * Returns the content as a string.
+ * The result string must be freed by user using ms_free().
+ * @param content #LinphoneContent object. @notnil
+ * @return the content as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_content_to_string (const LinphoneContent *content);
+
+/**
  * @}
  */
 
