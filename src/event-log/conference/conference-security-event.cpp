@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include "conference-event-p.h"
 #include "conference-security-event.h"
 
@@ -76,7 +78,7 @@ const IdentityAddress &ConferenceSecurityEvent::getFaultyDeviceAddress () const 
 	return d->faultyDevice;
 }
 
-std::string ConferenceNotifiedEvent::toString () const {
+std::string ConferenceSecurityEvent::toString () const {
 	std::stringstream ss;
 	ss << ConferenceEvent::toString();
 	ss << " with faulty device address " << getFaultyDeviceAddress() << " and security type " << getSecurityEventType();
