@@ -258,7 +258,7 @@ public:
 
 	void destroyTimer(belle_sip_source_t *timer);
 
-	void toString() const override;
+	std::string toString() const override;
 
 private:
 	Core ();
