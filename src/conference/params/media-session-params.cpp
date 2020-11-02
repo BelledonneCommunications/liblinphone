@@ -580,4 +580,16 @@ bool MediaSessionParams::rtpBundleEnabled()const{
 	return d->rtpBundle;
 }
 
+std::string MediaSessionParams::toString() const {
+	std::stringstream ss;
+	ss << CallSessionParams::toString();
+	ss << " video enabled: " << videoEnabled();
+	ss << " audio enabled: " << audioEnabled();
+	ss << " avpf enabled: " << avpfEnabled();
+	ss << " real time text enabled: " << realtimeTextEnabled();
+	ss << " record file path: " << getRecordFilePath();
+
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
