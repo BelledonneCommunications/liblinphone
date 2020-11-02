@@ -82,3 +82,7 @@ bctbx_list_t *linphone_dial_plan_get_all_list () {
 bool_t linphone_dial_plan_is_generic (const LinphoneDialPlan *ccc) {
 	return DialPlan::toCpp(ccc)->isGeneric();
 }
+
+char *linphone_dial_plan_to_string (const LinphoneDialPlan *content) {
+	return ms_strdup(DialPlan::toCpp(ccc)->toString().c_str());
+}
