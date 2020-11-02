@@ -552,4 +552,13 @@ list<SearchResult> *MagicSearch::uniqueItemsList (list<SearchResult> &list) cons
 	return &list;
 }
 
+std::string MagicSearch::toString() const {
+	std::stringstream ss;
+	ss << "Magic Search [" << this << "]";
+	if (getUseDelimiter() && !getDelimiter().empty()) {
+		ss << " with delimiter " << getDelimiter();
+	}
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
