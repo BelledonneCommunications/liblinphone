@@ -251,7 +251,7 @@ Variant Content::getUserData() const {
 	return getProperty("LinphonePrivate::Content::userData");
 }
 
-std:string Content::toString() const {
+string Content::toString() const {
 	std::stringstream ss;
 	ss << "Content [" << this << "] has "  << getContentType () << " and encoded as " << getContentEncoding () << " disposition " << getContentDisposition ();
 

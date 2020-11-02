@@ -106,7 +106,7 @@ string HeaderParam::toString () const {
 }
 
 ostream &operator<< (ostream &os, const HeaderParam& headerParam) {
-	return os << header.toString();
+	return os << headerParam.toString();
 }
 
 
