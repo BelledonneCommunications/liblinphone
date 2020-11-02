@@ -46,4 +46,11 @@ unsigned int ConferenceNotifiedEvent::getNotifyId () const {
 	return notifyId;
 }
 
+std::string ConferenceNotifiedEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceEvent::toString();
+	ss << " with notify ID " << getNotifyId() << " and fullState " << std::boolalpha << getFullState();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
