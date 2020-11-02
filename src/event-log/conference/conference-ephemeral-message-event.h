@@ -38,7 +38,9 @@ public:
 							);
 	
 	long getEphemeralMessageLifetime() const;
-	
+
+	std::string toString () const override;
+
 private:
 	L_DECLARE_PRIVATE(ConferenceEphemeralMessageEvent);
 	L_DISABLE_COPY(ConferenceEphemeralMessageEvent);

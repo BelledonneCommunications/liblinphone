@@ -377,3 +377,7 @@ LINPHONE_PUBLIC long linphone_event_log_get_ephemeral_message_lifetime (const Li
 	return static_pointer_cast<const LinphonePrivate::ConferenceEphemeralMessageEvent>(
 		L_GET_CPP_PTR_FROM_C_OBJECT(event_log))->getEphemeralMessageLifetime();
 }
+
+char *linphone_event_log_to_string (const LinphoneEventLog *event_log) {
+	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(event_log)->toString().c_str());
+}

@@ -59,5 +59,12 @@ long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime () const {
 	return d->ephemeralLifetime;
 }
 
+std::string ConferenceChatMessageEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceEvent::toString();
+	ss << " with duration of " << getEphemeralMessageLifetime() << " seconds";
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
 

@@ -70,4 +70,11 @@ const string &ConferenceParticipantDeviceEvent::getDeviceName () const {
 	return d->deviceName;
 }
 
+std::string ConferenceParticipantDeviceEvent::toString () const {
+	std::stringstream ss;
+	ss << ConferenceParticipantEvent::toString();
+	ss << " and device " << getDeviceName() << " with address " << getDeviceAddress();
+	return ss.str();
+}
+
 LINPHONE_END_NAMESPACE
