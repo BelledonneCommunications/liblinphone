@@ -62,9 +62,10 @@ void EventLog::deleteFromDatabase (const shared_ptr<const EventLog> &eventLog) {
 }
 
 std::string EventLog::toString () const {
+	L_D();
 	std::stringstream ss;
 	ss << "Event Log [" << this << "]";
-	ss << " created on " << ctime(&getCreation());
+	ss << " created on " << ctime(&(d->creationTime));
 	ss << " of type type " << getType();
 	return ss.str();
 }

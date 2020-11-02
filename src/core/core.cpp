@@ -1239,7 +1239,7 @@ void Core::deleteAudioVideoConference(const shared_ptr<const MediaConference::Co
 
 }
 
-void Core::toString() const {
+std::string Core::toString() const {
 	std::stringstream ss;
 	ss << "Core [" << this << "] with current call " << *getCurrentCall();
 	return ss.str();

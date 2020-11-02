@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include "conference-participant-event-p.h"
 #include "conference/participant.h"
 
