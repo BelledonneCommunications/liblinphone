@@ -123,6 +123,8 @@ public:
 	void enableRtpBundle(bool value);
 	bool rtpBundleEnabled()const;
 
+	std::string toString() const override;
+
 private:
 	L_DECLARE_PRIVATE(MediaSessionParams);
 };
