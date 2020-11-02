@@ -523,6 +523,14 @@ LINPHONE_PUBLIC void linphone_chat_room_notify_participant_device_registration(L
 **/
 LINPHONE_PUBLIC const LinphoneChatRoomParams *linphone_chat_room_get_current_params(const LinphoneChatRoom *chat_room);
 
+/**
+ * Returns the chat room as a string.
+ * The result string must be freed by user using ms_free().
+ * @param chat_room #LinphoneChatRoom object. @notnil
+ * @return the chat room as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_chat_room_to_string (const LinphoneChatRoom *chat_room);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -578,7 +586,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
  * @deprecated 01/07/2020. Use linphone_chat_room_create_message_from_utf8() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
-
 
 /**
  * @}
