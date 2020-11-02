@@ -17,6 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
+#include "call/call.h"
 #include "conference-call-event.h"
 #include "event-log/event-log-p.h"
 

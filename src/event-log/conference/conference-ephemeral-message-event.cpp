@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sstream>
+
 #include "conference-ephemeral-message-event.h"
 
 // =============================================================================
@@ -59,7 +61,7 @@ long ConferenceEphemeralMessageEvent::getEphemeralMessageLifetime () const {
 	return d->ephemeralLifetime;
 }
 
-std::string ConferenceChatMessageEvent::toString () const {
+std::string ConferenceEphemeralMessageEvent::toString () const {
 	std::stringstream ss;
 	ss << ConferenceEvent::toString();
 	ss << " with duration of " << getEphemeralMessageLifetime() << " seconds";
