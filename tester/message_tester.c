@@ -519,17 +519,22 @@ void text_message_reply_from_non_default_proxy_config(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void text_message_in_call_chat_room(void) {
+static void text_message_in_call_chat_room_base(bool_t rtt_enabled_in_sender_but_denied) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
-	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	LinphoneCall *pauline_call, *marie_call;
 	LinphoneChatRoom *pauline_chat_room, *marie_chat_room;
 
-	if (BC_ASSERT_TRUE(call_with_caller_params(marie, pauline, marie_params))){
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_realtime_text(marie_params, rtt_enabled_in_sender_but_denied);
+	linphone_call_params_enable_realtime_text(pauline_params, FALSE);
+
+	if (BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params))){
 		pauline_call = linphone_core_get_current_call(pauline->lc);
 		marie_call = linphone_core_get_current_call(marie->lc);
 		BC_ASSERT_FALSE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(pauline_call)));
+		BC_ASSERT_FALSE(linphone_call_params_realtime_text_enabled(linphone_call_get_current_params(marie_call)));
 		BC_ASSERT_EQUAL(linphone_call_get_state(pauline_call), LinphoneCallStateStreamsRunning, int, "%d");
 		BC_ASSERT_EQUAL(linphone_call_get_state(marie_call), LinphoneCallStateStreamsRunning, int, "%d");
 
@@ -577,8 +582,17 @@ static void text_message_in_call_chat_room(void) {
 		end_call(marie, pauline);
 	}
 	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void text_message_in_call_chat_room(void) {
+	text_message_in_call_chat_room_base(FALSE);
+}
+
+static void text_message_in_call_chat_room_from_denied_text_offer(void) {
+	text_message_in_call_chat_room_base(TRUE);
 }
 
 void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
@@ -3308,6 +3322,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Text message from non default proxy config", text_message_from_non_default_proxy_config),
 	TEST_NO_TAG("Text message reply from non default proxy config", text_message_reply_from_non_default_proxy_config),
 	TEST_NO_TAG("Text message in call chat room", text_message_in_call_chat_room),
+	TEST_NO_TAG("Text message in call chat room from denied text offer", text_message_in_call_chat_room_from_denied_text_offer),
 	TEST_NO_TAG("Transfer message", transfer_message),
 	TEST_NO_TAG("Transfer message 2", transfer_message_2),
 	TEST_NO_TAG("Transfer message 3", transfer_message_3),

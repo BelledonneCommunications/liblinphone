@@ -85,10 +85,21 @@ void RealTimeTextChatRoomPrivate::realtimeTextReceived (uint32_t character, cons
 
 void RealTimeTextChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
+
 	shared_ptr<Call> call = q->getCall();
 	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
 		uint32_t newLine = 0x2028;
 		chatMessage->putCharacter(newLine);
+	} else {
+		lWarning() << "Trying to send a chat message in a real time text chatroom out of a RTT enabled call";
+
+		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+		dChatMessage->setTime(ms_time(0));
+		if (!q->canHandleCpim()) {
+			//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
+			dChatMessage->setImdnMessageId("");
+		}
+		dChatMessage->send();
 	}
 }
 
