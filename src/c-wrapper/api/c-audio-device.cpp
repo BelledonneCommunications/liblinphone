@@ -69,3 +69,7 @@ void linphone_audio_device_unref(LinphoneAudioDevice *audioDevice) {
         AudioDevice::toCpp(audioDevice)->unref();
     }
 }
+
+char *linphone_audio_device_to_string (const LinphoneAudioDevice *audio_device) {
+	return bctbx_strdup(AudioDevice::toCpp(audio_device)->toString().c_str());
+}
