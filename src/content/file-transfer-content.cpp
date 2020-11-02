@@ -205,9 +205,9 @@ bool FileTransferContent::isFileTransfer () const {
 	return true;
 }
 
-std::string FileContent::toString () const {
+std::string FileTransferContent::toString () const {
 	L_D();
-	std::stringstream ss:
+	std::stringstream ss;
 	ss << "File Transfer " << Content::toString();
 	ss << " file URL: " << d->fileUrl;
 	ss << " filepath: " << d->filePath;

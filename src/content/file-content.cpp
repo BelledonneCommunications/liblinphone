@@ -199,7 +199,7 @@ const string FileContent::getPlainFilePath() const {
 
 std::string FileContent::toString () const {
 	L_D();
-	std::stringstream ss:
+	std::stringstream ss;
 	ss << "File " << Content::toString();
 	ss << " filepath: " << d->filePath;
 	ss << " filename: " << d->fileName;
