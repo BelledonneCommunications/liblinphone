@@ -359,6 +359,14 @@ void Conference::setUserData (void *ud) {
 	userData = ud;
 }
 
+std::string Conference::toString() const {
+	std::stringstream ss;
+	ss << "Conference [" << this << "]";
+	ss << " with conference address: " << getConferenceAddress().toString();
+
+	return ss.str();
+}
+
 LocalConference::LocalConference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
@@ -852,6 +860,13 @@ VideoControlInterface * LocalConference::getVideoControlInterface() const{
 AudioStream *LocalConference::getAudioStream(){
 	MS2AudioMixer *mixer = dynamic_cast<MS2AudioMixer*>(mMixerSession->getMixerByType(SalAudio));
 	return mixer ? mixer->getAudioStream() : nullptr;
+}
+
+std::string LocalConference::toString() const {
+	std::stringstream ss;
+	ss << "Local " << Conference::toString();
+
+	return ss.str();
 }
 
 void LocalConference::notifyFullState () {
@@ -1367,6 +1382,13 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			break;
 	}
 
+}
+
+std::string RemoteConference::toString() const {
+	std::stringstream ss;
+	ss << "Remote " << Conference::toString();
+
+	return ss.str();
 }
 
 }//end of namespace MediaConference

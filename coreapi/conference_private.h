@@ -160,6 +160,8 @@ public:
 		return mConferenceID;
 	}
 
+	std::string toString() const override;
+
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);
 
@@ -224,6 +226,8 @@ public:
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
 
+	std::string toString() const override;
+
 private:
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
@@ -273,6 +277,8 @@ public:
 	void notifyReceived (const std::string &body);
 
 	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+
+	std::string toString() const override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
