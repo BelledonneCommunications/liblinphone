@@ -120,6 +120,9 @@ public:
 	void removeFromLeakDetector() const;
 	static void clearSipAddressesCache ();
 
+protected:
+	SalAddress *internalAddress = nullptr;
+
 private:
 	struct AddressCache {
 		std::string scheme;
@@ -134,7 +137,6 @@ private:
 		std::unordered_map<std::string, std::string> uriParams;
 	};
 
-	SalAddress *internalAddress = nullptr;
 	mutable AddressCache cache;
 
 };

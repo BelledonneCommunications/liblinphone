@@ -72,7 +72,6 @@ public:
 
 	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
 	void removeFromLeakDetector() const {Address::removeFromLeakDetector();}
-	Address internalAddress;
 
 private:
 };

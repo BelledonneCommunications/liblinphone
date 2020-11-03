@@ -48,7 +48,7 @@ IdentityAddress::IdentityAddress (const Address &address) {
 }
 
 IdentityAddress::IdentityAddress (const IdentityAddress &other) : Address(other) {
-	internalAddress = other.asAddress();
+
 }
 
 IdentityAddress::IdentityAddress () {
@@ -58,7 +58,6 @@ IdentityAddress::IdentityAddress () {
 IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 	if (this != &other) {
 		Address::operator= (other);
-		internalAddress = other.asAddress();
 	}
 	return *this;
 }
@@ -90,43 +89,43 @@ bool IdentityAddress::isValid () const {
 }
 
 const string &IdentityAddress::getScheme () const {
-	return internalAddress.getScheme();
+	return Address::getScheme();
 }
 
 void IdentityAddress::setScheme (const string &scheme) {
-	internalAddress.setSecure (scheme.compare("sips") == 0);
+	Address::setSecure (scheme.compare("sips") == 0);
 }
 
 const string &IdentityAddress::getUsername () const {
-	return internalAddress.getUsername();
+	return Address::getUsername();
 }
 
 void IdentityAddress::setUsername (const string &username) {
-	internalAddress.setUsername(username);
+	Address::setUsername(username);
 }
 
 const string &IdentityAddress::getDomain () const {
-	return internalAddress.getDomain();
+	return Address::getDomain();
 }
 
 void IdentityAddress::setDomain (const string &domain) {
-	internalAddress.setDomain(domain);
+	Address::setDomain(domain);
 }
 
 bool IdentityAddress::hasGruu () const {
-	return internalAddress.hasUriParam("gr");
+	return hasUriParam("gr");
 }
 
 const string &IdentityAddress::getGruu () const {
-	return internalAddress.getUriParamValue("gr");
+	return getUriParamValue("gr");
 }
 
 void IdentityAddress::setGruu (const string &gruu) {
-	internalAddress.setUriParam("gr",gruu);
+	setUriParam("gr",gruu);
 }
 
 IdentityAddress IdentityAddress::getAddressWithoutGruu () const {
-	Address address(internalAddress);
+	Address address(*this);
 	address.removeUriParam("gr");
 	return address;
 }
@@ -153,7 +152,7 @@ string IdentityAddress::asString () const {
 }
 
 const Address & IdentityAddress::asAddress() const {
-	return internalAddress;
+	return *this;
 }
 
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
@@ -208,15 +207,15 @@ string ConferenceAddress::asString () const {
 }
 
 const string &ConferenceAddress::getConfId () const {
-	return internalAddress.getUriParamValue("conf-id");
+	return getUriParamValue("conf-id");
 }
 
 void ConferenceAddress::setConfId (const string &confId) {
-	internalAddress.setUriParam("conf-id", confId);
+	setUriParam("conf-id", confId);
 }
 
 bool ConferenceAddress::hasConfId () const {
-	return internalAddress.hasUriParam("conf-id");
+	return hasUriParam("conf-id");
 }
 
 LINPHONE_END_NAMESPACE
