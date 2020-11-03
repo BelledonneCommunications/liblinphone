@@ -116,6 +116,8 @@ public:
 	}
 	void setInternalAddress (const SalAddress *value);
 
+	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
+	void removeFromLeakDetector() const;
 	static void clearSipAddressesCache ();
 
 private:
