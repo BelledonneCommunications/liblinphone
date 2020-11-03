@@ -46,25 +46,28 @@ static string getPath (const GUID &id) {
 #ifdef ENABLE_MICROSOFT_STORE_APP
 
     //if( id ==FOLDERID_LocalAppData)
-    string strPath;
-    char * env = getenv("LOCALAPPDATA");
-    if( env != NULL) {
-	strPath = env;
-	strPath = strPath.append("/linphone/");
-	if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
-    }
-    return strPath;
+	string strPath;
+	char * env = getenv("LOCALAPPDATA");
+	if( env != NULL) {
+		strPath = env;
+		strPath = strPath.append("/linphone/");
+		if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+		strPath = LinphonePrivate::Utils::localeToUtf8(strPath);
+	}
+	return strPath;
 #else
 	string strPath;
 	LPWSTR path;
 	if (SHGetKnownFolderPath(id, KF_FLAG_DONT_VERIFY, 0, &path) == S_OK) {
-                strPath = LinphonePrivate::Utils::localeToUtf8(string(_bstr_t(path)));
+		strPath = _bstr_t(path);
 		replace(strPath.begin(), strPath.end(), '\\', '/');
-                CoTaskMemFree(path);
+		CoTaskMemFree(path);
 	}
 
 	strPath = strPath.append("/linphone/");
-	if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
+	if (!dirExists(strPath))
+		CreateDirectoryA(strPath.c_str(), nullptr);
+	strPath = LinphonePrivate::Utils::localeToUtf8(strPath);
 	return strPath;
 #endif //ENABLE_MICROSOFT_STORE_APP
 }
