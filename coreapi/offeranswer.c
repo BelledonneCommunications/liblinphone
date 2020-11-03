@@ -560,22 +560,48 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
 }
 
+bool is_avpf(SalMediaProto proto) {
+	return (proto == SalProtoRtpAvpf) || (proto == SalProtoRtpSavpf) || (proto == SalProtoUdpTlsRtpSavpf);
+}
+
+bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherProto)
+{
+	switch (localProto) {
+		case SalProtoRtpAvp:
+		case SalProtoRtpAvpf:
+			return (otherProto == SalProtoRtpAvp || otherProto == SalProtoRtpAvpf);
+		case SalProtoRtpSavp:
+		case SalProtoRtpSavpf:
+			return (otherProto == SalProtoRtpSavp || otherProto == SalProtoRtpSavpf);
+		case SalProtoUdpTlsRtpSavp:
+		case SalProtoUdpTlsRtpSavpf:
+			return (otherProto == SalProtoUdpTlsRtpSavp || otherProto == SalProtoUdpTlsRtpSavpf);
+		case SalProtoOther:
+			return (otherProto == SalProtoOther);
+	}
+}
 
 /**
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int offer_answer_initiate_outgoing(MSFactory *factory, const SalMediaDescription *local_offer,
+int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *local_offer,
 					const SalMediaDescription *remote_answer,
 					SalMediaDescription *result){
 	int i;
-	const SalStreamDescription *ls,*rs;
+	const SalStreamDescription *rs;
+	SalStreamDescription *ls;
 
 	for(i=0;i<local_offer->nb_streams;++i){
 		ms_message("Processing for stream %i",i);
 		ls=&local_offer->streams[i];
 		rs=&remote_answer->streams[i];
-		if (rs && ls->proto == rs->proto && rs->type == ls->type) {
+		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
+		{
+			if (ls->proto != rs->proto && is_avpf(ls->proto))	{
+				ls->proto = rs->proto;
+				ms_warning("Received a downgraded AVP answer for our AVPF offer");
+			}
 			initiate_outgoing(factory, ls,rs,&result->streams[i]);
 			memcpy(&result->streams[i].rtcp_xr, &ls->rtcp_xr, sizeof(result->streams[i].rtcp_xr));
 			if ((ls->rtcp_xr.enabled == TRUE) && (rs->rtcp_xr.enabled == FALSE)) {
@@ -615,10 +641,11 @@ int offer_answer_initiate_outgoing(MSFactory *factory, const SalMediaDescription
  * The returned media description is an answer and should be sent to the offerer.
 **/
 int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription *local_capabilities,
-					const SalMediaDescription *remote_offer,
+					SalMediaDescription *remote_offer,
 					SalMediaDescription *result, bool_t one_matching_codec){
 	int i;
-	const SalStreamDescription *ls=NULL,*rs;
+	const SalStreamDescription *ls=NULL;
+	SalStreamDescription *rs;
 
 	if (remote_offer->bundles && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
@@ -628,7 +655,12 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	for(i=0;i<remote_offer->nb_streams;++i){
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
-		if (ls && rs->type == ls->type && rs->proto == ls->proto){
+		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
+		{
+			if (ls->proto != rs->proto && is_avpf(rs->proto))	{
+				rs->proto = ls->proto;
+				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
+			}
 			const char *bundle_owner_mid = NULL;
 			if (local_capabilities->accept_bundles){
 				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
