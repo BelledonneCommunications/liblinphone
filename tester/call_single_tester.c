@@ -5155,6 +5155,81 @@ static void async_core_stop_after_call(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void call_avpf_mismatch(void) {
+	LinphoneCoreManager *marie, *pauline;
+	const LinphoneAddress *from;
+	LinphoneCall *pauline_call;
+	LinphoneProxyConfig* marie_cfg;
+
+	marie = linphone_core_manager_new("marie_rc");
+	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+
+	/* with the account manager, we might lose the identity */
+	marie_cfg = linphone_core_get_default_proxy_config(marie->lc);
+	{
+		LinphoneAddress* marie_addr = linphone_address_clone(linphone_proxy_config_get_identity_address(marie_cfg));
+		linphone_address_set_display_name(marie_addr, "Super Marie");
+
+		linphone_proxy_config_edit(marie_cfg);
+		linphone_proxy_config_set_identity_address(marie_cfg, marie_addr);
+		// Enable AVPF from the caller
+		linphone_proxy_config_set_avpf_mode(marie_cfg, LinphoneAVPFEnabled);
+		linphone_proxy_config_done(marie_cfg);
+
+		linphone_address_unref(marie_addr);
+	}
+	
+	linphone_core_enable_video_display(marie->lc, TRUE);
+	linphone_core_enable_video_display(pauline->lc, TRUE);
+	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_initiate(vpol, TRUE);
+	linphone_video_activation_policy_set_automatically_accept(vpol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, vpol);
+	linphone_core_set_video_activation_policy(pauline->lc, vpol);
+	linphone_video_activation_policy_unref(vpol);
+	
+	linphone_core_invite_address(marie->lc, pauline->identity);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+	
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	
+	//Disable AVPF from the callee
+	LinphoneCallParams* pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_enable_avpf(pauline_params, FALSE);
+	
+	//Test early media
+	linphone_call_accept_early_media_with_params(pauline_call, pauline_params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1));
+	
+	linphone_call_accept_with_params(pauline_call, pauline_params);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected, 1));
+	linphone_call_params_unref(pauline_params);
+	
+	
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1, int, "%d");
+	BC_ASSERT_PTR_NOT_NULL(pauline_call);
+	/*check that display name is correctly propagated in From */
+	if (pauline_call) {
+		from = linphone_call_get_remote_address(linphone_core_get_current_call(pauline->lc));
+		BC_ASSERT_PTR_NOT_NULL(from);
+		if (from) {
+			const char *dname = linphone_address_get_display_name(from);
+			BC_ASSERT_PTR_NOT_NULL(dname);
+			if (dname){
+				BC_ASSERT_STRING_EQUAL(dname, "Super Marie");
+			}
+		}
+	}
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+	end_call(marie, pauline);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t call_tests[] = {
 	TEST_NO_TAG("Early declined call", early_declined_call),
 	TEST_NO_TAG("Call declined", call_declined),
@@ -5259,7 +5334,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined, other ringing device receive CANCEL with reason", cancel_other_device_after_decline),
 	TEST_NO_TAG("Simple call with GRUU", simple_call_with_gruu),
 	TEST_NO_TAG("Simple call with GRUU only one device ring", simple_call_with_gruu_only_one_device_ring),
-	TEST_ONE_TAG("Async core stop", async_core_stop_after_call, "LeaksMemory")
+	TEST_ONE_TAG("Async core stop", async_core_stop_after_call, "LeaksMemory"),
+	TEST_NO_TAG("Call AVPF mismatch", call_avpf_mismatch)
 };
 
 test_suite_t call_test_suite = {"Single Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
