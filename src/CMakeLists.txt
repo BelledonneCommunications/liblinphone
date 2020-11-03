@@ -111,6 +111,7 @@ add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	address/address.h
 	address/identity-address.h
+	address/identity-address-parser.h
 	auth-info/auth-info.h
 	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
@@ -283,6 +284,7 @@ endif()
 set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	address/address.cpp
 	address/identity-address.cpp
+	address/identity-address-parser.cpp
 	c-wrapper/api/c-address.cpp
 	c-wrapper/api/c-audio-device.cpp
 	c-wrapper/api/c-auth-info.cpp
@@ -541,6 +543,7 @@ if(ENABLE_SHARED)
 	)
 	set(LINPHONE_RESOURCES
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/cpim_grammar"
+		"${CMAKE_CURRENT_SOURCE_DIR}/../share/identity_grammar"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/rootca.pem"
 		"${CMAKE_CURRENT_SOURCE_DIR}/../share/ringback.wav"
 	) # Keep it relative to current dir to allow CMakeList inclusion
