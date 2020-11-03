@@ -74,6 +74,7 @@ public:
 	void removeFromLeakDetector() const {Address::removeFromLeakDetector();}
 
 private:
+	void fillFromAddress(const Address &address);
 };
 
 inline std::ostream &operator<< (std::ostream &os, const IdentityAddress &identityAddress) {

@@ -34,11 +34,28 @@ LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
 
-IdentityAddress::IdentityAddress (const string &address) : IdentityAddress(Address(address)) {
+IdentityAddress::IdentityAddress (const string &address) {
 
+	shared_ptr<IdentityAddress> parsedAddress = IdentityAddressParser::getInstance()->parseAddress(address);
+	if (parsedAddress != nullptr) {
+		char *tmp;
+		setScheme(parsedAddress->getScheme());
+		tmp = belle_sip_to_unescaped_string(parsedAddress->getUsername().c_str());
+		setUsername(tmp);
+		ms_free(tmp);
+		setDomain(parsedAddress->getDomain());
+		setGruu(parsedAddress->getGruu());
+	} else {
+		Address tmpAddress(address);
+		fillFromAddress(tmpAddress);
+	}
 }
 
 IdentityAddress::IdentityAddress (const Address &address) {
+	fillFromAddress(address);
+}
+
+void IdentityAddress::fillFromAddress(const Address &address) {
 	if (address.isValid() && ((address.getScheme() == "sip") || (address.getScheme() == "sips"))) {
 		setScheme(address.getScheme());
 		setUsername(address.getUsername());
