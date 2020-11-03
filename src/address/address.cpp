@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <belle-sip/sip-uri.h>
+
 #include "address.h"
 #include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
@@ -405,6 +407,14 @@ bool Address::removeUriParam (const string &uriParamName) {
 
 	sal_address_remove_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
 	return true;
+}
+
+void Address::removeFromLeakDetector() const {
+	belle_sip_header_address_t* header_addr = BELLE_SIP_HEADER_ADDRESS(internalAddress);
+	belle_sip_uri_t* sip_uri = belle_sip_header_address_get_uri(header_addr);
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(belle_sip_uri_get_headers(sip_uri)));
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(header_addr));
 }
 
 LINPHONE_END_NAMESPACE
