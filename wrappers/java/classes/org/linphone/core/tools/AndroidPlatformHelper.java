@@ -604,6 +604,19 @@ public class AndroidPlatformHelper {
         }
     }
 
+    public synchronized boolean isActiveNetworkWifiOnlyCompliant() {
+        NetworkInfo networkInfo = mNetworkManager.getActiveNetworkInfo();
+        if (networkInfo != null) {
+            Log.i("[Platform Helper] Active network type is " + networkInfo.getTypeName());
+            if (networkInfo.getType() == ConnectivityManager.TYPE_WIFI || networkInfo.getType() == ConnectivityManager.TYPE_ETHERNET) {
+                return true;
+            }
+        } else {
+            Log.w("[Platform Helper] Active network info is null, assuming network isn't WiFi only compliant");
+        }
+        return false;
+    }
+
     public synchronized void updateNetworkReachability() {
         if (mNativePtr == 0) {
             Log.w("[Platform Helper] Native pointer has been reset, stopping there");

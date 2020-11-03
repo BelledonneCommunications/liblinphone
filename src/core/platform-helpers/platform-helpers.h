@@ -71,6 +71,7 @@ public:
 
 	// This method shall retrieve DNS server list from the platform and assign it to the core.
 	virtual bool isNetworkReachable () = 0;
+	virtual bool isActiveNetworkWifiOnlyCompliant () const = 0;
 	virtual void onWifiOnlyEnabled (bool enabled) = 0;
 	virtual void setDnsServers () = 0;
 	virtual void setHttpProxy (const std::string &host, int port) = 0;
@@ -124,6 +125,7 @@ public:
 	void resizeVideoPreview (int width, int height) override;
 
 	bool isNetworkReachable () override;
+	bool isActiveNetworkWifiOnlyCompliant () const override;
 	void onWifiOnlyEnabled (bool enabled) override;
 	void setDnsServers () override;
 	void setHttpProxy (const std::string &host, int port) override;

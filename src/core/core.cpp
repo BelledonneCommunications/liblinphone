@@ -970,12 +970,24 @@ void Core::pushNotificationReceived () {
 	d->startPushReceivedBackgroundTask();
 
 	LinphoneCore *lc = getCCore();
-	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
-	bctbx_list_t *it = (bctbx_list_t *)proxies;
+
+#ifdef __ANDROID__
+	if (linphone_core_wifi_only_enabled(lc)) {
+		// If WiFi only policy enabled, check that we are on a WiFi network, otherwise don't handle the push
+		bool_t isWifiOnlyCompliant = static_cast<PlatformHelpers *>(lc->platform_helper)->isActiveNetworkWifiOnlyCompliant();
+		if (!isWifiOnlyCompliant) {
+			lError() << "Android Platform Helpers says current network isn't compliant with WiFi only policy, aborting push notification processing!";
+ 			return;
+		}
+	}
+#endif
 
 	// We can assume network should be reachable when a push notification is received.
-	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration 
+	// If the app was put in DOZE mode, internal network reachability will have been disabled and thus may prevent registration.
 	linphone_core_set_network_reachable_internal(lc, TRUE);
+
+	const bctbx_list_t *proxies = linphone_core_get_proxy_config_list(lc);
+	bctbx_list_t *it = (bctbx_list_t *)proxies;
 
 	/*
 	 * The following is a bit hacky. But sometimes 3 lines of code are better than

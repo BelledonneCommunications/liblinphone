@@ -83,7 +83,7 @@ public class NetworkManager extends BroadcastReceiver implements NetworkManagerI
             Log.i("[Platform Helper] [Network Manager] Found network type: " + networkInfo.getTypeName() + ", isConnectedOrConnecting() = " + networkInfo.isConnectedOrConnecting());
             if (networkInfo.isConnectedOrConnecting()) {
                 Log.i("[Platform Helper] [Network Manager] Network state is " + networkInfo.getState() + " / " + networkInfo.getDetailedState());
-                if (networkInfo.getType() != ConnectivityManager.TYPE_WIFI && mWifiOnly) {
+                if ((networkInfo.getType() != ConnectivityManager.TYPE_WIFI || networkInfo.getType() != ConnectivityManager.TYPE_ETHERNET) && mWifiOnly) {
                     Log.i("[Platform Helper] [Network Manager] Wifi only mode enabled, skipping");
                 } else {
                     return true;
