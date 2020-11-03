@@ -79,6 +79,7 @@ public:
 	void resizeVideoPreview (int width, int height) override {}
 
 	void onWifiOnlyEnabled (bool enabled) override;
+	bool isActiveNetworkWifiOnlyCompliant () const override;
 	void setDnsServers () override;
 	void setHttpProxy (const string &host, int port) override;
 	bool startNetworkMonitoring() override;
@@ -510,6 +511,10 @@ bool IosPlatformHelpers::isReachable(SCNetworkReachabilityFlags flags) {
 		return false;
 	}
 	return true;
+}
+
+bool IosPlatformHelpers::isActiveNetworkWifiOnlyCompliant() const {
+	return false;
 }
 
 //Method called when we detected actual network changes in callbacks

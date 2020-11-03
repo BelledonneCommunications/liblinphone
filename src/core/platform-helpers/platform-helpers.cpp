@@ -105,6 +105,10 @@ bool GenericPlatformHelpers::isNetworkReachable () {
 	return mNetworkReachable;
 }
 
+bool GenericPlatformHelpers::isActiveNetworkWifiOnlyCompliant () const {
+	return false;
+}
+
 void GenericPlatformHelpers::onWifiOnlyEnabled (bool enabled) {}
 
 void GenericPlatformHelpers::setDnsServers () {}
