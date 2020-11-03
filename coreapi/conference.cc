@@ -487,7 +487,7 @@ int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addre
 
 			linphone_call_params_set_in_conference(new_params, TRUE);
 
-			const Address & conferenceAddress = getConferenceAddress ();
+			const Address & conferenceAddress = getConferenceAddress().asAddress();
 			const string & confId = conferenceAddress.getUriParamValue("conf-id");
 			linphone_call_params_set_conference_id(new_params, confId.c_str());
 
@@ -528,7 +528,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
-		const Address & conferenceAddress = getConferenceAddress ();
+		const Address & conferenceAddress = getConferenceAddress().asAddress();
 		const string & confId = conferenceAddress.getUriParamValue("conf-id");
 
 		switch(state){
@@ -1216,7 +1216,7 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 		{
 			Address focusContactAddress(m_focusCall->getRemoteContact());
 			ConferenceId confId = getConferenceId();
-			Address peerAddress(confId.getPeerAddress());
+			Address peerAddress(confId.getPeerAddress().asAddress());
 			if ((getState() == ConferenceInterface::State::CreationPending) && (focusContactAddress.hasUriParam("conf-id")) && (!peerAddress.hasUriParam("conf-id"))) {
 				m_focusContact = ms_strdup(linphone_call_get_remote_contact(m_focusCall->toC()));
 				it = m_pendingCalls.begin();
