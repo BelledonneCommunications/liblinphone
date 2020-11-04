@@ -3652,22 +3652,14 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 
 		LinphoneConference *conference = linphone_core_get_conference(c);
 
+		BC_ASSERT_PTR_NULL(conference);
+		BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
+
 		if (m != marie) {
-			BC_ASSERT_PTR_NULL(conference);
-			BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
 			LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, marie->identity);
 			BC_ASSERT_PTR_NULL(participant_call);
 			LinphoneCall * conference_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
 			BC_ASSERT_PTR_NULL(conference_call);
-		} else {
-			if (add_participants_immediately_after_creation == FALSE) {
-				// Marie has a second conferece already started, hence the core should hold it
-				BC_ASSERT_PTR_NOT_NULL(conference);
-				BC_ASSERT_TRUE(linphone_core_is_in_conference(c));
-			} else {
-				BC_ASSERT_PTR_NULL(conference);
-				BC_ASSERT_FALSE(linphone_core_is_in_conference(c));
-			}
 		}
 
 		idx++;
@@ -3677,7 +3669,7 @@ static void interleaved_conferences_base(bool_t add_participants_immediately_aft
 		conference_with_calls_queued(marie, new_maries_conference, new_participants, FALSE, FALSE);
 	}
 
-	// Verify that a third conference is not created when adidng calls
+	// Verify that a third conference is not created when adding calls
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreationPending, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateCreated, 2, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneConferenceStateTerminationPending, 2, int, "%d");
