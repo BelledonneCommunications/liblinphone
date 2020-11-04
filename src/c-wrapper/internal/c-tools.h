@@ -39,6 +39,18 @@
 	#define L_INTERNAL_WRAPPER_CONSTEXPR constexpr
 #endif
 
+#ifndef LINPHONE_PUBLIC
+#if defined(_MSC_VER)
+#ifdef LINPHONE_EXPORTS
+#define LINPHONE_PUBLIC	__declspec(dllexport)
+#else
+#define LINPHONE_PUBLIC	__declspec(dllimport)
+#endif
+#else
+#define LINPHONE_PUBLIC
+#endif
+#endif
+
 LINPHONE_BEGIN_NAMESPACE
 
 // -----------------------------------------------------------------------------
@@ -151,8 +163,8 @@ private:
 	// ---------------------------------------------------------------------------
 
 	#ifdef DEBUG
-		static void setName (belle_sip_object_t *cObject, const BaseObject *cppObject);
-		static void setName (belle_sip_object_t *cObject, const ClonableObject *cppObject);
+		LINPHONE_PUBLIC static void setName (belle_sip_object_t *cObject, const BaseObject *cppObject);
+		LINPHONE_PUBLIC static void setName (belle_sip_object_t *cObject, const ClonableObject *cppObject);
 	#endif
 
 	// ---------------------------------------------------------------------------
