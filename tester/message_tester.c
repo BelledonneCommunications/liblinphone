@@ -597,7 +597,7 @@ static void text_message_in_call_chat_room_from_denied_text_offer(void) {
 
 void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
 							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
-							int auto_download, bool_t two_files, bool_t legacy, const char* url) {
+							int auto_download, bool_t two_files, bool_t legacy, const char* url, bool_t expect_auth_failure_up, bool_t expect_auth_failure_down ) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -668,6 +668,15 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 	}
 
 	linphone_chat_message_send(msg);
+
+	if (expect_auth_failure_up) {
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageNotDelivered,1));
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageDelivered, 0, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferError, 1, int, "%d");
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageFileTransferDone, 0, int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
+		goto end;
+	}
 
 	if (upload_error) {
 		int chat_room_size = 0;
@@ -746,6 +755,13 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					bc_free(receive_filepath);
 				}
 				linphone_chat_message_download_file(recv_msg);
+
+				if (expect_auth_failure_down) {
+					BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageFileTransferError, 1));
+					BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneFileTransferDownloadSuccessful,0, int, "%d");
+					goto end;
+				}
+
 				BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageFileTransferInProgress, 1, int, "%d");
 
 				if (download_error) {
@@ -861,13 +877,98 @@ static void transfer_message_tls_client_auth(void) {
 			FALSE, FALSE,
 			FALSE, FALSE,
 			FALSE,
-			-1, FALSE, FALSE, file_transfer_url_tls_client_auth);
+			-1, FALSE, FALSE, file_transfer_url_tls_client_auth, FALSE, FALSE);
 
 		// Give some time for IMDN's 200 OK to be received so it doesn't leak
 		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
 		linphone_core_manager_destroy(pauline);
 		linphone_core_manager_destroy(marie);
 	}
+}
+
+static void transfer_message_digest_auth_arg(const char *server_url, bool_t auth_info_failure_up, bool_t auth_info_failure_down) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+		// enable imdn (otherwise transfer_message_base3 is unhappy)
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+		// either up or down are set to fail, not both as up would stop the transfer anyway
+		LinphoneAuthInfo* good_auth_info=NULL;
+		LinphoneAuthInfo* wrong_auth_info=NULL;
+		if (auth_info_failure_up) {
+			// set wrong credentials for pauline (message sender)
+			good_auth_info=linphone_auth_info_clone(linphone_core_find_auth_info(pauline->lc,NULL,linphone_address_get_username(pauline->identity),NULL));
+			wrong_auth_info=linphone_auth_info_clone(good_auth_info);
+			linphone_auth_info_set_password(wrong_auth_info, "passecretdutout");
+			linphone_core_clear_all_auth_info(pauline->lc);
+			linphone_core_add_auth_info(pauline->lc,wrong_auth_info);
+		}
+
+		if (auth_info_failure_down) {
+			// set wrong credentials for marie (message receiver)
+			good_auth_info=linphone_auth_info_clone(linphone_core_find_auth_info(marie->lc,NULL,linphone_address_get_username(marie->identity),NULL));
+			wrong_auth_info=linphone_auth_info_clone(good_auth_info);
+			linphone_auth_info_set_password(wrong_auth_info, "passecretdutout");
+			linphone_core_clear_all_auth_info(marie->lc);
+			linphone_core_add_auth_info(marie->lc,wrong_auth_info);
+		}
+
+		transfer_message_base3(marie, pauline,
+			FALSE, FALSE,
+			FALSE, FALSE,
+			FALSE,
+			-1, FALSE, FALSE, server_url, auth_info_failure_up, auth_info_failure_down);
+
+		if (auth_info_failure_up) {
+			// to make sure unregister will work
+			linphone_core_clear_all_auth_info(pauline->lc);
+			linphone_core_add_auth_info(pauline->lc,good_auth_info);
+			linphone_auth_info_unref(good_auth_info);
+			linphone_auth_info_unref(wrong_auth_info);
+		}
+
+		if (auth_info_failure_down) {
+			// to make sure unregister will work
+			linphone_core_clear_all_auth_info(marie->lc);
+			linphone_core_add_auth_info(marie->lc,good_auth_info);
+			linphone_auth_info_unref(good_auth_info);
+			linphone_auth_info_unref(wrong_auth_info);
+		}
+
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
+}
+
+static void transfer_message_digest_auth(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth, FALSE, FALSE);
+}
+
+static void transfer_message_digest_auth_fail_up(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth, TRUE, FALSE);
+}
+
+static void transfer_message_digest_auth_fail_down(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth, FALSE, TRUE);
+}
+
+static void transfer_message_digest_auth_any_domain(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth_any_domain, FALSE, FALSE);
+}
+
+static void transfer_message_digest_auth_fail_any_domain_up(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth_any_domain, TRUE, FALSE);
+}
+
+static void transfer_message_digest_auth_fail_any_domain_down(void) {
+	transfer_message_digest_auth_arg(file_transfer_url_digest_auth_any_domain, FALSE, TRUE);
 }
 
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
@@ -877,7 +978,7 @@ void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 			upload_error, download_error,
 			use_file_body_handler_in_upload, use_file_body_handler_in_download,
 			download_from_history,
-			auto_download, two_files, legacy, file_transfer_url);
+			auto_download, two_files, legacy, file_transfer_url, FALSE, FALSE);
 }
 
 void transfer_message_base(
@@ -3347,6 +3448,12 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer using external body URL 2", file_transfer_using_external_body_url_2),
 	TEST_NO_TAG("Transfer using external body URL 404", file_transfer_using_external_body_url_404),
 	TEST_NO_TAG("Transfer message - file transfer server authenticates client using certificate", transfer_message_tls_client_auth),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth", transfer_message_digest_auth),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain", transfer_message_digest_auth_any_domain),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth - upload auth fail", transfer_message_digest_auth_fail_up),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth - download auth fail", transfer_message_digest_auth_fail_down),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain - upload auth fail", transfer_message_digest_auth_fail_any_domain_up),
+	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain - download auth fail", transfer_message_digest_auth_fail_any_domain_down),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 #ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
