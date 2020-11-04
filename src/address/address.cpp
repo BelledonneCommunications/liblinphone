@@ -20,7 +20,6 @@
 #include <belle-sip/sip-uri.h>
 
 #include "address.h"
-#include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "containers/lru-cache.h"
 #include "logger/logger.h"
