@@ -174,6 +174,10 @@ const Address & IdentityAddress::asAddress() const {
 	return *this;
 }
 
+void IdentityAddress::removeFromLeakDetector() const {
+	Address::removeFromLeakDetector();
+}
+
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
 	if (address.hasUriParam("conf-id")) {
 		setConfId(address.getUriParamValue("conf-id"));
