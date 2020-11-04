@@ -157,6 +157,8 @@ extern const char* test_route;
 extern const char* userhostsfile;
 extern const char* file_transfer_url;
 extern const char* file_transfer_url_tls_client_auth;
+extern const char* file_transfer_url_digest_auth;
+extern const char* file_transfer_url_digest_auth_any_domain;
 extern const char* lime_server_c25519_url;
 extern const char* lime_server_c448_url;
 extern const char* lime_server_any_domain_c25519_url;
