@@ -230,22 +230,8 @@ static void _chat_message_process_response_from_post_file (void *data, const bel
 	d->processResponseFromPostFile(event);
 }
 
-void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_http_response_event_t *event) {
-	if (httpRequest && !isFileTransferInProgressAndValid()) {
-		releaseHttpRequest();
-		return;
-	}
-
-	shared_ptr<ChatMessage> message = chatMessage.lock();
-	if (!message)
-		return;
-
-	// check the answer code
-	if (event->response) {
-		int code = belle_http_response_get_status_code(event->response);
-		if (code == 204) { // this is the reply to the first post to the server - an empty msg
+belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_handler(shared_ptr<ChatMessage> message) {
 			// start uploading the file
-			belle_sip_multipart_body_handler_t *bh;
 			string first_part_header;
 			belle_sip_body_handler_t *first_part_bh;
 
@@ -317,11 +303,27 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 					currentFileContentToTransfer->getContentType().getSubType().c_str()));
 
 			// insert it in a multipart body handler which will manage the boundaries of multipart msg
-			bh = belle_sip_multipart_body_handler_new(_chat_message_file_transfer_on_progress, this, first_part_bh, nullptr);
+			return (BELLE_SIP_BODY_HANDLER(belle_sip_multipart_body_handler_new(_chat_message_file_transfer_on_progress, this, first_part_bh, nullptr)));
+}
 
+void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_http_response_event_t *event) {
+	if (httpRequest && !isFileTransferInProgressAndValid()) {
+		releaseHttpRequest();
+		return;
+	}
+
+	shared_ptr<ChatMessage> message = chatMessage.lock();
+	if (!message)
+		return;
+
+	// check the answer code
+	if (event->response) {
+		int code = belle_http_response_get_status_code(event->response);
+		if (code == 204) { // this is the reply to the first post to the server - an empty msg
+			auto bh = prepare_upload_body_handler(message);
 			releaseHttpRequest();
 			fileUploadBeginBackgroundTask();
-			uploadFile(BELLE_SIP_BODY_HANDLER(bh));
+			uploadFile(bh);
 		} else if (code == 200) {     // file has been uploaded correctly, get server reply and send it
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			if (body && strlen(body) > 0) {
@@ -433,6 +435,15 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			message->getPrivate()->setState(ChatMessage::State::FileTransferError);
 			releaseHttpRequest();
 			fileUploadEndBackgroundTask();
+		} else if (code == 401) {
+			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning that our credentials were rejected";
+			message->getPrivate()->removeContent(currentFileTransferContent);
+			delete currentFileTransferContent;
+			currentFileTransferContent = nullptr;
+
+			message->getPrivate()->setState(ChatMessage::State::FileTransferError);
+			releaseHttpRequest();
+			fileUploadEndBackgroundTask();
 		} else {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
 			message->getPrivate()->removeContent(currentFileTransferContent);
@@ -475,6 +486,25 @@ void FileTransferChatMessageModifier::processAuthRequestedUpload (belle_sip_auth
 	 * - Stored auth information in linphone core are indexed by username/domain */
 	linphone_core_fill_belle_sip_auth_event(message->getCore()->getCCore(), event, address.getUsername().data(), address.getDomain().data());
 
+	// For digest auth: If there is no body handler, now it is a good time to add it
+	if (belle_sip_auth_event_get_mode(event) == BELLE_SIP_AUTH_MODE_HTTP_DIGEST) {
+		if (belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(httpRequest)) == NULL) {
+			lInfo()<<"File upload: Add a body handler to the message during auth request";
+			auto bh = prepare_upload_body_handler(message);
+			// THIS IS ONLY FOR BACKWARD C API COMPAT
+			if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
+				currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
+			}
+			fileUploadBeginBackgroundTask();
+			if (bh) belle_sip_message_set_body_handler(BELLE_SIP_MESSAGE(httpRequest), BELLE_SIP_BODY_HANDLER(bh));
+		} else { // There is already a body handler, it means our credentials were rejected by the server
+			lError()<<"File upload failed because our credentials are rejected by the server - give up on this transfer";
+			// Cancel found credentials so the 401 code will flow to the response handler and the upload will be cancelled
+			belle_sip_auth_event_set_passwd(event, NULL);
+			belle_sip_auth_event_set_ha1(event, NULL);
+			belle_sip_auth_event_set_algorithm(event, NULL);
+		}
+	}
 }
 
 int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
@@ -526,7 +556,8 @@ int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const
 	httpRequest = belle_http_request_create(
 		action.c_str(),
 		uri,
-		belle_sip_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
+		belle_http_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
+		belle_http_header_create("From", message->getLocalAdress().asString().c_str()),
 		nullptr
 	);
 
