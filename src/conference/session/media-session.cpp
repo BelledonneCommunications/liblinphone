@@ -1777,7 +1777,6 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		return -1;
 	}
 
-		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state);
 	string subject;
 	if (sal_media_description_has_dir(resultDesc, SalStreamSendRecv))
 		subject = "Call on hold";
