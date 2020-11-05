@@ -159,7 +159,6 @@ public:
 	virtual void setMicGain(float value) override;
 	virtual float getSpeakerGain() override;
 	virtual void setSpeakerGain(float value) override;
-	virtual void setRoute(LinphoneAudioRoute route) override;
 	virtual void sendDtmf(int dtmf) override;
 	virtual void enableEchoCancellation(bool value) override;
 	virtual bool echoCancellationEnabled()const override;

@@ -1088,10 +1088,6 @@ bool Call::mediaInProgress () const {
 	return static_pointer_cast<const MediaSession>(getActiveSession())->mediaInProgress();
 }
 
-void Call::setAudioRoute (LinphoneAudioRoute route) {
-	static_pointer_cast<MediaSession>(getActiveSession())->setAudioRoute(route);
-}
-
 void Call::setAuthenticationTokenVerified (bool value) {
 	static_pointer_cast<MediaSession>(getActiveSession())->setAuthenticationTokenVerified(value);
 }

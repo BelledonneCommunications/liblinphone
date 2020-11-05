@@ -106,7 +106,6 @@ public:
 	LinphoneCallStats * getTextStats () const;
 	LinphoneCallStats * getVideoStats () const;
 	bool mediaInProgress () const;
-	void setAudioRoute (LinphoneAudioRoute route);
 	void setAuthenticationTokenVerified (bool value);
 	void setMicrophoneVolumeGain (float value);
 	void setNativeVideoWindowId (void *id);
