@@ -20,6 +20,8 @@
 #ifndef _L_BASE_OBJECT_H_
 #define _L_BASE_OBJECT_H_
 
+#include <string>
+
 #include "linphone/utils/general.h"
 
 #include "object-head.h"
