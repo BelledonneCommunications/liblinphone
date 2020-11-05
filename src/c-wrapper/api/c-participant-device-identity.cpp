@@ -74,6 +74,10 @@ void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdenti
 #endif
 }
 
-char * linphone_participant_device_to_string (const LinphoneParticipantDeviceIdentity *deviceIdentity) {
+char * linphone_participant_device_identity_to_string (const LinphoneParticipantDeviceIdentity *deviceIdentity) {
+#ifdef HAVE_ADVANCED_IM
 	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(deviceIdentity)->toString().c_str());
+#else
+	return NULL;
+#endif
 }
