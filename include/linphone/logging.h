@@ -34,6 +34,11 @@ extern "C" {
 
 /**
  * @brief Singleton class giving access to logging features.
+ * 
+ * It supports custom domain, writing into a file as well as several verbosity levels.
+ * The #LinphoneLoggingServiceCbs listener allows you to be notified each time a log is printed.
+ * 
+ * As the #LoggingService is a singleton, use linphone_logging_service_get() to get it.
  */
 typedef struct _LinphoneLoggingService LinphoneLoggingService;
 
@@ -63,10 +68,6 @@ typedef enum _LinphoneLogLevel {
  * @param message Content of the message. @notnil
  */
 typedef void (*LinphoneLoggingServiceCbsLogMessageWrittenCb)(LinphoneLoggingService *log_service, const char *domain, LinphoneLogLevel level, const char *message);
-
-
-
-
 
 /**
  * @brief Gets the singleton logging service object.

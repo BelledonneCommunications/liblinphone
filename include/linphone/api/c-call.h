@@ -353,14 +353,6 @@ LINPHONE_PUBLIC void linphone_call_cancel_dtmfs (LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneConference *linphone_call_get_conference (const LinphoneCall *call);
 
 /**
- * Change the playback output device (currently only used for blackberry)
- * @param call The #LinphoneCall object @notnil
- * @param route the wanted audio route (earpiece, speaker, ...)
- * @donotwrap
-**/
-LINPHONE_PUBLIC void linphone_call_set_audio_route (LinphoneCall *call, LinphoneAudioRoute route);
-
-/**
  * Returns the number of stream for the given call.
  * @param call The #LinphoneCall object @notnil
  * @return the amount of streams for this call.
