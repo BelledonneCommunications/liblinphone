@@ -225,12 +225,12 @@ bool ContentType::isFile (const ContentType &contentType) {
 }
 
 string ContentType::getMediaType () const {
-	stringstream toString;
-	toString << getValue();
+	stringstream asString;
+	asString << getValue();
 	for (const auto &param : getParameters())
-		toString << param.toString();
+		asString << param.toString();
 
-	return toString.str();
+	return asString.str();
 }
 
 string ContentType::toString () const {
@@ -239,11 +239,5 @@ string ContentType::toString () const {
 
 	return ss.str();
 }
-
-/*
-ostream &operator<< (ostream &os, const ContentType& contentType) {
-	return os << contentType.toString();
-}
-*/
 
 LINPHONE_END_NAMESPACE
