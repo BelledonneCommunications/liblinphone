@@ -204,7 +204,6 @@ public:
 	virtual void setMicGain(float value) = 0;
 	virtual float getSpeakerGain() = 0;
 	virtual void setSpeakerGain(float value) = 0;
-	virtual void setRoute(LinphoneAudioRoute route) = 0;
 	virtual void sendDtmf(int dtmf) = 0;
 	virtual void enableEchoCancellation(bool value) = 0;
 	virtual bool echoCancellationEnabled()const = 0;
