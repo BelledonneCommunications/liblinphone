@@ -119,7 +119,6 @@ LINPHONE_PUBLIC LinphoneInfoMessage *linphone_core_create_info_message(LinphoneC
  * Create a #LinphoneMagicSearch object.
  * @param core #LinphoneCore object @notnil
  * @return The created #LinphoneMagicSearch object @notnil
- * @ingroup misc
  */
 LINPHONE_PUBLIC LinphoneMagicSearch *linphone_core_create_magic_search(LinphoneCore *core);
 

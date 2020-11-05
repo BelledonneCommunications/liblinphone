@@ -2958,12 +2958,6 @@ bool MediaSession::mediaInProgress () const {
 	return false;
 }
 
-void MediaSession::setAudioRoute (LinphoneAudioRoute route) {
-	L_D();
-	AudioControlInterface *i = d->getStreamsGroup().lookupMainStreamInterface<AudioControlInterface>(SalAudio);
-	if (i) i->setRoute(route);
-}
-
 void MediaSession::setAuthenticationTokenVerified (bool value) {
 	L_D();
 	d->getStreamsGroup().setAuthTokenVerified(value);
