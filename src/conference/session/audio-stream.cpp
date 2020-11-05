@@ -498,10 +498,6 @@ void MS2AudioStream::forceSpeakerMuted (bool muted) {
 		audio_stream_set_spk_gain_db(mStream, getCCore()->sound_conf.soft_play_lev);
 }
 
-void MS2AudioStream::setRoute(LinphoneAudioRoute route){
-	audio_stream_set_audio_route(mStream, (MSAudioRoute)route);
-}
-
 void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 	LinphoneConfig *config = linphone_core_get_config(lc);
 	const char *eqActive = linphone_config_get_string(config, "sound", "eq_active", nullptr);
