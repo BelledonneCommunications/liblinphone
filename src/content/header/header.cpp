@@ -173,15 +173,19 @@ const HeaderParam &Header::getParameter (const string &paramName) const {
 }
 
 string Header::toString () const {
-	stringstream toString;
+	return toStringForParsing();
+}
+
+string Header::toStringForParsing () const {
+	stringstream asString;
 	if (!getName().empty())
-		toString << getName() << ":";
+		asString << getName() << ":";
 
-	toString << getValue();
+	asString << getValue();
 	for (const auto &param : getParameters())
-		toString << param.toString();
+		asString << param.toString();
 
-	return toString.str();
+	return asString.str();
 }
 
 ostream &operator<< (ostream &os, const Header& header) {

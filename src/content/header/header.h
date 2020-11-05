@@ -65,6 +65,7 @@ public:
 	const HeaderParam &getParameter (const std::string &paramName) const;
 
 	std::string toString () const override;
+	std::string toStringForParsing () const;
 
 protected:
 	explicit Header (HeaderPrivate &p);
