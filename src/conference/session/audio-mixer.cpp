@@ -230,9 +230,6 @@ float MS2AudioMixer::getSpeakerGain(){
 void MS2AudioMixer::setSpeakerGain(float value){
 }
 
-void MS2AudioMixer::setRoute(LinphoneAudioRoute route){
-}
-
 void MS2AudioMixer::sendDtmf(int dtmf){
 }
 
