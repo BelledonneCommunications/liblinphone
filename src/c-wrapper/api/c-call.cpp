@@ -337,10 +337,6 @@ LinphoneConference *linphone_call_get_conference (const LinphoneCall *call) {
 	return Call::toCpp(call)->getConference();
 }
 
-void linphone_call_set_audio_route (LinphoneCall *call, LinphoneAudioRoute route) {
-	Call::toCpp(call)->setAudioRoute(route);
-}
-
 int linphone_call_get_stream_count (const LinphoneCall *call) {
 	return Call::toCpp(call)->getStreamCount();
 }
