@@ -21,6 +21,7 @@
 #define _L_HEADER_H_
 
 #include <list>
+#include <iostream>
 
 #include "object/clonable-object.h"
 
@@ -74,7 +75,7 @@ private:
 	L_DECLARE_PRIVATE(Header);
 };
 
-std::ostream &operator<< (std::ostream &os, const Header& header);
+LINPHONE_PUBLIC std::ostream &operator<< (std::ostream &os, const Header& header);
 
 LINPHONE_END_NAMESPACE
 
