@@ -21,14 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
-project(linphone VERSION 4.4.0 LANGUAGES C CXX)
-
-
-set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
-set(LINPHONE_MINOR_VERSION ${PROJECT_VERSION_MINOR})
-set(LINPHONE_MICRO_VERSION ${PROJECT_VERSION_PATCH})
-set(LINPHONE_VERSION ${PROJECT_VERSION})
-set(LINPHONE_SO_VERSION "10") #incremented for 4.4.0 release.
+project(linphone LANGUAGES C CXX)
 
 file(GLOB LINPHONE_PO_FILES RELATIVE "${CMAKE_CURRENT_LIST_DIR}/po" "${CMAKE_CURRENT_LIST_DIR}/po/*.po")
 string(REGEX REPLACE "([a-zA-Z_]+)\\.po" "\\1" LINPHONE_ALL_LANGS_LIST "${LINPHONE_PO_FILES}")
@@ -127,6 +120,16 @@ find_package(Mediastreamer2 CONFIG REQUIRED)
 find_package(ortp CONFIG REQUIRED)
 find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
 find_package(belr CONFIG REQUIRED)
+
+# the version shuold be defined here because bctoolbox is required
+bc_compute_lib_version(LIB_VERSION "4.4.0")
+project(linphone VERSION ${LIB_VERSION})
+
+set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
+set(LINPHONE_MINOR_VERSION ${PROJECT_VERSION_MINOR})
+set(LINPHONE_MICRO_VERSION ${PROJECT_VERSION_PATCH})
+set(LINPHONE_VERSION ${PROJECT_VERSION})
+set(LINPHONE_SO_VERSION "10") #incremented for 4.4.0 release.
 
 if(ENABLE_ADVANCED_IM)
 	find_package(LibXsd REQUIRED)
