@@ -579,7 +579,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
 
-
 /**
  * @}
  */
