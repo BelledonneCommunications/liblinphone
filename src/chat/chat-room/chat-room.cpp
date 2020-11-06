@@ -263,10 +263,11 @@ void ChatRoomPrivate::notifyStateChanged () {
 	if (q->getCore()->getCCore()->state == LinphoneGlobalStartup) {
 		lDebug() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
 	} else {
-		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << q->getState();
+		lInfo() << "Chat room [" << q->getConferenceId() << "] state changed to: " << Utils::toString(q->getState());
 	}
-	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, (LinphoneChatRoomState)q->getState());
-	_linphone_chat_room_notify_state_changed(cr, (LinphoneChatRoomState)q->getState());
+	LinphoneChatRoomState chatRoomCState = linphone_conference_state_to_chat_room_state(static_cast<LinphoneConferenceState>(q->getState()));
+	linphone_core_notify_chat_room_state_changed(q->getCore()->getCCore(), cr, chatRoomCState);
+	_linphone_chat_room_notify_state_changed(cr, chatRoomCState);
 }
 
 void ChatRoomPrivate::notifyUndecryptableChatMessageReceived (const shared_ptr<ChatMessage> &chatMessage) {
