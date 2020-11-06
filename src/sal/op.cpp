@@ -963,7 +963,7 @@ int SalOp::setCustomBody(belle_sip_message_t *msg, const Content &body) {
 	}
 
 	if (contentType.isValid()) {
-		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_parse(contentType.toString().c_str());
+		belle_sip_header_content_type_t *content_type = belle_sip_header_content_type_parse(contentType.toStringForParsing().c_str());
 		belle_sip_message_add_header(msg, BELLE_SIP_HEADER(content_type));
 	}
 	if (contentDisposition.isValid()) {

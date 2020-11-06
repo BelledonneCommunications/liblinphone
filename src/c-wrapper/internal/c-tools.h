@@ -151,8 +151,8 @@ private:
 	// ---------------------------------------------------------------------------
 
 	#ifdef DEBUG
-		static void setName (belle_sip_object_t *cObject, const BaseObject *cppObject);
-		static void setName (belle_sip_object_t *cObject, const ClonableObject *cppObject);
+		static LINPHONE_PUBLIC void setName (belle_sip_object_t *cObject, const BaseObject *cppObject);
+		static LINPHONE_PUBLIC void setName (belle_sip_object_t *cObject, const ClonableObject *cppObject);
 	#endif
 
 	// ---------------------------------------------------------------------------
