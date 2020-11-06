@@ -579,6 +579,14 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_chat_room_send_chat_message(Li
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneChatMessage* linphone_chat_room_create_message(LinphoneChatRoom *chat_room,const char* message);
 
+// The following methods are private and they allow a conversion from conference state enum to chat room state enum and viceversa.
+// This allows to easily go from one type to another one ensuring that they are synchronized and ease debugging in case they are not
+// Note that these methods must be updated if either the value of conference state or chat room state change.
+// The compiler will throw an error if not doing it:
+// <pathToLiblinphone>/src/c-wrapper/api/c-chat-room.cpp: In function ‘LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState)’:
+// <pathToLiblinphone>/src/c-wrapper/api/c-chat-room.cpp:676:9: error: enumeration value ‘<name>’ not handled in switch [-Werror=switch]
+LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneChatRoomState state);
+LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state);
 
 /**
  * @}
