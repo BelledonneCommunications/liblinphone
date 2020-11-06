@@ -316,7 +316,7 @@ LinphoneChatMessage *linphone_chat_room_find_message (LinphoneChatRoom *cr, cons
 }
 
 LinphoneChatRoomState linphone_chat_room_get_state (const LinphoneChatRoom *cr) {
-	return (LinphoneChatRoomState)L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getState();
+	return linphone_conference_state_to_chat_room_state(static_cast<LinphoneConferenceState>(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getState()));
 }
 
 bool_t linphone_chat_room_has_been_left (const LinphoneChatRoom *cr) {
@@ -642,4 +642,52 @@ LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, Linp
 	lWarning() << "Advanced IM such as group chat is disabled!";
 	return NULL;
 #endif
+}
+
+LinphoneConferenceState linphone_chat_room_state_to_conference_state(LinphoneChatRoomState state) {
+	switch (state) {
+		case LinphoneChatRoomStateNone:
+			return LinphoneConferenceStateNone;
+		case LinphoneChatRoomStateInstantiated:
+			return LinphoneConferenceStateInstantiated;
+		case LinphoneChatRoomStateCreationPending:
+			return LinphoneConferenceStateCreationPending;
+		case LinphoneChatRoomStateCreated:
+			return LinphoneConferenceStateCreated;
+		case LinphoneChatRoomStateCreationFailed:
+			return LinphoneConferenceStateCreationFailed;
+		case LinphoneChatRoomStateTerminationPending:
+			return LinphoneConferenceStateTerminationPending;
+		case LinphoneChatRoomStateTerminated:
+			return LinphoneConferenceStateTerminated;
+		case LinphoneChatRoomStateTerminationFailed:
+			return LinphoneConferenceStateTerminationFailed;
+		case LinphoneChatRoomStateDeleted:
+			return LinphoneConferenceStateDeleted;
+	}
+	return LinphoneConferenceStateNone;
+}
+
+LinphoneChatRoomState linphone_conference_state_to_chat_room_state(LinphoneConferenceState state) {
+	switch (state) {
+		case LinphoneConferenceStateNone:
+			return LinphoneChatRoomStateNone;
+		case LinphoneConferenceStateInstantiated:
+			return LinphoneChatRoomStateInstantiated;
+		case LinphoneConferenceStateCreationPending:
+			return LinphoneChatRoomStateCreationPending;
+		case LinphoneConferenceStateCreated:
+			return LinphoneChatRoomStateCreated;
+		case LinphoneConferenceStateCreationFailed:
+			return LinphoneChatRoomStateCreationFailed;
+		case LinphoneConferenceStateTerminationPending:
+			return LinphoneChatRoomStateTerminationPending;
+		case LinphoneConferenceStateTerminated:
+			return LinphoneChatRoomStateTerminated;
+		case LinphoneConferenceStateTerminationFailed:
+			return LinphoneChatRoomStateTerminationFailed;
+		case LinphoneConferenceStateDeleted:
+			return LinphoneChatRoomStateDeleted;
+	}
+	return LinphoneChatRoomStateNone;
 }
