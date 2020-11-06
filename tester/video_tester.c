@@ -23,8 +23,9 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 #include "linphone/lpconfig.h"
-
 #include <mediastreamer2/msqrcodereader.h>
+
+
 
 static void enable_disable_camera_after_camera_switches(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -59,6 +60,33 @@ static void enable_disable_camera_after_camera_switches(void) {
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void camera_switches_while_only_preview(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	const char *camId = "Mire: Mire (synthetic moving picture)";
+	float fps = 0.0f;
+	MSWebCam *cam = ms_web_cam_manager_get_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)),camId );
+
+	if (cam == NULL) {
+		MSWebCamDesc *desc = ms_mire_webcam_desc_get();
+		if (desc) {
+			cam=ms_web_cam_new(desc);
+			ms_web_cam_manager_add_cam(ms_factory_get_web_cam_manager(linphone_core_get_ms_factory(marie->lc)), cam);
+		}
+	}
+	linphone_core_set_video_device(marie->lc, camId);
+	linphone_core_iterate(marie->lc);
+	linphone_core_enable_video_preview(marie->lc, TRUE);
+	linphone_core_iterate(marie->lc);   // Let time to the core to set new values
+	VideoStream *vs = (VideoStream *)linphone_core_get_preview_stream(marie->lc);
+	if(BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source) ){
+	    ms_filter_call_method(vs->source, MS_FILTER_SET_FPS,(void *)&fps);	//Simulate camera deficiency
+	    BC_ASSERT_TRUE(vs->cam == cam);
+	    wait_for_until(marie->lc, NULL, NULL, 0, 10000);
+	    BC_ASSERT_TRUE(vs->cam != cam);
+        }
+	linphone_core_manager_destroy(marie);
 }
 
 typedef struct struct_qrcode_callback_data {
@@ -148,7 +176,8 @@ static void decode_qrcode_from_zone(void) {
 test_t video_tests[] = {
 	TEST_NO_TAG("Enable/disable camera after camera switches", enable_disable_camera_after_camera_switches),
 	TEST_ONE_TAG("Decode QRCode from image", decode_qrcode_from_image, "QRCode"),
-	TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode")
+	TEST_ONE_TAG("Decode QRCode from zone", decode_qrcode_from_zone, "QRCode"),
+	TEST_NO_TAG("Fallback camera while preview is only enabled", camera_switches_while_only_preview)
 };
 
 test_suite_t video_test_suite = {
