@@ -21,6 +21,16 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
+
+include(CMakeDependentOption)
+include(cmake/Tools.cmake)
+include(CheckSymbolExists)
+include(CMakePushCheckState)
+include(GNUInstallDirs)
+include(CheckCXXCompilerFlag)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
 find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
 bc_compute_lib_version(LIB_VERSION "4.4.0")
 project(linphone VERSION ${LIB_VERSION} LANGUAGES C CXX)
@@ -35,9 +45,6 @@ set(LINPHONE_SO_VERSION "10") #incremented for 4.4.0 release.
 file(GLOB LINPHONE_PO_FILES RELATIVE "${CMAKE_CURRENT_LIST_DIR}/po" "${CMAKE_CURRENT_LIST_DIR}/po/*.po")
 string(REGEX REPLACE "([a-zA-Z_]+)\\.po" "\\1" LINPHONE_ALL_LANGS_LIST "${LINPHONE_PO_FILES}")
 string(REPLACE ";" " " LINPHONE_ALL_LANGS "${LINPHONE_ALL_LANGS_LIST}")
-
-include(CMakeDependentOption)
-include(cmake/Tools.cmake)
 
 option(ENABLE_SHARED "Build shared library." YES)
 option(ENABLE_STATIC "Build static library." YES)
@@ -92,13 +99,6 @@ endif()
 if(WIN32 AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	list(APPEND LINPHONE_LIBS_FOR_TOOLS "Ws2_32" "Iphlpapi")
 endif()
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-
-include(CheckSymbolExists)
-include(CMakePushCheckState)
-include(GNUInstallDirs)
-include(CheckCXXCompilerFlag)
 
 check_symbol_exists(getifaddrs "sys/types.h;ifaddrs.h" HAVE_GETIFADDRS)
 
