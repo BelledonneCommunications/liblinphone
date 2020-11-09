@@ -1038,7 +1038,8 @@ RtpSession* MS2Stream::createRtpIoSession() {
 	rtp_profile_set_payload(mRtpIoProfile, ptnum, payload_type_clone(pt));
 	const char *localIp = linphone_config_get_string(config, config_section, "rtp_local_addr", "127.0.0.1");
 	int localPort = linphone_config_get_int(config, config_section, "rtp_local_port", 17076);
-	RtpSession *rtpSession = ms_create_duplex_rtp_session(localIp, localPort, -1, ms_factory_get_mtu(getCCore()->factory));
+	// Set the last argument to FALSE as it will match the legacy behaviour - if port is -1, then SO_REUSEADDR and SO_REUSEPORT are set to false
+	RtpSession *rtpSession = ms_create_duplex_rtp_session(localIp, localPort, -1, ms_factory_get_mtu(getCCore()->factory),FALSE);
 	rtp_session_set_profile(rtpSession, mRtpIoProfile);
 	const char *remoteIp = linphone_config_get_string(config, config_section, "rtp_remote_addr", "127.0.0.1");
 	int remotePort = linphone_config_get_int(config, config_section, "rtp_remote_port", 17078);

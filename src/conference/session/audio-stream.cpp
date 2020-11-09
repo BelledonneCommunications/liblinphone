@@ -46,7 +46,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
-	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort, !(mPortConfig.multicastIp.empty()));
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */

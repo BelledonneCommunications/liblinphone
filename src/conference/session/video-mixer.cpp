@@ -86,7 +86,8 @@ int MS2VideoMixer::getOutputBandwidth(){
 void MS2VideoMixer::addLocalParticipant(){
 	if (mLocalEndpoint) return;
 	LinphoneCore *core = getSession().getCCore();
-	VideoStream *st = video_stream_new(core->factory, 65002, 65003, FALSE);
+	// As the ports are explicitly set to a value differnet from 0 or -1, the last argument is not used
+	VideoStream *st = video_stream_new(core->factory, 65002, 65003, FALSE, FALSE);
 	mLocalDummyProfile = sMakeDummyProfile();
 	MSMediaStreamIO io;
 	int outputBandwidth =  getOutputBandwidth() * 1000;

@@ -45,7 +45,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
-	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort, !(mPortConfig.multicastIp.empty()));
 	initializeSessions(&mStream->ms);
 }
 
