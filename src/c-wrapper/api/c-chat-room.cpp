@@ -447,7 +447,7 @@ void linphone_chat_room_set_conference_address (LinphoneChatRoom *cr, const Linp
 void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const LinphoneAddress *partAddr, const bctbx_list_t *deviceIdentities) {
 #ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(partAddr);
-	list<LinphonePrivate::ParticipantDeviceIdentity> lDevicesIdentities = L_GET_RESOLVED_CPP_LIST_FROM_C_LIST(deviceIdentities, ParticipantDeviceIdentity);
+	list<shared_ptr<LinphonePrivate::ParticipantDeviceIdentity>> lDevicesIdentities = LinphonePrivate::ParticipantDeviceIdentity::getCppListFromCList(deviceIdentities);
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr)
 		sgcr->setParticipantDevices(LinphonePrivate::IdentityAddress(addrStr), lDevicesIdentities);

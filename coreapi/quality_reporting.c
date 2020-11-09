@@ -389,7 +389,6 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	}
 
 	if (linphone_event_send_publish(lev, content) != 0){
-		lev=NULL;
 		ret=4;
 	} else {
 		reset_avg_metrics(report);
@@ -399,7 +398,7 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 		STR_REASSIGN(report->qos_analyzer.output_leg, NULL);
 		STR_REASSIGN(report->qos_analyzer.output, NULL);
 	}
-
+	linphone_event_unref(lev);
 	linphone_address_unref(request_uri);
 	linphone_content_unref(content);
 	if (collector_uri_allocated) ms_free(collector_uri_allocated);

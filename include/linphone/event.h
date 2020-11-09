@@ -186,15 +186,14 @@ LINPHONE_PUBLIC const char *linphone_event_get_custom_header(LinphoneEvent *linp
 
 /**
  * Terminate an incoming or outgoing subscription that was previously acccepted, or a previous publication.
- * The #LinphoneEvent shall not be used anymore after this operation, unless the application explicitely took a reference on the object with
- * linphone_event_ref().
+ * The #LinphoneEvent shall not be used anymore after this operation.
  * @param linphone_event #LinphoneEvent object @notnil
 **/
 LINPHONE_PUBLIC void linphone_event_terminate(LinphoneEvent *linphone_event);
 
 /**
  * Increase reference count of LinphoneEvent.
- * By default #LinphoneEvents created by the core are owned by the core only.
+ * A #LinphoneEvent created by the core when receiving an incoming SUBSCRIBE or PUBLISH are owned by the core only.
  * An application that wishes to retain a reference to it must call linphone_event_ref().
  * When this reference is no longer needed, linphone_event_unref() must be called.
  * @param linphone_event #LinphoneEvent object @notnil

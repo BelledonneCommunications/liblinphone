@@ -193,7 +193,7 @@ static void subscribe_test_with_args2(bool_t terminated_by_subscriber, RefreshTe
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
-
+	linphone_event_unref(lev);
 	linphone_content_unref(content);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -278,7 +278,7 @@ static void subscribe_loosing_dialog(void) {
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,2,5000));
 	linphone_event_terminate(lev);
-
+	linphone_event_unref(lev);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
@@ -334,6 +334,7 @@ static void subscribe_loosing_dialog_2(void) {
 	/* now marie looses internet connection and reboots */
 	linphone_core_set_network_reachable(marie->lc, FALSE);
 	lcs = bctbx_list_remove(lcs, marie->lc);
+	linphone_event_unref(lev);
 	linphone_core_manager_destroy(marie);
 	marie = linphone_core_manager_new( "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
@@ -341,6 +342,7 @@ static void subscribe_loosing_dialog_2(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,2000));
 	//now try a terminate the dialog
 	linphone_event_terminate(pauline->lev);
+	
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	/*let expire the incoming subscribe received by pauline */
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,3000));
@@ -398,7 +400,7 @@ static void subscribe_with_io_error(void) {
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_NotifyReceived,2,5000));
 	linphone_event_terminate(lev);
-
+	linphone_event_unref(lev);
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
@@ -447,6 +449,7 @@ static void subscribe_not_timely_responded(void) {
 	lcs = bctbx_list_append(lcs, pauline->lc);
 	wait_for_list(lcs, NULL, 0, 3000);
 	linphone_event_terminate(lev);
+	linphone_event_unref(lev);
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 
@@ -474,7 +477,6 @@ static void publish_test_with_args(bool_t refresh, int expires){
 
 	lev=linphone_core_create_publish(marie->lc,pauline->identity,"dodo",expires);
 	linphone_event_add_custom_header(lev,"CustomHeader","someValue");
-	linphone_event_ref(lev);
 	linphone_event_send_publish(lev,content);
 
 
@@ -527,7 +529,6 @@ static void out_of_dialog_notify(void){
 	linphone_content_set_buffer(content,(const uint8_t *)notify_content,strlen(notify_content));
 
 	lev = linphone_core_create_notify(marie->lc,pauline->identity,"dodo");
-	linphone_event_ref(lev);
 	linphone_event_add_custom_header(lev,"CustomHeader","someValue");
 	linphone_event_notify(lev,content);
 

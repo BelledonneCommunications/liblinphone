@@ -22,9 +22,12 @@
 #include "linphone/core.h"
 #include "linphone/logging.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
 
 #include "private.h"
 #include "logging-private.h"
+
+using namespace LinphonePrivate;
 
 LinphoneUpdateCheck * linphone_update_check_new(LinphoneCore *lc, const char *version, belle_http_request_listener_t *listener) {
 	LinphoneUpdateCheck *update = ms_new0(LinphoneUpdateCheck, 1);
@@ -49,44 +52,8 @@ static void update_check_process_terminated(LinphoneUpdateCheck *update, Linphon
 	linphone_update_check_destroy(update);
 }
 
-typedef struct _parsed_version_st {
-	int major;
-	int minor;
-	int patch;
-} parsed_version_t;
-
-static int compare_parsed_versions(parsed_version_t current_version, parsed_version_t last_version) {
-	bool same_major = (last_version.major == current_version.major);
-	bool same_minor = (last_version.minor == current_version.minor);
-	if (last_version.major > current_version.major) return 1;
-	if (same_major && last_version.minor > current_version.minor) return 1;
-	if (same_minor && last_version.patch > current_version.patch) return 1;
-	return -1;
-}
-
-static void parse_version(const char *version, parsed_version_t *parsed_version) {
-	char *copy = bctbx_strdup(version);
-	char *ptr = copy;
-	char *next;
-	memset(parsed_version, 0, sizeof(parsed_version_t));
-	next = strchr(ptr, '.');
-	parsed_version->major = atoi(ptr);
-	ptr = next + 1;
-	next = strchr(ptr, '.');
-	parsed_version->minor = atoi(ptr);
-	if (next != NULL) {
-		ptr = next + 1;
-		parsed_version->patch = atoi(ptr);
-	}
-	bctbx_free(copy);
-}
-
 static bool_t update_is_available(const char *current_version, const char *last_version) {
-	parsed_version_t current_parsed_version;
-	parsed_version_t last_parsed_version;
-	parse_version(current_version, &current_parsed_version);
-	parse_version(last_version, &last_parsed_version);
-	return (compare_parsed_versions(current_parsed_version, last_parsed_version) > 0) ? TRUE : FALSE;
+	return Utils::Version(current_version) < Utils::Version(last_version);
 }
 
 static void update_check_process_response_event(void *ctx, const belle_http_response_event_t *event) {

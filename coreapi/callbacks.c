@@ -744,6 +744,7 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 	if (out_of_dialog) {
 		/*out of dialog notify */
 		lev = linphone_event_new_with_out_of_dialog_op(lc,op,LinphoneSubscriptionOutgoing,eventname);
+		lev->unref_when_terminated = TRUE;
 	}
 	{
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
@@ -756,7 +757,10 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		/*out of dialog NOTIFY do not create an implicit subscription*/
 		linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 	}else if (st!=SalSubscribeNone){
-		linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
+		/* Take into account that the subscription may have been closed by app already within linphone_core_notify_notify_received() */
+		if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated){
+			linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
+		}
 	}
 }
 
@@ -769,6 +773,7 @@ static void subscribe_received(SalSubscribeOp *op, const char *eventname, const 
 
 	if (lev==NULL) {
 		lev=linphone_event_new_with_op(lc,op,LinphoneSubscriptionIncoming,eventname);
+		lev->unref_when_terminated = TRUE;
 		linphone_event_set_state(lev,LinphoneSubscriptionIncomingReceived);
 		LinphoneContent *ct = linphone_content_from_sal_body_handler(body_handler);
 		Address to(op->getTo());
