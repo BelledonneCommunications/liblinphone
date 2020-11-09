@@ -133,6 +133,8 @@ set(RC_FILES
 	rcfiles/marie_nat64_rc
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
+	rcfiles/marie_rtp_port_range_rc
+	rcfiles/marie_os_defined_rtp_ports_rc 
 	rcfiles/marie_rc_rtcp_xr
 	rcfiles/marie_remote_404_rc
 	rcfiles/marie_remote_default_values_rc
@@ -163,6 +165,8 @@ set(RC_FILES
 	rcfiles/pauline_lime_x3dh_rc
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
+	rcfiles/pauline_rtp_port_range_rc
+	rcfiles/pauline_os_defined_rtp_ports_rc 
 	rcfiles/pauline_rc_rtcp_xr
 	rcfiles/pauline_sips_rc
 	rcfiles/pauline_tcp_rc
