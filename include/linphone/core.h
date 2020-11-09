@@ -1952,7 +1952,7 @@ LINPHONE_PUBLIC void linphone_core_get_audio_port_range(const LinphoneCore *core
 /**
  * Get the audio port range from which is randomly chosen the UDP port used for audio streaming.
  * @param core #LinphoneCore object @notnil
- * @return a #LinphoneRange object @notnil
+ * @return a #LinphoneRange object @notnil @tobefreed
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC LinphoneRange *linphone_core_get_audio_ports_range(const LinphoneCore *core);
@@ -1978,7 +1978,7 @@ LINPHONE_PUBLIC void linphone_core_get_video_port_range(const LinphoneCore *core
 /**
  * Get the video port range from which is randomly chosen the UDP port used for video streaming.
  * @param core #LinphoneCore object @notnil
- * @return a #LinphoneRange object @notnil
+ * @return a #LinphoneRange object @notnil @tobefreed
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC LinphoneRange *linphone_core_get_video_ports_range(const LinphoneCore *core);
@@ -2004,7 +2004,7 @@ LINPHONE_PUBLIC void linphone_core_get_text_port_range(const LinphoneCore *core,
 /**
  * Get the text port range from which is randomly chosen the UDP port used for text streaming.
  * @param core #LinphoneCore object @notnil
- * @return a #LinphoneRange object @notnil
+ * @return a #LinphoneRange object @notnil @tobefreed
  * @ingroup network_parameters
  */
 LINPHONE_PUBLIC LinphoneRange *linphone_core_get_text_ports_range(const LinphoneCore *core);
@@ -2136,7 +2136,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_transports(LinphoneCore *core, 
  * A zero value port for a given transport means the transport
  * is not used. A value of LC_SIP_TRANSPORT_RANDOM (-1) means the port is to be chosen randomly by the system.
  * @param core #LinphoneCore object @notnil
- * @return A #LinphoneTransports structure with the configured ports @notnil
+ * @return A #LinphoneTransports structure with the configured ports @notnil @tobefreed
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC LinphoneTransports *linphone_core_get_transports(LinphoneCore *core);
@@ -2146,7 +2146,7 @@ LINPHONE_PUBLIC LinphoneTransports *linphone_core_get_transports(LinphoneCore *c
  * A zero value means that the transport is not activated.
  * If LC_SIP_TRANSPORT_RANDOM was passed to linphone_core_set_sip_transports(), the random port choosed by the system is returned.
  * @param core #LinphoneCore object @notnil
- * @return A #LinphoneTransports structure with the ports being used @notnil
+ * @return A #LinphoneTransports structure with the ports being used @notnil @tobefreed
  * @ingroup network_parameters
 **/
 LINPHONE_PUBLIC LinphoneTransports *linphone_core_get_transports_used(LinphoneCore *core);

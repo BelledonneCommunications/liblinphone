@@ -121,7 +121,7 @@ LINPHONE_PUBLIC const LinphoneAddress * linphone_presence_model_get_presentity(c
 /**
  * Gets the first activity of a presence model (there is usually only one).
  * @param model The #LinphonePresenceModel object to get the activity from. @notnil
- * @return A #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil
+ * @return A #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil @tobefreed
  */
 LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_model_get_activity(const LinphonePresenceModel *model);
 
@@ -149,7 +149,7 @@ LINPHONE_PUBLIC unsigned int linphone_presence_model_get_nb_activities(const Lin
  * Gets the nth activity of a presence model.
  * @param model The #LinphonePresenceModel object to get the activity from. @notnil
  * @param index The index of the activity to get (the first activity having the index 0).
- * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil
+ * @return A pointer to a #LinphonePresenceActivity object if successful, NULL otherwise. @maybenil @tobefreed
  */
 LINPHONE_PUBLIC LinphonePresenceActivity * linphone_presence_model_get_nth_activity(const LinphonePresenceModel *model, unsigned int index);
 
