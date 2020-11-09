@@ -19,6 +19,7 @@
 
 //#include <iomanip>
 //#include <math.h>
+#include <algorithm>
 
 #include "call/call.h"
 #include "address/address.h"
@@ -2512,6 +2513,32 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		if (d->localDesc && d->localDesc->streams[0].max_rate > 0)
 			ms_snd_card_set_preferred_sample_rate(getCore()->getCCore()->sound_conf.play_sndcard, d->localDesc->streams[0].max_rate);
 		d->getStreamsGroup().prepare();
+	}
+
+	if (d->localDesc) {
+		srand((unsigned int)time(NULL));
+		for (int i = 0; i < d->localDesc->nb_streams; i++) {
+			// In case of multicasting, choose a random port to send with the invite
+			if (ms_is_multicast(d->localDesc->streams[i].rtp_addr)){
+				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), d->localDesc->streams[i].type);
+				if (portRange.first <= 0) {
+					portRange.first = 1024;
+					lInfo() << "Setting minimum value of port range to " << portRange.first;
+				}
+				if (portRange.second <= 0) {
+					// 2^16 - 1
+					portRange.second = 65535;
+					lInfo() << "Setting maximum value of port range to " << portRange.second;
+				}
+				if (portRange.second < portRange.first) {
+					lError() << "Invalid port range provided for stream type " << Utils::toString(d->localDesc->streams[i].type) << ": min=" << portRange.first << " max=" << portRange.second;
+					continue;
+				}
+				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+				d->localDesc->streams[i].rtp_port = rtp_port;
+				d->localDesc->streams[i].rtcp_port = d->localDesc->streams[i].rtp_port + 1;
+			}
+		}
 	}
 
 	d->op->setLocalMediaDescription(d->localDesc);
