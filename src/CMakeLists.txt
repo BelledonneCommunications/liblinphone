@@ -420,6 +420,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	utils/payload-type-handler.cpp
 	utils/utils.cpp
 	utils/if-addrs.cpp
+	utils/version.cpp
 	variant/variant.cpp
 )
 
