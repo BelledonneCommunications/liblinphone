@@ -38,25 +38,24 @@ LINPHONE_BEGIN_NAMESPACE
 
 class ParticipantDevice;
 
-class ParticipantDeviceIdentityPrivate : public ClonableObjectPrivate {
-public:
-	Address deviceAddress;
-	std::string deviceName;
-};
 
-class ParticipantDeviceIdentity : public ClonableObject {
+class ParticipantDeviceIdentity : public bellesip::HybridObject<LinphoneParticipantDeviceIdentity, ParticipantDeviceIdentity> {
 public:
-	ParticipantDeviceIdentity (const Address &address, const std::string &name);
-	ParticipantDeviceIdentity (const ParticipantDeviceIdentity &other);
-
-	ParticipantDeviceIdentity* clone () const override {
-		return new ParticipantDeviceIdentity(*this);
+	ParticipantDeviceIdentity(const Address &address, const std::string &name);
+	void setCapabilityDescriptor(const std::string & capabilities);
+	const Address &getAddress () const{
+		return mDeviceAddress;
 	}
-
-	const Address &getAddress () const;
-	const std::string &getName () const;
+	const std::string &getName () const{
+		return mDeviceName;
+	}
+	const std::string &getCapabilityDescriptor()const{
+		return mCapabilityDescriptor;
+	}
 private:
-	L_DECLARE_PRIVATE(ParticipantDeviceIdentity);
+	Address mDeviceAddress;
+	std::string mDeviceName;
+	std::string mCapabilityDescriptor; // +org.linphone.specs capability descriptor
 };
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
@@ -90,8 +89,8 @@ public:
 	void handleSubjectChange(SalCallOp *op);
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
-	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
-	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void updateParticipantDevices (const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
+	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
 	void updateParticipantsSessions();
 	void conclude();
@@ -100,7 +99,7 @@ public:
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 	
 	/*These are the two methods called by the registration subscription module*/
-	void setParticipantDevices(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void setParticipantDevices(const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
 	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
 
 private:
@@ -128,7 +127,7 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 	static bool allDevicesLeft(const std::shared_ptr<Participant> &participant);
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 	void designateAdmin ();
 	void sendMessage (const std::shared_ptr<Message> &message, const IdentityAddress &deviceAddr);
 	void finalizeCreation ();
