@@ -1,0 +1,67 @@
+[sip]
+sip_port=-1
+sip_tcp_port=-1
+sip_tls_port=-1
+default_proxy=0
+ping_with_options=0
+composing_idle_timeout=1
+store_ha1_passwd=0 #used for sipp
+
+[auth_info_0]
+username=marie laroueverte
+userid=marie laroueverte
+passwd=secret
+realm=sip.example.org
+
+[proxy_0]
+reg_proxy=<sip:sip.example.org;transport=tcp>
+reg_route=<sip:sip.example.org;transport=tcp>
+reg_identity="Super Marie" <sip:marie%20laroueverte@sip.example.org>
+reg_expires=3600
+reg_sendregister=1
+publish=0
+dial_escape_plus=0
+
+[friend_0]
+url="Paupoche" <sip:pauline@sip.example.org>
+pol=accept
+subscribe=0
+
+[rtp]
+audio_rtp_port=18070-28000
+video_rtp_port=28070-38000
+text_rtp_port=39000-49000
+
+[video]
+display=0
+capture=0
+show_local=0
+size=qcif
+enabled=0
+self_view=0
+automatically_initiate=0
+automatically_accept=0
+device=StaticImage: Static picture
+
+[sound]
+echocancellation=0 #to not overload cpu in case of VG
+
+[net]
+
+stun_server=stun.example.org
+
+#leave this section, which is used by "Codec setup" test of "Setup" suite.
+[video_codec_0]
+mime=VP8
+rate=90000
+enabled=1
+
+[misc]
+hide_chat_rooms_from_removed_proxies=0
+hide_empty_chat_rooms=0
+
+[app]
+sender_name_hidden_in_forward_message=1
+
+[tester]
+test_env=1
