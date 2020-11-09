@@ -176,7 +176,7 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 			lInfo() << "IPv6 address change detected";
 			ipChanged = true;
 		}
-		if (status) {
+		if (ipChanged) {
 			lInfo() << "Default local ipv4 address is " << core->localip4;
 			if (ipv6Enabled) lInfo() << "Default local ipv6 address is " << core->localip6;
 		}
