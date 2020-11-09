@@ -83,7 +83,7 @@ static void camera_switches_while_only_preview(void) {
 	if(BC_ASSERT_PTR_NOT_NULL(vs) && BC_ASSERT_PTR_NOT_NULL(vs->source) ){
 	    ms_filter_call_method(vs->source, MS_FILTER_SET_FPS,(void *)&fps);	//Simulate camera deficiency
 	    BC_ASSERT_TRUE(vs->cam == cam);
-	    wait_for_until(marie->lc, NULL, NULL, 0, 10000);
+	    wait_for_until(marie->lc, NULL, NULL, 0, 6000);
 	    BC_ASSERT_TRUE(vs->cam != cam);
         }
 	linphone_core_manager_destroy(marie);
