@@ -24,40 +24,25 @@
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/server-group-chat-room-p.h"
 #endif
+
 #include "c-wrapper/c-wrapper.h"
 
 // =============================================================================
 
-#ifdef HAVE_ADVANCED_IM
-L_DECLARE_C_CLONABLE_OBJECT_IMPL(ParticipantDeviceIdentity);
-#endif
 
 using namespace std;
+using namespace LinphonePrivate;
 
 // =============================================================================
 
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (const LinphoneAddress *address, const char *name) {
 #ifdef HAVE_ADVANCED_IM
-	LinphonePrivate::ParticipantDeviceIdentity *cppPtr = new LinphonePrivate::ParticipantDeviceIdentity(
-		*L_GET_CPP_PTR_FROM_C_OBJECT(address),
-		L_C_TO_STRING(name)
-	);
-	LinphoneParticipantDeviceIdentity *object = L_INIT(ParticipantDeviceIdentity);
-	L_SET_CPP_PTR_FROM_C_OBJECT(object, cppPtr);
-
-	return object;
+	return ParticipantDeviceIdentity::createCObject(*L_GET_CPP_PTR_FROM_C_OBJECT(address), name);
 #else
 	return NULL;
 #endif
 }
 
-LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *deviceIdentity) {
-#ifdef HAVE_ADVANCED_IM
-	return reinterpret_cast<LinphoneParticipantDeviceIdentity *>(belle_sip_object_clone(BELLE_SIP_OBJECT(deviceIdentity)));
-#else
-	return NULL;
-#endif
-}
 
 LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_ref (LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
@@ -73,3 +58,25 @@ void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdenti
 	belle_sip_object_unref(deviceIdentity);
 #endif
 }
+
+
+void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *deviceIdentity, const char *descriptor){
+#ifdef HAVE_ADVANCED_IM
+	ParticipantDeviceIdentity::toCpp(deviceIdentity)->setCapabilityDescriptor(descriptor);
+#endif
+}
+
+const char* linphone_participant_device_identity_get_capability_descriptor(const LinphoneParticipantDeviceIdentity *deviceIdentity){
+#ifdef HAVE_ADVANCED_IM
+	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getCapabilityDescriptor().c_str();
+#endif
+	return NULL;
+}
+
+const LinphoneAddress* linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity){
+#ifdef HAVE_ADVANCED_IM
+	return ParticipantDeviceIdentity::toCpp(deviceIdentity)->getLinphoneAddress();
+#endif
+	return NULL;
+}
+

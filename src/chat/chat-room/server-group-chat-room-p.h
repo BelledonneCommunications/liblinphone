@@ -32,31 +32,37 @@
 #include "object/clonable-object.h"
 #include "object/clonable-object-p.h"
 
+#include "linphone/utils/utils.h"
+
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
 
 class ParticipantDevice;
 
-class ParticipantDeviceIdentityPrivate : public ClonableObjectPrivate {
-public:
-	Address deviceAddress;
-	std::string deviceName;
-};
 
-class ParticipantDeviceIdentity : public ClonableObject {
+class ParticipantDeviceIdentity : public bellesip::HybridObject<LinphoneParticipantDeviceIdentity, ParticipantDeviceIdentity> {
 public:
-	ParticipantDeviceIdentity (const Address &address, const std::string &name);
-	ParticipantDeviceIdentity (const ParticipantDeviceIdentity &other);
-
-	ParticipantDeviceIdentity* clone () const override {
-		return new ParticipantDeviceIdentity(*this);
+	ParticipantDeviceIdentity(const Address &address, const std::string &name);
+	void setCapabilityDescriptor(const std::string & capabilities);
+	const Address &getAddress () const{
+		return mDeviceAddress;
 	}
-
-	const Address &getAddress () const;
-	const std::string &getName () const;
+	const LinphoneAddress *getLinphoneAddress () const{
+		return mDeviceAddressCache;
+	}
+	const std::string &getName () const{
+		return mDeviceName;
+	}
+	const std::string &getCapabilityDescriptor()const{
+		return mCapabilityDescriptor;
+	}
+	virtual ~ParticipantDeviceIdentity();
 private:
-	L_DECLARE_PRIVATE(ParticipantDeviceIdentity);
+	Address mDeviceAddress;
+	LinphoneAddress *mDeviceAddressCache; // To be removed once Address becomes an HybridObject.
+	std::string mDeviceName;
+	std::string mCapabilityDescriptor; // +org.linphone.specs capability descriptor
 };
 
 class ServerGroupChatRoomPrivate : public ChatRoomPrivate {
@@ -72,6 +78,8 @@ public:
 	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
 
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
+	// Find the other participant of a 1-1 chatroom.
+	std::shared_ptr<Participant> getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const;
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.
@@ -90,8 +98,8 @@ public:
 	void handleSubjectChange(SalCallOp *op);
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
-	void updateParticipantDevices (const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
-	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void updateParticipantDevices (const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
+	void setParticipantDevicesAtCreation(const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
 	void updateParticipantDeviceSession(const std::shared_ptr<ParticipantDevice> &device, bool freslyRegistered = false);
 	void updateParticipantsSessions();
 	void conclude();
@@ -100,7 +108,7 @@ public:
 	LinphoneReason onSipMessageReceived (SalOp *op, const SalMessage *message) override;
 	
 	/*These are the two methods called by the registration subscription module*/
-	void setParticipantDevices(const IdentityAddress &addr, const std::list<ParticipantDeviceIdentity> &devices);
+	void setParticipantDevices(const IdentityAddress &addr, const std::list<std::shared_ptr<ParticipantDeviceIdentity>> &devices);
 	void notifyParticipantDeviceRegistration(const IdentityAddress &participantDevice);
 
 private:
@@ -128,7 +136,7 @@ private:
 
 	static void copyMessageHeaders (const std::shared_ptr<Message> &fromMessage, const std::shared_ptr<ChatMessage> &toMessage);
 	static bool allDevicesLeft(const std::shared_ptr<Participant> &participant);
-	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const ParticipantDeviceIdentity &deviceInfo);
+	void addParticipantDevice (const std::shared_ptr<Participant> &participant, const std::shared_ptr<ParticipantDeviceIdentity> &deviceInfo);
 	void designateAdmin ();
 	void sendMessage (const std::shared_ptr<Message> &message, const IdentityAddress &deviceAddr);
 	void finalizeCreation ();
@@ -141,6 +149,9 @@ private:
 	void removeParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
 
 	void onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device);
+	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
+	void determineProtocolVersion();
+	void updateProtocolVersionFromDevice(const std::shared_ptr<ParticipantDevice> &device);
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
@@ -169,7 +180,7 @@ private:
 	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	bool joiningPendingAfterCreation = false;
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;
-
+	Utils::Version protocolVersion;
 	L_DECLARE_PUBLIC(ServerGroupChatRoom);
 };
 

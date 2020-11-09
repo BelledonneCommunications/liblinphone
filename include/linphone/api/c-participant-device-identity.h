@@ -42,13 +42,6 @@
 LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_new (const LinphoneAddress *address, const char *name);
 
 /**
- * Clones a #LinphoneParticipantDeviceIdentity object.
- * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
- * @return a cloned #LinphoneParticipantDeviceIdentity object @notnil
- **/
-LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_identity_clone (const LinphoneParticipantDeviceIdentity *device_identity);
-
-/**
  * Increment reference count of #LinphoneParticipantDeviceIdentity object.
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  * @return the same #LinphoneParticipantDeviceIdentity object @notnil
@@ -60,6 +53,30 @@ LINPHONE_PUBLIC LinphoneParticipantDeviceIdentity *linphone_participant_device_i
  * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
  **/
 LINPHONE_PUBLIC void linphone_participant_device_identity_unref (LinphoneParticipantDeviceIdentity *device_identity);
+
+
+/**
+ * Set the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @param capability_descriptor the capability descriptor string.
+ *
+ **/
+LINPHONE_PUBLIC void linphone_participant_device_identity_set_capability_descriptor(LinphoneParticipantDeviceIdentity *device_identity, const char *capability_descriptor);
+
+/**
+ * Get the capability descriptor (currently +org.linphone.specs value) for this participant device identity.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity object @notnil
+ * @return the capability descriptor string.
+ *
+ **/
+LINPHONE_PUBLIC const char* linphone_participant_device_identity_get_capability_descriptor(const LinphoneParticipantDeviceIdentity *device_identity);
+
+/**
+ * Get the address of the participant device.
+ * @param device_identity the #LinphoneParticipantDeviceIdentity @notnil
+ * @return the address. @notnil
+ */
+LINPHONE_PUBLIC const LinphoneAddress* linphone_participant_device_identity_get_address(const LinphoneParticipantDeviceIdentity *deviceIdentity);
 
 /**
  * @}
