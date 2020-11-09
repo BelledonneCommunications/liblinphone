@@ -94,6 +94,7 @@ class CArgument(CObject):
 		self.onTheFlyList = False
 		self.maybenil = False
 		self.notnil = False
+		self.toBeFreed = False
 		keywords = [ 'const', 'struct', 'enum', 'signed', 'unsigned', 'short', 'long', '*' ]
 		fullySplittedType = []
 		splittedType = t.strip().split(' ')
@@ -482,6 +483,7 @@ class Project:
 						returnarg.containedType = n.text
 				returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
 				returnarg.notnil = True if returndesc.find('.//notnil') is not None else False
+				returnarg.toBeFreed = True if returndesc.find('.//tobefreed') is not None else False
 				returnarg.description = self.__cleanDescription(returndesc)
 			elif returnarg.completeType != 'void':
 				missingDocWarning += "\tReturn value is not documented\n"
@@ -571,6 +573,7 @@ class Project:
 		if returndesc is not None:
 			returnarg.maybenil = True if returndesc.find('.//maybenil') is not None else False
 			returnarg.notnil = True if returndesc.find('.//notnil') is not None else False
+			returnarg.toBeFreed = True if returndesc.find('.//tobefreed') is not None else False
 			if returnarg.ctype == 'MSList' or returnarg.ctype == 'bctbx_list_t':
 				n = returndesc.find('.//bctbxlist')
 				if n is not None:
