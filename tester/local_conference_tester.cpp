@@ -185,7 +185,11 @@ public:
 		linphone_core_cbs_set_chat_room_state_changed(linphone_core_get_first_callbacks(getLc()), server_core_chat_room_state_changed);
 		linphone_proxy_config_set_conference_factory_uri(linphone_core_get_default_proxy_config(getLc()), getIdentity().asString().c_str());
 	}
-	~Focus() = default ;
+	~Focus(){
+		CoreManagerAssert({*this}).waitUntil(chrono::seconds(1),[] {
+			return false;
+		});
+	}
 
 	void registerAsParticipantDevice(ClientConference &otherMgr) {
 		const LinphoneAddress *cAddr = linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(otherMgr.getLc()));

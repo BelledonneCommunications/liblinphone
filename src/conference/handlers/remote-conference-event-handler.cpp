@@ -290,8 +290,6 @@ void RemoteConferenceEventHandler::subscribe () {
 	}
 
 	lev = linphone_core_create_subscribe_2(conf->getCore()->getCCore(), peerAddr, cfg, "conference", 600);
-	// FIXME: Take a ref of the event because when linphone_event_release is called upon termination of the subscription. This function unrefs the event causing a dangling pointer to be left to the event handler
-	linphone_event_ref(lev);
 	lev->op->setFrom(localAddress);
 	const string &lastNotifyStr = Utils::toString(getLastNotify());
 	linphone_event_add_custom_header(lev, "Last-Notify-Version", lastNotifyStr.c_str());
@@ -306,7 +304,15 @@ void RemoteConferenceEventHandler::subscribe () {
 // -----------------------------------------------------------------------------
 
 void RemoteConferenceEventHandler::unsubscribePrivate () {
-	invalidateSubscription();
+	if (lev){
+		/* The following tricky code is to break a cycle. Indeed linphone_event_terminate() will chage the event's state,
+		 * which will be notified to the core, that will call us immediately in invalidateSubscription(), which resets 'lev'
+		 * while we still have to unref it.*/
+		LinphoneEvent *tmpEv = lev;
+		lev = nullptr;
+		linphone_event_terminate(tmpEv);
+		linphone_event_unref(tmpEv);
+	}
 }
 
 void RemoteConferenceEventHandler::onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) {
@@ -329,11 +335,8 @@ void RemoteConferenceEventHandler::onEnteringForeground () {
 
 void RemoteConferenceEventHandler::invalidateSubscription () {
 	if (lev){
-		LinphoneEvent *tmpEv = lev;
+		linphone_event_unref(lev);
 		lev = nullptr;
-		linphone_event_terminate(tmpEv);
-		linphone_event_unref(tmpEv);
-		
 	}
 }
 

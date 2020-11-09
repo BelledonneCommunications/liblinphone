@@ -121,7 +121,7 @@ static void linphone_event_release(LinphoneEvent *lev){
 		/*this will stop the refresher*/
 		lev->op->stopRefreshing();
 	}
-	linphone_event_unref(lev);
+	if (lev->unref_when_terminated) linphone_event_unref(lev);
 }
 
 static LinphoneEvent * linphone_event_new_base(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, LinphonePrivate::SalEventOp *op){
@@ -169,10 +169,12 @@ void linphone_event_set_state(LinphoneEvent *lev, LinphoneSubscriptionState stat
 	if (lev && lev->subscription_state!=state){
 		ms_message("LinphoneEvent [%p] moving to subscription state %s",lev,linphone_subscription_state_to_string(state));
 		lev->subscription_state=state;
+		linphone_event_ref(lev);
 		linphone_core_notify_subscription_state_changed(lev->lc,lev,state);
 		if (state==LinphoneSubscriptionTerminated || state == LinphoneSubscriptionError){
 			linphone_event_release(lev);
 		}
+		linphone_event_unref(lev);
 	}
 }
 
@@ -245,6 +247,7 @@ LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddre
 
 LinphoneEvent *linphone_core_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body){
 	LinphoneEvent *lev=linphone_core_create_subscribe(lc,resource,event,expires);
+	lev->unref_when_terminated = TRUE;
 	linphone_event_send_subscribe(lev,body);
 	return lev;
 }
@@ -391,6 +394,7 @@ static int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneConten
 LinphoneEvent *linphone_core_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body){
 	int err;
 	LinphoneEvent *lev=linphone_core_create_publish(lc,resource,event,expires);
+	lev->unref_when_terminated = TRUE;
 	err=_linphone_event_send_publish(lev,body,FALSE);
 	if (err==-1){
 		linphone_event_unref(lev);

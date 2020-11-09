@@ -34,8 +34,9 @@ using namespace {{{namespace}}};
 static {{{returnType}}} {{{cbName}}}({{{declArgs}}}) {
 	{{{cListenerName}}} *cbs = {{{currentCallbacksGetter}}}({{{firstArgName}}});
 	if (cbs) {
-		std::list<std::shared_ptr<Listener> > *listeners = static_cast<std::list<std::shared_ptr<Listener> > *>(belle_sip_object_data_get((::belle_sip_object_t *)cbs, MultiListenableObject::sListenerListName));
-		for(std::list<std::shared_ptr<Listener> >::iterator it=listeners->begin(); it!=listeners->end(); it++) {
+		// Make a copy of the list of listeners, so that it is possible to remove a listener from a listener without corrupting the list.
+		std::list<std::shared_ptr<Listener> > listeners = *static_cast<std::list<std::shared_ptr<Listener> > *>(belle_sip_object_data_get((::belle_sip_object_t *)cbs, MultiListenableObject::sListenerListName));
+		for(std::list<std::shared_ptr<Listener> >::iterator it=listeners.begin(); it!=listeners.end(); it++) {
 			std::shared_ptr<{{{cppListenerName}}}> listener = std::static_pointer_cast<{{{cppListenerName}}},Listener>(*it);
 			{{{cppMethodCallingLine}}};
 		}
