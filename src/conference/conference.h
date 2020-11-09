@@ -56,12 +56,7 @@ class ConferenceParams : public bellesip::HybridObject<LinphoneConferenceParams,
 	friend class MediaConference::RemoteConference;
 	public:
 		ConferenceParams(const ConferenceParams& params) = default;
-		ConferenceParams(const LinphoneCore *core = NULL) {
-			if(core) {
-				const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
-				if(policy->automatically_initiate) m_enableVideo = true;
-			}
-		}
+		ConferenceParams(const LinphoneCore *core = NULL);
 
 		Object *clone()const override{
 			return new ConferenceParams(*this);

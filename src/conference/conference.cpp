@@ -38,6 +38,14 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+
+ConferenceParams::ConferenceParams(const LinphoneCore *core) {
+	if(core) {
+		const LinphoneVideoPolicy *policy = linphone_core_get_video_policy(core);
+		if(policy->automatically_initiate) m_enableVideo = true;
+	}
+}
+
 Conference::Conference (
 	const shared_ptr<Core> &core,
 	const IdentityAddress &myAddress,
