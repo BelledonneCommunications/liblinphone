@@ -23,13 +23,12 @@
 #include "linphone/core.h"
 #include "belle-sip/belle-sip.h"
 
-
-static void call_multicast_base(bool_t video) {
+static void call_multicast_base(const char *marie_rc_file, const char *pauline_rc_file, bool_t video) {
 	LinphoneCoreManager *marie, *pauline;
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 
-	marie = linphone_core_manager_new( "marie_rc");
-	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	marie = linphone_core_manager_new(marie_rc_file);
+	pauline = linphone_core_manager_new(pauline_rc_file);
 
 	if (video) {
 		linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -67,15 +66,20 @@ static void call_multicast_base(bool_t video) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_multicast(void)  {
-	call_multicast_base(FALSE);
+static void call_multicast_with_user_defined_rtp_ports(void)  {
+	call_multicast_base("marie_rtp_port_range_rc", "pauline_rtp_port_range_rc", FALSE);
 }
+
+static void call_multicast_with_os_defined_rtp_ports(void)  {
+	call_multicast_base("marie_os_defined_rtp_ports_rc", "pauline_os_defined_rtp_ports_rc", FALSE);
+}
+
 static void multicast_audio_with_pause_resume(void) {
 	call_paused_resumed_base(TRUE,FALSE);
 }
 #ifdef VIDEO_ENABLED
 static void call_multicast_video(void)  {
-	call_multicast_base(TRUE);
+	call_multicast_base("marie_rc", "pauline_tcp_rc", TRUE);
 }
 #endif
 static void early_media_with_multicast_base(bool_t video) {
@@ -257,7 +261,8 @@ static void early_media_with_multicast_video(void) {
 #endif
 
 test_t multicast_call_tests[] = {
-	TEST_NO_TAG("Multicast audio call",call_multicast),
+	TEST_NO_TAG("Multicast audio call with user defined RTP ports",call_multicast_with_user_defined_rtp_ports),
+	TEST_NO_TAG("Multicast audio call with OS defined rtp ports",call_multicast_with_os_defined_rtp_ports),
 	TEST_NO_TAG("Multicast call with pause/resume",multicast_audio_with_pause_resume),
 	TEST_NO_TAG("Early media multicast audio call",early_media_with_multicast_audio),
 	TEST_NO_TAG("Unicast incoming call with multicast activated",unicast_incoming_with_multicast_audio_on),
