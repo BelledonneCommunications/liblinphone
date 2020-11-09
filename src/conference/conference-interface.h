@@ -287,7 +287,7 @@ public:
 	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {}
 };
 
-class ConferenceParamsInterface {
+class LINPHONE_PUBLIC ConferenceParamsInterface {
 public:
 	virtual ~ConferenceParamsInterface () = default;
 	

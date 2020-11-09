@@ -363,7 +363,7 @@ void LocalConferenceEventHandler::notifyResponseCb (const LinphoneEvent *ev) {
 				for (const auto &p : handler->conf->getParticipants()) {
 					for (const auto &d : p->getDevices()) {
 						if ((d->getConferenceSubscribeEvent() == ev) && (d->getState() == ParticipantDevice::State::Joining)) {
-							//fixme confListener should be removed in the futur. On only relevant for server grou chatroom
+							//fixme confListener should be removed in the futur. On only relevant for server group chatroom
 							handler->confListener->onFirstNotifyReceived(d->getAddress());
 							return;
 						}
@@ -409,8 +409,20 @@ string LocalConferenceEventHandler::createNotifySubjectChanged (const string &su
 }
 
 void LocalConferenceEventHandler::notifyParticipant (const string &notify, const shared_ptr<Participant> &participant) {
-	for (const auto &device : participant->getDevices())
-		notifyParticipantDevice(notify, device);
+	for (const auto &device : participant->getDevices()){
+		/* Only notify to device that are present in the conference. */
+		switch(device->getState()){
+			case ParticipantDevice::State::Present:
+			case ParticipantDevice::State::Joining:
+			case ParticipantDevice::State::ScheduledForJoining:
+				notifyParticipantDevice(notify, device);
+				break;
+			case ParticipantDevice::State::Leaving:
+			case ParticipantDevice::State::Left:
+			case ParticipantDevice::State::ScheduledForLeaving:
+				break;
+		}
+	}
 }
 
 void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify, const shared_ptr<ParticipantDevice> &device, bool multipart) {

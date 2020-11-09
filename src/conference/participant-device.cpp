@@ -104,4 +104,8 @@ ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	return stream;
 }
 
+void ParticipantDevice::setCapabilityDescriptor(const std::string &capabilities){
+	mCapabilityDescriptor = capabilities;
+}
+
 LINPHONE_END_NAMESPACE
