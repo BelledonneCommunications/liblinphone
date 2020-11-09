@@ -128,16 +128,17 @@ class Object(object):
 
 
 class Type(Object):
-	def __init__(self, name, isconst=False, isref=False):
+	def __init__(self, name, isconst=False, isref=False, toBeFreed=False):
 		Object.__init__(self, name)
 		self.isconst = isconst
 		self.isref = isref
+		self.toBeFreed = toBeFreed
 		self.cDecl = None
 
 
 class BaseType(Type):
-	def __init__(self, name, isconst=False, isref=False, size=None, isUnsigned=False):
-		Type.__init__(self, name, isconst=isconst, isref=isref)
+	def __init__(self, name, isconst=False, isref=False, toBeFreed=False, size=None, isUnsigned=False):
+		Type.__init__(self, name, isconst=isconst, isref=isref, toBeFreed=toBeFreed)
 		self.size = size
 		self.isUnsigned = isUnsigned
 	
@@ -146,8 +147,8 @@ class BaseType(Type):
 
 
 class EnumType(Type):
-	def __init__(self, name, isconst=False, isref=False, enumDesc=None):
-		Type.__init__(self, name, isconst=isconst, isref=isref)
+	def __init__(self, name, isconst=False, isref=False, toBeFreed=False, enumDesc=None):
+		Type.__init__(self, name, isconst=isconst, isref=isref, toBeFreed=toBeFreed)
 		self.desc = enumDesc
 	
 	def translate(self, translator, **params):
@@ -155,8 +156,8 @@ class EnumType(Type):
 
 
 class ClassType(Type):
-	def __init__(self, name, isconst=False, isref=False, classDesc=None):
-		Type.__init__(self, name, isconst=isconst, isref=isref)
+	def __init__(self, name, isconst=False, isref=False, toBeFreed=False, classDesc=None):
+		Type.__init__(self, name, isconst=isconst, isref=isref, toBeFreed=toBeFreed)
 		self.desc = classDesc
 	
 	def translate(self, translator, **params):
@@ -164,8 +165,8 @@ class ClassType(Type):
 
 
 class ListType(Type):
-	def __init__(self, containedTypeName, isconst=False, isref=False):
-		Type.__init__(self, 'list', isconst=isconst, isref=isref)
+	def __init__(self, containedTypeName, isconst=False, isref=False, toBeFreed=False):
+		Type.__init__(self, 'list', isconst=isconst, isref=isref, toBeFreed=toBeFreed)
 		self.containedTypeName = containedTypeName
 		self._containedTypeDesc = None
 	
@@ -399,7 +400,7 @@ class Method(DocumentableObject):
 
 	@property
 	def returnAllocatedObject(self):
-		return self.name.words[0] in ['create', 'new', 'clone']
+		return self.name.words[0] in ['create', 'new', 'clone'] or (self._returnType is not None and self._returnType.toBeFreed)
 	
 	def translate_as_prototype(self, translator, **params):
 		return translator.translate_method_as_prototype(self, **params)
@@ -939,6 +940,7 @@ class CParser(object):
 			raise ParsingError('Unknown C type \'{0}\''.format(cType.ctype))
 		
 		absType.cDecl = cType.completeType
+		absType.toBeFreed = cType.toBeFreed
 		return absType
 	
 	def parse_c_base_type(self, cDecl):
