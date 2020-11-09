@@ -68,7 +68,8 @@ void AudioStreamStartCommand::exec(Daemon *app, const string& args) {
 		app->sendResponse(Response("No payload type were assigned to this number."));
 		return;
 	}
-	AudioStream *stream = audio_stream_new(factory, local_port, local_port + 1, linphone_core_ipv6_enabled(app->getCore()));
+	const char *multicastAddress=linphone_config_get_string(app->getCore()->config,"rtp","audio_multicast_addr",NULL);
+	AudioStream *stream = audio_stream_new(factory, local_port, local_port + 1, linphone_core_ipv6_enabled(app->getCore()),(multicastAddress != NULL));
 	audio_stream_set_features(stream, linphone_core_get_audio_features(app->getCore()));
 		
 	pt = payload_type_clone(pt);

@@ -1872,7 +1872,8 @@ static void echo_canceller_check(void){
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	MSFactory *factory = linphone_core_get_ms_factory(manager->lc);
 	const char *expected_filter = "MSSpeexEC";
-	AudioStream *as = audio_stream_new2(factory, NULL, 43000, 43001);
+	// As the ports are explicitly set to a value differnet from 0 or -1, the last argument is not used
+	AudioStream *as = audio_stream_new2(factory, NULL, 43000, 43001, FALSE);
 	const char *ec_filter = NULL;
 
 	BC_ASSERT_PTR_NOT_NULL(as);

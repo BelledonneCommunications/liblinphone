@@ -39,7 +39,7 @@ LINPHONE_BEGIN_NAMESPACE
 
 MS2RTTStream::MS2RTTStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = getBindIp();
-	mStream = text_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	mStream = text_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort, !(mPortConfig.multicastIp.empty()));
 	initializeSessions(&mStream->ms);
 }
 

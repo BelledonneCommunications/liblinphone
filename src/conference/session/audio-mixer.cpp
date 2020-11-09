@@ -98,7 +98,8 @@ RtpProfile *MS2AudioMixer::sMakeDummyProfile(int samplerate) {
 
 void MS2AudioMixer::addLocalParticipant(){
 	LinphoneCore *core = getSession().getCCore();
-	AudioStream *st = audio_stream_new(core->factory, 65000, 65001, FALSE);
+	// As the ports are explicitly set to a value differnet from 0 or -1, the last argument is not used
+	AudioStream *st = audio_stream_new(core->factory, 65000, 65001, FALSE, FALSE);
 	MSSndCard *playcard = core->sound_conf.lsd_card
 		? core->sound_conf.lsd_card
 		: core->sound_conf.play_sndcard;
