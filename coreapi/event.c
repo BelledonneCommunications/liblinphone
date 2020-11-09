@@ -121,7 +121,7 @@ static void linphone_event_release(LinphoneEvent *lev){
 		/*this will stop the refresher*/
 		lev->op->stopRefreshing();
 	}
-	linphone_event_unref(lev);
+	if (lev->unref_when_terminated) linphone_event_unref(lev);
 }
 
 static LinphoneEvent * linphone_event_new_base(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, LinphonePrivate::SalEventOp *op){
@@ -245,6 +245,7 @@ LinphoneEvent *linphone_core_create_notify(LinphoneCore *lc, const LinphoneAddre
 
 LinphoneEvent *linphone_core_subscribe(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body){
 	LinphoneEvent *lev=linphone_core_create_subscribe(lc,resource,event,expires);
+	lev->unref_when_terminated = TRUE;
 	linphone_event_send_subscribe(lev,body);
 	return lev;
 }
@@ -391,6 +392,7 @@ static int _linphone_event_send_publish(LinphoneEvent *lev, const LinphoneConten
 LinphoneEvent *linphone_core_publish(LinphoneCore *lc, const LinphoneAddress *resource, const char *event, int expires, const LinphoneContent *body){
 	int err;
 	LinphoneEvent *lev=linphone_core_create_publish(lc,resource,event,expires);
+	lev->unref_when_terminated = TRUE;
 	err=_linphone_event_send_publish(lev,body,FALSE);
 	if (err==-1){
 		linphone_event_unref(lev);

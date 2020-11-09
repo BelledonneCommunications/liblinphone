@@ -1017,7 +1017,6 @@ static void _linphone_friend_list_send_list_subscription_with_body(LinphoneFrien
 			linphone_event_unref(list->event);
 		}
 		list->event = linphone_core_create_subscribe(list->lc, address, "presence", expires);
-		linphone_event_ref(list->event);
 		linphone_event_set_internal(list->event, TRUE);
 		linphone_event_add_custom_header(list->event, "Require", "recipient-list-subscribe");
 		linphone_event_add_custom_header(list->event, "Supported", "eventlist");
@@ -1054,7 +1053,6 @@ static void _linphone_friend_list_send_list_subscription_without_body(LinphoneFr
 		linphone_event_unref(list->event);
 	}
 	list->event = linphone_core_create_subscribe(list->lc, address, "presence", expires);
-	linphone_event_ref(list->event);
 	linphone_event_set_internal(list->event, TRUE);
 	linphone_event_add_custom_header(list->event, "Supported", "eventlist");
 	linphone_event_add_custom_header(list->event, "Accept", "multipart/related, application/pidf+xml, application/rlmi+xml");

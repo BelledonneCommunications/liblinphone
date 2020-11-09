@@ -256,4 +256,20 @@ string Utils::quoteStringIfNotAlready(const string &str){
 	return string("\"") + str + string("\"");
 }
 
+
+map<string, Utils::Version> Utils::parseCapabilityDescriptor(const string &descriptor){
+	map<string, Utils::Version> result;
+	istringstream istr(descriptor);
+	string cap;
+	string version;
+	while (std::getline(istr, cap, ',')){
+		istringstream capversion(cap);
+		if (std::getline(capversion, cap, '/') && std::getline(capversion, version, '/')){
+			result[cap] = Utils::Version(version);
+		}else result[cap] = Utils::Version(1, 0);
+		
+	}
+	return result;
+}
+
 LINPHONE_END_NAMESPACE

@@ -11,7 +11,6 @@ This changelog file was started on October 2019. Previous changes were more or l
 ## [Unreleased]
 
 ### Added
-- RTP bundle mode feature according to https://tools.ietf.org/html/draft-ietf-mmusic-sdp-bundle-negotiation-54 .
 - EnterForeground and enterBackground automatically for ios and anroid.
 - Audio routes API to choose which device use to capture & play audio on Android & iOS.
 - Handling push notifications, activity monitor and Core iterate automatically in Core for Android.
@@ -21,6 +20,10 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ### Changed
 - Improved Android network manager.
+- to make it consistent with other liblinphone's object, linphone_core_create_subscribe(), linphone_core_create_subscribe2(),
+  linphone_core_create_publish() now give ownership of the returned LinphoneEvent, which means that it is no longer need to call
+  linphone_event_ref() after calling these functions. As a consequence, an application not using linphone_event_ref() should now
+  use linphone_event_unref() when the LinphoneEvent is no longer used, otherwise it will create a memory leak.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.

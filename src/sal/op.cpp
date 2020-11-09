@@ -948,6 +948,7 @@ int SalOp::unsubscribe () {
 	auto lastRequest = belle_sip_transaction_get_request(transaction);
 	belle_sip_message_set_body(BELLE_SIP_MESSAGE(lastRequest), nullptr, 0);
 	belle_sip_refresher_refresh(mRefresher, 0);
+	mState = State::Terminating;
 	return 0;
 }
 

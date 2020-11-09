@@ -7946,23 +7946,28 @@ void linphone_core_enable_conference_server (LinphoneCore *lc, bool_t enable) {
 }
 
 bool_t _linphone_core_is_conference_creation (const LinphoneCore *lc, const LinphoneAddress *addr) {
-	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
-	if (!proxy)
-		return FALSE;
-	const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
-	if (!uri)
-		return FALSE;
-
-	LinphoneAddress *factoryAddr = linphone_address_new(uri);
-	if (!factoryAddr)
-		return FALSE;
-	// Do not compare ports
-	linphone_address_set_port(factoryAddr, 0);
+	const bctbx_list_t * elem;
 	LinphoneAddress *testedAddr = linphone_address_clone(addr);
-
+	bool_t result = FALSE;
+	
+	if (!testedAddr) return FALSE;
 	linphone_address_set_port(testedAddr, 0);
-	bool_t result = linphone_address_weak_equal(factoryAddr, testedAddr);
-	linphone_address_unref(factoryAddr);
+	
+	for (elem = linphone_core_get_proxy_config_list(lc); elem != NULL; elem = elem->next){
+		LinphoneProxyConfig *proxy = (LinphoneProxyConfig*) elem->data;
+		
+		const char *uri = linphone_proxy_config_get_conference_factory_uri(proxy);
+		if (!uri) continue;
+
+		LinphoneAddress *factoryAddr = linphone_address_new(uri);
+		if (!factoryAddr) continue;
+		// Do not compare ports
+		linphone_address_set_port(factoryAddr, 0);
+		result = linphone_address_weak_equal(factoryAddr, testedAddr);
+		linphone_address_unref(factoryAddr);
+		
+		if (result) break; /* if they match*/
+	}
 	linphone_address_unref(testedAddr);
 	return result;
 }

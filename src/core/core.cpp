@@ -72,6 +72,8 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
+const Utils::Version CorePrivate::groupChatProtocolVersion(1, 1);
+
 void CorePrivate::init () {
 	L_Q();
 
@@ -711,6 +713,8 @@ std::string Core::getSpecs() const {
 	L_D();
 	return Utils::join(Utils::toVector(d->specs), ",");
 }
+
+
 
 // ---------------------------------------------------------------------------
 // Friends.

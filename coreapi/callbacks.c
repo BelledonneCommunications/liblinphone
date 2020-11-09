@@ -756,7 +756,10 @@ static void notify(SalSubscribeOp *op, SalSubscribeStatus st, const char *eventn
 		/*out of dialog NOTIFY do not create an implicit subscription*/
 		linphone_event_set_state(lev, LinphoneSubscriptionTerminated);
 	}else if (st!=SalSubscribeNone){
-		linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
+		/* Take into account that the subscription may have been closed by app already within linphone_core_notify_notify_received() */
+		if (linphone_event_get_subscription_state(lev) != LinphoneSubscriptionTerminated){
+			linphone_event_set_state(lev,linphone_subscription_state_from_sal(st));
+		}
 	}
 }
 

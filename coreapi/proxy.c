@@ -974,7 +974,6 @@ int linphone_proxy_config_send_publish(LinphoneProxyConfig *proxy, LinphonePrese
 			proxy->presence_publish_event = linphone_proxy_config_create_publish(proxy
 										 , "presence"
 										 , linphone_proxy_config_get_publish_expires(proxy));
-			linphone_event_ref(proxy->presence_publish_event);
 		}
 		proxy->presence_publish_event->internal = TRUE;
 
