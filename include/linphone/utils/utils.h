@@ -26,6 +26,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <map>
 
 #include "linphone/utils/enum-generator.h"
 
@@ -154,7 +155,46 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);
 	LINPHONE_PUBLIC std::string convertAnyToUtf8 (const std::string &str, const std::string &encoding);
 	LINPHONE_PUBLIC std::string quoteStringIfNotAlready(const std::string &str);
+
+	
+	class Version{
+		public:
+			LINPHONE_PUBLIC Version() = default;
+			LINPHONE_PUBLIC Version(int major, int minor);
+			LINPHONE_PUBLIC Version(int major, int minor, int patch);
+			LINPHONE_PUBLIC Version(const std::string &version);
+			
+			LINPHONE_PUBLIC int compare(const Version &other) const;
+			LINPHONE_PUBLIC inline bool operator<(const Version &other)const{
+				return compare(other) < 0;
+			}
+			LINPHONE_PUBLIC inline bool operator<=(const Version &other)const{
+				return compare(other) <= 0;
+			}
+			LINPHONE_PUBLIC inline bool operator>(const Version &other)const{
+				return compare(other) > 0;
+			}
+			LINPHONE_PUBLIC inline bool operator>=(const Version &other)const{
+				return compare(other) >= 0;
+			}
+			LINPHONE_PUBLIC inline bool operator==(const Version &other)const{
+				return compare(other) == 0;
+			}
+			LINPHONE_PUBLIC inline int getMajor()const {return mMajor;};
+			LINPHONE_PUBLIC inline int getMinor()const {return mMinor;};
+			LINPHONE_PUBLIC inline int getPatch()const {return mPatch;};
+		private:
+			int mMajor = 0, mMinor = 0, mPatch = 0;
+	};
+	
+	/**
+	 * Parse a capability descriptor string such our org.linphone.specs, made of comma separated keyword with optional version numbers:
+	 * "lime,groupchat/1.1,ephemeral". If absent, the version number is arbitrary supposed to be 1.0.
+	 */
+	LINPHONE_PUBLIC std::map<std::string, Version> parseCapabilityDescriptor(const std::string &descriptor);
 }
+
+LINPHONE_PUBLIC std::ostream &operator<<(std::ostream & ostr, const Utils::Version &version);
 
 LINPHONE_END_NAMESPACE
 

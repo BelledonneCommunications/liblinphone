@@ -22,6 +22,8 @@
 
 #include <stdexcept>
 
+#include "linphone/utils/utils.h"
+
 #include "chat/chat-room/abstract-chat-room.h"
 #include "core.h"
 #include "db/main-db.h"
@@ -160,7 +162,8 @@ public:
 
 	void startPushReceivedBackgroundTask ();
 	void pushReceivedBackgroundTaskEnded ();
-
+	
+	static const Utils::Version groupChatProtocolVersion;
 private:
 	bool isInBackground = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
