@@ -298,17 +298,13 @@ class JavaTranslator(object):
         methodDict['returnClassName'] = _method.returnType.translate(self.langTranslator, namespace=namespace)
         methodDict['isRealObjectArray'] = False
         methodDict['isStringObjectArray'] = False
-        methodDict['freeListWithData'] = False
-        methodDict['freeList'] = True
         methodDict['c_type_return'] = _method.returnType.translate(self.clangTranslator)
 
         if methodDict['c_name'] in jni_blacklist:
             return {'notEmpty': False}
 
         if methodDict['hasListReturn']:
-            if isinstance(_method.returnType, AbsApi.OnTheFlyListType):
-                methodDict['freeListWithData'] = True
-                methodDict['freeList'] = False
+            if _method.returnAllocatedObject:
                 methodDict['cPrefix'] = _method.returnType.containedTypeDesc.desc.name.to_snake_case(fullName=True)
 
             if isinstance(_method.returnType, AbsApi.BaseType) and _method.returnType.name == 'string_array':

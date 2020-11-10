@@ -211,7 +211,7 @@ namespace Linphone
 			}
 		}
 
-		internal static IEnumerable<T> MarshalBctbxList<T>(IntPtr listPtr) where T : LinphoneObject, new()
+		internal static IEnumerable<T> MarshalBctbxList<T>(IntPtr listPtr, bool takeRef=true) where T : LinphoneObject, new()
 		{
 			if (listPtr != IntPtr.Zero)
 			{
@@ -223,7 +223,7 @@ namespace Linphone
 					{
 						break;
 					}
-					T obj = fromNativePtr<T>(dataPtr);
+					T obj = fromNativePtr<T>(dataPtr, takeRef);
 					yield return obj;
 					ptr = bctbx_list_next(ptr);
 				}
@@ -583,7 +583,7 @@ namespace Linphone
 				return MarshalStringArray({{getter_c_name}}({{getter_nativePtr}}));
 				{{/is_string_list}}
 				{{#is_class_list}}
-				return MarshalBctbxList<{{{list_type}}}>({{getter_c_name}}({{getter_nativePtr}}));
+				return MarshalBctbxList<{{{list_type}}}>({{getter_c_name}}({{getter_nativePtr}}), {{takeRef}});
 				{{/is_class_list}}
 			}
 		{{/has_getter}}
@@ -655,7 +655,7 @@ namespace Linphone
 			IEnumerable<string> returnVal = MarshalStringArray({{c_name}}({{nativePtr}}{{{c_args}}}));
 			{{/is_string_list}}
 			{{#is_class_list}}
-			IEnumerable<{{{list_type}}}> returnVal = MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}));
+			IEnumerable<{{{list_type}}}> returnVal = MarshalBctbxList<{{{list_type}}}>({{c_name}}({{nativePtr}}{{{c_args}}}), {{takeRef}});
 			{{/is_class_list}}
 			{{#clean_string_list_ptrs}}CleanStringArrayPtrs();{{/clean_string_list_ptrs}}
 			{{#hasReturn}}return returnVal;{{/hasReturn}}
