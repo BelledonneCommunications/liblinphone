@@ -63,6 +63,7 @@
 #include "private.h"
 
 #define LINPHONE_DB "linphone.db"
+#define LINPHONE_CALL_HISTORY_DB "call-history.db"
 
 // =============================================================================
 
@@ -80,10 +81,11 @@ void CorePrivate::init () {
 #endif
 
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 		AbstractDb::Backend backend;
-		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
+		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", nullptr));
 		if (!uri.empty())
-			if (strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
+			if (strcmp(linphone_config_get_string(linphone_core_get_config(lc), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
 				backend = MainDb::Mysql;
 			} else {
 				backend = MainDb::Sqlite3;
@@ -114,6 +116,11 @@ void CorePrivate::init () {
 
 			loadChatRooms();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+
+		if (lc->logs_db_file == NULL) {
+			string calHistoryDbPath = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_CALL_HISTORY_DB);
+			linphone_core_set_call_logs_database_path(lc, calHistoryDbPath.c_str());
+		}
 	}
 }
 
