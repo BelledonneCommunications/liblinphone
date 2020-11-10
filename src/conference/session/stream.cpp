@@ -179,22 +179,27 @@ void Stream::setPortConfig(pair<int, int> portRange) {
 	else mPortConfig.rtcpPort = mPortConfig.rtpPort + 1;
 }
 
-void Stream::setPortConfig(){
+pair<int, int> Stream::getPortRange(LinphoneCore * core, const SalStreamType type) {
 	int minPort = 0, maxPort = 0;
-	switch(getType()){
+	switch(type){
 		case SalAudio:
-			linphone_core_get_audio_port_range(getCCore(), &minPort, &maxPort);
+			linphone_core_get_audio_port_range(core, &minPort, &maxPort);
 		break;
 		case SalVideo:
-			linphone_core_get_video_port_range(getCCore(), &minPort, &maxPort);
+			linphone_core_get_video_port_range(core, &minPort, &maxPort);
 		break;
 		case SalText:
-			linphone_core_get_text_port_range(getCCore(), &minPort, &maxPort);
+			linphone_core_get_text_port_range(core, &minPort, &maxPort);
 		break;
 		case SalOther:
 		break;
 	}
-	setPortConfig(make_pair(minPort, maxPort));
+
+	return make_pair(minPort, maxPort);
+}
+
+void Stream::setPortConfig(){
+	setPortConfig(Stream::getPortRange(getCCore(), getType()));
 }
 
 void Stream::fillMulticastMediaAddresses () {
