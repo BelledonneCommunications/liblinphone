@@ -91,7 +91,9 @@ void CorePrivate::init () {
 			}
 		else {
 			backend = AbstractDb::Sqlite3;
-			uri = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_DB);
+			string dbPath = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_DB);
+			lInfo() << "Using [" << dbPath << "] as default database path";
+			uri = LinphonePrivate::Utils::localeToUtf8(dbPath);// `mainDb->connect` take a UTF8 string.
 		}
 
 		if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
