@@ -1338,6 +1338,21 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 		ms_error("Core [%p] failed to start", mgr->lc);
 	}
 
+	char random_part[10];
+	belle_sip_random_token(random_part, sizeof(random_part)-1);
+
+	char *call_log_db = bctbx_strdup_printf("call-history-%s.db", random_part);
+	char *call_log_db_path = bc_tester_file(call_log_db);
+	linphone_core_set_call_logs_database_path(mgr->lc, call_log_db_path);
+	bctbx_free(call_log_db_path);
+	bctbx_free(call_log_db);
+
+	char *zrtp_secrets_db = bctbx_strdup_printf("zrtp-secrets-%s.db", random_part);
+	char *zrtp_secrets_db_path = bc_tester_file(zrtp_secrets_db);
+	linphone_core_set_zrtp_secrets_file(mgr->lc, zrtp_secrets_db_path);
+	bctbx_free(zrtp_secrets_db_path);
+	bctbx_free(zrtp_secrets_db);
+
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies){ /**/
 		proxy_count=(int)bctbx_list_size(linphone_core_get_proxy_config_list(mgr->lc));
@@ -1460,6 +1475,12 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 			}
 		}
 		linphone_core_stop(mgr->lc);
+
+		const char *call_log_db_path = linphone_core_get_call_logs_database_path(mgr->lc);
+		if (call_log_db_path) unlink(call_log_db_path);
+		const char *zrtp_secrets_db_path = linphone_core_get_zrtp_secrets_file(mgr->lc);
+		if (zrtp_secrets_db_path) unlink (zrtp_secrets_db_path);
+
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
 	}
