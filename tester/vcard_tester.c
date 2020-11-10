@@ -252,7 +252,7 @@ static void friends_sqlite_storage(void) {
 	LinphoneFriendList *lfl = NULL;
 	LinphoneFriend *lf = NULL;
 	LinphoneFriend *lf2 = NULL;
-	LinphoneVcard *lvc = linphone_factory_create_vcard(linphone_factory_get());
+	LinphoneVcard *lvc = NULL;
 	LinphoneAddress *addr = linphone_address_new("sip:sylvain@sip.linphone.org");
 	LinphoneCoreManager *lcm;
 	const bctbx_list_t *friends = NULL;
@@ -280,12 +280,12 @@ static void friends_sqlite_storage(void) {
 	friends_from_db = linphone_core_fetch_friends_from_db(lc, linphone_core_get_default_friend_list(lc));
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(friends_from_db), 0, unsigned int, "%u");
 
-	linphone_vcard_set_etag(lvc, "\"123-456789\"");
-	linphone_vcard_set_url(lvc, "http://dav.somewhere.fr/addressbook/me/someone.vcf");
-	lf = linphone_friend_new_from_vcard(lvc);
-	linphone_vcard_unref(lvc);
+	lf = linphone_friend_new();
 	linphone_friend_set_address(lf, addr);
 	linphone_friend_set_name(lf, "Sylvain");
+	lvc = linphone_friend_get_vcard(lf);
+	linphone_vcard_set_etag(lvc, "\"123-456789\"");
+	linphone_vcard_set_url(lvc, "http://dav.somewhere.fr/addressbook/me/someone.vcf");
 
 	linphone_core_add_friend_list(lc, lfl);
 	wait_for_until(lc, NULL, &stats->new_list_count, 1, 1000);

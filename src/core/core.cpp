@@ -63,6 +63,8 @@
 #include "private.h"
 
 #define LINPHONE_DB "linphone.db"
+#define LINPHONE_CALL_HISTORY_DB "call-history.db"
+#define LINPHONE_ZRTP_SECRETS_DB "zrtp-secrets.db"
 
 // =============================================================================
 
@@ -80,18 +82,21 @@ void CorePrivate::init () {
 #endif
 
 	if (linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		LinphoneCore *lc = L_GET_C_BACK_PTR(q);
 		AbstractDb::Backend backend;
-		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "uri", nullptr));
+		string uri = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", nullptr));
 		if (!uri.empty())
-			if (strcmp(linphone_config_get_string(linphone_core_get_config(L_GET_C_BACK_PTR(q)), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
+			if (strcmp(linphone_config_get_string(linphone_core_get_config(lc), "storage", "backend", "sqlite3"), "mysql") == 0 ) {
 				backend = MainDb::Mysql;
 			} else {
 				backend = MainDb::Sqlite3;
-				uri = Utils::quotePathIfNeeded(uri);
+				uri = Utils::quoteStringIfNotAlready(uri);
 			}
 		else {
 			backend = AbstractDb::Sqlite3;
-			uri = Utils::quotePathIfNeeded(q->getDataPath() + LINPHONE_DB);
+			string dbPath = Utils::quoteStringIfNotAlready(q->getDataPath() + LINPHONE_DB);
+			lInfo() << "Using [" << dbPath << "] as default database path";
+			uri = dbPath;
 		}
 
 		if (uri != "null"){ //special uri "null" means don't open database. We need this for tests.
@@ -114,6 +119,18 @@ void CorePrivate::init () {
 
 			loadChatRooms();
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
+
+		if (lc->logs_db_file == NULL) {
+			string calHistoryDbPath = q->getDataPath() + LINPHONE_CALL_HISTORY_DB;
+			lInfo() << "Using [" << calHistoryDbPath << "] as default call history database path";
+			linphone_core_set_call_logs_database_path(lc, calHistoryDbPath.c_str());
+		}
+
+		if (lc->zrtp_secrets_cache == NULL) {
+			string zrtpSecretsDbPath = q->getDataPath() + LINPHONE_ZRTP_SECRETS_DB;
+			lInfo() << "Using [" << zrtpSecretsDbPath << "] as default zrtp secrets database path";
+			linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
+		}
 	}
 }
 
