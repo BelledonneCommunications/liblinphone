@@ -113,11 +113,7 @@ class CsharpTranslator(object):
 			methodDict['is_class'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.ClassType
 			methodDict['is_enum'] = self.is_linphone_type(method.returnType, False, False) and type(method.returnType) is AbsApi.EnumType
 			methodDict['is_generic'] = self.is_generic(methodDict)
-			methodDict['takeRef'] = 'true'
-			if isinstance(method.returnType.parent, AbsApi.Method) and len(method.returnType.parent.name.words) >=1:
-				if method.returnAllocatedObject:
-					methodDict['takeRef'] = 'false'
-
+			methodDict['takeRef'] = 'false' if method.returnAllocatedObject else 'true'
 			methodDict['impl']['args'] = ''
 			methodDict['impl']['c_args'] = ''
 			methodDict['impl']['clean_string_list_ptrs'] = False

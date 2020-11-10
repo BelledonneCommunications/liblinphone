@@ -194,7 +194,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_is_empty (LinphoneChatRoom *chat_room)
  * Gets nb_message most recent messages from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved @notnil
  * @param nb_message Number of message to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneChatMessage} \onTheFlyList
+ * @return \bctbx_list{LinphoneChatMessage} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *chat_room, int nb_message);
 
@@ -203,7 +203,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved @notnil
  * @param begin The first message of the range to be retrieved. History most recent message has index 0.
  * @param end The last message of the range to be retrieved. History oldest message has index of history size - 1 (use #linphone_chat_room_get_history_size to retrieve history size)
- * @return \bctbx_list{LinphoneChatMessage} \onTheFlyList
+ * @return \bctbx_list{LinphoneChatMessage} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range (LinphoneChatRoom *chat_room, int begin, int end);
 
@@ -211,7 +211,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range (LinphoneChat
  * Gets nb_events most recent chat message events from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneEventLog} \onTheFlyList
+ * @return \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events (LinphoneChatRoom *chat_room, int nb_events);
 
@@ -220,7 +220,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events (Lin
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
- * @return \bctbx_list{LinphoneEventLog} \onTheFlyList
+ * @return \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_message_events (LinphoneChatRoom *chat_room, int begin, int end);
 
@@ -228,7 +228,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_message_event
  * Gets nb_events most recent events from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneEventLog} \onTheFlyList
+ * @return \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events (LinphoneChatRoom *chat_room, int nb_events);
 
@@ -237,7 +237,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events (LinphoneCha
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
- * @return \bctbx_list{LinphoneEventLog} \onTheFlyList
+ * @return \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_events (LinphoneChatRoom *chat_room, int begin, int end);
 

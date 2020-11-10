@@ -155,7 +155,7 @@ LINPHONE_PUBLIC void linphone_magic_search_reset_search_cache (LinphoneMagicSear
  * - NULL or "" for searching in all contact
  * - "*" for searching in contact with sip SipUri
  * - "yourdomain" for searching in contact from "yourdomain" domain
- * @return sorted list of \bctbx_list{LinphoneSearchResult} \onTheFlyList @notnil
+ * @return sorted list of \bctbx_list{LinphoneSearchResult} @tobefreed @notnil
  **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_magic_search_get_contact_list_from_filter (
 	const LinphoneMagicSearch *magic_search,
