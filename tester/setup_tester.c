@@ -598,9 +598,6 @@ static void search_friend_in_alphabetical_order(void) {
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
-	// To prevent call history to mess with the test
-	linphone_core_delete_call_history(manager->lc);
-
 	const char *name1SipUri = {"sip:toto@sip.example.org"};
 	const char *name2SipUri = {"sip:stephanie@sip.example.org"};
 	const char *name3SipUri = {"sip:alber@sip.example.org"};
@@ -1252,9 +1249,6 @@ static void search_friend_in_call_log_already_exist(void) {
 	LinphoneAddress *ronanAddress = linphone_address_new(ronanSipUri);
 	LinphoneAddress *chloeAddress = linphone_address_new(chloeSipUri);
 
-	// To prevent call history to mess with the test
-	linphone_core_delete_call_history(manager->lc);
-
 	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_dial_prefix(proxy, "33");
 	linphone_proxy_config_done(proxy);
@@ -1514,9 +1508,6 @@ static void search_friend_with_same_address(void) {
 	LinphoneVcard *stephanieVcard2 = linphone_factory_create_vcard(linphone_factory_get());
 	const char *stephanieName = {"stephanie delarue"};
 
-	// To prevent call history to mess with the test
-	linphone_core_delete_call_history(manager->lc);
-
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
 
 	linphone_vcard_set_full_name(stephanieVcard1, stephanieName); // stephanie delarue
@@ -1590,6 +1581,7 @@ static void search_friend_large_database(void) {
 	
 	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
 	linphone_core_set_friends_database_path(manager->lc, dbPath);
+
 	LinphoneMagicSearch *magicSearch = linphone_magic_search_new(manager->lc);
 
 	for (size_t i = 1; i < strlen(searchedFriend) ; i++) {
