@@ -670,6 +670,11 @@ static void group_chat_room_creation_server (void) {
 
 	start_core_for_conference(coresManagerList);
 
+	linphone_core_set_call_logs_database_path(marie->lc, NULL);
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
+	linphone_core_set_call_logs_database_path(laure->lc, NULL);
+	linphone_core_set_call_logs_database_path(chloe->lc, NULL);
+
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
 	stats initialMarieStats = marie->stat;
@@ -855,6 +860,11 @@ static void group_chat_room_add_participant (void) {
 	stats initialLaureStats = laure->stat;
 	stats initialChloeStats = chloe->stat;
 
+	linphone_core_set_call_logs_database_path(marie->lc, NULL);
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
+	linphone_core_set_call_logs_database_path(laure->lc, NULL);
+	linphone_core_set_call_logs_database_path(chloe->lc, NULL);
+
 	// Pauline creates a new group chat room
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *paulineCr = create_chat_room_client_side(coresList, pauline, &initialPaulineStats, participantsAddresses, initialSubject, FALSE);
@@ -876,6 +886,7 @@ static void group_chat_room_add_participant (void) {
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(pauline, TRUE);
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
 	paulineCr = linphone_core_find_chat_room(pauline->lc, paulineAddr, NULL);
 	linphone_address_unref(paulineAddr);
 
@@ -908,6 +919,7 @@ static void group_chat_room_add_participant (void) {
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(chloe, TRUE);
+	linphone_core_set_call_logs_database_path(chloe->lc, NULL);
 
 	// Pauline adds Chloe to the chat room
 	participantsAddresses = NULL;
@@ -3373,6 +3385,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
 	stats initialPaulineStats = pauline->stat;
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Pauline";
@@ -3440,6 +3453,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 		linphone_core_manager_start(marie, TRUE);
+		linphone_core_set_call_logs_database_path(marie->lc, NULL);
 		marieCr = linphone_core_get_chat_room(marie->lc, marieAddr);
 		linphone_address_unref(marieAddr);
 	}
@@ -3532,6 +3546,9 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_2
 	stats initialPaulineStats = pauline->stat;
 	stats initialMarie2Stats = marie2->stat;
 	stats initialPauline2Stats = pauline2->stat;
+
+	linphone_core_set_call_logs_database_path(marie->lc, NULL);
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
 
 	linphone_core_set_network_reachable(marie2->lc, FALSE);
 	linphone_core_set_network_reachable(pauline2->lc, FALSE);

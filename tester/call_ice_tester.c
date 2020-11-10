@@ -158,6 +158,8 @@ static void audio_call_with_ice_no_matching_audio_codecs(void) {
 	const bctbx_list_t *logs;
 	LinphoneCallLog *cl;
 
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
+
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
 	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
