@@ -670,6 +670,11 @@ static void group_chat_room_creation_server (void) {
 
 	start_core_for_conference(coresManagerList);
 
+	linphone_core_delete_call_history(marie->lc);
+	linphone_core_delete_call_history(pauline->lc);
+	linphone_core_delete_call_history(laure->lc);
+	linphone_core_delete_call_history(chloe->lc);
+
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(laure->lc)));
 	stats initialMarieStats = marie->stat;
