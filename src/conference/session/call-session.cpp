@@ -796,6 +796,12 @@ void CallSessionPrivate::completeLog () {
 	L_Q();
 	log->duration = computeDuration(); /* Store duration since connected */
 	log->error_info = linphone_error_info_ref(ei);
+	if (!log->from) {
+		log->from = linphone_address_new(sal_address_as_string(op->getFromAddress()));
+	}
+	if (!log->to) {
+		log->to = linphone_address_new(sal_address_as_string(op->getToAddress()));
+	}
 	if (log->status == LinphoneCallMissed)
 		q->getCore()->getCCore()->missed_calls++;
 	linphone_core_report_call_log(q->getCore()->getCCore(), log);

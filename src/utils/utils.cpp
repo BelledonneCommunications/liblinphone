@@ -252,7 +252,7 @@ string Utils::convertAnyToUtf8 (const string &str, const string &encoding) {
 }
 
 string Utils::quotePathIfNeeded(const string &str){
-	if (str.empty() || str[0] == '"') return str;
+	if (str.empty() || str[0] == '"' || str.find(" ") == std::string::npos) return str;
 	return string("\"") + str + string("\"");
 }
 
