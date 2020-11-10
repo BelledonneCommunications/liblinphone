@@ -427,7 +427,7 @@ void linphone_core_call_log_storage_init(LinphoneCore *lc) {
 	ret=_linphone_sqlite3_open(lc->logs_db_file, &db);
 	if(ret != SQLITE_OK) {
 		errmsg = sqlite3_errmsg(db);
-		ms_error("Error in the opening: %s.\n", errmsg);
+		ms_error("Error in the opening call_history_db_file(%s): %s.\n", lc->logs_db_file, errmsg);
 		sqlite3_close(db);
 		return;
 	}
