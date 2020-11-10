@@ -5439,6 +5439,7 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 	if (lc->logs_db_file){
 		ms_free(lc->logs_db_file);
 		lc->logs_db_file = NULL;
+		linphone_core_call_log_storage_close(lc);
 	}
 	if (lc->call_logs) {
 		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);

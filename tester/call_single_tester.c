@@ -4607,13 +4607,15 @@ static void call_record_with_custom_rtp_modifier(void) {
 static void call_logs_if_no_db_set(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 10);
+
+	linphone_core_set_call_logs_database_path(laure->lc, NULL);
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 0, int, "%d");
 
 	BC_ASSERT_TRUE(call(marie, laure));
 	wait_for_until(marie->lc, laure->lc, NULL, 5, 1000);
 	end_call(marie, laure);
 
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 11);
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 1, int, "%d");
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 }
@@ -4624,12 +4626,25 @@ static void call_logs_migrate(void) {
 	size_t i = 0;
 	int incoming_count = 0, outgoing_count = 0, missed_count = 0, aborted_count = 0, decline_count = 0, video_enabled_count = 0;
 	bctbx_list_t **call_logs_attr = NULL;
-
 	unlink(logs_db);
-	BC_ASSERT_TRUE(bctbx_list_size(linphone_core_get_call_logs(laure->lc)) == 10);
+
+	// Need to reset migration flag & restore call logs in rc file
+	// because when the Core started it automatically migrated the call logs & removed them from the rc
+	char *logs_rc = bc_tester_res("rcfiles/laure_call_logs_rc");
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "misc", "call_logs_migration_done", 0);
+	linphone_config_read_file(linphone_core_get_config(laure->lc), logs_rc);
+	linphone_core_migrate_logs_from_rc_to_db(laure->lc);
+
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 10, int , "%d");
+
+	// Need to reset migration flag & restore call logs in rc file
+	// because when the Core started it automatically migrated the call logs & removed them from the rc
+	linphone_config_set_int(linphone_core_get_config(laure->lc), "misc", "call_logs_migration_done", 0);
+	linphone_config_read_file(linphone_core_get_config(laure->lc), logs_rc);
+	ms_free(logs_rc);
 
 	linphone_core_set_call_logs_database_path(laure->lc, logs_db);
-	BC_ASSERT_TRUE(linphone_core_get_call_history_size(laure->lc) == 10);
+	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(laure->lc), 10, int , "%d");
 
 	for (; i < bctbx_list_size(linphone_core_get_call_logs(laure->lc)); i++) {
 		LinphoneCallLog *log = bctbx_list_nth_data(linphone_core_get_call_logs(laure->lc), (int)i);
@@ -4654,12 +4669,12 @@ static void call_logs_migrate(void) {
 			video_enabled_count += 1;
 		}
 	}
-	BC_ASSERT_TRUE(incoming_count == 5);
-	BC_ASSERT_TRUE(outgoing_count == 5);
-	BC_ASSERT_TRUE(missed_count == 1);
-	BC_ASSERT_TRUE(aborted_count == 3);
-	BC_ASSERT_TRUE(decline_count == 2);
-	BC_ASSERT_TRUE(video_enabled_count == 3);
+	BC_ASSERT_EQUAL(incoming_count, 5,int , "%d");
+	BC_ASSERT_EQUAL(outgoing_count, 5, int , "%d");
+	BC_ASSERT_EQUAL(missed_count, 1, int , "%d");
+	BC_ASSERT_EQUAL(aborted_count, 3, int , "%d");
+	BC_ASSERT_EQUAL(decline_count, 2, int , "%d");
+	BC_ASSERT_EQUAL(video_enabled_count, 3, int , "%d");
 
 	{
 		LinphoneCallLog *log = linphone_core_get_last_outgoing_call_log(laure->lc);
