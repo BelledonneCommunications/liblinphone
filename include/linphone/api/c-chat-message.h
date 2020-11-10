@@ -408,7 +408,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer_in_progress (const
  * @param message #LinphoneChatMessage object. @notnil
  * @param state The LinphoneChatMessageState the imdn have reached (only use LinphoneChatMessageStateDelivered,
  * LinphoneChatMessageStateDeliveredToUser, LinphoneChatMessageStateDisplayed and LinphoneChatMessageStateNotDelivered)
- * @return \bctbx_list{LinphoneParticipantImdnState} \onTheFlyList @notnil
+ * @return \bctbx_list{LinphoneParticipantImdnState} @tobefreed @notnil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (
 	const LinphoneChatMessage *message,

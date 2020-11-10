@@ -188,7 +188,7 @@ LINPHONE_PUBLIC bool_t linphone_content_is_multipart (const LinphoneContent *con
 /**
  * Get all the parts from a multipart content.
  * @param content #LinphoneContent object. @notnil
- * @return A \bctbx_list{LinphoneContent} \onTheFlyList object holding the part if found, NULL otherwise. @maybenil
+ * @return A \bctbx_list{LinphoneContent} object holding the part if found, NULL otherwise. @tobefreed @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_content_get_parts (const LinphoneContent *content);
 

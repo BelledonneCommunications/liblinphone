@@ -298,7 +298,7 @@ class CppTranslator(object):
 			if exprtype.desc.refcountable:
 				cppReturnType = CppTranslator.sharedPtrTypeExtractor.match(cppReturnType).group(2)
 
-				if isinstance(exprtype.parent, AbsApi.Method) and len(exprtype.parent.name.words) >=1 and exprtype.parent.returnAllocatedObject:
+				if isinstance(exprtype.parent, AbsApi.Method) and exprtype.parent.returnAllocatedObject:
 					return 'Object::cPtrToSharedPtr<{0}>({1}, false)'.format(cppReturnType, cExpr)
 				else:
 					return 'Object::cPtrToSharedPtr<{0}>({1})'.format(cppReturnType, cExpr)
@@ -315,7 +315,7 @@ class CppTranslator(object):
 				return 'StringBctbxListWrapper::bctbxListToCppList({0})'.format(cExpr)
 			elif isinstance(exprtype.containedTypeDesc, AbsApi.ClassType):
 				cppReturnType = exprtype.containedTypeDesc.translate(self.langTranslator, namespace=usedNamespace)
-				takeRef = 'false' if isinstance(exprtype, AbsApi.OnTheFlyListType) else 'true'
+				takeRef = 'false' if isinstance(exprtype.parent, AbsApi.Method) and exprtype.parent.returnAllocatedObject else 'true'
 				if exprtype.containedTypeDesc.desc.refcountable:
 					cppReturnType = CppTranslator.sharedPtrTypeExtractor.match(cppReturnType).group(2)
 					return 'ObjectBctbxListWrapper<{0}>::bctbxListToCppList({1}, {2})'.format(cppReturnType, cExpr, takeRef)

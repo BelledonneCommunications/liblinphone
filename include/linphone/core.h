@@ -2798,7 +2798,7 @@ LINPHONE_PUBLIC const bctbx_list_t * linphone_core_get_call_logs(LinphoneCore *c
  * @param core #LinphoneCore object. @notnil
  * @param peer_address The remote #LinphoneAddress object. @notnil
  * @param local_address The local #LinphoneAddress object @notnil
- * @return \bctbx_list{LinphoneCallLog} \onTheFlyList @maybenil
+ * @return \bctbx_list{LinphoneCallLog} @tobefreed @maybenil
 **/
 LINPHONE_PUBLIC bctbx_list_t *linphone_core_get_call_history_2(
 	LinphoneCore *core,
@@ -6233,7 +6233,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bool_t linphone_core_is_mic_muted(LinphoneCo
  * At the contrary of linphone_core_get_call_logs, it is your responsibility to unref the logs and free this list once you are done using it.
  * @param core #LinphoneCore object @notnil
  * @param address #LinphoneAddress object @notnil
- * @return \bctbx_list{LinphoneCallLog} \onTheFlyList @maybenil
+ * @return \bctbx_list{LinphoneCallLog} @tobefreed @maybenil
  * @deprecated 29/10/2018 Use #linphone_core_get_call_history_2 instead.
  * @ingroup call_logs
 **/
