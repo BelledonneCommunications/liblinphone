@@ -52,7 +52,6 @@ static string getPath (const GUID &id) {
 		strPath = env;
 		strPath = strPath.append("/linphone/");
 		if (!dirExists(strPath)) CreateDirectoryA(strPath.c_str(), nullptr);
-		strPath = LinphonePrivate::Utils::localeToUtf8(strPath);
 	}
 	return strPath;
 #else
@@ -67,7 +66,6 @@ static string getPath (const GUID &id) {
 	strPath = strPath.append("/linphone/");
 	if (!dirExists(strPath))
 		CreateDirectoryA(strPath.c_str(), nullptr);
-	strPath = LinphonePrivate::Utils::localeToUtf8(strPath);
 	return strPath;
 #endif //ENABLE_MICROSOFT_STORE_APP
 }
