@@ -92,6 +92,7 @@ void CorePrivate::init () {
 				uri += " charset=utf8mb4";
 			}
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+			uri = LinphonePrivate::Utils::localeToUtf8(uri);// `mainDb->connect` take a UTF8 string.
 			if (!mainDb->connect(backend, uri)) {
 				ostringstream os;
 				os << "Unable to open linphone database with uri " << uri << " and backend " << backend;
