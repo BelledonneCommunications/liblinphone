@@ -260,7 +260,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 	bool iceRestarted = false;
 	string addr = md->addr;
 	if ((addr == "0.0.0.0") || (addr == "::0")) {
-		ice_session_restart(mIceSession, isOffer ? IR_Controlled : IR_Controlling);
+		restartSession(isOffer ? IR_Controlled : IR_Controlling);
 		iceRestarted = true;
 	} else {
 		for (int i = 0; i < md->nb_streams; i++) {
@@ -268,7 +268,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 			IceCheckList *cl = ice_session_check_list(mIceSession, i);
 			string rtpAddr = stream->rtp_addr;
 			if (cl && (rtpAddr == "0.0.0.0")) {
-				ice_session_restart(mIceSession, isOffer ? IR_Controlled : IR_Controlling);
+				restartSession(isOffer ? IR_Controlled : IR_Controlling);
 				iceRestarted = true;
 				break;
 			}
@@ -278,7 +278,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 		ice_session_set_remote_credentials(mIceSession, md->ice_ufrag, md->ice_pwd);
 	} else if (ice_session_remote_credentials_changed(mIceSession, md->ice_ufrag, md->ice_pwd)) {
 		if (!iceRestarted) {
-			ice_session_restart(mIceSession, isOffer ? IR_Controlled : IR_Controlling);
+			restartSession( isOffer ? IR_Controlled : IR_Controlling);
 			iceRestarted = true;
 		}
 		ice_session_set_remote_credentials(mIceSession, md->ice_ufrag, md->ice_pwd);
@@ -290,7 +290,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 			if (ice_check_list_remote_credentials_changed(cl, stream->ice_ufrag, stream->ice_pwd)) {
 				if (!iceRestarted && ice_check_list_get_remote_ufrag(cl) && ice_check_list_get_remote_pwd(cl)) {
 					// Restart only if remote ufrag/paswd was already set.
-					ice_session_restart(mIceSession, isOffer ? IR_Controlled : IR_Controlling);
+					restartSession(isOffer ? IR_Controlled : IR_Controlling);
 					iceRestarted = true;
 				}
 				ice_check_list_set_remote_credentials(cl, stream->ice_ufrag, stream->ice_pwd);
@@ -650,7 +650,11 @@ void IceService::setListener(IceServiceListener *listener){
 void IceService::restartSession (IceRole role) {
 	if (!mIceSession)
 		return;
-	ice_session_restart(mIceSession, role);
+	/* We use ice_session_reset(), which is similar to ice_session_restart() but it also clears local candidates.
+	 * Indeed, the local candidates are always added back after restart.
+	 * This avoids previously discovered and possibly non-working peer-reflexive candidates to be accumulated after successive restarts.
+	 */
+	ice_session_reset(mIceSession, role);
 }
 
 void IceService::resetSession() {
