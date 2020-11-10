@@ -153,6 +153,8 @@ public:
 		return "undefined";
 	}
 	
+	static std::pair<int, int> getPortRange(LinphoneCore * core, const SalStreamType type);
+
 protected:
 	Stream(StreamsGroup &ms, const OfferAnswerContext &params);
 	/**
