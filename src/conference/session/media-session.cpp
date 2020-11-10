@@ -19,6 +19,7 @@
 
 //#include <iomanip>
 //#include <math.h>
+#include <algorithm>
 
 #include "call/call.h"
 #include "address/address.h"
@@ -2514,7 +2515,29 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		d->getStreamsGroup().prepare();
 	}
 
-	d->op->setLocalMediaDescription(d->localDesc);
+	SalMediaDescription *localDesc = new SalMediaDescription();
+	if (d->localDesc) {
+		*localDesc = *(d->localDesc);
+	}
+	srand((unsigned int)time(NULL));
+	for (int i = 0; i < localDesc->nb_streams; i++) {
+printf("original rtpPort %0d from local desc %0d\n", localDesc->streams[i].rtp_port, d->localDesc->streams[i].rtp_port);
+		if (ms_is_multicast(localDesc->streams[i].rtp_addr)){
+			pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), localDesc->streams[i].type);
+			if ((portRange.first > 0) && (portRange.second > 0)) {
+				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + std::min(portRange.second, portRange.first);
+	printf("original rtpPort %0d new port %0d\n", localDesc->streams[i].rtp_port, rtp_port);
+				localDesc->streams[i].rtp_port = rtp_port;
+				localDesc->streams[i].rtcp_port = localDesc->streams[i].rtp_port + 1;
+			} else {
+				// Handle OS defined ports
+			}
+		}
+	}
+
+	d->op->setLocalMediaDescription(localDesc);
+
+	ms_free(localDesc);
 
 	int result = CallSession::startInvite(destination, subject, content);
 	if (result < 0) {
