@@ -3280,6 +3280,8 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 
+	linphone_core_set_call_logs_database_path(marie->lc, NULL);
+	linphone_core_set_call_logs_database_path(pauline->lc, NULL);
 
 	// Wait for lime user creation
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
