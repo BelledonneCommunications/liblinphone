@@ -132,6 +132,13 @@ void CorePrivate::init () {
 			linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
 		}
 	}
+
+#ifdef __ANDROID__
+	// On Android assume Core has been started in background,
+	// otherwise first notifyEnterForeground() will do nothing.
+	// If not, ActivityMonitor will tell us quickly.
+	isInBackground = true;
+#endif
 }
 
 void CorePrivate::registerListener (CoreListener *listener) {
