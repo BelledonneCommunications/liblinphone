@@ -5440,10 +5440,13 @@ void linphone_core_set_call_logs_database_path(LinphoneCore *lc, const char *pat
 		ms_free(lc->logs_db_file);
 		lc->logs_db_file = NULL;
 	}
+	if (lc->call_logs) {
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func)linphone_call_log_unref);
+		lc->call_logs = NULL;
+	}
 	if (path) {
 		lc->logs_db_file = ms_strdup(path);
 		linphone_core_call_log_storage_init(lc);
-
 		linphone_core_migrate_logs_from_rc_to_db(lc);
 	}
 }

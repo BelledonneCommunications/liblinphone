@@ -427,7 +427,7 @@ void linphone_core_call_log_storage_init(LinphoneCore *lc) {
 	ret=_linphone_sqlite3_open(lc->logs_db_file, &db);
 	if(ret != SQLITE_OK) {
 		errmsg = sqlite3_errmsg(db);
-		ms_error("Error in the opening: %s.\n", errmsg);
+		ms_error("Error in the opening call_history_db_file(%s): %s.\n", lc->logs_db_file, errmsg);
 		sqlite3_close(db);
 		return;
 	}
@@ -548,11 +548,11 @@ static int linphone_sql_request_generic(sqlite3* db, const char *stmt) {
 
 void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	if (lc && lc->logs_db){
-		char *from, *to;
-		char *buf;
+		char *from = NULL, *to = NULL;
+		char *buf = NULL;
 
-		from = linphone_address_as_string(log->from);
-		to = linphone_address_as_string(log->to);
+		if (log->from) from = linphone_address_as_string(log->from);
+		if (log->to) to = linphone_address_as_string(log->to);
 		buf = sqlite3_mprintf("INSERT INTO call_history VALUES(NULL,%Q,%Q,%i,%i,%lld,%lld,%i,%i,%f,%Q,%Q);",
 						from,
 						to,
@@ -568,8 +568,8 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 					);
 		linphone_sql_request_generic(lc->logs_db, buf);
 		sqlite3_free(buf);
-		ms_free(from);
-		ms_free(to);
+		if (from) ms_free(from);
+		if (to) ms_free(to);
 
 		log->storage_id = (unsigned int)sqlite3_last_insert_rowid(lc->logs_db);
 	}
@@ -613,6 +613,11 @@ void linphone_core_delete_call_history(LinphoneCore *lc) {
 	buf = sqlite3_mprintf("DELETE FROM call_history");
 	linphone_sql_request_generic(lc->logs_db, buf);
 	sqlite3_free(buf);
+
+	if (lc->call_logs) {
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		lc->call_logs = NULL;
+	}
 }
 
 void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
@@ -623,6 +628,11 @@ void linphone_core_delete_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 	buf = sqlite3_mprintf("DELETE FROM call_history WHERE id = %u", log->storage_id);
 	linphone_sql_request_generic(lc->logs_db, buf);
 	sqlite3_free(buf);
+
+	if (lc->call_logs) {
+		bctbx_list_free_with_data(lc->call_logs, (bctbx_list_free_func) linphone_call_log_unref);
+		lc->call_logs = NULL;
+	}
 }
 
 int linphone_core_get_call_history_size(LinphoneCore *lc) {
