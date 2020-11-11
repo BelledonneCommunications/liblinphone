@@ -100,6 +100,7 @@ void CorePrivate::init () {
 				uri += " charset=utf8mb4";
 			}
 			lInfo() << "Opening linphone database " << uri << " with backend " << backend;
+			uri = LinphonePrivate::Utils::localeToUtf8(uri);// `mainDb->connect` take a UTF8 string.
 			auto startMs = bctbx_get_cur_time_ms();
 			if (!mainDb->connect(backend, uri)) {
 				ostringstream os;

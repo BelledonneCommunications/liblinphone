@@ -483,7 +483,16 @@ static void recovered_call_on_network_switch_in_early_media_2 (void) {
 	recovered_call_on_network_switch_in_early_media_base(FALSE);
 }
 
-static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh, bool_t enable_rtt, bool_t caller_pause, bool_t callee_pause) {
+typedef struct _CallConfig{
+	bool_t use_ice;
+	bool_t with_socket_refresh;
+	bool_t enable_rtt;
+	bool_t caller_pause;
+	bool_t callee_pause;
+	bool_t forced_relay;
+}CallConfig;
+
+static void _call_with_network_switch(const CallConfig *config) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *pauline_params = NULL;
@@ -495,40 +504,51 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	if (use_ice){
+	if (config->use_ice){
 		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
 		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
 		linphone_core_manager_wait_for_stun_resolution(marie);
 		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
-	if (with_socket_refresh){
+	if (config->with_socket_refresh){
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "recreate_sockets_when_network_is_up", 1);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "net", "recreate_sockets_when_network_is_up", 1);
 	}
-	if (enable_rtt) {
+	if (config->enable_rtt) {
 		pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 		linphone_call_params_enable_realtime_text(pauline_params, TRUE);
+	}
+	
+	if (config->forced_relay){
+		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+		linphone_core_enable_forced_ice_relay(marie->lc, TRUE);
+		linphone_core_enable_forced_ice_relay(pauline->lc, TRUE);
 	}
 
 	BC_ASSERT_TRUE((call_ok=call_with_params(pauline, marie, pauline_params, NULL)));
 	if (!call_ok) goto end;
 
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 2000);
-	if (use_ice) {
+	if (config->use_ice) {
 		/*wait for ICE reINVITE to complete*/
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
-		BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+		if (config->forced_relay){
+			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateRelayConnection));
+		}else{
+			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+		}
 	}
 
-	if (caller_pause) {
+	if (config->caller_pause) {
 		pauline_call = linphone_core_get_current_call(pauline->lc);
 		if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 		linphone_call_pause(pauline_call);
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 1));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPaused, 1));
 		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
-	} else if (callee_pause) {
+	} else if (config->callee_pause) {
 		marie_call = linphone_core_get_current_call(marie->lc);
 		if(!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
 		linphone_call_pause(marie_call);
@@ -545,8 +565,8 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneRegistrationOk, 2));
 
-	if (use_ice){
-		if (caller_pause) {
+	if (config->use_ice){
+		if (config->caller_pause) {
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 2));
@@ -561,7 +581,7 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 			linphone_call_resume(pauline_call);
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
-		}else if (callee_pause){
+		}else if (config->callee_pause){
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausing, 2));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 2));
@@ -585,13 +605,13 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 4));
 		}
 	}else{
-		if (caller_pause) {
+		if (config->caller_pause) {
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPausedByRemote, 2));
 			linphone_call_resume(pauline_call);
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
-		} else if (callee_pause) {
+		} else if (config->callee_pause) {
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallPausedByRemote, 2));
 			BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallPaused, 2));
@@ -609,7 +629,13 @@ static void _call_with_network_switch(bool_t use_ice, bool_t with_socket_refresh
 	/*check that media is back*/
 	check_media_direction(marie, linphone_core_get_current_call(marie->lc), lcs, LinphoneMediaDirectionSendRecv, LinphoneMediaDirectionInvalid);
 	liblinphone_tester_check_rtcp(pauline, marie);
-	if (use_ice) BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+	if (config->use_ice) {
+		if (config->forced_relay){
+			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateRelayConnection));
+		}else{
+			BC_ASSERT_TRUE(check_ice(pauline,marie,LinphoneIceStateHostConnection));
+		}
+	}
 
 	/*pauline shall be able to end the call without problem now*/
 	end_call(pauline, marie);
@@ -623,35 +649,61 @@ end:
 }
 
 static void call_with_network_switch(void){
-	_call_with_network_switch(FALSE, FALSE, FALSE, FALSE, FALSE);
+	CallConfig cfg = {0};
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_in_paused_state(void) {
-	_call_with_network_switch(FALSE, FALSE, FALSE, FALSE, TRUE);
+	CallConfig cfg = {0};
+	cfg.callee_pause = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_in_paused_state_and_ice(void) {
-	_call_with_network_switch(TRUE, FALSE, FALSE, FALSE, TRUE);
+	CallConfig cfg = {0};
+	cfg.callee_pause = TRUE;
+	cfg.use_ice = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_in_paused_by_remote_state_and_ice(void){
-	_call_with_network_switch(TRUE, FALSE, FALSE, TRUE, FALSE);
+	CallConfig cfg = {0};
+	cfg.caller_pause = TRUE;
+	cfg.use_ice = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_in_paused_by_remote_state(void) {
-	_call_with_network_switch(FALSE, FALSE, FALSE, TRUE, FALSE);
+	CallConfig cfg = {0};
+	cfg.caller_pause = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_and_ice(void){
-	_call_with_network_switch(TRUE, FALSE, FALSE, FALSE, FALSE);
+	CallConfig cfg = {0};
+	cfg.use_ice = TRUE;
+	_call_with_network_switch(&cfg);
+}
+
+static void call_with_network_switch_and_ice_and_relay(void){
+	CallConfig cfg = {0};
+	cfg.use_ice = TRUE;
+	cfg.forced_relay = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_ice_and_rtt(void) {
-	_call_with_network_switch(TRUE, FALSE, TRUE, FALSE, FALSE);
+	CallConfig cfg = {0};
+	cfg.use_ice = TRUE;
+	cfg.enable_rtt = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_and_socket_refresh(void){
-	_call_with_network_switch(TRUE, TRUE, FALSE, FALSE, FALSE);
+	CallConfig cfg = {0};
+	cfg.use_ice = TRUE;
+	cfg.with_socket_refresh = TRUE;
+	_call_with_network_switch(&cfg);
 }
 
 static void call_with_network_switch_no_recovery(void){
@@ -796,6 +848,7 @@ static test_t call_recovery_tests[] = {
 	TEST_ONE_TAG("Call with network switch in paused by remote state, ICE enabled",call_with_network_switch_in_paused_by_remote_state_and_ice, "ICE"),
 	TEST_ONE_TAG("Call with network switch in paused by remote state", call_with_network_switch_in_paused_by_remote_state, "CallRecovery"),
 	TEST_ONE_TAG("Call with network switch and ICE", call_with_network_switch_and_ice, "ICE"),
+	TEST_ONE_TAG("Call with network switch and ICE with relay", call_with_network_switch_and_ice_and_relay, "ICE"),
 	TEST_ONE_TAG("Call with network switch, ICE and RTT", call_with_network_switch_ice_and_rtt, "ICE"),
 	TEST_NO_TAG("Call with network switch with socket refresh", call_with_network_switch_and_socket_refresh),
 	TEST_NO_TAG("Call with SIP and RTP independant switches", call_with_sip_and_rtp_independant_switches)
