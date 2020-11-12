@@ -2524,14 +2524,23 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 printf("original rtpPort %0d from local desc %0d\n", localDesc->streams[i].rtp_port, d->localDesc->streams[i].rtp_port);
 		if (ms_is_multicast(localDesc->streams[i].rtp_addr)){
 			pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), localDesc->streams[i].type);
-			if ((portRange.first > 0) && (portRange.second > 0)) {
-				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + std::min(portRange.second, portRange.first);
-	printf("original rtpPort %0d new port %0d\n", localDesc->streams[i].rtp_port, rtp_port);
-				localDesc->streams[i].rtp_port = rtp_port;
-				localDesc->streams[i].rtcp_port = localDesc->streams[i].rtp_port + 1;
-			} else {
-				// Handle OS defined ports
+			if (portRange.first <= 0) {
+				portRange.first = 1024;
+				lInfo() << "Setting minimum value of port range to " << portRange.first;
 			}
+			if (portRange.second <= 0) {
+				// 2^16 - 1
+				portRange.second = 65535;
+				lInfo() << "Setting maximum value of port range to " << portRange.second;
+			}
+			if (portRange.second < portRange.first) {
+				lError() << "Invalid port range provided for stream type " << Utils::toString(localDesc->streams[i].type) << ": min=" << portRange.first << " max=" << portRange.second;
+				continue;
+			}
+			int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+	printf("original rtpPort %0d new port %0d\n", localDesc->streams[i].rtp_port, rtp_port);
+			localDesc->streams[i].rtp_port = rtp_port;
+			localDesc->streams[i].rtcp_port = localDesc->streams[i].rtp_port + 1;
 		}
 	}
 
