@@ -90,7 +90,7 @@ typedef struct _LinphoneAuthInfo LinphoneAuthInfo;
  * A SIP address is made of display name, username, domain name, port, and various
  * uri headers (such as tags). It looks like 'Alice <sip:alice@example.net>'.
  * 
- * You can create an address using linphone_factory_create_address() or linphone_core_interpret_url(),
+ * You can create an address using linphone_factory_create_address() or linphone_core_interpret_url()
  * and both will return a NULL object if it doesn't match the grammar defined by the standard.
  * 
  * This object is used in almost every other major objects to identity people (including yourself) & servers.
@@ -133,7 +133,7 @@ typedef struct _LinphoneConferenceCbs LinphoneConferenceCbs;
  * @brief Identifies a member of a #LinphoneConference or #LinphoneChatRoom.
  * 
  * A participant is identified by it's SIP address.
- * It can have many devices, @see #LinphoneParticipantDevice.
+ * It can have many #LinphoneParticipantDevice.
  * @ingroup conference
  */
 typedef struct _LinphoneParticipant LinphoneParticipant;
@@ -161,7 +161,7 @@ typedef struct _LinphoneParticipantDevice LinphoneParticipantDevice;
 typedef struct _LinphoneParticipantImdnState LinphoneParticipantImdnState;
 
 /**
- * @brief This object is only used on server side for group chat rooms.
+ * @brief This object is only used on server side for #LinphoneChatRoom with #LinphoneChatRoomBackendFlexisipChat backend.
  * @ingroup conference
  */
 typedef struct _LinphoneParticipantDeviceIdentity LinphoneParticipantDeviceIdentity;
@@ -264,7 +264,7 @@ typedef struct _LinphoneAudioDevice LinphoneAudioDevice;
  * On the receiving side, either use linphone_chat_message_download_content() to download received files or enable auto-download in the #LinphoneCore using 
  * linphone_core_set_max_size_for_auto_download_incoming_files(), -1 disabling the feature and 0 always downloading files no matter it's size.
  * 
- * Keep in mind a #LinphoneChatMessage created by a 'Basic' #LinphoneChatRoom can only contain one #LinphoneContent, either text or file.
+ * Keep in mind a #LinphoneChatMessage created by a #LinphoneChatRoomBackendBasic #LinphoneChatRoom can only contain one #LinphoneContent, either text or file.
  * @ingroup chatroom
  */
 typedef struct _LinphoneChatMessage LinphoneChatMessage;
@@ -280,10 +280,10 @@ typedef struct _LinphoneChatMessageCbs LinphoneChatMessageCbs;
  * 
  * To create (or find) a #LinphoneChatRoom, you first need a #LinphoneChatRoomParams object.
  * A chat room is uniquely identified by it's local and remote SIP addresses, meaning you can
- * only have one chat room between two accounts (unless the backend is 'Flexisip').
+ * only have one chat room between two accounts (unless the backend is #LinphoneChatRoomBackendFlexisipChat).
  * Then you can call linphone_core_search_chat_room() or linphone_core_create_chat_room_6().
  * 
- * Be careful as a 'Flexisip' backend #LinphoneChatRoom will be created asynchronously, so
+ * Be careful as a #LinphoneChatRoomBackendFlexisipChat backend #LinphoneChatRoom will be created asynchronously, so
  * make sure you add a #LinphoneChatRoomCbs to the returned object to be notified 
  * when it will be in state #LinphoneChatRoomStateCreated.
  * 
@@ -301,8 +301,8 @@ typedef struct _LinphoneChatRoom LinphoneChatRoom;
  * Can be created with linphone_core_create_default_chat_room_params().
  * You can use linphone_chat_room_params_is_valid() to check if your configuration is valid or not.
  * 
- * If the #LinphoneChatRoom backend is 'Basic', then no other parameter is required, 
- * but #LinphoneChatMessage sent and received won't benefit from all features a 'FlexisipBackend' can offer 
+ * If the #LinphoneChatRoom backend is #LinphoneChatRoomBackendBasic, then no other parameter is required, 
+ * but #LinphoneChatMessage sent and received won't benefit from all features a #LinphoneChatRoomBackendFlexisipChat can offer 
  * like conversation with multiple participants and a subject, end-to-end encryption, ephemeral messages, etc... 
  * but this type is the only one that can interoperate with other SIP clients or with non-flexisip SIP proxies.
  * @ingroup chatroom

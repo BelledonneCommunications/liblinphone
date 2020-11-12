@@ -38,7 +38,7 @@ extern "C" {
  * It supports custom domain, writing into a file as well as several verbosity levels.
  * The #LinphoneLoggingServiceCbs listener allows you to be notified each time a log is printed.
  * 
- * As the #LoggingService is a singleton, use linphone_logging_service_get() to get it.
+ * As the #LinphoneLoggingService is a singleton, use linphone_logging_service_get() to get it.
  */
 typedef struct _LinphoneLoggingService LinphoneLoggingService;
 

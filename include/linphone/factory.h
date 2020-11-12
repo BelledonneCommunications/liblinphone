@@ -62,7 +62,7 @@ LINPHONE_PUBLIC void linphone_factory_clean(void);
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
  * @return a #LinphoneCore object @notnil
- * @see linphone_core_new_with_config_3
+ * @see linphone_core_new_with_config_3()
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
 	const LinphoneFactory *factory,
@@ -101,7 +101,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_3 (
  * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
  * @return a #LinphoneCore object @notnil
- * @see linphone_factory_create_shared_core_with_config
+ * @see linphone_factory_create_shared_core_with_config()
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
 	const LinphoneFactory *factory,
@@ -125,7 +125,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core (
  * @param system_context A pointer to a system object required by the core to operate. Currently it is required to
  * pass an android Context on android, pass NULL on other platforms. @maybenil
  * @return a #LinphoneCore object @notnil
- * @see linphone_factory_create_core_3
+ * @see linphone_factory_create_core_3()
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
 	const LinphoneFactory *factory,
@@ -157,7 +157,7 @@ LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_with_config_3 (
  * @param app_group_id Name of iOS App Group that lead to the file system that is shared between an app and its app extensions. @notnil
  * @param main_core Indicate if we want to create a "Main Core" or an "Executor Core".
  * @return a #LinphoneCore object @notnil
- * @see linphone_factory_create_shared_core
+ * @see linphone_factory_create_shared_core()
  */
 LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_shared_core_with_config (
 	const LinphoneFactory *factory,
@@ -613,7 +613,7 @@ LINPHONE_PUBLIC const char *linphone_factory_get_download_dir(LinphoneFactory *f
  *        to store hard-coded preference such as proxy settings or internal preferences.
  *        The settings in this factory file always override the one in the normal config file.
  *        It is OPTIONAL, use NULL if unneeded.
- * @see linphone_core_new_with_config
+ * @see linphone_core_new_with_config()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
  * @donotwrap
  */
@@ -643,7 +643,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core(
  *        It is OPTIONAL, use NULL if unneeded.
  * @param user_data an application pointer associated with the returned core.
  * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
- * @see linphone_core_new_with_config
+ * @see linphone_core_new_with_config()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_3() instead
  * @donotwrap
  */
@@ -666,7 +666,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_2
  * will be taken on it until the destruciton of the core or the unregistration
  * with linphone_core_remove_cbs().
  * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
- * @see linphone_core_new
+ * @see linphone_core_new()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
  * @donotwrap
  */
@@ -688,7 +688,7 @@ LINPHONE_DEPRECATED LINPHONE_PUBLIC LinphoneCore *linphone_factory_create_core_w
  * @param config a pointer to an LpConfig object holding the configuration of the #LinphoneCore to be instantiated.
  * @param user_data an application pointer associated with the returned core.
  * @param system_context a pointer to a system object required by the core to operate. Currently it is required to pass an android Context on android, pass NULL on other platforms.
- * @see linphone_core_new
+ * @see linphone_core_new()
  * @deprecated 2018-01-10: Use linphone_factory_create_core_with_config_3() instead
  * @donotwrap
  */

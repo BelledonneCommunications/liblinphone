@@ -52,9 +52,8 @@
 typedef struct _LinphoneProxyConfig LinphoneProxyConfig;
 
 /**
- * @brief The object used to configure an account on a server via XML-RPC.
- * 
- * @see https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Override%20account%20creator%20request/
+ * @brief The object used to configure an account on a server via XML-RPC, 
+ * see @link https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Features/Override%20account%20creator%20request/
  * @ingroup account_creator
 **/
 typedef struct _LinphoneAccountCreator LinphoneAccountCreator;
@@ -271,10 +270,10 @@ typedef struct _LinphoneFriend LinphoneFriend;
 * @ingroup buddy_list
 **/
 typedef enum _LinphoneFriendCapability {
-	LinphoneFriendCapabilityNone = 0, /** No capabilities populated */
-	LinphoneFriendCapabilityGroupChat = 1 << 0, /** This friend can be invited in a Flexisip backend #LinphoneChatRoom */
-	LinphoneFriendCapabilityLimeX3dh = 1 << 1, /** This friend can be invited in a Flexisip backend end-to-end encrypted #LinphoneChatRoom */
-	LinphoneFriendCapabilityEphemeralMessages = 1 << 2 /** This friend is able to delete ephemeral messages once they have expired */
+	LinphoneFriendCapabilityNone = 0, /**< No capabilities populated */
+	LinphoneFriendCapabilityGroupChat = 1 << 0, /**< This friend can be invited in a Flexisip backend #LinphoneChatRoom */
+	LinphoneFriendCapabilityLimeX3dh = 1 << 1, /**< This friend can be invited in a Flexisip backend end-to-end encrypted #LinphoneChatRoom */
+	LinphoneFriendCapabilityEphemeralMessages = 1 << 2 /**< This friend is able to delete ephemeral messages once they have expired */
 } LinphoneFriendCapability;
 
 /**
@@ -296,9 +295,9 @@ typedef struct _LinphoneFriendListCbs LinphoneFriendListCbs;
 * @ingroup buddy_list
 **/
 typedef enum _LinphoneFriendListStatus {
-	LinphoneFriendListOK, /** Operation went fine */
-	LinphoneFriendListNonExistentFriend, /** #LinphoneFriend wasn't found in the #LinphoneFriendList */
-	LinphoneFriendListInvalidFriend /** #LinphoneFriend is already present in a #LinphoneFriendList */
+	LinphoneFriendListOK, /**< Operation went fine */
+	LinphoneFriendListNonExistentFriend, /**< #LinphoneFriend wasn't found in the #LinphoneFriendList */
+	LinphoneFriendListInvalidFriend /**< #LinphoneFriend is already present in a #LinphoneFriendList */
 } LinphoneFriendListStatus;
 
 /**
@@ -306,9 +305,9 @@ typedef enum _LinphoneFriendListStatus {
  * @ingroup buddy_list
  */
 typedef enum _LinphoneFriendListSyncStatus {
-	LinphoneFriendListSyncStarted, /** Synchronization started */
-	LinphoneFriendListSyncSuccessful, /** Synchronization finished successfuly */
-	LinphoneFriendListSyncFailure /** Synchronization failed */
+	LinphoneFriendListSyncStarted, /**< Synchronization started */
+	LinphoneFriendListSyncSuccessful, /**< Synchronization finished successfuly */
+	LinphoneFriendListSyncFailure /**< Synchronization failed */
 } LinphoneFriendListSyncStatus;
 
 // -----------------------------------------------------------------------------
@@ -389,7 +388,7 @@ typedef enum _LinphoneRegistrationState {
  * @brief Main object to instanciate and on which to keep a reference.
  * 
  * This object is the first object to instanciante, and will allow you to perform all kind of tasks.
- * To create it, use either #linphone_factory_create_core3() or linphone_factory_create_core_with_config_3(),
+ * To create it, use either linphone_factory_create_core_3() or linphone_factory_create_core_with_config_3(),
  * see #LinphoneConfig for more information about factory and default config.
  * On some platforms like Android or iOS you will need to give it the Context of your application.
  * 
@@ -1134,7 +1133,7 @@ typedef enum _LinphoneUpnpState {
 } LinphoneUpnpState;
 
 /**
- * @brief The #LinphoneVcard object.
+ * @brief Object storing contact information using vCard 4.0 format.
  * @ingroup carddav_vcard
  */
 typedef struct _LinphoneVcard LinphoneVcard;
