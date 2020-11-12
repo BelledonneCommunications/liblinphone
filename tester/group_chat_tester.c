@@ -4196,8 +4196,9 @@ static void exhume_one_to_one_chat_room_1(void) {
 
 	if (marieOneToOneCr) {
 		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
-		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000);
-		BC_ASSERT_EQUAL(linphone_chat_room_get_state(paulineOneToOneCr), LinphoneChatRoomStateTerminated, int, "%d");
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+		/* The chatroom from Pauline is expected to terminate as well */
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 
 		bctbx_list_t *participants = linphone_chat_room_get_participants(paulineOneToOneCr);
 		BC_ASSERT_EQUAL(bctbx_list_size(participants), 1, int , "%d");
