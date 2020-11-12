@@ -4431,9 +4431,16 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 		linphone_core_leave_conference(lc);
 		return 0;
 	}
-
+	
 	current_call=linphone_core_get_current_call(lc);
 	if(current_call != NULL){
+		if (L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getCalls().size() == 1){
+			/* 
+			 * The current call is the unique one and is the call that requires the sound ressources. 
+			 * This is the case of receiving an incoming call when there is no other one. It is then set as current_call.
+			 */
+			return 0;
+		}
 		ms_message("Pausing automatically the current call.");
 		err = Call::toCpp(current_call)->pause();
 	}
