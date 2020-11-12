@@ -26,6 +26,7 @@
 #include "conference/conference.h"
 #include "conference/participant-device.h"
 #include "conference/participant.h"
+#include "chat/chat-room/server-group-chat-room-p.h"
 #include "content/content-manager.h"
 #include "content/content-type.h"
 #include "content/content.h"
@@ -136,6 +137,7 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 		shared_ptr<ConferenceNotifiedEvent> notifiedEvent = static_pointer_cast<ConferenceNotifiedEvent>(eventLog);
 		int eventNotifyId = static_cast<int>(notifiedEvent->getNotifyId());
 		conf->setLastNotify(eventNotifyId == -1 ? (conf->getLastNotify()+1) : static_cast<unsigned int>(eventNotifyId));
+
 		switch (eventLog->getType()) {
 			case EventLog::Type::ConferenceParticipantAdded: {
 				shared_ptr<ConferenceParticipantEvent> addedEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
@@ -450,11 +452,14 @@ void LocalConferenceEventHandler::notifyParticipantDevice (const string &notify,
 void LocalConferenceEventHandler::subscribeReceived (LinphoneEvent *lev, bool oneToOne) {
 	const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 	char *addrStr = linphone_address_as_string(lAddr);
-	unsigned int lastNotify = conf->getLastNotify();
-	shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));
+	Address participantAddress(addrStr);
 	bctbx_free(addrStr);
+	unsigned int lastNotify = conf->getLastNotify();
+
+	shared_ptr<Participant> participant = getConferenceParticipant (participantAddress);
 	if (!participant) {
-		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conf->getConferenceAddress() << "], no NOTIFY sent";
+		ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+		lError() << "Received SUBSCRIBE corresponds to no participant of the conference [" << conferenceAddress << "], no NOTIFY sent";
 		linphone_event_deny_subscription(lev, LinphoneReasonDeclined);
 		return;
 	}
@@ -494,7 +499,8 @@ void LocalConferenceEventHandler::subscriptionStateChanged (LinphoneEvent *lev, 
 	if (state == LinphoneSubscriptionTerminated && conf) {
 		const LinphoneAddress *lAddr = linphone_event_get_from(lev);
 		char *addrStr = linphone_address_as_string(lAddr);
-		shared_ptr<Participant> participant = conf->findParticipant(Address(addrStr));
+		Address participantAddress(addrStr);
+		shared_ptr<Participant> participant = getConferenceParticipant (participantAddress);
 		bctbx_free(addrStr);
 		if (!participant)
 			return;
@@ -587,4 +593,26 @@ void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_
 void LocalConferenceEventHandler::onStateChanged (LinphonePrivate::ConferenceInterface::State state) {
 }
 
+shared_ptr<Participant> LocalConferenceEventHandler::getConferenceParticipant (const Address & address) const {
+	shared_ptr<Core> core = conf->getCore();
+	ConferenceAddress conferenceAddress = conf->getConferenceAddress();
+	ConferenceId conferenceId(conferenceAddress, conferenceAddress);
+
+	// Enquire whether this conference belongs to a server group chat room
+	std::shared_ptr<AbstractChatRoom> chatRoom = core->findChatRoom (conferenceId);
+	std::shared_ptr<LinphonePrivate::ServerGroupChatRoom> sgcr = nullptr;
+	if (chatRoom && (chatRoom->getConference().get() == conf)) {
+		sgcr = dynamic_pointer_cast<LinphonePrivate::ServerGroupChatRoom>(chatRoom);
+	}
+
+	shared_ptr<Participant> participant = nullptr;
+	if (sgcr) {
+		// If conference belongs to a server group chat room, then search in the cached participants
+		participant = sgcr->findCachedParticipant(address);
+	} else {
+		participant = conf->findParticipant(address);
+	}
+
+	return participant;
+}
 LINPHONE_END_NAMESPACE

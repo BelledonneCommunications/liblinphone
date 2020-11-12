@@ -38,7 +38,7 @@ public:
 	// TODO: Same idea.
 	ServerGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const IdentityAddress &peerAddress,
+		const ConferenceAddress &peerAddress,
 		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params,
 		const std::string &subject,
@@ -55,8 +55,6 @@ public:
 	bool canHandleCpim () const override;
 	bool canHandleMultipart () const override;
 
-	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
-
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
@@ -70,7 +68,11 @@ public:
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
+	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
+	std::shared_ptr<Participant> findCachedParticipant (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findCachedParticipant (const IdentityAddress &participantAddress) const;
+	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	std::shared_ptr<Participant> getMe () const override;
 	int getParticipantCount () const override;
@@ -93,6 +95,9 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 
 private:
+
+	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that habe been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
+
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
 };

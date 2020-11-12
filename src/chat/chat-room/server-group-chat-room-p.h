@@ -74,12 +74,12 @@ public:
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
 	void removeParticipant (const std::shared_ptr<Participant> &participant);
 
-	std::shared_ptr<Participant> findAuthorizedParticipant (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
-
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
 	// Find the other participant of a 1-1 chatroom.
 	std::shared_ptr<Participant> getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const;
+
+	// Make a search in the list of participants that are currently part of the chat room or in the process of leaving
+	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.
@@ -171,8 +171,6 @@ private:
 					 // This will remove the need for a map in conference server for holding subscriptions.
 	};
 	
-	std::list<std::shared_ptr<Participant>> authorizedParticipants; /*list of participant authorized to send messages to the chatroom.
-					This typically excludes participants that in the process of being removed.*/
 	std::list<IdentityAddress> invitedParticipants; // participants in the process of being added to the chatroom, while for registration information.
 	ChatRoomListener *chatRoomListener = this;
 	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/

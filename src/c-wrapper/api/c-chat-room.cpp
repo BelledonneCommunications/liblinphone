@@ -456,7 +456,6 @@ void linphone_chat_room_set_participant_devices (LinphoneChatRoom *cr, const Lin
 void linphone_chat_room_notify_participant_device_registration(LinphoneChatRoom *cr, const LinphoneAddress *participant_device){
 #ifdef HAVE_ADVANCED_IM
 	char *addrStr = linphone_address_as_string(participant_device);
-	list<LinphonePrivate::IdentityAddress> lIdentAddr;
 	LinphonePrivate::ServerGroupChatRoomPrivate *sgcr = dynamic_cast<LinphonePrivate::ServerGroupChatRoomPrivate *>(L_GET_PRIVATE_FROM_C_OBJECT(cr));
 	if (sgcr)
 		sgcr->notifyParticipantDeviceRegistration(LinphonePrivate::IdentityAddress(addrStr));
