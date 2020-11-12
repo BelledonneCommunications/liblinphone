@@ -71,7 +71,7 @@ static void call_multicast_with_user_defined_rtp_ports(void)  {
 }
 
 static void call_multicast_with_os_defined_rtp_ports(void)  {
-	call_multicast_base("marie_os_defined_rtp_port_rc", "pauline_os_defined_rtp_port_rc", FALSE);
+	call_multicast_base("marie_os_defined_rtp_ports_rc", "pauline_os_defined_rtp_ports_rc", FALSE);
 }
 
 static void multicast_audio_with_pause_resume(void) {
