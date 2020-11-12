@@ -1207,8 +1207,26 @@ shared_ptr<Core> ServerGroupChatRoom::getCore () const {
 	return ChatRoom::getCore();
 }
 
+
 shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const shared_ptr<const CallSession> &session) const {
-	return getConference()->findParticipant(session);
+	L_D();
+	for (const auto &participant : d->authorizedParticipants) {
+		shared_ptr<ParticipantDevice> device = participant->findDevice(session);
+		if (device || (participant->getSession() == session))
+			return participant;
+	}
+	return nullptr;
+}
+
+shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
+	L_D();
+	IdentityAddress searchedAddr(participantAddress);
+	searchedAddr.setGruu("");
+	for (const auto &participant : d->authorizedParticipants) {
+		if (participant->getAddress() == searchedAddr)
+			return participant;
+	}
+	return nullptr;
 }
 
 ServerGroupChatRoom::CapabilitiesMask ServerGroupChatRoom::getCapabilities () const {
@@ -1267,10 +1285,6 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddr
 		d->subscribeRegistrationForParticipants(participantsList, true);
 	}
 	return true;
-}
-
-shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
-	return getConference()->findParticipant(participantAddress);
 }
 
 const ConferenceAddress ServerGroupChatRoom::getConferenceAddress () const {
