@@ -4204,12 +4204,16 @@ static void exhume_one_to_one_chat_room_1(void) {
 		BC_ASSERT_EQUAL(bctbx_list_size(participants), 1, int , "%d");
 		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 
-		linphone_chat_room_compose(paulineOneToOneCr);
+		//linphone_chat_room_compose(paulineOneToOneCr);
+		LinphoneChatMessage *exhume_message = linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "Lich king !");
+		linphone_chat_message_send(exhume_message);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateExhumePending, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
-
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 5000));
+		//BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
+		linphone_chat_message_unref(exhume_message);
 
 		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
@@ -4276,8 +4280,13 @@ static void exhume_one_to_one_chat_room_2(void) {
 			paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, exhumedConfAddr, "one to one", 1, FALSE);
 			BC_ASSERT_PTR_NOT_NULL(paulineOneToOneCr);
 
-			linphone_chat_room_compose(marieOneToOneCr);
-			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
+			//linphone_chat_room_compose(marieOneToOneCr);
+			LinphoneChatMessage *exhume_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "Lich king 2 !");
+			linphone_chat_message_send(exhume_message);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+			linphone_chat_message_unref(exhume_message);
+			//BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, 1, 5000));
 		}
 	}
 
