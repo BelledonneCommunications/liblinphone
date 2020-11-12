@@ -89,12 +89,12 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::addParticipant (const Identi
 	shared_ptr<Participant> participant = q->findParticipant(addr);
 	if (!participant) {
 		participant = Participant::create(q->getConference().get(),addr);
-		q->getConference()->participants.push_back(participant);
+		authorizedParticipants.push_back(participant);
 	}
 	/* Case of participant that is still referenced in the chatroom, but no longer authorized because it has been removed
 	 * previously OR a totally new participant. */
 	if (findAuthorizedParticipant(addr) == nullptr){
-		authorizedParticipants.push_back(participant);
+		q->getConference()->participants.push_back(participant);
 		shared_ptr<ConferenceParticipantEvent> event = q->getConference()->notifyParticipantAdded(time(nullptr), false, participant);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 	}
@@ -361,10 +361,10 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 		updateParticipantDeviceSession(device);
 	}
 
-	for (const auto &p : authorizedParticipants) {
+	for (const auto &p : q->getParticipants()) {
 		if (participant->getAddress() == p->getAddress()) {
 			lInfo() << q <<" 'participant ' "<< p->getAddress() <<" no more authorized'";
-			authorizedParticipants.remove(p);
+			q->getConference()->removeParticipant(p);
 			break;
 		}
 	}
@@ -379,7 +379,8 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 }
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (const shared_ptr<const CallSession> &session) const {
-	for (const auto &participant : authorizedParticipants) {
+	L_Q();
+	for (const auto &participant : q->getParticipants()) {
 		shared_ptr<ParticipantDevice> device = participant->findDevice(session);
 		if (device || (participant->getSession() == session))
 			return participant;
@@ -388,9 +389,10 @@ shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (c
 }
 
 shared_ptr<Participant> ServerGroupChatRoomPrivate::findAuthorizedParticipant (const IdentityAddress &participantAddress) const {
+	L_Q();
 	IdentityAddress searchedAddr(participantAddress);
 	searchedAddr.setGruu("");
-	for (const auto &participant : authorizedParticipants) {
+	for (const auto &participant : q->getParticipants()) {
 		if (participant->getAddress() == searchedAddr)
 			return participant;
 	}
@@ -720,8 +722,8 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 void ServerGroupChatRoomPrivate::designateAdmin () {
 	L_Q();
 	// Do not designate new admin for one-to-one chat room
-	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && !authorizedParticipants.empty()) {
-		q->setParticipantAdminStatus(authorizedParticipants.front(), true);
+	if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && !q->getParticipants().empty()) {
+		q->setParticipantAdminStatus(q->getConference()->participants.front(), true);
 		lInfo() << q << ": New admin designated";
 	}
 }
@@ -825,7 +827,7 @@ void ServerGroupChatRoomPrivate::inviteDevice (const shared_ptr<ParticipantDevic
 	}
 
 	list<IdentityAddress> addressesList;
-	for (const auto &invitedParticipant : authorizedParticipants) {
+	for (const auto &invitedParticipant : q->getParticipants()) {
 		if (invitedParticipant != participant)
 			addressesList.push_back(invitedParticipant->getAddress());
 	}
@@ -883,7 +885,8 @@ void ServerGroupChatRoomPrivate::notifyParticipantDeviceRegistration(const Ident
 }
 
 bool ServerGroupChatRoomPrivate::isAdminLeft () const {
-	for (const auto &participant : authorizedParticipants) {
+	L_Q();
+	for (const auto &participant : q->getParticipants()) {
 		if (participant->isAdmin())
 			return true;
 	}
@@ -1112,7 +1115,8 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
-	getConference()->participants = move(participants);
+	L_D();
+	d->authorizedParticipants = move(participants);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
 	getConference()->confParams->setConferenceAddress(peerAddress);
@@ -1216,8 +1220,7 @@ int ServerGroupChatRoom::getParticipantCount () const {
 }
 
 const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () const {
-	L_D();
-	return d->authorizedParticipants;
+	return getConference()->getParticipants();
 }
 
 const string &ServerGroupChatRoom::getSubject () const {
@@ -1274,12 +1277,12 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 		// Handle transitional states (joining and leaving of participants)
 		// This is needed when the chat room is loaded from its state in database
 		list<IdentityAddress> participantAddresses;
-		for (const auto &participant : getConference()->getParticipants()) {
+		for (const auto &participant : d->authorizedParticipants) {
 			participantAddresses.emplace_back(participant->getAddress());
 
 			if (d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne){
 				// Even if devices can BYE and get rid of their session, actually no one can leave a one to one chatroom.
-				d->authorizedParticipants.push_back(participant);
+				getConference()->participants.push_back(participant);
 			}else{
 				bool atLeastOneDeviceJoining = false;
 				bool atLeastOneDevicePresent = false;
@@ -1305,7 +1308,7 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 				//its devices were "BYEed" yet. This is what the line below is testing. Might be better to add a new state in the participant Class,
 				// but it's not the case yet.
 				if (atLeastOneDevicePresent || atLeastOneDeviceJoining || atLeastOneDeviceLeaving == false ){
-					d->authorizedParticipants.push_back(participant);
+					getConference()->participants.push_back(participant);
 				}
 			}
 		}
