@@ -207,7 +207,7 @@ LINPHONE_PUBLIC LinphoneCallLog * linphone_call_log_ref(LinphoneCallLog *call_lo
 LINPHONE_PUBLIC void linphone_call_log_unref(LinphoneCallLog *call_log);
 
 /**
- * Creates a fake LinphoneCallLog.
+ * Creates a fake #LinphoneCallLog.
  * @param core #LinphoneCore object @notnil
  * @param from #LinphoneAddress of caller @notnil
  * @param to #LinphoneAddress of callee @notnil

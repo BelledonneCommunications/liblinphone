@@ -499,10 +499,15 @@ class Translator:
 		while len(line) > width:
 			cutIndex = line.rfind(' ', 0, width)
 			if cutIndex != -1:
+				if self.langCode == 'Java':
+					# Do not break a line in the middle of a { }
+					while (not line[0:cutIndex].count('{') == line[0:cutIndex].count('}')) and (not line[cutIndex:].count('{') == line[cutIndex:].count('}')):
+						cutIndex += 1
 				lines.append(line[0:cutIndex])
 				line = line[cutIndex+1:]
 			else:
-				cutIndex = width
+				# Don't break http links
+				cutIndex = len(line) if ('http://' or 'https://') in line else width
 				lines.append(line[0:cutIndex])
 				line = line[cutIndex:]
 		lines.append(line)
@@ -557,17 +562,17 @@ class JavaDocTranslator(DoxygenTranslator):
 		pass
 
 	def translate_class_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
+		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Interface)):
 			raise ReferenceTranslationError(ref.cname)
 		return '{@link ' + Translator.translate_reference(self, ref) + '}'
 	
 	def _translate_section(self, section):
 		if section.kind == 'see':
-			return 'See also: {0}'.format(self._translate_paragraph(section.paragraph))
+			return 'see: {0}'.format(self._translate_paragraph(section.paragraph))
 		if section.kind == 'note':
-			return 'Note: {0}'.format(self._translate_paragraph(section.paragraph))
+			return 'note: {0}'.format(self._translate_paragraph(section.paragraph))
 		if section.kind == 'warning':
-			return 'Warning: {0}'.format(self._translate_paragraph(section.paragraph))
+			return 'warning: {0}'.format(self._translate_paragraph(section.paragraph))
 			
 		return '@{0} {1}'.format(
 			section.kind,
@@ -581,6 +586,15 @@ class JavaDocTranslator(DoxygenTranslator):
 		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
 		methodName = ref.relatedObject.name.translate(self.nameTranslator)
 		return '{@link ' + className + '#' + methodName + '}'
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('@param {0} {1}\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
 
 
 class SwiftDocTranslator(JavaDocTranslator):
