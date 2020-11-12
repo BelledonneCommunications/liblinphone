@@ -4806,7 +4806,7 @@ static void group_chat_room_subscription_denied (void) {
 	BC_ASSERT_PTR_NOT_NULL(paulineParticipant);
 	linphone_chat_room_remove_participant(marieCr, paulineParticipant);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_participants_removed, initialMarieStats.number_of_participants_removed + 1, 5000));
-	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_participants_removed, initialLaureStats.number_of_participants_removed + 1, 5000));
 
 	// Reconnect pauline
 	linphone_core_set_network_reachable(pauline->lc, TRUE);

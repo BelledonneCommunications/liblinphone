@@ -142,6 +142,8 @@ private:
 	void notifyParticipant (const std::string &notify, const std::shared_ptr<Participant> &participant);
 	void notifyParticipantDevice (const std::string &notify, const std::shared_ptr<ParticipantDevice> &device, bool multipart = false);
 
+	std::shared_ptr<Participant> getConferenceParticipant (const Address & address) const;
+
 	L_DISABLE_COPY(LocalConferenceEventHandler);
 };
 

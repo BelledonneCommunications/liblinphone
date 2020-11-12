@@ -409,6 +409,7 @@ void CorePrivate::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom) 
 	if (it == chatRoomsById.end()) {
 		// Remove chat room from workaround cache.
 		noCreatedClientGroupChatRooms.erase(chatRoom.get());
+		lInfo() << "Insert chat room " << conferenceId << " to core map";
 		chatRoomsById[conferenceId] = chatRoom;
 	}
 }
