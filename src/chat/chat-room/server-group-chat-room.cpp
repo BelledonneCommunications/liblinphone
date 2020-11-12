@@ -224,7 +224,7 @@ void ServerGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			op->decline(SalReasonDeclined, "");
 			return;
 		}
-		// One to one chatroom can be resurected by a participant, but the participant actually never leaves from server's standpoint.
+		// In protocol < 1.1, one to one chatroom can be resurected by a participant, but the participant actually never leaves from server's standpoint.
 		if (!(capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && op->getRemoteBody().getContentType() == ContentType::ResourceLists){
 			lError() << q << "Receiving ressource list body while not in creation step.";
 			op->decline(SalReasonNotAcceptable);
@@ -317,6 +317,7 @@ void ServerGroupChatRoomPrivate::dispatchQueuedMessages () {
 
 			if (!msgQueue.empty()){
 				if ( (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && device->getState() == ParticipantDevice::State::Left){
+					// Happens only with protocol < 1.1
 					lInfo() << "There is a message to transmit to a participant in left state in a one to one chatroom, so inviting first.";
 					inviteDevice(device);
 					continue;
@@ -597,6 +598,8 @@ void ServerGroupChatRoomPrivate::conclude(){
 		acceptSession(session);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
+			// This is necessary for protocol version < 1.1, and for backward compatibility in case these prior versions 
+			// are subsequently used by device that gets joined to the chatroom.
 			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis(),
 				!!(capabilities & ServerGroupChatRoom::Capabilities::Encrypted) );
 		}
@@ -692,7 +695,7 @@ void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Particip
 		shared_ptr<ConferenceParticipantDeviceEvent> event = q->getConference()->notifyParticipantDeviceAdded(time(nullptr), false, participant, device);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 
-		if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne && allDevLeft){
+		if (protocolVersion < Utils::Version(1, 1) && (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && allDevLeft){
 			/* If all other devices have left, let this new device to left state too, it will be invited to join if a message is sent to it. */
 			setParticipantDeviceState(device, ParticipantDevice::State::Left);
 		}else{
@@ -942,7 +945,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 
 	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
 
-	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) ){
+	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) || protocolVersion >= Utils::Version(1, 1)){
 		shared_ptr<Participant> participant = const_pointer_cast<Participant>(device->getParticipant()->getSharedFromThis());
 		if (allDevicesLeft(participant) && findAuthorizedParticipant(participant->getAddress()) == nullptr) {
 			lInfo() << q << ": Participant '" << participant->getAddress().asString() << "'removed and last device left, unsubscribing";
@@ -992,6 +995,57 @@ void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 	q->deleteFromDb();
 }
 
+std::shared_ptr<Participant> ServerGroupChatRoomPrivate::getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const{
+	L_Q();
+	std::shared_ptr<Participant> otherParticipant;
+	bool looksSane = false;
+	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne ){
+		for (auto & p : q->getParticipants()){
+			if (p == someParticipant) looksSane = true;
+			else otherParticipant = p;
+		}
+		/* Yes I'm paranoid.*/
+		if (!looksSane){
+			lError() << "getOtherParticipant() reference participant not found !";
+		}else if (!otherParticipant){
+			lError() << "getOtherParticipant() other participant not found !";
+		}
+	}else lError() << "getOtherParticipant() used for not a 1-1 chatroom.";
+	return otherParticipant;
+}
+
+void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &participantLeaving){
+	L_Q();
+	bool shouldRemoveParticipant = true;
+	
+	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne ){
+		if (protocolVersion < Utils::Version(1, 1)){
+			/* 
+			* In protocol 1.0, unlike normal group chatrooms, a participant can never leave a one to one chatroom.
+			* The receiving of BYE is instead interpreted as a termination of the SIP session specific for the device.
+			*/
+			shouldRemoveParticipant = false;
+		}else{
+			/* 
+			* In subsequent protocol versions, both participants of a one to one chatroom are removed,
+			* which terminates the chatroom forever.
+			*/
+			lInfo() << "1-1 chatroom was left by one participant, removing other participant to terminate the chatroom";
+			auto otherParticipant = getOtherParticipant(participantLeaving->getParticipant()->getSharedFromThis());
+			if (otherParticipant) q->removeParticipant(otherParticipant);
+		}
+	}
+	if (shouldRemoveParticipant){
+		// Participant leaves the chat room on its own by sending a BYE.
+		// Set it the Leaving state first, so that q->removeParticipant() does nothing with it (does not attempt to send a BYE...).
+		setParticipantDeviceState(participantLeaving, ParticipantDevice::State::Leaving);
+		// Remove participant will change other devices to Leaving state.
+		q->removeParticipant(participantLeaving->getParticipant()->getSharedFromThis());
+		// But since we received its BYE, it is actually already left.
+	}
+	setParticipantDeviceState(participantLeaving, ParticipantDevice::State::Left);
+}
+
 // -----------------------------------------------------------------------------
 
 void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
@@ -1008,20 +1062,8 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 		break;
 		case CallSession::State::End:
 			if (device->getState() == ParticipantDevice::State::Present){
-				lInfo() << q << device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
-				/* Unlike normal group chatrooms, a participant can never leave a one to one chatroom.
-				 * In real life you cannot prevent someone to send you a message.
-				 * The receiving of BYE is then interpreted as a termination of the SIP session specific for the device.
-				 */
-				if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) ){
-					// Participant leaves the chat room on its own by sending a BYE.
-					// Set it the Leaving state first, so that q->removeParticipant() does nothing with it.
-					setParticipantDeviceState(device, ParticipantDevice::State::Leaving);
-					// Remove participant will change other devices to Leaving state.
-					q->removeParticipant(device->getParticipant()->getSharedFromThis());
-					// But since we received its BYE, it is actually already left.
-				}
-				setParticipantDeviceState(device, ParticipantDevice::State::Left);
+				lInfo() << q << ": "<< device->getParticipant()->getAddress().asString() << " is leaving the chatroom.";
+				onBye(device);
 			}
 		break;
 		case CallSession::State::Released:
@@ -1087,6 +1129,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
+	d->protocolVersion = Utils::Version(1, 1);
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
@@ -1098,6 +1141,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
+	L_D();
 	getConference()->participants = move(participants);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));
@@ -1105,6 +1149,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	getConference()->confParams->setSubject(subject);
 	getConference()->confParams->enableChat(true);
 	getCore()->getPrivate()->localListEventHandler->addHandler(static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
+	d->protocolVersion = Utils::Version(1, 1);
 }
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {
@@ -1264,7 +1309,13 @@ void ServerGroupChatRoom::setState (ConferenceInterface::State state) {
 			participantAddresses.emplace_back(participant->getAddress());
 
 			if (d->capabilities & ServerGroupChatRoom::Capabilities::OneToOne){
-				// Even if devices can BYE and get rid of their session, actually no one can leave a one to one chatroom.
+				/**
+				 * With protocol < 1.1, even if devices can BYE and get rid of their session, actually no one can leave a one to one chatroom.
+				 * With protocol >= 1.1, two states are possible: both have Present/Joining/ScheduledForJoining devices
+				 * OR both have Left/Leaving/ScheduledForLeaving devices.
+				 * Since we don't have the protocol version at this stage (it will be known after receiving register information),
+				 * it is not a problem to push the two participants in the authorized list even if they are in the process of leaving.
+				 */
 				d->authorizedParticipants.push_back(participant);
 			}else{
 				bool atLeastOneDeviceJoining = false;

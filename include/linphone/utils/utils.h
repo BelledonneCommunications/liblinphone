@@ -154,6 +154,35 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string utf8ToLocale (const std::string &str);
 	LINPHONE_PUBLIC std::string convertAnyToUtf8 (const std::string &str, const std::string &encoding);
 	LINPHONE_PUBLIC std::string quotePathIfNeeded(const std::string &str);
+	
+	
+	
+	LINPHONE_PUBLIC class Version{
+		public:
+			LINPHONE_PUBLIC Version() = default;
+			LINPHONE_PUBLIC Version(int major, int minor);
+			LINPHONE_PUBLIC Version(int major, int minor, int patch);
+			LINPHONE_PUBLIC Version(const std::string &version);
+			
+			LINPHONE_PUBLIC int compare(const Version &other) const;
+			LINPHONE_PUBLIC inline bool operator<(const Version &other)const{
+				return compare(other) < 0;
+			}
+			LINPHONE_PUBLIC inline bool operator<=(const Version &other)const{
+				return compare(other) <= 0;
+			}
+			LINPHONE_PUBLIC inline bool operator>(const Version &other)const{
+				return compare(other) > 0;
+			}
+			LINPHONE_PUBLIC inline bool operator>=(const Version &other)const{
+				return compare(other) >= 0;
+			}
+			LINPHONE_PUBLIC inline bool operator==(const Version &other)const{
+				return compare(other) == 0;
+			}
+		private:
+			int mMajor = 0, mMinor = 0, mPatch = 0;
+	};
 }
 
 LINPHONE_END_NAMESPACE

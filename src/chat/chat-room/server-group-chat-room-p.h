@@ -32,6 +32,8 @@
 #include "object/clonable-object.h"
 #include "object/clonable-object-p.h"
 
+#include "linphone/utils/utils.h"
+
 // =============================================================================
 
 LINPHONE_BEGIN_NAMESPACE
@@ -71,6 +73,8 @@ public:
 	std::shared_ptr<Participant> findAuthorizedParticipant (const IdentityAddress &participantAddress) const;
 
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
+	// Find the other participant of a 1-1 chatroom.
+	std::shared_ptr<Participant> getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const;
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.
@@ -140,6 +144,7 @@ private:
 	void removeParticipantDevice (const std::shared_ptr<Participant> &participant, const IdentityAddress &deviceAddress);
 
 	void onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device);
+	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
@@ -168,7 +173,7 @@ private:
 	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	bool joiningPendingAfterCreation = false;
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;
-
+	Utils::Version protocolVersion;
 	L_DECLARE_PUBLIC(ServerGroupChatRoom);
 };
 
