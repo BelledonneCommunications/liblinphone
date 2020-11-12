@@ -74,7 +74,7 @@ void ChatRoomPrivate::sendIsComposingNotification () {
 		return;
 
 	auto isComposingMsg = createIsComposingMessage();
-	isComposingMsg->getPrivate()->send();
+	isComposingMsg->send();
 }
 
 // -----------------------------------------------------------------------------
