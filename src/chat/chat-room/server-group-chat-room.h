@@ -55,8 +55,6 @@ public:
 	bool canHandleCpim () const override;
 	bool canHandleMultipart () const override;
 
-	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
-
 	CapabilitiesMask getCapabilities () const override;
 	bool hasBeenLeft () const override;
 
@@ -70,6 +68,7 @@ public:
 
 	bool removeParticipant (const std::shared_ptr<Participant> &participant) override;
 
+	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
 
 	std::shared_ptr<Participant> getMe () const override;
