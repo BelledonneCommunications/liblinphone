@@ -183,25 +183,31 @@ list<string> IfAddrs::fetchLocalAddresses(){
 #endif
 #endif
 	/*
-	 * Finally if none of the above methods worked, fallback with linphone_core_get_local_ip() that uses the
-	 * socket/connect/getsockname method to get the local ip address that has the route to public internet.
+	 * Finally ensure that addresses provided by linphone_core_get_local_ip(), that uses the
+	 * socket/connect/getsockname method to get the local ip address that has the route to public internet,
+	 * are also added to the list, which may not be the case if the system has dozens of IPv6 addresses per interface.
+	 * In this case it is hard to guess the one that will be used, but the address returned by this raw method
+	 * has a good probability to be the good one.
 	 */
-	if (ret.empty()){
-		lInfo() << "Fetching local ip addresses using the connect() method.";
-		char localAddr[LINPHONE_IPADDR_SIZE];
-		
-		if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
+	lInfo() << "Fetching local ip addresses using the connect() method.";
+	char localAddr[LINPHONE_IPADDR_SIZE];
+	
+	if (linphone_core_get_local_ip_for(AF_INET6, nullptr, localAddr) == 0) {
+		if (find(ret.begin(), ret.end(), localAddr) == ret.end()){
 			ret.push_back(localAddr);
-		}else{
-			lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv6";
 		}
-		
-		if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0){
-			ret.push_back(localAddr);
-		}else{
-			lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv4";
-		}
+	}else{
+		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv6";
 	}
+	
+	if (linphone_core_get_local_ip_for(AF_INET, nullptr, localAddr) == 0){
+		if (find(ret.begin(), ret.end(), localAddr) == ret.end()){
+			ret.push_back(localAddr);
+		}
+	}else{
+		lInfo() << "IceService::fetchLocalAddresses(): Fail to get default IPv4";
+	}
+
 	return ret;
 }
 
