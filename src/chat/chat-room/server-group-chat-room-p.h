@@ -81,6 +81,9 @@ public:
 	// Find the other participant of a 1-1 chatroom.
 	std::shared_ptr<Participant> getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const;
 
+	// Make a search in the list of participants that are currently part of the chat room or in the process of leaving
+	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
+
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.
 	void confirmCreation ();
