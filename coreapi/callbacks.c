@@ -937,7 +937,7 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 								return;
 							}
 						} else {
-							participant = L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->findAuthorizedParticipant(addr);
+							participant = static_pointer_cast<ServerGroupChatRoom>(chatRoom)->findParticipant(addr);
 							if (!participant) {
 								bool ret = static_pointer_cast<ServerGroupChatRoom>(chatRoom)->addParticipant(
 									IdentityAddress(addr));
