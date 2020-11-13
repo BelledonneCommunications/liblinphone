@@ -1003,7 +1003,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 	
 	/* if all devices of participants are left we'll delete the chatroom*/
 	bool allLeft = true;
-	for (const auto &participant : q->getConference()->getParticipants()){
+	for (const auto &participant : cachedParticipants){
 		if (!allDevicesLeft(participant)){
 			allLeft = false;
 			break;
@@ -1292,7 +1292,8 @@ shared_ptr<Participant> ServerGroupChatRoom::getMe () const {
 }
 
 int ServerGroupChatRoom::getParticipantCount () const {
-	return getConference()->getParticipantCount();
+	L_D();
+	return (int)d->cachedParticipants.size();
 }
 
 const list<shared_ptr<Participant>> &ServerGroupChatRoom::getParticipants () const {
