@@ -253,10 +253,7 @@ const char *linphone_payload_type_get_recv_fmtp(const LinphonePayloadType *pt) {
 void linphone_payload_type_set_recv_fmtp(LinphonePayloadType *pt, const char *recv_fmtp) {
 	if (pt->pt->recv_fmtp != NULL) bctbx_free(pt->pt->recv_fmtp);
 	if (recv_fmtp != NULL) pt->pt->recv_fmtp = bctbx_strdup(recv_fmtp);
-	else {
-		pt->pt->recv_fmtp = NULL;
-		recv_fmtp = NULL;
-	}
+	else pt->pt->recv_fmtp = NULL;
 }
 
 const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *pt) {
@@ -266,10 +263,7 @@ const char *linphone_payload_type_get_send_fmtp(const LinphonePayloadType *pt) {
 void linphone_payload_type_set_send_fmtp(LinphonePayloadType *pt, const char *send_fmtp) {
 	if (pt->pt->send_fmtp != NULL) bctbx_free(pt->pt->send_fmtp);
 	if (send_fmtp != NULL) pt->pt->send_fmtp = bctbx_strdup(send_fmtp);
-	else {
-		pt->pt->send_fmtp = NULL;
-		send_fmtp = NULL;
-	}
+	else pt->pt->send_fmtp = NULL;
 }
 
 int linphone_payload_type_get_clock_rate(const LinphonePayloadType *pt) {
