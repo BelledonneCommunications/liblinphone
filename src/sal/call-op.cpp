@@ -115,7 +115,7 @@ const list<Content>& SalCallOp::getAdditionalRemoteBodies () const {
 
 belle_sip_header_allow_t *SalCallOp::createAllow (bool enableUpdate) {
 	ostringstream oss;
-	oss << "INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO";
+	oss << "INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, NOTIFY, MESSAGE, SUBSCRIBE, INFO, PRACK";
 	if (enableUpdate)
 		oss << ", UPDATE";
 	return belle_sip_header_allow_create(oss.str().c_str());
