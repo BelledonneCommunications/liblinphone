@@ -72,6 +72,7 @@ public:
 	std::shared_ptr<Participant> findCachedParticipant (const IdentityAddress &participantAddress) const;
 
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
+	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 	// we go here when receiving the first INVITE, the one that will redirect to newly allocated conference URI.

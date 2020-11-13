@@ -1012,7 +1012,7 @@ void ServerGroupChatRoomPrivate::onChatRoomDeleteRequested (const shared_ptr<Abs
 
 void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<CallSession> &session, CallSession::State newState, const string &message) {
 	L_Q();
-	auto device = q->getConference()->findParticipantDevice(session);
+	auto device = findCachedParticipantDevice(session);
 	if (!device) {
 		lInfo() << q << "onCallSessionStateChanged on unknown device (maybe not yet).";
 		return;
@@ -1066,9 +1066,20 @@ void ServerGroupChatRoomPrivate::onCallSessionStateChanged (const shared_ptr<Cal
 	}
 }
 
+shared_ptr<ParticipantDevice> ServerGroupChatRoomPrivate::findCachedParticipantDevice (const shared_ptr<const CallSession> &session) const {
+
+	for (const auto &participant : cachedParticipants) {
+		for (const auto &device : participant->getDevices()) {
+			if (device->getSession() == session)
+				return device;
+		}
+	}
+
+	return nullptr;
+}
+
 void ServerGroupChatRoomPrivate::onCallSessionSetReleased (const shared_ptr<CallSession> &session) {
-	L_Q();
-	shared_ptr<ParticipantDevice> device = q->getConference()->findParticipantDevice(session);
+	shared_ptr<ParticipantDevice> device = findCachedParticipantDevice(session);
 	if (device)
 		device->setSession(nullptr);
 }
