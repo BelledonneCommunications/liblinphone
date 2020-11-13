@@ -35,6 +35,7 @@
 #include "if-addrs.h"
 
 #include <set>
+#include <algorithm>
 
 using namespace std;
 
