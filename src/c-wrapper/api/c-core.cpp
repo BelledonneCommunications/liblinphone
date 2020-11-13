@@ -224,3 +224,7 @@ const LinphoneAudioDevice* linphone_core_get_default_output_audio_device(const L
 	}
 	return NULL;
 }
+
+VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
+	return lc->previewstream;
+}

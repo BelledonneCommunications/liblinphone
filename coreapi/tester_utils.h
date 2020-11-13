@@ -90,6 +90,7 @@ LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config
 LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddress *b);
 
 LINPHONE_PUBLIC MediaStream * linphone_call_get_stream(LinphoneCall *call, LinphoneStreamType type);
+LINPHONE_PUBLIC VideoStream * linphone_core_get_preview_stream(LinphoneCore *call);
 LINPHONE_PUBLIC bool_t linphone_call_get_all_muted(const LinphoneCall *call);
 LINPHONE_PUBLIC LinphoneProxyConfig * linphone_call_get_dest_proxy(const LinphoneCall *call);
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_audio_starts (const LinphoneCall *call);
