@@ -123,15 +123,23 @@ void CorePrivate::init () {
 		} else lWarning() << "Database explicitely not requested, this Core is built with no database support.";
 
 		if (lc->logs_db_file == NULL) {
-			string calHistoryDbPath = q->getDataPath() + LINPHONE_CALL_HISTORY_DB;
-			lInfo() << "Using [" << calHistoryDbPath << "] as default call history database path";
-			linphone_core_set_call_logs_database_path(lc, calHistoryDbPath.c_str());
+			string calHistoryDbPath = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "call_logs_db_uri", nullptr));
+			if (calHistoryDbPath.empty())
+				calHistoryDbPath = q->getDataPath() + LINPHONE_CALL_HISTORY_DB;
+			if (calHistoryDbPath != "null") {
+				lInfo() << "Using [" << calHistoryDbPath << "] as default call history database path";
+				linphone_core_set_call_logs_database_path(lc, calHistoryDbPath.c_str());
+			} else lWarning() << "Call logs database explicitely not requested";
 		}
 
 		if (lc->zrtp_secrets_cache == NULL) {
-			string zrtpSecretsDbPath = q->getDataPath() + LINPHONE_ZRTP_SECRETS_DB;
-			lInfo() << "Using [" << zrtpSecretsDbPath << "] as default zrtp secrets database path";
-			linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
+			string zrtpSecretsDbPath = L_C_TO_STRING(linphone_config_get_string(linphone_core_get_config(lc), "storage", "zrtp_secrets_db_uri", nullptr));
+			if (zrtpSecretsDbPath.empty())
+				zrtpSecretsDbPath = q->getDataPath() + LINPHONE_ZRTP_SECRETS_DB;
+			if (zrtpSecretsDbPath != "null") {
+				lInfo() << "Using [" << zrtpSecretsDbPath << "] as default zrtp secrets database path";
+				linphone_core_set_zrtp_secrets_file(lc, zrtpSecretsDbPath.c_str());
+			} else lWarning() << "ZRTP secrets database explicitely not requested";
 		}
 	}
 

@@ -48,4 +48,5 @@ stun_server=stun.example.org
 #this will explicitely request to not use database. We need this for a few tests where multiple cores are instanciated, so that they don't 
 #try to connect to the same default sqlite3 database.
 uri=null
-
+call_logs_db_uri=null
+zrtp_secrets_db_uri=null
