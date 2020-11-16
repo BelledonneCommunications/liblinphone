@@ -70,6 +70,9 @@ public:
 
 	std::shared_ptr<Participant> findParticipant (const std::shared_ptr<const CallSession> &session) const;
 	std::shared_ptr<Participant> findParticipant (const IdentityAddress &participantAddress) const override;
+	std::shared_ptr<Participant> findCachedParticipant (const std::shared_ptr<const CallSession> &session) const;
+	std::shared_ptr<Participant> findCachedParticipant (const IdentityAddress &participantAddress) const;
+	std::shared_ptr<ParticipantDevice> findCachedParticipantDevice (const std::shared_ptr<const CallSession> &session) const;
 
 	std::shared_ptr<Participant> getMe () const override;
 	int getParticipantCount () const override;
@@ -92,6 +95,9 @@ public:
 	void subscribeReceived (LinphoneEvent *event);
 
 private:
+
+	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that habe been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
+
 	L_DECLARE_PRIVATE(ServerGroupChatRoom);
 	L_DISABLE_COPY(ServerGroupChatRoom);
 };

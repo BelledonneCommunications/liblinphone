@@ -74,9 +74,6 @@ public:
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
 	void removeParticipant (const std::shared_ptr<Participant> &participant);
 
-	std::shared_ptr<Participant> findCachedParticipant (const std::shared_ptr<const CallSession> &session) const;
-	std::shared_ptr<Participant> findCachedParticipant (const IdentityAddress &participantAddress) const;
-
 	void setParticipantDeviceState (const std::shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state);
 	// Find the other participant of a 1-1 chatroom.
 	std::shared_ptr<Participant> getOtherParticipant(const std::shared_ptr<Participant> someParticipant) const;
@@ -174,7 +171,6 @@ private:
 					 // This will remove the need for a map in conference server for holding subscriptions.
 	};
 	
-	std::list<std::shared_ptr<Participant>> cachedParticipants; /*list of participant that habe been added to the chat room. It includes participants that are currently active in the chat room as well as past participants.*/
 	std::list<IdentityAddress> invitedParticipants; // participants in the process of being added to the chatroom, while for registration information.
 	ChatRoomListener *chatRoomListener = this;
 	std::map<std::string, RegistrationSubscriptionContext> registrationSubscriptions; /*map of registrationSubscriptions for each participant*/
