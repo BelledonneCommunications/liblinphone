@@ -83,10 +83,23 @@ static void version_comparisons(void){
 	BC_ASSERT_TRUE(Version(1, 1) < Version(1, 4));
 }
 
+static void parse_capabilities(void){
+	auto caps = Utils::parseCapabilityDescriptor("groupchat,lime,ephemeral");
+	BC_ASSERT_TRUE(caps.find("groupchat") != caps.end());
+	BC_ASSERT_TRUE(caps.find("lime") != caps.end());
+	BC_ASSERT_TRUE(caps.find("ephemeral") != caps.end());
+	
+	caps = Utils::parseCapabilityDescriptor("groupchat/1.3,lime/1.1,ephemeral");
+	BC_ASSERT_TRUE(caps["lime"] == Version(1, 1));
+	BC_ASSERT_TRUE(caps["groupchat"] == Version(1, 3));
+	BC_ASSERT_TRUE(caps["ephemeral"] == Version(1, 0));
+}
+
 test_t utils_tests[] = {
 	TEST_NO_TAG("split", split),
 	TEST_NO_TAG("trim", trim),
-	TEST_NO_TAG("Version comparisons", version_comparisons)
+	TEST_NO_TAG("Version comparisons", version_comparisons),
+	TEST_NO_TAG("Parse capabilities", parse_capabilities)
 };
 
 test_suite_t utils_test_suite = {

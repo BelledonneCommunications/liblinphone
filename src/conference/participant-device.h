@@ -79,11 +79,15 @@ public:
 	bool isInConference () const;
 
 	time_t getTimeOfJoining() const;
-
+	void setCapabilityDescriptor(const std::string &capabilities);
+	const std::string & getCapabilityDescriptor()const{
+		return mCapabilityDescriptor;
+	}
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
 	std::string mName;
+	std::string mCapabilityDescriptor;
 	std::shared_ptr<CallSession> mSession;
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;

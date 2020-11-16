@@ -580,6 +580,14 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 	// Remove all devices that are no longer existing.
 	for (auto &device : devicesToRemove)
 		removeParticipantDevice(participant, device->getAddress());
+	
+	if (protocolVersion < CorePrivate::groupChatProtocolVersion){
+		/* we need to recheck in case some devices have upgraded. */
+		determineProtocolVersion();
+		if (protocolVersion == CorePrivate::groupChatProtocolVersion){
+			lInfo() << "It's marvellous, all devices are now up to date !";
+		}
+	}
 }
 
 void ServerGroupChatRoomPrivate::conclude(){
@@ -678,20 +686,46 @@ void ServerGroupChatRoomPrivate::updateParticipantsSessions(){
 	}
 }
 
+void ServerGroupChatRoomPrivate::updateProtocolVersionFromDevice(const shared_ptr<ParticipantDevice> &device){
+	auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
+	auto groupchat = protocols.find("groupchat");
+	if (groupchat == protocols.end()){
+		lWarning() << "Device " << device->getAddress().asString() << "has no groupchat capability set !";
+		return;
+	}
+	if (protocolVersion > groupchat->second){
+		protocolVersion = groupchat->second;
+		lWarning() << "Device " << device->getAddress().asString() << " downgrades chatroom's protocol version to " << protocolVersion;
+	}
+}
+
+void ServerGroupChatRoomPrivate::determineProtocolVersion(){
+	L_Q();
+	protocolVersion = CorePrivate::groupChatProtocolVersion;
+	for (const auto &participant : q->getParticipants()) {
+		for (const auto &device : participant->getDevices()) {
+			updateProtocolVersionFromDevice(device);
+		}
+	}
+}
+
 void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const shared_ptr<ParticipantDeviceIdentity> &deviceInfo) {
 	L_Q();
 	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo->getAddress());
 
 	if (device) {
-		// Nothing to do, but set the name because the user-agent is not known for the initiator device.
+		// Nothing to do, but set the name and capabilities because they are not known for the initiator device.
 		device->setName(deviceInfo->getName());
+		device->setCapabilityDescriptor(deviceInfo->getCapabilityDescriptor());
+		updateProtocolVersionFromDevice(device);
 	} else if (findAuthorizedParticipant(participant->getAddress())) {
 		bool allDevLeft = !participant->getDevices().empty() && allDevicesLeft(participant);
 		/*
 		 * This is a really new device.
 		 */
 		device = participant->addDevice(deviceInfo->getAddress(), deviceInfo->getName());
-
+		device->setCapabilityDescriptor(deviceInfo->getCapabilityDescriptor());
+		updateProtocolVersionFromDevice(device);
 		shared_ptr<ConferenceParticipantDeviceEvent> event = q->getConference()->notifyParticipantDeviceAdded(time(nullptr), false, participant, device);
 		q->getCore()->getPrivate()->mainDb->addEvent(event);
 
@@ -1111,7 +1145,8 @@ void ServerGroupChatRoomPrivate::onAckReceived (const std::shared_ptr<CallSessio
 // =============================================================================
 
 ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallOp *op)
-	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(core, IdentityAddress(linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(core->getCCore()))), nullptr, ConferenceParams::create(core->getCCore()),this)) {
+	: ChatRoom(*new ServerGroupChatRoomPrivate, core, ChatRoomParams::getDefaults(core), make_shared<LocalConference>(core, IdentityAddress(op->getTo())
+	, nullptr, ConferenceParams::create(core->getCCore()),this)) {
 	L_D();
 
 	getConference()->setSubject(op->getSubject());
@@ -1129,7 +1164,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
-	d->protocolVersion = Utils::Version(1, 1);
+	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
@@ -1149,7 +1184,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	getConference()->confParams->setSubject(subject);
 	getConference()->confParams->enableChat(true);
 	getCore()->getPrivate()->localListEventHandler->addHandler(static_pointer_cast<LocalConference>(getConference())->eventHandler.get());
-	d->protocolVersion = Utils::Version(1, 1);
+	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
 }
 
 ServerGroupChatRoom::~ServerGroupChatRoom () {

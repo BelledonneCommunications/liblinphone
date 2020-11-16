@@ -145,6 +145,8 @@ private:
 
 	void onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device);
 	void onBye(const std::shared_ptr<ParticipantDevice> &participantLeaving);
+	void determineProtocolVersion();
+	void updateProtocolVersionFromDevice(const std::shared_ptr<ParticipantDevice> &device);
 
 	// ChatRoomListener
 	void onChatRoomInsertRequested (const std::shared_ptr<AbstractChatRoom> &chatRoom) override;
