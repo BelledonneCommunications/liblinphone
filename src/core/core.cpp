@@ -90,7 +90,8 @@ void CorePrivate::init () {
 				backend = MainDb::Mysql;
 			} else {
 				backend = MainDb::Sqlite3;
-				uri = Utils::quoteStringIfNotAlready(uri);
+				if (uri != "null")
+				    uri = Utils::quoteStringIfNotAlready(uri);
 			}
 		else {
 			backend = AbstractDb::Sqlite3;

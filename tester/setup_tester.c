@@ -83,8 +83,13 @@ static void linphone_version_test(void){
 
 static void core_init_test(void) {
 	LinphoneCore* lc;
+	FILE *in;
 	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL,liblinphone_tester_get_empty_rc(), NULL, system_context);
-
+	const char *uri = linphone_config_get_string(linphone_core_get_config(lc), "storage", "uri", NULL);
+	BC_ASSERT_STRING_EQUAL(uri,"null");
+	in=fopen(uri, "rb");
+	if(!BC_ASSERT_PTR_NULL( in ))// "null" file should not exists
+		fclose(in);
 	/* until we have good certificates on our test server... */
 	linphone_core_verify_server_certificates(lc,FALSE);
 	if (BC_ASSERT_PTR_NOT_NULL(lc)) {
