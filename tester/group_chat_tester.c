@@ -381,11 +381,22 @@ void _receive_file(bctbx_list_t *coresList, LinphoneCoreManager *lcm, stats *rec
 }
 
 // Configure list of core manager for conference and add the listener
-bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri) {
+static bctbx_list_t * _init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri, const char *groupchat_version) {
 	LinphoneAddress *factoryAddr = linphone_address_new(factoryUri);
 	bctbx_list_for_each2(coreManagerList, (void (*)(void *, void *))_configure_core_for_conference, (void *) factoryAddr);
 	linphone_address_unref(factoryAddr);
 
+	if (groupchat_version){
+		bctbx_list_t *it;
+		char *spec = bctbx_strdup_printf("groupchat/%s", groupchat_version);
+		for (it = coreManagerList; it != NULL; it = it->next){
+			LinphoneCoreManager *mgr = (LinphoneCoreManager *)it->data;
+			linphone_core_remove_linphone_spec(mgr->lc, "groupchat");
+			linphone_core_add_linphone_spec(mgr->lc, spec);
+		}
+		bctbx_free(spec);
+	}
+	
 	LinphoneCoreCbs *cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 	linphone_core_cbs_set_chat_room_state_changed(cbs, core_chat_room_state_changed);
 	linphone_core_cbs_set_chat_room_subject_changed(cbs, core_chat_room_subject_changed);
@@ -399,8 +410,16 @@ bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManag
 	return coresList;
 }
 
+bctbx_list_t * init_core_for_conference_with_factory_uri(bctbx_list_t *coreManagerList, const char* factoryUri) {
+	return _init_core_for_conference_with_factory_uri(coreManagerList, factoryUri, NULL);
+}
+
 bctbx_list_t * init_core_for_conference(bctbx_list_t *coreManagerList) {
 	return init_core_for_conference_with_factory_uri(coreManagerList, sFactoryUri);
+}
+
+bctbx_list_t * init_core_for_conference_with_groupchat_version(bctbx_list_t *coreManagerList, const char *groupchat_version) {
+	return _init_core_for_conference_with_factory_uri(coreManagerList, sFactoryUri, groupchat_version);
 }
  
 void start_core_for_conference(bctbx_list_t *coreManagerList) {
@@ -3275,7 +3294,8 @@ static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDevice
 	if (secondDeviceForSender)
 		coresManagerList = bctbx_list_append(coresManagerList, marie2);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	/* This test was constructed according to 1.0 specification of groupchat.*/
+	bctbx_list_t *coresList = init_core_for_conference_with_groupchat_version(coresManagerList, "1.0");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
@@ -3371,7 +3391,9 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 	bctbx_list_t *participantsAddresses = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
-	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	
+	/* This test checks the behavior of 1.0 groupchat protocol version, where one-to-one chatroom were supposed to be unique. */
+	bctbx_list_t *coresList = init_core_for_conference_with_groupchat_version(coresManagerList, "1.0");
 	start_core_for_conference(coresManagerList);
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	stats initialMarieStats = marie->stat;
