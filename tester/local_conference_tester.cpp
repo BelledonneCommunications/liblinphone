@@ -727,7 +727,7 @@ static void multidomain_group_chat_room (void) {
 }
 
 static test_t local_conference_tests[] = {
-	TEST_NO_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server),
+	TEST_ONE_TAG("Group chat room creation local server", LinphoneTest::group_chat_room_creation_server,"LeaksMemory"), /* beacause of coreMgr restart*/
 	TEST_NO_TAG("Group chat Server chat room deletion", LinphoneTest::group_chat_room_server_deletion),
 	TEST_ONE_TAG("Group chat Server chat room deletion with remote list event handler", LinphoneTest::group_chat_room_server_deletion_with_rmt_lst_event_handler,"LeaksMemory"), /* beacause of coreMgr restart*/
 	TEST_ONE_TAG("Multi domain chatroom", LinphoneTest::multidomain_group_chat_room,"LeaksMemory"), /* beacause of coreMgr restart*/
