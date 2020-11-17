@@ -66,7 +66,7 @@ static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, Linpho
  * @param[in] encryption	true to activate message encryption
  * @param[in] external_sender	if true claire (from the external domain) will send the message, otherwise marie will do it
  */
-static void group_chat (bool_t encryption, bool_t external_sender) {
+static void group_chat (bool_t encryption, bool_t external_sender, bool_t restart_external_participant) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *claire = linphone_core_manager_create("claire_rc"); // External
@@ -149,37 +149,51 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	const char *msgText = "Hello";
 	send_chat_message_to_group_chat_room(coresList, senderCr, recipients, msgText);
 
-	// Restart core for Marie
-	coresList = bctbx_list_remove(coresList, marie->lc);
-	linphone_core_manager_reinit(marie);
-
-	if (encryption == TRUE) {
-		// marie and pauline are on the regular lime server
-		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
-		linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_c25519_tlsauth_opt_url);
+	LinphoneCoreManager * manager_to_restart = NULL;
+	if (restart_external_participant) {
+		manager_to_restart = claire;
+	} else {
+		manager_to_restart = marie;
 	}
 
-	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
+	BC_ASSERT_PTR_NOT_NULL(manager_to_restart);
+
+	// Restart core for Marie
+	coresList = bctbx_list_remove(coresList, manager_to_restart->lc);
+	linphone_core_manager_reinit(manager_to_restart);
+
+	if (encryption == TRUE) {
+		linphone_config_set_string(linphone_core_get_config(manager_to_restart->lc),"lime","curve","c25519");
+		if (bctbx_list_find(coresManagerList, manager_to_restart)) {
+			linphone_core_set_lime_x3dh_server_url(manager_to_restart->lc, lime_server_c25519_tlsauth_opt_url);
+		} else {
+printf("ERROR!!\n");
+			linphone_core_set_lime_x3dh_server_url(manager_to_restart->lc, lime_server_c25519_external_url);
+		}
+
+	}
+
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, manager_to_restart);
 	init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
 
-	linphone_core_manager_start(marie, TRUE);
+	linphone_core_manager_start(manager_to_restart, TRUE);
 
 	if (encryption == TRUE) {
 		// Check encryption status for both participants
-		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(manager_to_restart->lc));
 	}
 
-	coresList = bctbx_list_append(coresList, marie->lc);
+	coresList = bctbx_list_append(coresList, manager_to_restart->lc);
 
 	// Retrieve chat room
-	LinphoneAddress *marieDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc)));
-	marieCr = linphone_core_search_chat_room(marie->lc, NULL, marieDeviceAddr, confAddr, NULL);
-	linphone_address_unref(marieDeviceAddr);
-	BC_ASSERT_PTR_NOT_NULL(marieCr);
+	LinphoneAddress *restartedManagerDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(manager_to_restart->lc)));
+	LinphoneChatRoom *restartedManagerCr = linphone_core_search_chat_room(manager_to_restart->lc, NULL, restartedManagerDeviceAddr, confAddr, NULL);
+	linphone_address_unref(restartedManagerDeviceAddr);
+	BC_ASSERT_PTR_NOT_NULL(restartedManagerCr);
 
-	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
-	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(restartedManagerCr), 2, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(restartedManagerCr), 1, int, "%d");
 
 	// Sender selection
 	LinphoneChatRoom *senderCr2 = NULL;
@@ -200,9 +214,14 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 
 	linphone_address_unref(confAddr);
 
-	linphone_core_delete_chat_room(marie->lc, marieCr);
+	linphone_core_delete_chat_room(manager_to_restart->lc,  restartedManagerCr);
+
+	if (restart_external_participant) {
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	} else {
+		linphone_core_manager_delete_chat_room(claire, claireCr, coresList);
+	}
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
-	linphone_core_manager_delete_chat_room(claire, claireCr, coresList);
 
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
@@ -212,16 +231,16 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 }
 
 static void group_chat_external_domain_participant (void) {
-	group_chat(FALSE, FALSE);
+	group_chat(FALSE, FALSE, FALSE);
 }
 static void group_chat_external_domain_participant_ext_sender (void) {
-	group_chat(FALSE, TRUE);
+	group_chat(FALSE, TRUE, FALSE);
 }
 static void encrypted_message(void) {
-	group_chat(TRUE, FALSE);
+	group_chat(TRUE, FALSE, FALSE);
 }
 static void encrypted_message_ext_sender(void) {
-	group_chat(TRUE, TRUE);
+	group_chat(TRUE, TRUE, FALSE);
 }
 
 test_t external_domain_tests[] = {
