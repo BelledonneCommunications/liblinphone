@@ -328,7 +328,12 @@ static void group_chat_room_creation_server (void) {
 		focus.reStart();
 		coresList = bctbx_list_append(coresList, focus.getLc());
 
-		BC_ASSERT_EQUAL(laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated, int, "%d");
+		for (auto chatRoom :focus.getCore().getChatRooms()) {
+
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(L_GET_C_BACK_PTR(chatRoom)), 3, int, "%d");
+		}
+
+		BC_ASSERT_FALSE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated + 1, 3000));
 
 		// Laure comes back online and its chatroom is expected to be deleted
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
@@ -336,6 +341,11 @@ static void group_chat_room_creation_server (void) {
 		focus.notifyParticipantDeviceRegistration(linphone_chat_room_get_conference_address(marieCr), laureDeviceAddress);
 		linphone_address_unref(laureDeviceAddress);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated + 1, 5000));
+
+		for (auto chatRoom :focus.getCore().getChatRooms()) {
+
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(L_GET_C_BACK_PTR(chatRoom)), 3, int, "%d");
+		}
 
 		linphone_chat_room_leave(paulineCr);
 	}
