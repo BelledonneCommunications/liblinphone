@@ -223,6 +223,8 @@ LINPHONE_PUBLIC void linphone_core_reset_shared_core_state(LinphoneCore *lc);
 LINPHONE_PUBLIC void linphone_shared_core_helpers_on_msg_written_in_user_defaults(LinphoneCore *lc);
 LINPHONE_PUBLIC char *linphone_core_get_download_path(LinphoneCore *lc);
 
+LINPHONE_PUBLIC const char *linphone_core_get_groupchat_version(void);
+
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg);
