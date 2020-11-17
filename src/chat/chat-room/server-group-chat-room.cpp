@@ -1088,7 +1088,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 
 ServerGroupChatRoom::ServerGroupChatRoom (
 	const shared_ptr<Core> &core,
-	const IdentityAddress &peerAddress,
+	const ConferenceAddress &peerAddress,
 	AbstractChatRoom::CapabilitiesMask capabilities,
 	const shared_ptr<ChatRoomParams> &params,
 	const string &subject,
