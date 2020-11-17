@@ -38,7 +38,7 @@ public:
 	// TODO: Same idea.
 	ServerGroupChatRoom (
 		const std::shared_ptr<Core> &core,
-		const IdentityAddress &peerAddress,
+		const ConferenceAddress &peerAddress,
 		AbstractChatRoom::CapabilitiesMask capabilities,
 		const std::shared_ptr<ChatRoomParams> &params,
 		const std::string &subject,
