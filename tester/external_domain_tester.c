@@ -152,10 +152,24 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	// Restart core for Marie
 	coresList = bctbx_list_remove(coresList, marie->lc);
 	linphone_core_manager_reinit(marie);
+
+	if (encryption == TRUE) {
+		// marie and pauline are on the regular lime server
+		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
+		linphone_core_set_lime_x3dh_server_url(marie->lc, lime_server_c25519_tlsauth_opt_url);
+	}
+
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
 	init_core_for_conference(tmpCoresManagerList);
 	bctbx_list_free(tmpCoresManagerList);
+
 	linphone_core_manager_start(marie, TRUE);
+
+	if (encryption == TRUE) {
+		// Check encryption status for both participants
+		BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
+	}
+
 	coresList = bctbx_list_append(coresList, marie->lc);
 
 	// Retrieve chat room
