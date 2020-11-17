@@ -543,17 +543,18 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
 		bool encrypted) {
+	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
+	
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
-
 		if (chatRoom->getState() == ChatRoom::State::Terminated
 				&& capabilities & ChatRoom::Capabilities::Conference
 				&& capabilities & ChatRoom::Capabilities::OneToOne
 				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
 			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
-					&& participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress()) {
+					&& participantAddress.getAddressWithoutGruu() == chatRoom->getParticipants().front()->getAddress().getAddressWithoutGruu()) {
 				return chatRoom;
 			}
 		}

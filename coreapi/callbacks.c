@@ -157,15 +157,19 @@ static void call_received(SalCallOp *h) {
 			string endToEndEncrypted = L_C_TO_STRING(sal_custom_header_find(h->getRecvCustomHeaders(), "End-To-End-Encrypted"));
 			const char *oneToOneChatRoomStr = sal_custom_header_find(h->getRecvCustomHeaders(), "One-To-One-Chat-Room");
 			if (oneToOneChatRoomStr && (strcmp(oneToOneChatRoomStr, "true") == 0)) {
-				shared_ptr<AbstractChatRoom> chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(
-					IdentityAddress(h->getTo()), 
-					IdentityAddress(h->getFrom()), 
-					endToEndEncrypted == "true");
+				list<IdentityAddress> participantList = Conference::parseResourceLists(h->getRemoteBody());
+				if (participantList.size() == 1) {
+					IdentityAddress participant = participantList.front();
+					shared_ptr<AbstractChatRoom> chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(
+						IdentityAddress(h->getTo()), 
+						participant,
+						endToEndEncrypted == "true");
 					if (chatRoom) {
 						lInfo() << "Found exhumable chat room [" << chatRoom << "]";
 						static_pointer_cast<ClientGroupChatRoom>(chatRoom)->onConferenceExhumed(IdentityAddress(h->getRemoteContact()));
 						return;
 					}
+				}
 			}
 
 			shared_ptr<AbstractChatRoom> chatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findChatRoom(
