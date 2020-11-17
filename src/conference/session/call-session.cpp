@@ -759,20 +759,26 @@ void CallSessionPrivate::setContactOp () {
 		char * contactAddressStr = linphone_address_as_string(contact);
 		Address contactAddress(contactAddressStr);
 		ms_free(contactAddressStr);
-		if (isInConference()) {
-			const string confId = getConferenceId();
-			if (confId.empty() == false) {
-				contactAddress.setUriParam("conf-id", confId);
-			}
-			std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
-			if (conference) {
+		// Do not try to set contact address if it is not valid
+		if (contactAddress.isValid()) {
+			if (isInConference()) {
+				const string confId = getConferenceId();
+				if (confId.empty() == false) {
+					contactAddress.setUriParam("conf-id", confId);
+				}
+				std::shared_ptr<MediaConference::Conference> conference = q->getCore()->findAudioVideoConference(ConferenceId(contactAddress, contactAddress));
+				if (conference) {
 
-				// Change conference address in order to add GRUU to it
-				conference->setConferenceAddress(contactAddress);
+					// Change conference address in order to add GRUU to it
+					conference->setConferenceAddress(contactAddress);
+				}
 			}
+			q->updateContactAddress (contactAddress);
+			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
+			op->setContactAddress(contactAddress.getInternalAddress());
+		} else {
+			lWarning() << "Unable to set contact address for session " << this << " to " << contactAddress.asString() << " as it is not valid";
 		}
-		q->updateContactAddress (contactAddress);
-		op->setContactAddress(contactAddress.getInternalAddress());
 		linphone_address_unref(contact);
 	}
 }

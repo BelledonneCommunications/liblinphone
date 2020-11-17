@@ -85,7 +85,7 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encryption);
 
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
@@ -130,10 +130,49 @@ static void group_chat (bool_t encryption, bool_t external_sender) {
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient1LastMsg), senderTextMessage);
 	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient2LastMsg), senderTextMessage);
 
-end:
-	linphone_chat_message_unref(senderMessage);
+	// Restart core for Marie
+	coresList = bctbx_list_remove(coresList, marie->lc);
+	linphone_core_manager_reinit(marie);
+	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, marie);
+	init_core_for_conference(tmpCoresManagerList);
+	bctbx_list_free(tmpCoresManagerList);
+	linphone_core_manager_start(marie, TRUE);
+	coresList = bctbx_list_append(coresList, marie->lc);
 
-	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	// Retrieve chat room
+	LinphoneAddress *marieDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(marie->lc)));
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, marieDeviceAddr, confAddr, NULL);
+	linphone_address_unref(marieDeviceAddr);
+	BC_ASSERT_PTR_NOT_NULL(marieCr);
+
+	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 2, int, "%d");
+	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(marieCr), 1, int, "%d");
+
+	initialMarieStats = marie->stat;
+	recipient1CoreManager = marie;
+	recipient1InitialStats = &initialMarieStats;
+
+	// Sender (Pauline or Claire - external domain -) begins composing a message
+	const char *senderTextMessage2 = "Hello again";
+	LinphoneChatMessage *senderMessage2 = _send_message(senderCr, senderTextMessage2);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient1CoreManager->stat.number_of_LinphoneMessageReceived, recipient1InitialStats->number_of_LinphoneMessageReceived + 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &recipient2CoreManager->stat.number_of_LinphoneMessageReceived, recipient2InitialStats->number_of_LinphoneMessageReceived + 2, 5000));
+	LinphoneChatMessage *recipient1LastMsg2 = recipient1CoreManager->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(recipient1LastMsg2))
+		goto end;
+	LinphoneChatMessage *recipient2LastMsg2 = recipient2CoreManager->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(recipient2LastMsg2))
+		goto end;
+
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient1LastMsg2), senderTextMessage2);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(recipient2LastMsg2), senderTextMessage2);
+
+end:
+	linphone_address_unref(confAddr);
+	linphone_chat_message_unref(senderMessage);
+	linphone_chat_message_unref(senderMessage2);
+
+	linphone_core_delete_chat_room(marie->lc, marieCr);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 	linphone_core_manager_delete_chat_room(claire, claireCr, coresList);
 
