@@ -34,6 +34,7 @@ public:
 	ClientGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
 
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
+	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
 	std::shared_ptr<CallSession> createSession ();
 	void notifyReceived (const std::string &body);
 	void multipartNotifyReceived (const std::string &body);
@@ -56,6 +57,7 @@ public:
 
 	void onChatRoomCreated (const Address &remoteContact);
 	void onChatRoomExhumed (const Address &remoteContact);
+	void onExhumingConference (SalCallOp *op);
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 
 private:
@@ -70,6 +72,7 @@ private:
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400;  //24 hours = 86400s
 
+	bool exhumePending = false;
 	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
 	
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
