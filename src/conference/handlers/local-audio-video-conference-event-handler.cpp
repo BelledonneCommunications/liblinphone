@@ -60,8 +60,6 @@ void LocalAudioVideoConferenceEventHandler::onStateChanged (LinphonePrivate::Con
 			break;
 		case ConferenceInterface::State::Deleted:
 			break;
-		case ConferenceInterface::State::ExhumePending:
-			break;
 	}
 
 }

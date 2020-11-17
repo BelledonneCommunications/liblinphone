@@ -63,7 +63,7 @@ list<IdentityAddress> ClientGroupChatRoomPrivate::cleanAddressesList (const list
 	return cleanedList;
 }
 
-shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
+shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSessionTo (Address sessionTo) {
 	L_Q();
 
 	CallSessionParams csp;
@@ -74,17 +74,24 @@ shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
 	if (capabilities & ClientGroupChatRoom::Capabilities::Encrypted)
 		csp.addCustomHeader("End-To-End-Encrypted", "true");
 
-	shared_ptr<Participant> & focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
-	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
 	Address myCleanedAddress(q->getMe()->getAddress());
 	myCleanedAddress.removeUriParam("gr"); // Remove gr parameter for INVITE.
-	const ConferenceAddress & peerAddress(q->getConferenceId().getPeerAddress());
-	const Address sessionTo = peerAddress.isValid() ? peerAddress : focus->getAddress();
+
+	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
+	shared_ptr<CallSession> session = focus->createSession(*q->getConference().get(), &csp, false, callSessionListener);
 	session->configure(LinphoneCallOutgoing, nullptr, nullptr, myCleanedAddress, sessionTo);
 	session->initiateOutgoing();
 	session->getPrivate()->createOp();
 
 	return session;
+}
+
+shared_ptr<CallSession> ClientGroupChatRoomPrivate::createSession () {
+	L_Q();
+	const ConferenceAddress & peerAddress(q->getConferenceId().getPeerAddress());
+	shared_ptr<Participant> &focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
+	const Address sessionTo = peerAddress.isValid() ? peerAddress : focus->getAddress();
+	return createSessionTo(sessionTo);
 }
 
 void ClientGroupChatRoomPrivate::notifyReceived (const string &body) {
@@ -187,7 +194,11 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
-			onChatRoomCreated(*session->getRemoteContactAddress());
+			if (exhumePending) {
+				onChatRoomExhumed(*session->getRemoteContactAddress());
+			} else {
+				onChatRoomCreated(*session->getRemoteContactAddress());
+			}
 		} else if (q->getState() == ConferenceInterface::State::TerminationPending){
 			/* This is the case where we have re-created the session in order to quit the chatroom.
 			 * In this case, defer the sending of the bye so that it is sent after the ACK.
@@ -711,6 +722,7 @@ void ClientGroupChatRoom::exhume () {
 
 	const IdentityAddress& remoteParticipant = getParticipants().front()->getAddress();
 	lInfo() << "Exhuming chat room [" << conference->getConferenceId() << "] with participant [" << remoteParticipant << "]";
+	d->exhumePending = true;
 
 	Content content;
 	list<IdentityAddress> addresses;
@@ -722,7 +734,9 @@ void ClientGroupChatRoom::exhume () {
 		content.setContentEncoding("deflate");
 	}
 
-	auto session = d->createSession();
+	string conferenceFactoryUri = Core::getConferenceFactoryUri(getCore(), getConferenceId().getLocalAddress());
+	Address conferenceFactoryAddress = Address(conferenceFactoryUri);
+	auto session = d->createSessionTo(conferenceFactoryAddress);
 	session->startInvite(nullptr, getSubject(), &content);
 	setState(ConferenceInterface::State::CreationPending);
 }
@@ -738,12 +752,6 @@ void ClientGroupChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> 
 		auto it = std::find(pendingExhumeMessages.begin(), pendingExhumeMessages.end(), chatMessage);
 		if (it == pendingExhumeMessages.end())
 			pendingExhumeMessages.push_back(chatMessage);
-	} else if (q->getState() == ConferenceInterface::State::ExhumePending) {
-		lWarning() << "Exhuming is still pending, waiting for Created state to send the message";
-
-		auto it = std::find(pendingExhumeMessages.begin(), pendingExhumeMessages.end(), chatMessage);
-		if (it == pendingExhumeMessages.end())
-			pendingExhumeMessages.push_back(chatMessage);
 	} else {
 		ChatRoomPrivate::sendChatMessage(chatMessage);
 	}
@@ -755,11 +763,13 @@ void ClientGroupChatRoomPrivate::onChatRoomExhumed (const Address &remoteContact
 	IdentityAddress addr(remoteContact);
 	q->onConferenceExhumed(addr);
 
+	lInfo() << "Found " << pendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : pendingExhumeMessages) {
 		chatMessage->getPrivate()->setChatRoom(q->getSharedFromThis());
 		ChatRoomPrivate::sendChatMessage(chatMessage);
 	}
 	pendingExhumeMessages.clear();
+	exhumePending = false;
 }
 
 void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
@@ -780,10 +790,57 @@ void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
 	setState(ConferenceInterface::State::Created);
 }
 
+void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
+	L_Q();
+
+	IdentityAddress addr = IdentityAddress(op->getRemoteContact());
+	const auto &conference = q->getConference();
+	ConferenceId newConfId = ConferenceId(addr, conference->getConferenceId().getLocalAddress());
+	lInfo() << "Conference [" << conference->getConferenceId() << "] is being exhumed into [" << newConfId << "]";
+
+	conference->setConferenceAddress(addr);
+	static_pointer_cast<RemoteConference>(conference)->confParams->setConferenceAddress(addr);
+	static_pointer_cast<RemoteConference>(conference)->focus->setAddress(addr);
+	static_pointer_cast<RemoteConference>(conference)->focus->clearDevices();
+	static_pointer_cast<RemoteConference>(conference)->focus->addDevice(addr);
+
+	ConferenceId oldConfId = conference->getConferenceId();
+	conference->setConferenceId(newConfId);
+	q->getCore()->getPrivate()->updateChatRoomConferenceId(q->getSharedFromThis(), oldConfId);
+
+	auto focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
+	bool previousSession = (focus->getSession() != nullptr);
+	auto session = focus->createSession(*q->getConference().get(), nullptr, false, this);
+	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
+	session->startIncomingNotification(false);
+
+	if (!previousSession) {
+		q->setState(ConferenceInterface::State::CreationPending);
+		// Handle participants addition
+		list<IdentityAddress> identAddresses = ClientGroupChatRoom::parseResourceLists(op->getRemoteBody());
+		for (const auto &addr : identAddresses) {
+			auto participant = q->findParticipant(addr);
+			if (!participant) {
+				participant = Participant::create(q->getConference().get(),addr);
+				q->getConference()->participants.push_back(participant);
+			}
+		}
+	}
+	acceptSession(session);
+	
+	q->setState(ConferenceInterface::State::Created);
+
+	q->getConference()->setLastNotify(0);
+	q->getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(q->getConference())->eventHandler.get());
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->subscribe(q->getConferenceId());
+}
+
 // -----------------------------------------------------------------------------
 
 void ClientGroupChatRoom::onConferenceCreated (const ConferenceAddress &addr) {
 	L_D();
+	lInfo() << "Conference [" << conference->getConferenceId() << "] has been created";
+
 	static_pointer_cast<RemoteConference>(getConference())->confParams->setConferenceAddress(addr);
 	static_pointer_cast<RemoteConference>(getConference())->focus->setAddress(addr);
 	static_pointer_cast<RemoteConference>(getConference())->focus->clearDevices();

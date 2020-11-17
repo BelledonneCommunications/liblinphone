@@ -35,7 +35,6 @@ typedef enum _LinphoneChatRoomState{
 	LinphoneChatRoomStateTerminated, /**< Chat room exists on server but not in local */
 	LinphoneChatRoomStateTerminationFailed, /**< The chat room termination failed */
 	LinphoneChatRoomStateDeleted, /**< Chat room was deleted on the server */
-	LinphoneChatRoomStateExhumePending /**< Chat room 1-1 is being exhumed */
 } LinphoneChatRoomState;
 
 /**
