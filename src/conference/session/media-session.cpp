@@ -2515,38 +2515,33 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		d->getStreamsGroup().prepare();
 	}
 
-	SalMediaDescription *localDesc = new SalMediaDescription();
 	if (d->localDesc) {
-		*localDesc = *(d->localDesc);
-	}
-	srand((unsigned int)time(NULL));
-	for (int i = 0; i < localDesc->nb_streams; i++) {
-printf("original rtpPort %0d from local desc %0d\n", localDesc->streams[i].rtp_port, d->localDesc->streams[i].rtp_port);
-		if (ms_is_multicast(localDesc->streams[i].rtp_addr)){
-			pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), localDesc->streams[i].type);
-			if (portRange.first <= 0) {
-				portRange.first = 1024;
-				lInfo() << "Setting minimum value of port range to " << portRange.first;
+		srand((unsigned int)time(NULL));
+		for (int i = 0; i < d->localDesc->nb_streams; i++) {
+			// In case of multicasting, choose a random port to send with the invite
+			if (ms_is_multicast(d->localDesc->streams[i].rtp_addr)){
+				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), d->localDesc->streams[i].type);
+				if (portRange.first <= 0) {
+					portRange.first = 1024;
+					lInfo() << "Setting minimum value of port range to " << portRange.first;
+				}
+				if (portRange.second <= 0) {
+					// 2^16 - 1
+					portRange.second = 65535;
+					lInfo() << "Setting maximum value of port range to " << portRange.second;
+				}
+				if (portRange.second < portRange.first) {
+					lError() << "Invalid port range provided for stream type " << Utils::toString(d->localDesc->streams[i].type) << ": min=" << portRange.first << " max=" << portRange.second;
+					continue;
+				}
+				int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
+				d->localDesc->streams[i].rtp_port = rtp_port;
+				d->localDesc->streams[i].rtcp_port = d->localDesc->streams[i].rtp_port + 1;
 			}
-			if (portRange.second <= 0) {
-				// 2^16 - 1
-				portRange.second = 65535;
-				lInfo() << "Setting maximum value of port range to " << portRange.second;
-			}
-			if (portRange.second < portRange.first) {
-				lError() << "Invalid port range provided for stream type " << Utils::toString(localDesc->streams[i].type) << ": min=" << portRange.first << " max=" << portRange.second;
-				continue;
-			}
-			int rtp_port = (rand() % abs(portRange.second - portRange.first)) + portRange.first;
-	printf("original rtpPort %0d new port %0d\n", localDesc->streams[i].rtp_port, rtp_port);
-			localDesc->streams[i].rtp_port = rtp_port;
-			localDesc->streams[i].rtcp_port = localDesc->streams[i].rtp_port + 1;
 		}
 	}
 
-	d->op->setLocalMediaDescription(localDesc);
-
-	ms_free(localDesc);
+	d->op->setLocalMediaDescription(d->localDesc);
 
 	int result = CallSession::startInvite(destination, subject, content);
 	if (result < 0) {
