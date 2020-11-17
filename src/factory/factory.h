@@ -128,7 +128,7 @@ public:
 
   LinphoneCallCbs * createCallCbs() const;
 
-  LinphoneConferenceCbs * CreateConferenceCbs() const;
+  LinphoneConferenceCbs * createConferenceCbs() const;
 
   LinphoneChatRoomCbs * createChatRoomCbs() const;
 

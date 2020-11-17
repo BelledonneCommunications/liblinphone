@@ -250,7 +250,7 @@ LinphoneCallCbs* Factory::createCallCbs() const {
 	return _linphone_call_cbs_new();
 }
 
-LinphoneConferenceCbs * Factory::CreateConferenceCbs() const {
+LinphoneConferenceCbs * Factory::createConferenceCbs() const {
 	return _linphone_conference_cbs_new();
 }
 
