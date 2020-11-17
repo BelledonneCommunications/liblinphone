@@ -110,21 +110,26 @@ void ServerGroupChatRoomPrivate::resumeParticipant(const std::shared_ptr<Partici
 
 void ServerGroupChatRoomPrivate::setParticipantDeviceState (const shared_ptr<ParticipantDevice> &device, ParticipantDevice::State state) {
 	L_Q();
-	string address(device->getAddress().asString());
-	lInfo() << q << ": Set participant device '" << address << "' state to " << state;
-	device->setState(state);
-	q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
-	switch (state){
-		case ParticipantDevice::State::ScheduledForLeaving:
-		case ParticipantDevice::State::Leaving:
-			queuedMessages.erase(address);
-		break;
-		case ParticipantDevice::State::Left:
-			queuedMessages.erase(address);
-			onParticipantDeviceLeft(device);
-		break;
-		default:
-		break;
+
+	// Do not change state of participants if the core is shutting down.
+	// If a participant is about to leave and its call session state is End, it will be released during shutdown event though the participant may not be notified yet as it is offline
+	if (linphone_core_get_global_state(q->getCore()->getCCore()) ==  LinphoneGlobalOn) {
+		string address(device->getAddress().asString());
+		lInfo() << q << ": Set participant device '" << address << "' state to " << state;
+		device->setState(state);
+		q->getCore()->getPrivate()->mainDb->updateChatRoomParticipantDevice(q->getSharedFromThis(), device);
+		switch (state){
+			case ParticipantDevice::State::ScheduledForLeaving:
+			case ParticipantDevice::State::Leaving:
+				queuedMessages.erase(address);
+			break;
+			case ParticipantDevice::State::Left:
+				queuedMessages.erase(address);
+				onParticipantDeviceLeft(device);
+			break;
+			default:
+			break;
+		}
 	}
 }
 
@@ -359,8 +364,7 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 
 	queuedMessages.erase(participant->getAddress().asString());
 
-	shared_ptr<ConferenceParticipantEvent> event = q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
-	q->getCore()->getPrivate()->mainDb->addEvent(event);
+	q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
 
 	if (!isAdminLeft())
 		designateAdmin();
@@ -968,6 +972,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 		if (allDevicesLeft(participant) && q->findParticipant(participant->getAddress()) == nullptr) {
 			lInfo() << q << ": Participant '" << participant->getAddress().asString() << "'removed and last device left, unsubscribing";
 			unSubscribeRegistrationForParticipant(participant->getAddress());
+			q->getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
 		}
 	}
 	
