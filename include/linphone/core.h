@@ -1399,7 +1399,8 @@ LINPHONE_PUBLIC bool_t linphone_core_retransmission_on_nack_enabled(LinphoneCore
 LINPHONE_PUBLIC void linphone_core_enable_retransmission_on_nack(LinphoneCore *core, bool_t enable);
 
 /**
- * Tells whether Wifi only mode is enabled or not
+ * Tells whether Wifi only mode is enabled or not.
+ * @warning Only works for Android platform.
  * @param core #LinphoneCore object @notnil
  * @return A boolean value telling whether Wifi only mode is enabled or not
  * @ingroup network_parameters
@@ -1407,7 +1408,8 @@ LINPHONE_PUBLIC void linphone_core_enable_retransmission_on_nack(LinphoneCore *c
 LINPHONE_PUBLIC bool_t linphone_core_wifi_only_enabled(LinphoneCore *core);
 
 /**
- * Turns Wifi only mode on or off
+ * Turns Wifi only mode on or off. If enabled, app won't register when active network isn't WiFi or Ethernet.
+ * @warning Only works for Android platform.
  * @param core #LinphoneCore object @notnil
  * @param enable A boolean value telling whether to enable IPv6 support
  * @ingroup network_parameters
