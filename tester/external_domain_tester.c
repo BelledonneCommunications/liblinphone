@@ -167,7 +167,6 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 		if (bctbx_list_find(coresManagerList, manager_to_restart)) {
 			linphone_core_set_lime_x3dh_server_url(manager_to_restart->lc, lime_server_c25519_tlsauth_opt_url);
 		} else {
-printf("ERROR!!\n");
 			linphone_core_set_lime_x3dh_server_url(manager_to_restart->lc, lime_server_c25519_external_url);
 		}
 
@@ -202,7 +201,11 @@ printf("ERROR!!\n");
 
 	// Sender (Pauline or Claire - external domain -) begins composing a message
 	if (external_sender == TRUE) { // Claire is the sender
-		senderCr2 = claireCr;
+		if (restart_external_participant) {
+			senderCr2 = restartedManagerCr;
+		} else {
+			senderCr2 = claireCr;
+		}
 		recipients2 = bctbx_list_append(recipients2, pauline);
 	} else { // Pauline - from external domaine - is the sender
 		senderCr2 = paulineCr;
@@ -242,13 +245,21 @@ static void encrypted_message(void) {
 static void encrypted_message_ext_sender(void) {
 	group_chat(TRUE, TRUE, FALSE);
 }
+static void group_chat_external_domain_participant_external_restart (void) {
+	group_chat(FALSE, FALSE, TRUE);
+}
+static void encrypted_message_ext_sender_external_restart(void) {
+	group_chat(TRUE, TRUE, TRUE);
+}
 
 test_t external_domain_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_ONE_TAG("Message sent from domainA", group_chat_external_domain_participant, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Message sent from domainB", group_chat_external_domain_participant_ext_sender, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Encrypted message sent from domainA", encrypted_message, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Encrypted message sent from domainB", encrypted_message_ext_sender, "LeaksMemory" /*due to core restart*/)
+	TEST_ONE_TAG("Encrypted message sent from domainB", encrypted_message_ext_sender, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Message sent from domainA with external core restart", group_chat_external_domain_participant_external_restart, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Encrypted message sent from domainB with external core restart", encrypted_message_ext_sender_external_restart, "LeaksMemory" /*due to core restart*/)
 };
 
 test_suite_t external_domain_test_suite = {"External domain", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
