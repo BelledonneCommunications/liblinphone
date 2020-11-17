@@ -1165,6 +1165,7 @@ ServerGroupChatRoom::ServerGroupChatRoom (
 	list<shared_ptr<Participant>> &&participants,
 	unsigned int lastNotifyId
 ) : ChatRoom(*new ServerGroupChatRoomPrivate(capabilities), core, params, make_shared<LocalConference>(core, peerAddress, nullptr, ConferenceParams::create(core->getCCore()),this)) {
+	L_D();
 	cachedParticipants = move(participants);
 	getConference()->setLastNotify(lastNotifyId);
 	getConference()->setConferenceId(ConferenceId(peerAddress, peerAddress));

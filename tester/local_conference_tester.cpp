@@ -328,7 +328,7 @@ static void group_chat_room_creation_server (void) {
 		focus.reStart();
 		coresList = bctbx_list_append(coresList, focus.getLc());
 
-		BC_ASSERT_EQUAL(laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated, int, "%d");
+		BC_ASSERT_FALSE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated + 1, 3000));
 
 		// Laure comes back online and its chatroom is expected to be deleted
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
