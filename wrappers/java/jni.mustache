@@ -502,7 +502,7 @@ JNIEXPORT void JNICALL Java_{{jniPackage}}{{className}}Impl_addListener(JNIEnv* 
 		return;
 	}
 	jobject listener = env->NewWeakGlobalRef(jlistener);
-	{{classCName}}Cbs *cbs = linphone_factory_create_{{factoryName}}_cbs(nullptr);
+	{{classCName}}Cbs *cbs = linphone_factory_create_{{factoryName}}_cbs(linphone_factory_get());
 	{{cPrefix}}_cbs_set_user_data(cbs, listener);
 	{{#callbacksList}}
 	{{cPrefix}}_cbs_set_{{callback}}(cbs, {{callbackName}});
