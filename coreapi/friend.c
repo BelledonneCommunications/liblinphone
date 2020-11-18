@@ -1682,7 +1682,7 @@ void linphone_friend_add_addresses_and_numbers_into_maps(LinphoneFriend *lf, Lin
 	bctbx_list_t *iterator;
 	bctbx_list_t *phone_numbers;
 	const bctbx_list_t *addresses;
-
+	
 	if (lf->refkey) {
 		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(lf->refkey, linphone_friend_ref(lf));
 		bctbx_map_cchar_insert_and_delete(list->friends_map, pair);
