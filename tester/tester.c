@@ -1476,12 +1476,13 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 				unlink(record_file);
 			}
 		}
-		linphone_core_stop(mgr->lc);
 
 		const char *call_log_db_path = linphone_core_get_call_logs_database_path(mgr->lc);
 		if (call_log_db_path) unlink(call_log_db_path);
 		const char *zrtp_secrets_db_path = linphone_core_get_zrtp_secrets_file(mgr->lc);
 		if (zrtp_secrets_db_path) unlink (zrtp_secrets_db_path);
+		
+		linphone_core_stop(mgr->lc);
 
 		linphone_core_unref(mgr->lc);
 		mgr->lc = NULL;
