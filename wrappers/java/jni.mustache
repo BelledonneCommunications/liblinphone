@@ -547,7 +547,6 @@ JNIEXPORT jobject JNICALL Java_{{jni_package}}CoreImpl_getMediastreamerFactory(J
 {{#notEmpty}}
 JNIEXPORT {{return}} JNICALL {{name}}({{params}}) {
 	{{#notStatic}}{{classCName}} *cptr = ({{classCName}}*)ptr;
-	{{#isLinphoneFactory}}cptr = linphone_factory_get();{{/isLinphoneFactory}}
 	if (cptr == nullptr) {
 		bctbx_error("{{name}}'s {{classCName}} C ptr is null!");
 		{{#hasListReturn}}

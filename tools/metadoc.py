@@ -337,7 +337,10 @@ class Parser:
 		
 		match = self.constants_regex.search(text)
 		while match is not None:
-			if match.start(1)-lastIndex > 0:
+			if match.start(1) == 0 and lastIndex == 0:
+				# Special case when text starts by constant
+				parts.append(self._parse_constant(text[match.start(1):match.end(1)]))
+			elif match.start(1)-lastIndex > 0:
 				parts.append(TextPart(text[lastIndex:match.start(1)]))
 				parts.append(self._parse_constant(text[match.start(1):match.end(1)]))
 			lastIndex = match.end(1)

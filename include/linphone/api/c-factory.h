@@ -454,7 +454,7 @@ LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config(LinphoneFactory *
  * Creates an object #LinphoneConfig
  * @param factory the #LinphoneFactory @notnil
  * @param path the path of the config @maybenil
- * @param path the path of the factory @maybenil
+ * @param factory_path the path of the factory @maybenil
  * @return a #LinphoneConfig @notnil
  */
 LINPHONE_PUBLIC LinphoneConfig *linphone_factory_create_config_with_factory(LinphoneFactory *factory, const char *path, const char *factory_path);
