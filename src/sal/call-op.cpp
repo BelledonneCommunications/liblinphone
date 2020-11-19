@@ -864,14 +864,21 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 				);
 
 				auto *session_expires = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES);
+				auto *session_min_se = belle_sip_message_get_header(BELLE_SIP_MESSAGE(request), BELLE_SIP_SESSION_EXPIRES_MSE);
 
-				if (supported
-				 	&& (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true
-				 	&& session_expires
-				) {
-					int inviteSE = atoi(belle_sip_header_get_unparsed_value(session_expires));
+				if (supported && (bool)belle_sip_header_supported_contains_tag(supported, "timer") == true)
+				{
+					bool tooSmall = false;
 
-					if (inviteSE < op->mRoot->mSessionExpiresValue) {
+					if(session_expires) {
+						int inviteSE = atoi(belle_sip_header_get_unparsed_value(session_expires));
+						tooSmall = (inviteSE < op->mRoot->mSessionExpiresMin);
+					} else if(session_min_se) {
+						int minSE = atoi(belle_sip_header_get_unparsed_value(session_min_se));
+						tooSmall = (minSE < op->mRoot->mSessionExpiresMin);
+					}
+
+					if (tooSmall) {
 						response = op->createResponseFromRequest(request, 422);
 						belle_sip_message_t *msg = BELLE_SIP_MESSAGE(response);
 
@@ -889,7 +896,7 @@ void SalCallOp::processRequestEventCb (void *userCtx, const belle_sip_request_ev
 							msg,
 							belle_sip_header_create(
 								BELLE_SIP_SESSION_EXPIRES_MSE,
-								std::to_string(op->mRoot->mSessionExpiresValue).c_str()
+								std::to_string(op->mRoot->mSessionExpiresMin).c_str()
 							)
 						);
 
@@ -1212,7 +1219,12 @@ int SalCallOp::accept () {
 			auto *session_expires_header = belle_sip_message_get_header_by_type(request, belle_sip_header_session_expires_t);
 			if (session_expires_header) {
 				delta = belle_sip_header_session_expires_get_delta(session_expires_header);
-				refresher =	belle_sip_header_session_expires_get_refresher_value(session_expires_header);
+
+				if (delta >= mRoot->mSessionExpiresValue) {
+					delta = mRoot->mSessionExpiresValue;
+				}
+
+				refresher = belle_sip_header_session_expires_get_refresher_value(session_expires_header);
 			}
 
 			// If the header is unspecified, we load it from the configuration
