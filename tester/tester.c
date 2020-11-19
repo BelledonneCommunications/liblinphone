@@ -389,8 +389,11 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	if (filepath) bctbx_free(filepath);
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
+	linphone_config_set_string(config, "storage", "call_logs_db_uri", mgr->call_logs_database_path);
+	linphone_config_set_string(config, "storage", "zrtp_secrets_db_uri", mgr->zrtp_secrets_database_path);
 	linphone_config_set_string(config, "lime", "x3dh_db_path", mgr->lime_database_path);
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
+
 	linphone_config_unref(config);
 	return lc;
 }
@@ -480,6 +483,12 @@ static void generate_random_database_path (LinphoneCoreManager *mgr) {
 	database_path_format = bctbx_strdup_printf("lime_%s.db", random_id);
 	mgr->lime_database_path = bc_tester_file(database_path_format);
 	bctbx_free(database_path_format);
+	char *call_logs_database_path_format = bctbx_strdup_printf("call-history-%s.db", random_id);
+	mgr->call_logs_database_path = bc_tester_file(call_logs_database_path_format);
+	bctbx_free(call_logs_database_path_format);
+	char *zrtp_secrets_database_path_format = bctbx_strdup_printf("zrtp-secrets-%s.db", random_id);
+	mgr->zrtp_secrets_database_path = bc_tester_file(zrtp_secrets_database_path_format);
+	bctbx_free(zrtp_secrets_database_path_format);
 }
 
 static void conference_state_changed (LinphoneConference *conference, LinphoneConferenceState newState) {
@@ -1299,7 +1308,7 @@ void linphone_core_manager_init2(LinphoneCoreManager *mgr, const char* rc_file, 
 	manager_count++;
 }
 
-void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, const char* linphone_db, const char *lime_db) {
+void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, const char* linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db) {
 	linphone_core_manager_init2(mgr, rc_file, phone_alias);
 	if (rc_file) mgr->rc_path = ms_strdup_printf("rcfiles/%s", rc_file);
 	if (linphone_db == NULL && lime_db == NULL) {
@@ -1307,12 +1316,14 @@ void linphone_core_manager_init_with_db(LinphoneCoreManager *mgr, const char* rc
 	} else {
 		mgr->database_path = bctbx_strdup(linphone_db);
 		mgr->lime_database_path = bctbx_strdup(lime_db);
+		mgr->call_logs_database_path = ms_strdup(call_logs_db);
+		mgr->zrtp_secrets_database_path = ms_strdup(zrtp_secrets_db);
 	}
 	linphone_core_manager_configure(mgr);
 }
 
 void linphone_core_manager_init(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias) {
-	linphone_core_manager_init_with_db(mgr, rc_file, phone_alias, NULL, NULL);
+	linphone_core_manager_init_with_db(mgr, rc_file, phone_alias, NULL, NULL, NULL, NULL);
 }
 
 void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_file, const char* phone_alias, LinphoneCoreManager *mgr_to_copy) {
@@ -1325,6 +1336,8 @@ void linphone_core_manager_init_shared(LinphoneCoreManager *mgr, const char* rc_
 		mgr->rc_path = ms_strdup(mgr_to_copy->rc_path);
 		mgr->database_path = ms_strdup(mgr_to_copy->database_path);
 		mgr->lime_database_path = ms_strdup(mgr_to_copy->lime_database_path);
+		mgr->call_logs_database_path = ms_strdup(mgr_to_copy->call_logs_database_path);
+		mgr->zrtp_secrets_database_path = ms_strdup(mgr_to_copy->zrtp_secrets_database_path);
 	}
 	linphone_core_manager_configure(mgr);
 }
@@ -1339,21 +1352,6 @@ void linphone_core_manager_start(LinphoneCoreManager *mgr, bool_t check_for_prox
 	if (linphone_core_start(mgr->lc) == -1) {
 		ms_error("Core [%p] failed to start", mgr->lc);
 	}
-
-	char random_part[10];
-	belle_sip_random_token(random_part, sizeof(random_part)-1);
-
-	char *call_log_db = bctbx_strdup_printf("call-history-%s.db", random_part);
-	char *call_log_db_path = bc_tester_file(call_log_db);
-	linphone_core_set_call_logs_database_path(mgr->lc, call_log_db_path);
-	bctbx_free(call_log_db_path);
-	bctbx_free(call_log_db);
-
-	char *zrtp_secrets_db = bctbx_strdup_printf("zrtp-secrets-%s.db", random_part);
-	char *zrtp_secrets_db_path = bc_tester_file(zrtp_secrets_db);
-	linphone_core_set_zrtp_secrets_file(mgr->lc, zrtp_secrets_db_path);
-	bctbx_free(zrtp_secrets_db_path);
-	bctbx_free(zrtp_secrets_db);
 
 	/*BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_proxy_config_list(lc)),proxy_count, int, "%d");*/
 	if (check_for_proxies){ /**/
@@ -1438,15 +1436,15 @@ void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, 
 }
 
 /* same as new but insert the rc_local in the core manager before the init and provide path to db files */
-LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
+LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db) {
 	LinphoneCoreManager *manager = ms_new0(LinphoneCoreManager, 1);
 	manager->rc_local = bctbx_strdup(rc_local);
-	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db);
+	linphone_core_manager_init_with_db(manager, rc_factory, NULL, linphone_db, lime_db, call_logs_db, zrtp_secrets_db);
 	return manager;
 }
 
-LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db) {
-	LinphoneCoreManager *manager = linphone_core_manager_create_local(rc_factory, rc_local, linphone_db, lime_db);
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db) {
+	LinphoneCoreManager *manager = linphone_core_manager_create_local(rc_factory, rc_local, linphone_db, lime_db, call_logs_db, zrtp_secrets_db);
 	linphone_core_manager_start(manager, TRUE);
 
 	return manager;
@@ -1476,11 +1474,6 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 				unlink(record_file);
 			}
 		}
-
-		const char *call_log_db_path = linphone_core_get_call_logs_database_path(mgr->lc);
-		if (call_log_db_path) unlink(call_log_db_path);
-		const char *zrtp_secrets_db_path = linphone_core_get_zrtp_secrets_file(mgr->lc);
-		if (zrtp_secrets_db_path) unlink (zrtp_secrets_db_path);
 		
 		linphone_core_stop(mgr->lc);
 
@@ -1549,6 +1542,18 @@ void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
 			unlink(mgr->lime_database_path);
 		}
 		bc_free(mgr->lime_database_path);
+	}
+	if (mgr->call_logs_database_path) {
+		if (unlinkDb == TRUE) {
+			unlink(mgr->call_logs_database_path);
+		}
+		bc_free(mgr->call_logs_database_path);
+	}
+	if (mgr->zrtp_secrets_database_path) {
+		if (unlinkDb == TRUE) {
+			unlink(mgr->zrtp_secrets_database_path);
+		}
+		bc_free(mgr->zrtp_secrets_database_path);
 	}
 	if (mgr->app_group_id)
 		bctbx_free(mgr->app_group_id);

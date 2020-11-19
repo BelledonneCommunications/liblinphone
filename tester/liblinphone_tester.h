@@ -388,6 +388,8 @@ typedef struct _LinphoneCoreManager {
 	char *rc_local;
 	char *database_path;
 	char *lime_database_path;
+	char *call_logs_database_path;
+	char *zrtp_secrets_database_path;
 	char *app_group_id;
 	bool_t main_core;
 	void * user_info;
@@ -421,8 +423,8 @@ LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_f
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias);
 LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
-LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db);
-LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db);
+LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db);
+LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db);
 LinphoneCoreManager* linphone_core_manager_create_shared(const char *rc_file, const char *app_group_id, bool_t main_core, LinphoneCoreManager *mgr_to_copy);
 void linphone_core_manager_stop(LinphoneCoreManager *mgr);
 void linphone_core_manager_uninit_after_stop_async(LinphoneCoreManager *mgr);
