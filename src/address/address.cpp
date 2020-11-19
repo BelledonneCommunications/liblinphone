@@ -384,6 +384,13 @@ const string &Address::getUriParamValue (const string &uriParamName) const {
 	return Utils::getEmptyConstRefObject<string>();
 }
 
+const bctbx_map_t* Address::getUriParams () const {
+	if (internalAddress) {
+		return sal_address_get_uri_params(internalAddress);
+	}
+	return nullptr;
+}
+
 bool Address::setUriParam (const string &uriParamName, const string &uriParamValue) {
 	if (!internalAddress)
 		return false;

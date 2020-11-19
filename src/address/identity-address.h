@@ -102,8 +102,8 @@ public:
 		return *this;
 	} ;
 
-	bool operator== (const IdentityAddress &other) const;
-	bool operator!= (const IdentityAddress &other) const;
+	bool operator== (const ConferenceAddress &other) const;
+	bool operator!= (const ConferenceAddress &other) const;
 
 	bool operator< (const ConferenceAddress &other) const;
 
@@ -114,6 +114,8 @@ public:
 	void setConfId (const std::string &confId);
 
 private:
+	void fillUriParams (const Address &address);
+	int compareUriParams (const bctbx_map_t* otherUriParamMap) const;
 };
 
 LINPHONE_END_NAMESPACE
