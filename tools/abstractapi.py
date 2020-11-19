@@ -101,7 +101,7 @@ class Boolean(Constant):
 		return self.value
 	
 	def translate(self, langTranslator):
-		return langTranslator.trueConstantToken if self else langTranslator.falseConstantToken
+		return langTranslator.trueConstantToken if self.value else langTranslator.falseConstantToken
 
 
 class Object(object):
