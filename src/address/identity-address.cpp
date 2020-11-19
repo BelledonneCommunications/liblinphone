@@ -202,8 +202,6 @@ ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other)
 }
 
 bool ConferenceAddress::operator== (const IdentityAddress &other) const {
-	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	// Operator < ignores scheme
 	// If this is not smaller than other and other is not smaller than this, it means that they are identical
 	return !(*this < other) && !(other < *this);
 }
@@ -213,9 +211,41 @@ bool ConferenceAddress::operator!= (const IdentityAddress &other) const {
 }
 
 bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+	// Operator < ignores scheme
 	int diff = IdentityAddress::operator<(other);
+	const bctbx_map_t* thisUriParamMap = getUriParams();
+	const bctbx_map_t* otherUriParamMap = other.getUriParams();
+
+	// Check that this and other uri parameter maps have the same number of elements
 	if (diff == 0){
-		diff = getConfId().compare(other.getConfId());
+		size_t thisMapSize = bctbx_map_cchar_size(thisUriParamMap);
+		size_t otherMapSize = bctbx_map_cchar_size(otherUriParamMap);
+		diff = (int)(thisMapSize - otherMapSize);
+	}
+	bctbx_iterator_t * thisUriParamMapEnd = bctbx_map_cchar_end(thisUriParamMap);
+	bctbx_iterator_t * otherUriParamMapEnd = bctbx_map_cchar_end(otherUriParamMap);
+
+	bctbx_iterator_t * thisIt = bctbx_map_cchar_begin(thisUriParamMap);
+
+	// Loop through URI parameter map until:
+	// - diff is 0
+	// - end of map has not been reached
+	while((diff == 0) && (!bctbx_iterator_cchar_equals(thisIt, thisUriParamMapEnd))) {
+		bctbx_pair_t *thisPair = bctbx_iterator_cchar_get_pair(thisIt);
+		const char * thisKey = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(thisPair));
+		const char * thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
+
+		bctbx_iterator_t * otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
+		if (!bctbx_iterator_cchar_equals(otherIt, otherUriParamMapEnd)) {
+			bctbx_pair_t *otherPair = bctbx_iterator_cchar_get_pair(otherIt);
+			const char * otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
+			diff = strcmp(thisValue, otherValue);
+		} else {
+			diff = -1;
+		}
+
+		thisIt = bctbx_iterator_cchar_get_next(thisIt);
 	}
 	return diff < 0;
 }
