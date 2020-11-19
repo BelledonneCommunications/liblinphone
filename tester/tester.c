@@ -79,6 +79,7 @@ const char *lime_server_c448_tlsauth_opt_url="https://lime.wildcard1.linphone.or
 const char *lime_server_c25519_external_url="https://lime.external-domain.org:8643/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_external_url="https://lime.external-domain.org:8643/lime-server-c448/lime-server.php";
 bool_t liblinphonetester_ipv6 = TRUE;
+const char * liblinphone_tester_ipv6_probing_address = "2a01:e00::2";
 bool_t liblinphonetester_show_account_manager_logs = FALSE;
 bool_t liblinphonetester_no_account_creator = FALSE;
 int liblinphonetester_transport_timeout = 9000; /*milliseconds. it is set to such low value to workaround a problem with our Freebox v6 when connecting to Ipv6 addresses.
@@ -1616,7 +1617,7 @@ void linphone_core_manager_delete_chat_room (LinphoneCoreManager *mgr, LinphoneC
 
 int liblinphone_tester_ipv6_available(void){
 	if (liblinphonetester_ipv6) {
-		struct addrinfo *ai=bctbx_ip_address_to_addrinfo(AF_INET6,SOCK_STREAM,"2a01:e00::2",53);
+		struct addrinfo *ai=bctbx_ip_address_to_addrinfo(AF_INET6,SOCK_STREAM,liblinphone_tester_ipv6_probing_address,53);
 		if (ai){
 			struct sockaddr_storage ss;
 			struct addrinfo src;
