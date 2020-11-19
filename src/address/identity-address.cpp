@@ -221,11 +221,19 @@ bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
 }
 
 string ConferenceAddress::asString () const {
-	if (hasConfId())
-		return IdentityAddress::asString() + ";conf-id="+getConfId();
-	else {
-		return IdentityAddress::asString();
+	std::string addressStr = IdentityAddress::asString();
+	const bctbx_map_t* uriParamMap = getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		// GRUU is already added by Identity address asString() function
+		if (strcmp(key, "gr") != 0) {
+			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			addressStr = addressStr + ";" + key + "=" + value;
+		}
 	}
+	return addressStr;
 }
 
 const string &ConferenceAddress::getConfId () const {

@@ -237,7 +237,7 @@ const bctbx_map_t* sal_address_get_uri_params(const SalAddress *addr) {
 	belle_sip_parameters_t* parameters = BELLE_SIP_PARAMETERS(belle_sip_header_address_get_uri(BELLE_SIP_HEADER_ADDRESS(addr)));
 	const belle_sip_list_t* param_names = belle_sip_parameters_get_parameter_names(parameters);
 	bctbx_map_t *param_map = bctbx_mmap_cchar_new();
-	for(belle_sip_list_t* it = (belle_sip_list_t*)param_names; it  != NULL; it++) {
+	for(belle_sip_list_t* it = (belle_sip_list_t*)param_names; it  != NULL; it = it->next) {
 		const char * name = (const char *)it->data;
 		char * value = const_cast<char *>(belle_sip_parameters_get_parameter(parameters, name));
 		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, value);
