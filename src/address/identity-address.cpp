@@ -183,25 +183,20 @@ void IdentityAddress::removeFromLeakDetector() const {
 }
 
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
-	if (address.hasUriParam("conf-id")) {
-		setConfId(address.getUriParamValue("conf-id"));
-	}
+	fillUriParams(address);
 };
 ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
 }
 ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
-	if (other.getConfId().empty() == false) {
-		setConfId(other.getConfId());
-	}
+	fillUriParams(other);
 }
+
 ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
 }
 ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
-		if (other.getConfId().empty() == false) {
-			setConfId(other.getConfId());
-		}
+		fillUriParams(other);
 	}
 	return *this;
 }
@@ -243,6 +238,17 @@ void ConferenceAddress::setConfId (const string &confId) {
 
 bool ConferenceAddress::hasConfId () const {
 	return hasUriParam("conf-id");
+}
+
+void ConferenceAddress::fillUriParams (const Address &address) {
+	const bctbx_map_t* uriParamMap = address.getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+		setUriParam(key, value);
+	}
 }
 
 LINPHONE_END_NAMESPACE

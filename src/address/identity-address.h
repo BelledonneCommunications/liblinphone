@@ -114,6 +114,8 @@ public:
 	void setConfId (const std::string &confId);
 
 private:
+
+	void fillUriParams (const Address &address);
 };
 
 LINPHONE_END_NAMESPACE
