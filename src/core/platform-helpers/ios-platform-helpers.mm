@@ -434,7 +434,7 @@ void IosPlatformHelpers::networkChangeCallback() {
 			ms_message("New Wifi SSID detected: %s", mCurrentSSID.empty()?"[none]":mCurrentSSID.c_str());
 		}
 #else
-        if (reachable){
+        if (reachable && !force){
             force = checkIpAddressChanged();
         }
 #endif
