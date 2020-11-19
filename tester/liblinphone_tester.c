@@ -30,6 +30,7 @@ static const char* liblinphone_helper =
 		"\t\t\t--disable-leak-detector\n"
 		"\t\t\t--disable-tls-support\n"
 		"\t\t\t--no-ipv6 (turn off IPv6 in LinphoneCore, tests requiring IPv6 will be skipped)\n"
+		"\t\t\t--ipv6-probing-address IPv6 addr used to probe connectivity, default is 2a01:e00::2)\n"
 		"\t\t\t--show-account-manager-logs (show temporary test account creation logs)\n"
 		"\t\t\t--no-account-creator (use file database flexisip for account creation)\n"
 		"\t\t\t--file-transfer-server-url <url> - override the default https://transfer.example.org:9444/http-file-transfer-server/hft.php\n"
@@ -121,7 +122,10 @@ static int liblinphone_tester_start(int argc, char *argv[]) {
 			liblinphone_tester_tls_support_disabled = TRUE;
 		} else if (strcmp(argv[i],"--no-ipv6")==0){
 			liblinphonetester_ipv6 = FALSE;
-		} else if (strcmp(argv[i],"--show-account-manager-logs")==0){
+		} else if (strcmp(argv[i], "--ipv6-probing-address") == 0){
+			CHECK_ARG("--ipv6-probing-address", ++i, argc);
+			liblinphone_tester_ipv6_probing_address=argv[i];
+		}else if (strcmp(argv[i],"--show-account-manager-logs")==0){
 			liblinphonetester_show_account_manager_logs=TRUE;
 		} else if (strcmp(argv[i],"--no-account-creator")==0){
 			liblinphonetester_no_account_creator=TRUE;

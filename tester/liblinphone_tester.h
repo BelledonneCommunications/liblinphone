@@ -112,6 +112,7 @@ extern test_suite_t audio_quality_test_suite;
 
 extern int manager_count;
 
+extern const char * liblinphone_tester_ipv6_probing_address;
 extern int liblinphone_tester_ipv6_available(void);
 extern int liblinphone_tester_ipv4_available(void);
 
