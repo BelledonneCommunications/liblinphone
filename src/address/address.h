@@ -20,6 +20,7 @@
 #ifndef _L_ADDRESS_H_
 #define _L_ADDRESS_H_
 
+#include <bctoolbox/map.h>
 #include <unordered_map>
 #include <ostream>
 
@@ -107,6 +108,7 @@ public:
 
 	bool hasUriParam (const std::string &uriParamName) const;
 	const std::string &getUriParamValue (const std::string &uriParamName) const;
+	const bctbx_map_t* getUriParams () const;
 	bool setUriParam (const std::string &uriParamName, const std::string &uriParamValue = "");
 	bool setUriParams (const std::string &uriParams);
 	bool removeUriParam (const std::string &uriParamName);
@@ -119,9 +121,6 @@ public:
 	// This method is necessary when creating static variables of type address as they canot be freed before the leak detector runs
 	void removeFromLeakDetector() const;
 	static void clearSipAddressesCache ();
-
-protected:
-	SalAddress *internalAddress = nullptr;
 
 private:
 	struct AddressCache {
@@ -137,8 +136,10 @@ private:
 		std::unordered_map<std::string, std::string> uriParams;
 	};
 
+	// Cqche is required so that getters can return const refs
 	mutable AddressCache cache;
 
+	SalAddress *internalAddress = nullptr;
 };
 
 inline std::ostream &operator<< (std::ostream &os, const Address &address) {

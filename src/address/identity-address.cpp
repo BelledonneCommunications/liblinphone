@@ -83,9 +83,7 @@ IdentityAddress &IdentityAddress::operator= (const IdentityAddress &other) {
 
 bool IdentityAddress::operator== (const IdentityAddress &other) const {
 	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	// Operator < ignores scheme
-	// If this is not smaller than other and other is not smaller than this, it means that they are identical
-	return !(*this < other) && !(other < *this);
+	return getUsername() == other.getUsername() && getDomain() == other.getDomain() && getGruu() == other.getGruu();
 }
 
 bool IdentityAddress::operator!= (const IdentityAddress &other) const {
@@ -183,54 +181,65 @@ void IdentityAddress::removeFromLeakDetector() const {
 }
 
 ConferenceAddress::ConferenceAddress (const Address &address) :IdentityAddress(address) {
-	if (address.hasUriParam("conf-id")) {
-		setConfId(address.getUriParamValue("conf-id"));
-	}
+	fillUriParams(address);
 };
 ConferenceAddress::ConferenceAddress (const std::string &address) : ConferenceAddress(Address(address)) {
 }
 ConferenceAddress::ConferenceAddress (const ConferenceAddress &other) :IdentityAddress(other) {
-	if (other.getConfId().empty() == false) {
-		setConfId(other.getConfId());
-	}
+	fillUriParams(other);
 }
+
 ConferenceAddress::ConferenceAddress (const IdentityAddress &other) :IdentityAddress(other) {
+
 }
 ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other) {
 	if (this != &other) {
 		IdentityAddress::operator=(other);
-		if (other.getConfId().empty() == false) {
-			setConfId(other.getConfId());
-		}
+		fillUriParams(other);
 	}
 	return *this;
 }
 
-bool ConferenceAddress::operator== (const IdentityAddress &other) const {
-	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	// Operator < ignores scheme
+bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
+	bool equal = IdentityAddress::operator==(other);
+	if (equal) {
+		const bctbx_map_t* otherUriParamMap = other.getUriParams();
+		equal = (compareUriParams(otherUriParamMap) == 0);
+	}
 	// If this is not smaller than other and other is not smaller than this, it means that they are identical
-	return !(*this < other) && !(other < *this);
+	return equal;
 }
 
-bool ConferenceAddress::operator!= (const IdentityAddress &other) const {
+bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
 	return !(*this == other);
 }
 
 bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
+	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
+	// Operator < ignores scheme
 	int diff = IdentityAddress::operator<(other);
+	const bctbx_map_t* otherUriParamMap = other.getUriParams();
+	
 	if (diff == 0){
-		diff = getConfId().compare(other.getConfId());
+		diff = compareUriParams(otherUriParamMap);
 	}
 	return diff < 0;
 }
 
 string ConferenceAddress::asString () const {
-	if (hasConfId())
-		return IdentityAddress::asString() + ";conf-id="+getConfId();
-	else {
-		return IdentityAddress::asString();
+	std::string addressStr = IdentityAddress::asString();
+	const bctbx_map_t* uriParamMap = getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		// GRUU is already added by Identity address asString() function
+		if (strcmp(key, "gr") != 0) {
+			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+			addressStr = addressStr + ";" + key + "=" + value;
+		}
 	}
+	return addressStr;
 }
 
 const string &ConferenceAddress::getConfId () const {
@@ -245,4 +254,49 @@ bool ConferenceAddress::hasConfId () const {
 	return hasUriParam("conf-id");
 }
 
+void ConferenceAddress::fillUriParams (const Address &address) {
+	const bctbx_map_t* uriParamMap = address.getUriParams();
+	bctbx_iterator_t * uriParamMapEnd = bctbx_map_cchar_end(uriParamMap);
+	for (bctbx_iterator_t * it = bctbx_map_cchar_begin(uriParamMap);!bctbx_iterator_cchar_equals(it,uriParamMapEnd); it = bctbx_iterator_cchar_get_next(it)) {
+		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
+		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
+		const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
+		setUriParam(key, value);
+	}
+}
+
+int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) const {
+	const bctbx_map_t* thisUriParamMap = getUriParams();
+	// Check that this and other uri parameter maps have the same number of elements
+	size_t thisMapSize = bctbx_map_cchar_size(thisUriParamMap);
+	size_t otherMapSize = bctbx_map_cchar_size(otherUriParamMap);
+	int diff = (int)(thisMapSize - otherMapSize);
+
+	bctbx_iterator_t * thisUriParamMapEnd = bctbx_map_cchar_end(thisUriParamMap);
+	bctbx_iterator_t * otherUriParamMapEnd = bctbx_map_cchar_end(otherUriParamMap);
+
+	bctbx_iterator_t * thisIt = bctbx_map_cchar_begin(thisUriParamMap);
+
+	// Loop through URI parameter map until:
+	// - diff is 0
+	// - end of map has not been reached
+	while((diff == 0) && (!bctbx_iterator_cchar_equals(thisIt, thisUriParamMapEnd))) {
+		bctbx_pair_t *thisPair = bctbx_iterator_cchar_get_pair(thisIt);
+		const char * thisKey = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(thisPair));
+		const char * thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
+
+		bctbx_iterator_t * otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
+		if (!bctbx_iterator_cchar_equals(otherIt, otherUriParamMapEnd)) {
+			bctbx_pair_t *otherPair = bctbx_iterator_cchar_get_pair(otherIt);
+			const char * otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
+			diff = strcmp(thisValue, otherValue);
+		} else {
+			diff = -1;
+		}
+
+		thisIt = bctbx_iterator_cchar_get_next(thisIt);
+	}
+
+	return diff;
+}
 LINPHONE_END_NAMESPACE
