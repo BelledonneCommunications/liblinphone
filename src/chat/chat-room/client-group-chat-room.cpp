@@ -580,9 +580,8 @@ bool ClientGroupChatRoom::addParticipants (
 		setState(ConferenceInterface::State::CreationPending);
 	} else {
 		SalReferOp *referOp = new SalReferOp(getCore()->getCCore()->sal);
-		LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+		LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 		linphone_configure_op(getCore()->getCCore(), referOp, lAddr, nullptr, true);
-		linphone_address_unref(lAddr);
 		for (const auto &addr : addresses) {
 			Address referToAddr = addr.asAddress();
 			referToAddr.setParam("text");
@@ -609,9 +608,8 @@ bool ClientGroupChatRoom::removeParticipant (const shared_ptr<Participant> &part
 
 	//TODO handle one-to-one case ?
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
 	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setUriParam("method", "BYE");
@@ -649,9 +647,8 @@ void ClientGroupChatRoom::setParticipantAdminStatus (const shared_ptr<Participan
 	LinphoneCore *cCore = getCore()->getCCore();
 
 	SalReferOp *referOp = new SalReferOp(cCore->sal);
-	LinphoneAddress *lAddr = linphone_address_new(getConferenceAddress().asString().c_str());
+	LinphoneAddress *lAddr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 	linphone_configure_op(cCore, referOp, lAddr, nullptr, false);
-	linphone_address_unref(lAddr);
 	Address referToAddr = participant->getAddress().asAddress();
 	referToAddr.setParam("text");
 	referToAddr.setParam("admin", Utils::toString(isAdmin));
