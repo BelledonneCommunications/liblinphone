@@ -1186,7 +1186,7 @@ lpc_cmd_call_logs(LinphoneCore *lc, char *args)
 	for (;elem!=NULL;elem=bctbx_list_next(elem))
 	{
 		LinphoneCallLog *cl=(LinphoneCallLog*)elem->data;
-		char *str=linphone_call_log_to_str(cl);
+		char *str=linphone_call_log_to_string(cl);
 		linphonec_out("%s\n",str);
 		ms_free(str);
 	}
