@@ -249,7 +249,7 @@ void linphone_call_log_set_ref_key(LinphoneCallLog *cl, const char *refkey){
 	if (refkey) cl->refkey=ms_strdup(refkey);
 }
 
-char * linphone_call_log_to_str(const LinphoneCallLog *cl){
+char * linphone_call_log_to_string(const LinphoneCallLog *cl){
 	const char *status;
 	char *tmp;
 	char *from=linphone_address_to_string (cl->from);
