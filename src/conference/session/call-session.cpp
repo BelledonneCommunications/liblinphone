@@ -774,10 +774,10 @@ void CallSessionPrivate::setContactOp () {
 				}
 			}
 			q->updateContactAddress (contactAddress);
-			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.asString();
+			lInfo() << "Setting contact address for session " << this << " to " << contactAddress.toString();
 			op->setContactAddress(contactAddress.getInternalAddress());
 		} else {
-			lWarning() << "Unable to set contact address for session " << this << " to " << contactAddress.asString() << " as it is not valid";
+			lWarning() << "Unable to set contact address for session " << this << " to " << contactAddress.toString() << " as it is not valid";
 		}
 		linphone_address_unref(contact);
 	}
