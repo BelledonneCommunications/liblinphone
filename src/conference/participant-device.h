@@ -83,6 +83,10 @@ public:
 	const std::string & getCapabilityDescriptor()const{
 		return mCapabilityDescriptor;
 	}
+
+	void *getUserData () const;
+	void setUserData (void *ud);
+
 private:
 	Participant *mParticipant = nullptr;
 	IdentityAddress mGruu;
@@ -92,6 +96,8 @@ private:
 	LinphoneEvent *mConferenceSubscribeEvent = nullptr;
 	State mState = State::Joining;
 	time_t mTimeOfJoining;
+
+	void *mUserData = nullptr;
 
 	L_DISABLE_COPY(ParticipantDevice);
 };

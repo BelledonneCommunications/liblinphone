@@ -86,6 +86,14 @@ bool ParticipantDevice::isInConference() const {
 	}
 }
 
+void *ParticipantDevice::getUserData () const{
+	return mUserData;
+}
+
+void ParticipantDevice::setUserData (void *ud) {
+	mUserData = ud;
+}
+
 ostream &operator<< (ostream &stream, ParticipantDevice::State state) {
 	switch (state) {
 		case ParticipantDevice::State::ScheduledForJoining:
