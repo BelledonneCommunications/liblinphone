@@ -385,7 +385,7 @@ LocalConference::LocalConference (
 
 	// Update proxy contact address to add conference ID
 	// Do not use myAddress directly as it may lack some parameter like gruu
-	LinphoneAddress * cAddress = linphone_address_new(myAddress.asString().c_str());
+	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(myAddress.asAddress()));
 	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(core->getCCore(), cAddress);
 	char * contactAddressStr = nullptr;
 	if (proxyCfg && proxyCfg->op) {
@@ -400,7 +400,6 @@ LocalConference::LocalConference (
 	if (contactAddressStr) {
 		ms_free(contactAddressStr);
 	}
-	linphone_address_unref(cAddress);
 
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
@@ -1041,7 +1040,7 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationFailed:
 			ms_message("Calling the conference focus (%s)", getConferenceAddress().asString().c_str());
-			addr = linphone_address_new(getConferenceAddress().asString().c_str());
+			addr = L_GET_C_BACK_PTR(&(getConferenceAddress().asAddress()));
 			if (!addr)
 				return false;
 			params = linphone_core_create_call_params(getCore()->getCCore(), nullptr);
@@ -1051,7 +1050,6 @@ bool RemoteConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> ca
 			m_pendingCalls.push_back(call);
 			callLog = m_focusCall->getLog();
 			callLog->was_conference = TRUE;
-			linphone_address_unref(addr);
 			linphone_call_params_unref(params);
 			setState(ConferenceInterface::State::CreationPending);
 			Conference::addParticipant(call);
