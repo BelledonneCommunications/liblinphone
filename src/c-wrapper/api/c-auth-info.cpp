@@ -220,3 +220,7 @@ const char *linphone_auth_info_get_tls_key_password(const LinphoneAuthInfo *info
     const char *tlsKeyPassword = AuthInfo::toCpp(info)->getTlsKeyPassword().c_str();
     return strlen(tlsKeyPassword) != 0 ? tlsKeyPassword : NULL;
 }
+
+char *linphone_auth_info_to_string (const LinphoneAuthInfo *info) {
+	return ms_strdup(AuthInfo::toCpp(info)->toString().c_str());
+}
