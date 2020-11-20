@@ -1300,10 +1300,6 @@ bool ServerGroupChatRoom::addParticipant (const IdentityAddress &participantAddr
 	return true;
 }
 
-shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddress &participantAddress) const {
-	return getConference()->findParticipant(participantAddress);
-}
-
 const ConferenceAddress &ServerGroupChatRoom::getConferenceAddress () const {
 	return getConference()->getConferenceAddress();
 }
