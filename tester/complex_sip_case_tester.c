@@ -47,7 +47,7 @@ LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const 
 	wait_for_until(mgr->lc, mgr->lc, (int*)&results, 1,2000);
 	
 	ai = belle_sip_resolver_results_get_addrinfos(results);
-	err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
+	err = bctbx_getnameinfo((struct sockaddr*)ai->ai_addr, (socklen_t)ai->ai_addrlen, ipstring, INET6_ADDRSTRLEN, NULL, 0, NI_NUMERICHOST);
 	if (err != 0)
 		ms_error("linphone_core_manager_resolve(): getnameinfo error %s", gai_strerror(err));
 	dest = linphone_address_new(NULL);
