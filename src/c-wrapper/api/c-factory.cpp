@@ -278,7 +278,8 @@ void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const ch
 }
 
 const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
-	return Factory::toCpp(factory)->getMspluginsDir().c_str();
+	const char *tmp = Factory::toCpp(factory)->getMspluginsDir().c_str();
+	return tmp[0] == '\0' ? nullptr : tmp;
 }
 
 void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path) {
