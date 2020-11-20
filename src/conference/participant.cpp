@@ -169,4 +169,12 @@ bool Participant::getPreserveSession () const {
 	return preserveSession;
 }
 
+void *Participant::getUserData () const{
+	return mUserData;
+}
+
+void Participant::setUserData (void *ud) {
+	mUserData = ud;
+}
+
 LINPHONE_END_NAMESPACE

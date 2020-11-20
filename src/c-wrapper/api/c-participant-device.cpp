@@ -37,12 +37,11 @@ void linphone_participant_device_unref (LinphoneParticipantDevice *participant_d
 }
 
 void *linphone_participant_device_get_user_data(const LinphoneParticipantDevice *participant_device) {
-	//return L_GET_USER_DATA_FROM_C_OBJECT(participant_device);
-	return nullptr;
+	return LinphonePrivate::ParticipantDevice::toCpp(participant_device)->getUserData();
 }
 
 void linphone_participant_device_set_user_data(LinphoneParticipantDevice *participant_device, void *ud) {
-	//L_SET_USER_DATA_FROM_C_OBJECT(participant_device, ud);
+	LinphonePrivate::ParticipantDevice::toCpp(participant_device)->setUserData(ud);
 }
 
 const LinphoneAddress *linphone_participant_device_get_address(const LinphoneParticipantDevice *participant_device) {
