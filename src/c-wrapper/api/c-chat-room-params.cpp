@@ -95,3 +95,7 @@ const char * linphone_chat_room_params_get_subject(LinphoneChatRoomParams *param
 void linphone_chat_room_params_set_subject(LinphoneChatRoomParams *params, const char *subject) {
 	ChatRoomParams::toCpp(params)->setSubject(L_C_TO_STRING(subject));
 }
+
+char *linphone_chat_room_params_to_string (const LinphoneChatRoomParams *params) {
+	return ms_strdup(ChatRoomParams::toCpp(params)->toString().c_str());
+}

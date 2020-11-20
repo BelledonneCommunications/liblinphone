@@ -278,6 +278,14 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_tls_key_password(const Linpho
  */
 LINPHONE_PUBLIC bool_t linphone_auth_info_is_equal_but_algorithms(const LinphoneAuthInfo *auth_info_1,const LinphoneAuthInfo *auth_info_2);
 
+/**
+ * Returns the auth info as a string.
+ * The result string must be freed by user using ms_free().
+ * @param info #LinphoneAuthInfo object. @notnil
+ * @return the auth info as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_auth_info_to_string (const LinphoneAuthInfo *info);
+
 /* you don't need those function*/
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_auth_info_destroy(LinphoneAuthInfo *info);
 
