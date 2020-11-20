@@ -194,7 +194,7 @@ int main(int argc, char *argv[]){
 			ms_message("*********************************");
 			for (iterator=linphone_core_get_call_logs(lc);iterator!=NULL;iterator=iterator->next) {
 				LinphoneCallLog *call_log=(LinphoneCallLog *)iterator->data;
-				char * tmp_str = linphone_call_log_to_str(call_log);
+				char * tmp_str = linphone_call_log_to_string(call_log);
 				ms_message("\n%s",tmp_str);
 				ms_free(tmp_str);
 			}
