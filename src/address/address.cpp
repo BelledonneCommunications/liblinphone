@@ -418,7 +418,7 @@ bool Address::removeUriParam (const string &uriParamName) {
 void Address::removeFromLeakDetector() const {
 	belle_sip_header_address_t* header_addr = BELLE_SIP_HEADER_ADDRESS(internalAddress);
 	belle_sip_uri_t* sip_uri = belle_sip_header_address_get_uri(header_addr);
-	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(belle_sip_uri_get_headers(sip_uri)));
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(const_cast<belle_sip_parameters_t*>(belle_sip_uri_get_headers(sip_uri))));
 	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
 	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(header_addr));
 }
