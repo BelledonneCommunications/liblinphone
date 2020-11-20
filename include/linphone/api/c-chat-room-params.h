@@ -146,6 +146,14 @@ LINPHONE_PUBLIC const char * linphone_chat_room_params_get_subject(LinphoneChatR
 LINPHONE_PUBLIC void linphone_chat_room_params_set_subject(LinphoneChatRoomParams *params, const char *subject);
 
 /**
+ * Returns the chat room parameters as a string.
+ * The result string must be freed by user using ms_free().
+ * @param params #LinphoneChatRoomParams object. @notnil
+ * @return the chat room parameters as a string. @maybenil
+**/
+LINPHONE_PUBLIC char *linphone_chat_room_params_to_string (const LinphoneChatRoomParams *params);
+
+/**
  * @}
  */
 
