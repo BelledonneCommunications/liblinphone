@@ -4239,15 +4239,6 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		return NULL;
 	}
 
-	if (!(!linphone_call_params_audio_enabled(params) ||
-		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
-		linphone_call_params_get_local_conference_mode(params) == TRUE
-		)
-		&& linphone_core_preempt_sound_resources(lc) == -1) {
-		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. Call attempt is rejected.");
-		return NULL;
-	}
-
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
 		return NULL;
 
@@ -4278,6 +4269,17 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		ms_warning("we had a problem in adding the call into the invite ... weird");
 		linphone_call_unref(call);
 		linphone_call_params_unref(cp);
+		return NULL;
+	}
+
+	// Try to free up resources after adding it to the call list.
+	// linphone_core_preempt_sound_resources tries to pause a call only if there is more than one in the list of core stored in the core
+	if (!(!linphone_call_params_audio_enabled(params) ||
+		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
+		linphone_call_params_get_local_conference_mode(params) == TRUE
+		)
+		&& linphone_core_preempt_sound_resources(lc) == -1) {
+		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. Call attempt is rejected.");
 		return NULL;
 	}
 
