@@ -553,7 +553,7 @@ void linphone_core_store_call_log(LinphoneCore *lc, LinphoneCallLog *log) {
 
 		if (log->from) from = linphone_address_as_string(log->from);
 		if (log->to) to = linphone_address_as_string(log->to);
-O
+
 		buf = sqlite3_mprintf("INSERT INTO call_history VALUES(NULL,%Q,%Q,%i,%i,%lld,%lld,%i,%i,%f,%Q,%Q);",
 						from,
 						to,

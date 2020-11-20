@@ -553,7 +553,7 @@ int FileTransferChatMessageModifier::startHttpTransfer (const string &url, const
 		action.c_str(),
 		uri,
 		belle_http_header_create("User-Agent", linphone_core_get_user_agent(message->getCore()->getCCore())),
-		belle_http_header_create("From", message->getLocalAdress().asString().c_str()),
+		belle_http_header_create("From", message->getLocalAdress().toString().c_str()),
 		nullptr
 	);
 
