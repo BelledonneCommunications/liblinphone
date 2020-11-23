@@ -458,4 +458,10 @@ void linphone_vcard_clean_cache(LinphoneVcard *vCard) {
 	vCard->sip_addresses_cache = NULL;
 }
 
+char *linphone_vcard_to_string(const LinphoneVcard *vCard) {
+	char *tmp;
+	tmp=ms_strdup_printf("VCard %p\n", vCard);
+	return tmp;
+}
+
 } // extern "C"
