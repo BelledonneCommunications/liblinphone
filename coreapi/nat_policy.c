@@ -378,3 +378,10 @@ bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNatPolicy *policy)
 LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy) {
 	return policy->lc;
 }
+
+char *linphone_nat_policy_to_string(const LinphoneNatPolicy *policy) {
+	char *tmp;
+	tmp=ms_strdup_printf("NAT policy %p\n", policy);
+	return tmp;
+}
+

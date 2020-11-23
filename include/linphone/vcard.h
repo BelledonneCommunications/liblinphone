@@ -240,6 +240,13 @@ LINPHONE_PUBLIC void linphone_vcard_set_url(LinphoneVcard *vCard, const char *ur
 LINPHONE_PUBLIC const char* linphone_vcard_get_url(const LinphoneVcard *vCard);
 
 /**
+ * Convert vCard to string
+ * @param vCard the #LinphoneVcard @notnil
+ * @return vCard as string @notnil
+**/
+LINPHONE_PUBLIC char *linphone_vcard_to_string(const LinphoneVcard *vCard);
+
+/**
  * @}
  */
 

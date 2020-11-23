@@ -1619,6 +1619,18 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone(L
 
 	return LinphoneAccountCreatorStatusRequestFailed;
 }
+
+char * linphone_account_creator_to_string(LinphoneAccountCreator *creator){
+	char *tmp;
+
+	const char *username = creator->username ? creator->username : creator->phone_number;
+	tmp=ms_strdup_printf("Account manager %p of %s\nIdentity %s\nPhone number: %s\nAlgorithm: %s\n",
+			creator, username, _get_identity(creator), (creator->phone_number) ? creator->phone_number : "Not provided",
+			creator->algorithm);
+
+	return tmp;
+}
+
 /****************** END OF UPDATE ACCOUNT **************************/
 
 /************************** End Account Creator Linphone **************************/
