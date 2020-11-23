@@ -641,6 +641,13 @@ LINPHONE_PUBLIC bool_t linphone_proxy_config_is_push_notification_allowed(const 
  */
 LINPHONE_PUBLIC int linphone_proxy_config_get_unread_chat_message_count (const LinphoneProxyConfig *proxy_config);
 
+/**
+ * Convert proxy config to string
+ * @param proxy_config #LinphoneProxyConfig object. @notnil
+ * @return proxy config as string @notnil
+**/
+LINPHONE_PUBLIC char * linphone_proxy_config_to_string(const LinphoneProxyConfig *proxy_config);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -667,7 +674,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_route(
  * @deprecated 29/07/2015 use linphone_proxy_config_get_identity_address()
  * @donotwrap
 **/
-LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_identity(const LinphoneProxyConfig *cfg);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_proxy_config_get_identity(const LinphoneProxyConfig *proxy_config);
 
 /**
  * @}

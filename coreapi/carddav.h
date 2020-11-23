@@ -160,6 +160,13 @@ void linphone_carddav_fetch_vcards(LinphoneCardDavContext *cdc);
 void linphone_carddav_pull_vcards(LinphoneCardDavContext *cdc, MSList *vcards_to_pull);
 
 /**
+ * Convert CardDAV to string
+ * @param cdc LinphoneCardDavContext object
+ * @return CardDAV as string @notnil
+**/
+LINPHONE_PUBLIC char * linphone_carddav_to_string(LinphoneCardDavContext *cdc);
+
+/**
  * @}
  */
 

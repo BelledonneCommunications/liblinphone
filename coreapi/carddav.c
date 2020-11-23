@@ -21,9 +21,6 @@
 #include "private.h"
 #include "linphone/api/c-auth-info.h"
 
-
-
-
 LinphoneCardDavContext* linphone_carddav_context_new(LinphoneFriendList *lfl) {
 	LinphoneCardDavContext *carddav_context = NULL;
 
@@ -763,4 +760,12 @@ static LinphoneCardDavQuery* linphone_carddav_create_addressbook_multiget_query(
 void linphone_carddav_pull_vcards(LinphoneCardDavContext *cdc, bctbx_list_t *vcards_to_pull) {
 	LinphoneCardDavQuery *query = linphone_carddav_create_addressbook_multiget_query(cdc, vcards_to_pull);
 	linphone_carddav_send_query(query);
+}
+
+char * linphone_carddav_to_string(LinphoneCardDavContext *cdc){
+	char *tmp;
+
+	tmp=ms_strdup_printf("Card DAV %p\n", cdc);
+
+	return tmp;
 }
