@@ -161,6 +161,13 @@ LINPHONE_PUBLIC bool_t linphone_player_get_is_video_available(LinphonePlayer *pl
 LINPHONE_PUBLIC LinphoneCore *linphone_player_get_core(const LinphonePlayer *player);
 
 /**
+ * Convert player to string
+ * @param player #LinphonePlayer object @notnil
+ * @return player as string @notnil
+**/
+LINPHONE_PUBLIC char *linphone_player_to_string(LinphonePlayer *player);
+
+/**
  * Acquire a reference to the #LinphonePlayerCbs object.
  * @param cbs #LinphonePlayerCbs object. @notnil
  * @return The same #LinphonePlayerCbs object. @notnil

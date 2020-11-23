@@ -85,24 +85,24 @@ LinphoneCore *linphone_player_get_core(const LinphonePlayer *player){
 	return player->core;
 }
 
-LinphoneStatus linphone_player_open(LinphonePlayer *obj, const char *filename){
-	return obj->open(obj,filename);
+LinphoneStatus linphone_player_open(LinphonePlayer *player, const char *filename){
+	return player->open(player,filename);
 }
 
-LinphoneStatus linphone_player_start(LinphonePlayer *obj){
-	return obj->start(obj);
+LinphoneStatus linphone_player_start(LinphonePlayer *player){
+	return player->start(player);
 }
 
-LinphoneStatus linphone_player_pause(LinphonePlayer *obj){
-	return obj->pause(obj);
+LinphoneStatus linphone_player_pause(LinphonePlayer *player){
+	return player->pause(player);
 }
 
-LinphoneStatus linphone_player_seek(LinphonePlayer *obj, int time_ms){
-	return obj->seek(obj,time_ms);
+LinphoneStatus linphone_player_seek(LinphonePlayer *player, int time_ms){
+	return player->seek(player,time_ms);
 }
 
-LinphonePlayerState linphone_player_get_state(LinphonePlayer *obj){
-	switch (obj->get_state(obj)) {
+LinphonePlayerState linphone_player_get_state(LinphonePlayer *player){
+	switch (player->get_state(player)) {
 		case MSPlayerClosed:
 		default:
 			return LinphonePlayerClosed;
@@ -113,28 +113,28 @@ LinphonePlayerState linphone_player_get_state(LinphonePlayer *obj){
 	}
 }
 
-int linphone_player_get_duration(LinphonePlayer *obj) {
-	return obj->get_duration(obj);
+int linphone_player_get_duration(LinphonePlayer *player) {
+	return player->get_duration(player);
 }
 
-int linphone_player_get_current_position(LinphonePlayer *obj) {
-	return obj->get_position(obj);
+int linphone_player_get_current_position(LinphonePlayer *player) {
+	return player->get_position(player);
 }
 
-void linphone_player_close(LinphonePlayer *obj){
-	obj->close(obj);
+void linphone_player_close(LinphonePlayer *player){
+	player->close(player);
 }
 
-void linphone_player_set_window_id(LinphonePlayer *obj, void* window_id){
-	obj->set_window_id(obj, window_id);
+void linphone_player_set_window_id(LinphonePlayer *player, void* window_id){
+	player->set_window_id(player, window_id);
 }
 
-bool_t linphone_player_get_is_video_available(LinphonePlayer *obj) {
-	return obj->is_video_available(obj);
+bool_t linphone_player_get_is_video_available(LinphonePlayer *player) {
+	return player->is_video_available(player);
 }
 
-void linphone_player_destroy(LinphonePlayer *obj) {
-	_linphone_player_destroy(obj);
+void linphone_player_destroy(LinphonePlayer *player) {
+	_linphone_player_destroy(player);
 }
 
 void _linphone_player_destroy(LinphonePlayer *player) {
@@ -144,6 +144,11 @@ void _linphone_player_destroy(LinphonePlayer *player) {
 	player->callbacks_list = nullptr;
 }
 
+char *linphone_player_to_string(LinphonePlayer *player) {
+	char *tmp;
+	tmp=ms_strdup_printf("Player %p\n", player);
+	return tmp;
+}
 
 /*
  * Call player implementation below.
@@ -239,21 +244,21 @@ static void call_player_close(LinphonePlayer *player){
 
 }
 
-static void on_call_destroy(void *obj, belle_sip_object_t *call_being_destroyed){
-	linphone_player_unref(reinterpret_cast<LinphonePlayer *>(obj));
+static void on_call_destroy(void *player, belle_sip_object_t *call_being_destroyed){
+	linphone_player_unref(reinterpret_cast<LinphonePlayer *>(player));
 }
 
 LinphonePlayer *linphone_call_build_player(LinphoneCall *call){
-	LinphonePlayer *obj = linphone_player_new(linphone_call_get_core(call));
-	obj->open=call_player_open;
-	obj->close=call_player_close;
-	obj->start=call_player_start;
-	obj->seek=call_player_seek;
-	obj->pause=call_player_pause;
-	obj->get_state=call_player_get_state;
-	obj->impl=call;
-	belle_sip_object_weak_ref(call,on_call_destroy,obj);
-	return obj;
+	LinphonePlayer *player = linphone_player_new(linphone_call_get_core(call));
+	player->open=call_player_open;
+	player->close=call_player_close;
+	player->start=call_player_start;
+	player->seek=call_player_seek;
+	player->pause=call_player_pause;
+	player->get_state=call_player_get_state;
+	player->impl=call;
+	belle_sip_object_weak_ref(call,on_call_destroy,player);
+	return player;
 }
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphonePlayerCbs);

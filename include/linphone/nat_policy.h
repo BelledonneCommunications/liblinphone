@@ -232,6 +232,13 @@ LINPHONE_PUBLIC bool_t linphone_nat_policy_tls_turn_transport_enabled(LinphoneNa
 LINPHONE_PUBLIC LinphoneCore *linphone_nat_policy_get_core(const LinphoneNatPolicy *policy);
 
 /**
+ * Convert NAT policy to string
+ * @param policy #LinphoneNatPolicy object @notnil
+ * @return NAT policy as string @notnil
+**/
+LINPHONE_PUBLIC char *linphone_nat_policy_to_string(const LinphoneNatPolicy *policy);
+
+/**
  * @}
  */
 
