@@ -213,6 +213,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_pas
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_linphone(LinphoneAccountCreator *creator);
 
+/**
+ * Convert account creator to string
+ * @param[in] creator LinphoneAccountCreator object @notnil
+ * @return account creator as string @notnil
+**/
+LINPHONE_PUBLIC char * linphone_account_creator_to_string(LinphoneAccountCreator *creator);
+
 #ifdef __cplusplus
 }
 #endif
