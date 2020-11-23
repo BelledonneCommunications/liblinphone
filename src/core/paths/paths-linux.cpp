@@ -18,6 +18,7 @@
  */
 
 #include "logger/logger.h"
+#include <unistd.h>
 
 #include "paths-linux.h"
 
@@ -31,9 +32,14 @@ static string getBaseDirectory () {
 	static string base;
 	if (base.empty()) {
 		char *dir = getenv("HOME");
-		if (!dir)
-			lFatal() << "Unable to get home directory.";
-		base = dir;
+		if (!dir){
+			lError() << "Unable to get $HOME directory, will use current directory instead as base directory.";
+			dir = get_current_dir_name();
+			base = dir;
+			free(dir);
+		}else{
+			base = dir;
+		}
 	}
 	return base;
 }
