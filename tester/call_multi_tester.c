@@ -169,6 +169,10 @@ static void second_call_rejection(bool_t second_without_audio){
 			,pauline->lc
 			,&marie->stat.number_of_LinphoneCallError
 			,1));
+		BC_ASSERT_TRUE(wait_for(marie->lc
+			,pauline->lc
+			,&marie->stat.number_of_LinphoneCallReleased
+			,1));
 
 	}else{
 		BC_ASSERT_PTR_NULL(marie_call);
@@ -634,30 +638,29 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 	LinphoneCall* pauline_called_by_laure;
 	LinphoneCallParams *laure_params=linphone_core_create_call_params(laure->lc, NULL);
 	LinphoneCallParams *marie_params=linphone_core_create_call_params(marie->lc, NULL);
+	bctbx_list_t *core_list = NULL;
+	
+	core_list = bctbx_list_append(core_list, marie->lc);
+	core_list = bctbx_list_append(core_list, pauline->lc);
+	core_list = bctbx_list_append(core_list, laure->lc);
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(laure->lc,pauline->identity,laure_params));
 	linphone_call_params_unref(laure_params);
 
-	BC_ASSERT_TRUE(wait_for(laure->lc
-							,pauline->lc
-							,&pauline->stat.number_of_LinphoneCallIncomingReceived
-							,1));
+	BC_ASSERT_TRUE(wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
 	pauline_called_by_laure=linphone_core_get_current_call(pauline->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 
 	BC_ASSERT_PTR_NOT_NULL(linphone_core_invite_address_with_params(marie->lc,pauline->identity,marie_params));
 	linphone_call_params_unref(marie_params);
 
-	BC_ASSERT_TRUE(wait_for(marie->lc
-							,pauline->lc
-							,&pauline->stat.number_of_LinphoneCallIncomingReceived
-							,2));
+	BC_ASSERT_TRUE(wait_for_list(core_list, &pauline->stat.number_of_LinphoneCallIncomingReceived,2,10000));
 	pauline_called_by_marie=linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingtone, 1, int, "%d");
 
 	linphone_call_decline(pauline_called_by_laure, LinphoneReasonDeclined);
-	BC_ASSERT_TRUE(wait_for(laure->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(laure->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallReleased,1, 10000));
 
 	// check that rigntone player restart
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 1, int, "%d");
@@ -665,15 +668,18 @@ void do_not_stop_ringing_when_declining_one_of_two_incoming_calls(void) {
 
 	BC_ASSERT_TRUE(linphone_ringtoneplayer_is_started(linphone_core_get_ringtoneplayer(pauline->lc)));
 	linphone_call_terminate(pauline_called_by_marie);
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallEnd,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallReleased,1));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEnd,2));
-	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallReleased,2));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&marie->stat.number_of_LinphoneCallReleased,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&laure->stat.number_of_LinphoneCallEnd,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&laure->stat.number_of_LinphoneCallReleased,1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallEnd,2, 10000));
+	BC_ASSERT_TRUE(wait_for_list(core_list,&pauline->stat.number_of_LinphoneCallReleased,2, 10000));
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopRingtone, 2, int, "%d");
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(laure);
+	bctbx_list_free(core_list);
 }
 
 void no_auto_answer_on_fake_call_with_replaces_header (void) {
