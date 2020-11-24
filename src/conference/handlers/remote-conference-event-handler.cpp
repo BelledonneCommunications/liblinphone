@@ -223,7 +223,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 
 				if (state == StateType::deleted) {
 
-					// Take a pointer towards the device bebfore deleting it in order to send the notification
+					// Take a pointer towards the device before deleting it in order to send the notification
 					shared_ptr<ParticipantDevice> device = participant->findDevice(gruu);
 					participant->removeDevice(gruu);
 

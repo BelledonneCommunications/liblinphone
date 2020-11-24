@@ -64,11 +64,11 @@ public:
 	void notifyAll (const std::string &notify);
 	std::string createNotifyFullState (bool oneToOne = false);
 	std::string createNotifyMultipart (int notifyId);
-	std::string createNotifyParticipantAdded (const std::shared_ptr<Participant> participant);
-	std::string createNotifyParticipantAdminStatusChanged (const std::shared_ptr<Participant> participant, bool isAdmin);
-	std::string createNotifyParticipantRemoved (const std::shared_ptr<Participant> participant);
-	std::string createNotifyParticipantDeviceAdded (const std::shared_ptr<ParticipantDevice> participantDevice);
-	std::string createNotifyParticipantDeviceRemoved (const std::shared_ptr<ParticipantDevice> participantDevice);
+	std::string createNotifyParticipantAdded (const Address & pAddress);
+	std::string createNotifyParticipantAdminStatusChanged (const Address & pAddress, bool isAdmin);
+	std::string createNotifyParticipantRemoved (const Address & pAddress);
+	std::string createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress);
+	std::string createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress);
 	std::string createNotifySubjectChanged ();
 
 	static void notifyResponseCb (const LinphoneEvent *ev);
