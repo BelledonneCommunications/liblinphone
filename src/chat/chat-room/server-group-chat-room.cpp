@@ -165,21 +165,18 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	if (!registrationSubscriptions.empty()){
 		lError() << q << " still " << registrationSubscriptions.size() << " registration subscriptions pending while deletion is requested.";
 	}
-	chatRoomListener->onChatRoomDeleteRequested(q->getSharedFromThis());
+	
+	shared_ptr<ChatRoom> chatRoom(q->getSharedFromThis()); // Take a shared_ptr here, because onChatRoomDeleteRequested() may destroy our chatroom otherwise.
+	chatRoomListener->onChatRoomDeleteRequested(chatRoom);
 	/*
 	 * The LinphoneChatRoom (C object) is also built when the ServerGroupChatRoom is created, which is unnecessary here, but
-	 * this is consistent with other kind of chatrooms. Consequence is that we have to free it in order to remove the last reference
-	 * to the C++ object.
+	 * this is consistent with other kind of chatrooms.
 	 * The destruction is defered to next main loop iteration, in order to make the self-destruction outside of the call stack that leaded to it.
+	 * TODO: remove this after switching chatrooms to HybridObject.
 	 */
-	//just in case ServerGroupChatRoom is destroyed before lambda is executed
-	std::weak_ptr<ChatRoom> cppChatRoom(q->getSharedFromThis());
-	q->getCore()->doLater([cppChatRoom](){
-		auto obj = cppChatRoom.lock();
-		if (obj) {
-			LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(obj);
-			if (cChatRoom) linphone_chat_room_unref(cChatRoom);
-		}
+	q->getCore()->doLater([chatRoom](){
+		LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(chatRoom);
+		if (cChatRoom) linphone_chat_room_unref(cChatRoom);
 	});
 }
 
