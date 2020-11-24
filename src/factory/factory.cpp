@@ -51,6 +51,8 @@ Factory::Factory(){
 	mSupportedVideoDefinitions = nullptr;
 	initializeSupportedVideoDefinitions(this);
 
+	mUserData = nullptr;
+
 	mPackageSoundDir = PACKAGE_SOUND_DIR;
 	mPackageRingDir = PACKAGE_RING_DIR;
 	mPackageDataDir = PACKAGE_DATA_DIR;
