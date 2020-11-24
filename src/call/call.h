@@ -44,7 +44,7 @@ LINPHONE_BEGIN_NAMESPACE
 class Address;
 class CallSessionPrivate;
 class MediaSessionPrivate;
-class RealTimeTextChatRoom;
+class AbstractChatRoom;
 class ConferencePrivate;
 
 namespace MediaConference {

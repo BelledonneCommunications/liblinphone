@@ -130,6 +130,9 @@ public:
 	bool update(const ConferenceParamsInterface &newParameters) override;
 
 	void setState (ConferenceInterface::State state) override;
+	
+	uint32_t getChar () const override;
+	std::shared_ptr<Call> getCall () const override;
 
 protected:
 	ProxyChatRoom (ProxyChatRoomPrivate &p, const std::shared_ptr<ChatRoom> &chatRoom);
