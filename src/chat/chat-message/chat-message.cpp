@@ -1458,14 +1458,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 		return -1;
 	}
 
-	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> rttcr =
-		static_pointer_cast<LinphonePrivate::RealTimeTextChatRoom>(chatRoom);
-	if (!rttcr) {
-		lError() << "Chat room [" << chatRoom << "] that created the message can't be cast to RealTimeTextChatRoom";
-		return -1;
-	}
-
-	shared_ptr<Call> call = rttcr->getCall();
+	shared_ptr<Call> call = chatRoom->getCall();
 	if (!call || !call->getMediaStream(LinphoneStreamTypeText)) {
 		lError() << "Failed to find Text stream from call [" << call << "]";
 		return -1;

@@ -208,28 +208,24 @@ shared_ptr<AbstractChatRoom> CorePrivate::createBasicChatRoom (
 	L_Q();
 
 	shared_ptr<AbstractChatRoom> chatRoom;
-	if (capabilities & ChatRoom::Capabilities::RealTimeText)
-		chatRoom.reset(new RealTimeTextChatRoom(q->getSharedFromThis(), conferenceId, params));
-	else {
-		BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
-		string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
-		if (basicToFlexisipChatroomMigrationEnabled()) {
-			capabilities.set(ChatRoom::Capabilities::Migratable);
-		}else{
-			capabilities.unset(ChatRoom::Capabilities::Migratable);
-		}
+	BasicChatRoom *basicChatRoom = new BasicChatRoom(q->getSharedFromThis(), conferenceId, params);
+	string conferenceFactoryUri = Core::getConferenceFactoryUri(q->getSharedFromThis(), conferenceId.getLocalAddress());
+	if (basicToFlexisipChatroomMigrationEnabled()) {
+		capabilities.set(ChatRoom::Capabilities::Migratable);
+	} else {
+		capabilities.unset(ChatRoom::Capabilities::Migratable);
+	}
 
 #ifdef HAVE_ADVANCED_IM
-		if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
-			chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
-		}
-		else {
-#endif
-			chatRoom.reset(basicChatRoom);
-#ifdef HAVE_ADVANCED_IM
-		}
-#endif
+	if ((capabilities & ChatRoom::Capabilities::Migratable) && !conferenceFactoryUri.empty()) {
+		chatRoom.reset(new BasicToClientGroupChatRoom(shared_ptr<BasicChatRoom>(basicChatRoom)));
 	}
+	else {
+#endif
+		chatRoom.reset(basicChatRoom);
+#ifdef HAVE_ADVANCED_IM
+	}
+#endif
 	chatRoom->setState(ConferenceInterface::State::Instantiated);
 	chatRoom->setState(ConferenceInterface::State::Created);
 
@@ -710,21 +706,14 @@ shared_ptr<AbstractChatRoom> Core::findOneToOneChatRoom (
 	return nullptr;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId &conferenceId) {
 	L_D();
 
 	shared_ptr<AbstractChatRoom> chatRoom = findChatRoom(conferenceId);
 	if (chatRoom) {
-		if (isRtt && !(chatRoom->getCapabilities() & ChatRoom::Capabilities::RealTimeText)) {
-			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
-			return nullptr;
-		}
 		return chatRoom;
 	}
 	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
-	if (isRtt) {
-		capabilities |=	ChatRoom::Capabilities::RealTimeText;
-	}
 	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
@@ -735,23 +724,16 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const ConferenceId 
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddress &peerAddress, bool isRtt) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddress &peerAddress) {
 	L_D();
 
 	list<shared_ptr<AbstractChatRoom>> chatRooms = findChatRooms(peerAddress);
 	if (!chatRooms.empty()) {
 		shared_ptr<AbstractChatRoom> ret = chatRooms.front();
-		if (isRtt && !(ret->getCapabilities() & ChatRoom::Capabilities::RealTimeText)) {
-			lError() << "Found chatroom but without RealTimeText capability. This is a bug, fixme";
-			ret = nullptr;
-		}
 		return ret;
 	}
 
 	ChatRoom::CapabilitiesMask capabilities(ChatRoom::Capabilities::OneToOne);
-	if (isRtt) {
-		capabilities |=	ChatRoom::Capabilities::RealTimeText;
-	}
 	if (d->basicToFlexisipChatroomMigrationEnabled()) {
 		capabilities |= ChatRoom::Capabilities::Migratable;
 	}
@@ -766,13 +748,13 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoom (const IdentityAddre
 	return chatRoom;
 }
 
-shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string &peerAddress, bool isRtt) {
+shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string &peerAddress) {
 	Address address(interpretUrl(peerAddress));
 	if (!address.isValid()) {
 		lError() << "Cannot make a valid address with: `" << peerAddress << "`.";
 		return nullptr;
 	}
-	return getOrCreateBasicChatRoom(address, isRtt);
+	return getOrCreateBasicChatRoom(address);
 }
 
 void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {

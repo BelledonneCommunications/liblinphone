@@ -68,8 +68,7 @@ const bctbx_list_t *linphone_core_get_chat_rooms (LinphoneCore *lc) {
 
 static LinphoneChatRoom *linphone_chat_room_new (LinphoneCore *core, const LinphoneAddress *addr) {
 	return L_GET_C_BACK_PTR(L_GET_CPP_PTR_FROM_C_OBJECT(core)->getOrCreateBasicChatRoom(
-		*L_GET_CPP_PTR_FROM_C_OBJECT(addr),
-		!!linphone_core_realtime_text_enabled(core)
+		*L_GET_CPP_PTR_FROM_C_OBJECT(addr)
 	));
 }
 
@@ -287,12 +286,6 @@ LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate:
 		reason = LinphoneReasonNotFound;
 	}
 	return reason;
-}
-
-void linphone_core_real_time_text_received(LinphoneCore *lc, LinphoneChatRoom *cr, uint32_t character, LinphoneCall *call) {
-	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
-		return;
-	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->realtimeTextReceived(character, LinphonePrivate::Call::toCpp(call)->getSharedFromThis());
 }
 
 unsigned int linphone_chat_message_store(LinphoneChatMessage *msg) {

@@ -45,14 +45,11 @@ shared_ptr<CallSession> Call::getActiveSession () const {
 
 shared_ptr<AbstractChatRoom> Call::getChatRoom () {
 	if ((getState() != CallSession::State::End) && (getState() != CallSession::State::Released)) {
-		bool rtt = getCurrentParams()->realtimeTextEnabled();
-		mChatRoom = getCore()->getOrCreateBasicChatRoom(*getRemoteAddress(), rtt);
-
-		if (mChatRoom && rtt) {
+		mChatRoom = getCore()->getOrCreateBasicChatRoom(*getRemoteAddress());
+		if (mChatRoom) {
 			const char *callId = linphone_call_log_get_call_id(getLog());
-			shared_ptr<RealTimeTextChatRoom> rttChatRoom = static_pointer_cast<RealTimeTextChatRoom>(mChatRoom);
-			lInfo() << "Setting call id [" << callId << "] to RealTimeTextChatRoom [" << rttChatRoom << "]";
-			rttChatRoom->getPrivate()->setCallId(callId);
+			lInfo() << "Setting call id [" << callId << "] to ChatRoom [" << mChatRoom << "]";
+			mChatRoom->getPrivate()->setCallId(callId);
 		}
 	}
 	return mChatRoom;
@@ -650,8 +647,7 @@ LinphoneConference * Call::getCallSessionConference (const shared_ptr<CallSessio
 void Call::onRealTimeTextCharacterReceived (const shared_ptr<CallSession> &session, RealtimeTextReceivedCharacter *data) {
 	shared_ptr<AbstractChatRoom> chatRoom = getChatRoom();
 	if (chatRoom) {
-		shared_ptr<RealTimeTextChatRoom> rttChatRoom = static_pointer_cast<RealTimeTextChatRoom>(chatRoom);
-		rttChatRoom->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
+		chatRoom->getPrivate()->realtimeTextReceived(data->character, getSharedFromThis());
 	} else {
 		lError()<<"CallPrivate::onRealTimeTextCharacterReceived: no chatroom.";
 	}
