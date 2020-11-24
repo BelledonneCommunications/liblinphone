@@ -225,7 +225,7 @@ LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_na
 }
 
 const char * linphone_factory_get_top_resources_dir(const LinphoneFactory *factory) {
-	return Factory::toCpp(factory)->getTopResourcesDir().c_str();
+	return Factory::nullifyEmptyString(Factory::toCpp(factory)->getTopResourcesDir());
 }
 
 void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -235,7 +235,7 @@ void linphone_factory_set_top_resources_dir(LinphoneFactory *factory, const char
 }
 
 const char * linphone_factory_get_data_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getDataResourcesDir().c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDataResourcesDir());
 }
 
 void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -246,7 +246,7 @@ void linphone_factory_set_data_resources_dir(LinphoneFactory *factory, const cha
 }
 
 const char * linphone_factory_get_sound_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getSoundResourcesDir().c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getSoundResourcesDir());
 }
 
 void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -257,7 +257,7 @@ void linphone_factory_set_sound_resources_dir(LinphoneFactory *factory, const ch
 }
 
 const char * linphone_factory_get_ring_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getRingResourcesDir().c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getRingResourcesDir());
 }
 
 void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -268,7 +268,7 @@ void linphone_factory_set_ring_resources_dir(LinphoneFactory *factory, const cha
 }
 
 const char * linphone_factory_get_image_resources_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getImageResourcesDir().c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getImageResourcesDir());
 }
 
 void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const char *path) {
@@ -278,7 +278,7 @@ void linphone_factory_set_image_resources_dir(LinphoneFactory *factory, const ch
 }
 
 const char * linphone_factory_get_msplugins_dir(LinphoneFactory *factory) {
-  return Factory::toCpp(factory)->getMspluginsDir().c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getMspluginsDir());
 }
 
 void linphone_factory_set_msplugins_dir(LinphoneFactory *factory, const char *path) {
@@ -404,15 +404,15 @@ bool_t linphone_factory_is_imdn_available(LinphoneFactory *factory) {
 }
 
 const char *linphone_factory_get_config_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getConfigDir(context).c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getConfigDir(context));
 }
 
 const char *linphone_factory_get_data_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getDataDir(context).c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDataDir(context));
 }
 
 const char *linphone_factory_get_download_dir(LinphoneFactory *factory, void *context) {
-  return Factory::toCpp(factory)->getDownloadDir(context).c_str();
+  return Factory::nullifyEmptyString(Factory::toCpp(factory)->getDownloadDir(context));
 }
 
 void linphone_factory_set_vfs_encryption(LinphoneFactory *factory, const uint16_t encryptionModule, const uint8_t *secret, const size_t secretSize) {
