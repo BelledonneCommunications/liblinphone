@@ -2643,6 +2643,12 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_send(pauline_rtt_message);
 			linphone_chat_message_send(marie_rtt_message);
 
+			// Read new line character
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_1) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_2) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
+
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 			{
 				LinphoneChatMessage * msg = marie->stat.last_received_chat_message;
@@ -2680,6 +2686,12 @@ static void real_time_text_conversation(void) {
 			/*Commit the message, triggers a NEW LINE in T.140 */
 			linphone_chat_message_send(pauline_rtt_message);
 			linphone_chat_message_send(marie_rtt_message);
+
+			// Read new line character
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_1) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_2) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
 
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 			{
@@ -2900,6 +2912,9 @@ static void real_time_text_and_early_media(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 		linphone_call_params_unref(pauline_params);
 		chars_received = marie->stat.number_of_LinphoneIsComposingActiveReceived;
+
+		// Read new line character
+		BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
 		
 		/* Send RTT again once the call is established. */
 		rtt_message = linphone_chat_room_create_message_from_utf8(pauline_chat_room,NULL);
