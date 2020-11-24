@@ -28,7 +28,6 @@
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
-#include "chat/chat-room/real-time-text-chat-room-p.h"
 #include "chat/notification/imdn.h"
 #include "conference/participant-imdn-state.h"
 #include "conference/participant.h"

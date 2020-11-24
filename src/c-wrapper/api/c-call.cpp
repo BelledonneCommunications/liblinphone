@@ -24,7 +24,6 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
-#include "chat/chat-room/real-time-text-chat-room.h"
 #include "conference/params/media-session-params-p.h"
 #include "conference/session/ms2-streams.h"
 #include "core/core-p.h"
