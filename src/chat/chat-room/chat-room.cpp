@@ -146,25 +146,27 @@ void ChatRoomPrivate::realtimeTextReceived (uint32_t character, const shared_ptr
 	LinphoneCore *cCore = core->getCCore();
 
 	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
-		if (!pendingMessage) {
-			pendingMessage = q->createChatMessage();
-			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
-			Content *content = new Content();
-			content->setContentType(ContentType::PlainText);
-			pendingMessage->addContent(content);
-		}
-
-		Character cmc;
-		cmc.value = character;
-		cmc.hasBeenRead = false;
-		receivedRttCharacters.push_back(cmc);
-
+		receivedRttCharacters.push_back(character);
 		remoteIsComposing.push_back(q->getPeerAddress());
 		linphone_core_notify_is_composing_received(cCore, getCChatRoom());
 
 		if ((character == new_line) || (character == crlf) || (character == lf)) {
-			// End of message
-			auto content = pendingMessage->getContents().front();
+			// End of message, copy characters except line break
+			ostringstream completeTextStream;
+			vector<uint32_t>::iterator end = receivedRttCharacters.end() - 1;
+			vector<uint32_t>::iterator it = receivedRttCharacters.begin();
+			for (; it != end; it++) {
+				completeTextStream << Utils::utf8ToChar(*it);
+			}
+			string completeText = completeTextStream.str();
+
+			shared_ptr<ChatMessage> pendingMessage = q->createChatMessage();
+			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
+			Content *content = new Content();
+			content->setContentType(ContentType::PlainText);
+			content->setBodyFromUtf8(completeText);
+			pendingMessage->addContent(content);
+			
 			lDebug() << "New line received, forge a message with content " << content->getBodyAsString();
 			pendingMessage->getPrivate()->setState(ChatMessage::State::Delivered);
 			pendingMessage->getPrivate()->setTime(::ms_time(0));
@@ -174,14 +176,11 @@ void ChatRoomPrivate::realtimeTextReceived (uint32_t character, const shared_ptr
 			}
 			
 			onChatMessageReceived(pendingMessage);
-			pendingMessage = nullptr;
+			readCharacterIndex = 0;
 			receivedRttCharacters.clear();
 		} else {
-			char *value = Utils::utf8ToChar(character);
-			auto content = pendingMessage->getContents().front();
-			content->setBodyFromUtf8(content->getBodyAsUtf8String() + string(value));
-			lDebug() << "Received RTT character: " << value << " (" << character << "), pending text is " << content->getBodyAsUtf8String();
-			delete[] value;
+			string completeText = Utils::utf8ToString(receivedRttCharacters);
+			lDebug() << "Received RTT character: " << character << ", pending text is " << completeText;
 		}
 	}
 }
@@ -743,16 +742,14 @@ bool ChatRoom::addParticipants (const std::list<IdentityAddress> &addresses) {
 	return soFarSoGood;
 }
 
-
-uint32_t ChatRoom::getChar () const {
+uint32_t ChatRoom::getChar () {
 	L_D();
-	for (const auto &cmc : d->receivedRttCharacters) {
-		if (!cmc.hasBeenRead) {
-			const_cast<ChatRoomPrivate::Character *>(&cmc)->hasBeenRead = true;
-			return cmc.value;
-		}
+	uint32_t character = 0;
+	if (d->readCharacterIndex < d->receivedRttCharacters.size()) {
+		character = d->receivedRttCharacters.at(d->readCharacterIndex);
+		d->readCharacterIndex += 1;
 	}
-	return 0;
+	return character;
 }
 
 std::shared_ptr<Call> ChatRoom::getCall () const {

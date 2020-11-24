@@ -397,8 +397,7 @@ bool ProxyChatRoom::canHandleParticipants () const {
 	return d->chatRoom->canHandleParticipants();
 }
 
-
-uint32_t ProxyChatRoom::getChar () const {
+uint32_t ProxyChatRoom::getChar () {
 	L_D();
 	return d->chatRoom->getChar();
 }
@@ -407,6 +406,5 @@ std::shared_ptr<Call> ProxyChatRoom::getCall () const {
 	L_D();
 	return d->chatRoom->getCall();
 }
-
 
 LINPHONE_END_NAMESPACE

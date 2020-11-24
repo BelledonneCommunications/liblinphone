@@ -179,6 +179,14 @@ char *Utils::utf8ToChar (uint32_t ic) {
 	return result;
 }
 
+std::string Utils::utf8ToString (const std::vector<uint32_t>& chars) {
+	std::ostringstream ss;
+	for (auto character : chars) {
+		ss << Utils::utf8ToChar(character);
+	}
+	return ss.str();
+}
+
 string Utils::trim (const string &str) {
 	auto itFront = find_if_not(str.begin(), str.end(), [] (int c) { return isspace(c); });
 	auto itBack = find_if_not(str.rbegin(), str.rend(), [] (int c) { return isspace(c); }).base();

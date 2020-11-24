@@ -107,7 +107,7 @@ public:
 		return (getConference() != nullptr);
 	}
 
-	uint32_t getChar () const override;
+	uint32_t getChar () override;
 	std::shared_ptr<Call> getCall () const override;
 
 protected:
