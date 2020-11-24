@@ -509,6 +509,9 @@ namespace Linphone
 
 		{{#listener}}
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
+		static extern IntPtr linphone_factory_get();
+
+		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
 		static extern IntPtr linphone_factory_create_{{listener_constructor}}_cbs(IntPtr factory);
 
 		[DllImport(LinphoneWrapper.LIB_NAME, CallingConvention = CallingConvention.Cdecl)]
@@ -532,7 +535,7 @@ namespace Linphone
 			get {
 				if (listener == null)
 				{
-					IntPtr nativeListener = linphone_factory_create_{{listener_constructor}}_cbs(IntPtr.Zero);
+					IntPtr nativeListener = linphone_factory_create_{{listener_constructor}}_cbs(linphone_factory_get());
 					listener = fromNativePtr<{{interfaceName}}>(nativeListener, false);
 					linphone_{{listener_constructor}}_add_callbacks(nativePtr, nativeListener);
 					listener.register();
