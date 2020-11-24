@@ -291,6 +291,7 @@ static void quality_reporting_interval_report (void) {
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishProgress, 1, 60000));
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 1, 60000));
 		end_call(marie, pauline);
+		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphonePublishOk, 2));
 	}
 
 	linphone_core_manager_destroy(marie);

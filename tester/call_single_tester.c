@@ -546,6 +546,7 @@ static void call_outbound_with_multiple_proxy(void) {
 static void call_outbound_using_different_proxies(void) {
 	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_dual_proxy_rc", FALSE);// Caller
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
+	int call_count = 0;
 	
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 10000));
@@ -555,8 +556,9 @@ static void call_outbound_using_different_proxies(void) {
 		// Set the proxy to be used in call
 		linphone_core_set_default_proxy_config(marie->lc, (LinphoneProxyConfig*)proxy->data);
 		LinphoneCall * caller = linphone_core_invite(marie->lc, linphone_core_get_identity(pauline->lc));
+		call_count++;
 		if( BC_ASSERT_PTR_NOT_NULL(caller) ) {
-			wait_for_until(marie->lc, pauline->lc, NULL, 5, 500); // Wait for stabilize call
+			wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
 			const LinphoneCallParams * callerParameters = linphone_call_get_current_params(caller);
 			if(BC_ASSERT_PTR_NOT_NULL(callerParameters)){
 				const LinphoneProxyConfig * callerProxyConfig = linphone_call_params_get_proxy_config(callerParameters);
@@ -564,6 +566,7 @@ static void call_outbound_using_different_proxies(void) {
 					const LinphoneAddress * callerAddress = linphone_proxy_config_get_identity_address(callerProxyConfig);
 					if(BC_ASSERT_PTR_NOT_NULL(callerAddress)){
 						BC_ASSERT_TRUE(linphone_address_weak_equal(callerAddress, marieProxyAddress ));// Main test : the caller address must use the selected proxy
+						BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, call_count, 10000));
 						LinphoneCall * callee = linphone_core_get_current_call(pauline->lc);
 						BC_ASSERT_PTR_NOT_NULL(callee);
 						if(callee){
