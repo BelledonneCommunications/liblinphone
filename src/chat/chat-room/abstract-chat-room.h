@@ -143,7 +143,7 @@ public:
 	virtual bool canHandleParticipants () const = 0;
 	virtual std::shared_ptr<Conference> getConference () const = 0;
 
-	virtual uint32_t getChar () const = 0;
+	virtual uint32_t getChar () = 0;
 	virtual std::shared_ptr<Call> getCall () const = 0;
 
 protected:

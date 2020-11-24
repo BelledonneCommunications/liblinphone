@@ -24,6 +24,8 @@ This changelog file was started on October 2019. Previous changes were more or l
   linphone_core_create_publish() now give ownership of the returned LinphoneEvent, which means that it is no longer need to call
   linphone_event_ref() after calling these functions. As a consequence, an application not using linphone_event_ref() should now
   use linphone_event_unref() when the LinphoneEvent is no longer used, otherwise it will create a memory leak.
+- Real time text related function linphone_chat_message_get_char() now will always return the new line character,
+  which wasn't the case before if the getChar() was done after the composing callback was triggered for this character.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.

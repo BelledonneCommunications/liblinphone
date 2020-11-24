@@ -201,7 +201,7 @@ void linphone_chat_room_receive_chat_message (LinphoneChatRoom *cr, LinphoneChat
 	L_GET_PRIVATE_FROM_C_OBJECT(msg)->receive();
 }
 
-uint32_t linphone_chat_room_get_char (const LinphoneChatRoom *cr) {
+uint32_t linphone_chat_room_get_char (LinphoneChatRoom *cr) {
 	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getChar();
 }
 
