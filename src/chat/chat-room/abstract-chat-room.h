@@ -36,6 +36,7 @@ class EventLog;
 class ChatRoomParams;
 
 class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
+	friend class Call;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
@@ -141,6 +142,9 @@ public:
 
 	virtual bool canHandleParticipants () const = 0;
 	virtual std::shared_ptr<Conference> getConference () const = 0;
+
+	virtual uint32_t getChar () const = 0;
+	virtual std::shared_ptr<Call> getCall () const = 0;
 
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);
