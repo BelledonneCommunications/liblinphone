@@ -140,27 +140,24 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 			case EventLog::Type::ConferenceParticipantAdded: {
 				shared_ptr<ConferenceParticipantEvent> addedEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
 				const IdentityAddress & participantAddress = addedEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdded(
-					participant
+					participantAddress
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantRemoved: {
 				shared_ptr<ConferenceParticipantEvent> removedEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
 				const IdentityAddress & participantAddress = removedEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantRemoved(
-					participant
+					participantAddress
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantSetAdmin: {
 				shared_ptr<ConferenceParticipantEvent> setAdminEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
 				const IdentityAddress & participantAddress = setAdminEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdminStatusChanged(
-					participant,
+					participantAddress,
 					true
 				);
 			} break;
@@ -168,9 +165,8 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 			case EventLog::Type::ConferenceParticipantUnsetAdmin: {
 				shared_ptr<ConferenceParticipantEvent> unsetAdminEvent = static_pointer_cast<ConferenceParticipantEvent>(eventLog);
 				const IdentityAddress & participantAddress = unsetAdminEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				body = createNotifyParticipantAdminStatusChanged(
-					participant,
+					participantAddress,
 					false
 				);
 			} break;
@@ -178,22 +174,20 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 			case EventLog::Type::ConferenceParticipantDeviceAdded: {
 				shared_ptr<ConferenceParticipantDeviceEvent> deviceAddedEvent = static_pointer_cast<ConferenceParticipantDeviceEvent>(eventLog);
 				const IdentityAddress & participantAddress = deviceAddedEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				const IdentityAddress & deviceAddress = deviceAddedEvent->getDeviceAddress();
-				const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
 				body = createNotifyParticipantDeviceAdded(
-					device
+					participantAddress,
+					deviceAddress
 				);
 			} break;
 
 			case EventLog::Type::ConferenceParticipantDeviceRemoved: {
 				shared_ptr<ConferenceParticipantDeviceEvent> deviceRemovedEvent = static_pointer_cast<ConferenceParticipantDeviceEvent>(eventLog);
 				const IdentityAddress & participantAddress = deviceRemovedEvent->getParticipantAddress();
-				std::shared_ptr<LinphonePrivate::Participant> participant = conf->findParticipant(participantAddress);
 				const IdentityAddress & deviceAddress = deviceRemovedEvent->getDeviceAddress();
-				const std::shared_ptr<ParticipantDevice> & device = participant->findDevice(deviceAddress);
 				body = createNotifyParticipantDeviceRemoved(
-					device
+					participantAddress,
+					deviceAddress
 				);
 			} break;
 
@@ -224,7 +218,7 @@ string LocalConferenceEventHandler::createNotifyMultipart (int notifyId) {
 	return multipart;
 }
 
-string LocalConferenceEventHandler::createNotifyParticipantAdded (const std::shared_ptr<Participant> participant) {
+string LocalConferenceEventHandler::createNotifyParticipantAdded (const Address & pAddress) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -233,6 +227,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const std::sha
 	UserRolesType roles;
 	UserType::EndpointSequence endpoints;
 
+	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
 	if (participant) {
 		for (const auto &device : participant->getDevices()) {
 			const string &gruu = device->getAddress().asString();
@@ -248,7 +243,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const std::sha
 	}
 
 	user.setRoles(roles);
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(pAddress.asStringUriOnly());
 	user.getRoles()->getEntry().push_back("participant");
 	user.setState(StateType::full);
 
@@ -257,7 +252,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdded (const std::sha
 	return createNotify(confInfo);
 }
 
-string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (const std::shared_ptr<Participant> participant, bool isAdmin) {
+string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (const Address & pAddress, bool isAdmin) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
@@ -266,7 +261,7 @@ string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (c
 	UserType user = UserType();
 	UserRolesType roles;
 	user.setRoles(roles);
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(pAddress.asStringUriOnly());
 	user.getRoles()->getEntry().push_back(isAdmin ? "admin" : "participant");
 	user.setState(StateType::partial);
 	confInfo.getUsers()->getUser().push_back(user);
@@ -274,35 +269,36 @@ string LocalConferenceEventHandler::createNotifyParticipantAdminStatusChanged (c
 	return createNotify(confInfo);
 }
 
-string LocalConferenceEventHandler::createNotifyParticipantRemoved (const std::shared_ptr<Participant> participant) {
+string LocalConferenceEventHandler::createNotifyParticipantRemoved (const Address & pAddress) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
 
 	UserType user = UserType();
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(pAddress.asStringUriOnly());
 	user.setState(StateType::deleted);
 	confInfo.getUsers()->getUser().push_back(user);
 
 	return createNotify(confInfo);
 }
 
-string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const std::shared_ptr<ParticipantDevice> participantDevice) {
+string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const Address & pAddress, const Address & dAddress) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
 
-	Participant *participant = participantDevice->getParticipant();
 	UserType user = UserType();
 	UserType::EndpointSequence endpoints;
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(pAddress.asStringUriOnly());
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(Address(participantDevice->getAddress()).asStringUriOnly());
+	endpoint.setEntity(dAddress.asStringUriOnly());
+	shared_ptr<Participant> participant = conf->findParticipant(pAddress);
 	if (participant) {
+		shared_ptr<ParticipantDevice> participantDevice = participant->findDevice(dAddress);
 		if (participantDevice) {
 			const string &displayName = participantDevice->getName();
 			if (!displayName.empty())
@@ -317,20 +313,19 @@ string LocalConferenceEventHandler::createNotifyParticipantDeviceAdded (const st
 	return createNotify(confInfo);
 }
 
-string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const std::shared_ptr<ParticipantDevice> participantDevice) {
+string LocalConferenceEventHandler::createNotifyParticipantDeviceRemoved (const Address & pAddress, const Address & dAddress) {
 	string entity = conf->getConferenceAddress().asString();
 	ConferenceType confInfo = ConferenceType(entity);
 	UsersType users;
 	confInfo.setUsers(users);
 
-	Participant *participant = participantDevice->getParticipant();
 	UserType user = UserType();
 	UserType::EndpointSequence endpoints;
-	user.setEntity(Address(participant->getAddress()).asStringUriOnly());
+	user.setEntity(pAddress.asStringUriOnly());
 	user.setState(StateType::partial);
 
 	EndpointType endpoint = EndpointType();
-	endpoint.setEntity(Address(participantDevice->getAddress()).asStringUriOnly());
+	endpoint.setEntity(dAddress.asStringUriOnly());
 	endpoint.setState(StateType::deleted);
 	user.getEndpoint().push_back(endpoint);
 
@@ -532,7 +527,7 @@ void LocalConferenceEventHandler::onFullStateReceived () {
 void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAllExcept(createNotifyParticipantAdded(participant), participant);
+		notifyAllExcept(createNotifyParticipantAdded(participant->getAddress()), participant);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being added because pointer to conference is null";
 	}
@@ -541,7 +536,7 @@ void LocalConferenceEventHandler::onParticipantAdded (const std::shared_ptr<Conf
 void LocalConferenceEventHandler::onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAllExcept(createNotifyParticipantRemoved(participant), participant);
+		notifyAllExcept(createNotifyParticipantRemoved(participant->getAddress()), participant);
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " being removed because pointer to conference is null";
 	}
@@ -551,7 +546,7 @@ void LocalConferenceEventHandler::onParticipantSetAdmin (const std::shared_ptr<C
 	const bool isAdmin = (event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyParticipantAdminStatusChanged(participant, isAdmin));
+		notifyAll(createNotifyParticipantAdminStatusChanged(participant->getAddress(), isAdmin));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant " << participant->getAddress() << " admin status changed because pointer to conference is null";
 	}
@@ -572,7 +567,8 @@ void LocalConferenceEventHandler::onAvailableMediaChanged (const std::shared_ptr
 void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyParticipantDeviceAdded(device));
+		Participant *participant = device->getParticipant();
+		notifyAll(createNotifyParticipantDeviceAdded(participant->getAddress(), device->getAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being added because pointer to conference is null";
 	}
@@ -581,7 +577,8 @@ void LocalConferenceEventHandler::onParticipantDeviceAdded (const std::shared_pt
 void LocalConferenceEventHandler::onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
 	// Do not send notify if conference pointer is null. It may mean that the confernece has been terminated
 	if (conf) {
-		notifyAll(createNotifyParticipantDeviceRemoved(device));
+		Participant *participant = device->getParticipant();
+		notifyAll(createNotifyParticipantDeviceRemoved(participant->getAddress(), device->getAddress()));
 	} else {
 		lWarning() << __func__ << ": Not sending notification of participant device " << device->getAddress() << " being removed because pointer to conference is null";
 	}
