@@ -50,7 +50,6 @@
 	F(AbstractChatRoom, ChatRoom) \
 	F(AbstractChatRoom, ClientGroupChatRoom) \
 	F(AbstractChatRoom, ClientGroupToBasicChatRoom) \
-	F(AbstractChatRoom, RealTimeTextChatRoom) \
 	F(AbstractChatRoom, ServerGroupChatRoom) \
 	F(EventLog, ConferenceCallEvent) \
 	F(EventLog, ConferenceChatMessageEvent) \

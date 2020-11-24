@@ -30,7 +30,6 @@
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
-#include "chat/chat-room/real-time-text-chat-room-p.h"
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room-p.h"
@@ -202,9 +201,7 @@ void linphone_chat_room_receive_chat_message (LinphoneChatRoom *cr, LinphoneChat
 }
 
 uint32_t linphone_chat_room_get_char (const LinphoneChatRoom *cr) {
-	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
-		return 0;
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->getChar();
+	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getChar();
 }
 
 void linphone_chat_room_compose (LinphoneChatRoom *cr) {
@@ -212,15 +209,13 @@ void linphone_chat_room_compose (LinphoneChatRoom *cr) {
 }
 
 LinphoneCall *linphone_chat_room_get_call (const LinphoneChatRoom *cr) {
-	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
-		return nullptr;
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->getCall()->toC();
+	shared_ptr<LinphonePrivate::Call> call = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCall();
+	if (call) return call->toC();
+	return nullptr;
 }
 
 void linphone_chat_room_set_call (LinphoneChatRoom *cr, LinphoneCall *call) {
-	if (!(L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getCapabilities() & LinphonePrivate::ChatRoom::Capabilities::RealTimeText))
-		return;
-	L_GET_PRIVATE_FROM_C_OBJECT(cr, RealTimeTextChatRoom)->callId = linphone_call_log_get_call_id(linphone_call_get_call_log(call));
+	L_GET_PRIVATE_FROM_C_OBJECT(cr)->setCallId(linphone_call_log_get_call_id(linphone_call_get_call_log(call)));
 }
 
 void linphone_chat_room_mark_as_read (LinphoneChatRoom *cr) {

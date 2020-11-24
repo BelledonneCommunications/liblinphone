@@ -20,6 +20,7 @@
 #include "linphone/utils/utils.h"
 
 #include "basic-chat-room-p.h"
+#include "call/call.h"
 #include "conference/participant.h"
 #include "logger/logger.h"
 
@@ -71,6 +72,10 @@ bool BasicChatRoom::canHandleMultipart () const {
 }
 
 BasicChatRoom::CapabilitiesMask BasicChatRoom::getCapabilities () const {
+	shared_ptr<Call> call = getCall();
+	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
+		return { Capabilities::Basic, Capabilities::OneToOne, Capabilities::RealTimeText };
+	}
 	return { Capabilities::Basic, Capabilities::OneToOne };
 }
 

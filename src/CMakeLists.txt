@@ -135,8 +135,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	chat/chat-room/chat-room-listener.h
 	chat/chat-room/chat-room-p.h
 	chat/chat-room/chat-room.h
-	chat/chat-room/real-time-text-chat-room-p.h
-	chat/chat-room/real-time-text-chat-room.h
 	chat/cpim/cpim.h
 	chat/cpim/header/cpim-core-headers.h
 	chat/cpim/header/cpim-generic-header.h
@@ -325,7 +323,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	chat/chat-room/abstract-chat-room.cpp
 	chat/chat-room/basic-chat-room.cpp
 	chat/chat-room/chat-room.cpp
-	chat/chat-room/real-time-text-chat-room.cpp
 	chat/chat-room/chat-room-params.cpp
 	chat/cpim/header/cpim-core-headers.cpp
 	chat/cpim/header/cpim-generic-header.cpp
