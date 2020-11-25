@@ -536,7 +536,155 @@ static void linphone_session_timer_invite_interval_ok_refresher_uac_uac(void)
 	linphone_core_manager_destroy(marie);
 }
 
-static void linphone_session_timer_invite_interval_ok_refresher_uas_uas(void)
+static void session_timer_interval_smaller(void)
+{
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+
+	marie = linphone_core_manager_create("marie_session_timers_rc");
+
+	linphone_core_set_session_expires_value(marie->lc, 5); // Client value smaller but above the server Min-SE
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 5);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 5);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	linphone_core_manager_start(marie, TRUE);
+
+	pauline = linphone_core_manager_new("pauline_rc");
+	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
+	linphone_core_set_session_expires_value(pauline->lc, 6);
+	linphone_core_set_session_expires_min_value(pauline->lc, 3);
+	linphone_core_manager_start(pauline, TRUE);
+
+	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_accept(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected, 1));
+
+	// Marie INVITE
+	const LinphoneCallParams *marie_params = linphone_call_get_remote_params(pauline_call);
+
+	const char *marie_value_session_expires = linphone_call_params_get_custom_header(marie_params, "Session-Expires");
+	if (BC_ASSERT_PTR_NOT_NULL(marie_value_session_expires)) {
+		BC_ASSERT_STRING_EQUAL(marie_value_session_expires, "5;refresher=uac");
+	}
+
+	const char *marie_value_session_expires_min_se = linphone_call_params_get_custom_header(marie_params, "Min-SE");
+	if (BC_ASSERT_PTR_NOT_NULL(marie_value_session_expires_min_se)) {
+		BC_ASSERT_STRING_EQUAL(marie_value_session_expires_min_se, "5");
+	}
+
+	// Pauline 200 OK
+	const LinphoneCallParams *pauline_params = linphone_call_get_remote_params(out_call);
+
+	const char *value_session_expires = linphone_call_params_get_custom_header(pauline_params, "Session-Expires");
+	if (BC_ASSERT_PTR_NOT_NULL(value_session_expires)) {
+		BC_ASSERT_STRING_EQUAL(value_session_expires, "5;refresher=uac");
+	}
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+	// UPDATE
+	LinphoneCallParams *params;
+	int dummy = 0;
+	params = linphone_core_create_call_params(pauline->lc,linphone_core_get_current_call(pauline->lc));
+
+	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_call_update(linphone_core_get_current_call(pauline->lc),params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,3));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))), "PCMA");
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))), "PCMA");
+	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 5000);
+
+	// Wait for the 200 OK
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
+
+	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+static void session_timer_interval_larger(void)
+{
+	LinphoneCoreManager* marie;
+	LinphoneCoreManager* pauline;
+	LinphoneCall *pauline_call;
+
+	marie = linphone_core_manager_create("marie_session_timers_rc");
+
+	linphone_core_set_session_expires_value(marie->lc, 5); // Client value larger that the server SE and Min-SE
+	linphone_core_set_session_expires_min_value(marie->lc, 0);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_value(marie->lc) == 5);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_min_value(marie->lc) == 0);
+	BC_ASSERT_TRUE(linphone_core_get_session_expires_refresher_value(marie->lc) == (int)LinphoneSessionExpiresRefresherUAC);
+	linphone_core_manager_start(marie, TRUE);
+
+	pauline = linphone_core_manager_new("pauline_rc");
+	linphone_core_set_session_expires_enabled(pauline->lc, TRUE);
+	linphone_core_set_session_expires_value(pauline->lc, 4);
+	linphone_core_set_session_expires_min_value(pauline->lc, 2);
+	linphone_core_manager_start(pauline, TRUE);
+
+	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
+
+	pauline_call = linphone_core_get_current_call(pauline->lc);
+	linphone_call_accept(pauline_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallConnected, 1));
+
+	// Marie INVITE
+	const LinphoneCallParams *marie_params = linphone_call_get_remote_params(pauline_call);
+
+	const char *marie_value_session_expires = linphone_call_params_get_custom_header(marie_params, "Session-Expires");
+	if (BC_ASSERT_PTR_NOT_NULL(marie_value_session_expires)) {
+		BC_ASSERT_STRING_EQUAL(marie_value_session_expires, "5;refresher=uac");
+	}
+
+	const char *marie_value_session_expires_min_se = linphone_call_params_get_custom_header(marie_params, "Min-SE");
+	BC_ASSERT_PTR_NULL(marie_value_session_expires_min_se);
+
+	// Pauline 200 OK
+	const LinphoneCallParams *pauline_params = linphone_call_get_remote_params(out_call);
+
+	const char *value_session_expires = linphone_call_params_get_custom_header(pauline_params, "Session-Expires");
+	if (BC_ASSERT_PTR_NOT_NULL(value_session_expires)) {
+		BC_ASSERT_STRING_EQUAL(value_session_expires, "4;refresher=uac");
+	}
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+
+	// Wait for the 200 OK
+	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
+
+	linphone_call_terminate(out_call);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
+static void session_timer_interval_ok_refresher_uas_uas(void)
 {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
