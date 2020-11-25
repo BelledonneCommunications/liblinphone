@@ -54,6 +54,8 @@ LINPHONE_PUBLIC LinphoneStatus linphone_dictionary_haskey(const LinphoneDictiona
 
 LINPHONE_PUBLIC void linphone_dictionary_foreach( const LinphoneDictionary* obj, void (*apply_func)(const char*key, void* value, void* userdata), void* userdata);
 
+LINPHONE_PUBLIC char *linphone_dictionary_to_string(const LinphoneDictionary *obj);
+
 #ifdef __cplusplus
 }
 #endif

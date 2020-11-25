@@ -174,6 +174,12 @@ LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *p
  */
 LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type);
 
+/**
+ * Return #LinphonePayloadType as string.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return #LinphonePayloadType as string. @notnil
+ */
+LINPHONE_PUBLIC char *linphone_payload_type_to_string(const LinphonePayloadType *payload_type);
 
 #ifdef __cplusplus
 }

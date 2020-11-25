@@ -118,3 +118,9 @@ void linphone_info_message_set_headers (LinphoneInfoMessage *im, const SalCustom
 	if (headers)
 		im->headers = sal_custom_header_clone(headers);
 }
+
+char *linphone_info_message_to_string(const LinphoneInfoMessage* im){
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Info Message %p\n", im);
+	return tmp;
+}

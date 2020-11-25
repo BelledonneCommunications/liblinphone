@@ -1961,3 +1961,9 @@ float linphone_friend_get_capability_version(const LinphoneFriend *lf, const Lin
 
 	return version;
 }
+
+char *linphone_friend_to_string(const LinphoneFriend *linphone_friend) {
+	char *tmp;
+	tmp=ms_strdup_printf("LinphoneFriend %p\n", linphone_friend);
+	return tmp;
+}

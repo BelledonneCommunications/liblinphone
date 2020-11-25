@@ -285,6 +285,14 @@ LINPHONE_PUBLIC LinphoneAccountCreatorRequestFunc linphone_account_creator_servi
 **/
 LINPHONE_PUBLIC void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb);
 
+/**
+ * Returns the #LinphoneAccountCreatorService as a string
+ * @param service #LinphoneAccountCreatorService object. @notnil
+ * @return the #LinphoneAccountCreatorService as a string. @notnil
+ * @donotwrap
+**/
+LINPHONE_PUBLIC char *linphone_account_creator_service_to_string(const LinphoneAccountCreatorService *service);
+
 /************************** End Account Creator Requests **************************/
 
 #ifdef __cplusplus
