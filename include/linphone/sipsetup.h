@@ -152,6 +152,8 @@ const char ** sip_setup_context_get_domains(SipSetupContext *ctx);
 
 void sip_setup_context_free(SipSetupContext *ctx);
 
+LINPHONE_PUBLIC char *sip_setup_context_to_string(const SipSetupContext *ctx);
+
 LINPHONE_PUBLIC LinphoneStatus sip_setup_context_logout(SipSetupContext *ctx);
 
 /*internal methods for use WITHIN plugins: do not use elsewhere*/

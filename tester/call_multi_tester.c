@@ -863,7 +863,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		}
 	}
 
-	char* p_remote_address = pcall ? linphone_call_get_remote_address_to_string(pcall) : "Unknown Call";
+	char* p_remote_address = pcall ? linphone_call_get_remote_address_as_string(pcall) : "Unknown Call";
 	BC_ASSERT_EQUAL(strcmp(p_remote_address,linphone_address_to_string(marie->identity)), 0, int, "%d");
 	BC_ASSERT_EQUAL(no_paused_by_remote,no_call_paused, int, "%d");
 
@@ -882,7 +882,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	}
 	bctbx_list_free(calls);
 
-	char* h_remote_address = hcall ? linphone_call_get_remote_address_to_string(hcall) : "Unknown remote address";
+	char* h_remote_address = hcall ? linphone_call_get_remote_address_as_string(hcall) : "Unknown remote address";
 	char* pm_address = pm ? linphone_address_to_string(pm->identity) : "Unknown participant address";
 	BC_ASSERT_EQUAL(strcmp(h_remote_address, pm_address), 0, int, "%d");
 	BC_ASSERT_EQUAL(no_active_calls_stream_running,1, int, "%d");

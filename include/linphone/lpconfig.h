@@ -565,6 +565,13 @@ LINPHONE_PUBLIC LinphoneDictionary * linphone_config_section_to_dict(const Linph
  */
 LINPHONE_PUBLIC void linphone_config_load_dict_to_section(LinphoneConfig* config, const char* section, const LinphoneDictionary* dict);
 
+/**
+ * Return #LinphoneConfig as string.
+ * @param config The #LinphoneConfig object @notnil
+ * @return #LinphoneConfig as string. @notnil
+ */
+LINPHONE_PUBLIC char *linphone_config_to_string(const LpConfig *config);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

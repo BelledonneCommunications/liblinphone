@@ -393,3 +393,8 @@ void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *sta
 	stats->estimated_download_bandwidth = estimated_value;
 }
 
+char *linphone_call_stats_to_string(const LinphoneCallStats *stats) {
+	char *tmp;
+	tmp=ms_strdup_printf("LinphoneCallStats %p\n", stats);
+	return tmp;
+}

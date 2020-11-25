@@ -1346,3 +1346,9 @@ void linphone_friend_list_enable_subscriptions(LinphoneFriendList *list, bool_t 
 bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *list) {
 	return list->enable_subscriptions;
 }
+
+char *linphone_friend_list_to_string(const LinphoneFriendList *list) {
+	char *tmp;
+	tmp=ms_strdup_printf("Friend List %p\n", list);
+	return tmp;
+}

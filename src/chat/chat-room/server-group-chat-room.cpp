@@ -49,7 +49,7 @@ LINPHONE_BEGIN_NAMESPACE
 // -----------------------------------------------------------------------------
 
 ParticipantDeviceIdentity::ParticipantDeviceIdentity (const Address &address, const string &name) : mDeviceAddress(address), mDeviceName(name) {
-	mDeviceAddressCache = linphone_address_new(address.asString().c_str());
+	mDeviceAddressCache = linphone_address_new(address.toString().c_str());
 }
 
 void ParticipantDeviceIdentity::setCapabilityDescriptor(const string &capabilities){
@@ -676,12 +676,12 @@ void ServerGroupChatRoomPrivate::updateProtocolVersionFromDevice(const shared_pt
 	auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
 	auto groupchat = protocols.find("groupchat");
 	if (groupchat == protocols.end()){
-		lWarning() << "Device " << device->getAddress().asString() << "has no groupchat capability set !";
+		lWarning() << "Device " << device->getAddress().toString() << "has no groupchat capability set !";
 		return;
 	}
 	if (protocolVersion > groupchat->second){
 		protocolVersion = groupchat->second;
-		lWarning() << "Device " << device->getAddress().asString() << " downgrades chatroom's protocol version to " << protocolVersion;
+		lWarning() << "Device " << device->getAddress().toString() << " downgrades chatroom's protocol version to " << protocolVersion;
 	}
 }
 

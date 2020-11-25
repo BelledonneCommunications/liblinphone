@@ -3457,7 +3457,7 @@ void MainDb::updateChatRoomConferenceId (ConferenceId oldConferenceId, const Con
 	L_DB_TRANSACTION {
 		L_D();
 
-		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
+		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().toString());
 
 		const long long &dbChatRoomId = d->selectChatRoomId(oldConferenceId);
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"
