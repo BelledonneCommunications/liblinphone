@@ -24,6 +24,7 @@
 #include "address/address-p.h"
 #include "basic-to-client-group-chat-room.h"
 #include "c-wrapper/c-wrapper.h"
+#include "call/call.h"
 #include "client-group-chat-room-p.h"
 #include "conference/handlers/remote-conference-event-handler-p.h"
 #include "conference/handlers/remote-conference-list-event-handler.h"
@@ -371,6 +372,12 @@ bool ClientGroupChatRoom::canHandleMultipart () const {
 
 ClientGroupChatRoom::CapabilitiesMask ClientGroupChatRoom::getCapabilities () const {
 	L_D();
+	shared_ptr<Call> call = getCall();
+	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
+		CapabilitiesMask capabilities = CapabilitiesMask(d->capabilities);
+		capabilities |= Capabilities::RealTimeText;
+		return capabilities;
+	}
 	return d->capabilities;
 }
 

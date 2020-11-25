@@ -328,7 +328,7 @@ LINPHONE_PUBLIC LinphoneCore* linphone_chat_room_get_core(const LinphoneChatRoom
  * @param[in] cr #LinphoneChatRoom object
  * @return  RFC 4103/T.140 char
  */
-LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(const LinphoneChatRoom *cr);
+LINPHONE_PUBLIC uint32_t linphone_chat_room_get_char(LinphoneChatRoom *cr);
 
 /**
  * Returns true if lime is available for given peer

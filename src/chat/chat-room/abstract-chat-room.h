@@ -21,7 +21,7 @@
 #define _L_ABSTRACT_CHAT_ROOM_H_
 
 #include "linphone/utils/enum-mask.h"
-
+#include "call/call.h"
 #include "chat/chat-message/chat-message.h"
 #include "conference/conference-interface.h"
 #include "core/core-accessor.h"
@@ -36,6 +36,7 @@ class EventLog;
 class ChatRoomParams;
 
 class LINPHONE_PUBLIC AbstractChatRoom : public Object, public CoreAccessor, public ConferenceInterface {
+	friend class CallPrivate;
 	friend class ChatMessage;
 	friend class ChatMessagePrivate;
 	friend class ClientGroupToBasicChatRoomPrivate;
@@ -155,6 +156,9 @@ public:
 	virtual bool ephemeralSupportedByAllParticipants () const = 0;
 
 	virtual const std::shared_ptr<ChatRoomParams> &getCurrentParams() const = 0;
+
+	virtual uint32_t getChar () = 0;
+	virtual std::shared_ptr<Call> getCall () const = 0;
 
 protected:
 	explicit AbstractChatRoom (AbstractChatRoomPrivate &p, const std::shared_ptr<Core> &core);

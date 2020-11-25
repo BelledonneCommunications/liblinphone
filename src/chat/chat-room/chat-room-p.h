@@ -95,6 +95,9 @@ public:
 	void onIsComposingStateChanged (bool isComposing) override;
 	void onIsRemoteComposingStateChanged (const Address &remoteAddress, bool isComposing) override;
 
+	void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) override;
+	void setCallId (const std::string &value) override { callId = value; };
+
 	Imdn *getImdnHandler () const { return imdnHandler.get(); }
 
 	LinphoneChatRoom *getCChatRoom () const;
@@ -121,6 +124,11 @@ private:
 
 	bool isComposing = false;
 	bool isEmpty = true;
+	
+	std::string callId;
+	size_t readCharacterIndex = 0;
+	std::vector<uint32_t> receivedRttCharacters;
+	std::vector<uint32_t> lastMessageCharacters;
 
 	L_DECLARE_PUBLIC(ChatRoom);
 };

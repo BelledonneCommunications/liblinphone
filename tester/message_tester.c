@@ -2248,7 +2248,7 @@ static void file_transfer_success_after_destroying_chatroom(void) {
 static void real_time_text(
 	bool_t audio_stream_enabled, bool_t srtp_enabled, bool_t mess_with_marie_payload_number,
 	bool_t mess_with_pauline_payload_number, bool_t ice_enabled, bool_t sql_storage,
-	bool_t do_not_store_rtt_messages_in_sql_storage
+	bool_t do_not_store_rtt_messages_in_sql_storage, bool_t existing_chat_room
 ) {
 	if (sql_storage && !linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
@@ -2263,6 +2263,10 @@ static void real_time_text(
 	LinphoneCall *pauline_call, *marie_call;
 	char *marie_db  = bc_tester_file("marie.db");
 	char *pauline_db  = bc_tester_file("pauline.db");
+
+	if (existing_chat_room) {
+		text_message_base(marie, pauline);
+	}
 
 	if (sql_storage) {
 		linphone_core_set_chat_database_path(marie->lc, marie_db);
@@ -2400,15 +2404,19 @@ srtp_end:
 }
 
 static void real_time_text_message(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+}
+
+static void real_time_text_message_with_existing_basic_chat_room(void) {
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE);
 }
 
 static void real_time_text_sql_storage(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, TRUE, FALSE);
 }
 
 static void real_time_text_sql_storage_rtt_disabled(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE);
 }
 
 static void real_time_text_conversation(void) {
@@ -2451,6 +2459,12 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_send(pauline_rtt_message);
 			linphone_chat_message_send(marie_rtt_message);
 
+			// Read new line character
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_1) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_2) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
+
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 			{
 				LinphoneChatMessage * msg = marie->stat.last_received_chat_message;
@@ -2489,6 +2503,12 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_send(pauline_rtt_message);
 			linphone_chat_message_send(marie_rtt_message);
 
+			// Read new line character
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_1) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_2) + 1, 5000));
+			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
+
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
 			{
 				LinphoneChatMessage * msg = marie->stat.last_received_chat_message;
@@ -2516,15 +2536,15 @@ static void real_time_text_conversation(void) {
 }
 
 static void real_time_text_without_audio(void) {
-	real_time_text(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_srtp(void) {
-	real_time_text(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(TRUE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_ice(void) {
-	real_time_text(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE);
+	real_time_text(TRUE, FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_message_compat(bool_t end_with_crlf, bool_t end_with_lf) {
@@ -2708,6 +2728,9 @@ static void real_time_text_and_early_media(void) {
 		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
 		linphone_call_params_unref(pauline_params);
 		chars_received = marie->stat.number_of_LinphoneIsComposingActiveReceived;
+
+		// Read new line character
+		BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
 		
 		/* Send RTT again once the call is established. */
 		rtt_message = linphone_chat_room_create_message(pauline_chat_room,NULL);
@@ -2807,11 +2830,11 @@ static void only_real_time_text_accepted(void) {
 
 
 static void real_time_text_message_different_text_codecs_payload_numbers_sender_side(void) {
-	real_time_text(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_message_different_text_codecs_payload_numbers_receiver_side(void) {
-	real_time_text(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+	real_time_text(FALSE, FALSE, FALSE, TRUE, FALSE, FALSE, FALSE, FALSE);
 }
 
 static void real_time_text_copy_paste(void) {
@@ -3298,6 +3321,7 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer not sent if host not found", file_transfer_not_sent_if_host_not_found),
 	TEST_NO_TAG("Transfer not sent if url moved permanently", file_transfer_not_sent_if_url_moved_permanently),
 	TEST_ONE_TAG("Real Time Text message", real_time_text_message, "RTT"),
+	TEST_ONE_TAG("Real Time Text message with existing basic chat room", real_time_text_message_with_existing_basic_chat_room, "RTT"),
 	TEST_ONE_TAG("Real Time Text SQL storage", real_time_text_sql_storage, "RTT"),
 	TEST_ONE_TAG("Real Time Text SQL storage with RTT messages not stored", real_time_text_sql_storage_rtt_disabled, "RTT"),
 	TEST_ONE_TAG("Real Time Text conversation", real_time_text_conversation, "RTT"),
