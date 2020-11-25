@@ -160,6 +160,12 @@ void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAcco
 	service->login_linphone_account_request_cb = cb;
 }
 
+char *linphone_account_creator_service_to_string(const LinphoneAccountCreatorService *service) {
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Account Creator Service %p\n", service);
+	return tmp;
+}
+
 /************************** End Account Creator service **************************/
 
 void linphone_core_set_account_creator_service(LinphoneCore *lc, LinphoneAccountCreatorService *service) {

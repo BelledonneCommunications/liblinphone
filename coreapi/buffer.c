@@ -106,3 +106,9 @@ void linphone_buffer_set_size(LinphoneBuffer *buffer, size_t size) {
 bool_t linphone_buffer_is_empty(const LinphoneBuffer *buffer) {
 	return (buffer->size == 0) ? TRUE : FALSE;
 }
+
+char *linphone_bufffer_to_string(const LinphoneBuffer *buffer) {
+	char *tmp;
+	tmp=ms_strdup_printf("Buffer %p\n", buffer);
+	return tmp;
+}

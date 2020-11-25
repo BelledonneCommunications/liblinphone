@@ -1279,6 +1279,12 @@ int linphone_config_has_entry(const LpConfig *lpconfig, const char *section, con
 
 }
 
+char *linphone_config_to_string(const LpConfig *config) {
+	char *tmp;
+	tmp=ms_strdup_printf("LpConfig %p\n", config);
+	return tmp;
+}
+
 BELLE_SIP_INSTANCIATE_VPTR(
 	LinphoneConfig,
 	belle_sip_object_t,

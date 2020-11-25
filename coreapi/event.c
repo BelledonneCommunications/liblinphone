@@ -618,6 +618,12 @@ void linphone_event_remove_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs) {
 	linphone_event_cbs_unref(cbs);
 }
 
+char *linphone_event_to_string(const LinphoneEvent *linphone_event) {
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Event %p\n", linphone_event);
+	return tmp;
+}
+
 LinphoneEventCbs *linphone_event_get_current_callbacks(const LinphoneEvent *ev) {
 	return ev->currentCbs;
 }

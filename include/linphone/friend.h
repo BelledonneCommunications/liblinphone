@@ -385,12 +385,19 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_friend_destroy(LinphoneFriend 
 
 /**
  * Get the status of a friend
- * @param lf A #LinphoneFriend object
+ * @param linphone_friend #LinphoneFriend object
  * @return #LinphoneOnlineStatus
  * @deprecated 19/06/2013 Use linphone_friend_get_presence_model() instead
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneOnlineStatus linphone_friend_get_status(const LinphoneFriend *linphone_friend);
+
+/**
+ * Return #LinphoneFriend as string.
+ * @param linphone_friend #LinphoneFriend object @notnil
+ * @return #LinphoneFriend as string. @notnil
+ */
+LINPHONE_PUBLIC char *linphone_friend_to_string(const LinphoneFriend *linphone_friend);
 
 /**
  * @}

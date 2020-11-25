@@ -222,6 +222,12 @@ void lsd_player_set_gain(LsdPlayer *p, float gain){
 	ms_filter_call_method(p->lsd->mixer,MS_AUDIO_MIXER_SET_INPUT_GAIN,&gainctl);
 }
 
+char *lsd_player_to_string(const LsdPlayer *p){
+	char *tmp;
+	tmp=ms_strdup_printf("LsdPlayer %p\n", p);
+	return tmp;
+}
+
 static void lsd_player_configure_notify_func (void *userdata, MSFilter *, unsigned int, void *) {
 	lsd_player_configure((LsdPlayer *)userdata);
 }
@@ -302,6 +308,12 @@ void linphone_sound_daemon_destroy(LinphoneSoundDaemon *obj){
 
 MSSndCard *linphone_sound_daemon_get_proxy_card(LinphoneSoundDaemon *lsd){
 	return lsd->proxycard;
+}
+
+char *linphone_sound_daemon_to_string(const LinphoneSoundDaemon *lsd){
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Sound Daemon %p\n", lsd);
+	return tmp;
 }
 
 void linphone_core_use_sound_daemon(LinphoneCore *lc, LinphoneSoundDaemon *lsd){
