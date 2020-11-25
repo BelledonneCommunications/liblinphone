@@ -220,6 +220,11 @@ void sip_setup_context_free(SipSetupContext *ctx){
 	ms_free(ctx);
 }
 
+char *sip_setup_context_to_string(const SipSetupContext *ctx){
+	char *tmp;
+	tmp=ms_strdup_printf("SIP setup context %p\n", ctx);
+	return tmp;
+}
 
 BuddyInfo *buddy_info_new(){
 	return ms_new0(BuddyInfo,1);

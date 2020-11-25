@@ -158,6 +158,13 @@ LINPHONE_PUBLIC bool_t linphone_im_notif_policy_get_recv_imdn_displayed(const Li
 LINPHONE_PUBLIC void linphone_im_notif_policy_set_recv_imdn_displayed(LinphoneImNotifPolicy *policy, bool_t enable);
 
 /**
+ * Returns the #LinphoneImNotifPolicy as a string
+ * @param policy #LinphoneImNotifPolicy object @notnil
+ * @return the #LinphoneImNotifPolicy as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_im_notif_policy_to_string(const LinphoneImNotifPolicy *policy);
+
+/**
  * @}
  */
 

@@ -81,7 +81,7 @@ const LinphoneAddress* linphone_participant_device_identity_get_address(const Li
 
 char * linphone_participant_device_identity_to_string (const LinphoneParticipantDeviceIdentity *deviceIdentity) {
 #ifdef HAVE_ADVANCED_IM
-	return ms_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(deviceIdentity)->toString().c_str());
+	return ms_strdup(ParticipantDeviceIdentity::toCpp(deviceIdentity)->toString().c_str());
 #else
 	return NULL;
 #endif

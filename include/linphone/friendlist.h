@@ -408,6 +408,13 @@ LINPHONE_PUBLIC void linphone_friend_list_enable_subscriptions(LinphoneFriendLis
  */
 LINPHONE_PUBLIC bool_t linphone_friend_list_subscriptions_enabled(LinphoneFriendList *friend_list);
 
+/**
+ * Returns the #LinphoneFriendList as a string
+ * @param friend_list the #LinphoneFriendList object @notnil
+ * @return the #LinphoneFriendList as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_friend_list_to_string(const LinphoneFriendList *list);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

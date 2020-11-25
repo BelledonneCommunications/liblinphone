@@ -201,6 +201,13 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator) {
 	return linphone_account_creator_create_proxy_config(creator);
 }
+
+char *linphone_account_creator_to_string(const LinphoneAccountCreator *creator) {
+	char *tmp;
+	tmp=ms_strdup_printf("Account creator %p\n", creator);
+	return tmp;
+}
+
 /************************** End Misc **************************/
 
 /************************** Start Account Creator Cbs **************************/

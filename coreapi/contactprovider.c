@@ -57,6 +57,13 @@ void linphone_contact_search_invoke_cb(LinphoneContactSearch* req, MSList* frien
 	if( req->cb ) req->cb(req, friends, req->data);
 }
 
+char*linphone_contact_search_to_string(LinphoneContactSearch* obj)
+{
+	char *tmp;
+	tmp=ms_strdup_printf("Contact search %p\n", obj);
+	return tmp;
+}
+
 int linphone_contact_search_compare(const void* a, const void* b) {
 	LinphoneContactSearch *ra=((LinphoneContactSearch*)a);
 	LinphoneContactSearch *rb=((LinphoneContactSearch*)b);
@@ -110,6 +117,13 @@ LinphoneContactSearch* linphone_contact_provider_begin_search(LinphoneContactPro
 unsigned int linphone_contact_provider_cancel_search(LinphoneContactProvider* obj, LinphoneContactSearch* request)
 {
 	return BELLE_SIP_OBJECT_VPTR(obj,LinphoneContactProvider)->cancel_search( LINPHONE_CONTACT_PROVIDER(obj), request);
+}
+
+char*linphone_contact_provider_to_string(LinphoneContactProvider* obj)
+{
+	char *tmp;
+	tmp=ms_strdup_printf("Contact provider %p\n", obj);
+	return tmp;
 }
 
 LinphoneContactProvider* linphone_contact_provider_ref(void* obj)

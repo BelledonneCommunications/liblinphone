@@ -41,6 +41,7 @@ LINPHONE_PUBLIC void lsd_player_enable_loop(LsdPlayer *p, bool_t loopmode);
 LINPHONE_PUBLIC bool_t lsd_player_loop_enabled(const LsdPlayer *p);
 LINPHONE_PUBLIC void lsd_player_set_gain(LsdPlayer *p, float gain);
 LINPHONE_PUBLIC LinphoneSoundDaemon *lsd_player_get_daemon(const LsdPlayer *p);
+LINPHONE_PUBLIC char *lsd_player_to_string(const LsdPlayer *p);
 
 LINPHONE_PUBLIC LinphoneSoundDaemon * linphone_sound_daemon_new(MSFactory* factory, const char *cardname, int rate, int nchannels);
 LINPHONE_PUBLIC LsdPlayer * linphone_sound_daemon_get_player(LinphoneSoundDaemon *lsd);
@@ -49,7 +50,7 @@ LINPHONE_PUBLIC void linphone_sound_daemon_stop_all_players(LinphoneSoundDaemon 
 LINPHONE_PUBLIC void linphone_sound_daemon_release_all_players(LinphoneSoundDaemon *obj);
 LINPHONE_PUBLIC void linphone_core_use_sound_daemon(LinphoneCore *lc, LinphoneSoundDaemon *lsd);
 LINPHONE_PUBLIC void linphone_sound_daemon_destroy(LinphoneSoundDaemon *obj);
-
+LINPHONE_PUBLIC char *linphone_sound_daemon_to_string(const LinphoneSoundDaemon *lsd);
 
 /*These typedefs are deprecated, but we don't mark them LINPHONE_DEPRECATED otherwise we get deprecation warnings with
  * the deprecated linphone_core_start_echo_calibration() that make use of them*/

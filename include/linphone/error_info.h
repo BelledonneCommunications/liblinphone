@@ -173,6 +173,12 @@ LINPHONE_PUBLIC void linphone_error_info_set_phrase(LinphoneErrorInfo *error_inf
 LINPHONE_PUBLIC void linphone_error_info_set_warnings(LinphoneErrorInfo *error_info, const char *warnings);
 
 /**
+ * Returns the #LinphoneErrorInfo as a string
+ * @param error_info #LinphoneErrorInfo object @notnil
+ * @return the #LinphoneErrorInfo as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_error_info_to_string(const LinphoneErrorInfo *error_info);
+/**
  * @}
  */
 

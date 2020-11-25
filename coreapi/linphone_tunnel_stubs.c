@@ -121,6 +121,12 @@ void linphone_tunnel_enable_sip(LinphoneTunnel *tunnel, bool_t enable) {
 }
 bool_t linphone_tunnel_sip_enabled(const LinphoneTunnel *tunnel) { return FALSE; }
 
+char *linphone_tunnel_to_string(const LinphoneTunnel *tunnel) {
+	char *tmp;
+	tmp=ms_strdup_printf("Tunnel %p\n", tunnel);
+	return tmp;
+}
+
 /* Deprecated functions */
 void linphone_tunnel_enable(LinphoneTunnel *tunnel, bool_t enabled) {}
 bool_t linphone_tunnel_enabled(const LinphoneTunnel *tunnel) { return FALSE; }

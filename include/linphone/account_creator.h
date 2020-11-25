@@ -141,6 +141,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linp
 LINPHONE_PUBLIC LinphoneAccountCreator * linphone_account_creator_ref(LinphoneAccountCreator *creator);
 
 /**
+ * Returns the #LinphoneAccountCreator as a string
+ * @param creator #LinphoneAccountCreator object. @notnil
+ * @return the #LinphoneAccountCreator as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_account_creator_to_string(const LinphoneAccountCreator *creator);
+
+/**
  * Release reference to the LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object. @notnil
 **/

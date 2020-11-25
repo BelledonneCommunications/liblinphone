@@ -391,6 +391,12 @@ LINPHONE_PUBLIC void linphone_tunnel_set_domain(LinphoneTunnel *tunnel, const ch
  */
 LINPHONE_PUBLIC const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel);
 
+/**
+ * Return #LinphoneTunnel as string.
+ * @param tunnel #LinphoneTunnel object @notnil
+ * @return #LinphoneTunnel as string. @notnil
+ */
+LINPHONE_PUBLIC char *linphone_tunnel_to_string(const LinphoneTunnel *tunnel);
 
 LINPHONE_PUBLIC void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled);
 
