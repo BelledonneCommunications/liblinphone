@@ -347,6 +347,18 @@ void ProxyChatRoom::setSubject (const string &subject) {
 
 // -----------------------------------------------------------------------------
 
+uint32_t ProxyChatRoom::getChar () {
+	L_D();
+	return d->chatRoom->getChar();
+}
+
+std::shared_ptr<Call> ProxyChatRoom::getCall () const {
+	L_D();
+	return d->chatRoom->getCall();
+}
+
+// -----------------------------------------------------------------------------
+
 void ProxyChatRoom::join () {
 	L_D();
 	d->chatRoom->join();

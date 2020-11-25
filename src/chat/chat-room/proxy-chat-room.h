@@ -118,6 +118,9 @@ public:
 
 	const std::string &getSubject () const override;
 	void setSubject (const std::string &subject) override;
+	
+	uint32_t getChar () override;
+	std::shared_ptr<Call> getCall () const override;
 
 	void join () override;
 	void leave () override;

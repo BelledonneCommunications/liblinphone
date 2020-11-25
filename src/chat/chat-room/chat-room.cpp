@@ -23,6 +23,7 @@
 #include "linphone/utils/algorithm.h"
 
 #include "c-wrapper/c-wrapper.h"
+#include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-message/imdn-message.h"
 #include "chat/chat-message/is-composing-message.h"
@@ -36,6 +37,10 @@
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
+
+#define NEW_LINE 0x2028
+#define CRLF 0x0D0A
+#define LF 0x0A
 
 // -----------------------------------------------------------------------------
 
@@ -51,28 +56,33 @@ void ChatRoomPrivate::setState (ChatRoom::State newState) {
 void ChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> &chatMessage) {
 	L_Q();
 
-	ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
-	dChatMessage->setTime(ms_time(0));
-	if (!q->canHandleCpim()) {
-		//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
-		dChatMessage->setImdnMessageId("");
-	}
-
-	LinphoneChatRoom *cr = getCChatRoom();
-	bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
-	if (!isResend && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
-		shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
-			q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
-		);
-		if (!event) {
-			event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
+	shared_ptr<Call> call = q->getCall();
+	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
+		chatMessage->putCharacter(NEW_LINE);
+	} else {
+		ChatMessagePrivate *dChatMessage = chatMessage->getPrivate();
+		dChatMessage->setTime(ms_time(0));
+		if (!q->canHandleCpim()) {
+			//if not using cpim, ImdnMessageId = SIP Message call id, so should be computed each time, specially in case of resend.
+			dChatMessage->setImdnMessageId("");
 		}
-		
-		_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
-		linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
-	}
 
-	dChatMessage->send();
+		LinphoneChatRoom *cr = getCChatRoom();
+		bool isResend = chatMessage->getState() == ChatMessage::State::NotDelivered;
+		if (!isResend && !linphone_core_conference_server_enabled(q->getCore()->getCCore())) {
+			shared_ptr<ConferenceChatMessageEvent> event = static_pointer_cast<ConferenceChatMessageEvent>(
+				q->getCore()->getPrivate()->mainDb->getEventFromKey(dChatMessage->dbKey)
+			);
+			if (!event) {
+				event = make_shared<ConferenceChatMessageEvent>(time(nullptr), chatMessage);
+			}
+			
+			_linphone_chat_room_notify_chat_message_sent(cr, L_GET_C_BACK_PTR(event));
+			linphone_core_notify_message_sent(q->getCore()->getCCore(), cr, L_GET_C_BACK_PTR(chatMessage));
+		}
+
+		dChatMessage->send();
+	}
 }
 
 void ChatRoomPrivate::onChatMessageSent(const shared_ptr<ChatMessage> &chatMessage) {
@@ -142,6 +152,46 @@ std::list<std::shared_ptr<ChatMessage>> ChatRoomPrivate::getTransientChatMessage
 
 void ChatRoomPrivate::setIsEmpty (const bool empty) {
 	isEmpty = empty;
+}
+
+void ChatRoomPrivate::realtimeTextReceived (uint32_t character, const shared_ptr<Call> &call) {
+	L_Q();
+
+	shared_ptr<Core> core = q->getCore();
+	LinphoneCore *cCore = core->getCCore();
+
+	if (call && call->getCurrentParams()->realtimeTextEnabled()) {
+		receivedRttCharacters.push_back(character);
+		remoteIsComposing.push_back(q->getPeerAddress());
+		linphone_core_notify_is_composing_received(cCore, getCChatRoom());
+
+		if ((character == NEW_LINE) || (character == CRLF) || (character == LF)) {
+			// End of message
+			string completeText = Utils::utf8ToString(lastMessageCharacters);
+
+			shared_ptr<ChatMessage> pendingMessage = q->createChatMessage();
+			pendingMessage->getPrivate()->setDirection(ChatMessage::Direction::Incoming);
+			Content *content = new Content();
+			content->setContentType(ContentType::PlainText);
+			content->setBodyFromUtf8(completeText);
+			pendingMessage->addContent(content);
+			
+			bctbx_debug("New line received, forge a message with content [%s]", content->getBodyAsString().c_str());
+			pendingMessage->getPrivate()->setState(ChatMessage::State::Delivered);
+			pendingMessage->getPrivate()->setTime(::ms_time(0));
+
+			if (linphone_config_get_int(linphone_core_get_config(cCore), "misc", "store_rtt_messages", 1) == 1) {
+				pendingMessage->getPrivate()->storeInDb();
+			}
+			
+			onChatMessageReceived(pendingMessage);
+			lastMessageCharacters.clear();
+		} else {
+			lastMessageCharacters.push_back(character);
+			string completeText = Utils::utf8ToString(lastMessageCharacters);
+			bctbx_debug("Received RTT character: [%llu], pending text is [%s]", character, completeText.c_str());
+		}
+	}
 }
 
 // -----------------------------------------------------------------------------
@@ -652,6 +702,28 @@ long ChatRoom::getEphemeralLifetime () const {
 
 bool ChatRoom::ephemeralSupportedByAllParticipants () const  {
 	return false;
+}
+
+uint32_t ChatRoom::getChar () {
+	L_D();
+	uint32_t character = 0;
+
+	if (d->readCharacterIndex < d->receivedRttCharacters.size()) {
+		character = d->receivedRttCharacters.at(d->readCharacterIndex);
+		d->readCharacterIndex += 1;
+	}
+
+	if (d->readCharacterIndex == d->receivedRttCharacters.size()) {
+		d->readCharacterIndex = 0;
+		d->receivedRttCharacters.clear();
+	}
+
+	return character;
+}
+
+std::shared_ptr<Call> ChatRoom::getCall () const {
+	L_D();
+	return getCore()->getCallByCallId(d->callId);
 }
 
 LINPHONE_END_NAMESPACE

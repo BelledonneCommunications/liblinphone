@@ -97,6 +97,14 @@ public:
 		chatRoom->getPrivate()->onChatMessageReceived(chatMessage);
 	}
 
+	inline void realtimeTextReceived (uint32_t character, const std::shared_ptr<Call> &call) override {
+		chatRoom->getPrivate()->realtimeTextReceived(character, call);
+	}
+
+	inline void setCallId (const std::string &value) override { 
+		chatRoom->getPrivate()->setCallId(value);
+	};
+
 	void setupProxy ();
 	void teardownProxy ();
 

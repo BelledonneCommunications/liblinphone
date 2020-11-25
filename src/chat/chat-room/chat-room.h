@@ -93,6 +93,9 @@ public:
 
 	const std::shared_ptr<ChatRoomParams> &getCurrentParams() const override;
 
+	uint32_t getChar () override;
+	std::shared_ptr<Call> getCall () const override;
+
 protected:
 	explicit ChatRoom (ChatRoomPrivate &p, const std::shared_ptr<Core> &core, const ConferenceId &conferenceId, const std::shared_ptr<ChatRoomParams> &params);
 

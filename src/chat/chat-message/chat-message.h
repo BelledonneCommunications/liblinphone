@@ -54,7 +54,6 @@ class LINPHONE_PUBLIC ChatMessage : public Object, public CoreAccessor {
 	friend class ImdnMessagePrivate;
 	friend class MainDb;
 	friend class MainDbPrivate;
-	friend class RealTimeTextChatRoomPrivate;
 	friend class ServerGroupChatRoomPrivate;
 	friend class LimeX3dhEncryptionEngine;
 	friend class CorePrivate;

@@ -30,7 +30,6 @@
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/chat-room/chat-room-p.h"
 #include "chat/chat-room/client-group-to-basic-chat-room.h"
-#include "chat/chat-room/real-time-text-chat-room.h"
 #include "chat/modifier/cpim-chat-message-modifier.h"
 #include "chat/modifier/encryption-chat-message-modifier.h"
 #include "chat/modifier/multipart-chat-message-modifier.h"
@@ -1393,14 +1392,7 @@ int ChatMessage::putCharacter (uint32_t character) {
 		return -1;
 	}
 
-	shared_ptr<LinphonePrivate::RealTimeTextChatRoom> rttcr =
-		static_pointer_cast<LinphonePrivate::RealTimeTextChatRoom>(chatRoom);
-	if (!rttcr) {
-		lError() << "Chat room [" << chatRoom << "] that created the message can't be cast to RealTimeTextChatRoom";
-		return -1;
-	}
-
-	shared_ptr<Call> call = rttcr->getCall();
+	shared_ptr<Call> call = chatRoom->getCall();
 	if (!call || !call->getPrivate()->getMediaStream(LinphoneStreamTypeText)) {
 		lError() << "Failed to find Text stream from call [" << call << "]";
 		return -1;

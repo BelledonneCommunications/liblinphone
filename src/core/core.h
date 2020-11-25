@@ -64,7 +64,6 @@ class LINPHONE_PUBLIC Core : public Object {
 	friend class MainDbChatMessageKey;
 	friend class MainDbEventKey;
 	friend class MediaSessionPrivate;
-	friend class RealTimeTextChatRoomPrivate;
 	friend class RemoteConferenceEventHandler;
 	friend class RemoteConferenceListEventHandler;
 	friend class ServerGroupChatRoom;
@@ -101,6 +100,7 @@ public:
 
 	bool areSoundResourcesLocked () const;
 	std::shared_ptr<Call> getCallByRemoteAddress (const Address &addr) const;
+	std::shared_ptr<Call> getCallByCallId (const std::string &callId) const;
 	const std::list<std::shared_ptr<Call>> &getCalls () const;
 	unsigned int getCallCount () const;
 	std::shared_ptr<Call> getCurrentCall () const;
@@ -136,12 +136,12 @@ public:
 								     LinphoneChatRoomCapabilitiesMask capabilities,
 								     bool fallback = true);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId, bool isRtt = false);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const ConferenceId &conferenceId);
 
 	//TODO: Remove me in the future, a chatroom is identified by a local and peer address now!
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &peerAddress, bool isRtt = false);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoom (const IdentityAddress &peerAddress);
 
-	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri (const std::string &uri, bool isRtt = false);
+	std::shared_ptr<AbstractChatRoom> getOrCreateBasicChatRoomFromUri (const std::string &uri);
 
 	static void deleteChatRoom (const std::shared_ptr<const AbstractChatRoom> &chatRoom);
 

@@ -275,7 +275,6 @@ LinphoneProxyConfig *linphone_proxy_config_new_from_config_file(LinphoneCore *lc
 void linphone_proxy_config_write_to_config_file(LinphoneConfig* config,LinphoneProxyConfig *obj, int index);
 
 LinphoneReason linphone_core_message_received(LinphoneCore *lc, LinphonePrivate::SalOp *op, const SalMessage *msg);
-void linphone_core_real_time_text_received(LinphoneCore *lc, LinphoneChatRoom *cr, uint32_t character, LinphoneCall *call);
 
 void linphone_call_init_media_streams(LinphoneCall *call);
 void linphone_call_start_media_streams_for_ice_gathering(LinphoneCall *call);
