@@ -591,6 +591,25 @@ static void session_timer_interval_smaller(void)
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 
+	// UPDATE
+	LinphoneCallParams *params;
+	int dummy = 0;
+	params = linphone_core_create_call_params(pauline->lc,linphone_core_get_current_call(pauline->lc));
+
+	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_call_update(linphone_core_get_current_call(pauline->lc),params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,3));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,1));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))), "PCMA");
+	BC_ASSERT_STRING_EQUAL(payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))), "PCMA");
+	wait_for_until(pauline->lc, marie->lc, &dummy, 1, 5000);
+
 	// Wait for the 200 OK
 	wait_for_until(marie->lc, pauline->lc, NULL, 0, 300);
 
