@@ -213,6 +213,12 @@ LINPHONE_PUBLIC void linphone_im_encryption_engine_cbs_set_generate_file_transfe
 LINPHONE_PUBLIC LinphoneImEncryptionEngine *linphone_im_encryption_engine_new(void);
 	
 /**
+ * Returns the #LinphoneImEncryptionEngine as a string
+ * @param imee #LinphoneImEncryptionEngine object @notnil
+ * @return the #LinphoneImEncryptionEngine as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_im_encryption_engine_to_string(const LinphoneImEncryptionEngine *imee);
+/**
  * @}
  */
 

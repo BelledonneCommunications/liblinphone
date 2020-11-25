@@ -147,3 +147,9 @@ LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb linphone_im_encryption_en
 void linphone_im_encryption_engine_cbs_set_generate_file_transfer_key(LinphoneImEncryptionEngineCbs *cbs, LinphoneImEncryptionEngineCbsGenerateFileTransferKeyCb cb) {
 		cbs->generate_file_transfer_key = cb;
 }
+
+char *linphone_im_encryption_engine_to_string(const LinphoneImEncryptionEngine *imee) {
+	char *tmp;
+	tmp=ms_strdup_printf("IM encryption engine %p\n", imee);
+	return tmp;
+}

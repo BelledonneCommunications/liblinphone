@@ -466,3 +466,9 @@ const char *linphone_tunnel_get_domain(LinphoneTunnel *tunnel) {
 void linphone_tunnel_simulate_udp_loss(LinphoneTunnel *tunnel, bool_t enabled) {
 	bcTunnel(tunnel)->simulateUdpLoss(enabled == FALSE ? false : true);
 }
+
+char *linphone_tunnel_to_string(const LinphoneTunnel *tunnel) {
+	char *tmp;
+	tmp=ms_strdup_printf("Tunnel %p\n", tunnel);
+	return tmp;
+}

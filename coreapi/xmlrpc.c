@@ -570,3 +570,9 @@ void linphone_xml_rpc_session_release(LinphoneXmlRpcSession *session){
 	session->released = TRUE;
 	belle_sip_object_unref(session);
 }
+
+char *linphone_xml_rpc_session_to_string(const LinphoneXmlRpcSession *session){
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone XML RPC Session %p\n", session);
+	return tmp;
+}

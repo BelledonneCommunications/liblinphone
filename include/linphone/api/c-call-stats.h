@@ -203,6 +203,13 @@ LINPHONE_PUBLIC float linphone_call_stats_get_round_trip_delay (const LinphoneCa
  */
 LINPHONE_PUBLIC float linphone_call_stats_get_estimated_download_bandwidth(const LinphoneCallStats *stats);
 
+/**
+ * Return #LinphoneCallStats as string.
+ * @param stats #LinphoneCallStats object @notnil
+ * @return #LinphoneCallStats as string. @notnil
+ */
+LINPHONE_PUBLIC char *linphone_call_stats_to_string(const LinphoneCallStats *stats);
+
 void linphone_call_stats_set_estimated_download_bandwidth(LinphoneCallStats *stats, float estimated_value);
 
 /**
