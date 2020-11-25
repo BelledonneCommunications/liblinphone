@@ -326,3 +326,9 @@ void payload_type_set_enable(OrtpPayloadType *pt, bool_t value) {
 bool_t payload_type_enabled(const OrtpPayloadType *pt) {
 	return (pt->flags & PAYLOAD_TYPE_ENABLED);
 }
+
+char *linphone_payload_type_to_string(const LinphonePayloadType *payload_type) {
+	char *tmp;
+	tmp=ms_strdup_printf("LinphonePayloadType %p\n", payload_type);
+	return tmp;
+}

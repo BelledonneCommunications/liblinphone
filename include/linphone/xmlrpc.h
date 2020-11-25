@@ -254,6 +254,13 @@ LINPHONE_PUBLIC void linphone_xml_rpc_request_cbs_set_response(LinphoneXmlRpcReq
  */
 LINPHONE_PUBLIC LinphoneXmlRpcRequest * linphone_xml_rpc_session_create_request(LinphoneXmlRpcSession *session, LinphoneXmlRpcArgType return_type, const char *method);
 
+/**
+ * Return #LinphoneXmlRpcSession as string.
+ * @param session the #LinphoneXmlRpcSession @notnil
+ * @return #LinphoneXmlRpcSession as string. @notnil
+ */
+LINPHONE_PUBLIC char * linphone_xml_rpc_session_to_string(const LinphoneXmlRpcSession *session);
+
 /************ */
 /* DEPRECATED */
 /* ********** */

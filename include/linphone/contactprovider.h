@@ -37,7 +37,7 @@ void linphone_contact_search_invoke_cb(LinphoneContactSearch *req, MSList *frien
 LINPHONE_PUBLIC LinphoneContactSearch* linphone_contact_search_ref(void *obj);
 void linphone_contact_search_unref(void *obj);
 LinphoneContactSearch* linphone_contact_search_cast(void *obj);
-
+char*linphone_contact_search_to_string(LinphoneContactSearch* obj);
 
 /* LinphoneContactProvider */
 
@@ -50,6 +50,7 @@ LINPHONE_PUBLIC LinphoneContactProvider * linphone_contact_provider_cast(void *o
 
 LINPHONE_PUBLIC LinphoneContactSearch * linphone_contact_provider_begin_search(LinphoneContactProvider *obj, const char *predicate, ContactSearchCallback cb, void *data);
 unsigned int linphone_contact_provider_cancel_search(LinphoneContactProvider *obj, LinphoneContactSearch *request);
+char*linphone_contact_provider_to_string(LinphoneContactProvider* obj);
 
 #ifdef __cplusplus
 }

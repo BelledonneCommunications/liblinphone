@@ -121,4 +121,10 @@ LinphoneStatus linphone_ringtoneplayer_stop(LinphoneRingtonePlayer* rp) {
 	}
 	return 0;
 }
+
+char *linphone_ringtoneplayer_to_string(const LinphoneRingtonePlayer* rp){
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Ringtone Player %p\n", rp);
+	return tmp;
+}
 #endif

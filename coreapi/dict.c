@@ -152,7 +152,11 @@ void linphone_config_load_dict_to_section(LpConfig* lpconfig, const char* sectio
 	linphone_dictionary_foreach(dict,linphone_config_dict_dump_cb, &pvdata);
 }
 
-
+char *linphone_dictionary_to_string(const LinphoneDictionary *obj) {
+	char *tmp;
+	tmp=ms_strdup_printf("Dictionary %p\n", obj);
+	return tmp;
+}
 
 /**
  * @}

@@ -125,3 +125,9 @@ bool_t linphone_video_definition_strict_equals(const LinphoneVideoDefinition *vd
 bool_t linphone_video_definition_is_undefined(const LinphoneVideoDefinition *vdef) {
 	return vdef == NULL || (vdef->width == 0) || (vdef->height == 0);
 }
+
+char *linphone_video_definition_to_string(const LinphoneVideoDefinition* vdef){
+	char *tmp;
+	tmp=ms_strdup_printf("Linphone Video Definition %p\n", vdef);
+	return tmp;
+}

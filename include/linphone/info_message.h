@@ -76,12 +76,18 @@ LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_ref(LinphoneInfoMessa
 
 /**
  * Release a reference on a #LinphoneInfoMessage.
- * @param info_message the linphone info message @notnil
+ * @param info_message the #LinphoneInfoMessage object @notnil
  */
 LINPHONE_PUBLIC void linphone_info_message_unref(LinphoneInfoMessage *info_message);
 
-LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *info_message);
+/**
+ * Return #LinphoneInfoMessage as string.
+ * @param info_message the #LinphoneInfoMessage object @notnil
+ * @return #LinphoneInfoMessage as string. @notnil
+ */
+LINPHONE_PUBLIC char * linphone_info_message_to_string(const LinphoneInfoMessage *session);
 
+LINPHONE_PUBLIC LinphoneInfoMessage *linphone_info_message_copy(const LinphoneInfoMessage *info_message);
 
 /**
  * @}

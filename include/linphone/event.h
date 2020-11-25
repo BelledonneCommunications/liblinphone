@@ -252,6 +252,13 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_event_get_remote_contact (const 
 LINPHONE_PUBLIC LinphoneCore *linphone_event_get_core(const LinphoneEvent *linphone_event);
 
 /**
+ * Returns the #LinphoneEvent as a string
+ * @param linphone_event #LinphoneEvent object @notnil
+ * @return the #LinphoneEvent as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_event_to_string(const LinphoneEvent *linphone_event);
+
+/**
  * Adds a LinphoneEventCbs object to be associated with a LinphoneEvent.
  * @param linphone_event #LinphoneEvent object @notnil
  * @param cbs The LinphoneEventCbs object to add @notnil

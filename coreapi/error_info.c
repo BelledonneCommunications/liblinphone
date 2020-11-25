@@ -334,3 +334,9 @@ void linphone_error_info_set_sub_error_info(LinphoneErrorInfo *ei, LinphoneError
 		ei->sub_ei = linphone_error_info_ref(appended_ei);
 	}
 }
+
+char *linphone_error_info_to_string(const LinphoneErrorInfo *ei) {
+	char *tmp;
+	tmp=ms_strdup_printf("Error Info %p\n", ei);
+	return tmp;
+}

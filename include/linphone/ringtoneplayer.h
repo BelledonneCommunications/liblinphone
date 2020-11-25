@@ -48,6 +48,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_ringtoneplayer_start_with_cb(MSFactory *
 LINPHONE_PUBLIC bool_t linphone_ringtoneplayer_is_started(LinphoneRingtonePlayer* rp);
 LINPHONE_PUBLIC RingStream* linphone_ringtoneplayer_get_stream(LinphoneRingtonePlayer* rp);
 LINPHONE_PUBLIC LinphoneStatus linphone_ringtoneplayer_stop(LinphoneRingtonePlayer* rp);
+LINPHONE_PUBLIC char * linphone_ringtoneplayer_to_string(const LinphoneRingtonePlayer* rp);
 
 #ifdef __cplusplus
 }

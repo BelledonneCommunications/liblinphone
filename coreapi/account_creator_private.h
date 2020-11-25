@@ -218,7 +218,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linp
  * @param[in] creator LinphoneAccountCreator object @notnil
  * @return account creator as string @notnil
 **/
-LINPHONE_PUBLIC char * linphone_account_creator_to_string(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC char * linphone_account_creator_to_string(const LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }

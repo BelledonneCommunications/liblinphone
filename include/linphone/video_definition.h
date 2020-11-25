@@ -142,6 +142,13 @@ LINPHONE_PUBLIC bool_t linphone_video_definition_strict_equals(const LinphoneVid
 LINPHONE_PUBLIC bool_t linphone_video_definition_is_undefined(const LinphoneVideoDefinition *video_definition);
 
 /**
+ * Return #LinphoneVideoDefinition as string.
+ * @param video_definition #LinphoneVideoDefinition object @notnil
+ * @return #LinphoneVideoDefinition as string. @notnil
+ */
+LINPHONE_PUBLIC char * linphone_video_definition_to_string(const LinphoneVideoDefinition *video_definition);
+
+/**
  * @}
  */
 
