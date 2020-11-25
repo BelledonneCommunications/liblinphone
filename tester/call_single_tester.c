@@ -547,7 +547,7 @@ static void call_outbound_using_different_proxies(void) {
 	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_dual_proxy_rc", FALSE);// Caller
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
 	int call_count = 0;
-	
+
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 10000));
 
@@ -3614,9 +3614,10 @@ static void call_with_in_dialog_codec_change_base(bool_t no_sdp) {
 	LinphoneCallParams *params;
 	bool_t call_ok;
 
-	marie = linphone_core_manager_new( "marie_rc");
+	marie = linphone_core_manager_new("marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc),"sip","keep_sdp_version",1);
 	if (!call_ok) goto end;
 
 	liblinphone_tester_check_rtcp(marie,pauline);
@@ -3636,6 +3637,7 @@ static void call_with_in_dialog_codec_change_base(bool_t no_sdp) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
 	BC_ASSERT_STRING_EQUAL("PCMA",payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))));
+	BC_ASSERT_STRING_EQUAL("PCMA",payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))));
 	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
 	BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie),70,int,"%i");
 	BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline),70,int,"%i");
@@ -5168,7 +5170,7 @@ static void call_avpf_mismatch(void) {
 
 		linphone_address_unref(marie_addr);
 	}
-	
+
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	LinphoneVideoActivationPolicy *vpol = linphone_factory_create_video_activation_policy(linphone_factory_get());
@@ -5177,27 +5179,27 @@ static void call_avpf_mismatch(void) {
 	linphone_core_set_video_activation_policy(marie->lc, vpol);
 	linphone_core_set_video_activation_policy(pauline->lc, vpol);
 	linphone_video_activation_policy_unref(vpol);
-	
+
 	linphone_core_invite_address(marie->lc, pauline->identity);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingRinging, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
-	
+
 	pauline_call = linphone_core_get_current_call(pauline->lc);
-	
+
 	//Disable AVPF from the callee
 	LinphoneCallParams* pauline_params = linphone_core_create_call_params(pauline->lc, pauline_call);
 	linphone_call_params_enable_avpf(pauline_params, FALSE);
-	
+
 	//Test early media
 	linphone_call_accept_early_media_with_params(pauline_call, pauline_params);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingEarlyMedia, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1));
-	
+
 	linphone_call_accept_with_params(pauline_call, pauline_params);
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallConnected, 1));
 	linphone_call_params_unref(pauline_params);
-	
-	
+
+
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingEarlyMedia,1, int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallOutgoingEarlyMedia,1, int, "%d");
 	BC_ASSERT_PTR_NOT_NULL(pauline_call);
