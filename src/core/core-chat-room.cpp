@@ -538,7 +538,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
 		bool encrypted) {
-	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
+	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.toString() << "] and participant [" << participantAddress.toString() << "]";
 	
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;

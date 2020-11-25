@@ -215,6 +215,12 @@ void linphone_im_notif_policy_set_recv_imdn_displayed(LinphoneImNotifPolicy *pol
 	save_im_notif_policy_to_config(policy);
 }
 
+char *linphone_im_notif_policy_to_string(const LinphoneImNotifPolicy *policy) {
+	char *tmp;
+	tmp=ms_strdup_printf("IM Notification policy %p\n", policy);
+	return tmp;
+}
+
 LinphoneImNotifPolicy * linphone_core_get_im_notif_policy(const LinphoneCore *lc) {
 	return lc->im_notif_policy;
 }
@@ -227,3 +233,4 @@ void linphone_core_create_im_notif_policy(LinphoneCore *lc) {
 	load_im_notif_policy_from_config(lc->im_notif_policy);
 	save_im_notif_policy_to_config(lc->im_notif_policy);
 }
+

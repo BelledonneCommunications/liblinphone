@@ -133,6 +133,12 @@ LINPHONE_PUBLIC void linphone_buffer_set_size(LinphoneBuffer *buffer, size_t siz
 LINPHONE_PUBLIC bool_t linphone_buffer_is_empty(const LinphoneBuffer *buffer);
 
 /**
+ * Returns the #LinphoneBuffer as a string
+ * @param buffer #LinphoneBuffer object @notnil
+ * @return the #LinphoneBuffer as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_bufffer_to_string(const LinphoneBuffer *buffer);
+/**
  * @}
  */
 
