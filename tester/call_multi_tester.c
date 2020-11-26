@@ -1049,7 +1049,6 @@ static void call_with_ice_negotiations_ending_while_accepting_call_base(bool_t b
 	}
 	// Calls whose core enables ICE send a reINVITE hence they go twice to stream running
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, (2*no_ice_callers) +  no_non_ice_callers, 5000));
-printf("%s - streqms running %0d - ice callers %0d non ice callers %0d\n", __func__, marie->stat.number_of_LinphoneCallStreamsRunning, no_ice_callers, no_non_ice_callers);
 
 	// Only one call is not paused
 	unsigned int no_call_paused = no_ice_callers + no_non_ice_callers - 1;

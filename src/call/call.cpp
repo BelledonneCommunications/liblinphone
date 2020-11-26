@@ -768,6 +768,10 @@ LinphoneStatus Call::pause () {
 	return static_pointer_cast<MediaSession>(getActiveSession())->pause();
 }
 
+bool Call::canSoundResourcesBeFreed () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->canSoundResourcesBeFreed();
+}
+
 LinphoneStatus Call::redirect (const string &redirectUri) {
 	return getActiveSession()->redirect(redirectUri);
 }

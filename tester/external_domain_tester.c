@@ -78,6 +78,10 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
+	LinphoneChatRoom *marieCr = NULL;
+	LinphoneChatRoom *paulineCr = NULL;
+	LinphoneChatRoom *claireCr = NULL;
+
 	if (encryption == TRUE) {
 		// marie and pauline are on the regular lime server
 		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
@@ -121,16 +125,23 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Colleagues";
-	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encryption);
+	marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, encryption);
+	if (!BC_ASSERT_PTR_NOT_NULL(marieCr))
+		goto end;
 
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 2, FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineCr))
+		goto end;
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &claire->stat.number_of_LinphoneConferenceStateCreationPending, initialClaireStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 	// Check that the chat room is correctly created on Claire's side and that the participants are added
-	LinphoneChatRoom *claireCr = check_creation_chat_room_client_side(coresList, claire, &initialClaireStats, confAddr, initialSubject, 2, FALSE);
+	claireCr = check_creation_chat_room_client_side(coresList, claire, &initialClaireStats, confAddr, initialSubject, 2, FALSE);
+	if (!BC_ASSERT_PTR_NOT_NULL(claireCr))
+		goto end;
 
 	// Sender selection
 	LinphoneChatRoom *senderCr = NULL;
@@ -193,6 +204,12 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	linphone_address_unref(restartedManagerDeviceAddr);
 	BC_ASSERT_PTR_NOT_NULL(restartedManagerCr);
 
+	if (restart_external_participant) {
+		claireCr = restartedManagerCr;
+	} else {
+		marieCr = restartedManagerCr;
+	}
+
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(restartedManagerCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(restartedManagerCr), 1, int, "%d");
 
@@ -221,16 +238,19 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 
 	linphone_address_unref(confAddr);
 
-	linphone_core_delete_chat_room(manager_to_restart->lc,  restartedManagerCr);
-
-	if (restart_external_participant) {
+end:
+	if (marieCr) {
 		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
-	} else {
+	}
+
+	if (claireCr) {
 		linphone_core_manager_delete_chat_room(claire, claireCr, coresList);
 	}
-	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 
-end:
+	if (paulineCr) {
+		linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	}
+
 	bctbx_list_free(coresList);
 	bctbx_list_free(coresManagerList);
 	bctbx_list_free(externalCoresManagerList);

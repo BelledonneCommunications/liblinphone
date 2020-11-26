@@ -4239,6 +4239,20 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		return NULL;
 	}
 
+	// Check that sound resources can be freed before moving on
+	LinphoneCall *current_call = linphone_core_get_current_call(lc);
+	if (current_call) {
+		LinphoneCallState current_call_state = linphone_call_get_state (current_call);
+		if (!(!linphone_call_params_audio_enabled(params) ||
+			linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
+			linphone_call_params_get_local_conference_mode(params) == TRUE
+			)
+			&& ((current_call_state != LinphoneCallPausing) && (current_call_state != LinphoneCallPaused) && !Call::toCpp(current_call)->canSoundResourcesBeFreed())) {
+			ms_error("linphone_core_invite_address_with_params(): sound are locked by another call and they cannot be freed. Call attempt is rejected.");
+			return NULL;
+		}
+	}
+
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
 		return NULL;
 
@@ -4274,12 +4288,9 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 
 	// Try to free up resources after adding it to the call list.
 	// linphone_core_preempt_sound_resources tries to pause a call only if there is more than one in the list of core stored in the core
-	if (!(!linphone_call_params_audio_enabled(params) ||
-		linphone_call_params_get_audio_direction(params) == LinphoneMediaDirectionInactive ||
-		linphone_call_params_get_local_conference_mode(params) == TRUE
-		)
-		&& linphone_core_preempt_sound_resources(lc) == -1) {
-		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. Call attempt is rejected.");
+	if (linphone_core_preempt_sound_resources(lc) == -1) {
+		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. The call is automatically terminated.");
+		linphone_call_terminate(call);
 		return NULL;
 	}
 

@@ -93,6 +93,7 @@ public:
 	SalCallOp * getOp () const { return op; }
 
 	void stopStreams ();
+	bool canSoundResourcesBeFreed () const;
 
 	// Methods used by testers
 	void addLocalDescChangedFlag (int flag) { localDescChanged |= flag; }
