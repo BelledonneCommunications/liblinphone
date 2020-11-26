@@ -1765,6 +1765,10 @@ void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
 }
 
 
+bool MediaSessionPrivate::canSoundResourcesBeFreed() const {
+	return ((state == CallSession::State::StreamsRunning) && (state == CallSession::State::PausedByRemote));
+}
+
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
 	if (state == CallSession::State::Paused) {
@@ -1773,7 +1777,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	} else if (state == CallSession::State::Pausing) {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already in the process of being paused";
 		return 0;
-	} else if ((state != CallSession::State::StreamsRunning) && (state != CallSession::State::PausedByRemote)) {
+	} else if (!canSoundResourcesBeFreed()) {
 		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
 	}

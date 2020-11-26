@@ -4239,6 +4239,14 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 		return NULL;
 	}
 
+	LinphoneCall *current_call = linphone_core_get_current_call(lc);
+	if (current_call) {
+		LinphoneCallState current_call_state = linphone_call_get_state (current_call);
+		if ((current_call_state != LinphoneCallPausing) && (current_call_state != LinphoneCallPaused) && !Call::toCpp(current_call)->canSoundResourcesBeFreed()) {
+			return NULL;
+		}
+	}
+
 	if (!L_GET_PRIVATE_FROM_C_OBJECT(lc)->canWeAddCall())
 		return NULL;
 
