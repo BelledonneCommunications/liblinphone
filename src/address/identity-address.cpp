@@ -236,7 +236,10 @@ string ConferenceAddress::asString () const {
 		// GRUU is already added by Identity address asString() function
 		if (strcmp(key, "gr") != 0) {
 			const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
-			addressStr = addressStr + ";" + key + "=" + value;
+			addressStr = addressStr + ";" + key;
+			if (value) {
+				addressStr = addressStr  + "=" + value;
+			}
 		}
 	}
 	return addressStr;
@@ -261,7 +264,11 @@ void ConferenceAddress::fillUriParams (const Address &address) {
 		bctbx_pair_t *pair = bctbx_iterator_cchar_get_pair(it);
 		const char * key = bctbx_pair_cchar_get_first(reinterpret_cast<bctbx_pair_cchar_t *>(pair));
 		const char * value = (const char *)bctbx_pair_cchar_get_second(pair);
-		setUriParam(key, value);
+		if (value) {
+			setUriParam(key, value);
+		} else {
+			setUriParams(key);
+		}
 	}
 }
 
@@ -286,10 +293,16 @@ int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) co
 		const char * thisValue = (const char *)bctbx_pair_cchar_get_second(thisPair);
 
 		bctbx_iterator_t * otherIt = bctbx_map_cchar_find_key(otherUriParamMap, thisKey);
+		// Test that key exists
 		if (!bctbx_iterator_cchar_equals(otherIt, otherUriParamMapEnd)) {
 			bctbx_pair_t *otherPair = bctbx_iterator_cchar_get_pair(otherIt);
 			const char * otherValue = (const char *)bctbx_pair_cchar_get_second(otherPair);
-			diff = strcmp(thisValue, otherValue);
+			if ((otherValue == NULL) || (thisValue == NULL)) {
+				// keep diff at 0 if both other and this value are NULL
+				diff = ((otherValue == NULL) && (thisValue == NULL)) ? 0 : -1;
+			} else {
+				diff = strcmp(thisValue, otherValue);
+			}
 		} else {
 			diff = -1;
 		}
