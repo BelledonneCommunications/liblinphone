@@ -1322,6 +1322,9 @@ LinphoneStatus CallSession::terminate (const LinphoneErrorInfo *ei) {
 			d->op->release();
 			d->op = nullptr;
 			break;
+		case CallSession::State::Idle:
+			// Do nothing if trying to terminate call in idle state
+			break;
 		default:
 			if (ei) {
 				linphone_error_info_to_sal(ei, &sei);

@@ -277,6 +277,8 @@ public:
 	void setUserData (void *ud);
 	
 
+	bool canSoundResourcesBeFreed () const;
+
 private:
 	std::shared_ptr<Participant> mParticipant;
 	mutable LinphonePlayer *mPlayer = nullptr;
