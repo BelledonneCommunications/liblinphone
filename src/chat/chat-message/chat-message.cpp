@@ -672,7 +672,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// In plain text group chat rooms the sender authentication is disabled
 	if (!(q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
-			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			ConferenceAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
 			setAuthenticatedFromAddress(sipFromAddress);
 		} else {
 			lInfo() << "Sender authentication disabled for clear text group chat";
@@ -1287,17 +1287,17 @@ const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
 	return d->authenticatedFromAddress;
 }
 
-const IdentityAddress &ChatMessage::getFromAddress () const {
+const ConferenceAddress &ChatMessage::getFromAddress () const {
 	L_D();
 	return d->fromAddress;
 }
 
-const IdentityAddress &ChatMessage::getToAddress () const {
+const ConferenceAddress &ChatMessage::getToAddress () const {
 	L_D();
 	return d->toAddress;
 }
 
-const IdentityAddress &ChatMessage::getLocalAdress () const {
+const ConferenceAddress &ChatMessage::getLocalAdress () const {
 	L_D();
 	if (getDirection() == Direction::Outgoing)
 		return d->fromAddress;
