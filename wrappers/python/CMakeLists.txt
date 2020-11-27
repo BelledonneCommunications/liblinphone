@@ -79,11 +79,6 @@ function(bc_compute_python_wheel_version OUTPUT_VERSION)
 endfunction()
 bc_compute_python_wheel_version(WHEEL_LINPHONESDK_VERSION)
 
-if (WIN32)
-	set(LINPHONE_LIBRARY_NAME "liblinphone")
-else()
-	set(LINPHONE_LIBRARY_NAME "linphone")
-endif()
 configure_file("setup.cmake" "setup.py" @ONLY)
 
 add_custom_command(OUTPUT pylinphone.pyx linphone_doc.py
@@ -95,8 +90,6 @@ add_custom_command(OUTPUT pylinphone.pyx linphone_doc.py
 	pylinphone.mustache
 	linphone-doc
 )
-
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/linphone" DESTINATION .)
 
 if (WIN32)
 	set(SETUP_PY_ARGS "--plat-name=win32")
@@ -121,20 +114,6 @@ if (ENABLE_DOC)
 	add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx linphone_doc.html pylinphone.so pylinphone.whl)
 else()
 	add_custom_target(pylinphone ALL DEPENDS pylinphone.pyx pylinphone.so pylinphone.whl)
-endif()
-
-if(WIN32)
-	add_custom_command(TARGET pylinphone
-		PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/*" "./linphone/"
-		COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_BINARY_DIR}/src/liblinphone.lib" "./linphone/"
-	)
-else()
-	add_custom_command(TARGET pylinphone
-		PRE_BUILD
-		COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/*" "./linphone/"
-		COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_BINARY_DIR}/src/liblinphone.so" "./linphone/"
-	)
 endif()
 
 add_dependencies(pylinphone linphone)

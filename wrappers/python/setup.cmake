@@ -4,12 +4,12 @@ from distutils.extension import Extension
 from Cython.Build import cythonize
 
 linphone_extension = Extension(
-    name="pylinphone",
+    name="linphone",
     sources=["pylinphone.pyx"],
-    libraries=["@LINPHONE_LIBRARY_NAME@", "@BCTOOLBOX_CORE_LIBRARIES@", "@BELLESIP_LIBRARIES@"],
     language="c",
+    libraries=["@LINPHONE_LIBS_FOR_TOOLS@", "@BELLESIP_LIBRARIES@", "@BCTOOLBOX_CORE_LIBRARIES@"],
     library_dirs=["@PROJECT_BINARY_DIR@/src", "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_LIBDIR@"],
-    include_dirs=["@PROJECT_SOURCE_DIR@/include", "@BELLESIP_INCLUDE_DIRS@", "@BCTOOLBOX_INCLUDE_DIRS@"]
+    include_dirs=["@CMAKE_CURRENT_BINARY_DIR@/include", "@PROJECT_BINARY_DIR@/include", "@PROJECT_SOURCE_DIR@/include", "@CMAKE_CURRENT_SOURCE_DIR@", "@BCTOOLBOX_INCLUDE_DIRS@", "@BELLESIP_INCLUDE_DIRS@"]
 )
 
 class BinaryDistribution(Distribution):
@@ -30,7 +30,5 @@ setup(
     long_description_content_type="plain/text",
     url="https://linphone.org",
     license="GPLv3",
-    packages=['linphone'],
-    package_data={'linphone': ['*.so*']},
     distclass=BinaryDistribution
 )
