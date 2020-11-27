@@ -581,6 +581,12 @@ void ServerGroupChatRoomPrivate::conclude(){
 	L_Q();
 	lInfo() << q << "All devices are known, the chatroom creation can be concluded.";
 	shared_ptr<CallSession> session = mInitiatorDevice->getSession();
+	
+	if (!session){
+		lError() << "ServerGroupChatRoomPrivate::conclude(): initiator's session died.";
+		requestDeletion();
+		return;
+	}
 
 	if (q->getParticipants().size() < 2){
 		lError() << q << ": there are less than 2 participants in this chatroom, refusing creation.";
