@@ -149,8 +149,8 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 	LinphoneCore *core = getCore()->getCCore();
 	bool ipv6Enabled = linphone_core_ipv6_enabled(core);
 
-	char newIp4[LINPHONE_IPADDR_SIZE];
-	char newIp6[LINPHONE_IPADDR_SIZE];
+	char newIp4[LINPHONE_IPADDR_SIZE] = {0};
+	char newIp6[LINPHONE_IPADDR_SIZE] = {0};
 	linphone_core_get_local_ip(core, AF_INET, nullptr, newIp4);
 	if (ipv6Enabled)
 		linphone_core_get_local_ip(core, AF_INET6, nullptr, newIp6);
@@ -169,7 +169,7 @@ bool GenericPlatformHelpers::checkIpAddressChanged(){
 			lInfo() << "IPv6 address change detected";
 			ipChanged = true;
 		}
-		if (status) {
+		if (ipChanged) {
 			lInfo() << "Default local ipv4 address is " << core->localip4;
 			if (ipv6Enabled) lInfo() << "Default local ipv6 address is " << core->localip6;
 		}
