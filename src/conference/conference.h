@@ -86,6 +86,20 @@ class LINPHONE_PUBLIC ConferenceParams : public bellesip::HybridObject<LinphoneC
 		virtual void setMe (const IdentityAddress &participantAddress) override { m_me = participantAddress;};
 		const IdentityAddress &getMe() const { return m_me; };
 
+		virtual std::string toString() const override {
+			std::stringstream ss;
+			ss << "Conference Params [" << this << "] :\n";
+			ss << " - audio enabled: " << m_enableAudio << "\n";
+			ss << " - video enabled: " << m_enableVideo << "\n";
+			ss << " - chat enabled: " << m_enableChat << "\n";
+			ss << " - local participant enabled: " << mLocalParticipantEnabled << "\n";
+			ss << " - me: " << m_me << "\n";
+			ss << " - conference address: " << m_conferenceAddress << "\n";
+			if (m_subject.empty() == false) ss << " - subject: " << m_subject << "\n";
+
+			return ss.str();
+		}
+
 	private:
 		bool m_enableVideo = false;
 		bool m_enableAudio = false;

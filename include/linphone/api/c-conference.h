@@ -78,7 +78,7 @@ LINPHONE_PUBLIC char *linphone_conference_get_conference_address_as_string (cons
  * Returns the conference as a string.
  * The result string must be freed by user using ms_free().
  * @param conference #LinphoneConference object. @notnil
- * @return the conference as a string. @maybenil
+ * @return the conference as a string. @notnil
 **/
 LINPHONE_PUBLIC char *linphone_conference_to_string (const LinphoneConference *conference);
 

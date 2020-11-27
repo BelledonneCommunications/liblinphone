@@ -292,6 +292,10 @@ void linphone_conference_params_free (LinphoneConferenceParams *params) {
 	ConferenceParams::toCpp(params)->unref();
 }
 
+char *linphone_conference_params_to_string (const LinphoneConferenceParams *params) {
+	return ms_strdup(ConferenceParams::toCpp(params)->toString().c_str());
+}
+
 LinphoneConferenceParams *linphone_conference_params_clone (const LinphoneConferenceParams *params) {
 	return static_cast<ConferenceParams*>(ConferenceParams::toCpp(params)->clone())->toC();
 }

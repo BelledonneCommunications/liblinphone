@@ -74,6 +74,14 @@ LINPHONE_PUBLIC LinphoneConferenceParams *linphone_conference_params_ref(Linphon
 LINPHONE_PUBLIC void linphone_conference_params_unref(LinphoneConferenceParams *params);
 
 /**
+ * Returns the conference parameters as a string.
+ * The result string must be freed by user using ms_free().
+ * @param params #LinphoneConferenceParams object. @notnil
+ * @return the conference parameters as a string. @notnil
+**/
+LINPHONE_PUBLIC char *linphone_conference_params_to_string (const LinphoneConferenceParams *params);
+
+/**
  * Free a #LinphoneConferenceParams
  * @param params #LinphoneConferenceParams to free @notnil
  * @deprecated 17/03/2017 Use linphone_conference_params_unref() instead.

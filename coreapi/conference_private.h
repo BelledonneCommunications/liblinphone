@@ -45,7 +45,7 @@ extern "C" {
 typedef void (*LinphoneConferenceStateChangedCb)(LinphoneConference *conference, LinphoneConferenceState new_state, void *user_data);
 
 /**
- * A function to converte a #LinphoneConferenceState into a string
+ * A function to convert a #LinphoneConferenceState into a string
  */
 const char *linphone_conference_state_to_string(LinphoneConferenceState state);
 
