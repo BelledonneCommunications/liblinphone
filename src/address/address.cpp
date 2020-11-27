@@ -96,7 +96,10 @@ Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new 
 }
 
 Address::Address (const ConferenceAddress &conferenceAddress) : Address(IdentityAddress(conferenceAddress)) {
-	setUriParam ("conf-id", conferenceAddress.getConfId());
+	const std::string & confId = conferenceAddress.getConfId();
+	if (confId.empty() == false) {
+		setUriParam ("conf-id", confId);
+	}
 }
 
 Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
