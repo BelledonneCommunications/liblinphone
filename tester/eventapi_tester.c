@@ -341,8 +341,11 @@ static void subscribe_loosing_dialog_2(void) {
 	
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,2000));
 	//now try a terminate the dialog
-	linphone_event_terminate(pauline->lev);
-	
+	BC_ASSERT_PTR_NOT_NULL(pauline->lev);
+	if (pauline->lev) {
+		linphone_event_terminate(pauline->lev);
+	}
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated,1,5000));
 	/*let expire the incoming subscribe received by pauline */
 	BC_ASSERT_TRUE(wait_for_list(lcs,NULL,0,3000));

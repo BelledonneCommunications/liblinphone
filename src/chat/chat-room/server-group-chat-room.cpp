@@ -364,7 +364,8 @@ void ServerGroupChatRoomPrivate::removeParticipant (const shared_ptr<Participant
 
 	queuedMessages.erase(participant->getAddress().asString());
 
-	q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
+	shared_ptr<ConferenceParticipantEvent> event = q->getConference()->notifyParticipantRemoved(time(nullptr), false, participant);
+	q->getCore()->getPrivate()->mainDb->addConferenceParticipantEventToDb(event);
 
 	if (!isAdminLeft())
 		designateAdmin();

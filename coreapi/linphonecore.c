@@ -156,7 +156,7 @@ static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
 static void _linphone_core_stop_async_end(LinphoneCore *lc);
 static LinphoneStatus _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config, bool_t applyIt);
-bool_t linphone_core_sound_resources_need_locking(const LinphoneCallParams *params);
+bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params);
 
 #include "enum.h"
 #include "contact_providers_priv.h"
@@ -4230,9 +4230,18 @@ void linphone_configure_op_2(LinphoneCore *lc, SalOp *op, const LinphoneAddress 
 	linphone_configure_op_with_proxy(lc, op, dest, headers, with_contact, linphone_core_lookup_proxy_by_identity(lc, local));
 }
 
+void linphone_core_set_media_resource_mode (LinphoneCore *lc, LinphoneMediaResourceMode mode) {
+	linphone_config_set_int(linphone_core_get_config(lc), "misc", "media_resources_mode", mode);
+}
+
+LinphoneMediaResourceMode linphone_core_get_media_resource_mode (const LinphoneCore *lc) {
+	return (LinphoneMediaResourceMode)linphone_config_get_int(linphone_core_get_config(lc), "misc", "media_resources_mode", LinphoneExclusiveMediaResources);
+}
+
 // This function states whether a locking of the sound resources is required based on the given call parameters
-bool_t linphone_core_sound_resources_need_locking(const LinphoneCallParams *params){
-	return (linphone_call_params_audio_enabled(params) &&
+bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params){
+	return ((linphone_core_get_media_resource_mode(lc) == LinphoneExclusiveMediaResources) &&
+		linphone_call_params_audio_enabled(params) &&
 		linphone_call_params_get_audio_direction(params) != LinphoneMediaDirectionInactive &&
 		linphone_call_params_get_local_conference_mode(params) == FALSE
 		);
@@ -4254,7 +4263,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 	LinphoneCall *current_call = linphone_core_get_current_call(lc);
 	if (current_call) {
 		LinphoneCallState current_call_state = linphone_call_get_state (current_call);
-		if (linphone_core_sound_resources_need_locking(params)
+		if (linphone_core_sound_resources_need_locking(lc, params)
 			&& ((current_call_state != LinphoneCallPausing) && (current_call_state != LinphoneCallPaused) && !Call::toCpp(current_call)->canSoundResourcesBeFreed())) {
 			ms_error("linphone_core_invite_address_with_params(): sound are locked by another call and they cannot be freed. Call attempt is rejected.");
 			return NULL;
@@ -4296,7 +4305,7 @@ LinphoneCall * linphone_core_invite_address_with_params(LinphoneCore *lc, const 
 
 	// Try to free up resources after adding it to the call list.
 	// linphone_core_preempt_sound_resources tries to pause a call only if there is more than one in the list of core stored in the core
-	if (linphone_core_sound_resources_need_locking(params) && (linphone_core_preempt_sound_resources(lc) == -1)) {
+	if (linphone_core_sound_resources_need_locking(lc, params) && (linphone_core_preempt_sound_resources(lc) == -1)) {
 		ms_error("linphone_core_invite_address_with_params(): sound is required for this call but another call is already locking the sound resource. The call is automatically terminated.");
 		linphone_call_terminate(call);
 		return NULL;
@@ -4465,8 +4474,14 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 			return 0;
 		}
 
-		ms_message("Pausing automatically the current call.");
-		err = Call::toCpp(current_call)->pause();
+		shared_ptr<LinphonePrivate::Call> cpp_call = Call::toCpp(current_call)->getSharedFromThis();
+		auto ms = static_pointer_cast<LinphonePrivate::MediaSession>(cpp_call->getActiveSession());
+		if (sal_media_description_has_dir(L_GET_PRIVATE(ms)->getResultDesc(), SalStreamSendOnly)) {
+			ms_error("Trying to empty resources of a call whose SAL media direction is SendOnly - If you wish to do so, please set configuration parameter media_resources_mode to shared: linphone_core_set_media_resource_mode (lc, LinphoneSharedMediaResources)");
+		} else {
+			ms_message("Pausing automatically the current call.");
+			err = cpp_call->pause();
+		}
 	}
 	return err;
 }

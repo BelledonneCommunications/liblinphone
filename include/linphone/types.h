@@ -679,6 +679,15 @@ typedef enum _LinphoneMediaDirection {
 } LinphoneMediaDirection;
 
 /**
+ * @brief Media resource usage.
+ * @ingroup media_parameters
+**/
+typedef enum _LinphoneMediaResourceMode {
+	LinphoneExclusiveMediaResources, /**< Media resources are not shared */
+	LinphoneSharedMediaResources, /**< Media resources are shared */
+} LinphoneMediaResourceMode;
+
+/**
  * @brief Enum describing type of media encryption types.
  * @ingroup media_parameters
 **/

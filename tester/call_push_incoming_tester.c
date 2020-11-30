@@ -94,12 +94,12 @@ void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t 
 							,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
 				BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
 
-				if (!did_receive_call) return;
-
-				BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
-				BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
-				BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
-				BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+				if (did_receive_call) {
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallEnd,1));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallEnd,1));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallReleased,1));
+					BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1));
+				}
 
 				goto end;
 			} else {
@@ -118,7 +118,7 @@ void simple_push_call_base(bool_t push, bool_t canceled, bool_t decline, bool_t 
 				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000);
 	BC_ASSERT_EQUAL(did_receive_call, 1, int, "%d");
 
-	if (!did_receive_call) return;
+	if (!did_receive_call) goto end;
 
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCoreFirstCallStarted, 1, int, "%d");
