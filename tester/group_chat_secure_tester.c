@@ -2452,7 +2452,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", TRUE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
-	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, TRUE);
 
 	LinphoneChatMessage *message = linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "Do. Or do not. There is no try.");
@@ -2479,7 +2479,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 5000));
 		linphone_chat_message_unref(exhume_message);
 
-		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
+		exhumedConfAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineOneToOneCr));
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
 
 		int pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr);
@@ -2548,7 +2548,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const int cu
 	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", TRUE);
 	
 	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
-	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	confAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, TRUE);
 
 	LinphoneChatMessage *message = linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "Help me, Obi-Wan Kenobi. You’re my only hope.");
@@ -2574,7 +2574,7 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const int cu
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
 
-		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+		exhumedConfAddr = linphone_address_clone((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
 		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
 
 		if (exhumedConfAddr) {

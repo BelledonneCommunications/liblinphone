@@ -351,7 +351,7 @@ bool_t linphone_chat_room_has_capability(const LinphoneChatRoom *cr, int mask) {
 }
 
 const LinphoneAddress *linphone_chat_room_get_conference_address (const LinphoneChatRoom *cr) {
-	const LinphonePrivate::IdentityAddress &confAddress = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceAddress();
+	const LinphonePrivate::ConferenceAddress &confAddress = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getConferenceAddress();
 	if (confAddress.isValid()) {
 		const LinphonePrivate::Address & address = confAddress.asAddress();
 		return L_GET_C_BACK_PTR(&address);
