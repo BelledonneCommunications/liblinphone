@@ -816,7 +816,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 				const LinphoneCallParams *old_params = linphone_call_get_params(call_to_update);
 				LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
 				linphone_call_params_enable_video (new_params, TRUE);
-				BC_ASSERT_TRUE(linphone_call_update(call_to_update, new_params));
+				linphone_call_update(call_to_update, new_params);
 				linphone_call_params_unref (new_params);
 			}
 		}
@@ -830,22 +830,29 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 
 	if (update_from_callee) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallUpdatedByRemote, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, 1, 5000));
 	} else {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallUpdating, 1, 5000));
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallPausedByRemote, 1, 5000));
 
-	if (update_from_callee) {
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, no_callers, 5000));
-	} else {
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdatedByRemote, no_callers, 5000));
-	}
-
 	// Only one call is not paused
 	unsigned int no_call_paused = no_callers - 1;
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, no_call_paused, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
+
+	const LinphoneAddress *phead_uri = phead->identity;
+	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(phead_uri));
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	const LinphoneCallParams *marie_params = linphone_call_get_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_params));
+
+	LinphoneCall * phead_call = linphone_core_get_current_call(phead->lc);
+	BC_ASSERT_PTR_NOT_NULL(phead_call);
+	const LinphoneCallParams *phead_params = linphone_call_get_params(phead_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(phead_params));
 
 	LinphoneCall * pcall = NULL;
 	unsigned int no_paused_by_remote = 0;
@@ -1107,8 +1114,8 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in progress", incoming_call_accepted_when_outgoing_call_in_progress),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
-	TEST_ONE_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one, "ICE"),
-	TEST_ONE_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee, "ICE"),
+	TEST_NO_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one),
+	TEST_NO_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee),
 	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call", call_with_ice_negotiations_ending_while_accepting_call, "ICE"),
 	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call back to back", call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
 	TEST_NO_TAG("Simple call transfer", simple_call_transfer),

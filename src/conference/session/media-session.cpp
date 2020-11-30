@@ -1971,7 +1971,6 @@ void MediaSessionPrivate::startAccept(){
 	L_Q();
 
 	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
-lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis().get() << " current call session " << (currentCall ? currentCall->getActiveSession().get() : nullptr);
 	// If the core in a call, request to empty sound resources only if this call is not the call the core is currently in
 	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
 
@@ -1986,7 +1985,7 @@ lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis(
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
-		if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
+		if ((linphone_core_get_media_resource_mode(q->getCore()->getCCore()) == LinphoneExclusiveMediaResources) && linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
 			pendingActions.push([this] {this->startAccept();});
 			return;

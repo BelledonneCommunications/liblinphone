@@ -6220,7 +6220,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("New device after group chat room creation", group_chat_room_new_device_after_creation),
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
-	TEST_NO_TAG("Group chat room subscription denied", group_chat_room_subscription_denied),
+	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory" /*due network up/down*/),
 	TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch"),
 	TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory"),
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),

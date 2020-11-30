@@ -3915,6 +3915,22 @@ LINPHONE_PUBLIC void linphone_core_enable_conference_server (LinphoneCore *core,
 LINPHONE_PUBLIC bool_t linphone_core_conference_server_enabled (const LinphoneCore *core);
 
 /**
+ * Sets the media resources mode. Value values are: unique and shared.
+ * When the mode is set to unique, then only one call in the state StreamsRunning is allowed. While acepting a call, the core will try to free media resource used by the current call. If it is unsuccessful, then the call is not accepted.
+ * If mode is set to shared, then the media resources of the current call (if any) are not emptied when taking a new call. If the user whishes to free them, he/she is responsible to call linphone_core_preempt_sound_resources himself/herself
+ * @param core A #LinphoneCore object @notnil
+ * @param mode the chosen mode
+ */
+LINPHONE_PUBLIC void linphone_core_set_media_resource_mode (LinphoneCore *core, LinphoneMediaResourceMode mode);
+
+/**
+ * This function returns the media resource mode for this core
+ * @param core A #LinphoneCore object @notnil
+ * @return The media resource mode
+ */
+LINPHONE_PUBLIC LinphoneMediaResourceMode linphone_core_get_media_resource_mode (const LinphoneCore *core);
+
+/**
  * @}
  */
 
