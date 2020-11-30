@@ -82,9 +82,11 @@ public class LinphoneObject {
 
      - Returns: new LinphoneObject
   */
-	init(cPointer:OpaquePointer) {
+	init(cPointer:OpaquePointer, _ allocated: Bool=false) {
 		cPtr = cPointer
-		belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
+		if (!allocated) {
+			belle_sip_object_ref(UnsafeMutableRawPointer(cPtr))
+		}
 	}
 
 	deinit {
@@ -278,13 +280,13 @@ public class {{className}} : LinphoneObject
 	var delegateManagers : [{{className}}DelegateManager] = []
 	{{/hasListener}}
 
-	static public func getSwiftObject(cObject:OpaquePointer) -> {{className}} {
+	static public func getSwiftObject(cObject:OpaquePointer, _ allocated: Bool=false) -> {{className}} {
 		let result = belle_sip_object_data_get(UnsafeMutablePointer(cObject), "swiftRef")
 		if (result != nil) {
 			return Unmanaged<{{className}}>.fromOpaque(result!).takeUnretainedValue()
 		}
 
-		let sObject = {{className}}(cPointer: cObject)
+		let sObject = {{className}}(cPointer: cObject, allocated)
 		belle_sip_object_data_set(UnsafeMutablePointer(cObject), "swiftRef",  UnsafeMutableRawPointer(Unmanaged.passUnretained(sObject).toOpaque()), nil)
 
 		return sObject
@@ -429,7 +431,7 @@ public class {{className}} : LinphoneObject
 			if (cPointer == nil) {
 				return nil
 			}
-			return {{{return}}}.getSwiftObject(cObject:cPointer!){{/Instance}}{{#Instance}}return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
+			return {{{return}}}.getSwiftObject(cObject:cPointer!{{#isAllocated}}, true{{/isAllocated}}){{/Instance}}{{#Instance}}return {{{return}}}.getSwiftObject(cObject:{{getter_c_name}}({{cPtr}})){{/Instance}}
 			{{/is_class}}
 			{{#is_enum}}
 			return {{{return}}}(rawValue: Int({{getter_c_name}}({{cPtr}}).rawValue)){{^isFlag}}!{{/isFlag}}
@@ -588,7 +590,7 @@ public class {{className}} : LinphoneObject
 		{{#return}}if (cPointer == nil) {
 			{{#create_method}}throw LinphoneError.exception(result: "create null {{type}} value"){{/create_method}}{{^create_method}}return nil{{/create_method}}
 		}{{/return}}
-		{{return}}{{{type}}}.getSwiftObject(cObject: cPointer!)
+		{{return}}{{{type}}}.getSwiftObject(cObject: cPointer!{{#isAllocated}}, true{{/isAllocated}})
 		{{/is_class}}
 		{{#is_enum}}
 		{{#exception}}let exception_result = {{/exception}}{{#return}}{{return}}{{{type}}}(rawValue: Int({{/return}}{{c_name}}({{cPtr}}{{{c_args}}}){{#return}}.rawValue))!{{/return}}

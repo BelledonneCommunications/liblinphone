@@ -108,6 +108,7 @@ class SwiftTranslator(object):
             methodDict['is_generic'] = self.is_generic(methodDict)
             methodDict['isNotConst'] = not method.returnType.isconst
             methodDict['isDeprecated'] = method.deprecated
+            methodDict['isAllocated'] = method.returnAllocatedObject
 
             methodDict['impl']['create_method'] = 'create' in method.name.to_word_list()
             if (methodDict['is_class'] and not methodDict['impl']['create_method']):
