@@ -816,7 +816,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 				const LinphoneCallParams *old_params = linphone_call_get_params(call_to_update);
 				LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
 				linphone_call_params_enable_video (new_params, TRUE);
-				BC_ASSERT_TRUE(linphone_call_update(call_to_update, new_params));
+				linphone_call_update(call_to_update, new_params);
 				linphone_call_params_unref (new_params);
 			}
 		}
@@ -830,17 +830,13 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 
 	if (update_from_callee) {
 		BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallUpdatedByRemote, 1, 5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, 1, 5000));
 	} else {
+		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdatedByRemote, 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallUpdating, 1, 5000));
 	}
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &phead->stat.number_of_LinphoneCallPausedByRemote, 1, 5000));
-
-	if (update_from_callee) {
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdating, no_callers, 5000));
-	} else {
-		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallUpdatedByRemote, no_callers, 5000));
-	}
 
 	// Only one call is not paused
 	unsigned int no_call_paused = no_callers - 1;
