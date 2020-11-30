@@ -1971,7 +1971,6 @@ void MediaSessionPrivate::startAccept(){
 	L_Q();
 
 	shared_ptr<Call> currentCall = q->getCore()->getCurrentCall();
-lInfo() << "Core " << q->getCore().get() << " session " << q->getSharedFromThis().get() << " current call session " << (currentCall ? currentCall->getActiveSession().get() : nullptr);
 	// If the core in a call, request to empty sound resources only if this call is not the call the core is currently in
 	bool isThisNotCurrentMediaSession = currentCall && (currentCall->getActiveSession() != q->getSharedFromThis());
 
