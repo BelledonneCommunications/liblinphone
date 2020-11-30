@@ -176,6 +176,8 @@ public:
 	void insertChatRoom (const std::shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId = 0);
 	void deleteChatRoom (const ConferenceId &conferenceId);
 	void updateChatRoomConferenceId (ConferenceId oldConferenceId, const ConferenceId &newConferenceId);
+	long long addConferenceParticipantEventToDb (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
+
 	void enableChatRoomMigration (const ConferenceId &conferenceId, bool enable);
 
 	void migrateBasicToClientGroupChatRoom (

@@ -163,7 +163,7 @@ private:
 	long long insertConferenceChatMessageEvent (const std::shared_ptr<EventLog> &eventLog);
 	void updateConferenceChatMessageEvent(const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceNotifiedEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
-	long long insertConferenceParticipantEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr);
+	long long insertConferenceParticipantEvent (const std::shared_ptr<EventLog> &eventLog, long long *chatRoomId = nullptr, bool executeAction = true);
 	long long insertConferenceParticipantDeviceEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSubjectEvent (const std::shared_ptr<EventLog> &eventLog);
 	long long insertConferenceSecurityEvent (const std::shared_ptr<EventLog> &eventLog);
