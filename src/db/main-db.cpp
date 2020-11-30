@@ -1088,7 +1088,8 @@ long long MainDbPrivate::insertConferenceNotifiedEvent (const shared_ptr<EventLo
 
 long long MainDbPrivate::insertConferenceParticipantEvent (
 	const shared_ptr<EventLog> &eventLog,
-	long long *chatRoomId
+	long long *chatRoomId,
+	bool executeAction
 ) {
 #ifdef HAVE_DB_STORAGE
 	long long curChatRoomId;
@@ -1106,20 +1107,22 @@ long long MainDbPrivate::insertConferenceParticipantEvent (
 	*dbSession.getBackendSession() << "INSERT INTO conference_participant_event (event_id, participant_sip_address_id)"
 		" VALUES (:eventId, :participantAddressId)", soci::use(eventId), soci::use(participantAddressId);
 
-	bool isAdmin = eventLog->getType() == EventLog::Type::ConferenceParticipantSetAdmin;
-	switch (eventLog->getType()) {
-		case EventLog::Type::ConferenceParticipantAdded:
-		case EventLog::Type::ConferenceParticipantSetAdmin:
-		case EventLog::Type::ConferenceParticipantUnsetAdmin:
-			insertChatRoomParticipant(curChatRoomId, participantAddressId, isAdmin);
-			break;
+	if (executeAction) {
+		bool isAdmin = eventLog->getType() == EventLog::Type::ConferenceParticipantSetAdmin;
+		switch (eventLog->getType()) {
+			case EventLog::Type::ConferenceParticipantAdded:
+			case EventLog::Type::ConferenceParticipantSetAdmin:
+			case EventLog::Type::ConferenceParticipantUnsetAdmin:
+				insertChatRoomParticipant(curChatRoomId, participantAddressId, isAdmin);
+				break;
 
-		case EventLog::Type::ConferenceParticipantRemoved:
-			deleteChatRoomParticipant(curChatRoomId, participantAddressId);
-			break;
+			case EventLog::Type::ConferenceParticipantRemoved:
+				deleteChatRoomParticipant(curChatRoomId, participantAddressId);
+				break;
 
-		default:
-			break;
+			default:
+				break;
+		}
 	}
 
 	if (chatRoomId)
@@ -3466,6 +3469,15 @@ void MainDb::updateChatRoomConferenceId (ConferenceId oldConferenceId, const Con
 		tr.commit();
 	};
 #endif
+}
+
+long long MainDb::addConferenceParticipantEventToDb (
+	const shared_ptr<EventLog> &eventLog,
+	long long *chatRoomId
+) {
+
+	L_D();
+	return d->insertConferenceParticipantEvent(eventLog, chatRoomId, false);
 }
 
 void MainDb::migrateBasicToClientGroupChatRoom (
