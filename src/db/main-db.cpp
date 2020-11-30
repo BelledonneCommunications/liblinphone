@@ -2216,7 +2216,7 @@ bool MainDb::addEvent (const shared_ptr<EventLog> &eventLog) {
 		long long eventId = -1;
 
 		EventLog::Type type = eventLog->getType();
-		lInfo() << "MainDb::addEvent() of type " << static_cast<int>(type);
+		lInfo() << "MainDb::addEvent() of type " << type << " (value " << static_cast<int>(type) << ")";
 		switch (type) {
 			case EventLog::Type::None:
 				return false;
