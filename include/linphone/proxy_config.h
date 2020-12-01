@@ -157,7 +157,7 @@ LINPHONE_PUBLIC int linphone_proxy_config_get_publish_expires(const LinphoneProx
 
 /**
  * Sets whether liblinphone should replace "+" by international calling prefix in dialed numbers (passed to
- * #linphone_core_invite ).
+ * #linphone_core_invite() ).
  * @param proxy_config #LinphoneProxyConfig object. @notnil
  * @param enable TRUE to replace + by the international prefix, FALSE otherwise.
 **/
@@ -253,7 +253,7 @@ LINPHONE_PUBLIC void linphone_proxy_config_set_realm(LinphoneProxyConfig *proxy_
 /**
  * Gets the list of the routes set for this proxy config.
  * @param proxy_config #LinphoneProxyConfig object. @notnil
- * @return \bctbx_list{const char *} the list of routes. @maybenil
+ * @return The list of routes as string. \bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t* linphone_proxy_config_get_routes(const LinphoneProxyConfig *proxy_config);
 

@@ -119,7 +119,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_echo_canceller_calibration_required(Linp
 /**
  * @ingroup IOS
  * @param core The #LinphoneCore object. @notnil
- * Special function to warm up  dtmf feeback stream. #linphone_core_stop_dtmf_stream must() be called before entering FG mode
+ * Special function to warm up  dtmf feeback stream. #linphone_core_stop_dtmf_stream() must be called before entering FG mode
  */
 LINPHONE_PUBLIC void linphone_core_start_dtmf_stream(LinphoneCore* core);
 
