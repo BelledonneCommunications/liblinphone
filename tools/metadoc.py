@@ -161,9 +161,11 @@ class ClassReference(Reference):
 		return docTranslator.translate_class_reference(self, **kargs)
 
 	def resolve(self, api):
-		try:
-			self.relatedObject = api.classesIndex[self.cname]
-		except KeyError:
+		for index in api.enumsIndex, api.enumeratorsIndex, api.classesIndex:
+			if self.cname in index:
+				self.relatedObject = index[self.cname]
+				break
+		if self.relatedObject is None:
 			logging.warning('doc reference pointing on an unknown object ({0})'.format(self.cname))
 
 
@@ -530,7 +532,7 @@ class DoxygenTranslator(Translator):
 			lines[0] = '@brief ' + lines[0]
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
+		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Enumerator, abstractapi.Interface)):
 			return '#' + Translator.translate_reference(self, ref)
 		else:
 			raise ReferenceTranslationError(ref.cname)
@@ -565,7 +567,7 @@ class JavaDocTranslator(DoxygenTranslator):
 		pass
 
 	def translate_class_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Interface)):
+		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Enumerator, abstractapi.Interface)):
 			raise ReferenceTranslationError(ref.cname)
 		return '{@link ' + Translator.translate_reference(self, ref) + '}'
 	

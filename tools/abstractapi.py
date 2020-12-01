@@ -542,8 +542,9 @@ class CParser(object):
 		}
 
 		self.cProject = cProject
-		
+
 		self.enumsIndex = {}
+		self.enumeratorsIndex = {}
 		for enum in self.cProject.enums:
 			if enum.associatedTypedef is None:
 				self.enumsIndex[enum.name] = None
@@ -618,7 +619,7 @@ class CParser(object):
 		self._pending_enums = []
 
 	def _clean_all_indexes(self):
-		for index in [self.classesIndex, self.interfacesIndex, self.methodsIndex]:
+		for index in self.classesIndex, self.interfacesIndex, self.methodsIndex, self.enumsIndex, self.enumeratorsIndex:
 			self._clean_index(index)
 	
 	def _clean_index(self, index):
@@ -719,6 +720,7 @@ class CParser(object):
 		enum.detailedDescription = cenum.detailedDoc
 		self.namespace.addenum(enum)
 		
+		enumeratorsIndex = {}
 		for cEnumValue in cenum.values:
 			valueName = metaname.EnumeratorName()
 			valueName.from_camel_case(cEnumValue.name, namespace=name)
@@ -734,8 +736,11 @@ class CParser(object):
 					context.from_camel_case(cEnumValue.name)
 					raise ParsingError(reason, context)
 			enum.add_enumerator(aEnumValue)
+			enumeratorsIndex[cEnumValue.name] = aEnumValue
 		
 		self.enumsIndex[cenum.publicName] = enum
+		self.enumeratorsIndex.update(enumeratorsIndex)
+
 		if cenum.publicName in self.enum_relocations:
 			self._pending_enums.append(enum)
 		return enum
