@@ -1433,6 +1433,7 @@ static void accept_call_in_send_only_with_ice(void)  {
 	accept_call_in_send_base(TRUE);
 }
 
+// The goal of this test is to verify that 2 calls with streams in send only can be taken at the same time
 void two_accepted_call_in_send_only(void) {
 	LinphoneCoreManager *pauline, *marie, *laure;
 	bctbx_list_t *lcs=NULL;

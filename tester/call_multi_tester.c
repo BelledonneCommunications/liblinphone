@@ -843,6 +843,17 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, no_call_paused, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
 
+	const LinphoneAddress *phead_uri = phead->identity;
+	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(phead_uri));
+	BC_ASSERT_PTR_NOT_NULL(marie_call);
+	const LinphoneCallParams *marie_params = linphone_call_get_params(marie_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_params));
+
+	LinphoneCall * phead_call = linphone_core_get_current_call(phead->lc);
+	BC_ASSERT_PTR_NOT_NULL(phead_call);
+	const LinphoneCallParams *phead_params = linphone_call_get_params(phead_call);
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(phead_params));
+
 	LinphoneCall * pcall = NULL;
 	unsigned int no_paused_by_remote = 0;
 	LinphoneCoreManager * pm = NULL;
