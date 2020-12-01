@@ -520,47 +520,6 @@ static void call_outbound_with_multiple_proxy(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_outbound_using_different_proxies(void) {
-	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_dual_proxy_rc", FALSE);// Caller
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
-	int call_count = 0;
-
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 10000));
-	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, 2, 10000));
-
-	for(const bctbx_list_t * proxy=linphone_core_get_proxy_config_list(marie->lc) ; proxy!=NULL ; proxy=proxy->next) {
-		const LinphoneAddress * marieProxyAddress = linphone_proxy_config_get_identity_address((LinphoneProxyConfig*)proxy->data);
-		// Set the proxy to be used in call
-		linphone_core_set_default_proxy_config(marie->lc, (LinphoneProxyConfig*)proxy->data);
-		LinphoneCall * caller = linphone_core_invite(marie->lc, linphone_core_get_identity(pauline->lc));
-		call_count++;
-		if( BC_ASSERT_PTR_NOT_NULL(caller) ) {
-			wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);
-			const LinphoneCallParams * callerParameters = linphone_call_get_current_params(caller);
-			if(BC_ASSERT_PTR_NOT_NULL(callerParameters)){
-				const LinphoneProxyConfig * callerProxyConfig = linphone_call_params_get_proxy_config(callerParameters);
-				if(BC_ASSERT_PTR_NOT_NULL(callerProxyConfig)){
-					const LinphoneAddress * callerAddress = linphone_proxy_config_get_identity_address(callerProxyConfig);
-					if(BC_ASSERT_PTR_NOT_NULL(callerAddress)){
-						BC_ASSERT_TRUE(linphone_address_weak_equal(callerAddress, marieProxyAddress ));// Main test : the caller address must use the selected proxy
-						BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, call_count, 10000));
-						LinphoneCall * callee = linphone_core_get_current_call(pauline->lc);
-						BC_ASSERT_PTR_NOT_NULL(callee);
-						if(callee){
-							const LinphoneAddress * remoteAddress = linphone_call_get_remote_address(callee);
-							BC_ASSERT_TRUE(linphone_address_weak_equal(remoteAddress, marieProxyAddress));// Main test : callee get a call from the selected proxy of caller
-						}
-					}
-				}
-			}
-		}
-		end_call(marie, pauline);
-		wait_for_until(marie->lc, pauline->lc, NULL, 5, 500);// Wait between each session to proper ending calls
-	}
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
 #if 0 /* TODO: activate test when the implementation is ready */
 static void multiple_answers_call(void) {
 	/* Scenario is this: pauline calls marie, which is registered 2 times.
