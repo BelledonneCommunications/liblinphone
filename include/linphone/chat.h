@@ -41,9 +41,9 @@ extern "C" {
  */
 
 /**
- * Returns an list of chat rooms
+ * Returns a list of chat rooms
  * @param core #LinphoneCore object @notnil
- * @return \bctbx_list{LinphoneChatRoom} @maybenil
+ * @return List of chat rooms. \bctbx_list{LinphoneChatRoom} @maybenil
 **/
 LINPHONE_PUBLIC const bctbx_list_t* linphone_core_get_chat_rooms(LinphoneCore *core);
 

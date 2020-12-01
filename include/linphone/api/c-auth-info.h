@@ -96,7 +96,7 @@ LINPHONE_PUBLIC void linphone_auth_info_set_algorithm(LinphoneAuthInfo *auth_inf
 /**
  * Sets the available algorithms list without testing unicity
  * @param auth_info The #LinphoneAuthInfo object. @notnil
- * @param algorithms \bctbx_list{const char *} The available algorithms list. @maybenil
+ * @param algorithms The available algorithms list. @bctbx_list{const char *} @maybenil
 */
 LINPHONE_PUBLIC void linphone_auth_info_set_available_algorithms(LinphoneAuthInfo *auth_info, const bctbx_list_t *algorithms);
 
@@ -196,7 +196,7 @@ LINPHONE_PUBLIC const char *linphone_auth_info_get_algorithm(const LinphoneAuthI
 /**
  * Gets all available algorithms.
  * @param auth_info The #LinphoneAuthInfo object. @notnil
- * @return \bctbx_list{const char *} A list of available algorithms. @maybenil
+ * @return A list of available algorithms. @bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t * linphone_auth_info_get_available_algorithms(const LinphoneAuthInfo *auth_info);
 

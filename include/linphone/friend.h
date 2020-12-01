@@ -58,7 +58,7 @@ LINPHONE_PUBLIC void linphone_friend_add_address(LinphoneFriend *linphone_friend
 /**
  * Returns a list of #LinphoneAddress for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
- * @return \bctbx_list{LinphoneAddress} @maybenil
+ * @return A list of #LinphoneAddress. \bctbx_list{LinphoneAddress} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t* linphone_friend_get_addresses(const LinphoneFriend *linphone_friend);
 
@@ -79,7 +79,7 @@ LINPHONE_PUBLIC void linphone_friend_add_phone_number(LinphoneFriend *linphone_f
 /**
  * Returns a list of phone numbers for this friend
  * @param linphone_friend #LinphoneFriend object @notnil
- * @return \bctbx_list{const char *} @maybenil
+ * @return A list of phone numbers as string. \bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_friend_get_phone_numbers(const LinphoneFriend *linphone_friend);
 
@@ -150,7 +150,7 @@ LINPHONE_PUBLIC LinphoneSubscribePolicy linphone_friend_get_inc_subscribe_policy
  *
  * Because friend configuration must be consistent, applications MUST
  * call linphone_friend_edit() before doing any attempts to modify
- * friend configuration (such as \link linphone_friend_set_address() address \endlink  or \link linphone_friend_set_inc_subscribe_policy() subscription policy\endlink  and so on).
+ * friend configuration (such as linphone_friend_set_address() or linphone_friend_set_inc_subscribe_policy()).
  * Once the modifications are done, then the application must call
  * linphone_friend_done() to commit the changes.
  * @param linphone_friend #LinphoneFriend object @notnil
@@ -296,7 +296,8 @@ LINPHONE_PUBLIC bool_t linphone_friend_create_vcard(LinphoneFriend *linphone_fri
 /**
  * Contructor same as linphone_friend_new() + linphone_friend_set_address()
  * @param vcard a #LinphoneVcard object @notnil
- * @return a new #LinphoneFriend with \link linphone_friend_get_vcard() vCard initialized \endlink @maybenil
+ * @return a new #LinphoneFriend which has its vCard attribute initialized from the given vCard.
+ * This can be get by linphone_friend_get_vcard(). @maybenil
  */
 LINPHONE_PUBLIC	LinphoneFriend *linphone_friend_new_from_vcard(LinphoneVcard *vcard);
 
@@ -361,7 +362,7 @@ LINPHONE_PUBLIC void linphone_friend_remove(LinphoneFriend *linphone_friend);
 /**
  * Contructor
  * @return a new empty #LinphoneFriend
- * @deprecated 03/02/2016 use #linphone_core_create_friend instead
+ * @deprecated 03/02/2016 use #linphone_core_create_friend() instead
  * @donotwrap
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend * linphone_friend_new(void);
@@ -369,8 +370,8 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneFriend * linphone_friend_new(void);
 /**
  * Contructor same as linphone_friend_new() + linphone_friend_set_address()
  * @param addr a buddy address, must be a sip uri like sip:joe@sip.linphone.org
- * @return a new #LinphoneFriend with \link linphone_friend_get_address() address initialized \endlink
- * @deprecated 03/02/2016 use #linphone_core_create_friend_with_address instead
+ * @return a new #LinphoneFriend with an initialized address.
+ * @deprecated 03/02/2016 use #linphone_core_create_friend_with_address() instead
  * @donotwrap
  */
 LINPHONE_PUBLIC	LINPHONE_DEPRECATED LinphoneFriend *linphone_friend_new_with_address(const char *addr);
