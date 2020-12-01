@@ -1789,6 +1789,7 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
+		lError() << "Trying to pause a call whose SAL media direction is SendOnly - If you wish to do so, please set configuration parameter media_resources_mode in the misc section to shared";
 		return -1;
 	}
 	broken = false;
@@ -1985,7 +1986,7 @@ void MediaSessionPrivate::startAccept(){
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
 	if (isThisNotCurrentConference || isThisNotCurrentMediaSession) {
-		if (linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
+		if ((strcmp(linphone_config_get_string(linphone_core_get_config(q->getCore()->getCCore()), "misc", "media_resources_mode", "unique"), "unique") == 0) && linphone_core_preempt_sound_resources(q->getCore()->getCCore()) != 0) {
 			lInfo() << "Delaying call to " << __func__ << " for media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") in state " << Utils::toString(state) << " because sound resources cannot be preempted";
 			pendingActions.push([this] {this->startAccept();});
 			return;
