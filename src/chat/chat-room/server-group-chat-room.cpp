@@ -971,6 +971,7 @@ bool ServerGroupChatRoomPrivate::allDevicesLeft(const std::shared_ptr<Participan
 void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<ParticipantDevice> &device) {
 	L_Q();
 
+	unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
 	lInfo() << q << ": Participant device '" << device->getAddress().asString() << "' left";
 
 	if (! (capabilities & ServerGroupChatRoom::Capabilities::OneToOne) || protocolVersion >= Utils::Version(1, 1)){
@@ -978,7 +979,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 		if (allDevicesLeft(participant) && q->findParticipant(participant->getAddress()) == nullptr) {
 			lInfo() << q << ": Participant '" << participant->getAddress().asString() << "'removed and last device left, unsubscribing";
 			unSubscribeRegistrationForParticipant(participant->getAddress());
-			q->getCore()->getPrivate()->mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
+			mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
 		}
 	}
 	
@@ -1002,6 +1003,13 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 		}
 	}
 	if (allLeft){
+		// Delete the chat room from the main DB as its termination process started and it cannot be retrieved in the future
+		lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
+		mainDb->deleteChatRoom(q->getConferenceId());
+		if (q->getState() != ConferenceInterface::State::TerminationPending) {
+			q->setState(ConferenceInterface::State::TerminationPending);
+		}
+		q->setState(ConferenceInterface::State::Terminated);
 		lInfo() << q << ": No participant left, deleting the chat room";
 		requestDeletion();
 	}
@@ -1061,7 +1069,14 @@ void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &part
 			*/
 			lInfo() << "1-1 chatroom was left by one participant, removing other participant to terminate the chatroom";
 			auto otherParticipant = getOtherParticipant(participantLeaving->getParticipant()->getSharedFromThis());
-			if (otherParticipant) q->removeParticipant(otherParticipant);
+			if (otherParticipant) {
+				q->removeParticipant(otherParticipant);
+				// Do not wait to delete the chat room from the list stored in the core as the process of terminating it has already started and it cannot be restored
+				lInfo() << q << ": Delete chatroom from MainDB as not participant is left";
+				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+				mainDb->deleteChatRoom(q->getConferenceId());
+			}
+			q->setState(ConferenceInterface::State::TerminationPending);
 		}
 	}
 	if (shouldRemoveParticipant){

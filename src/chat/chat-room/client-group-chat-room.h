@@ -43,7 +43,7 @@ class LINPHONE_PUBLIC ClientGroupChatRoom :
 public:
 	L_OVERRIDE_SHARED_FROM_THIS(ClientGroupChatRoom);
 
-	~ClientGroupChatRoom ();
+	virtual ~ClientGroupChatRoom ();
 
 	std::shared_ptr<Core> getCore () const;
 

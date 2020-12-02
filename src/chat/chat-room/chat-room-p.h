@@ -38,6 +38,7 @@ class IsComposingMessage;
 class ChatRoomPrivate : public AbstractChatRoomPrivate, public IsComposingListener {
 public:
 	ChatRoomPrivate (AbstractChatRoom::CapabilitiesMask value) { capabilities = value; }
+	virtual ~ChatRoomPrivate() = default;
 
 	inline void setProxyChatRoom (AbstractChatRoom *value) { proxyChatRoom = value; }
 
