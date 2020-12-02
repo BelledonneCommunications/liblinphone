@@ -701,37 +701,47 @@ const char *linphone_proxy_config_get_quality_reporting_collector(const Linphone
 
 
 bool_t linphone_proxy_config_is_phone_number(LinphoneProxyConfig *proxy, const char *username){
-	const char *p;
 	if (!username) return FALSE;
-	for(p=username;*p!='\0';++p){
+
+	const char *p;
+	char* unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
+	for (p = unescaped_username; *p != '\0'; ++p) {
 		if (isdigit(*p) ||
-			*p==' ' ||
-			*p=='.' ||
-			*p=='-' ||
-			*p==')' ||
-			*p=='(' ||
-			*p=='/' ||
-			*p=='+' ||
-			(unsigned char)*p==0xca || (unsigned char)*p==0xc2 || (unsigned char)*p==0xa0 // non-breakable space (iOS uses it to format contacts phone number)
-			) {
+				*p==' ' ||
+				*p=='.' ||
+				*p=='-' ||
+				*p==')' ||
+				*p=='(' ||
+				*p=='/' ||
+				*p=='+' ||
+				// non-breakable space (iOS uses it to format contacts phone number)
+				(unsigned char)*p == 0xca || (unsigned char)*p == 0xc2 || (unsigned char)*p == 0xa0) {
 			continue;
 		}
+
+		belle_sip_free(unescaped_username);
 		return FALSE;
 	}
+
+	belle_sip_free(unescaped_username);
 	return TRUE;
 }
 
 //remove anything but [0-9] and +
 static char *linphone_proxy_config_flatten_phone_number(LinphoneProxyConfig *proxy, const char *number) {
-	char *result=reinterpret_cast<char *>(ms_malloc0(strlen(number)+1));
-	char *w=result;
+	char *unescaped_phone_number = belle_sip_username_unescape_unnecessary_characters(number);
+	char *result = reinterpret_cast<char *>(ms_malloc0(strlen(unescaped_phone_number) + 1));
+	char *w = result;
 	const char *r;
-	for(r=number;*r!='\0';++r){
-		if (*r=='+' || isdigit(*r)){
-			*w++=*r;
+
+	for (r = unescaped_phone_number; *r != '\0'; ++r) {
+		if (*r == '+' || isdigit(*r)) {
+			*w++ = *r;
 		}
 	}
-	*w++='\0';
+	
+	*w++ = '\0';
+	belle_sip_free(unescaped_phone_number);
 	return result;
 }
 
@@ -876,7 +886,10 @@ LinphoneAddress* linphone_proxy_config_normalize_sip_uri(LinphoneProxyConfig *pr
 			} else {
 				linphone_address_clean(uri);
 				linphone_address_set_display_name(uri,NULL);
-				linphone_address_set_username(uri,username);
+				// Unescape character if possible
+				char *unescaped_username = belle_sip_username_unescape_unnecessary_characters(username);
+				linphone_address_set_username(uri,unescaped_username);
+				belle_sip_free(unescaped_username);
 				return _linphone_core_destroy_addr_if_not_sip(uri);
 			}
 		} else {
