@@ -46,7 +46,7 @@ public:
 		unsigned int lastNotifyId
 	);
 
-	~ServerGroupChatRoom ();
+	virtual ~ServerGroupChatRoom ();
 
 	std::shared_ptr<Core> getCore () const;
 

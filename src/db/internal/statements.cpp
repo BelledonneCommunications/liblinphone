@@ -111,7 +111,7 @@ namespace Statements {
 	};
 
 	// ---------------------------------------------------------------------------
-	// Select statements.
+	// Insert statements.
 	// ---------------------------------------------------------------------------
 
 	constexpr AbstractStatement insert[InsertCount] = {

@@ -760,12 +760,16 @@ shared_ptr<AbstractChatRoom> Core::getOrCreateBasicChatRoomFromUri (const string
 void Core::deleteChatRoom (const shared_ptr<const AbstractChatRoom> &chatRoom) {
 	CorePrivate *d = chatRoom->getCore()->getPrivate();
 
-	d->noCreatedClientGroupChatRooms.erase(chatRoom.get());
 	const ConferenceId &conferenceId = chatRoom->getConferenceId();
+	lInfo() << "Trying to delete chat room with conference ID " << conferenceId << ".";
+
+	d->noCreatedClientGroupChatRooms.erase(chatRoom.get());
 	auto chatRoomsByIdIt = d->chatRoomsById.find(conferenceId);
 	if (chatRoomsByIdIt != d->chatRoomsById.end()) {
 		d->chatRoomsById.erase(chatRoomsByIdIt);
 		if (d->mainDb->isInitialized()) d->mainDb->deleteChatRoom(conferenceId);
+	} else {
+		lError() << "Unable to delete chat room with conference ID " << conferenceId << " because it cannot be found.";
 	}
 }
 

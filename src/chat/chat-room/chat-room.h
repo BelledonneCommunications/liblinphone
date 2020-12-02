@@ -39,7 +39,7 @@ public:
 
 	L_OVERRIDE_SHARED_FROM_THIS(ChatRoom);
 
-	~ChatRoom ();
+	virtual ~ChatRoom ();
 
 	const IdentityAddress &getPeerAddress () const override;
 	const IdentityAddress &getLocalAddress () const override;
