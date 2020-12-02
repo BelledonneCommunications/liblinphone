@@ -829,14 +829,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			}
 		}
 
-		// Marie now changes the subject again
-		const char *newSubject = "One to one exhumed";
-		linphone_chat_room_set_subject(marieCr, newSubject);
-
-		BC_ASSERT_TRUE(wait_for_list(coresList, &marie.getStats().number_of_subject_changed, initialMarieStats.number_of_subject_changed + 1, 5000));
-		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline.getStats().number_of_subject_changed, initialPaulineStats.number_of_subject_changed + 1, 5000));
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(marieCr), newSubject);
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), initialSubject);
+		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, int, "%d");
 
 		initialMarieStats = marie.getStats();
 		initialPaulineStats = pauline.getStats();
@@ -853,9 +846,11 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getCMgr()->stat.number_of_LinphoneRegistrationOk, initialPaulineStats.number_of_LinphoneRegistrationOk + 1, 10000));
 
-		paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, newSubject, 1, FALSE);
+		paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
+
+		BC_ASSERT_EQUAL(pauline.getCore().getChatRooms().size(), 1, int, "%d");
 
 		LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineCr));
 		BC_ASSERT_PTR_NOT_NULL(paulineNewConfAddr);
@@ -867,7 +862,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 		}
 
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), newSubject);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), initialSubject);
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
 		paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
