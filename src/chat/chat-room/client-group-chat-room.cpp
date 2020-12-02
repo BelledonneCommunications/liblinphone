@@ -800,7 +800,7 @@ void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
 void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
 	L_Q();
 
-	IdentityAddress addr = IdentityAddress(op->getRemoteContact());
+	ConferenceAddress addr(op->getRemoteContact());
 	const auto &conference = q->getConference();
 	ConferenceId newConfId = ConferenceId(addr, conference->getConferenceId().getLocalAddress());
 	lInfo() << "Conference [" << conference->getConferenceId() << "] is being exhumed into [" << newConfId << "]";

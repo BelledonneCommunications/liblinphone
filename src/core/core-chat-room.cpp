@@ -556,6 +556,8 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		}
 	}
 
+	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
+
 	return nullptr;
 }
 
