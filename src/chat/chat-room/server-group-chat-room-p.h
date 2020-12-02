@@ -70,6 +70,7 @@ public:
 	ServerGroupChatRoomPrivate(void) : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})) {};
 	ServerGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
 
+	virtual ~ServerGroupChatRoomPrivate() = default;
 	
 	std::shared_ptr<Participant> addParticipant (const IdentityAddress &participantAddress);
 	void removeParticipant (const std::shared_ptr<Participant> &participant);
