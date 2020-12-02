@@ -545,8 +545,9 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
-		if (chatRoom->getState() == ChatRoom::State::Terminated
-				&& capabilities & ChatRoom::Capabilities::Conference
+//		if (chatRoom->getState() == ChatRoom::State::Terminated
+//				&& capabilities & ChatRoom::Capabilities::Conference
+		if ( capabilities & ChatRoom::Capabilities::Conference
 				&& capabilities & ChatRoom::Capabilities::OneToOne
 				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
 			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
