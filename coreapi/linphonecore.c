@@ -3977,17 +3977,22 @@ void linphone_core_iterate(LinphoneCore *lc){
 	}
 }
 
-LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url){
+LinphoneAddress * linphone_core_interpret_url(LinphoneCore *lc, const char *url) {
+	if (!url) return NULL;
+	
 	LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(lc);
-	LinphoneAddress *result=NULL;
+	LinphoneAddress *result = NULL;
+	char *unescaped_url = belle_sip_username_unescape_unnecessary_characters(url);
 
-	if (linphone_proxy_config_is_phone_number(proxy,url)) {
-		char *normalized_number = linphone_proxy_config_normalize_phone_number(proxy, url);
+	if (linphone_proxy_config_is_phone_number(proxy, unescaped_url)) {
+		char *normalized_number = linphone_proxy_config_normalize_phone_number(proxy, unescaped_url);
 		result = linphone_proxy_config_normalize_sip_uri(proxy, normalized_number);
 		ms_free(normalized_number);
 	} else {
-		result = linphone_proxy_config_normalize_sip_uri(proxy, url);
+		result = linphone_proxy_config_normalize_sip_uri(proxy, unescaped_url);
 	}
+
+	ms_free(unescaped_url);
 	return result;
 }
 
