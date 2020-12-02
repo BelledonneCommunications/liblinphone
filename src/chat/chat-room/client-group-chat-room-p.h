@@ -33,6 +33,8 @@ public:
 	ClientGroupChatRoomPrivate(void) : ChatRoomPrivate(AbstractChatRoom::CapabilitiesMask({ChatRoom::Capabilities::Conference})) {};
 	ClientGroupChatRoomPrivate(AbstractChatRoom::CapabilitiesMask value) : ChatRoomPrivate((value | ChatRoom::Capabilities::Conference)) {};
 
+	virtual ~ClientGroupChatRoomPrivate() = default;
+
 	std::list<IdentityAddress> cleanAddressesList (const std::list<IdentityAddress> &addresses) const;
 	std::shared_ptr<CallSession> createSessionTo (Address sessionTo);
 	std::shared_ptr<CallSession> createSession ();
