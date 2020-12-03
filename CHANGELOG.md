@@ -26,6 +26,7 @@ This changelog file was started on October 2019. Previous changes were more or l
   use linphone_event_unref() when the LinphoneEvent is no longer used, otherwise it will create a memory leak.
 - Real time text related function linphone_chat_message_get_char() now will always return the new line character,
   which wasn't the case before if the getChar() was done after the composing callback was triggered for this character.
+- linphone_core_interpret_url() will unescape characters first if possible if only a username is given as input parameter.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.

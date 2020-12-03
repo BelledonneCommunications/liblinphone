@@ -252,12 +252,9 @@ public class CoreManager {
     }
 
     public void onAudioFocusLost() {
-        Log.i("[Core Manager] App has lost audio focus, pause current call if any");
+        Log.i("[Core Manager] App has lost audio focus, pausing all calls");
         if (mCore != null) {
-            Call call = mCore.getCurrentCall();
-            if (call != null) {
-                call.pause();
-            }
+            mCore.pauseAllCalls();
         }
     }
 

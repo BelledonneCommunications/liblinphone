@@ -1137,8 +1137,13 @@ LINPHONE_PUBLIC void linphone_core_remove_callbacks(LinphoneCore *core, const Li
 LINPHONE_PUBLIC void linphone_core_set_user_agent(LinphoneCore *core, const char *name, const char *version);
 
 /**
- * See linphone_proxy_config_normalize_sip_uri for documentation. Default proxy config is used to parse
- * the address.
+ * Constructs a #LinphoneAddress from the given string if possible.
+ * 
+ * In case of just a username, characters will be unescaped.
+ * If a phone number is detected, it will be flattened.
+ * sip: or sips: prefix will be added if not present.
+ * Finally, @domain will be added if not present using default proxy config.
+ * @see linphone_proxy_config_normalize_sip_uri() for documentation.
  * @param core The core @notnil
  * @param url the url to parse @notnil
  * @return the #LinphoneAddress matching the url or NULL in case of failure. @maybenil
