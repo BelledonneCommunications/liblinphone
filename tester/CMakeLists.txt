@@ -28,6 +28,10 @@ endif()
 if(SQLITE3_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${SQLITE3_LIBRARIES})
 endif()
+if(SOCI_FOUND)
+	list(APPEND OTHER_LIBS_FOR_TESTER  ${SOCI_LIBRARIES} ${SOCI_sqlite3_PLUGIN})
+	add_definitions(-DHAVE_SOCI=1)
+endif()
 if(ZLIB_FOUND)
 	if (ANDROID)
 		# Starting NDK r21, libz.a has issues: https://github.com/android/ndk/issues/1179
@@ -270,6 +274,7 @@ if(ENABLE_LIME_X3DH)
 endif()
 
 set(SOURCE_FILES_CXX
+	tester.cpp
 	audio_quality_tester.cpp
 	clonable-object-tester.cpp
 	contents-tester.cpp
@@ -351,7 +356,7 @@ endif()
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
 if(ANDROID OR IOS)
 	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
-	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
+	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
 	if(IOS)
@@ -380,7 +385,7 @@ if(ANDROID OR IOS)
 	)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	add_library(linphone_tester_static STATIC ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
-	target_include_directories(linphone_tester_static PRIVATE ${LINPHONE_INCLUDE_DIRS})
+	target_include_directories(linphone_tester_static PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 	target_link_libraries(linphone_tester_static ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 	set(RUNTIME_COMPONENT_SOURCES
@@ -415,7 +420,7 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
-		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS})
+		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
                 if(MSVC)
                         if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
@@ -437,7 +442,7 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(groupchat_benchmark PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(groupchat_benchmark PROPERTIES LINKER_LANGUAGE CXX)
 		set_target_properties(groupchat_benchmark PROPERTIES C_STANDARD 99)
-		target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS})
+		target_include_directories(groupchat_benchmark PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 		target_link_libraries(groupchat_benchmark ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 
 		install(TARGETS groupchat_benchmark

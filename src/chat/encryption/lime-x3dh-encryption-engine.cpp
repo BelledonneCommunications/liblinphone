@@ -884,6 +884,10 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager () {
 	return limeManager;
 }
 
+void LimeX3dhEncryptionEngine::stale_session (const std::string localDeviceId, const std::string peerDeviceId) {
+	limeManager->stale_sessions(localDeviceId, peerDeviceId);
+}
+
 lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) {
 	lime::limeCallback callback([operation](lime::CallbackReturn returnCode, string anythingToSay) {
 		if (returnCode == lime::CallbackReturn::success) {

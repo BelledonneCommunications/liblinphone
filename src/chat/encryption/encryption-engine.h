@@ -121,6 +121,8 @@ public:
 	virtual AbstractChatRoom::SecurityLevel getSecurityLevel (const std::string &deviceId) const { return AbstractChatRoom::SecurityLevel::ClearText; }
 	virtual std::list<EncryptionParameter> getEncryptionParameters () { return std::list<EncryptionParameter>(); }
 
+	virtual void stale_session (const std::string localDeviceId, const std::string peerDeviceId) {};
+
 protected:
 	EncryptionEngine (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
 
