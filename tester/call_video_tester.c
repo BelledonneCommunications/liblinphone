@@ -1350,8 +1350,8 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived,1,DEFAULT_WAIT_FOR));
 
-	char* remote_uri = linphone_address_as_string_uri_only(pauline->identity);
-	call = linphone_core_find_call_from_uri(marie->lc,remote_uri);
+	const LinphoneAddress* remote_uri = pauline->identity;
+	call = linphone_core_get_call_by_remote_address2(marie->lc,remote_uri);
 
 	stats initial_marie_stats = marie->stat;
 	stats initial_pauline_stats = pauline->stat;
@@ -1363,7 +1363,7 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		linphone_call_accept_with_params(call,params);
 		linphone_call_params_unref(params);
 
-		BC_ASSERT_PTR_NOT_NULL(linphone_core_find_call_from_uri(marie->lc,remote_uri));
+		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_call_by_remote_address2(marie->lc,remote_uri));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,1,DEFAULT_WAIT_FOR));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote,1,DEFAULT_WAIT_FOR));
@@ -1402,7 +1402,6 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 		BC_ASSERT_GREATER(quality, 1.0, float, "%f");
 	}
 
-	ms_free(remote_uri);
 }
 static void accept_call_in_send_base(bool_t caller_has_ice) {
 	LinphoneCoreManager *pauline, *marie;

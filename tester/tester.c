@@ -3007,7 +3007,6 @@ static void linphone_conference_server_call_state_changed(LinphoneCore *lc, Linp
 static void linphone_conference_server_refer_received(LinphoneCore *core, const char *refer_to) {
 	char method[20];
 	LinphoneAddress *refer_to_addr = linphone_address_new(refer_to);
-	char *uri;
 	LinphoneCall *call;
 
 	if(refer_to_addr == NULL) return;
@@ -3015,10 +3014,8 @@ static void linphone_conference_server_refer_received(LinphoneCore *core, const 
 	method[sizeof(method) - 1] = '\0';
 	if(strcmp(method, "BYE") == 0) {
 		linphone_address_clean(refer_to_addr);
-		uri = linphone_address_as_string_uri_only(refer_to_addr);
-		call = linphone_core_find_call_from_uri(core, uri);
+		call = linphone_core_get_call_by_remote_address2(core, refer_to_addr);
 		if(call) linphone_call_terminate(call);
-		ms_free(uri);
 	}
 	linphone_address_unref(refer_to_addr);
 }

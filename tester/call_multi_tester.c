@@ -788,7 +788,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		linphone_core_enable_video_display(c, TRUE);
 
 		const LinphoneAddress *caller_uri = m->identity;
-		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
+		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
 		BC_ASSERT_PTR_NOT_NULL(marie_call);
 
 		// Take call - ringing ends
@@ -807,7 +807,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 			LinphoneCall * call_to_update = NULL;
 			if (update_from_callee) {
 				const LinphoneAddress *caller_uri = m->identity;
-				call_to_update = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
+				call_to_update = linphone_core_get_call_by_remote_address2(marie->lc, caller_uri);
 			} else {
 				call_to_update = linphone_core_get_current_call(c);
 			}
