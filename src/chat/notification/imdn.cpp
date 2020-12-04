@@ -27,6 +27,7 @@
 #ifdef HAVE_ADVANCED_IM
 #include "xml/imdn.h"
 #include "xml/linphone-imdn.h"
+#include "chat/encryption/encryption-engine.h"
 #endif
 
 #include "imdn.h"
@@ -204,12 +205,25 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 			auto &displayNotification = imdn->getDisplayNotification();
 			if (deliveryNotification.present()) {
 				auto &status = deliveryNotification.get().getStatus();
-				if (status.getDelivered().present() && linphone_im_notif_policy_get_recv_imdn_delivered(policy))
+				if (status.getDelivered().present() && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::DeliveredToUser, imdnTime);
-				else if ((status.getFailed().present() || status.getError().present())
-					&& linphone_im_notif_policy_get_recv_imdn_delivered(policy)
-				)
+				} else if ((status.getFailed().present() || status.getError().present()) && linphone_im_notif_policy_get_recv_imdn_delivered(policy)) {
 					cm->getPrivate()->setParticipantState(participantAddress, ChatMessage::State::NotDelivered, imdnTime);
+					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is encrypted,
+					// something is wrong with our encryption session with this peer, stale the active session the next
+					// message (which can be a resend of this one) will be encrypted with a new session
+					if (status.getFailed().present() && status.getReason().present() && (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
+						// Check the reason code is 488
+						auto reason = status.getReason().get();
+						auto imee = cm->getCore()->getEncryptionEngine();
+						if ((reason.getCode() == 488) && imee) {
+							// stale the encryption sessions with this device: something went wrong, we will create a new one at next encryption
+							lWarning()<<"Peer "<<chatMessage->getFromAddress().asString()<<" could not decrypt message from "
+								<< cm->getFromAddress().asString()<<" -> Stale the lime X3DH session";
+							imee->stale_session(cm->getFromAddress().asString(), chatMessage->getFromAddress().asString());
+						}
+					}
+				}
 			} else if (displayNotification.present()) {
 				auto &status = displayNotification.get().getStatus();
 				if (status.getDisplayed().present() && linphone_im_notif_policy_get_recv_imdn_displayed(policy))

@@ -630,6 +630,8 @@ void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
 void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
 void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t required);
 
+void lime_delete_DRSessions(const char *limedb);
+
 
 #ifdef __cplusplus
 };
