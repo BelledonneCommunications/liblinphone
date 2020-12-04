@@ -146,7 +146,28 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getSession();
 	session->startIncomingNotification(false);
+	
+	/* Assign a random conference address to this new chatroom, with domain
+	 * set according to the proxy config used to receive the INVITE.
+	 */
+	
+	LinphoneProxyConfig *cfg = session->getPrivate()->getDestProxy();
+	if (!cfg) cfg = linphone_core_get_default_proxy_config(L_GET_C_BACK_PTR(q->getCore()));
+	LinphoneAddress *addr = linphone_address_clone(linphone_proxy_config_get_identity_address(cfg));
+	
+	char token[17];
+	ostringstream os;
+	
+	belle_sip_random_token(token, sizeof(token));
+	os << "chatroom-" << token;
+	linphone_address_set_username(addr, os.str().c_str());
+	q->getConference()->confParams->setConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+	linphone_address_destroy(addr);
 
+	/* Application (conference server) callback to register the name.
+	 * In response, the conference server will call setConferenceAddress().
+	 * It has the possibility to change the conference address.
+	 */
 	LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q);
 	CALL_CHAT_ROOM_CBS(cr, ConferenceAddressGeneration, conference_address_generation, cr);
 }
