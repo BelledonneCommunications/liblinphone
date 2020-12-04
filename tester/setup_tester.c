@@ -462,7 +462,8 @@ static void chat_room_test(void) {
 	LinphoneCore* lc;
 	lc = linphone_factory_create_core_2(linphone_factory_get(),NULL,NULL, liblinphone_tester_get_empty_rc(), NULL, system_context);
 	if (!BC_ASSERT_PTR_NOT_NULL(lc)) return;
-	BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room_from_uri(lc,"sip:toto@titi.com"));
+	LinphoneAddress *addr = linphone_core_interpret_url(lc, "sip:toto@titi.com");
+	BC_ASSERT_PTR_NOT_NULL(create_basic_chat_room(lc,addr));
 	linphone_core_unref(lc);
 }
 

@@ -153,9 +153,9 @@ int main(int argc, char *argv[]){
 	//linphone_core_set_file_transfer_server(lc,"http://npasc.al/lft.php");
 	linphone_core_set_file_transfer_server(lc,"https://www.linphone.org:444/lft.php");
 
-
 	/*Next step is to create a chat room*/
-	chat_room = linphone_core_get_chat_room_from_uri(lc,dest_friend);
+	LinphoneAddress *addr = linphone_core_interpret_url(lc, dest_friend);
+	chat_room = create_basic_chat_room(lc,addr);
 
 	content = linphone_core_create_content(lc);
 	linphone_content_set_type(content,"text");

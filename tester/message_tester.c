@@ -459,7 +459,7 @@ void text_message_from_non_default_proxy_config(void) {
 	
 	const LinphoneAddress *localAddr = linphone_proxy_config_get_identity_address(proxyConfig);
 	const LinphoneAddress *remoteAddr = linphone_proxy_config_get_identity_address(linphone_core_get_default_proxy_config(pauline->lc));
-	LinphoneChatRoom *room = linphone_core_get_chat_room_2(marie->lc, remoteAddr, localAddr);
+	LinphoneChatRoom *room = create_basic_chat_room_2(marie->lc, (LinphoneAddress *)remoteAddr, localAddr);
 	
 	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(room, "Bli bli");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
@@ -2372,7 +2372,8 @@ void crash_during_file_transfer(void) {
 
 static void text_status_after_destroying_chat_room(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneAddress *addr = linphone_core_interpret_url(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = create_basic_chat_room(marie->lc,addr);
 	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(chatroom, "hello");
 	linphone_chat_message_send(msg);
 	linphone_core_delete_chat_room(marie->lc, chatroom);
@@ -2385,7 +2386,8 @@ static void text_status_after_destroying_chat_room(void) {
 
 static void file_transfer_not_sent_if_invalid_url(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneAddress *addr = linphone_core_interpret_url(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = create_basic_chat_room(marie->lc,addr);
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
@@ -2398,7 +2400,8 @@ static void file_transfer_not_sent_if_invalid_url(void) {
 
 void file_transfer_io_error_base(char *server_url) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneAddress *addr = linphone_core_interpret_url(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = create_basic_chat_room(marie->lc,addr);
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
@@ -2420,7 +2423,8 @@ static void file_transfer_not_sent_if_url_moved_permanently(void) {
 
 static void file_transfer_success_after_destroying_chatroom(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
-	LinphoneChatRoom *chatroom = linphone_core_get_chat_room_from_uri(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneAddress *addr = linphone_core_interpret_url(marie->lc, "<sip:Jehan@sip.linphone.org>");
+	LinphoneChatRoom *chatroom = create_basic_chat_room(marie->lc,addr);
 	LinphoneChatMessage *msg = create_message_from_sintel_trailer(chatroom);
 	linphone_chat_message_cbs_set_msg_state_changed(
 		linphone_chat_message_get_callbacks(msg),

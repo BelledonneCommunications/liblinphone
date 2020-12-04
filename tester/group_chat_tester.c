@@ -35,12 +35,16 @@
 const char * sFactoryUri = "sip:conference-factory@conf.example.org";
 
 LinphoneChatRoom *create_basic_chat_room (LinphoneCore *lc, LinphoneAddress *peerAddr) {
+	return create_basic_chat_room_2(lc, peerAddr, NULL);
+}
+
+LinphoneChatRoom *create_basic_chat_room_2 (LinphoneCore *lc, LinphoneAddress *peerAddr, const LinphoneAddress *localAddr) {
 	bctbx_list_t *participants = bctbx_list_prepend(NULL, peerAddr);
 	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
 	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 	linphone_chat_room_params_enable_group(params, FALSE);
 
-	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_6(lc, params, NULL, participants);
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_6(lc, params, localAddr, participants);
 	linphone_chat_room_params_unref(params);
 	bctbx_list_free(participants);
 
