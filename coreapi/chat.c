@@ -188,13 +188,13 @@ LinphoneChatRoom *linphone_core_get_chat_room_2 (
 ) {
 	LinphoneChatRoom *result = linphone_core_search_chat_room(lc, NULL, local_addr, peer_addr, NULL);
 	if (result == NULL) {
-		bctbx_list_t *paricipants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
+		bctbx_list_t *participants = bctbx_list_prepend(NULL, (LinphoneAddress *)peer_addr);
 		LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
 		linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
 		linphone_chat_room_params_enable_group(params, FALSE);
-		result = linphone_core_create_chat_room_6(lc, params, local_addr, paricipants);
+		result = linphone_core_create_chat_room_6(lc, params, local_addr, participants);
 		linphone_chat_room_params_unref(params);
-		bctbx_list_free(paricipants);
+		bctbx_list_free(participants);
 	}
 	return result;
 }

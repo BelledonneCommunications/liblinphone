@@ -70,7 +70,7 @@ static void message_forking(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCoreManager* marie2 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatRoom* chat_room = create_basic_chat_room(pauline->lc, marie->identity);
 	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
@@ -101,7 +101,7 @@ static void message_forking_with_unreachable_recipients(void) {
 	LinphoneCoreManager* marie2 = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* marie3 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatRoom* chat_room = create_basic_chat_room(pauline->lc, marie->identity);
 	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
@@ -153,7 +153,7 @@ static void message_forking_with_all_recipients_unreachable(void) {
 	LinphoneCoreManager* marie2 = linphone_core_manager_new( "marie_rc");
 	LinphoneCoreManager* marie3 = linphone_core_manager_new( "marie_rc");
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
-	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatRoom* chat_room = create_basic_chat_room(pauline->lc, marie->identity);
 	LinphoneChatMessage* message = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(message);
 
@@ -227,8 +227,9 @@ static void message_forking_with_unreachable_recipients_with_gruu(void) {
 	bctbx_list_t* lcs=bctbx_list_append(NULL,marie->lc);
 
 	LinphoneProxyConfig *marie_proxy_config = linphone_core_get_default_proxy_config(marie->lc);
-	const LinphoneAddress *marie_address = linphone_proxy_config_get_contact(marie_proxy_config);
-	LinphoneChatRoom* chat_room_1 = linphone_core_get_chat_room(pauline->lc, marie_address);
+	LinphoneAddress *marie_address = linphone_address_clone(linphone_proxy_config_get_contact(marie_proxy_config));
+	LinphoneChatRoom* chat_room_1 = create_basic_chat_room(pauline->lc, marie_address);
+	linphone_address_unref(marie_address);
 	LinphoneChatMessage* message_1 = linphone_chat_room_create_message_from_utf8(chat_room_1,"Bli bli bli \n blu");
 
 	lcs=bctbx_list_append(lcs,pauline->lc);
@@ -276,7 +277,8 @@ static void text_message_expires(void) {
 	/* Wait for 5 seconds for surely cut marie of network */
 	wait_for_until(pauline->lc, marie->lc, NULL, 0, 5000);
 
-	linphone_chat_room_send_message(linphone_core_get_chat_room(pauline->lc,marie->identity), "hello");
+	LinphoneChatRoom* chat_room = create_basic_chat_room(pauline->lc, marie->identity);
+	linphone_chat_room_send_message(chat_room, "hello");
 	linphone_core_set_network_reachable(marie->lc, TRUE);
 
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneMessageReceived,1));
@@ -991,7 +993,7 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		linphone_core_set_file_transfer_server(pauline->lc, file_transfer_url);
 
 		/* create a chatroom on pauline's side */
-		chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+		chat_room = create_basic_chat_room(pauline->lc, marie->identity);
 
 		/* create a file transfer message */
 		content = linphone_core_create_content(pauline->lc);
@@ -1054,7 +1056,7 @@ static void dos_module_trigger(void) {
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 
-	chat_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	chat_room = create_basic_chat_room(pauline->lc, marie->identity);
 
 	time_begin = bctbx_get_cur_time_ms();
 	do {

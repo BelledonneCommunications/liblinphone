@@ -1738,7 +1738,7 @@ static void search_friend_chat_room_remote(void) {
 
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
-	LinphoneChatRoom *room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatRoom *room = linphone_core_search_chat_room(marie->lc, NULL, NULL, pauline->identity, NULL);
 	BC_ASSERT_PTR_NOT_NULL(room);
 
 	char *addr = linphone_address_as_string_uri_only(pauline->identity);

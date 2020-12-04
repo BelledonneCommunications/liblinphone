@@ -404,7 +404,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
 
 	// Send message in basic chat room
-	LinphoneChatRoom *marieBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatRoom *marieBasicCr = create_basic_chat_room(marie->lc, pauline->identity);
 	LinphoneChatMessage *basicMessage1 = linphone_chat_room_create_message_from_utf8(marieBasicCr, "Hello from our basic chat room");
 	LinphoneChatMessageCbs *cbs1 = linphone_chat_message_get_callbacks(basicMessage1);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs1, liblinphone_tester_chat_message_msg_state_changed);
@@ -417,7 +417,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), linphone_chat_message_get_text(basicMessage1));
 	}
-	LinphoneChatRoom *paulineBasicCr = linphone_core_get_chat_room(pauline->lc, marie->identity);
+	LinphoneChatRoom *paulineBasicCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, marie->identity, NULL);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieBasicCr) & LinphoneChatRoomCapabilitiesBasic);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineBasicCr) & LinphoneChatRoomCapabilitiesBasic);
 	BC_ASSERT_PTR_NOT_NULL(paulineBasicCr);
@@ -463,7 +463,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_EQUAL(pauline->stat.number_of_participants_removed, initialPaulineStats.number_of_participants_removed, int, "%d");
 
 	// Marie creates the basic chat room again
-	LinphoneChatRoom *marieNewBasicCr = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatRoom *marieNewBasicCr = create_basic_chat_room(marie->lc, pauline->identity);
 	LinphoneChatMessage *basicMessage2 = linphone_chat_room_create_message_from_utf8(marieNewBasicCr, "Hello again from our basic chat room");
 	LinphoneChatMessageCbs *cbs2 = linphone_chat_message_get_callbacks(basicMessage2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs2, liblinphone_tester_chat_message_msg_state_changed);

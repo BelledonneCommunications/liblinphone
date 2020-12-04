@@ -114,7 +114,7 @@ const char *shared_core_send_msg_and_get_call_id(LinphoneCoreManager *sender, Li
 												 const char *text) {
 	stats initial_sender_stat = sender->stat;
 	const char *content_type = "text/plain";
-	LinphoneChatRoom *room = linphone_core_get_chat_room(sender->lc, receiver->identity);
+	LinphoneChatRoom *room = linphone_core_search_chat_room(sender->lc, NULL, NULL, receiver->identity, NULL);
 
 	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(room, text);
 	linphone_chat_message_set_content_type(msg, content_type);
@@ -156,7 +156,7 @@ void shared_core_get_message_from_call_id(LinphoneCoreManager *sender_mgr, Linph
 			BC_ASSERT_STRING_EQUAL(linphone_push_notification_message_get_text_content(received_msg), text);
 			linphone_push_notification_message_unref(received_msg);
 
-			BC_ASSERT_PTR_NOT_NULL(linphone_core_get_chat_room(receiver, sender_mgr->identity));
+			BC_ASSERT_PTR_NOT_NULL(linphone_core_search_chat_room(receiver, NULL, NULL, sender_mgr->identity, NULL));
 		}
 	}
 }

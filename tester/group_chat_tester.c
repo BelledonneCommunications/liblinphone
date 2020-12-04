@@ -34,6 +34,19 @@
 
 const char * sFactoryUri = "sip:conference-factory@conf.example.org";
 
+LinphoneChatRoom *create_basic_chat_room (LinphoneCore *lc, LinphoneAddress *peerAddr) {
+	bctbx_list_t *participants = bctbx_list_prepend(NULL, peerAddr);
+	LinphoneChatRoomParams *params = linphone_core_create_default_chat_room_params(lc);
+	linphone_chat_room_params_set_backend(params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_group(params, FALSE);
+
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_6(lc, params, NULL, participants);
+	linphone_chat_room_params_unref(params);
+	bctbx_list_free(participants);
+
+	return chat_room;
+}
+
 static void chat_room_is_composing_received (LinphoneChatRoom *cr, const LinphoneAddress *remoteAddr, bool_t isComposing) {
 	LinphoneCore *core = linphone_chat_room_get_core(cr);
 	LinphoneCoreManager *manager = (LinphoneCoreManager *)linphone_core_get_user_data(core);
@@ -2738,7 +2751,7 @@ static void group_chat_room_fallback_to_basic_chat_room (void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message)
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
-	LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	LinphoneChatRoom *paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (paulineCr)
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesBasic);
@@ -2850,7 +2863,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	linphone_core_remove_linphone_spec(marie->lc, "groupchat"); //Prevent basic chat room from migrating directly
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
-	LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	LinphoneChatRoom *marieCr = create_basic_chat_room(marie->lc, paulineAddr);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieCr) & (LinphoneChatRoomCapabilitiesMigratable));
 
 	// Send a message and check that a basic chat room is created on Pauline's side
@@ -2862,7 +2875,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	if (pauline->stat.last_received_chat_message)
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
-	LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	LinphoneChatRoom *paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (paulineCr) {
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & (LinphoneChatRoomCapabilitiesBasic | LinphoneChatRoomCapabilitiesMigratable));
@@ -2878,7 +2891,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	linphone_core_manager_start(marie, TRUE);
-	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, NULL, paulineAddr, NULL);
 
 	/* // Enable chat room migration and restart core for Pauline */
 	_linphone_chat_room_enable_migration(paulineCr, TRUE);
@@ -2891,7 +2904,7 @@ static void group_chat_room_migrate_from_basic_chat_room (void) {
 	linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "enable_basic_to_client_group_chat_room_migration", 1);
 	linphone_core_manager_start(pauline, TRUE);
 
-	paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 
 	// Send a new message to initiate chat room migration
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
@@ -2988,7 +3001,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message)
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
-	LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	LinphoneChatRoom *paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (paulineCr)
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesBasic);
@@ -3008,9 +3021,9 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 	linphone_core_manager_start(marie, TRUE);
 
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
-	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, NULL, paulineAddr, NULL);
 	linphone_address_unref(paulineAddr);
-	paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (marieCr && paulineCr) {
@@ -3060,7 +3073,7 @@ static void group_chat_room_migrate_from_basic_to_client_fail (void) {
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 		linphone_core_manager_start(pauline, TRUE);
-		paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+		paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
 		wait_for_list(coresList, &dummy, 1, 3000);
@@ -3110,7 +3123,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 
 	// Create a basic chat room
 	LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
-	LinphoneChatRoom *marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	LinphoneChatRoom *marieCr = create_basic_chat_room(marie->lc, paulineAddr);
 
 	// Send a message and check that a basic chat room is created on Pauline's side
 	LinphoneChatMessage *msg = linphone_chat_room_create_message_from_utf8(marieCr, "Hey Pauline!");
@@ -3120,7 +3133,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message)
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
-	LinphoneChatRoom *paulineCr = linphone_core_get_chat_room(pauline->lc, linphone_chat_room_get_local_address(marieCr));
+	LinphoneChatRoom *paulineCr = linphone_core_search_chat_room(pauline->lc, NULL, NULL, linphone_chat_room_get_local_address(marieCr), NULL);
 	BC_ASSERT_PTR_NOT_NULL(paulineCr);
 	if (paulineCr)
 		BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesBasic);
@@ -3134,7 +3147,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	coresList = bctbx_list_append(coresList, marie->lc);
 
 	// Send a new message to initiate chat room migration
-	marieCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	marieCr = linphone_core_search_chat_room(marie->lc, NULL, NULL, paulineAddr, NULL);
 	BC_ASSERT_PTR_NOT_NULL(marieCr);
 	if (marieCr) {
 		initialMarieStats = marie->stat;
@@ -3462,7 +3475,7 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 		bctbx_list_free(tmpCoresManagerList);
 		coresList = bctbx_list_concat(coresList, tmpCoresList);
 		linphone_core_manager_start(marie, TRUE);
-		marieCr = linphone_core_get_chat_room(marie->lc, marieAddr);
+		marieCr = linphone_core_search_chat_room(marie->lc, NULL, NULL, marieAddr, NULL);
 		linphone_address_unref(marieAddr);
 	}
 
@@ -4167,7 +4180,9 @@ static void find_one_to_one_chat_room (void) {
 	BC_ASSERT_PTR_NULL(oneToOneChatRoom);
 
 	// Create a basic chat room
-	marieOneToOneCr = linphone_core_get_chat_room(marie->lc, paulineAddr);
+	LinphoneAddress * paulineAddrClone = linphone_address_clone(paulineAddr);
+	marieOneToOneCr = create_basic_chat_room(marie->lc, paulineAddrClone);
+	linphone_address_clone(paulineAddrClone);
 	BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr);
 
 	// Check it's the same chat room
