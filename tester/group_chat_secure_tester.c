@@ -196,7 +196,7 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 		goto end;
 
 	// Check that the message is received by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -233,7 +233,7 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 		goto end;
 
 	// Check that the message is received and decrypted by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -255,7 +255,7 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 	msg = _send_message(mariePlainCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
 	linphone_chat_message_unref(msg);
 
 	// Check that the recreated regular chat room address is the same as before and the capabilities are correct
@@ -281,7 +281,7 @@ static void group_chat_lime_x3dh_encrypted_chatrooms_curve(const int curveId) {
 	msg = _send_message(marieEncryptedCr, marieMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), marieMessage);
 	linphone_chat_message_unref(msg);
 
 	// Check that the recreated encrypted chat room address is the same as before and the capabilities are correct
@@ -415,7 +415,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), linphone_chat_message_get_text(basicMessage1));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), linphone_chat_message_get_utf8_text(basicMessage1));
 	}
 	LinphoneChatRoom *paulineBasicCr = linphone_core_get_chat_room(pauline->lc, marie->identity);
 	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(marieBasicCr) & LinphoneChatRoomCapabilitiesBasic);
@@ -453,7 +453,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 		goto end;
 
 	// Check that the message is received and decrypted by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieEncryptedMessage1);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieEncryptedMessage1);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 
@@ -474,7 +474,7 @@ static void group_chat_lime_x3dh_basic_chat_rooms_curve(const int curveId) {
 	BC_ASSERT_PTR_NOT_NULL(pauline->stat.last_received_chat_message);
 	if (pauline->stat.last_received_chat_message != NULL) {
 		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_content_type(pauline->stat.last_received_chat_message), "text/plain");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), linphone_chat_message_get_text(basicMessage2));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), linphone_chat_message_get_utf8_text(basicMessage2));
 	}
 	linphone_chat_message_unref(basicMessage2);
 	linphone_address_unref(encryptedConfAddr);
@@ -561,7 +561,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 	BC_ASSERT_EQUAL(linphone_core_get_unread_chat_message_count_from_local(pauline->lc, linphone_chat_room_get_local_address(paulineCr)), 1, int, "%d");
 
 	// Check that the message was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -583,7 +583,7 @@ static void lime_x3dh_message_test (bool_t with_composing, bool_t with_response,
 			goto end;
 
 		// Check that the response was correctly decrypted
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineMessage);
 		LinphoneAddress *paulineAddr = linphone_address_new(linphone_core_get_identity(pauline->lc));
 		BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 		linphone_address_unref(paulineAddr);
@@ -707,7 +707,7 @@ static void group_chat_lime_x3dh_encrypted_message_to_devices_with_and_without_k
 	linphone_chat_message_unref(msg);
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -924,7 +924,7 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 		goto end;
 
 	// Check that the message was correctly decrypted by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 
 	// Pauline sends a response
@@ -937,7 +937,7 @@ static void group_chat_lime_x3dh_verify_sas_before_message_curve(const int curve
 		goto end;
 
 	// Check that the response was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 
 	// Check LIME X3DH and ZRTP status
@@ -1075,7 +1075,7 @@ static void group_chat_lime_x3dh_reject_sas_before_message_curve(const int curve
 			goto end;
 
 		// Check that the message was correctly decrypted by Pauline
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 		BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	} else {
 		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
@@ -1194,7 +1194,7 @@ static void group_chat_lime_x3dh_message_before_verify_sas_curve(const int curve
 		goto end;
 
 	// Check that the message was correctly decrypted by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 
 	// Pauline sends a response
@@ -1207,7 +1207,7 @@ static void group_chat_lime_x3dh_message_before_verify_sas_curve(const int curve
 		goto end;
 
 	// Check that the response was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 
 	// Check LIME X3DH and ZRTP status
@@ -1319,7 +1319,7 @@ static void group_chat_lime_x3dh_message_before_reject_sas_curve(const int curve
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 
 	// Check LIME and ZRTP status
@@ -1444,7 +1444,7 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 		goto end;
 
 	// Check that the message was correctly decrypted by Pauline
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 
 	// Pauline sends a response
@@ -1457,7 +1457,7 @@ static void group_chat_lime_x3dh_message_before_verify_sas_with_call_from_device
 		goto end;
 
 	// Check that the response was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), paulineMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), paulineMessage);
 	BC_ASSERT_TRUE(linphone_address_weak_equal(paulineAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 
 	// Check LIME X3DH and ZRTP status
@@ -1557,7 +1557,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -1567,7 +1567,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -1577,7 +1577,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_upgrade_curve(const int
 	LinphoneChatMessage *chloeLastMsg = chloe->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(chloeLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(chloeLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(chloeLastMsg), marieMessage);
 	LinphoneAddress *marieAddr3 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr3, linphone_chat_message_get_from_address(chloeLastMsg)));
 	linphone_address_unref(marieAddr3);
@@ -1701,7 +1701,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_partic
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -1711,7 +1711,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_adding_partic
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -1838,7 +1838,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -1848,7 +1848,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_downgrade_resetting_zrt
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -1988,7 +1988,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	LinphoneChatMessage *pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), marieMessage);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(pauline1LastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -1999,7 +1999,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -2087,7 +2087,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), marieMessage);
 	pauline1LastMsg = NULL;
 
 	// Check that the message was correctly received and decrypted by Pauline2
@@ -2095,7 +2095,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	LinphoneChatMessage *pauline2LastMsg = pauline2->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline2LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline2LastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline2LastMsg), marieMessage);
 	pauline1LastMsg = NULL;
 
 	// Check that the message was correctly received and decrypted by Laure
@@ -2103,7 +2103,7 @@ static void group_chat_lime_x3dh_chatroom_security_level_self_multidevices_curve
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	laureLastMsg = NULL;
 
 end:
@@ -2183,7 +2183,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	LinphoneChatMessage *pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), marieMessage);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(pauline1LastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -2194,7 +2194,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -2234,7 +2234,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), marieMessage);
 	pauline1LastMsg = NULL;
 
 	// Check that the message was correctly received and decrypted by Laure
@@ -2242,7 +2242,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage);
 
 	// Create second device for Pauline
 	pauline2 = linphone_core_manager_create("pauline_lime_x3dh_rc");
@@ -2300,7 +2300,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), laureMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), laureMessage);
 	marieLastMsg = NULL;
 
 	// Check that the message was correctly received and decrypted by Pauline1
@@ -2308,7 +2308,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	pauline1LastMsg = pauline1->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline1LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), laureMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), laureMessage);
 	pauline1LastMsg = NULL;
 
 	// Check that the message was correctly received and decrypted by Pauline2
@@ -2316,7 +2316,7 @@ static void group_chat_lime_x3dh_chatroom_security_alert_curve(const int curveId
 	LinphoneChatMessage *pauline2LastMsg = pauline2->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(pauline2LastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline2LastMsg), laureMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline2LastMsg), laureMessage);
 	pauline2LastMsg = NULL;
 
 end:
@@ -2382,7 +2382,7 @@ static void group_chat_lime_x3dh_call_security_alert_curve(const int curveId) {
 		goto end;
 
 	// Check that the message was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -2937,7 +2937,7 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage1);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage1);
 	LinphoneAddress *marieAddr1 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr1, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr1);
@@ -2948,7 +2948,7 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	LinphoneChatMessage *laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage1);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage1);
 	LinphoneAddress *marieAddr2 = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr2, linphone_chat_message_get_from_address(laureLastMsg)));
 	linphone_address_unref(marieAddr2);
@@ -2964,7 +2964,7 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage2);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage2);
 	paulineLastMsg = NULL;
 
 	// Check that message 2 was correctly received and decrypted by Laure
@@ -2972,7 +2972,7 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage2);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage2);
 	laureLastMsg = NULL;
 
 	// Marie sends yet another message
@@ -2985,14 +2985,14 @@ static void group_chat_lime_x3dh_send_multiple_successive_encrypted_messages_cur
 	paulineLastMsg = pauline->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage3);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage3);
 
 	// Check that message 3 was correctly received and decrypted by Laure
 	BC_ASSERT_TRUE(wait_for_list(coresList, &laure->stat.number_of_LinphoneMessageReceived, initialLaureStats.number_of_LinphoneMessageReceived + 3, 10000));
 	laureLastMsg = laure->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(laureLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marieMessage3);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marieMessage3);
 
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -3330,10 +3330,10 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 		goto end;
 
 	// Check that the messages were correctly decrypted by everybody
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie2LastMsg), marie1Message);
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline1LastMsg), marie1Message);
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline2LastMsg), marie1Message);
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(laureLastMsg), marie1Message);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie2LastMsg), marie1Message);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline1LastMsg), marie1Message);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline2LastMsg), marie1Message);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(laureLastMsg), marie1Message);
 
 	// Check chatroom security level
 	BC_ASSERT_EQUAL(linphone_chat_room_get_security_level(marieCr2), LinphoneChatRoomSecurityLevelEncrypted, int, "%d");
@@ -3376,7 +3376,7 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 		goto end;
 
 	// Check that the messages were correctly decrypted at least for pauline3
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline3LastMsg), marie1Message2);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline3LastMsg), marie1Message2);
 
 end:
 
@@ -3460,7 +3460,7 @@ static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const i
 		goto end;
 
 	// Check that the message was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -3532,7 +3532,7 @@ static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
 		goto end;
 
 	// Check that the message was correctly decrypted
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(paulineLastMsg), marieMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieMessage);
 	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
 	linphone_address_unref(marieAddr);
@@ -3651,7 +3651,7 @@ static void imdn_for_group_chat_room_curve(const int curveId) {
 	LinphoneChatMessage *marieLastMsg = marie->stat.last_received_chat_message;
 	if (!BC_ASSERT_PTR_NOT_NULL(marieLastMsg))
 		goto end;
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marieLastMsg), chloeTextMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marieLastMsg), chloeTextMessage);
 	LinphoneAddress *chloeAddr = linphone_address_new(linphone_core_get_identity(chloe->lc));
 	BC_ASSERT_TRUE(linphone_address_weak_equal(chloeAddr, linphone_chat_message_get_from_address(marieLastMsg)));
 	linphone_address_unref(chloeAddr);
@@ -3761,7 +3761,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	LinphoneChatMessage *message = _send_message(marieCr, textMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(pauline->stat.last_received_chat_message), textMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(pauline->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
 
 	// Marie deletes the chat room
@@ -3782,7 +3782,7 @@ static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message_c
 	message = _send_message(paulineCr, textMessage);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, initialPaulineStats.number_of_LinphoneMessageDelivered + 1, 3000));
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 3000));
-	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), textMessage);
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(marie->stat.last_received_chat_message), textMessage);
 	linphone_chat_message_unref(message);
 
 	// Check that the chat room has been correctly recreated on Marie's side
@@ -3811,6 +3811,110 @@ end:
 static void group_chat_room_unique_one_to_one_chat_room_recreated_from_message(void) {
 	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(25519);
 	group_chat_room_unique_one_to_one_chat_room_recreated_from_message_curve(448);
+}
+
+/**
+ * Scenario:
+ * - Marie and Pauline exchange messages
+ * - Pauline db is corrupted, its session with Marie is cancelled
+ * - Marie sends a message to Pauline, she cannot decrypt, Marie is notified with a 488
+ * - Marie resend the message, it is encrypted again with a new session as the old one is staled.
+ * - Pauline decrypts with succes
+ */
+static void group_chat_lime_x3dh_session_corrupted_curve(const int curveId) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	set_lime_curve_list(curveId,coresManagerList);
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+
+	// Enable IMDN
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+	// Wait for lime user creation
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_X3dhUserCreationSuccess, initialMarieStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_X3dhUserCreationSuccess, initialPaulineStats.number_of_X3dhUserCreationSuccess+1, x3dhServer_creationTimeout));
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	if (!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr))
+		goto end;
+
+	// Marie send a message to Pauline
+	const char *marieTextMessage = "Hello";
+	LinphoneChatMessage *marieMessage = _send_message(marieCr, marieTextMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageDelivered, initialMarieStats.number_of_LinphoneMessageDelivered + 1, 10000));
+	linphone_chat_message_unref(marieMessage);
+	LinphoneChatMessage *paulineLastMsg = pauline->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieTextMessage);
+	LinphoneAddress *marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+	linphone_address_unref(marieAddr);
+
+	// Corrupt Pauline sessions in lime database: WARNING: if SOCI is not found, this call does nothing and the test fails
+	lime_delete_DRSessions(pauline->lime_database_path);
+	// Trick to force the reloading of the lime engine so the session in cache is cleared
+	if (curveId==448) {
+		set_lime_curve_list(25519,coresManagerList);
+	} else {
+		set_lime_curve_list(448,coresManagerList);
+	}
+	set_lime_curve_list(curveId,coresManagerList);
+
+	// Marie send a new message, it shall fail and get a 488 response
+	marieMessage = _send_message(marieCr, marieTextMessage);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageNotDelivered, initialMarieStats.number_of_LinphoneMessageNotDelivered + 1, 10000));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageReceived, 1, int, "%d");
+	linphone_chat_message_unref(marieMessage);
+
+	// Try again, it shall work this time
+	const char *marieTextMessage2 = "Hello again";
+	marieMessage = _send_message(marieCr, marieTextMessage2);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 3, 1000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 2, 10000));
+	linphone_chat_message_unref(marieMessage);
+	paulineLastMsg = pauline->stat.last_received_chat_message;
+	if (!BC_ASSERT_PTR_NOT_NULL(paulineLastMsg))
+		goto end;
+	BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(paulineLastMsg), marieTextMessage2);
+	marieAddr = linphone_address_new(linphone_core_get_identity(marie->lc));
+	BC_ASSERT_TRUE(linphone_address_weak_equal(marieAddr, linphone_chat_message_get_from_address(paulineLastMsg)));
+	linphone_address_unref(marieAddr);
+
+
+	end:
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_lime_x3dh_session_corrupted(void) {
+	group_chat_lime_x3dh_session_corrupted_curve(25519);
+	group_chat_lime_x3dh_session_corrupted_curve(448);
 }
 
 test_t secure_group_chat_tests[] = {
@@ -3855,7 +3959,8 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
 	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
-	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH")
+	TEST_ONE_TAG("LIME X3DH stop/start core", group_chat_lime_x3dh_stop_start_core, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH session corrupted", group_chat_lime_x3dh_session_corrupted, "LimeX3DH")
 };
 
 test_suite_t secure_group_chat_test_suite = {
