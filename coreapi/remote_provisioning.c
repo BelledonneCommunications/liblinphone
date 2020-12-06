@@ -52,8 +52,11 @@ static void belle_request_process_response_event(void *ctx, const belle_http_res
 	belle_sip_message_t *message = BELLE_SIP_MESSAGE(event->response);
 	const char *body = belle_sip_message_get_body(message);
 
-	if (belle_http_response_get_status_code(event->response) == 200) {
+	int statusCode = belle_http_response_get_status_code(event->response);
+	if (statusCode == 200) {
 		linphone_remote_provisioning_apply(lc, body);
+	} else if (statusCode == 401) {
+		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
 	} else {
 		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http error");
 	}
@@ -78,12 +81,7 @@ static void belle_request_process_auth_requested(void *ctx, belle_sip_auth_event
 	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
 	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(lc, realm, username, domain, algorithm, TRUE);
-
-	if (auth_info) {
-		linphone_auth_info_fill_belle_sip_event(auth_info, event);
-	} else {
-		linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "http auth requested");
-	}
+	linphone_auth_info_fill_belle_sip_event(auth_info, event);
 }
 
 int linphone_remote_provisioning_download_and_apply(LinphoneCore *lc, const char *remote_provisioning_uri) {
