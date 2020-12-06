@@ -205,20 +205,7 @@ static void process_auth_requested_from_post_xml_rpc_request(void *data, belle_s
 	const char *algorithm = belle_sip_auth_event_get_algorithm(event);
 
 	const LinphoneAuthInfo *auth_info = _linphone_core_find_auth_info(request->core, realm, username, domain, algorithm, TRUE);
-
-	if (auth_info) {
-		linphone_auth_info_fill_belle_sip_event(auth_info, event);
-	} else {
-		ms_error("Authentication error during XML-RPC request sending");
-		if (!linphone_xml_rpc_request_aborted(request)){
-			request->status = LinphoneXmlRpcStatusFailed;
-			if (request->callbacks->response != NULL) {
-				request->callbacks->response(request);
-			}
-			NOTIFY_IF_EXIST(Response, response, request)
-		}
-		linphone_xml_rpc_request_unref(request);
-	}
+	linphone_auth_info_fill_belle_sip_event(auth_info, event);
 }
 
 static void parse_valid_xml_rpc_response(LinphoneXmlRpcRequest *request, const char *response_body) {
@@ -315,7 +302,11 @@ static void process_response_from_post_xml_rpc_request(void *data, const belle_h
 			if (body) request->raw_response = bctbx_strdup(body);
 			parse_valid_xml_rpc_response(request, body);
 		} else {
-			ms_error("process_response_from_post_xml_rpc_request(): error code = %i", code);
+			if (code == 401) {
+				ms_error("Authentication error during XML-RPC request sending");
+			} else {
+				ms_error("process_response_from_post_xml_rpc_request(): error code = %i", code);
+			}
 			notify_xml_rpc_error(request);
 		}
 	}
