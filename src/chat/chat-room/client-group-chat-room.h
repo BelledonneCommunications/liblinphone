@@ -88,7 +88,6 @@ public:
 	void join () override;
 	void leave () override;
 	void exhume ();
-	void onConferenceExhumed (const IdentityAddress &addr);
 	
 	void enableEphemeral (bool ephem, bool updateDb) override;
 	bool ephemeralEnabled () const override;

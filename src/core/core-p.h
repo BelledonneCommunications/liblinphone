@@ -144,7 +144,8 @@ public:
 	std::shared_ptr<AbstractChatRoom> findExhumableOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
-		bool encrypted);
+		bool encrypted) const;
+	std::shared_ptr<AbstractChatRoom> findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const;
 
 	void doLater(const std::function<void ()> &something);
 	belle_sip_main_loop_t *getMainLoop();
