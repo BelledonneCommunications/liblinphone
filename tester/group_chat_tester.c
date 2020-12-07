@@ -4376,6 +4376,123 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void exhume_one_to_one_chat_room_3(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	LinphoneChatRoom *marieOneToOneCr = NULL, *paulineOneToOneCr = NULL;
+	LinphoneAddress *confAddr = NULL, *exhumedConfAddr = NULL;
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	initialMarieStats = marie->stat;
+	initialPaulineStats = pauline->stat;
+	marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+	
+	if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+	confAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+	paulineOneToOneCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, "one to one", 1, FALSE);
+
+	LinphoneChatMessage *message = linphone_chat_room_create_message_from_utf8(paulineOneToOneCr, "Hasta la vista, baby.");
+	linphone_chat_message_send(message);
+	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 1, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 1, 5000));
+	linphone_chat_message_unref(message);
+
+	// Pauline goes offline
+	int dummy = 0;
+	linphone_core_set_network_reachable(pauline->lc, FALSE);
+	wait_for_list(coresList, &dummy, 1, 2000);
+	
+	if (marieOneToOneCr) {
+		LinphoneChatMessage *offline_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'll be back.");
+		linphone_chat_message_send(offline_message);
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 1, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 1, 5000));
+		linphone_chat_message_unref(offline_message);
+
+		linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+		/* The chatroom from Pauline won't be terminated as it is offline */
+		BC_ASSERT_FALSE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+
+		participantsAddresses = NULL;
+		initialMarieStats = marie->stat;
+		participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+		marieOneToOneCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, "one to one", FALSE);
+		wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000);
+		if (!BC_ASSERT_PTR_NOT_NULL(marieOneToOneCr)) goto end;
+		
+		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+		BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
+
+		exhumedConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(marieOneToOneCr));
+		BC_ASSERT_PTR_NOT_NULL(exhumedConfAddr);
+
+		if (exhumedConfAddr) {
+			LinphoneChatMessage *exhume_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "I'm back.");
+			linphone_chat_message_send(exhume_message);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 5000));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+			linphone_chat_message_unref(exhume_message);
+
+			// Pauline goes back online
+			linphone_core_set_network_reachable(pauline->lc, TRUE);
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+			BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
+
+			int pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr);
+			BC_ASSERT_EQUAL(pauline_messages, 3, int , "%d");
+
+			int marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
+			BC_ASSERT_EQUAL(marie_messages, 1, int , "%d");
+
+			LinphoneChatMessage *post_exhume_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "Sarah Connor ?");
+			linphone_chat_message_send(post_exhume_message);
+			BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 3, 5000));
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 3, 5000));
+			linphone_chat_message_unref(post_exhume_message);
+
+			pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr);
+			BC_ASSERT_EQUAL(pauline_messages, 4, int , "%d");
+
+			marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
+			BC_ASSERT_EQUAL(marie_messages, 2, int , "%d");
+		}
+
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_empty_chat_rooms", 0);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
+		const bctbx_list_t *pauline_chat_rooms = linphone_core_get_chat_rooms(pauline->lc);
+		BC_ASSERT_EQUAL(bctbx_list_size(pauline_chat_rooms), 1, int , "%d");
+
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "hide_empty_chat_rooms", 0);
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
+		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
+		BC_ASSERT_EQUAL(bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+	}
+
+end:
+	if (confAddr) linphone_address_unref(confAddr);
+	if (exhumedConfAddr) linphone_address_unref(exhumedConfAddr);
+	if (marieOneToOneCr) linphone_core_manager_delete_chat_room(marie, marieOneToOneCr, coresList);
+	if (paulineOneToOneCr) linphone_core_manager_delete_chat_room(pauline, paulineOneToOneCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void group_chat_room_new_device_after_creation (void) {
 	LinphoneCoreManager *marie1 = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline1 = linphone_core_manager_create("pauline_rc");
@@ -6217,6 +6334,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Find one-to-one chat room", find_one_to_one_chat_room),
 	TEST_NO_TAG("Exhumed one-to-one chat room 1", exhume_one_to_one_chat_room_1),
 	TEST_NO_TAG("Exhumed one-to-one chat room 2", exhume_one_to_one_chat_room_2),
+	TEST_NO_TAG("Exhumed one-to-one chat room 3", exhume_one_to_one_chat_room_3),
 	TEST_NO_TAG("New device after group chat room creation", group_chat_room_new_device_after_creation),
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
