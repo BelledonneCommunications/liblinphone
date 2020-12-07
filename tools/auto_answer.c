@@ -155,7 +155,7 @@ int main(int argc, char *argv[]){
 			payload_type_set_recv_fmtp(pt, "stereo=1");
 		}
 		linphone_core_set_play_file(lc, media_file);
-		linphone_core_set_preferred_video_size_by_name(lc, "720p");
+		linphone_core_set_preferred_video_definition_by_name(lc, "720p");
 	}
 
 	{

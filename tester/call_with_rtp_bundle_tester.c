@@ -120,8 +120,8 @@ static void audio_video_call(const params_t *params) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 	
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "QVGA");
-	linphone_core_set_preferred_video_size_by_name(pauline->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "QVGA");
+	linphone_core_set_preferred_video_definition_by_name(pauline->lc, "QVGA");
 
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_set_video_device(pauline->lc, "Mire: Mire (synthetic moving picture)");

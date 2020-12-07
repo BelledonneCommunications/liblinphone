@@ -473,7 +473,7 @@ static void video_bandwidth_estimation (void) {
 	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_video_activation_policy_unref(pol);
 
-	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
+	linphone_core_set_preferred_video_definition_by_name(marie->lc, "vga");
 	simparams.mode = OrtpNetworkSimulatorOutbound;
 	simparams.enabled = TRUE;
 	simparams.max_bandwidth = 300000;
