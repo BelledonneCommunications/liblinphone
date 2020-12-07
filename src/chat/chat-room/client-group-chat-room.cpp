@@ -196,7 +196,7 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 	if (newState == CallSession::State::Connected) {
 		if (q->getState() == ConferenceInterface::State::CreationPending) {
 			if (exhumePending) {
-				onChatRoomExhumed(*session->getRemoteContactAddress());
+				onLocallyExhumedConference(*session->getRemoteContactAddress());
 			} else {
 				onChatRoomCreated(*session->getRemoteContactAddress());
 			}
@@ -209,7 +209,25 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			});
 		}
 	} else if (newState == CallSession::State::End) {
-		q->setState(ConferenceInterface::State::TerminationPending);
+		const auto &remoteAddress = session->getRemoteAddress();
+		ConferenceAddress remoteConferenceAddress = ConferenceAddress(*remoteAddress);
+		bool found = false;
+		for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+			ConferenceId confId = static_cast<ConferenceId>(*it);
+			if (confId.getPeerAddress() == remoteConferenceAddress) {
+				lInfo() << "Found previous chat room conference ID [" << confId << "] for chat room with current ID [" << q->getConferenceId() << "]";
+				removeConferenceIdFromPreviousList(confId);
+				found = true;
+				break;
+			}
+		}
+
+		if (found) {
+			/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
+			lInfo() << "Chat room [" << remoteConferenceAddress << "] from before the exhume has been terminated";
+		} else {
+			q->setState(ConferenceInterface::State::TerminationPending);
+		}
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ConferenceInterface::State::TerminationPending) {
 			if (session->getReason() == LinphoneReasonNone
@@ -764,22 +782,11 @@ void ClientGroupChatRoomPrivate::sendChatMessage (const shared_ptr<ChatMessage> 
 	}
 }
 
-void ClientGroupChatRoomPrivate::onChatRoomExhumed (const Address &remoteContact) {
+// Will be called on A when A is sending a message into a chat room with B previously terminated by B
+void ClientGroupChatRoomPrivate::onLocallyExhumedConference (const Address &remoteContact) {
 	L_Q();
 
 	IdentityAddress addr(remoteContact);
-	q->onConferenceExhumed(addr);
-
-	lInfo() << "Found " << pendingExhumeMessages.size() << " messages waiting for exhume";
-	for (auto &chatMessage : pendingExhumeMessages) {
-		chatMessage->getPrivate()->setChatRoom(q->getSharedFromThis());
-		ChatRoomPrivate::sendChatMessage(chatMessage);
-	}
-	pendingExhumeMessages.clear();
-	exhumePending = false;
-}
-
-void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
 	const auto &conference = getConference();
 	ConferenceId newConfId = ConferenceId(addr, conference->getConferenceId().getLocalAddress());
 	lInfo() << "Conference [" << conference->getConferenceId() << "] has been exhumed into [" << newConfId << "]";
@@ -795,15 +802,31 @@ void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
 	getCore()->getPrivate()->updateChatRoomConferenceId(getSharedFromThis(), oldConfId);
 	
 	setState(ConferenceInterface::State::Created);
+
+	lInfo() << "Found " << pendingExhumeMessages.size() << " messages waiting for exhume";
+	for (auto &chatMessage : pendingExhumeMessages) {
+		chatMessage->getPrivate()->setChatRoom(q->getSharedFromThis());
+		ChatRoomPrivate::sendChatMessage(chatMessage);
+	}
+	pendingExhumeMessages.clear();
+	exhumePending = false;
 }
 
-void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
+// Will be called on A when B exhumes a chat room previously terminated by B
+void ClientGroupChatRoomPrivate::onRemoteExhumedConference (SalCallOp *op) {
 	L_Q();
 
-	ConferenceAddress addr(op->getRemoteContact());
 	const auto &conference = q->getConference();
-	ConferenceId newConfId = ConferenceId(addr, conference->getConferenceId().getLocalAddress());
-	lInfo() << "Conference [" << conference->getConferenceId() << "] is being exhumed into [" << newConfId << "]";
+	ConferenceId oldConfId = conference->getConferenceId();
+
+	if (q->getState() != ChatRoom::State::Terminated) {
+		lWarning() << "Conference [" << oldConfId << "] is being exhumed but wasn't terminated first!";
+		addConferenceIdToPreviousList(oldConfId);
+	}
+
+	ConferenceAddress addr(op->getRemoteContact());
+	ConferenceId newConfId = ConferenceId(addr, oldConfId.getLocalAddress());
+	lInfo() << "Conference [" << oldConfId << "] is being exhumed into [" << newConfId << "]";
 
 	conference->setConferenceAddress(addr);
 	static_pointer_cast<RemoteConference>(conference)->confParams->setConferenceAddress(addr);
@@ -811,17 +834,28 @@ void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
 	static_pointer_cast<RemoteConference>(conference)->focus->clearDevices();
 	static_pointer_cast<RemoteConference>(conference)->focus->addDevice(addr);
 
-	ConferenceId oldConfId = conference->getConferenceId();
 	conference->setConferenceId(newConfId);
 	q->getCore()->getPrivate()->updateChatRoomConferenceId(q->getSharedFromThis(), oldConfId);
+	if (q->getState() != ChatRoom::State::Terminated) {
+		// Wait for chat room to have been updated before inserting the previous ID in db
+		q->getCore()->getPrivate()->mainDb->insertNewPreviousConferenceId(newConfId, oldConfId);
+	}
 
 	confirmJoining(op);
 	
 	q->setState(ConferenceInterface::State::Created);
 
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->unsubscribe(); // Required for next subscribe to be sent
 	q->getConference()->setLastNotify(0);
 	q->getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(q->getConference())->eventHandler.get());
 	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->subscribe(q->getConferenceId());
+}
+
+void ClientGroupChatRoomPrivate::removeConferenceIdFromPreviousList(const ConferenceId& confId) {
+	L_Q();
+
+	previousConferenceIds.remove(confId);
+	q->getCore()->getPrivate()->mainDb->removePreviousConferenceId(confId);
 }
 
 // -----------------------------------------------------------------------------

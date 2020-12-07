@@ -31,6 +31,7 @@
 #include "chat/chat-room/chat-room-p.h"
 #ifdef HAVE_ADVANCED_IM
 #include "chat/chat-room/client-group-chat-room.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 #include "chat/chat-room/server-group-chat-room.h"
 #endif
 #include "conference/participant-device.h"
@@ -2193,6 +2194,21 @@ void MainDb::init () {
 			"    ON DELETE CASCADE"
 			") " + charset;
 
+		*session <<
+			"CREATE TABLE IF NOT EXISTS one_to_one_chat_room_previous_conference_id ("
+			"  id" + primaryKeyStr("INT UNSIGNED") + ","
+
+			"  sip_address_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+			"  chat_room_id" + primaryKeyRefStr("BIGINT UNSIGNED") + " NOT NULL,"
+
+			"  FOREIGN KEY (sip_address_id)"
+			"    REFERENCES sip_address(id)"
+			"    ON DELETE CASCADE,"
+			"  FOREIGN KEY (chat_room_id)"
+			"    REFERENCES chat_room(id)"
+			"    ON DELETE CASCADE"
+			") " + charset;
+
 		d->updateSchema();
 
 		d->updateModuleVersion("events", ModuleVersionEvents);
@@ -3377,6 +3393,20 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 						? ConferenceInterface::State::Terminated
 						: ConferenceInterface::State::Created
 					);
+
+					if (capabilities & ChatRoom::CapabilitiesMask(ChatRoom::Capabilities::OneToOne)) {
+						// TODO: load previous IDs if any
+						static const string query = "SELECT sip_address.value FROM one_to_one_chat_room_previous_conference_id, sip_address"
+							" WHERE chat_room_id = :chatRoomId"
+							" AND sip_address_id = sip_address.id";
+						soci::rowset<soci::row> rows = (session->prepare << query, soci::use(dbChatRoomId));
+						for (const auto &row : rows) {
+							ConferenceId previousId = ConferenceId(ConferenceAddress(row.get<string>(0)), conferenceId.getLocalAddress());
+							lInfo() << "Keeping around previous chat room ID [" << previousId << "] in case BYE is received for exhumed chat room [" << conferenceId << "]";
+							clientGroupChatRoom->getPrivate()->addConferenceIdToPreviousList(previousId);
+						}
+					}
+
 				} else {
 					auto serverGroupChatRoom = std::make_shared<ServerGroupChatRoom>(
 						core,
@@ -3424,6 +3454,54 @@ list<shared_ptr<AbstractChatRoom>> MainDb::getChatRooms () const {
 #endif
 }
 
+void MainDbPrivate::insertNewPreviousConferenceId(const ConferenceId& currentConfId, const ConferenceId& previousConfId) {
+#ifdef HAVE_DB_STORAGE
+	const long long &previousConferenceSipAddressId = selectSipAddressId(previousConfId.getPeerAddress().asString());
+	const long long &chatRoomId = selectChatRoomId(currentConfId);
+
+	*dbSession.getBackendSession() << "INSERT INTO one_to_one_chat_room_previous_conference_id ("
+	"  chat_room_id, sip_address_id"
+	") VALUES ("
+	"  :chatRoomId, :previousConferenceSipAddressId"
+	")",
+	soci::use(chatRoomId), soci::use(previousConferenceSipAddressId);
+#endif
+}
+
+void MainDb::insertNewPreviousConferenceId(const ConferenceId& currentConfId, const ConferenceId& previousConfId) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		lInfo() << "Inserting previous conf ID [" << previousConfId << "] in database for [" << currentConfId << "]";
+		d->insertNewPreviousConferenceId(currentConfId, previousConfId);		
+		tr.commit();
+	};
+#endif
+}
+
+void MainDbPrivate::removePreviousConferenceId(const ConferenceId& previousConfId) {
+#ifdef HAVE_DB_STORAGE
+	const long long &previousConferenceSipAddressId = selectSipAddressId(previousConfId.getPeerAddress().asString());
+
+	*dbSession.getBackendSession() << "DELETE FROM one_to_one_chat_room_previous_conference_id WHERE "
+	"sip_address_id = :previousConferenceSipAddressId",
+	soci::use(previousConferenceSipAddressId);
+#endif
+}
+
+void MainDb::removePreviousConferenceId(const ConferenceId& previousConfId) {
+#ifdef HAVE_DB_STORAGE
+	L_DB_TRANSACTION {
+		L_D();
+
+		lInfo() << "Removing previous conf ID [" << previousConfId << "] from database";
+		d->removePreviousConferenceId(previousConfId);
+		tr.commit();
+	};
+#endif
+}
+
 void MainDb::insertChatRoom (const shared_ptr<AbstractChatRoom> &chatRoom, unsigned int notifyId) {
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
@@ -3455,18 +3533,21 @@ void MainDb::deleteChatRoom (const ConferenceId &conferenceId) {
 #endif
 }
 
-void MainDb::updateChatRoomConferenceId (ConferenceId oldConferenceId, const ConferenceId &newConferenceId) {
+void MainDb::updateChatRoomConferenceId (const ConferenceId oldConferenceId, const ConferenceId &newConferenceId) {
 #ifdef HAVE_DB_STORAGE
 	L_DB_TRANSACTION {
 		L_D();
 
 		const long long &peerSipAddressId = d->insertSipAddress(newConferenceId.getPeerAddress().asString());
-
 		const long long &dbChatRoomId = d->selectChatRoomId(oldConferenceId);
+
 		*d->dbSession.getBackendSession() << "UPDATE chat_room"
 			" SET peer_sip_address_id = :peerSipAddressId"
 			" WHERE id = :chatRoomId", soci::use(peerSipAddressId), soci::use(dbChatRoomId);
+
 		tr.commit();
+
+		d->cache(newConferenceId, dbChatRoomId);
 	};
 #endif
 }
