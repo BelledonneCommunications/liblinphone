@@ -176,6 +176,9 @@ private:
 		time_t stateChangeTime
 	);
 
+	void insertNewPreviousConferenceId(const ConferenceId& currentConfId, const ConferenceId& previousConfId);
+	void removePreviousConferenceId(const ConferenceId& confId);
+
 	// ---------------------------------------------------------------------------
 	// Cache API.
 	// ---------------------------------------------------------------------------
