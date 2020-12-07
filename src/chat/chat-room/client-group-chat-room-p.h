@@ -62,6 +62,10 @@ public:
 	void onExhumingConference (SalCallOp *op);
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
 
+	std::list<ConferenceId> getPreviousConferenceIds() const {
+		return previousConferenceIds;
+	};
+
 private:
 	void acceptSession (const std::shared_ptr<CallSession> &session);
 
@@ -76,6 +80,7 @@ private:
 
 	bool exhumePending = false;
 	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
+	std::list<ConferenceId> previousConferenceIds;
 	
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
 };

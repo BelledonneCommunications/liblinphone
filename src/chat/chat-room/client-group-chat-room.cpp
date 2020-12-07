@@ -209,7 +209,23 @@ void ClientGroupChatRoomPrivate::onCallSessionStateChanged (
 			});
 		}
 	} else if (newState == CallSession::State::End) {
-		q->setState(ConferenceInterface::State::TerminationPending);
+		const auto &remoteAddress = session->getRemoteAddress();
+		bool found = false;
+		for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+			ConferenceId confId = static_cast<ConferenceId>(*it);
+			if (remoteAddress->weakEqual(confId.getPeerAddress())) {
+				previousConferenceIds.remove(confId);
+				found = true;
+				break;
+			}
+		}
+
+		if (found) {
+			/* This is the case where we are accepting a BYE for an already exhumed chat room, don't change it's state */
+			lInfo() << "Chat room from before the exhume has been terminated";
+		} else {
+			q->setState(ConferenceInterface::State::TerminationPending);
+		}
 	} else if (newState == CallSession::State::Released) {
 		if (q->getState() == ConferenceInterface::State::TerminationPending) {
 			if (session->getReason() == LinphoneReasonNone
@@ -800,10 +816,16 @@ void ClientGroupChatRoom::onConferenceExhumed (const IdentityAddress &addr) {
 void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
 	L_Q();
 
-	ConferenceAddress addr(op->getRemoteContact());
 	const auto &conference = q->getConference();
-	ConferenceId newConfId = ConferenceId(addr, conference->getConferenceId().getLocalAddress());
-	lInfo() << "Conference [" << conference->getConferenceId() << "] is being exhumed into [" << newConfId << "]";
+	ConferenceId oldConfId = conference->getConferenceId();
+	if (q->getState() != ChatRoom::State::Terminated) {
+		lWarning() << "Conference [" << oldConfId << "] is being exhumed but wasn't terminated first!";
+		previousConferenceIds.push_back(oldConfId);
+	}
+
+	ConferenceAddress addr(op->getRemoteContact());
+	ConferenceId newConfId = ConferenceId(addr, oldConfId.getLocalAddress());
+	lInfo() << "Conference [" << oldConfId << "] is being exhumed into [" << newConfId << "]";
 
 	conference->setConferenceAddress(addr);
 	static_pointer_cast<RemoteConference>(conference)->confParams->setConferenceAddress(addr);
@@ -811,7 +833,6 @@ void ClientGroupChatRoomPrivate::onExhumingConference (SalCallOp *op) {
 	static_pointer_cast<RemoteConference>(conference)->focus->clearDevices();
 	static_pointer_cast<RemoteConference>(conference)->focus->addDevice(addr);
 
-	ConferenceId oldConfId = conference->getConferenceId();
 	conference->setConferenceId(newConfId);
 	q->getCore()->getPrivate()->updateChatRoomConferenceId(q->getSharedFromThis(), oldConfId);
 
