@@ -58,9 +58,19 @@ public:
 	void onCallSessionStateChanged (const std::shared_ptr<CallSession> &session, CallSession::State state, const std::string &message) override;
 
 	void onChatRoomCreated (const Address &remoteContact);
-	void onChatRoomExhumed (const Address &remoteContact);
-	void onExhumingConference (SalCallOp *op);
+	void onExhumedConference(const ConferenceId& oldConfId, const ConferenceId& newConfId);
+	void onLocallyExhumedConference (const Address &remoteContact);
+	void onRemotelyExhumedConference (SalCallOp *op);
 	void sendChatMessage (const std::shared_ptr<ChatMessage> &chatMessage) override;
+
+	// 1-1 exhume related
+	const std::list<ConferenceId>& getPreviousConferenceIds() const {
+		return previousConferenceIds;
+	};
+	void addConferenceIdToPreviousList(const ConferenceId& confId) {
+		previousConferenceIds.push_back(confId);
+	}
+	void removeConferenceIdFromPreviousList(const ConferenceId& confId);
 
 private:
 	void acceptSession (const std::shared_ptr<CallSession> &session);
@@ -74,8 +84,10 @@ private:
 	bool isEphemeral = false;
 	long ephemeralLifetime = 86400;  //24 hours = 86400s
 
-	bool exhumePending = false;
+	// 1-1 exhume related
+	bool localExhumePending = false;
 	std::list<std::shared_ptr<ChatMessage>> pendingExhumeMessages;
+	std::list<ConferenceId> previousConferenceIds;
 	
 	L_DECLARE_PUBLIC(ClientGroupChatRoom);
 };
