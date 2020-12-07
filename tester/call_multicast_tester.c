@@ -108,7 +108,7 @@ static void early_media_with_multicast_base(bool_t video) {
 
 		// important: VP8 has really poor performances with the mire camera, at least
 		// on iOS - so when ever h264 is available, let's use it instead
-		if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+		if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 			disable_all_video_codecs_except_one(pauline->lc,"h264");
 			disable_all_video_codecs_except_one(pauline2->lc,"h264");
 			disable_all_video_codecs_except_one(marie->lc,"h264");

@@ -46,6 +46,13 @@ LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_ref(LinphonePayloadTy
 LINPHONE_PUBLIC void linphone_payload_type_unref(LinphonePayloadType *payload_type);
 
 /**
+ * Clones a #LinphonePayloadType object.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return a new #LinphonePayloadType object @notnil
+ */
+LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_clone(const LinphonePayloadType *payload_type);
+
+/**
  * Get the type of a payload type.
  * @param payload_type The payload type. @notnil
  * @return The type of the payload e.g. PAYLOAD_AUDIO_CONTINUOUS or PAYLOAD_VIDEO.
@@ -174,6 +181,22 @@ LINPHONE_PUBLIC bool_t linphone_payload_type_is_vbr(const LinphonePayloadType *p
  */
 LINPHONE_PUBLIC bool_t linphone_payload_type_is_usable(const LinphonePayloadType *payload_type);
 
+// Methods used by testers
+/**
+ * Get the AVPF parameters.
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return The AVPF parameters.
+ * @donotwrap
+ */
+LINPHONE_PUBLIC PayloadTypeAvpfParams linphone_payload_type_get_avpf_params(const LinphonePayloadType *payload_type);
+
+/**
+ * Get ORTP payload type associated to Linphone payload type
+ * @param payload_type the #LinphonePayloadType object @notnil
+ * @return ORTP payload. @notnil
+ * @donotwrap
+ */
+LINPHONE_PUBLIC OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *payload_type);
 
 #ifdef __cplusplus
 }

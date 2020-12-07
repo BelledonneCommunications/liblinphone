@@ -90,12 +90,12 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 			 * Enable ICE and many codec to make the SIP message bigger*/
 			linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
 			linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
-			linphone_core_enable_payload_type(pauline->lc,
-				linphone_core_find_payload_type(pauline->lc, "speex", 32000, 1), TRUE);
-			linphone_core_enable_payload_type(pauline->lc,
-				linphone_core_find_payload_type(pauline->lc, "speex", 16000, 1), TRUE);
-			linphone_core_enable_payload_type(pauline->lc,
-				linphone_core_find_payload_type(pauline->lc, "G722", 8000, 1), TRUE);
+			linphone_payload_type_enable(
+				linphone_core_get_payload_type(pauline->lc, "speex", 32000, 1), TRUE);
+			linphone_payload_type_enable(
+				linphone_core_get_payload_type(pauline->lc, "speex", 16000, 1), TRUE);
+			linphone_payload_type_enable(
+				linphone_core_get_payload_type(pauline->lc, "G722", 8000, 1), TRUE);
 		}
 
 		if (tunnel_mode != LinphoneTunnelModeDisable){

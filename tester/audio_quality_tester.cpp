@@ -72,7 +72,7 @@ static void completion_cb(void *user_data, int percentage){
 static void audio_call_stereo_call(const char *codec_name, int clock_rate, int bitrate_override, bool_t stereo) {
 	LinphoneCoreManager* marie;
 	LinphoneCoreManager* pauline;
-	PayloadType *pt;
+	LinphonePayloadType *pt;
 	char *stereo_file = bc_tester_res("sounds/vrroom.wav");
 	char *recordpath = bc_tester_file("stereo-record.wav");
 	bool_t audio_cmp_failed = FALSE;
@@ -83,16 +83,16 @@ static void audio_call_stereo_call(const char *codec_name, int clock_rate, int b
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	/*make sure we have opus*/
-	pt = linphone_core_find_payload_type(marie->lc, codec_name, clock_rate, 2);
+	pt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
 	if (!pt) {
 		ms_warning("%s not available, stereo with %s not tested.",codec_name, codec_name);
 		goto end;
 	}
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, pt, bitrate_override);
-	pt = linphone_core_find_payload_type(pauline->lc, codec_name, clock_rate, 2);
-	if (stereo) payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
-	if (bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, pt, bitrate_override);
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(pt, bitrate_override);
+	pt = linphone_core_get_payload_type(pauline->lc, codec_name, clock_rate, 2);
+	if (stereo) linphone_payload_type_set_recv_fmtp(pt, "stereo=1;sprop-stereo=1");
+	if (bitrate_override) linphone_payload_type_set_normal_bitrate(pt, bitrate_override);
 
 	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
 	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
@@ -159,7 +159,7 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 
 #if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	OrtpNetworkSimulatorParams simparams = { 0 };
-	PayloadType *mariePt, *paulinePt;
+	LinphonePayloadType *mariePt, *paulinePt;
 	int sampleLength = 6000;
 	std::string recordFileNameRoot = "loss-record.wav", recordFileName, refRecordFileName;
 	FmtpManager marieFmtp, paulineFmtp;
@@ -176,8 +176,8 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	if (!BC_ASSERT_PTR_NOT_NULL(marie) || !BC_ASSERT_PTR_NOT_NULL(pauline)) goto end;
 	
 	/*make sure we have opus*/
-	mariePt = linphone_core_find_payload_type(marie->lc, codec_name, clock_rate, 2);
-	paulinePt = linphone_core_find_payload_type(pauline->lc, codec_name, clock_rate, 2);
+	mariePt = linphone_core_get_payload_type(marie->lc, codec_name, clock_rate, 2);
+	paulinePt = linphone_core_get_payload_type(pauline->lc, codec_name, clock_rate, 2);
 	if (!BC_ASSERT_PTR_NOT_NULL(mariePt) || !BC_ASSERT_PTR_NOT_NULL(paulinePt)) {
 		ms_warning("%s not available, stereo with %s and fec not tested.",codec_name, codec_name);
 		goto end;
@@ -189,8 +189,8 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	}
 	disable_all_audio_codecs_except_one(marie->lc, codec_name, clock_rate);
 	disable_all_audio_codecs_except_one(pauline->lc, codec_name, clock_rate);
-	if(bitrate_override) linphone_core_set_payload_type_bitrate(marie->lc, mariePt, bitrate_override);
-	if(bitrate_override) linphone_core_set_payload_type_bitrate(pauline->lc, paulinePt, bitrate_override);
+	if(bitrate_override) linphone_payload_type_set_normal_bitrate(mariePt, bitrate_override);
+	if(bitrate_override) linphone_payload_type_set_normal_bitrate(paulinePt, bitrate_override);
 	linphone_core_set_use_files(marie->lc, TRUE);
 	linphone_core_set_play_file(marie->lc, referenceFile);
 	linphone_core_set_use_files(pauline->lc, TRUE);
@@ -216,8 +216,8 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 // Compute similarity reference
 			marieFmtp.setFmtp("packetlosspercentage", "0");
 			paulineFmtp = marieFmtp;
-			payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
-			payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
+			linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
+			linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 			refRecordFileName= useinbandfec[inbandIndex]+"_"+std::to_string(lossRates[lossRateIndex])+"_ref_"+recordFileNameRoot;
 			bc_free(recordPath);
 			recordPath = bc_tester_file(refRecordFileName.c_str());
@@ -232,8 +232,8 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 // Set packetloss. Similarity must be greater than having no packetloss
 				marieFmtp.setFmtp("packetlosspercentage", packetLossPercentage[packetLossIndex]);
 				paulineFmtp = marieFmtp;
-				payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
-				payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
+				linphone_payload_type_set_recv_fmtp(mariePt, marieFmtp.toString().c_str());
+				linphone_payload_type_set_recv_fmtp(paulinePt, paulineFmtp.toString().c_str());
 				recordFileName= useinbandfec[inbandIndex]+"_"+std::to_string(lossRates[lossRateIndex])+"_"+packetLossPercentage[packetLossIndex]+"_out_"+recordFileNameRoot;
 				bc_free(recordPath);
 				recordPath = bc_tester_file(recordFileName.c_str());

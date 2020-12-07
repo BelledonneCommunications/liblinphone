@@ -535,7 +535,6 @@ bool_t payload_type_enabled(const OrtpPayloadType *pt);
 
 LinphonePayloadType *linphone_payload_type_new(LinphoneCore *lc, OrtpPayloadType *ortp_pt);
 bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const OrtpPayloadType *pt);
-OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
 char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);

@@ -420,16 +420,16 @@ static void audio_bypass_snd_card_detect(MSSndCardManager *m) {
 }
 
 static void only_enable_payload(LinphoneCore *lc, const char *mime, int rate, int channels) {
-	const MSList *elem = linphone_core_get_audio_codecs(lc);
-	PayloadType *pt;
+	const MSList *elem = linphone_core_get_audio_payload_types(lc);
+	LinphonePayloadType *pt;
 
 	for(; elem != NULL; elem = elem->next) {
-		pt = (PayloadType *)elem->data;
-		linphone_core_enable_payload_type(lc, pt, FALSE);
+		pt = (LinphonePayloadType *)elem->data;
+		linphone_payload_type_enable(pt, FALSE);
 	}
-	pt = linphone_core_find_payload_type(lc, mime, rate, channels);
+	pt = linphone_core_get_payload_type(lc, mime, rate, channels);
 	if (BC_ASSERT_PTR_NOT_NULL(pt)) {
-		linphone_core_enable_payload_type(lc, pt, TRUE);
+		linphone_payload_type_enable(pt, TRUE);
 	}
 }
 
@@ -492,8 +492,7 @@ static void audio_bypass(void) {
 	BC_ASSERT_TRUE(call_ok);
 	if (!call_ok) goto end;
 
-
-	BC_ASSERT_STRING_EQUAL(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie_lc)))->mime_type, "L16");
+	BC_ASSERT_STRING_EQUAL(linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(marie_lc)))), "L16");
 
 	wait_for_until(pauline_lc, marie_lc, NULL, 0, 5000); //hello44100.wav is 4 seconds long
 	end_call(marie, pauline);

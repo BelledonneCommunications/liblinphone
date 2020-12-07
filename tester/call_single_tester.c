@@ -717,7 +717,7 @@ static void call_with_specified_codec_bitrate(void) {
 	 Note that a play file is already set by linphone_core_manager_new() (but not used)*/
 	linphone_core_set_use_files(marie->lc, TRUE);
 
-	if (linphone_core_find_payload_type(marie->lc,codec,rate,-1)==NULL){
+	if (linphone_core_get_payload_type(marie->lc,codec,rate,-1)==NULL){
 		BC_PASS("opus codec not supported, test skipped.");
 		goto end;
 	}
@@ -725,11 +725,11 @@ static void call_with_specified_codec_bitrate(void) {
 	disable_all_audio_codecs_except_one(marie->lc,codec,rate);
 	disable_all_audio_codecs_except_one(pauline->lc,codec,rate);
 
-	linphone_core_set_payload_type_bitrate(marie->lc,
-		linphone_core_find_payload_type(marie->lc,codec,rate,-1),
+	linphone_payload_type_set_normal_bitrate(
+		linphone_core_get_payload_type(marie->lc,codec,rate,-1),
 		max_bw);
-	linphone_core_set_payload_type_bitrate(pauline->lc,
-		linphone_core_find_payload_type(pauline->lc,codec,rate,-1),
+	linphone_payload_type_set_normal_bitrate(
+		linphone_core_get_payload_type(pauline->lc,codec,rate,-1),
 		min_bw);
 
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
@@ -797,11 +797,11 @@ end:
 
 void disable_all_codecs(const bctbx_list_t* elem, LinphoneCoreManager* call){
 
-	PayloadType *pt;
+	LinphonePayloadType *pt;
 
 	for(;elem!=NULL;elem=elem->next){
-		pt=(PayloadType*)elem->data;
-		linphone_core_enable_payload_type(call->lc,pt,FALSE);
+		pt=(LinphonePayloadType*)elem->data;
+		linphone_payload_type_enable(pt,FALSE);
 	}
 }
 /***
@@ -814,7 +814,7 @@ static void call_with_no_audio_codec(void){
 	LinphoneCoreManager* caller = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall* out_call ;
 
-	const bctbx_list_t* elem =linphone_core_get_audio_codecs(caller->lc);
+	const bctbx_list_t* elem =linphone_core_get_audio_payload_types(caller->lc);
 
 	disable_all_codecs(elem, caller);
 
@@ -1141,31 +1141,31 @@ static void cancelled_call(void) {
 }
 
 void disable_all_audio_codecs_except_one(LinphoneCore *lc, const char *mime, int rate){
-	const bctbx_list_t *elem=linphone_core_get_audio_codecs(lc);
-	PayloadType *pt;
+	const bctbx_list_t *elem=linphone_core_get_audio_payload_types(lc);
+	LinphonePayloadType *pt;
 
 	for(;elem!=NULL;elem=elem->next){
-		pt=(PayloadType*)elem->data;
-		linphone_core_enable_payload_type(lc,pt,FALSE);
+		pt=(LinphonePayloadType*)elem->data;
+		linphone_payload_type_enable(pt,FALSE);
 	}
-	pt=linphone_core_find_payload_type(lc,mime,rate,-1);
+	pt=linphone_core_get_payload_type(lc,mime,rate,-1);
 	if (BC_ASSERT_PTR_NOT_NULL(pt)) {
-		linphone_core_enable_payload_type(lc,pt,TRUE);
+		linphone_payload_type_enable(pt,TRUE);
 	}
 }
 
 void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime) {
 #ifdef VIDEO_ENABLED
-	const bctbx_list_t *codecs = linphone_core_get_video_codecs(lc);
+	const bctbx_list_t *codecs = linphone_core_get_video_payload_types(lc);
 	const bctbx_list_t *it = NULL;
-	PayloadType *pt = NULL;
+	LinphonePayloadType *pt = NULL;
 
 	for(it = codecs; it != NULL; it = it->next) {
-		linphone_core_enable_payload_type(lc, (PayloadType *)it->data, FALSE);
+		linphone_payload_type_enable((LinphonePayloadType *)it->data, FALSE);
 	}
-	pt = linphone_core_find_payload_type(lc, mime, -1, -1);
+	pt = linphone_core_get_payload_type(lc, mime, -1, -1);
 	if (BC_ASSERT_PTR_NOT_NULL(pt)) {
-		linphone_core_enable_payload_type(lc, pt, TRUE);
+		linphone_payload_type_enable(pt, TRUE);
 	}
 #endif
 }
@@ -2680,7 +2680,7 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
 	}
@@ -3063,10 +3063,10 @@ static void call_established_with_complex_rejected_operation(void) {
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
 
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
 
 		/*just to authenticate marie*/
 		info = linphone_core_create_info_message(marie->lc);
@@ -3097,8 +3097,8 @@ static void call_established_with_complex_rejected_operation(void) {
 
 		params=linphone_core_create_call_params(marie->lc,linphone_core_get_current_call(marie->lc));
 		sal_enable_pending_trans_checking(linphone_core_get_sal(marie->lc),FALSE); /*to allow // transactions*/
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),TRUE);
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),FALSE);
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMU",8000,1),TRUE);
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMA",8000,1),FALSE);
 
 		linphone_call_update(linphone_core_get_current_call(marie->lc),params);
 
@@ -3128,10 +3128,10 @@ static void call_established_with_rejected_info_during_reinvite(void) {
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,1));
 
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
 
 		/*just to authenticate marie*/
 		info = linphone_core_create_info_message(marie->lc);
@@ -3169,8 +3169,8 @@ static void call_established_with_rejected_reinvite(void) {
 
 	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
 	if (call_ok){
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
 
 		linphone_call_update(linphone_core_get_current_call(pauline->lc),linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)));
 
@@ -3200,8 +3200,8 @@ static void call_established_with_rejected_incoming_reinvite(void) {
 		/*wait for ACK to be transmitted before going to reINVITE*/
 		wait_for_until(marie->lc,pauline->lc,NULL,0,1000);
 
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
 
 		linphone_call_update(linphone_core_get_current_call(marie->lc),linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)));
 
@@ -3284,7 +3284,7 @@ static void call_established_with_rejected_reinvite_with_error_base(bool_t trans
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 
 	if (call_ok){
-		linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*add PCMA*/
+		linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*add PCMA*/
 
 		if (trans_pending) {
 			LinphoneInfoMessage * info = linphone_core_create_info_message(pauline->lc);
@@ -3475,7 +3475,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
 	}
@@ -3492,8 +3492,8 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 #ifdef VIDEO_ENABLED
 	linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 	if(enableVideo) {
-		if(linphone_core_find_payload_type(marie->lc, video_codec, -1, -1)
-				&& linphone_core_find_payload_type(pauline->lc, video_codec, -1, -1)) {
+		if(linphone_core_get_payload_type(marie->lc, video_codec, -1, -1)
+				&& linphone_core_get_payload_type(pauline->lc, video_codec, -1, -1)) {
 			linphone_call_params_enable_video(marieParams, TRUE);
 			linphone_call_params_enable_video(paulineParams, TRUE);
 			disable_all_video_codecs_except_one(marie->lc, video_codec);
@@ -3623,10 +3623,10 @@ static void call_with_in_dialog_codec_change_base(bool_t no_sdp) {
 	liblinphone_tester_check_rtcp(marie,pauline);
 	params=linphone_core_create_call_params(marie->lc,linphone_core_get_current_call(marie->lc));
 
-	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
-	linphone_core_enable_payload_type(pauline->lc,linphone_core_find_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
-	linphone_core_enable_payload_type(marie->lc,linphone_core_find_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMU",8000,1),FALSE); /*disable PCMU*/
+	linphone_payload_type_enable(linphone_core_get_payload_type(pauline->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
+	linphone_payload_type_enable(linphone_core_get_payload_type(marie->lc,"PCMA",8000,1),TRUE); /*enable PCMA*/
 	if (no_sdp) {
 		linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
 	}
@@ -3636,8 +3636,8 @@ static void call_with_in_dialog_codec_change_base(bool_t no_sdp) {
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,2));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,2));
-	BC_ASSERT_STRING_EQUAL("PCMA",payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))));
-	BC_ASSERT_STRING_EQUAL("PCMA",payload_type_get_mime(linphone_call_params_get_used_audio_codec(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))));
+	BC_ASSERT_STRING_EQUAL("PCMA",linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(marie->lc)))));
+	BC_ASSERT_STRING_EQUAL("PCMA",linphone_payload_type_get_mime_type(linphone_call_params_get_used_audio_payload_type(linphone_call_get_current_params(linphone_core_get_current_call(pauline->lc)))));
 	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 5000);
 	BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(marie),70,int,"%i");
 	BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(pauline),70,int,"%i");
@@ -4048,7 +4048,7 @@ static void call_with_complex_late_offering(void){
 
 		// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
-	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
+	if (linphone_core_get_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
 	}

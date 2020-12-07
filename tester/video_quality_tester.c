@@ -343,7 +343,7 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(int
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
-		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
+		if (linphone_core_get_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
 			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 			linphone_core_enable_video_capture(marie->lc, TRUE);
 			linphone_core_enable_video_display(marie->lc, TRUE);
@@ -396,7 +396,7 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
-		if (linphone_core_find_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
+		if (linphone_core_get_payload_type(marie->lc, video_codec, -1, -1) != NULL) {
 			linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 			linphone_core_enable_video_capture(marie->lc, TRUE);
 			linphone_core_enable_video_display(marie->lc, TRUE);

@@ -226,6 +226,10 @@ const char *linphone_payload_type_get_mime_type(const LinphonePayloadType *pt) {
 	return pt->pt->mime_type;
 }
 
+PayloadTypeAvpfParams linphone_payload_type_get_avpf_params(const LinphonePayloadType *pt) {
+	return pt->pt->avpf;
+}
+
 int linphone_payload_type_get_channels(const LinphonePayloadType *pt) {
 	return pt->pt->channels;
 }
