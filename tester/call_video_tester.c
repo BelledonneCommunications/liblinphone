@@ -1775,9 +1775,8 @@ static void classic_video_entry_phone_setup(void) {
 		/*On Mac OS, set VGA as the prefered size, otherwise we don't benefit from the hardware
 		 * accelerated H264 videotoolbox codec*/
 		if (ms_factory_get_encoder(linphone_core_get_ms_factory(callee_mgr->lc), "H264")->id == MS_VT_H264_ENC_ID){
-			MSVideoSize vsize = MS_VIDEO_SIZE_VGA;
-			linphone_core_set_preferred_video_size(callee_mgr->lc, vsize);
-			linphone_core_set_preferred_video_size(caller_mgr->lc, vsize);
+			linphone_core_set_preferred_video_definition_by_name(callee_mgr->lc, "vga");
+			linphone_core_set_preferred_video_definition_by_name(caller_mgr->lc, "vga");
 			linphone_core_set_download_bandwidth(callee_mgr->lc, 512);
 			linphone_core_set_download_bandwidth(caller_mgr->lc, 512);
 			linphone_core_set_upload_bandwidth(callee_mgr->lc, 512);

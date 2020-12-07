@@ -440,8 +440,7 @@ void linphone_core_manager_configure(LinphoneCoreManager *mgr) {
 
 		//Usefull especially for encoders not supporting qcif
 		#ifdef __ANDROID__
-			MSVideoSize vsize = MS_VIDEO_SIZE_CIF;
-			linphone_core_set_preferred_video_size(mgr->lc, vsize);
+			linphone_core_set_preferred_video_definition_by_name(mgr->lc, "cif");
 		#endif
 
 
