@@ -538,15 +538,16 @@ void CorePrivate::replaceChatRoom (const shared_ptr<AbstractChatRoom> &replacedC
 shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 		const IdentityAddress &localAddress,
 		const IdentityAddress &participantAddress,
-		bool encrypted) {
+		bool encrypted) const {
 	lInfo() << "Looking for exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
 	
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
 		const auto &chatRoom = it->second;
 		const IdentityAddress &curLocalAddress = chatRoom->getLocalAddress();
 		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
-		if (chatRoom->getState() == ChatRoom::State::Terminated
-				&& capabilities & ChatRoom::Capabilities::Conference
+		// Don't check if terminated, it can be exhumed before the BYE has been received
+		if (/*chatRoom->getState() == ChatRoom::State::Terminated
+				&& */capabilities & ChatRoom::Capabilities::Conference
 				&& capabilities & ChatRoom::Capabilities::OneToOne
 				&& encrypted == bool(capabilities & ChatRoom::Capabilities::Encrypted)) {
 			if (localAddress.getAddressWithoutGruu() == curLocalAddress.getAddressWithoutGruu()
@@ -558,6 +559,25 @@ shared_ptr<AbstractChatRoom> CorePrivate::findExhumableOneToOneChatRoom (
 
 	lInfo() << "Unable to find exhumable 1-1 chat room with local address [" << localAddress.asString() << "] and participant [" << participantAddress.asString() << "]";
 
+	return nullptr;
+}
+
+shared_ptr<AbstractChatRoom> CorePrivate::findExumedChatRoomFromPreviousConferenceId(const ConferenceId conferenceId) const {
+	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
+		const shared_ptr<AbstractChatRoom> &chatRoom = it->second;
+		ChatRoom::CapabilitiesMask capabilities = chatRoom->getCapabilities();
+
+		// We are looking for a one to one chatroom which isn't basic
+		if ((capabilities & ChatRoom::Capabilities::Basic) || !(capabilities & ChatRoom::Capabilities::OneToOne))
+			continue;
+		
+		const shared_ptr<ClientGroupChatRoom> &clientGroupChatRoom = static_pointer_cast<ClientGroupChatRoom>(chatRoom);
+		list<ConferenceId> previousIds = clientGroupChatRoom->getPrivate()->getPreviousConferenceIds();
+		auto prevIdIt = find(previousIds.begin(), previousIds.end(), conferenceId);
+		if (prevIdIt != previousIds.cend()) {
+			return chatRoom;
+		}
+	}
 	return nullptr;
 }
 
@@ -644,8 +664,15 @@ shared_ptr<AbstractChatRoom> Core::findChatRoom (const ConferenceId &conferenceI
 		return it->second;
 	}
 
+	auto alreadyExhumedOneToOne = d->findExumedChatRoomFromPreviousConferenceId(conferenceId);
+	if (alreadyExhumedOneToOne) {
+		lWarning() << "Found conference id as already exhumed chat room with new conference ID " << alreadyExhumedOneToOne->getConferenceId() << ".";
+		return alreadyExhumedOneToOne;
+	}
+
 	if (logIfNotFound)
 		lInfo() << "Unable to find chat room in RAM: " << conferenceId << ".";
+	
 	return nullptr;
 }
 
