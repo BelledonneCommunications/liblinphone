@@ -244,16 +244,19 @@ end:
 }
 
 static void configure_video_policies_for_network_switch(LinphoneCore *marie, LinphoneCore *pauline) {
-	LinphoneVideoPolicy policy;
-	policy.automatically_accept = FALSE;
-	policy.automatically_initiate = FALSE;
 
 	linphone_core_enable_video_capture(marie, TRUE);
 	linphone_core_enable_video_display(marie, TRUE);
 	linphone_core_enable_video_capture(pauline, TRUE);
 	linphone_core_enable_video_display(pauline, TRUE);
-	linphone_core_set_video_policy(marie, &policy);
-	linphone_core_set_video_policy(pauline, &policy);
+
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, FALSE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, FALSE);
+	linphone_core_set_video_activation_policy(marie, policy);
+	linphone_core_set_video_activation_policy(pauline, policy);
+	linphone_video_activation_policy_unref(policy);
+
 	linphone_config_set_int(linphone_core_get_config(pauline), "sip", "defer_update_default", TRUE);
 }
 

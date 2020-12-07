@@ -191,8 +191,12 @@ static void unsubscribe_while_subscribing(void) {
 static void call_with_presence(void) {
 	LinphoneCoreManager* marie = presence_linphone_core_manager_new("marie");
 	LinphoneCoreManager* pauline = presence_linphone_core_manager_new("pauline");
-	LinphoneVideoPolicy pol={0};
-	linphone_core_set_video_policy(marie->lc,&pol);
+	LinphoneVideoActivationPolicy * marie_policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(marie_policy, FALSE);
+	linphone_video_activation_policy_set_automatically_initiate(marie_policy, FALSE);
+	linphone_core_set_video_activation_policy(marie->lc, marie_policy);
+	linphone_video_activation_policy_unref(marie_policy);
+
 	BC_ASSERT_TRUE(subscribe_to_callee_presence(marie,pauline));
 	BC_ASSERT_TRUE(subscribe_to_callee_presence(pauline,marie));
 

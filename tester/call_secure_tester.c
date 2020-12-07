@@ -482,20 +482,22 @@ static void video_srtp_call_without_audio(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCallParams *pauline_params;
 	const LinphoneCallParams *params;
-	LinphoneVideoPolicy vpol;
-	vpol.automatically_accept = TRUE;
-	vpol.automatically_initiate = TRUE;
 
 	if (!linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionSRTP)) goto end;
 	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionSRTP);
 
-	linphone_core_set_video_policy(marie->lc, &vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 
-	linphone_core_set_video_policy(pauline->lc, &vpol);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
+
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_audio(pauline_params, FALSE);

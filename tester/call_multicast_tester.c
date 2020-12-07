@@ -25,7 +25,6 @@
 
 static void call_multicast_base(const char *marie_rc_file, const char *pauline_rc_file, bool_t video) {
 	LinphoneCoreManager *marie, *pauline;
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 
 	marie = linphone_core_manager_new(marie_rc_file);
 	pauline = linphone_core_manager_new(pauline_rc_file);
@@ -36,13 +35,18 @@ static void call_multicast_base(const char *marie_rc_file, const char *pauline_r
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
 		linphone_core_enable_video_display(pauline->lc, FALSE);
 
-		marie_policy.automatically_initiate=TRUE;
-		marie_policy.automatically_accept=TRUE;
-		pauline_policy.automatically_initiate=TRUE;
-		pauline_policy.automatically_accept=TRUE;
+		LinphoneVideoActivationPolicy * marie_policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(marie_policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(marie_policy, TRUE);
+		linphone_core_set_video_activation_policy(marie->lc, marie_policy);
+		linphone_video_activation_policy_unref(marie_policy);
 
-		linphone_core_set_video_policy(marie->lc,&marie_policy);
-		linphone_core_set_video_policy(pauline->lc,&pauline_policy);
+		LinphoneVideoActivationPolicy * pauline_policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(pauline_policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(pauline_policy, TRUE);
+		linphone_core_set_video_activation_policy(pauline->lc, pauline_policy);
+		linphone_video_activation_policy_unref(pauline_policy);
+
 		linphone_core_set_video_multicast_addr(pauline->lc,"224.1.2.3");
 		linphone_core_enable_video_multicast(pauline->lc,TRUE);
 	}
@@ -86,7 +90,6 @@ static void early_media_with_multicast_base(bool_t video) {
 	LinphoneCoreManager *marie, *pauline, *pauline2;
 	bctbx_list_t* lcs = NULL;
 	int dummy=0;
-	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LpConfig *marie_lp;
 	LinphoneCallParams *params;
 	LinphoneCallStats *stats = NULL;
@@ -122,14 +125,19 @@ static void early_media_with_multicast_base(bool_t video) {
 		linphone_core_set_avpf_mode(pauline2->lc, LinphoneAVPFEnabled);
 		linphone_core_set_avpf_mode(marie->lc, LinphoneAVPFEnabled);
 
-		marie_policy.automatically_initiate=TRUE;
-		marie_policy.automatically_accept=TRUE;
-		pauline_policy.automatically_initiate=TRUE;
-		pauline_policy.automatically_accept=TRUE;
+		LinphoneVideoActivationPolicy * marie_policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(marie_policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(marie_policy, TRUE);
+		linphone_core_set_video_activation_policy(marie->lc, marie_policy);
+		linphone_video_activation_policy_unref(marie_policy);
 
-		linphone_core_set_video_policy(marie->lc,&marie_policy);
-		linphone_core_set_video_policy(pauline->lc,&pauline_policy);
-		linphone_core_set_video_policy(pauline2->lc,&pauline_policy);
+		LinphoneVideoActivationPolicy * pauline_policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(pauline_policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(pauline_policy, TRUE);
+		linphone_core_set_video_activation_policy(pauline->lc, pauline_policy);
+		linphone_core_set_video_activation_policy(pauline2->lc, pauline_policy);
+		linphone_video_activation_policy_unref(pauline_policy);
+
 		linphone_core_set_video_multicast_addr(marie->lc,"224.1.2.3");
 		linphone_core_enable_video_multicast(marie->lc,TRUE);
 	}

@@ -28,7 +28,6 @@
 static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specific_for_video){
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	LinphoneCallParams *params;
 	LinphoneCall *pauline_call, *marie_call;
 	const int bandwidth_limit = 128;
@@ -40,10 +39,13 @@ static void _video_call_with_explicit_bandwidth_limit(bool_t bandwidth_is_specif
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
+
 	
 	disable_all_audio_codecs_except_one(marie->lc, "opus", 48000);
 	disable_all_audio_codecs_except_one(pauline->lc, "opus", 48000);
@@ -121,7 +123,6 @@ static void video_call_with_explicit_bandwidth_limit_for_stream(void){
 static void video_call_with_thin_congestion(void){
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
@@ -130,10 +131,12 @@ static void video_call_with_thin_congestion(void){
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	/*set the video preset to custom so the video quality controller won't update the video size*/
 	linphone_core_set_video_preset(marie->lc, "custom");
@@ -193,7 +196,6 @@ static void call_created(LinphoneCore *lc, LinphoneCall *call) {
 static void video_call_with_high_bandwidth_available(void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 	LinphoneCoreCbs *core_cbs = linphone_factory_create_core_cbs(linphone_factory_get());
 
@@ -203,10 +205,12 @@ static void video_call_with_high_bandwidth_available(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	linphone_core_set_video_preset(marie->lc, "custom");
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
@@ -238,7 +242,6 @@ static void video_call_with_high_bandwidth_available(void) {
 static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int fps, const char *resolution) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
@@ -248,10 +251,13 @@ static void video_call_expected_fps_for_specified_bandwidth(int bandwidth, int f
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
 		linphone_core_enable_video_display(pauline->lc, TRUE);
 
-		pol.automatically_accept = TRUE;
-		pol.automatically_initiate = TRUE;
-		linphone_core_set_video_policy(marie->lc, &pol);
-		linphone_core_set_video_policy(pauline->lc, &pol);
+		LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+		linphone_core_set_video_activation_policy(marie->lc, policy);
+		linphone_core_set_video_activation_policy(pauline->lc, policy);
+		linphone_video_activation_policy_unref(policy);
+
 
 		linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
 		simparams.mode = OrtpNetworkSimulatorOutbound;
@@ -339,7 +345,6 @@ static void video_call_expected_fps_for_high_bandwidth(void) {
 static void video_call_expected_size_for_specified_bandwidth_with_congestion(int bandwidth, int width, int height, const char *resolution, const char *video_codec) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
@@ -352,10 +357,12 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(int
 
 			disable_all_video_codecs_except_one(marie->lc, video_codec);
 
-			pol.automatically_accept = TRUE;
-			pol.automatically_initiate = TRUE;
-			linphone_core_set_video_policy(marie->lc, &pol);
-			linphone_core_set_video_policy(pauline->lc, &pol);
+			LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+			linphone_core_set_video_activation_policy(marie->lc, policy);
+			linphone_core_set_video_activation_policy(pauline->lc, policy);
+			linphone_video_activation_policy_unref(policy);
 
 			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
 
@@ -392,7 +399,6 @@ static void video_call_expected_size_for_specified_bandwidth_with_congestion(int
 static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int width, int height, const char *resolution, const char *video_codec) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	if (ms_factory_get_cpu_count(linphone_core_get_ms_factory(marie->lc)) >= 2) {
@@ -405,10 +411,12 @@ static void video_call_expected_size_for_specified_bandwidth(int bandwidth, int 
 
 			disable_all_video_codecs_except_one(marie->lc, video_codec);
 
-			pol.automatically_accept = TRUE;
-			pol.automatically_initiate = TRUE;
-			linphone_core_set_video_policy(marie->lc, &pol);
-			linphone_core_set_video_policy(pauline->lc, &pol);
+			LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+			linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+			linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+			linphone_core_set_video_activation_policy(marie->lc, policy);
+			linphone_core_set_video_activation_policy(pauline->lc, policy);
+			linphone_video_activation_policy_unref(policy);
 
 			linphone_core_set_preferred_video_size_by_name(marie->lc, resolution);
 
@@ -526,7 +534,6 @@ static void call_with_retransmissions_on_nack(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_marie, *call_pauline;
 	OrtpNetworkSimulatorParams params = { 0 };
-	LinphoneVideoPolicy pol = {0};
 	bool_t call_ok;
 
 	params.enabled = TRUE;
@@ -550,10 +557,12 @@ static void call_with_retransmissions_on_nack(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
@@ -596,7 +605,6 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 	LinphoneCoreManager *pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneCall *call_marie, *call_pauline;
 	OrtpNetworkSimulatorParams params = { 0 };
-	LinphoneVideoPolicy pol = {0};
 	bool_t call_ok;
 
 	params.enabled = TRUE;
@@ -620,15 +628,16 @@ static void call_with_retransmissions_on_nack_with_congestion(void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	/* a VGA key frame is rather big, it has few chances to pass with such a high loss rate. */
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga"); 
-	
-	
+
 	BC_ASSERT_TRUE(call_ok = call(marie, pauline));
 	if (!call_ok) goto end;
 	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1));
@@ -665,7 +674,6 @@ end:
 static void video_call_loss_resilience(bool_t with_avpf) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = {0};
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
@@ -674,10 +682,12 @@ static void video_call_loss_resilience(bool_t with_avpf) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, policy);
+	linphone_core_set_video_activation_policy(pauline->lc, policy);
+	linphone_video_activation_policy_unref(policy);
 
 	linphone_core_set_video_preset(marie->lc, "custom");
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");

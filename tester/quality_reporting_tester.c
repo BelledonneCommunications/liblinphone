@@ -458,7 +458,6 @@ static void quality_reporting_interval_report_video_and_rtt (void) {
 static void video_bandwidth_estimation (void) {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
-	LinphoneVideoPolicy pol = { 0 };
 	OrtpNetworkSimulatorParams simparams = { 0 };
 
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
@@ -467,10 +466,12 @@ static void video_bandwidth_estimation (void) {
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
-	pol.automatically_accept = TRUE;
-	pol.automatically_initiate = TRUE;
-	linphone_core_set_video_policy(marie->lc, &pol);
-	linphone_core_set_video_policy(pauline->lc, &pol);
+	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(pol, TRUE);
+	linphone_core_set_video_activation_policy(marie->lc, pol);
+	linphone_core_set_video_activation_policy(pauline->lc, pol);
+	linphone_video_activation_policy_unref(pol);
 
 	linphone_core_set_preferred_video_size_by_name(marie->lc, "vga");
 	simparams.mode = OrtpNetworkSimulatorOutbound;

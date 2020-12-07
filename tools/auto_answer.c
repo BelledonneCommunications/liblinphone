@@ -73,7 +73,6 @@ static void helper(const char *progname) {
 int main(int argc, char *argv[]){
 	LinphoneCoreVTable vtable={0};
 	LinphoneCore *lc;
-	LinphoneVideoPolicy policy;
 	int i;
 	LinphoneAddress *addr=NULL;
 	LCSipTransports tp;
@@ -82,7 +81,6 @@ int main(int argc, char *argv[]){
 	int max_call_duration=3600;
 	static const char *media_file = NULL;
 
-	policy.automatically_accept=TRUE;
 	signal(SIGINT,stop);
 #ifndef _WIN32
 	signal(SIGUSR1,stats);
@@ -131,7 +129,10 @@ int main(int argc, char *argv[]){
 	lc=linphone_core_new_with_config(&vtable,lp_config,NULL);
 	linphone_core_enable_video_capture(lc,TRUE);
 	linphone_core_enable_video_display(lc,FALSE);
-	linphone_core_set_video_policy(lc,&policy);
+	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
+	linphone_core_set_video_activation_policy(lc, pol);
+	linphone_video_activation_policy_unref(pol);
 	linphone_core_enable_keep_alive(lc,FALSE);
 
 

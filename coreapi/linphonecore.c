@@ -2037,8 +2037,6 @@ static void video_config_read(LinphoneCore *lc){
 #ifdef VIDEO_ENABLED
 	int automatic_video=1;
 	const char *str;
-	LinphoneVideoPolicy vpol;
-	memset(&vpol, 0, sizeof(LinphoneVideoPolicy));
 	build_video_devices_table(lc);
 
 	str = linphone_config_get_string(lc->config, "video", "device", NULL);
@@ -2056,14 +2054,16 @@ static void video_config_read(LinphoneCore *lc){
 #if defined(__ANDROID__) || TARGET_OS_IPHONE
 	automatic_video=0;
 #endif
-	vpol.automatically_initiate = !!linphone_config_get_int(lc->config,"video","automatically_initiate",automatic_video);
-	vpol.automatically_accept = !!linphone_config_get_int(lc->config,"video","automatically_accept",automatic_video);
+	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(pol, !!linphone_config_get_int(lc->config,"video","automatically_accept",automatic_video));
+	linphone_video_activation_policy_set_automatically_initiate(pol, !!linphone_config_get_int(lc->config,"video","automatically_initiate",automatic_video));
+	linphone_core_set_video_activation_policy(lc, pol);
+	linphone_video_activation_policy_unref(pol);
 	linphone_core_enable_video_capture(lc, !!linphone_config_get_int(lc->config,"video","capture",1));
 	linphone_core_enable_video_display(lc, !!linphone_config_get_int(lc->config,"video","display",1));
 	linphone_core_enable_video_preview(lc, !!linphone_config_get_int(lc->config,"video","show_local",0));
 	linphone_core_enable_self_view(lc, !!linphone_config_get_int(lc->config,"video","self_view",1));
 	linphone_core_enable_video_source_reuse(lc, !!linphone_config_get_int(lc->config,"video","reuse_source",0));
-	linphone_core_set_video_policy(lc,&vpol);
 
 	lc->video_conf.retransmission_on_nack_enabled = !!linphone_config_get_int(lc->config,"video","retransmission_on_nack_enabled",0);
 #endif

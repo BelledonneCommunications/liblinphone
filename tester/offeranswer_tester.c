@@ -387,15 +387,18 @@ static void profile_call_base(bool_t avpf1
 	}
 
 	if (enable_video && linphone_core_video_supported(marie->lc)) {
-		LinphoneVideoPolicy policy;
-		policy.automatically_accept = TRUE;
-		policy.automatically_initiate = TRUE;
 		linphone_core_enable_video_capture(marie->lc, TRUE);
 		linphone_core_enable_video_display(marie->lc, TRUE);
-		linphone_core_set_video_policy(marie->lc,&policy);
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
 		linphone_core_enable_video_display(pauline->lc, TRUE);
-		linphone_core_set_video_policy(pauline->lc,&policy);
+
+		LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+		linphone_core_set_video_activation_policy(marie->lc, policy);
+		linphone_core_set_video_activation_policy(pauline->lc, policy);
+		linphone_video_activation_policy_unref(policy);
+
 	}
 
 	if (linphone_core_media_encryption_supported(marie->lc, srtp1)) {
@@ -460,15 +463,17 @@ static void avp_avpf_video_call(void){
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
 
 	if (linphone_core_video_supported(marie->lc)) {
-		LinphoneVideoPolicy policy;
-		policy.automatically_accept = TRUE;
-		policy.automatically_initiate = TRUE;
 		linphone_core_enable_video_capture(marie->lc, TRUE);
 		linphone_core_enable_video_display(marie->lc, TRUE);
-		linphone_core_set_video_policy(marie->lc,&policy);
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
 		linphone_core_enable_video_display(pauline->lc, TRUE);
-		linphone_core_set_video_policy(pauline->lc,&policy);
+
+		LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+		linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+		linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+		linphone_core_set_video_activation_policy(marie->lc, policy);
+		linphone_core_set_video_activation_policy(pauline->lc, policy);
+		linphone_video_activation_policy_unref(policy);
 	}
 
 	if (!BC_ASSERT_TRUE(call(marie, pauline))) goto end;
@@ -696,17 +701,20 @@ static void savpf_dtls_to_avpf_video_call(void) {
 static LinphonePayloadType * configure_core_for_avpf_and_video(LinphoneCore *lc) {
 	LinphoneProxyConfig *lpc;
 	LinphonePayloadType *pt;
-	LinphoneVideoPolicy policy = { 0 };
 
-	policy.automatically_initiate = TRUE;
-	policy.automatically_accept = TRUE;
 	lpc = linphone_core_get_default_proxy_config(lc);
 	linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
 	linphone_core_set_video_device(lc, "StaticImage: Static picture");
 	linphone_core_enable_video_capture(lc, TRUE);
 	linphone_core_enable_video_display(lc, TRUE);
-	linphone_core_set_video_policy(lc, &policy);
+
+	LinphoneVideoActivationPolicy * policy = linphone_factory_create_video_activation_policy(linphone_factory_get());
+	linphone_video_activation_policy_set_automatically_accept(policy, TRUE);
+	linphone_video_activation_policy_set_automatically_initiate(policy, TRUE);
+	linphone_core_set_video_activation_policy(lc, policy);
+	linphone_video_activation_policy_unref(policy);
+
 	pt = linphone_core_get_payload_type(lc, "VP8", 90000, -1);
 	if (pt == NULL) {
 		ms_warning("VP8 codec not available.");
