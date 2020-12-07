@@ -213,29 +213,33 @@ public:
 		configureFocus();
 	}
 private:
+	static void server_core_chat_room_conference_address_generation (LinphoneChatRoom *cr) {
+		Focus *focus = (Focus*)(((LinphoneCoreManager *)linphone_core_get_user_data(linphone_chat_room_get_core(cr)))->user_info);
+		char config_id[6];
+		belle_sip_random_token(config_id,sizeof(config_id));
+		const LinphoneAddress *cAddr = linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(focus->getLc()));
+		Address conference_address = (*L_GET_CPP_PTR_FROM_C_OBJECT(cAddr));
+		conference_address.setUriParam("conf-id",config_id);
+		linphone_chat_room_set_conference_address(cr, L_GET_C_BACK_PTR(&conference_address));
+	}
+
 	static void server_core_chat_room_state_changed (LinphoneCore *core, LinphoneChatRoom *cr, LinphoneChatRoomState state) {
 		Focus *focus = (Focus*)(((LinphoneCoreManager *)linphone_core_get_user_data(core))->user_info);
 		switch (state) {
 			case LinphoneChatRoomStateInstantiated: {
-			if (linphone_chat_room_get_conference_address(cr) == NULL) {
-				char config_id[6];
-				belle_sip_random_token(config_id,sizeof(config_id));
-				const LinphoneAddress *cAddr = linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(focus->getLc()));
-				Address conference_address = (*L_GET_CPP_PTR_FROM_C_OBJECT(cAddr));
-				conference_address.setUriParam("conf-id",config_id);
-				linphone_chat_room_set_conference_address(cr, L_GET_C_BACK_PTR(&conference_address));
 				LinphoneChatRoomCbs *cbs = linphone_factory_create_chat_room_cbs(linphone_factory_get());
 				linphone_chat_room_cbs_set_participant_registration_subscription_requested(cbs, participant_registration_subscription_requested);
+				linphone_chat_room_cbs_set_conference_address_generation(cbs, server_core_chat_room_conference_address_generation);
 				linphone_chat_room_add_callbacks(cr, cbs);
 				linphone_chat_room_cbs_set_user_data(cbs, focus);
 				linphone_chat_room_cbs_unref(cbs);
-			}
 				break;
 		}
 			default:
 				break;
 		}
 	}
+
 	static void participant_registration_subscription_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr) {
 		Focus *focus = (Focus*)(linphone_chat_room_cbs_get_user_data(linphone_chat_room_get_current_callbacks(cr)));
 		const IdentityAddress participant = *L_GET_CPP_PTR_FROM_C_OBJECT(participantAddr);
