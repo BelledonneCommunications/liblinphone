@@ -166,7 +166,7 @@ static void call_received(SalCallOp *h) {
 						endToEndEncrypted == "true");
 					if (chatRoom) {
 						lInfo() << "Found exhumable chat room [" << chatRoom->getConferenceId() << "]";
-						L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->onExhumingConference(h);
+						L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->onRemoteExhumedConference(h);
 
 						linphone_address_unref(toAddr);
 						linphone_address_unref(fromAddr);
