@@ -701,6 +701,14 @@ typedef int (*LinphoneImEncryptionEngineCbsUploadingFileCb)(LinphoneImEncryption
 typedef void (*LinphoneXmlRpcRequestCbsResponseCb)(LinphoneXmlRpcRequest *request);
 
 /**
+ * Callback used to notify a chat room has been exhumed. Internal use only!
+ * @param core #LinphoneCore object @notnil
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @donotwrap
+**/
+typedef void (*LinphoneCoreCbsChatRoomExhumedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room);
+
+/**
  * @}
 **/
 

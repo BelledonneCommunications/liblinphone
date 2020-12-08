@@ -148,7 +148,17 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
 
-	if (!previousSession) {
+	bool found = false;
+	for (auto it = previousConferenceIds.begin(); it != previousConferenceIds.end(); it++) {
+		ConferenceId confId = static_cast<ConferenceId>(*it);
+		if (confId.getPeerAddress() == op->getRemoteContact()) {
+			found = true;
+			break;
+		}
+	}
+
+	// If INVITE is for a previous conference ID, only accept the session to acknowledge the BYE
+	if (!previousSession && !found) {
 		q->setState(ConferenceInterface::State::CreationPending);
 		// Handle participants addition
 		list<IdentityAddress> identAddresses = ClientGroupChatRoom::parseResourceLists(op->getRemoteBody());
