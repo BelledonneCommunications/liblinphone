@@ -137,6 +137,13 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 
 	auto focus = static_pointer_cast<RemoteConference>(q->getConference())->focus;
 	bool previousSession = (focus->getSession() != nullptr);
+
+	if (previousSession) {
+		// Prevents leak
+		focus->getSession()->getPrivate()->getOp()->terminate();
+		focus->getSession()->getPrivate()->getOp()->release();
+	}
+
 	auto session = focus->createSession(*q->getConference().get(), nullptr, false, this);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	session->startIncomingNotification(false);
@@ -153,6 +160,7 @@ void ClientGroupChatRoomPrivate::confirmJoining (SalCallOp *op) {
 			}
 		}
 	}
+
 	acceptSession(session);
 }
 
