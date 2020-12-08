@@ -493,7 +493,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	LinphoneChatMessage *msg = pauline->stat.last_received_chat_message;
 	auto contents = linphone_chat_message_get_contents(msg);
 	BC_ASSERT_PTR_NOT_NULL(contents);
-	BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
+	BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 	auto content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
 	BC_ASSERT_NSTRING_EQUAL(linphone_content_get_file_path(content), receivePaulineFilepath, strlen(receivePaulineFilepath)); // just to check we're on the correct path

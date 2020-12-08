@@ -236,7 +236,7 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 		if (use_multipart_invite_body) {
 			BC_ASSERT_PTR_NOT_NULL(parts);
 			if (parts) {
-				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, int, "%i");
+				BC_ASSERT_EQUAL((int)bctbx_list_size(parts), 1, int, "%i");
 				LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(parts);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				if (content) {
