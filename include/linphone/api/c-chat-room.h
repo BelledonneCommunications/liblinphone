@@ -413,7 +413,7 @@ LINPHONE_PUBLIC const LinphoneAddress *linphone_chat_room_get_conference_address
 /**
  * Get the participant representing myself in the chat room.
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @return The participant representing myself in the conference. @notnil
+ * @return The participant representing myself in the conference or NULL if me is not set. @maybenil
  */
 LINPHONE_PUBLIC LinphoneParticipant *linphone_chat_room_get_me (const LinphoneChatRoom *chat_room);
 

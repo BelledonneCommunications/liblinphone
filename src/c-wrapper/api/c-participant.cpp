@@ -72,7 +72,11 @@ LinphoneParticipantDevice *linphone_participant_find_device (const LinphoneParti
 	char *addrStr = linphone_address_as_string(address);
 	LinphonePrivate::Address deviceAddress(addrStr);
 	bctbx_free(addrStr);
-	return linphone_participant_device_ref (LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress)->toC());
+	std::shared_ptr<LinphonePrivate::ParticipantDevice> device = LinphonePrivate::Participant::toCpp(participant)->findDevice(deviceAddress);
+	if (device) {
+		return device->toC();
+	}
+	return NULL;
 }
 
 time_t linphone_participant_get_creation_time (const LinphoneParticipant *participant) {
