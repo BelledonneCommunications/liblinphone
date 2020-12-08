@@ -577,6 +577,13 @@ void linphone_core_cbs_set_ec_calibration_audio_uninit(LinphoneCoreCbs *cbs, Lin
 	cbs->vtable->ec_calibration_audio_uninit = cb;
 }
 
+LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room_exhumed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_exhumed;
+}
+
+void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb) {
+	cbs->vtable->chat_room_exhumed = cb;
+}
 
 void lc_callback_obj_init(LCCallbackObj *obj,LinphoneCoreCbFunc func,void* ud) {
 	obj->_func=func;

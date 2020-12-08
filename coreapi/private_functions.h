@@ -607,6 +607,7 @@ void linphone_core_notify_qrcode_found(LinphoneCore *lc, const char *result);
 void linphone_core_notify_ec_calibration_result(LinphoneCore *lc, LinphoneEcCalibratorStatus status, int delay_ms);
 void linphone_core_notify_ec_calibration_audio_init(LinphoneCore *lc);
 void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc);
+void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room);
 
 void set_playback_gain_db(AudioStream *st, float gain);
 

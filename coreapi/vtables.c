@@ -380,6 +380,11 @@ void linphone_core_notify_ec_calibration_audio_uninit(LinphoneCore *lc) {
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_chat_room_exhumed(LinphoneCore *lc, LinphoneChatRoom *chat_room) {
+	NOTIFY_IF_EXIST(chat_room_exhumed, lc, chat_room);
+	cleanup_dead_vtable_refs(lc);
+}
+
 static VTableReference * v_table_reference_new(LinphoneCoreCbs *cbs, bool_t internal){
 	VTableReference *ref=ms_new0(VTableReference,1);
 	ref->valid=TRUE;
