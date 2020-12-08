@@ -2644,9 +2644,9 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_send(marie_rtt_message);
 
 			// Read new line character
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_1) + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message1_1) + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message1_2) + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message1_2) + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
 
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));
@@ -2688,9 +2688,9 @@ static void real_time_text_conversation(void) {
 			linphone_chat_message_send(marie_rtt_message);
 
 			// Read new line character
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_1) + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message2_1) + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(marie_chat_room), (char)0x2028, char, "%c");
-			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, strlen(message2_2) + 1, 5000));
+			BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneIsComposingActiveReceived, (int)strlen(message2_2) + 1, 5000));
 			BC_ASSERT_EQUAL(linphone_chat_room_get_char(pauline_chat_room), (char)0x2028, char, "%c");
 
 			BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneMessageReceived, 1));

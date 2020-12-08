@@ -833,7 +833,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			}
 		}
 
-		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)marie.getCore().getChatRooms().size(), 1, int, "%d");
 
 		initialMarieStats = marie.getStats();
 		initialPaulineStats = pauline.getStats();
@@ -854,7 +854,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
 
-		BC_ASSERT_EQUAL(pauline.getCore().getChatRooms().size(), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)pauline.getCore().getChatRooms().size(), 1, int, "%d");
 
 		LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineCr));
 		BC_ASSERT_PTR_NOT_NULL(paulineNewConfAddr);

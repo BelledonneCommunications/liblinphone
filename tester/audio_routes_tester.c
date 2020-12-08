@@ -563,7 +563,7 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 	// load audio devices and get initial number of cards
 	linphone_core_reload_sound_devices(marie->lc);
 	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int native_audio_devices_count = bctbx_list_size(audio_devices);
+	int native_audio_devices_count = (int)bctbx_list_size(audio_devices);
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
 	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
@@ -581,7 +581,7 @@ static void simple_call_with_audio_device_change_base(bool_t before_ringback, bo
 	// Use linphone_core_get_extended_audio_devices instead of linphone_core_get_audio_devices because we added 2 BT devices, therefore we want the raw list
 	// In fact, linphone_core_get_audio_devices returns only 1 device per type
 	audio_devices = linphone_core_get_extended_audio_devices(marie->lc);
-	int audio_devices_count = bctbx_list_size(audio_devices);
+	int audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, (native_audio_devices_count + 2), int, "%d");
 
 	// As new devices are prepended, they can be easily accessed and we do not run the risk of gettting a device whose type is Unknown
