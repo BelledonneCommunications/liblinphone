@@ -850,57 +850,66 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getCMgr()->stat.number_of_LinphoneRegistrationOk, initialPaulineStats.number_of_LinphoneRegistrationOk + 1, 10000));
 
-		paulineCr = check_creation_chat_room_client_side(coresList, pauline.getCMgr(), &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
-
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneConferenceStateCreated, initialPaulineStats.number_of_LinphoneConferenceStateCreated + 1, 5000));
-
+		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneChatRoomConferenceJoined, initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 5000));
 		BC_ASSERT_EQUAL(pauline.getCore().getChatRooms().size(), 1, int, "%d");
 
-		LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineCr));
-		BC_ASSERT_PTR_NOT_NULL(paulineNewConfAddr);
-		if (paulineNewConfAddr) {
-			BC_ASSERT_FALSE(linphone_address_equal(confAddr, paulineNewConfAddr));
-			if (exhumedConfAddr) {
-				BC_ASSERT_TRUE(linphone_address_equal(exhumedConfAddr, paulineNewConfAddr));
+		char *paulineDeviceIdentity = linphone_core_get_device_identity(pauline.getLc());
+		LinphoneAddress *paulineDeviceAddr = linphone_address_new(paulineDeviceIdentity);
+		bctbx_free(paulineDeviceIdentity);
+		paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineDeviceAddr, confAddr, NULL);
+		linphone_address_unref(paulineDeviceAddr);
+		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+
+		if (paulineCr) {
+			LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineCr));
+			BC_ASSERT_PTR_NOT_NULL(paulineNewConfAddr);
+			if (paulineNewConfAddr) {
+				BC_ASSERT_FALSE(linphone_address_equal(confAddr, paulineNewConfAddr));
+				if (exhumedConfAddr) {
+					BC_ASSERT_TRUE(linphone_address_equal(exhumedConfAddr, paulineNewConfAddr));
+				}
 			}
+			linphone_address_unref(paulineNewConfAddr);
+
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
+			BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), initialSubject);
+
+			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
+			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			BC_ASSERT_EQUAL(paulineMsgs, 1, int , "%d");
+
+			LinphoneChatMessage *paulineMsg = linphone_chat_room_create_message_from_utf8(paulineCr, "Sorry I was offline :(");
+			linphone_chat_message_send(paulineMsg);
+			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineMsg] {
+				return (linphone_chat_message_get_state(paulineMsg) == LinphoneChatMessageStateDelivered);
+			}));
+			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([marieCr] {
+				return linphone_chat_room_get_unread_messages_count(marieCr) == 1;
+			}));
+
+			// Since Marie has deleted the chat room, she lost all messages she sent before deleting it
+			marieMsgs = linphone_chat_room_get_history_size(marieCr);
+			BC_ASSERT_EQUAL(marieMsgs, 1, int , "%d");
+			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			BC_ASSERT_EQUAL(paulineMsgs, 2, int , "%d");
+
+			LinphoneChatMessage *marieMsg = linphone_chat_room_create_message_from_utf8(marieCr, "exhumed!!");
+			linphone_chat_message_send(marieMsg);
+			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([marieMsg] {
+				return (linphone_chat_message_get_state(marieMsg) == LinphoneChatMessageStateDelivered);
+			}));
+			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
+				return linphone_chat_room_get_unread_messages_count(paulineCr) == 2;
+			}));
+			linphone_chat_message_unref(marieMsg);
+
+			marieMsgs = linphone_chat_room_get_history_size(marieCr);
+			BC_ASSERT_EQUAL(marieMsgs, 2, int , "%d");
+			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			BC_ASSERT_EQUAL(paulineMsgs, 3, int , "%d");
 		}
 
-		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
-		BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), initialSubject);
-
-		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
-		paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
-		BC_ASSERT_EQUAL(paulineMsgs, 1, int , "%d");
-
-		LinphoneChatMessage *paulineMsg = linphone_chat_room_create_message_from_utf8(paulineCr, "Sorry I was offline :(");
-		linphone_chat_message_send(paulineMsg);
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineMsg] {
-			return (linphone_chat_message_get_state(paulineMsg) == LinphoneChatMessageStateDelivered);
-		}));
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([marieCr] {
-			return linphone_chat_room_get_unread_messages_count(marieCr) == 1;
-		}));
-
-		// Since Marie has deleted the chat room, she lost all messages she sent before deleting it
-		marieMsgs = linphone_chat_room_get_history_size(marieCr);
-		BC_ASSERT_EQUAL(marieMsgs, 1, int , "%d");
-		paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
-		BC_ASSERT_EQUAL(paulineMsgs, 2, int , "%d");
-
-		LinphoneChatMessage *marieMsg = linphone_chat_room_create_message_from_utf8(marieCr, "exhumed!!");
-		linphone_chat_message_send(marieMsg);
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([marieMsg] {
-			return (linphone_chat_message_get_state(marieMsg) == LinphoneChatMessageStateDelivered);
-		}));
-		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
-			return linphone_chat_room_get_unread_messages_count(paulineCr) == 2;
-		}));
-		linphone_chat_message_unref(marieMsg);
-
-		marieMsgs = linphone_chat_room_get_history_size(marieCr);
-		BC_ASSERT_EQUAL(marieMsgs, 2, int , "%d");
-		paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
-		BC_ASSERT_EQUAL(paulineMsgs, 3, int , "%d");
+		linphone_address_unref(exhumedConfAddr);
 
 		CoreManagerAssert({focus, marie, pauline}).waitUntil(std::chrono::seconds(1),[ ]{return false;});
 		
