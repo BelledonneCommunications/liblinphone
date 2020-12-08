@@ -338,9 +338,13 @@ bool_t linphone_chat_room_add_participants (LinphoneChatRoom *cr, const bctbx_li
 }
 
 LinphoneParticipant *linphone_chat_room_find_participant (const LinphoneChatRoom *cr, const LinphoneAddress *addr) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
+	std::shared_ptr<LinphonePrivate::Participant> participant = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->findParticipant(
 		LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr))
-	)->toC();
+	);
+	if (participant) {
+		return participant->toC();
+	}
+	return NULL;
 }
 
 bool_t linphone_chat_room_can_handle_participants (const LinphoneChatRoom *cr) {
@@ -368,7 +372,11 @@ const LinphoneAddress *linphone_chat_room_get_conference_address (const Linphone
 }
 
 LinphoneParticipant *linphone_chat_room_get_me (const LinphoneChatRoom *cr) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe()->toC();
+	std::shared_ptr<LinphonePrivate::Participant> me = L_GET_CPP_PTR_FROM_C_OBJECT(cr)->getMe();
+	if (me) {
+		return me->toC();
+	}
+	return NULL;
 }
 
 int linphone_chat_room_get_nb_participants (const LinphoneChatRoom *cr) {
