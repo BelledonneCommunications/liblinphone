@@ -20,10 +20,11 @@
 #include <algorithm>
 #include <comutil.h>
 #include <ShlObj.h>
-
-#pragma comment(lib, "comsuppw.lib")
-#pragma comment(lib, "kernel32.lib")
-
+#include "private.h"
+#if !defined (LINPHONE_WINDOWS_UWP)
+    #pragma comment(lib, "comsuppw.lib")
+    #pragma comment(lib, "kernel32.lib")
+#endif
 #include "paths-windows.h"
 #include "config.h"
 #include "linphone/utils/utils.h"
@@ -43,7 +44,7 @@ static bool dirExists(const std::string& dirName) {
 LINPHONE_BEGIN_NAMESPACE
 
 static string getPath (const GUID &id) {
-#ifdef ENABLE_MICROSOFT_STORE_APP
+#if defined(ENABLE_MICROSOFT_STORE_APP) || defined (LINPHONE_WINDOWS_UWP)
 
     //if( id ==FOLDERID_LocalAppData)
 	string strPath;
@@ -72,7 +73,11 @@ static string getPath (const GUID &id) {
 
 
 string SysPaths::getDataPath (void *) {
-	static string dataPath = getPath(FOLDERID_LocalAppData);
+#if defined (LINPHONE_WINDOWS_UWP)    
+	static string dataPath = getPath(GUID_NULL);
+#else
+	static string dataPath = getPath(FOLDERID_LocalAppData);//FOLDERID_LocalAppData);
+#endif
 	return dataPath;
 }
 
