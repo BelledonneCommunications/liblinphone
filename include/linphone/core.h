@@ -238,6 +238,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
 	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
 	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
+	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -923,6 +924,22 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_ec_calibration_audio_init(LinphoneCor
  * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_ec_calibration_audio_uninit(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationAudioUninitCb cb);
+
+/**
+ * @brief Sets a callback to call when a chat room is exhumed. Internal use only!
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @return The callback to use
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room_exhumed(LinphoneCoreCbs *cbs);
+
+/**
+ * @brief Sets a callback to call when a chat room is exhumed. Internal use only!
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @param cb The callback to use
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb);
 
 /**
  * @}

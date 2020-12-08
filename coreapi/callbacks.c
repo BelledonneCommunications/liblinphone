@@ -167,6 +167,8 @@ static void call_received(SalCallOp *h) {
 					if (chatRoom) {
 						lInfo() << "Found exhumable chat room [" << chatRoom->getConferenceId() << "]";
 						L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(chatRoom))->onRemotelyExhumedConference(h);
+						// For tests purposes
+						linphone_core_notify_chat_room_exhumed(lc, L_GET_C_BACK_PTR(chatRoom));
 
 						linphone_address_unref(toAddr);
 						linphone_address_unref(fromAddr);

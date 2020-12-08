@@ -225,6 +225,7 @@ LINPHONE_PUBLIC char *linphone_core_get_download_path(LinphoneCore *lc);
 
 LINPHONE_PUBLIC const char *linphone_core_get_groupchat_version(void);
 
+LINPHONE_PUBLIC size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr);
 #ifndef __cplusplus
 LINPHONE_PUBLIC Sal *linphone_core_get_sal(const LinphoneCore *lc);
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op(const LinphoneProxyConfig *cfg);
