@@ -893,7 +893,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			return (linphone_chat_message_get_state(marieMsg) == LinphoneChatMessageStateDelivered);
 		}));
 		BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
-			return linphone_chat_room_get_unread_messages_count(paulineCr) == 1;
+			return linphone_chat_room_get_unread_messages_count(paulineCr) == 2;
 		}));
 		linphone_chat_message_unref(marieMsg);
 
