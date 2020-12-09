@@ -1627,6 +1627,14 @@ int SalCallOp::terminate (const SalErrorInfo *info) {
 				belle_sip_message_add_header(BELLE_SIP_MESSAGE(request),BELLE_SIP_HEADER(reasonHeader));
 			}
 			sendRequest(request);
+
+			/**
+			 * When the timer is quite short, it is possible that a timer renewal
+			 * is sent before the BYE ACK is received. Here we cancel the timer
+			 * before sending the BYE to prevent that oddly case.
+			 */
+			haltSessionTimersTimer();
+
 			mState = State::Terminating;
 			break;
 		}
