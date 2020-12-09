@@ -29,7 +29,8 @@
 
 #define SAL_CRYPTO_ALGO_MAX 4
 
-typedef struct SalStreamDescription{
+class SalStreamDescription {
+public:
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
@@ -72,7 +73,7 @@ typedef struct SalStreamDescription{
 	SalDtlsRole dtls_role;
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
-} SalStreamDescription;
+};
 
 #ifdef __cplusplus
 extern "C" {
