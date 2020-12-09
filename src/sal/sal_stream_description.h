@@ -31,10 +31,12 @@
 
 class SalStreamDescription {
 public:
+	std::string getTypeAsString() const;
+
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
-	char typeother[32];
+	std::string typeother;
 	char proto_other[32];
 	char rtp_addr[64];
 	char rtcp_addr[64];
