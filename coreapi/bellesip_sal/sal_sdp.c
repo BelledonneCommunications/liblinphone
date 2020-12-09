@@ -826,7 +826,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		stream->type=SalText;
 	} else {
 		stream->type=SalOther;
-		strncpy ( stream->typeother,mtype,sizeof ( stream->typeother )-1 );
+		stream->typeother = mtype;
 	}
 
 	if ( belle_sdp_media_description_get_bandwidth ( media_desc,"AS" ) >0 ) {
