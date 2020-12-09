@@ -260,18 +260,17 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 		/*check immmediately that the offer has a c line with the expected family.*/
 		if (with_ipv6_prefered){
 			/* the address in the c line shall be an ipv6 one.*/
-			BC_ASSERT_TRUE(strchr(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, ':') != NULL);
+			BC_ASSERT_TRUE(strchr(sal_media_description_get_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))), ':') != NULL);
 		}else{
-			BC_ASSERT_TRUE(strchr(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, ':') == NULL);
+			BC_ASSERT_TRUE(strchr(sal_media_description_get_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))), ':') == NULL);
 		}
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
 		BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
 		check_ice(marie, pauline, LinphoneIceStateHostConnection);
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->addr, local_addresses));
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, local_addresses));
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))->streams[0].rtp_addr, local_addresses));
-		BC_ASSERT_TRUE(is_matching_a_local_address(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->streams[0].rtp_addr, local_addresses)
-				|| is_matching_a_local_address(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))->addr, local_addresses)
+		BC_ASSERT_TRUE(is_matching_a_local_address(sal_media_description_get_address(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc))), local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(sal_stream_description_get_rtp_address(sal_media_description_get_stream_idx(_linphone_call_get_local_desc(linphone_core_get_current_call(marie->lc)),0)), local_addresses));
+		BC_ASSERT_TRUE(is_matching_a_local_address(sal_stream_description_get_rtp_address(sal_media_description_get_stream_idx(_linphone_call_get_local_desc(linphone_core_get_current_call(pauline->lc)),0)), local_addresses)
+				|| is_matching_a_local_address(sal_media_description_get_address(_linphone_call_get_result_desc(linphone_core_get_current_call(pauline->lc))), local_addresses)
 		);
 	}
 	end_call(marie, pauline);
