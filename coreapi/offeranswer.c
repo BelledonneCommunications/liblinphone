@@ -18,6 +18,7 @@
  */
 
 #include "c-wrapper/internal/c-sal.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal.h"
 #include "offeranswer.h"
 #include "private.h"

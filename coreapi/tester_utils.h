@@ -25,6 +25,7 @@
 #include "account_creator_private.h"
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
+#include "sal/sal_media_description.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "quality_reporting.h"
 #include "vcard_private.h"
