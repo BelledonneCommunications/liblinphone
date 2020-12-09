@@ -28,6 +28,7 @@
 #include "linphone/core_utils.h"
 #include <bctoolbox/vfs.h>
 #include "linphone/wrapper_utils.h"
+#include "shared_tester_functions.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable : 4996)

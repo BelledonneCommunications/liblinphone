@@ -26,6 +26,7 @@
 #include "chat/modifier/chat-message-modifier.h"
 #include "core/core-accessor.h"
 #include "linphone/lpconfig.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal.h"
 
 // =============================================================================
@@ -88,14 +89,14 @@ public:
 
 	virtual void mutualAuthentication (
 		MSZrtpContext *zrtpContext,
-		SalMediaDescription *localMediaDescription,
-		SalMediaDescription *remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & localMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		LinphoneCallDir direction
 	) {}
 
 	virtual void authenticationVerified (
 		MSZrtpContext *zrtpContext,
-		SalMediaDescription *remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		const char *peerDeviceId
 	) {}
 

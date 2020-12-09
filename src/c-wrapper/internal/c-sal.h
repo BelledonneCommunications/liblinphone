@@ -79,6 +79,44 @@ typedef enum {
 	SalTransportDTLS, /*DTLS*/
 }SalTransport;
 
+typedef enum{
+	SalStreamSendRecv,
+	SalStreamSendOnly,
+	SalStreamRecvOnly,
+	SalStreamInactive
+}SalStreamDir;
+
+typedef enum {
+	SalAudio,
+	SalVideo,
+	SalText,
+	SalOther
+} SalStreamType;
+
+typedef enum{
+	SalProtoRtpAvp,
+	SalProtoRtpSavp,
+	SalProtoRtpAvpf,
+	SalProtoRtpSavpf,
+	SalProtoUdpTlsRtpSavp,
+	SalProtoUdpTlsRtpSavpf,
+	SalProtoOther
+}SalMediaProto;
+
+typedef enum {
+	SalDtlsRoleInvalid,
+	SalDtlsRoleIsServer,
+	SalDtlsRoleIsClient,
+	SalDtlsRoleUnset
+} SalDtlsRole;
+
+typedef enum {
+	SalMulticastInactive=0,
+	SalMulticastSender,
+	SalMulticastReceiver,
+	SalMulticastSenderReceiver
+} SalMulticastRole;
+
 #define SAL_MEDIA_DESCRIPTION_UNCHANGED						0x00
 #define SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED				(1)
 #define SAL_MEDIA_DESCRIPTION_CODEC_CHANGED					(1<<1)
@@ -148,32 +186,6 @@ void sal_set_log_handler(BctbxLogFunc log_handler);
 }
 #endif
 
-
-typedef enum {
-	SalAudio,
-	SalVideo,
-	SalText,
-	SalOther
-} SalStreamType;
-
-
-typedef enum{
-	SalProtoRtpAvp,
-	SalProtoRtpSavp,
-	SalProtoRtpAvpf,
-	SalProtoRtpSavpf,
-	SalProtoUdpTlsRtpSavp,
-	SalProtoUdpTlsRtpSavpf,
-	SalProtoOther
-}SalMediaProto;
-
-typedef enum{
-	SalStreamSendRecv,
-	SalStreamSendOnly,
-	SalStreamRecvOnly,
-	SalStreamInactive
-}SalStreamDir;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -188,58 +200,6 @@ const char* sal_stream_dir_to_string(SalStreamDir type);
 
 #define SAL_ENDPOINT_CANDIDATE_MAX 2
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN 64
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN 32
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN 6
-
-typedef struct SalIceCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN];
-	char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN];
-	unsigned int componentID;
-	unsigned int priority;
-	int port;
-	int rport;
-} SalIceCandidate;
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
-
-typedef struct SalIceRemoteCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	int port;
-} SalIceRemoteCandidate;
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES 2
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN 256
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN 256
-
-/*sufficient for 256bit keys encoded in base 64*/
-#define SAL_SRTP_KEY_SIZE 128
-
-typedef struct SalSrtpCryptoAlgo {
-	unsigned int tag;
-	MSCryptoSuite algo;
-	char master_key[SAL_SRTP_KEY_SIZE + 1];
-} SalSrtpCryptoAlgo;
-
-#define SAL_CRYPTO_ALGO_MAX 4
-
-typedef enum {
-	SalDtlsRoleInvalid,
-	SalDtlsRoleIsServer,
-	SalDtlsRoleIsClient,
-	SalDtlsRoleUnset
-} SalDtlsRole;
-
-typedef enum {
-	SalMulticastInactive=0,
-	SalMulticastSender,
-	SalMulticastReceiver,
-	SalMulticastSenderReceiver
-} SalMulticastRole;
-
 typedef enum {
 	SalOpSDPNormal = 0, /** No special handling for SDP */
 	SalOpSDPSimulateError, /** Will simulate an SDP parsing error */
@@ -248,90 +208,15 @@ typedef enum {
 
 #define SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED 65536
 
-typedef struct SalStreamBundle{
-	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
-} SalStreamBundle;
-
-typedef struct SalStreamDescription{
-	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
-	SalMediaProto proto;
-	SalStreamType type;
-	char typeother[32];
-	char proto_other[32];
-	char rtp_addr[64];
-	char rtcp_addr[64];
-	unsigned int rtp_ssrc;
-	char rtcp_cname[256];
-	int rtp_port;
-	int rtcp_port;
-	MSList *payloads; /**<list of PayloadType */
-	MSList *already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
-	int bandwidth;
-	int ptime;
-	int maxptime;
-	SalStreamDir dir;
-	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
-	unsigned int crypto_local_tag;
-	int max_rate;
-	bool_t bundle_only;
-	bool_t implicit_rtcp_fb;
-	bool_t pad[2]; /* Use me */
-	OrtpRtcpFbConfiguration rtcp_fb;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	SalCustomSdpAttribute *custom_sdp_attributes;
-	SalIceCandidate ice_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES];
-	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
-	char mid[32]; /* Media line identifier for RTP bundle mode */
-	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
-	bool_t ice_mismatch;
-	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-	bool_t rtcp_mux;
-	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
-	uint8_t haveLimeIk; /**< flag for lime Ik presence */
-	uint8_t zrtphash[128];
-	char dtls_fingerprint[256];
-	SalDtlsRole dtls_role;
-	int ttl; /*for multicast -1 to disable*/
-	SalMulticastRole multicast_role;
-} SalStreamDescription;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 const char *sal_multicast_role_to_string(SalMulticastRole role);
-const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc);
-const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc);
 
 #ifdef __cplusplus
 }
 #endif
-
-#define SAL_MEDIA_DESCRIPTION_MAX_STREAMS 8
-
-typedef struct SalMediaDescription{
-	int refcount;
-	char name[64];
-	char addr[64];
-	char username[64];
-	int nb_streams;
-	int bandwidth;
-	unsigned int session_ver;
-	unsigned int session_id;
-	SalStreamDir dir;
-	SalStreamDescription streams[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
-	SalCustomSdpAttribute *custom_sdp_attributes;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
-	bctbx_list_t *bundles; /* list of SalStreamBundle */
-	bool_t ice_lite;
-	bool_t set_nortpproxy;
-	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	bool_t pad[1];
-} SalMediaDescription;
 
 typedef struct SalMessage{
 	const char *from;
@@ -341,64 +226,6 @@ typedef struct SalMessage{
 	const char *content_type;
 	time_t time;
 }SalMessage;
-
-#define SAL_MEDIA_DESCRIPTION_MAX_MESSAGE_ATTRIBUTES 5
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-SalMediaDescription *sal_media_description_new(void);
-SalMediaDescription * sal_media_description_ref(SalMediaDescription *md);
-void sal_media_description_unref(SalMediaDescription *md);
-bool_t sal_media_description_empty(const SalMediaDescription *md);
-int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
-int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
-char * sal_media_description_print_differences(int result);
-bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir dir);
-LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
-unsigned int sal_media_description_nb_active_streams_of_type(SalMediaDescription *md, SalStreamType type);
-SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaDescription *md, SalStreamType type, unsigned int idx);
-SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMediaDescription *md, SalStreamType type);
-SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescription *md, SalStreamType type);
-void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
-int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
-
-
-/* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
- *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
-bool_t sal_stream_description_enabled(const SalStreamDescription *sd);
-void sal_stream_description_disable(SalStreamDescription *sd);
-bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_ipv6(const SalStreamDescription *md);
-bool_t sal_media_description_has_avpf(const SalMediaDescription *md);
-bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md);
-bool_t sal_media_description_has_srtp(const SalMediaDescription *md);
-bool_t sal_media_description_has_dtls(const SalMediaDescription *md);
-bool_t sal_media_description_has_zrtp(const SalMediaDescription *md);
-bool_t sal_media_description_has_ipv6(const SalMediaDescription *md);
-int sal_media_description_get_nb_active_streams(const SalMediaDescription *md);
-
-SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md);
-/* Add stream to the bundle. The SalStreamDescription must be part of the SalMediaDescription in which the SalStreamBundle is added. */
-void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
-void sal_stream_bundle_destroy(SalStreamBundle *bundle);
-SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle);
-int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid);
-const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle);
-
-int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid);
-int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd);
-
-
-#ifdef __cplusplus
-}
-#endif
-
 
 typedef enum SalReason{
 	SalReasonNone, /*no error, please leave first so that it takes 0 value*/
@@ -628,15 +455,12 @@ const char* sal_privacy_to_string(SalPrivacy privacy);
 }
 #endif
 
-
-
 #define payload_type_set_number(pt,n) (pt)->user_data=(void*)((intptr_t)n);
 #define payload_type_get_number(pt) ((int)(intptr_t)(pt)->user_data)
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 SalCustomHeader *sal_custom_header_ref(SalCustomHeader *ch);
 void sal_custom_header_unref(SalCustomHeader *ch);
@@ -645,8 +469,6 @@ const char *sal_custom_header_find(const SalCustomHeader *ch, const char *name);
 SalCustomHeader *sal_custom_header_remove(SalCustomHeader *ch, const char *name);
 void sal_custom_header_free(SalCustomHeader *ch);
 SalCustomHeader *sal_custom_header_clone(const SalCustomHeader *ch);
-
-
 
 SalCustomSdpAttribute * sal_custom_sdp_attribute_append(SalCustomSdpAttribute *csa, const char *name, const char *value);
 const char * sal_custom_sdp_attribute_find(const SalCustomSdpAttribute *csa, const char *name);

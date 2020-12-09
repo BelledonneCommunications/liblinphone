@@ -53,6 +53,7 @@ class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
+class SalMediaDescription;
 class EventLog;
 
 namespace MediaConference {
@@ -257,6 +258,8 @@ public:
 	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
 	void destroyTimer(belle_sip_source_t *timer);
+
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 private:
 	Core ();
 

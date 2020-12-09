@@ -21,8 +21,13 @@
 #include <sys/stat.h>
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
+#include "sal/sal_media_description.h"
+#include "sal/sal_stream_description.h"
+
+using namespace LinphonePrivate;
 
 static int get_codec_position(const MSList *l, const char *mime_type, int rate){
 	const MSList *elem;
@@ -150,6 +155,8 @@ static void h264_call_with_fmtps(void){
 	OrtpPayloadType *pt_1=NULL, *pt_2=NULL;
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new( "pauline_tcp_rc");
+	bctbx_list_t * video_codecs = NULL;
+	OrtpPayloadType *origin_h264_pt = NULL;
 	
 	linphone_core_set_video_device(marie->lc, "Mire: Mire (synthetic moving picture)");
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -173,14 +180,14 @@ static void h264_call_with_fmtps(void){
 	
 	disable_all_video_codecs_except_one(marie->lc,"H264");
 	disable_all_video_codecs_except_one(pauline->lc,"H264");
-	OrtpPayloadType *origin_h264_pt = linphone_core_find_payload_type(pauline->lc,"H264",90000,-1);
+	origin_h264_pt = linphone_core_find_payload_type(pauline->lc,"H264",90000,-1);
 	pt_1 = payload_type_clone(origin_h264_pt);
 	pt_2 = payload_type_clone(pt_1);
 	
 	payload_type_set_recv_fmtp(pt_1,"profile-level-id=42801F; packetization-mode=0");
 	payload_type_set_recv_fmtp(pt_2,"profile-level-id=42801F; packetization-mode=1");
 	
-	bctbx_list_t * video_codecs = bctbx_list_copy(linphone_core_get_video_codecs(marie->lc));
+	video_codecs = bctbx_list_copy(linphone_core_get_video_codecs(marie->lc));
 	for (bctbx_list_t *it = video_codecs; it != NULL; it = bctbx_list_next(it)) {
 		OrtpPayloadType * pt = (OrtpPayloadType *)bctbx_list_get_data(it);
 		if (strcasecmp(payload_type_get_mime(pt),"H264") == 0) {
@@ -721,12 +728,13 @@ static void check_avpf_features(LinphoneCore *lc, unsigned char expected_feature
 	BC_ASSERT_PTR_NOT_NULL(lcall);
 	if (lcall != NULL) {
 		SalMediaDescription *resultDesc = _linphone_call_get_result_desc(lcall);
-		SalStreamDescription *desc = sal_media_description_find_stream(resultDesc, SalProtoRtpAvpf, SalVideo);
-		BC_ASSERT_PTR_NOT_NULL(desc);
-		if (desc != NULL) {
-			BC_ASSERT_PTR_NOT_NULL(desc->payloads);
-			if (desc->payloads) {
-				PayloadType *pt = (PayloadType *)desc->payloads->data;
+		const auto & desc = resultDesc->findStream(SalProtoRtpAvpf, SalVideo);
+		BC_ASSERT_TRUE(desc != Utils::getEmptyConstRefObject<SalStreamDescription>());
+		if (desc !=  Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			const auto & payloads = desc.getPayloads();
+			BC_ASSERT_FALSE(payloads.empty());
+			if (!payloads.empty()) {
+				PayloadType *pt = payloads.front();
 				BC_ASSERT_STRING_EQUAL(pt->mime_type, "VP8");
 				BC_ASSERT_EQUAL(pt->avpf.features, expected_features, int, "%d");
 			}

@@ -58,7 +58,7 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
-	SalStreamType type = params.localStreamDescription->type;
+	SalStreamType type = params.getLocalStreamDescription().type;
 	switch(type){
 		case SalAudio:
 			ret = new MS2AudioStream(*this, params);
@@ -100,22 +100,21 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	size_t index;
-	for(index = 0; index < (size_t)params.localMediaDescription->nb_streams; ++index){
+	for(index = 0; index < params.localMediaDescription->streams.size(); ++index){
 		Stream *s;
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.localStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
 		}else{
-			if (s->getType() != params.localStreamDescription->type){
+			if (s->getType() != params.getLocalStreamDescription().type){
 				lError() << "Inconsistency detected while creating streams. Type has changed from " <<
 					sal_stream_type_to_string(s->getType()) << " to " << 
-					sal_stream_type_to_string(params.localStreamDescription->type) << "!";
+					sal_stream_type_to_string(params.getLocalStreamDescription().type) << "!";
 			}else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED ){
 				/*
 				* Special case: due to implementation constraint, it is necessary to instanciate a new Stream when changing 
@@ -171,14 +170,12 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.localStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (params.resultStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.resultStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
 			lInfo() << "Result stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (streamPtr->getState() == Stream::Preparing)
 			streamPtr->finishPrepare();
@@ -263,10 +260,10 @@ int StreamsGroup::updateAllocatedAudioBandwidth (const PayloadType *pt, int maxb
 	return mAudioBandwidth;
 }
 
-int StreamsGroup::getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
+int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> & md, const SalStreamDescription & desc) {
 	int remoteBandwidth = 0;
-	if (desc->bandwidth > 0)
-		remoteBandwidth = desc->bandwidth;
+	if (desc.bandwidth > 0)
+		remoteBandwidth = desc.bandwidth;
 	else if (md->bandwidth > 0) {
 		/* Case where b=AS is given globally, not per stream */
 		remoteBandwidth = PayloadTypeHandler::getRemainingBandwidthForVideo(md->bandwidth, mAudioBandwidth);
@@ -274,7 +271,6 @@ int StreamsGroup::getVideoBandwidth (const SalMediaDescription *md, const SalStr
 	return PayloadTypeHandler::getMinBandwidth(
 		PayloadTypeHandler::getRemainingBandwidthForVideo(linphone_core_get_upload_bandwidth(getCCore()), mAudioBandwidth), remoteBandwidth);
 }
-
 
 void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 	for (auto &stream : mStreams){
@@ -340,15 +336,15 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
 		params.scopeStreamToIndex(s->getIndex());
-		if (!sal_stream_description_enabled(params.resultStreamDescription) || params.resultStreamDescription->dir == SalStreamInactive)
+		const auto & refStream = params.getResultStreamDescription();
+		if (!refStream.enabled() || refStream.getDirection() == SalStreamInactive)
 			continue;
 		
-		const SalStreamDescription *refStream = params.resultStreamDescription;
-		const SalStreamDescription *newStream = params.remoteStreamDescription;
+		const auto & newStream = params.getRemoteStreamDescription();
 		
-		if ((refStream->type == newStream->type) && refStream->payloads && newStream->payloads) {
-			OrtpPayloadType *refpt = static_cast<OrtpPayloadType *>(refStream->payloads->data);
-			OrtpPayloadType *newpt = static_cast<OrtpPayloadType *>(newStream->payloads->data);
+		if ((refStream.type == newStream.type) && !refStream.payloads.empty() && !newStream.payloads.empty()) {
+			OrtpPayloadType *refpt = refStream.payloads.front();
+			OrtpPayloadType *newpt = newStream.payloads.front();
 			if ((strcmp(refpt->mime_type, newpt->mime_type) == 0) && (refpt->clock_rate == newpt->clock_rate)
 				&& (payload_type_get_number(refpt) == payload_type_get_number(newpt))) {
 					s->tryEarlyMediaForking(params);

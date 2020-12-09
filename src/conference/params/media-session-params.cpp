@@ -255,7 +255,7 @@ void MediaSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphon
 		}
 	}
 	if (!linphone_core_video_enabled(cCore) && d->videoEnabled) {
-		lError() << "LinphoneCore has video disabled for both capture and display, but video policy is to start the call with video. "
+		lError() << "LinphoneCore " << linphone_core_get_identity(cCore) << " has video disabled for both capture and display, but video policy is to start the call with video. "
 			"This is a possible mis-use of the API. In this case, video is disabled in default LinphoneCallParams";
 		d->videoEnabled = false;
 	}
