@@ -542,7 +542,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->set_nortpproxy = local_cap->set_nortpproxy;
 	memcpy(result->ice_candidates, local_cap->ice_candidates, sizeof(result->ice_candidates));
 	memcpy(result->ice_remote_candidates, local_cap->ice_remote_candidates, sizeof(result->ice_remote_candidates));
-	strcpy(result->name,local_cap->name);
+	result->name = local_cap->name;
 	result->rtp_ssrc=local_cap->rtp_ssrc;
 	strncpy(result->rtcp_cname,local_cap->rtcp_cname,sizeof(result->rtcp_cname));
 
