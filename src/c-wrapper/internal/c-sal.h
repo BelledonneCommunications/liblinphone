@@ -35,6 +35,8 @@
 #include "belle-sip/belle-sip.h"
 #include "bctoolbox/map.h"
 #include "bctoolbox/crypto.h"
+#include "sal/sal_enums.h"
+#include "sal/sal_stream_description.h"
 
 #ifndef LINPHONE_PUBLIC
 #if defined(_MSC_VER)
@@ -65,10 +67,6 @@ typedef struct SalBodyHandler SalBodyHandler;
 struct SalCustomHeader;
 
 typedef struct SalCustomHeader SalCustomHeader;
-
-struct SalCustomSdpAttribute;
-
-typedef struct SalCustomSdpAttribute SalCustomSdpAttribute;
 
 struct addrinfo;
 
@@ -148,32 +146,6 @@ void sal_set_log_handler(BctbxLogFunc log_handler);
 }
 #endif
 
-
-typedef enum {
-	SalAudio,
-	SalVideo,
-	SalText,
-	SalOther
-} SalStreamType;
-
-
-typedef enum{
-	SalProtoRtpAvp,
-	SalProtoRtpSavp,
-	SalProtoRtpAvpf,
-	SalProtoRtpSavpf,
-	SalProtoUdpTlsRtpSavp,
-	SalProtoUdpTlsRtpSavpf,
-	SalProtoOther
-}SalMediaProto;
-
-typedef enum{
-	SalStreamSendRecv,
-	SalStreamSendOnly,
-	SalStreamRecvOnly,
-	SalStreamInactive
-}SalStreamDir;
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -188,58 +160,6 @@ const char* sal_stream_dir_to_string(SalStreamDir type);
 
 #define SAL_ENDPOINT_CANDIDATE_MAX 2
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN 64
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN 32
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN 6
-
-typedef struct SalIceCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN];
-	char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN];
-	unsigned int componentID;
-	unsigned int priority;
-	int port;
-	int rport;
-} SalIceCandidate;
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
-
-typedef struct SalIceRemoteCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	int port;
-} SalIceRemoteCandidate;
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES 2
-
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN 256
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN 256
-
-/*sufficient for 256bit keys encoded in base 64*/
-#define SAL_SRTP_KEY_SIZE 128
-
-typedef struct SalSrtpCryptoAlgo {
-	unsigned int tag;
-	MSCryptoSuite algo;
-	char master_key[SAL_SRTP_KEY_SIZE + 1];
-} SalSrtpCryptoAlgo;
-
-#define SAL_CRYPTO_ALGO_MAX 4
-
-typedef enum {
-	SalDtlsRoleInvalid,
-	SalDtlsRoleIsServer,
-	SalDtlsRoleIsClient,
-	SalDtlsRoleUnset
-} SalDtlsRole;
-
-typedef enum {
-	SalMulticastInactive=0,
-	SalMulticastSender,
-	SalMulticastReceiver,
-	SalMulticastSenderReceiver
-} SalMulticastRole;
-
 typedef enum {
 	SalOpSDPNormal = 0, /** No special handling for SDP */
 	SalOpSDPSimulateError, /** Will simulate an SDP parsing error */
@@ -251,51 +171,6 @@ typedef enum {
 typedef struct SalStreamBundle{
 	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
 } SalStreamBundle;
-
-typedef struct SalStreamDescription{
-	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
-	SalMediaProto proto;
-	SalStreamType type;
-	char typeother[32];
-	char proto_other[32];
-	char rtp_addr[64];
-	char rtcp_addr[64];
-	unsigned int rtp_ssrc;
-	char rtcp_cname[256];
-	int rtp_port;
-	int rtcp_port;
-	MSList *payloads; /**<list of PayloadType */
-	MSList *already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
-	int bandwidth;
-	int ptime;
-	int maxptime;
-	SalStreamDir dir;
-	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
-	unsigned int crypto_local_tag;
-	int max_rate;
-	bool_t bundle_only;
-	bool_t implicit_rtcp_fb;
-	bool_t pad[2]; /* Use me */
-	OrtpRtcpFbConfiguration rtcp_fb;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	SalCustomSdpAttribute *custom_sdp_attributes;
-	SalIceCandidate ice_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES];
-	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
-	char mid[32]; /* Media line identifier for RTP bundle mode */
-	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
-	bool_t ice_mismatch;
-	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-	bool_t rtcp_mux;
-	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
-	uint8_t haveLimeIk; /**< flag for lime Ik presence */
-	uint8_t zrtphash[128];
-	char dtls_fingerprint[256];
-	SalDtlsRole dtls_role;
-	int ttl; /*for multicast -1 to disable*/
-	SalMulticastRole multicast_role;
-} SalStreamDescription;
 
 #ifdef __cplusplus
 extern "C" {
