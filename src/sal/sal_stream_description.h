@@ -20,8 +20,14 @@
 #ifndef _SAL_STREAM_DESCRIPTION_H_
 #define _SAL_STREAM_DESCRIPTION_H_
 
+#include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
-#include "sal/sal_enums.h"
+
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
+
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES 2
+
+#define SAL_CRYPTO_ALGO_MAX 4
 
 typedef struct SalStreamDescription{
 	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
@@ -67,5 +73,30 @@ typedef struct SalStreamDescription{
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
 } SalStreamDescription;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
+ *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
+bool_t sal_stream_description_enabled(const SalStreamDescription *sd);
+void sal_stream_description_disable(SalStreamDescription *sd);
+bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd);
+bool_t sal_stream_description_has_ipv6(const SalStreamDescription *md);
+
+const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc);
+const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc);
+bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd);
+
+int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_
