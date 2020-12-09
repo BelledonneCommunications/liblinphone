@@ -25,7 +25,8 @@
 
 #define SAL_MEDIA_DESCRIPTION_MAX_STREAMS 8
 
-typedef struct SalMediaDescription{
+class SalMediaDescription {
+public:
 	int refcount;
 	char name[64];
 	char addr[64];
@@ -45,7 +46,7 @@ typedef struct SalMediaDescription{
 	bool_t set_nortpproxy;
 	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 	bool_t pad[1];
-} SalMediaDescription;
+};
 
 #ifdef __cplusplus
 extern "C" {
