@@ -1802,8 +1802,9 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 		if (linphone_call_params_get_update_call_when_ice_completed(cp1) && linphone_call_params_get_update_call_when_ice_completed(cp2)) {
 			memset(&remaddr, 0, remaddrlen);
 			result_desc = sal_call_get_final_media_description(linphone_call_get_op_as_sal_op(c2));
-			expected_addr = result_desc->streams[0].rtp_addr;
-			if (expected_addr[0] == '\0') expected_addr = result_desc->addr;
+
+			expected_addr = sal_stream_description_get_rtp_address(sal_media_description_get_stream_idx(result_desc, 0));
+			if (expected_addr[0] == '\0') expected_addr = sal_media_description_get_address(result_desc);
 			astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
 			if ((strchr(expected_addr, ':') == NULL) && (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
 				bctbx_sockaddr_ipv6_to_ipv4((struct sockaddr *)&astream->ms.sessions.rtp_session->rtp.gs.rem_addr, (struct sockaddr *)&remaddr, &remaddrlen);
