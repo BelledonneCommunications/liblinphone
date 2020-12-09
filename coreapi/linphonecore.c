@@ -1304,6 +1304,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	int tmp;
 	const char *tmpbuf;
 	const char *devid;
+	const char *tmpstr;
 
 #ifdef __linux__
 	/*alsadev let the user use custom alsa device within linphone*/
@@ -1335,13 +1336,20 @@ static void sound_config_read(LinphoneCore *lc) {
 	/* retrieve all sound devices */
 	build_sound_devices_table(lc);
 
-	devid = linphone_config_get_string(lc->config, "sound", "playback_dev_id", NULL);
+#if TARGET_OS_IPHONE
+	tmpbuf = "AQ: Audio Queue Device";
+	tmpstr = "AU: Audio Unit Receiver";
+#else
+	tmpbuf = NULL;
+	tmpstr = NULL;
+#endif
+	devid = linphone_config_get_string(lc->config, "sound", "playback_dev_id", tmpstr);
 	linphone_core_set_playback_device(lc, devid);
 
-	devid = linphone_config_get_string(lc->config, "sound", "ringer_dev_id", NULL);
+	devid = linphone_config_get_string(lc->config, "sound", "ringer_dev_id", tmpbuf);
 	linphone_core_set_ringer_device(lc, devid);
 
-	devid = linphone_config_get_string(lc->config, "sound", "capture_dev_id", NULL);
+	devid = linphone_config_get_string(lc->config, "sound", "capture_dev_id", tmpstr);
 	linphone_core_set_capture_device(lc, devid);
 
 	devid = linphone_config_get_string(lc->config, "sound", "media_dev_id", NULL);
@@ -1553,8 +1561,13 @@ static void sip_config_read(LinphoneCore *lc) {
 
 	memset(&tr,0,sizeof(tr));
 
+#if TARGET_OS_IPHONE || defined(__ANDROID__)
+	tr.udp_port= linphone_config_get_int(lc->config,"sip","sip_port",LC_SIP_TRANSPORT_DONTBIND);
+	tr.tcp_port=linphone_config_get_int(lc->config,"sip","sip_tcp_port",LC_SIP_TRANSPORT_DONTBIND);
+#else
 	tr.udp_port= linphone_config_get_int(lc->config,"sip","sip_port",5060);
 	tr.tcp_port=linphone_config_get_int(lc->config,"sip","sip_tcp_port",5060);
+#endif
 
 	/*we are not listening inbound connection for tls, port has no meaning*/
 	tr.tls_port=linphone_config_get_int(lc->config,"sip","sip_tls_port", LC_SIP_TRANSPORT_RANDOM);
@@ -1617,7 +1630,11 @@ static void sip_config_read(LinphoneCore *lc) {
 	}
 	linphone_core_enable_lime(lc, limeState);
 
+#if defined(__ANDROID__) || TARGET_OS_IPHONE
+	tmp=linphone_config_get_int(lc->config,"sip","inc_timeout",45);
+#else
 	tmp=linphone_config_get_int(lc->config,"sip","inc_timeout",30);
+#endif
 	linphone_core_set_inc_timeout(lc,tmp);
 
 	tmp=linphone_config_get_int(lc->config,"sip","push_incoming_call_timeout",15);
@@ -1685,8 +1702,8 @@ static void sip_config_read(LinphoneCore *lc) {
 		!!linphone_config_get_int(lc->config,"sip","register_only_when_upnp_is_ok",1);
 	lc->sip_conf.ping_with_options= !!linphone_config_get_int(lc->config,"sip","ping_with_options",0);
 	lc->sip_conf.auto_net_state_mon = !!linphone_config_get_int(lc->config,"sip","auto_net_state_mon",1);
-	lc->sip_conf.keepalive_period = (unsigned int)linphone_config_get_int(lc->config,"sip","keepalive_period",10000);
-	lc->sip_conf.tcp_tls_keepalive = !!linphone_config_get_int(lc->config,"sip","tcp_tls_keepalive",0);
+	lc->sip_conf.keepalive_period = (unsigned int)linphone_config_get_int(lc->config,"sip","keepalive_period",30000);
+	lc->sip_conf.tcp_tls_keepalive = !!linphone_config_get_int(lc->config,"sip","tcp_tls_keepalive",30000);
 	linphone_core_enable_keep_alive(lc, (lc->sip_conf.keepalive_period > 0));
 
 	lc->sal->useOneMatchingCodecPolicy(!!linphone_config_get_int(lc->config,"sip","only_one_codec",0));
