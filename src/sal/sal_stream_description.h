@@ -31,7 +31,7 @@
 
 class SalStreamDescription {
 public:
-	char name[16]; /*unique name of stream, in order to ease offer/answer model algorithm*/
+	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
 	char typeother[32];
