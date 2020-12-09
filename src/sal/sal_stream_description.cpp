@@ -62,9 +62,13 @@ static bool_t payload_list_equals(const bctbx_list_t *l1, const bctbx_list_t *l2
 	return TRUE;
 }
 
+std::string SalStreamDescription::getTypeAsString() const {
+	if (type==SalOther) return typeother;
+	else return sal_stream_type_to_string(type);
+}
+
 const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc){
-	if (desc->type==SalOther) return desc->typeother;
-	else return sal_stream_type_to_string(desc->type);
+	return desc->getTypeAsString().c_str();
 }
 
 const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc){
