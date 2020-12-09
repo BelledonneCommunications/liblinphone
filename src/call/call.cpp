@@ -27,6 +27,7 @@
 #include "core/core-p.h"
 #include "logger/logger.h"
 #include "conference/handlers/remote-conference-event-handler.h"
+#include "sal/sal_media_description.h"
 
 #include "conference_private.h"
 

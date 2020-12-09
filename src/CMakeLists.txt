@@ -237,7 +237,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/singleton.h
 	push-notification-message/push-notification-message.h
 	sal/sal.h
-	sal/sal_enums.h
+	sal/sal_stream_bundle.h
 	sal/sal_stream_description.h
 	sal/sal_media_description.h
 	search/magic-search-p.h
@@ -412,6 +412,9 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/refer-op.cpp
 	sal/register-op.cpp
 	sal/sal.cpp
+	sal/sal_stream_bundle.cpp
+	sal/sal_stream_description.cpp
+	sal/sal_media_description.cpp
 	search/magic-search.cpp
 	search/search-result.cpp
 	utils/background-task.cpp

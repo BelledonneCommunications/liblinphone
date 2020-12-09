@@ -25,6 +25,7 @@
 #include "sal/refer-op.h"
 #include "sal/event-op.h"
 #include "sal/message-op.h"
+#include "sal/sal_media_description.h"
 #include "bellesip_sal/sal_impl.h"
 #include "tester_utils.h"
 #include "private.h"
