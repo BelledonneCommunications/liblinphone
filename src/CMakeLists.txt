@@ -239,6 +239,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	sal/sal.h
 	sal/sal_enums.h
 	sal/sal_stream_description.h
+	sal/sal_media_description.h
 	search/magic-search-p.h
 	search/magic-search.h
 	search/search-result.h
