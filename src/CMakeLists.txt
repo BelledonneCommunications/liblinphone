@@ -237,6 +237,8 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/singleton.h
 	push-notification-message/push-notification-message.h
 	sal/sal.h
+	sal/sal_enums.h
+	sal/sal_stream_description.h
 	search/magic-search-p.h
 	search/magic-search.h
 	search/search-result.h
