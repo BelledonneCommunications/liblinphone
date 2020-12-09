@@ -119,14 +119,14 @@ public:
 
 	void mutualAuthentication (
 		MSZrtpContext *zrtpContext,
-		SalMediaDescription *localMediaDescription,
-		SalMediaDescription *remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & localMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		LinphoneCallDir direction
 	) override;
 
 	void authenticationVerified (
 		MSZrtpContext *zrtpContext,
-		SalMediaDescription *remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		const char *peerDeviceId
 	) override;
 

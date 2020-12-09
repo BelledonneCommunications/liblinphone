@@ -4378,10 +4378,6 @@ bool_t linphone_core_is_incoming_invite_pending(LinphoneCore*lc) {
 	return FALSE;
 }
 
-bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md){
-	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !sal_media_description_has_srtp(md);
-}
-
 LinphoneStatus linphone_core_accept_early_media_with_params(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_accept_early_media_with_params(call, params);
 }
@@ -4506,7 +4502,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 
 		shared_ptr<LinphonePrivate::Call> cpp_call = Call::toCpp(current_call)->getSharedFromThis();
 		auto ms = static_pointer_cast<LinphonePrivate::MediaSession>(cpp_call->getActiveSession());
-		if (sal_media_description_has_dir(L_GET_PRIVATE(ms)->getResultDesc(), SalStreamSendOnly)) {
+		if (L_GET_PRIVATE(ms)->getResultDesc()->hasDir(SalStreamSendOnly)) {
 			ms_error("Trying to empty resources of a call whose SAL media direction is SendOnly - If you wish to do so, please set configuration parameter media_resources_mode to shared: linphone_core_set_media_resource_mode (lc, LinphoneSharedMediaResources)");
 		} else {
 			ms_message("Pausing automatically the current call.");

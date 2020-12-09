@@ -27,6 +27,7 @@
 #include "mediastreamer2/msutils.h"
 #include "belle-sip/sipstack.h"
 #include <bctoolbox/defs.h>
+#include "shared_tester_functions.h"
 
 #ifdef _WIN32
 #define unlink _unlink

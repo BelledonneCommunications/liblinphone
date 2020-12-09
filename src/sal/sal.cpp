@@ -25,6 +25,7 @@
 #include "sal/refer-op.h"
 #include "sal/event-op.h"
 #include "sal/message-op.h"
+#include "sal/sal_media_description.h"
 #include "bellesip_sal/sal_impl.h"
 #include "tester_utils.h"
 #include "private.h"
@@ -853,11 +854,14 @@ belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *reque
 	return response;
 }
 
-int Sal::findCryptoIndexFromTag (const SalSrtpCryptoAlgo crypto[], unsigned char tag) {
-	for (int i = 0; i < SAL_CRYPTO_ALGO_MAX; i++) {
-		if (crypto[i].tag == tag)
-			return i;
+int Sal::findCryptoIndexFromTag (const std::vector<SalSrtpCryptoAlgo> & crypto, unsigned char tag) {
+	for (size_t i = 0; i < crypto.size(); i++) {
+		if (crypto[i].tag == tag) {
+			lInfo() << "Found crypto algorithm matching tag " << (int)tag << ": algorithm " << crypto[i].algo << " master key " << crypto[i].master_key;
+			return (int)i;
+		}
 	}
+	lInfo() << "Unable to find crypto algorithm matching tag " << (int)tag;
 	return -1;
 }
 
@@ -1046,13 +1050,6 @@ LINPHONE_PUBLIC void sal_call_set_sdp_handling (SalOp *op, SalOpSDPHandling hand
 	auto callOp = dynamic_cast<SalCallOp *>(op);
 	if (callOp)
 		callOp->setSdpHandling(handling);
-}
-
-LINPHONE_PUBLIC SalMediaDescription *sal_call_get_final_media_description (SalOp *op) {
-	auto callOp = dynamic_cast<SalCallOp *>(op);
-	if (!callOp)
-		return nullptr;
-	return callOp->getFinalMediaDescription();
 }
 
 LINPHONE_PUBLIC const char *sal_call_get_local_tag (SalOp *op) {

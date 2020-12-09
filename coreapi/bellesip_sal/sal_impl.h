@@ -24,9 +24,14 @@
 #include "belle-sip/belle-sip.h"
 #include "belle-sip/belle-sdp.h"
 
+belle_sdp_attribute_t * create_rtcp_xr_attribute(const OrtpRtcpXrConfiguration *config);
+void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param);
+void add_rtcp_fb_nack_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param);
+void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param);
+void add_rtcp_fb_trr_int_attribute(belle_sdp_media_description_t *media_desc, int8_t id, uint16_t trr_int);
 
-belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescription *desc);
-int sdp_to_media_description(belle_sdp_session_description_t  *sdp, SalMediaDescription *desc);
+void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config);
+void sdp_parse_media_rtcp_xr_parameters(const belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config);
 
 bool_t _sal_compute_sal_errors(belle_sip_response_t* response, SalReason* sal_reason, char* reason, size_t reason_size);
 SalReason _sal_reason_from_sip_code(int code);
