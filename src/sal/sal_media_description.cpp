@@ -18,6 +18,7 @@
  */
 
 #include "sal/sal_media_description.h"
+#include "tester_utils.h"
 
 static bool_t is_null_address(const char *addr){
 	return strcmp(addr,"0.0.0.0")==0 || strcmp(addr,"::0")==0;
@@ -355,4 +356,17 @@ char * sal_media_description_print_differences(int result){
 	return out;
 }
 
+int sal_media_description_get_nb_streams(SalMediaDescription *md){
+	return md->nb_streams;
+}
 
+char * sal_media_description_get_address(SalMediaDescription *md){
+	return md->addr;
+}
+
+SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx) {
+	if (idx < SAL_MEDIA_DESCRIPTION_MAX_STREAMS) {
+		return &(md->streams[idx]);
+	}
+	return NULL;
+}

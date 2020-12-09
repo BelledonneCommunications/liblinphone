@@ -59,7 +59,6 @@ int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaD
 int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
 char * sal_media_description_print_differences(int result);
 bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir dir);
-LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
 unsigned int sal_media_description_nb_active_streams_of_type(SalMediaDescription *md, SalStreamType type);
 SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaDescription *md, SalStreamType type, unsigned int idx);
 SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMediaDescription *md, SalStreamType type);
