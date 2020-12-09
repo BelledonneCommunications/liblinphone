@@ -36,6 +36,7 @@
 #include "bctoolbox/crypto.h"
 #include "sal/sal_enums.h"
 #include "sal/sal_stream_description.h"
+#include "sal/sal_media_description.h"
 
 #ifndef LINPHONE_PUBLIC
 #if defined(_MSC_VER)
@@ -181,30 +182,6 @@ const char *sal_stream_description_get_proto_as_string(const SalStreamDescriptio
 #ifdef __cplusplus
 }
 #endif
-
-#define SAL_MEDIA_DESCRIPTION_MAX_STREAMS 8
-
-typedef struct SalMediaDescription{
-	int refcount;
-	char name[64];
-	char addr[64];
-	char username[64];
-	int nb_streams;
-	int bandwidth;
-	unsigned int session_ver;
-	unsigned int session_id;
-	SalStreamDir dir;
-	SalStreamDescription streams[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
-	SalCustomSdpAttribute *custom_sdp_attributes;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
-	bctbx_list_t *bundles; /* list of SalStreamBundle */
-	bool_t ice_lite;
-	bool_t set_nortpproxy;
-	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	bool_t pad[1];
-} SalMediaDescription;
 
 typedef struct SalMessage{
 	const char *from;
