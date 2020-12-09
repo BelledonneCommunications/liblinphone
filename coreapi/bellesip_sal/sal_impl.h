@@ -20,10 +20,10 @@
 #ifndef SAL_IMPL_H_
 #define SAL_IMPL_H_
 
+#include "sal/sal_media_description.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "belle-sip/belle-sip.h"
 #include "belle-sip/belle-sdp.h"
-
 
 belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescription *desc);
 int sdp_to_media_description(belle_sdp_session_description_t  *sdp, SalMediaDescription *desc);

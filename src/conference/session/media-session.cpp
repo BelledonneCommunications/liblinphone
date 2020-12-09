@@ -30,6 +30,7 @@
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
+#include "sal/sal_media_description.h"
 #include "sal/call-op.h"
 #include "sal/sal.h"
 #include "utils/payload-type-handler.h"

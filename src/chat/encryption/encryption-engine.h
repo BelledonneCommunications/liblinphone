@@ -26,6 +26,7 @@
 #include "chat/modifier/chat-message-modifier.h"
 #include "core/core-accessor.h"
 #include "linphone/lpconfig.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal.h"
 
 // =============================================================================
