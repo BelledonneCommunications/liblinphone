@@ -270,9 +270,13 @@ LinphoneCall *linphone_event_log_get_call (const LinphoneEventLog *event_log) {
 	if (!isConferenceCallType(linphone_event_log_get_type(event_log)))
 		return nullptr;
 
-	return static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
+	std::shared_ptr<LinphonePrivate::Call> call = static_pointer_cast<const LinphonePrivate::ConferenceCallEvent>(
 			L_GET_CPP_PTR_FROM_C_OBJECT(event_log)
-		)->getCall()->toC();
+		)->getCall();
+	if (call) {
+		return call->toC();
+	}
+	return NULL;
 }
 
 // -----------------------------------------------------------------------------

@@ -913,6 +913,12 @@ static void group_chat_room_add_participant (void) {
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 2, int, "%d");
 	BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(laureCr), 2, int, "%d");
 
+	// Try to search for a participant that is not in the chatroom
+	LinphoneAddress *fakeAddr = linphone_address_new("sip:toto@sip.example.org");
+	LinphoneParticipant *fakeParticipant = linphone_chat_room_find_participant(marieCr, fakeAddr);
+	linphone_address_unref(fakeAddr);
+	BC_ASSERT_PTR_NULL(fakeParticipant);
+
 	// Pauline begins composing a message
 	linphone_chat_room_compose(paulineCr);
 	BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneIsComposingActiveReceived, initialMarieStats.number_of_LinphoneIsComposingActiveReceived + 1, 5000));

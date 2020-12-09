@@ -47,7 +47,11 @@ void linphone_participant_imdn_state_set_user_data(LinphoneParticipantImdnState 
 }
 
 const LinphoneParticipant *linphone_participant_imdn_state_get_participant (const LinphoneParticipantImdnState *state) {
-	return L_GET_CPP_PTR_FROM_C_OBJECT(state)->getParticipant()->toC();
+	std::shared_ptr<LinphonePrivate::Participant> participant = L_GET_CPP_PTR_FROM_C_OBJECT(state)->getParticipant();
+	if (participant) {
+		return participant->toC();
+	}
+	return NULL;
 }
 
 LinphoneChatMessageState linphone_participant_imdn_state_get_state (const LinphoneParticipantImdnState *state) {
