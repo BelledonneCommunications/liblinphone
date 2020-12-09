@@ -1214,7 +1214,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		md->streams[mainAudioStreamIndex].type = SalAudio;
 		if (getParams()->audioEnabled() && (l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
 		oldMd ? oldMd->streams[mainAudioStreamIndex].already_assigned_payloads : nullptr))) {
-			strncpy(md->streams[mainAudioStreamIndex].name, "Audio", sizeof(md->streams[mainAudioStreamIndex].name) - 1);
+			md->streams[mainAudioStreamIndex].name = "Audio";
 			md->streams[mainAudioStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[mainAudioStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			int downPtime = getParams()->getPrivate()->getDownPtime();
@@ -1252,7 +1252,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			oldMd ? oldMd->streams[mainVideoStreamIndex].already_assigned_payloads : nullptr)) ){
 			md->streams[mainVideoStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[mainVideoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
-			strncpy(md->streams[mainVideoStreamIndex].name, "Video", sizeof(md->streams[mainVideoStreamIndex].name) - 1);
+			md->streams[mainVideoStreamIndex].name = "Video";
 			md->streams[mainVideoStreamIndex].payloads = l;
 			strncpy(md->streams[mainVideoStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainVideoStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainVideoStreamIndex], "vs");
@@ -1283,7 +1283,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				oldMd ? oldMd->streams[mainTextStreamIndex].already_assigned_payloads : nullptr)) ) {
 			md->streams[mainTextStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[mainTextStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
-			strncpy(md->streams[mainTextStreamIndex].name, "Text", sizeof(md->streams[mainTextStreamIndex].name) - 1);
+			md->streams[mainTextStreamIndex].name = "Text";
 			md->streams[mainTextStreamIndex].payloads = l;
 			strncpy(md->streams[mainTextStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainTextStreamIndex].rtcp_cname));
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainTextStreamIndex], "ts");
