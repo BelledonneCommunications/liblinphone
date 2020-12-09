@@ -18,6 +18,7 @@
  */
 
 #include "sal/sal_stream_description.h"
+#include "tester_utils.h"
 
 static bool_t is_recv_only(PayloadType *p){
 	return (p->flags & PAYLOAD_TYPE_FLAG_CAN_RECV) && ! (p->flags & PAYLOAD_TYPE_FLAG_CAN_SEND);
@@ -151,6 +152,7 @@ bool_t sal_stream_description_has_ipv6(const SalStreamDescription *sd){
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd){
 	return sd->implicit_rtcp_fb;
 }
+
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd) {
 	switch (sd->proto){
@@ -192,4 +194,10 @@ bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
 	return FALSE;
 }
 
+char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
+	return sd->rtp_addr;
+}
 
+MSList * sal_stream_description_get_payloads(SalStreamDescription *sd){
+	return sd->payloads;
+}
