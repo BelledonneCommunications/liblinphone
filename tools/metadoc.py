@@ -532,16 +532,10 @@ class DoxygenTranslator(Translator):
 			lines[0] = '@brief ' + lines[0]
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Enumerator, abstractapi.Interface)):
-			return '#' + Translator.translate_reference(self, ref)
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return '#' + Translator.translate_reference(self, ref)
 
 	def translate_function_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, abstractapi.Method):
-			return Translator.translate_reference(self, ref) + '()'
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return Translator.translate_reference(self, ref) + '()'
 	
 	def _translate_section(self, section):
 		return '@{0} {1}'.format(
@@ -567,9 +561,12 @@ class JavaDocTranslator(DoxygenTranslator):
 		pass
 
 	def translate_class_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Enumerator, abstractapi.Interface)):
-			raise ReferenceTranslationError(ref.cname)
 		return '{@link ' + Translator.translate_reference(self, ref) + '}'
+
+	def translate_function_reference(self, ref, **kargs):
+		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
+		methodName = ref.relatedObject.name.translate(self.nameTranslator)
+		return '{@link ' + className + '#' + methodName + '}'
 	
 	def _translate_section(self, section):
 		if section.kind == 'see':
@@ -583,14 +580,6 @@ class JavaDocTranslator(DoxygenTranslator):
 			section.kind,
 			self._translate_paragraph(section.paragraph)
 		)
-
-	def translate_function_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, abstractapi.Method):
-			raise ReferenceTranslationError(ref.cname)
-
-		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
-		methodName = ref.relatedObject.name.translate(self.nameTranslator)
-		return '{@link ' + className + '#' + methodName + '}'
 
 	def _translate_parameter_list(self, parameterList):
 		text = ''
@@ -607,10 +596,7 @@ class SwiftDocTranslator(JavaDocTranslator):
 		DoxygenTranslator.__init__(self, 'Swift')
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
-			return '`{0}`'.format(Translator.translate_reference(self, ref))
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return '`{0}`'.format(Translator.translate_reference(self, ref))
 
 	def _translate_section(self, section):
 		if section.kind == 'return':
