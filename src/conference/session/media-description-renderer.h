@@ -21,6 +21,7 @@
 #define media_description_renderer_h
 
 #include "call-session.h"
+#include "sal/sal_stream_description.h"
 #include "c-wrapper/internal/c-sal.h"
 
 LINPHONE_BEGIN_NAMESPACE

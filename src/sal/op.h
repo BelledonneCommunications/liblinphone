@@ -29,6 +29,7 @@
 #include "content/content-type.h"
 #include "content/content-disposition.h"
 #include "logger/logger.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
