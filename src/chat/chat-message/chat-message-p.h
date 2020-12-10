@@ -56,7 +56,7 @@ public:
 		Started = 1 << 5,
 		FileDownload = 1 << 6,
 		AutoFileDownload = 1 << 7,
-		Sent = 1 << 6,
+		Sent = 1 << 8,
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }
