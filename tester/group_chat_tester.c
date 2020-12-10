@@ -3395,7 +3395,9 @@ static void group_chat_room_unique_one_to_one_chat_room_with_forward_message_rec
 		message = _send_message(paulineCr, textMessage);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageDelivered, initialPaulineStats.number_of_LinphoneMessageDelivered + 1, 5000));
 		BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, initialMarieStats.number_of_LinphoneMessageReceived + 1, 5000));
-		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), textMessage);
+		BC_ASSERT_PTR_NOT_NULL(marie->stat.last_received_chat_message);
+		if (marie->stat.last_received_chat_message)
+			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_text(marie->stat.last_received_chat_message), textMessage);
 		linphone_chat_message_unref(message);
 
 		// Check that the chat room has been correctly recreated on Marie's side
