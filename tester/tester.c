@@ -1521,7 +1521,8 @@ void linphone_core_manager_restart(LinphoneCoreManager *mgr, bool_t check_for_pr
 }
 
 void linphone_core_manager_uninit2(LinphoneCoreManager *mgr, bool_t unlinkDb) {
-	int old_log_level = linphone_core_get_log_level_mask();
+	LinphoneLoggingService *log_service = linphone_logging_service_get();
+	int old_log_level = linphone_logging_service_get_log_level_mask(log_service);
 	linphone_core_set_log_level(ORTP_ERROR);
 	if (mgr->phone_alias) {
 		ms_free(mgr->phone_alias);

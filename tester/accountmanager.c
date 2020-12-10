@@ -428,7 +428,8 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 void linphone_core_manager_check_accounts(LinphoneCoreManager *m){
 	const bctbx_list_t *it;
 	AccountManager *am = account_manager_get();
-	unsigned int logmask = linphone_core_get_log_level_mask();
+	LinphoneLoggingService *log_service = linphone_logging_service_get();
+	unsigned int logmask = linphone_logging_service_get_log_level_mask(log_service);
 
 	if (!liblinphonetester_show_account_manager_logs) linphone_core_set_log_level_mask(ORTP_ERROR|ORTP_FATAL);
 	for(it = linphone_core_get_proxy_config_list(m->lc); it != NULL; it = it->next){
