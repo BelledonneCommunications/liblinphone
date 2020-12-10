@@ -201,6 +201,13 @@ public:
 		
 	}
 
+	void subscribeParticipantDevice(const LinphoneAddress *conferenceAddress, const LinphoneAddress *participantDevice){
+		LinphoneChatRoom *cr = linphone_core_search_chat_room(getLc(), NULL, conferenceAddress, conferenceAddress, NULL);
+		BC_ASSERT_PTR_NOT_NULL(cr);
+	//	CALL_CHAT_ROOM_CBS(cr, ParticipantRegistrationSubscriptionRequested, participant_registration_subscription_requested, cr, participantDevice)
+		_linphone_chat_room_notify_participant_registration_subscription_requested(cr, participantDevice);
+	}
+
 	void notifyParticipantDeviceRegistration(const LinphoneAddress *conferenceAddress, const LinphoneAddress *participantDevice){
 
 		LinphoneChatRoom *cr = linphone_core_search_chat_room(getLc(), NULL, conferenceAddress, conferenceAddress, NULL);
@@ -342,6 +349,7 @@ static void group_chat_room_creation_server (void) {
 		// Laure comes back online and its chatroom is expected to be deleted
 		linphone_core_set_network_reachable(laure.getLc(), TRUE);
 		LinphoneAddress *laureDeviceAddress =  linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(laure.getLc())));
+		// Notify chat room that a participant has registered
 		focus.notifyParticipantDeviceRegistration(linphone_chat_room_get_conference_address(marieCr), laureDeviceAddress);
 		linphone_address_unref(laureDeviceAddress);
 		BC_ASSERT_TRUE(wait_for_list(coresList, &laure.getStats().number_of_LinphoneConferenceStateTerminated, initialLaureStats.number_of_LinphoneConferenceStateTerminated + 1, 5000));
@@ -802,7 +810,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 
 		int marieMsgs = linphone_chat_room_get_history_size(marieCr);
 		BC_ASSERT_EQUAL(marieMsgs, 1, int , "%d");
-		// Paulien didn't recieved the message as she was offline
+		// Pauline didn't received the message as she was offline
 		int paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
 		BC_ASSERT_EQUAL(paulineMsgs, 0, int , "%d");
 
@@ -834,11 +842,8 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 		}
 
 		BC_ASSERT_EQUAL(marie.getCore().getChatRooms().size(), 1, int, "%d");
-
-		initialMarieStats = marie.getStats();
-		initialPaulineStats = pauline.getStats();
-
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(marieCr), 1, int, "%d");
+
 		BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
 
 		// Wait a little bit to detect side effects
@@ -856,12 +861,13 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 		char *paulineDeviceIdentity = linphone_core_get_device_identity(pauline.getLc());
 		LinphoneAddress *paulineDeviceAddr = linphone_address_new(paulineDeviceIdentity);
 		bctbx_free(paulineDeviceIdentity);
-		paulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineDeviceAddr, confAddr, NULL);
+		LinphoneChatRoom *newPaulineCr = linphone_core_search_chat_room(pauline.getLc(), NULL, paulineDeviceAddr, confAddr, NULL);
 		linphone_address_unref(paulineDeviceAddr);
-		BC_ASSERT_PTR_NOT_NULL(paulineCr);
+		BC_ASSERT_PTR_NOT_NULL(newPaulineCr);
+		BC_ASSERT_PTR_EQUAL(newPaulineCr, paulineCr);
 
-		if (paulineCr) {
-			LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(paulineCr));
+		if (newPaulineCr) {
+			LinphoneAddress *paulineNewConfAddr = linphone_address_ref((LinphoneAddress *)linphone_chat_room_get_conference_address(newPaulineCr));
 			BC_ASSERT_PTR_NOT_NULL(paulineNewConfAddr);
 			if (paulineNewConfAddr) {
 				BC_ASSERT_FALSE(linphone_address_equal(confAddr, paulineNewConfAddr));
@@ -871,14 +877,14 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			}
 			linphone_address_unref(paulineNewConfAddr);
 
-			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(paulineCr), 1, int, "%d");
-			BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(paulineCr), initialSubject);
+			BC_ASSERT_EQUAL(linphone_chat_room_get_nb_participants(newPaulineCr), 1, int, "%d");
+			BC_ASSERT_STRING_EQUAL(linphone_chat_room_get_subject(newPaulineCr), initialSubject);
 
 			BC_ASSERT_TRUE(wait_for_list(coresList, &pauline.getStats().number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 5000));
-			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			paulineMsgs = linphone_chat_room_get_history_size(newPaulineCr);
 			BC_ASSERT_EQUAL(paulineMsgs, 1, int , "%d");
 
-			LinphoneChatMessage *paulineMsg = linphone_chat_room_create_message_from_utf8(paulineCr, "Sorry I was offline :(");
+			LinphoneChatMessage *paulineMsg = linphone_chat_room_create_message_from_utf8(newPaulineCr, "Sorry I was offline :(");
 			linphone_chat_message_send(paulineMsg);
 			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineMsg] {
 				return (linphone_chat_message_get_state(paulineMsg) == LinphoneChatMessageStateDelivered);
@@ -890,7 +896,7 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			// Since Marie has deleted the chat room, she lost all messages she sent before deleting it
 			marieMsgs = linphone_chat_room_get_history_size(marieCr);
 			BC_ASSERT_EQUAL(marieMsgs, 1, int , "%d");
-			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			paulineMsgs = linphone_chat_room_get_history_size(newPaulineCr);
 			BC_ASSERT_EQUAL(paulineMsgs, 2, int , "%d");
 
 			LinphoneChatMessage *marieMsg = linphone_chat_room_create_message_from_utf8(marieCr, "exhumed!!");
@@ -898,14 +904,14 @@ static void one_to_one_chatroom_exhumed_while_offline (void) {
 			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([marieMsg] {
 				return (linphone_chat_message_get_state(marieMsg) == LinphoneChatMessageStateDelivered);
 			}));
-			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([paulineCr] {
-				return linphone_chat_room_get_unread_messages_count(paulineCr) == 2;
+			BC_ASSERT_TRUE(CoreManagerAssert({focus,marie,pauline}).wait([newPaulineCr] {
+				return linphone_chat_room_get_unread_messages_count(newPaulineCr) == 2;
 			}));
 			linphone_chat_message_unref(marieMsg);
 
 			marieMsgs = linphone_chat_room_get_history_size(marieCr);
 			BC_ASSERT_EQUAL(marieMsgs, 2, int , "%d");
-			paulineMsgs = linphone_chat_room_get_history_size(paulineCr);
+			paulineMsgs = linphone_chat_room_get_history_size(newPaulineCr);
 			BC_ASSERT_EQUAL(paulineMsgs, 3, int , "%d");
 		}
 
