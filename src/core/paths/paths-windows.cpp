@@ -17,20 +17,24 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#define _WINSOCKAPI_    // stops windows.h including winsock.h
+#include <windows.h>
 #include <algorithm>
 #include <comutil.h>
 #include <ShlObj.h>
-#include "private.h"
-#if !defined (LINPHONE_WINDOWS_UWP)
-    #pragma comment(lib, "comsuppw.lib")
-    #pragma comment(lib, "kernel32.lib")
-#endif
 #include "paths-windows.h"
 #include "config.h"
 #include "linphone/utils/utils.h"
+#include <ppltasks.h>
+
+#include "private.h"// To get LINPHONE_WINDOWS_UWP
+#if !defined (LINPHONE_WINDOWS_UWP)
+	#pragma comment(lib, "comsuppw.lib")
+	#pragma comment(lib, "kernel32.lib")
+#endif
 
 // =============================================================================
-#include <ppltasks.h>
+
 
 using namespace std;
 
