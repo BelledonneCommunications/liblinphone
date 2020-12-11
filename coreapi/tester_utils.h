@@ -26,6 +26,8 @@
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "c-wrapper/internal/c-sal-stream-description.h"
+#include "c-wrapper/internal/c-sal-media-description.h"
 #include "quality_reporting.h"
 #include "vcard_private.h"
 
@@ -33,9 +35,6 @@
 typedef struct _Sal Sal;
 typedef struct _SalOp SalOp;
 #endif
-
-typedef struct SalStreamDescription SalStreamDescription;
-typedef struct SalMediaDescription SalMediaDescription;
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
 
@@ -101,14 +100,7 @@ LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_video_starts (const LinphoneC
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call);
 LINPHONE_PUBLIC belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call);
 LINPHONE_PUBLIC bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx);
-LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
-LINPHONE_PUBLIC char * sal_media_description_get_address(SalMediaDescription *md);
-LINPHONE_PUBLIC char * sal_stream_description_get_rtp_address(SalStreamDescription *sd);
-LINPHONE_PUBLIC int sal_media_description_get_nb_streams(SalMediaDescription *md);
-LINPHONE_PUBLIC MSList * sal_stream_description_get_payloads(SalStreamDescription *sd);
+
 LINPHONE_PUBLIC MSWebCam *_linphone_call_get_video_device (const LinphoneCall *call);
 LINPHONE_PUBLIC void _linphone_call_add_local_desc_changed_flag (LinphoneCall *call, int flag);
 LINPHONE_PUBLIC int _linphone_call_get_main_audio_stream_index (const LinphoneCall *call);
