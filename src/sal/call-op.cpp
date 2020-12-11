@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-sal-media-description.h"
+#include "c-wrapper/internal/c-sal-stream-description.h"
 #include "bellesip_sal/sal_impl.h"
 #include "offeranswer.h"
 #include "sal/call-op.h"
@@ -328,11 +330,11 @@ int SalCallOp::parseSdpBody (const Content &body, belle_sdp_session_description_
 	return 0;
 }
 
-void SalCallOp::setAddrTo0000 (char value[], size_t sz) {
-	if (ms_is_ipv6(value))
-		strncpy(value, "::0", sz);
+std::string SalCallOp::setAddrTo0000 (const std::string & value) {
+	if (ms_is_ipv6(value.c_str()))
+		return "::0";
 	else
-		strncpy(value, "0.0.0.0", sz);
+		return "0.0.0.0";
 }
 
 void SalCallOp::sdpProcess () {
@@ -355,11 +357,16 @@ void SalCallOp::sdpProcess () {
 		offer_answer_initiate_incoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && sal_media_description_has_dir(mResult,SalStreamSendOnly)) {
-			setAddrTo0000(mResult->addr, sizeof(mResult->addr));
+//			mResult->addr = setAddrTo0000(mResult->addr);
+			std::string dummy = mResult->addr;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
+			strncpy(mResult->addr, setAddrTo0000(dummy).c_str(), sizeof(mResult->addr));
+#pragma GCC diagnostic pop
 			for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 				if (mResult->streams[i].dir == SalStreamSendOnly) {
-					setAddrTo0000(mResult->streams[i].rtp_addr, sizeof(mResult->streams[i].rtp_addr));
-					setAddrTo0000(mResult->streams[i].rtcp_addr, sizeof(mResult->streams[i].rtcp_addr));
+					mResult->streams[i].rtp_addr = setAddrTo0000(mResult->streams[i].rtp_addr);
+					mResult->streams[i].rtcp_addr = setAddrTo0000(mResult->streams[i].rtcp_addr);
 				}
 			}
 		}
@@ -373,12 +380,12 @@ void SalCallOp::sdpProcess () {
 		for(int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 			// Copy back parameters from remote description that we need in our result description
 			if (mResult->streams[i].rtp_port != 0) { // If the stream was accepted
-				strcpy(mResult->streams[i].rtp_addr, mRemoteMedia->streams[i].rtp_addr);
+				mResult->streams[i].rtp_addr = mRemoteMedia->streams[i].rtp_addr;
 				mResult->streams[i].ptime = mRemoteMedia->streams[i].ptime;
 				mResult->streams[i].maxptime = mRemoteMedia->streams[i].maxptime;
 				mResult->streams[i].bandwidth = mRemoteMedia->streams[i].bandwidth;
 				mResult->streams[i].rtp_port = mRemoteMedia->streams[i].rtp_port;
-				strcpy(mResult->streams[i].rtcp_addr, mRemoteMedia->streams[i].rtcp_addr);
+				mResult->streams[i].rtcp_addr = mRemoteMedia->streams[i].rtcp_addr;
 				mResult->streams[i].rtcp_port = mRemoteMedia->streams[i].rtcp_port;
 				if (sal_stream_description_has_srtp(&mResult->streams[i])) {
 					int cryptoIdx = Sal::findCryptoIndexFromTag(	mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
