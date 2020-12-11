@@ -224,7 +224,7 @@ static void call_with_ice_and_rtcp_mux_without_reinvite(void){
 }
 
 static bool_t is_matching_a_local_address(const char *ip, const bctbx_list_t *addresses){
-	if (strlen(ip)==0) return FALSE;
+	if (!ip || strlen(ip)==0) return FALSE;
 	for (; addresses != NULL; addresses = addresses->next){
 		if (strcmp(ip, (const char*)addresses->data) == 0) return TRUE;
 	}

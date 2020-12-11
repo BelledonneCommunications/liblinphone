@@ -64,7 +64,8 @@ static bool_t payload_list_equals(const bctbx_list_t *l1, const bctbx_list_t *l2
 }
 
 const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc){
-	return desc->getTypeAsString().c_str();
+	if (desc->type==SalOther) return desc->typeother.c_str();
+	else return sal_stream_type_to_string(desc->type);
 }
 
 const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc){
@@ -195,10 +196,16 @@ bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
 }
 
 const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd){
+	if (sd->rtcp_addr.empty()) {
+		return NULL;
+	}
 	return sd->rtcp_addr.c_str();
 }
 
 const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
+	if (sd->rtp_addr.empty()) {
+		return NULL;
+	}
 	return sd->rtp_addr.c_str();
 }
 
