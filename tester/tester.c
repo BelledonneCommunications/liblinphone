@@ -25,6 +25,7 @@
 #include "liblinphone_tester.h"
 #include <bctoolbox/tester.h>
 #include "tester_utils.h"
+#include "belle-sip/sipstack.h"
 
 #define SKIP_PULSEAUDIO 1
 
@@ -146,6 +147,7 @@ void configure_lc(LinphoneCore *lc, const char *path, void *user_data) {
 
 	sal_enable_test_features(linphone_core_get_sal(lc), TRUE);
 
+	belle_sip_stack_set_dns_engine(sal_get_stack_impl(linphone_core_get_sal(lc)), BELLE_SIP_DNS_DNS_C); // Make sure we are not using Apple DNS Service during liblinphone tests
 	setup_dns(lc, path);
 }
 
