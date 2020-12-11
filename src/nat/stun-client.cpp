@@ -150,7 +150,7 @@ void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 		if (!sal_stream_description_enabled(&md->streams[i]))
 			continue;
 		if (md->streams[i].type == SalAudio && audioCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, audioCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
+			md->streams[i].rtp_addr = audioCandidate.address;
 			md->streams[i].rtp_port = audioCandidate.port;
 			if (
 				(
@@ -164,10 +164,10 @@ void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 				md->addr[sizeof(md->addr) - 1] = '\0';
 			}
 		} else if (md->streams[i].type == SalVideo && videoCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, videoCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
+			md->streams[i].rtp_addr = videoCandidate.address;
 			md->streams[i].rtp_port = videoCandidate.port;
 		} else if (md->streams[i].type == SalText && textCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, textCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
+			md->streams[i].rtp_addr = textCandidate.address;
 			md->streams[i].rtp_port = textCandidate.port;
 		}
 	}
