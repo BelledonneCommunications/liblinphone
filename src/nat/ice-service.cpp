@@ -456,7 +456,7 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 		if (firstCl)
 			result = !!ice_check_list_selected_valid_local_candidate(firstCl, &rtpCandidate, nullptr);
 		if (result) {
-			strncpy(desc->addr, rtpCandidate->taddr.ip, sizeof(desc->addr));
+			desc->addr = rtpCandidate->taddr.ip;
 		} else {
 			lWarning() << "If ICE has completed successfully, rtp_candidate should be set!";
 			ice_dump_valid_list(firstCl);

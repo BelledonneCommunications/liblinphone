@@ -63,7 +63,7 @@ LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const Linpho
 LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
 LINPHONE_PUBLIC SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx);
 LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
-LINPHONE_PUBLIC char * sal_media_description_get_address(SalMediaDescription *md);
+LINPHONE_PUBLIC const char * sal_media_description_get_address(SalMediaDescription *md);
 LINPHONE_PUBLIC int sal_media_description_get_nb_streams(SalMediaDescription *md);
 #ifdef __cplusplus
 }
