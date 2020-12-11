@@ -612,7 +612,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 	}
 	result->nb_streams=local_offer->nb_streams;
 	result->bandwidth=remote_answer->bandwidth;
-	strcpy(result->addr,remote_answer->addr);
+	result->addr=remote_answer->addr;
 	strcpy(result->ice_pwd, local_offer->ice_pwd);
 	strcpy(result->ice_ufrag, local_offer->ice_ufrag);
 	memcpy(&result->rtcp_xr, &local_offer->rtcp_xr, sizeof(result->rtcp_xr));
@@ -700,7 +700,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	}
 	result->nb_streams=i;
 	strcpy(result->username, local_capabilities->username);
-	strcpy(result->addr,local_capabilities->addr);
+	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
 	result->session_ver=local_capabilities->session_ver;
 	result->session_id=local_capabilities->session_id;
