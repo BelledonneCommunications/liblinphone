@@ -363,6 +363,9 @@ int sal_media_description_get_nb_streams(SalMediaDescription *md){
 }
 
 const char * sal_media_description_get_address(SalMediaDescription *md){
+	if (md->addr.empty()) {
+		return NULL;
+	}
 	return md->addr.c_str();
 }
 

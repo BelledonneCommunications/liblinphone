@@ -18,8 +18,3 @@
  */
 
 #include "sal/sal_stream_description.h"
-
-const std::string SalStreamDescription::getTypeAsString() const {
-	if (type==SalOther) return typeother;
-	else return sal_stream_type_to_string(type);
-}
