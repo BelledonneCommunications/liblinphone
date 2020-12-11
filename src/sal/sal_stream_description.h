@@ -30,8 +30,6 @@
 #define SAL_CRYPTO_ALGO_MAX 4
 
 typedef struct SalStreamDescription {
-	const std::string getTypeAsString() const;
-
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
