@@ -801,20 +801,16 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	}
 	if (mainAudioStreamIndex != -1){
 		SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
-		//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
-		//if (ms_is_multicast(rtpAddr.c_str())){
-		const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
-		if (ms_is_multicast(rtpAddr)){
+		const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+		if (ms_is_multicast(rtpAddr.c_str())){
 			lInfo() << "Incoming offer has audio multicast, enabling it in local params.";
 			getParams()->enableAudioMulticast(true);
 		}else getParams()->enableAudioMulticast(false);
 	}
 	if (mainVideoStreamIndex != -1){
 		SalStreamDescription *sd = &md->streams[mainVideoStreamIndex];
-		//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
-		//if (ms_is_multicast(rtpAddr.c_str())){
-		const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
-		if (ms_is_multicast(rtpAddr)){
+		const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+		if (ms_is_multicast(rtpAddr.c_str())){
 			lInfo() << "Incoming offer has video multicast, enabling it in local params.";
 			getParams()->enableVideoMulticast(true);
 		}else getParams()->enableVideoMulticast(false);
@@ -1183,8 +1179,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		getLocalIp(*L_GET_CPP_PTR_FROM_C_OBJECT(address));
 	}
 
-	strncpy(md->addr, mediaLocalIp.c_str(), sizeof(md->addr));
-	md->addr[sizeof(md->addr) - 1] = '\0';
+	md->addr = mediaLocalIp;
 
 	LinphoneAddress *addr = nullptr;
 	if (destProxy) {
@@ -1943,10 +1938,8 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
 			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
-				//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
-				//getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr.c_str()));
-				const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
-				getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr));
+				const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+				getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr.c_str()));
 			} else
 				getCurrentParams()->enableAudioMulticast(false);
 			getCurrentParams()->enableAudio(sal_stream_description_enabled(sd));
@@ -1956,10 +1949,8 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(sd && sal_stream_description_has_implicit_avpf(sd));
 			getCurrentParams()->setVideoDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
-				//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
-				//getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
-				const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
-				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr));
+				const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
 			} else
 				getCurrentParams()->enableVideoMulticast(false);
 			getCurrentParams()->enableVideo(sal_stream_description_enabled(sd));
