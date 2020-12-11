@@ -284,7 +284,7 @@ bool_t sal_media_description_has_ipv6(const SalMediaDescription *md){
 		if (md->streams[i].rtp_addr[0] != '\0'){
 			if (!sal_stream_description_has_ipv6(&md->streams[i])) return FALSE;
 		}else{
-			if (strchr(md->addr,':') == NULL) return FALSE;
+			if (md->addr.find(':') == std::string::npos) return FALSE;
 		}
 	}
 	return TRUE;
@@ -304,8 +304,8 @@ int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaD
 int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2) {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
-	if (strcmp(md1->addr, md2->addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (md1->addr[0]!='\0' && md2->addr[0]!='\0' && ms_is_multicast(md1->addr) != ms_is_multicast(md2->addr))
+	if (md1->addr.compare(md2->addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
+	if (md1->addr.empty() == false && md2->addr.empty() == false && ms_is_multicast(md1->addr.c_str()) != ms_is_multicast(md2->addr.c_str()))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (md1->nb_streams != md2->nb_streams) result |= SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
 	if (md1->bandwidth != md2->bandwidth) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
@@ -362,8 +362,8 @@ int sal_media_description_get_nb_streams(SalMediaDescription *md){
 	return md->nb_streams;
 }
 
-char * sal_media_description_get_address(SalMediaDescription *md){
-	return md->addr;
+const char * sal_media_description_get_address(SalMediaDescription *md){
+	return md->addr.c_str();
 }
 
 SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx) {

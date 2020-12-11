@@ -357,9 +357,7 @@ void SalCallOp::sdpProcess () {
 		offer_answer_initiate_incoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && sal_media_description_has_dir(mResult,SalStreamSendOnly)) {
-//			mResult->addr = setAddrTo0000(mResult->addr);
-			std::string dummy = mResult->addr;
-			strncpy(mResult->addr, setAddrTo0000(dummy).c_str(), sizeof(mResult->addr));
+			mResult->addr = setAddrTo0000(mResult->addr);
 			for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 				if (mResult->streams[i].dir == SalStreamSendOnly) {
 					mResult->streams[i].rtp_addr = setAddrTo0000(mResult->streams[i].rtp_addr);
@@ -371,7 +369,7 @@ void SalCallOp::sdpProcess () {
 		mSdpAnswer = reinterpret_cast<belle_sdp_session_description_t *>(belle_sip_object_ref(media_description_to_sdp(mResult)));
 		// Once we have generated the SDP answer, we modify the result description for processing by the upper layer
 		// It should contain media parameters constraints from the remote offer, not our response
-		strcpy(mResult->addr, mRemoteMedia->addr);
+		mResult->addr = mRemoteMedia->addr;
 		mResult->bandwidth = mRemoteMedia->bandwidth;
 
 		for(int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
