@@ -1818,7 +1818,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 			memset(&remaddr, 0, remaddrlen);
 			result_desc = sal_call_get_final_media_description(linphone_call_get_op_as_sal_op(c2));
 
-			expected_addr = sal_stream_description_get_rtp_address(sal_media_description_get_stream_idx(result_desc, 0));
+			expected_addr = ms_strdup(sal_stream_description_get_rtp_address(sal_media_description_get_stream_idx(result_desc, 0)));
 			if (expected_addr[0] == '\0') expected_addr = sal_media_description_get_address(result_desc);
 			astream = (AudioStream *)linphone_call_get_stream(c1, LinphoneStreamTypeAudio);
 			if ((strchr(expected_addr, ':') == NULL) && (astream->ms.sessions.rtp_session->rtp.gs.rem_addr.ss_family == AF_INET6)) {
@@ -1829,6 +1829,8 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 			bctbx_sockaddr_to_ip_address((struct sockaddr *)&remaddr, remaddrlen, ip, sizeof(ip), &port);
 
 			BC_ASSERT_STRING_EQUAL(ip, expected_addr);
+
+			ms_free(expected_addr);
 		}
 	}
 	linphone_call_stats_unref(stats);
