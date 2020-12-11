@@ -23,11 +23,11 @@
 #include "ortp/rtpsession.h"
 #include "linphone/api/c-types.h"
 #include "c-wrapper/internal/c-sal.h"
+#include "c-wrapper/internal/c-sal-stream-description.h"
 
 #define SAL_MEDIA_DESCRIPTION_MAX_STREAMS 8
 
 typedef struct SalMediaDescription SalMediaDescription;
-typedef struct SalStreamDescription SalStreamDescription;
 typedef struct SalStreamBundle SalStreamBundle;
 
 #ifdef __cplusplus
