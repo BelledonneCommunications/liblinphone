@@ -30,6 +30,7 @@
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
+#include "c-wrapper/internal/c-sal-stream-bundle.h"
 #include "sal/sal_media_description.h"
 #include "sal/call-op.h"
 #include "sal/sal.h"
@@ -800,7 +801,9 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	}
 	if (mainAudioStreamIndex != -1){
 		SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
-		const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+		//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+		//if (ms_is_multicast(rtpAddr.c_str())){
+		const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
 		if (ms_is_multicast(rtpAddr)){
 			lInfo() << "Incoming offer has audio multicast, enabling it in local params.";
 			getParams()->enableAudioMulticast(true);
@@ -808,7 +811,9 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	}
 	if (mainVideoStreamIndex != -1){
 		SalStreamDescription *sd = &md->streams[mainVideoStreamIndex];
-		const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+		//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+		//if (ms_is_multicast(rtpAddr.c_str())){
+		const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
 		if (ms_is_multicast(rtpAddr)){
 			lInfo() << "Incoming offer has video multicast, enabling it in local params.";
 			getParams()->enableVideoMulticast(true);
@@ -1224,7 +1229,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 				md->streams[mainAudioStreamIndex].ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
 			md->streams[mainAudioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
 			md->streams[mainAudioStreamIndex].payloads = l;
-			strncpy(md->streams[mainAudioStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainAudioStreamIndex].rtcp_cname));
+			md->streams[mainAudioStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainAudioStreamIndex], "as");
 
 			if (getParams()->audioMulticastEnabled()) {
@@ -1254,7 +1259,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[mainVideoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			md->streams[mainVideoStreamIndex].name = "Video";
 			md->streams[mainVideoStreamIndex].payloads = l;
-			strncpy(md->streams[mainVideoStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainVideoStreamIndex].rtcp_cname));
+			md->streams[mainVideoStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainVideoStreamIndex], "vs");
 
 			if (getParams()->videoMulticastEnabled()) {
@@ -1285,7 +1290,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[mainTextStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
 			md->streams[mainTextStreamIndex].name = "Text";
 			md->streams[mainTextStreamIndex].payloads = l;
-			strncpy(md->streams[mainTextStreamIndex].rtcp_cname, getMe()->getAddress().asString().c_str(), sizeof(md->streams[mainTextStreamIndex].rtcp_cname));
+			md->streams[mainTextStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[mainTextStreamIndex], "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
@@ -1938,7 +1943,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			SalStreamDescription *sd = &md->streams[mainAudioStreamIndex];
 			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
-				const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+				//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+				//getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr.c_str()));
+				const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
 				getCurrentParams()->enableAudioMulticast(!!ms_is_multicast(rtpAddr));
 			} else
 				getCurrentParams()->enableAudioMulticast(false);
@@ -1949,7 +1956,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(sd && sal_stream_description_has_implicit_avpf(sd));
 			getCurrentParams()->setVideoDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
-				const char *rtpAddr = (sd->rtp_addr[0] != '\0') ? sd->rtp_addr : md->addr;
+				//const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
+				//getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr.c_str()));
+				const char *rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr.c_str() : md->addr;
 				getCurrentParams()->enableVideoMulticast(!!ms_is_multicast(rtpAddr));
 			} else
 				getCurrentParams()->enableVideoMulticast(false);
@@ -2557,7 +2566,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		srand((unsigned int)time(NULL));
 		for (int i = 0; i < d->localDesc->nb_streams; i++) {
 			// In case of multicasting, choose a random port to send with the invite
-			if (ms_is_multicast(d->localDesc->streams[i].rtp_addr)){
+			if (ms_is_multicast(d->localDesc->streams[i].rtp_addr.c_str())){
 				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), d->localDesc->streams[i].type);
 				if (portRange.first <= 0) {
 					portRange.first = 1024;

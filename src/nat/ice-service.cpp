@@ -304,18 +304,18 @@ void IceService::getIceDefaultAddrAndPort (
 	uint16_t componentID,
 	const SalMediaDescription *md,
 	const SalStreamDescription *stream,
-	const char **addr,
-	int *port
+	std::string & addr,
+	int & port
 ) {
 	if (componentID == 1) {
-		*addr = stream->rtp_addr;
-		*port = stream->rtp_port;
+		addr = stream->rtp_addr;
+		port = stream->rtp_port;
 	} else if (componentID == 2) {
-		*addr = stream->rtcp_addr;
-		*port = stream->rtcp_port;
+		addr = stream->rtcp_addr;
+		port = stream->rtcp_port;
 	} else
 		return;
-	if ((*addr)[0] == '\0') *addr = md->addr;
+	if (addr.empty() == true) addr = md->addr;
 }
 
 void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted) {
@@ -342,10 +342,10 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 				break;
 			if ((candidate->componentID == 0) || (candidate->componentID > 2))
 				continue;
-			const char *addr = nullptr;
+			std::string addr = std::string();
 			int port = 0;
-			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate->componentID), md, stream, &addr, &port);
-			if (addr && (candidate->port == port) && (strlen(candidate->addr) == strlen(addr)) && (strcmp(candidate->addr, addr) == 0))
+			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate->componentID), md, stream, addr, port);
+			if ((addr.empty() == false) && (candidate->port == port) && (strlen(candidate->addr) == addr.length()) && (addr.compare(candidate->addr) == 0))
 				defaultCandidate = true;
 			int family = AF_INET;
 			if (strchr(candidate->addr, ':'))
@@ -360,11 +360,11 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 			bool losingPairsAdded = false;
 			for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES; j++) {
 				const SalIceRemoteCandidate *remoteCandidate = &stream->ice_remote_candidates[j];
-				const char *addr = nullptr;
+				std::string addr = std::string();
 				int port = 0;
 				int componentID = j + 1;
 				if (remoteCandidate->addr[0] == '\0') break;
-				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, stream, &addr, &port);
+				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, stream, addr, port);
 
 				// If we receive a re-invite with remote-candidates, supply these pairs to the ice check list.
 				// They might be valid pairs already selected, or losing pairs.
@@ -373,9 +373,9 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 				if (strchr(remoteCandidate->addr, ':'))
 					remoteFamily = AF_INET6;
 				int family = AF_INET;
-				if (strchr(addr, ':'))
+				if (addr.find(':') == std::string::npos)
 					family = AF_INET6;
-				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, remoteCandidate->addr, remoteCandidate->port, family, addr, port);
+				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, remoteCandidate->addr, remoteCandidate->port, family, addr.c_str(), port);
 				losingPairsAdded = true;
 			}
 			if (losingPairsAdded)
@@ -478,13 +478,13 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			result = !!ice_check_list_default_local_candidate(ice_session_check_list(mIceSession, i), &rtpCandidate, &rtcpCandidate);
 		}
 		if (result) {
-			strncpy(stream->rtp_addr, rtpCandidate->taddr.ip, sizeof(stream->rtp_addr));
-			strncpy(stream->rtcp_addr, rtcpCandidate->taddr.ip, sizeof(stream->rtcp_addr));
+			stream->rtp_addr = rtpCandidate->taddr.ip;
+			stream->rtcp_addr = rtcpCandidate->taddr.ip;
 			stream->rtp_port = rtpCandidate->taddr.port;
 			stream->rtcp_port = rtcpCandidate->taddr.port;
 		} else {
-			memset(stream->rtp_addr, 0, sizeof(stream->rtp_addr));
-			memset(stream->rtcp_addr, 0, sizeof(stream->rtcp_addr));
+			stream->rtp_addr = "0";
+			stream->rtcp_addr = "0";
 		}
 		if ((strlen(ice_check_list_local_pwd(cl)) != strlen(desc->ice_pwd)) || (strcmp(ice_check_list_local_pwd(cl), desc->ice_pwd)))
 			strncpy(stream->ice_pwd, ice_check_list_local_pwd(cl), sizeof(stream->ice_pwd) - 1);
@@ -501,7 +501,7 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			for (int j = 0; j < MIN((int)bctbx_list_size(cl->local_candidates), SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES); j++) {
 				SalIceCandidate *salCandidate = &stream->ice_candidates[nbCandidates];
 				IceCandidate *iceCandidate = reinterpret_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
-				const char *defaultAddr = nullptr;
+				std::string defaultAddr = nullptr;
 				int defaultPort = 0;
 				if (iceCandidate->componentID == 1) {
 					defaultAddr = stream->rtp_addr;
@@ -511,12 +511,12 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 					defaultPort = stream->rtcp_port;
 				} else
 					continue;
-				if (defaultAddr[0] == '\0')
+				if (defaultAddr.empty() == false)
 					defaultAddr = desc->addr;
 				// Only include the candidates matching the default destination for each component of the stream if the state is Completed as specified in RFC5245 section 9.1.2.2.
 				if (
 					ice_check_list_state(cl) == ICL_Completed &&
-					!((iceCandidate->taddr.port == defaultPort) && (strlen(iceCandidate->taddr.ip) == strlen(defaultAddr)) && (strcmp(iceCandidate->taddr.ip, defaultAddr) == 0))
+					!((iceCandidate->taddr.port == defaultPort) && (strlen(iceCandidate->taddr.ip) == defaultAddr.length()) && (defaultAddr.compare(iceCandidate->taddr.ip) == 0))
 				)
 					continue;
 				strncpy(salCandidate->foundation, iceCandidate->foundation, sizeof(salCandidate->foundation));
