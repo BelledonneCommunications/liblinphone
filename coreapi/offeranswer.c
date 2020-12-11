@@ -18,6 +18,7 @@
  */
 
 #include "c-wrapper/internal/c-sal.h"
+#include "c-wrapper/internal/c-sal-stream-bundle.h"
 #include "sal/sal_media_description.h"
 #include "sal/sal.h"
 #include "offeranswer.h"
@@ -347,7 +348,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 	result->proto=remote_answer->proto;
 	result->type=local_offer->type;
 
-	if (local_offer->rtp_addr[0]!='\0' && ms_is_multicast(local_offer->rtp_addr)) {
+	if (local_offer->rtp_addr.empty() == false && ms_is_multicast(local_offer->rtp_addr.c_str())) {
 			/*6.2 Multicast Streams
 			...
 		If a multicast stream is accepted, the address and port information
@@ -357,10 +358,10 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		participants in a multicast session need to have equivalent views of
 		the parameters of the session, an underlying assumption of the
 		multicast bias of RFC 2327.*/
-		if (strcmp(local_offer->rtp_addr,remote_answer->rtp_addr) !=0 ) {
+		if (local_offer->rtp_addr.compare(remote_answer->rtp_addr) !=0 ) {
 			ms_message("Remote answered IP [%s] does not match offered [%s] for local stream description [%p]"
-																,remote_answer->rtp_addr
-																,local_offer->rtp_addr
+																,remote_answer->rtp_addr.c_str()
+																,local_offer->rtp_addr.c_str()
 																,local_offer);
 			result->rtp_port=0;
 			return;
@@ -425,8 +426,8 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 	}
 
 	if (result->payloads && !only_telephone_event(result->payloads)){
-		strcpy(result->rtp_addr,remote_answer->rtp_addr);
-		strcpy(result->rtcp_addr,remote_answer->rtcp_addr);
+		result->rtp_addr=remote_answer->rtp_addr;
+		result->rtcp_addr=remote_answer->rtcp_addr;
 		result->rtp_port=remote_answer->rtp_port;
 		result->rtcp_port=remote_answer->rtcp_port;
 		result->bandwidth=remote_answer->bandwidth;
@@ -443,7 +444,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		}
 	}
 	result->rtp_ssrc=local_offer->rtp_ssrc;
-	strncpy(result->rtcp_cname,local_offer->rtcp_cname,sizeof(result->rtcp_cname));
+	result->rtcp_cname=local_offer->rtcp_cname;
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((local_offer->dtls_role!=SalDtlsRoleInvalid) && (remote_answer->dtls_role!=SalDtlsRoleInvalid)
@@ -474,15 +475,15 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->rtp_port=0;
 		return;
 	}
-	if (remote_offer->rtp_addr[0]!='\0' && ms_is_multicast(remote_offer->rtp_addr)) {
+	if (remote_offer->rtp_addr.empty() == false && ms_is_multicast(remote_offer->rtp_addr.c_str())) {
 		if (sal_stream_description_has_srtp(result) == TRUE) {
 			ms_message("SAVP not supported for multicast address for remote stream [%p]",remote_offer);
 			result->rtp_port=0;
 			return;
 		}
 		result->dir=remote_offer->dir;
-		strcpy(result->rtp_addr,remote_offer->rtp_addr);
-		strcpy(result->rtcp_addr,remote_offer->rtcp_addr);
+		result->rtp_addr=remote_offer->rtp_addr;
+		result->rtcp_addr=remote_offer->rtcp_addr;
 		result->rtp_port=remote_offer->rtp_port;
 		/*result->rtcp_port=remote_offer->rtcp_port;*/
 		result->rtcp_port=0; /* rtcp not supported yet*/
@@ -492,8 +493,8 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->ttl=remote_offer->ttl;
 		result->multicast_role = SalMulticastReceiver;
 	} else {
-		strcpy(result->rtp_addr,local_cap->rtp_addr);
-		strcpy(result->rtcp_addr,local_cap->rtcp_addr);
+		result->rtp_addr=local_cap->rtp_addr;
+		result->rtcp_addr=local_cap->rtcp_addr;
 		result->rtp_port=local_cap->rtp_port;
 		result->rtcp_port=local_cap->rtcp_port;
 		result->bandwidth=local_cap->bandwidth;
@@ -544,7 +545,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	memcpy(result->ice_remote_candidates, local_cap->ice_remote_candidates, sizeof(result->ice_remote_candidates));
 	result->name = local_cap->name;
 	result->rtp_ssrc=local_cap->rtp_ssrc;
-	strncpy(result->rtcp_cname,local_cap->rtcp_cname,sizeof(result->rtcp_cname));
+	result->rtcp_cname=local_cap->rtcp_cname;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
@@ -692,7 +693,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 				result->streams[i].typeother = rs->typeother;
 			}
 			if (rs->proto==SalProtoOther){
-				strncpy(result->streams[i].proto_other,rs->proto_other,sizeof(rs->proto_other)-1);
+				result->streams[i].proto_other = rs->proto_other;
 			}
 		}
 		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls->custom_sdp_attributes);

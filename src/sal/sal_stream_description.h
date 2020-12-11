@@ -29,19 +29,18 @@
 
 #define SAL_CRYPTO_ALGO_MAX 4
 
-class SalStreamDescription {
-public:
-	std::string getTypeAsString() const;
+typedef struct SalStreamDescription {
+	const std::string getTypeAsString() const;
 
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
 	std::string typeother;
-	char proto_other[32];
-	char rtp_addr[64];
-	char rtcp_addr[64];
+	std::string proto_other;
+	std::string rtp_addr;
+	std::string rtcp_addr;
 	unsigned int rtp_ssrc;
-	char rtcp_cname[256];
+	std::string rtcp_cname;
 	int rtp_port;
 	int rtcp_port;
 	MSList *payloads; /**<list of PayloadType */
@@ -75,31 +74,6 @@ public:
 	SalDtlsRole dtls_role;
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
-};
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
- *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
-bool_t sal_stream_description_enabled(const SalStreamDescription *sd);
-void sal_stream_description_disable(SalStreamDescription *sd);
-bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_ipv6(const SalStreamDescription *md);
-
-const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc);
-const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc);
-bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd);
-
-int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
-
-#ifdef __cplusplus
-}
-#endif
+} SalStreamDescription;
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_

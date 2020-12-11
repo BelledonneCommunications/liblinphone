@@ -26,9 +26,7 @@ This file contains SAL API functions that do not depend on the underlying implem
 #include "sal/sal_media_description.h"
 #include "c-wrapper/internal/c-sal.h"
 
-
 #include <ctype.h>
-
 
 const char *sal_multicast_role_to_string(SalMulticastRole role){
 	switch(role){
