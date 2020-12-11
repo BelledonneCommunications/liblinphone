@@ -17,6 +17,8 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sal_impl.h"
+#include "c-wrapper/internal/c-sal-stream-description.h"
+#include "c-wrapper/internal/c-sal-media-description.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
 inline OrtpRtcpXrStatSummaryFlag operator|=(OrtpRtcpXrStatSummaryFlag a, OrtpRtcpXrStatSummaryFlag b) {
@@ -213,8 +215,8 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	PayloadType* pt;
 	char buffer[1024];
 	const char* dir=NULL;
-	const char *rtp_addr;
-	const char *rtcp_addr;
+	std::string rtp_addr;
+	std::string rtcp_addr;
 	int rtp_port;
 	int rtcp_port;
 	bool_t different_rtp_and_rtcp_addr;
@@ -251,14 +253,14 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		belle_sdp_media_set_media_formats(belle_sdp_media_description_get_media(media_desc),format);
 	}
 	/*only add a c= line within the stream description if address are differents*/
-	if (rtp_addr[0]!='\0' && strcmp(rtp_addr,md->addr)!=0){
+	if ((rtp_addr.empty()==false) && (rtp_addr.compare(md->addr)!=0)){
 		bool_t inet6;
 		belle_sdp_connection_t *connection;
-		if (strchr(rtp_addr,':')!=NULL){
+		if (rtp_addr.find(':')!=std::string::npos){
 			inet6=TRUE;
 		}else inet6=FALSE;
-		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", rtp_addr);
-		if (ms_is_multicast(rtp_addr)) {
+		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", rtp_addr.c_str());
+		if (ms_is_multicast(rtp_addr.c_str())) {
 			/*remove session cline in case of multicast*/
 			belle_sdp_session_description_set_connection(session_desc,NULL);
 			if (inet6 == FALSE)
@@ -287,7 +289,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 
 	/* insert DTLS session attribute if needed */
 	if ((stream->proto == SalProtoUdpTlsRtpSavpf) || (stream->proto == SalProtoUdpTlsRtpSavp)) {
-		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",stream->rtp_ssrc,stream->rtcp_cname);
+		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",stream->rtp_ssrc,stream->rtcp_cname.c_str());
 		if ((stream->dtls_role != SalDtlsRoleInvalid) && (strlen(stream->dtls_fingerprint)>0)) {
 			switch(stream->dtls_role) {
 				case SalDtlsRoleIsClient:
@@ -335,10 +337,10 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	add_mid_attributes(media_desc, stream);
 
 	if (rtp_port != 0) {
-		different_rtp_and_rtcp_addr = (rtcp_addr[0] != '\0') && (strcmp(rtp_addr, rtcp_addr) != 0);
+		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
 			if (different_rtp_and_rtcp_addr == TRUE) {
-				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, rtcp_addr);
+				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, rtcp_addr.c_str());
 			} else {
 				snprintf(buffer, sizeof(buffer), "%u",rtcp_port);
 			}
@@ -807,11 +809,11 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		} else if (strcasecmp(proto, "UDP/TLS/RTP/SAVPF") == 0) {
 			stream->proto = SalProtoUdpTlsRtpSavpf;
 		} else {
-			strncpy(stream->proto_other,proto,sizeof(stream->proto_other)-1);
+			stream->proto_other = proto;
 		}
 	}
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		strncpy ( stream->rtp_addr,belle_sdp_connection_get_address ( cnx ), sizeof ( stream->rtp_addr ) -1 );
+		stream->rtp_addr = belle_sdp_connection_get_address ( cnx );
 		stream->ttl=belle_sdp_connection_get_ttl(cnx);
 	}
 
@@ -860,7 +862,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	/* Get media specific RTCP attribute */
 	stream->rtcp_port = stream->rtp_port + 1;
-	strncpy(stream->rtcp_addr, stream->rtp_addr, sizeof(stream->rtcp_addr) - 1);
+	stream->rtcp_addr = stream->rtp_addr;
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 		char *tmp = (char *)ms_malloc0(strlen(value));
@@ -868,8 +870,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		if (nb == 1) {
 			/* SDP rtcp attribute only contains the port */
 		} else if (nb == 2) {
-			strncpy(stream->rtcp_addr, tmp, sizeof(stream->rtcp_addr));
-			stream->rtcp_addr[sizeof(stream->rtcp_addr) - 1] = '\0';
+			stream->rtcp_addr = tmp;
 		} else {
 			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
 		}
