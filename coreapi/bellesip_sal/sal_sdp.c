@@ -433,7 +433,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	int i;
 	char *escaped_username = belle_sip_uri_to_escaped_username(desc->username);
 
-	if ( strchr ( desc->addr,':' ) !=NULL ) {
+	if ( desc->addr.find(':' ) != std::string::npos ) {
 		inet6=1;
 	} else inet6=0;
 	belle_sdp_session_description_set_version ( session_desc,belle_sdp_version_create ( 0 ) );
@@ -443,7 +443,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 									  ,desc->session_ver
 									  ,"IN"
 									  , inet6 ? "IP6" :"IP4"
-									  ,desc->addr );
+									  ,desc->addr.c_str() );
 	bctbx_free(escaped_username);
 
 	belle_sdp_session_description_set_origin ( session_desc,origin );
@@ -454,7 +454,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || desc->ice_ufrag[0] != '\0' ) {
 		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
 		belle_sdp_session_description_set_connection ( session_desc
-				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",desc->addr ) );
+				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",desc->addr.c_str() ) );
 
 	} else 	{
 		belle_sdp_session_description_set_connection ( session_desc
@@ -990,7 +990,7 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 	desc->dir = SalStreamSendRecv;
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( session_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		strncpy ( desc->addr,belle_sdp_connection_get_address ( cnx ),sizeof ( desc->addr ) -1  );
+		desc->addr = belle_sdp_connection_get_address ( cnx );
 	}
 	if ( (sname=belle_sdp_session_description_get_session_name(session_desc)) && belle_sdp_session_name_get_value(sname) ){
 		strncpy(desc->name,belle_sdp_session_name_get_value(sname),sizeof(desc->name) - 1);
