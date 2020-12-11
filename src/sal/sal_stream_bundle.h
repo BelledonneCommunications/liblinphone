@@ -26,23 +26,4 @@ typedef struct SalStreamBundle{
 	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
 } SalStreamBundle;
 
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-/* Add stream to the bundle. The SalStreamDescription must be part of the SalMediaDescription in which the SalStreamBundle is added. */
-void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid);
-SalStreamBundle *sal_stream_bundle_new(void);
-void sal_stream_bundle_destroy(SalStreamBundle *bundle);
-SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle);
-int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid);
-const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle);
-
-
-#ifdef __cplusplus
-}
-#endif
-
 #endif // ifndef _SAL_STREAM_BUNDLE_H_
