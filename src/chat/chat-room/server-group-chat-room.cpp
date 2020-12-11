@@ -705,7 +705,7 @@ void ServerGroupChatRoomPrivate::updateProtocolVersionFromDevice(const shared_pt
 	auto protocols = Utils::parseCapabilityDescriptor(device->getCapabilityDescriptor());
 	auto groupchat = protocols.find("groupchat");
 	if (groupchat == protocols.end()){
-		lWarning() << "Device " << device->getAddress().asString() << "has no groupchat capability set !";
+		lError() << "Device " << device->getAddress().asString() << " has no groupchat capability set: " << device->getCapabilityDescriptor();
 		return;
 	}
 	if (protocolVersion > groupchat->second){
