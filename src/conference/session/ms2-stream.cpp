@@ -171,8 +171,8 @@ string MS2Stream::getBindIp(){
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	SalStreamDescription *localDesc = ctx.localStreamDescription;
-	strncpy(localDesc->rtp_addr, getPublicIp().c_str(), sizeof(localDesc->rtp_addr) - 1);
-	strncpy(localDesc->rtcp_addr, getPublicIp().c_str(), sizeof(localDesc->rtcp_addr) -1);
+	localDesc->rtp_addr = getPublicIp();
+	localDesc->rtcp_addr = getPublicIp();
 	
 	if (localDesc->rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && localDesc->payloads != nullptr){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
@@ -301,8 +301,8 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 void MS2Stream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
 	RtpSession *session = mSessions.rtp_session;
 	const SalStreamDescription *newStream = ctx.remoteStreamDescription;
-	const char *rtpAddr = (newStream->rtp_addr[0] != '\0') ? newStream->rtp_addr : ctx.remoteMediaDescription->addr;
-	const char *rtcpAddr = (newStream->rtcp_addr[0] != '\0') ? newStream->rtcp_addr : ctx.remoteMediaDescription->addr;
+	const char *rtpAddr = (newStream->rtp_addr.empty() == false) ? newStream->rtp_addr.c_str() : ctx.remoteMediaDescription->addr;
+	const char *rtcpAddr = (newStream->rtcp_addr.empty() == false) ? newStream->rtcp_addr.c_str() : ctx.remoteMediaDescription->addr;
 	if (!ms_is_multicast(rtpAddr)){
 		rtp_session_set_symmetric_rtp(session, false); // Disable symmetric RTP when auxiliary destinations are added.
 		rtp_session_add_aux_remote_addr_full(session, rtpAddr, newStream->rtp_port, rtcpAddr, newStream->rtcp_port);
@@ -334,10 +334,10 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 		}
 	}
 	
-	info->rtpAddr = stream->rtp_addr[0] != '\0' ? stream->rtp_addr : params.resultMediaDescription->addr;
+	info->rtpAddr = stream->rtp_addr.empty() == false ? stream->rtp_addr.c_str() : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream->rtp_port;
-	info->rtcpAddr = stream->rtcp_addr[0] != '\0' ? stream->rtcp_addr : info->rtpAddr;
+	info->rtcpAddr = stream->rtcp_addr.empty() == false ? stream->rtcp_addr.c_str() : info->rtpAddr;
 	info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream->rtcp_port ? stream->rtcp_port : stream->rtp_port + 1) : 0;
 }
 
@@ -390,7 +390,7 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
-	const char *rtpAddr = (stream->rtp_addr[0] != '\0') ? stream->rtp_addr : params.resultMediaDescription->addr;
+	const char *rtpAddr = (stream->rtp_addr.empty() == false) ? stream->rtp_addr.c_str() : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr);
 	MediaStream *ms = getMediaStream();
 	
@@ -639,8 +639,8 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 		return;
 	}
 	
-	const char *rtpAddr = (params.resultStreamDescription->rtp_addr[0] != '\0') ? params.resultStreamDescription->rtp_addr : params.resultMediaDescription->addr;
-	const char *rtcpAddr = (params.resultStreamDescription->rtcp_addr[0] != '\0') ? params.resultStreamDescription->rtcp_addr : params.resultMediaDescription->addr;
+	const char *rtpAddr = (params.resultStreamDescription->rtp_addr.empty() == false) ? params.resultStreamDescription->rtp_addr.c_str() : params.resultMediaDescription->addr;
+	const char *rtcpAddr = (params.resultStreamDescription->rtcp_addr.empty() == false) ? params.resultStreamDescription->rtcp_addr.c_str() : params.resultMediaDescription->addr;
 	lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << params.resultStreamDescription->rtp_port << " RTCP=" << rtcpAddr << ":" << params.resultStreamDescription->rtcp_port;
 	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr, params.resultStreamDescription->rtp_port, rtcpAddr, params.resultStreamDescription->rtcp_port);
 }

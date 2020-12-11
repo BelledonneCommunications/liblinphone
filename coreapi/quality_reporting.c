@@ -435,9 +435,9 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 	if (local_desc != NULL) {
 		/*since this function might be called for video stream AFTER it has been uninitialized, local description might
 		be invalid. In any other case, IP/port should be always filled and valid*/
-		if (strlen(local_desc->rtp_addr) > 0) {
+		if (local_desc->rtp_addr.empty() == false) {
 			log->reporting.reports[stats_type]->info.local_addr.port = local_desc->rtp_port;
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.local_addr.ip, ms_strdup(local_desc->rtp_addr));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.local_addr.ip, ms_strdup(local_desc->rtp_addr.c_str()));
 		}
 	}
 
@@ -446,8 +446,8 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 		log->reporting.reports[stats_type]->info.remote_addr.port = remote_desc->rtp_port;
 
 		/*for IP it can be not set if we are using a direct route*/
-		if (strlen(remote_desc->rtp_addr) > 0) {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(remote_desc->rtp_addr));
+		if (remote_desc->rtp_addr.empty() == false) {
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(remote_desc->rtp_addr.c_str()));
 		} else {
 			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr));
 		}
