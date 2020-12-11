@@ -449,7 +449,7 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 		if (remote_desc->rtp_addr.empty() == false) {
 			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(remote_desc->rtp_addr.c_str()));
 		} else {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr.c_str()));
 		}
 	}
 }

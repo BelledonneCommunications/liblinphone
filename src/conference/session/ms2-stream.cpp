@@ -301,11 +301,11 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 void MS2Stream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
 	RtpSession *session = mSessions.rtp_session;
 	const SalStreamDescription *newStream = ctx.remoteStreamDescription;
-	const char *rtpAddr = (newStream->rtp_addr.empty() == false) ? newStream->rtp_addr.c_str() : ctx.remoteMediaDescription->addr;
-	const char *rtcpAddr = (newStream->rtcp_addr.empty() == false) ? newStream->rtcp_addr.c_str() : ctx.remoteMediaDescription->addr;
-	if (!ms_is_multicast(rtpAddr)){
+	std::string rtpAddr = (newStream->rtp_addr.empty() == false) ? newStream->rtp_addr : ctx.remoteMediaDescription->addr;
+	std::string rtcpAddr = (newStream->rtcp_addr.empty() == false) ? newStream->rtcp_addr : ctx.remoteMediaDescription->addr;
+	if (!ms_is_multicast(rtpAddr.c_str())){
 		rtp_session_set_symmetric_rtp(session, false); // Disable symmetric RTP when auxiliary destinations are added.
-		rtp_session_add_aux_remote_addr_full(session, rtpAddr, newStream->rtp_port, rtcpAddr, newStream->rtcp_port);
+		rtp_session_add_aux_remote_addr_full(session, rtpAddr.c_str(), newStream->rtp_port, rtcpAddr.c_str(), newStream->rtcp_port);
 		mUseAuxDestinations = true;
 	}
 	Stream::tryEarlyMediaForking(ctx);
@@ -390,8 +390,8 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
-	const char *rtpAddr = (stream->rtp_addr.empty() == false) ? stream->rtp_addr.c_str() : params.resultMediaDescription->addr;
-	bool isMulticast = !!ms_is_multicast(rtpAddr);
+	std::string rtpAddr = (stream->rtp_addr.empty() == false) ? stream->rtp_addr : params.resultMediaDescription->addr;
+	bool isMulticast = !!ms_is_multicast(rtpAddr.c_str());
 	MediaStream *ms = getMediaStream();
 	
 	if (getIceService().isActive() || (getMediaSessionPrivate().getParams()->earlyMediaSendingEnabled() 
@@ -639,10 +639,10 @@ void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
 		return;
 	}
 	
-	const char *rtpAddr = (params.resultStreamDescription->rtp_addr.empty() == false) ? params.resultStreamDescription->rtp_addr.c_str() : params.resultMediaDescription->addr;
-	const char *rtcpAddr = (params.resultStreamDescription->rtcp_addr.empty() == false) ? params.resultStreamDescription->rtcp_addr.c_str() : params.resultMediaDescription->addr;
+	std::string rtpAddr = (params.resultStreamDescription->rtp_addr.empty() == false) ? params.resultStreamDescription->rtp_addr : params.resultMediaDescription->addr;
+	std::string rtcpAddr = (params.resultStreamDescription->rtcp_addr.empty() == false) ? params.resultStreamDescription->rtcp_addr : params.resultMediaDescription->addr;
 	lInfo() << "Change audio stream destination: RTP=" << rtpAddr << ":" << params.resultStreamDescription->rtp_port << " RTCP=" << rtcpAddr << ":" << params.resultStreamDescription->rtcp_port;
-	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr, params.resultStreamDescription->rtp_port, rtcpAddr, params.resultStreamDescription->rtcp_port);
+	rtp_session_set_remote_addr_full(mSessions.rtp_session, rtpAddr.c_str(), params.resultStreamDescription->rtp_port, rtcpAddr.c_str(), params.resultStreamDescription->rtcp_port);
 }
 
 void MS2Stream::startEventHandling(){
