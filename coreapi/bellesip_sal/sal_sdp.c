@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "sal_impl.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal-stream-description.h"
 #include "c-wrapper/internal/c-sal-media-description.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
@@ -813,7 +814,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		}
 	}
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		stream->rtp_addr = belle_sdp_connection_get_address ( cnx );
+		stream->rtp_addr = L_C_TO_STRING(belle_sdp_connection_get_address ( cnx ));
 		stream->ttl=belle_sdp_connection_get_ttl(cnx);
 	}
 
@@ -862,7 +863,9 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	/* Get media specific RTCP attribute */
 	stream->rtcp_port = stream->rtp_port + 1;
-	stream->rtcp_addr = stream->rtp_addr;
+	if (!stream->rtp_addr.empty()) {
+		stream->rtcp_addr = stream->rtp_addr;
+	}
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 		char *tmp = (char *)ms_malloc0(strlen(value));
@@ -870,7 +873,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		if (nb == 1) {
 			/* SDP rtcp attribute only contains the port */
 		} else if (nb == 2) {
-			stream->rtcp_addr = tmp;
+			stream->rtcp_addr = L_C_TO_STRING(tmp);
 		} else {
 			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
 		}
