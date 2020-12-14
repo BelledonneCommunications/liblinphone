@@ -682,9 +682,11 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 	//  Check that me has focus attribute set to true
 	BC_ASSERT_PTR_NOT_NULL(conference);
-	LinphoneParticipant *me = linphone_conference_get_me(conference);
-	BC_ASSERT_PTR_NOT_NULL(me);
-	BC_ASSERT_TRUE(linphone_participant_is_focus(me));
+	if (conference) {
+		LinphoneParticipant *me = linphone_conference_get_me(conference);
+		BC_ASSERT_PTR_NOT_NULL(me);
+		BC_ASSERT_TRUE(linphone_participant_is_focus(me));
+	}
 
 	int * notifyExpected = NULL;
 	for (int idx = 0; idx < no_participants; idx++) {
@@ -889,33 +891,40 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		stats initial_stats = m->stat;
-		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
-		bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+		BC_ASSERT_PTR_NOT_NULL(conf_call);
 		call_paused = (bool_t*)realloc(call_paused, counter * sizeof(bool_t));
-		call_paused[counter - 1] = is_call_paused;
-		if (conference) {
-			linphone_conference_add_participant(conference,conf_call);
-			conference_used = conference;
-		} else {
-			linphone_core_add_to_conference(conf_mgr->lc,conf_call);
-			conference_used = linphone_core_get_conference(conf_mgr->lc);
-		}
+		call_paused[counter - 1] = FALSE;
+		if (conf_call) {
+			bool_t is_call_paused = (linphone_call_get_state(conf_call) == LinphoneCallStatePaused);
+			call_paused[counter - 1] = is_call_paused;
+			if (conference) {
+				linphone_conference_add_participant(conference,conf_call);
+				conference_used = conference;
+			} else {
+				linphone_core_add_to_conference(conf_mgr->lc,conf_call);
+				conference_used = linphone_core_get_conference(conf_mgr->lc);
+			}
 
-		if (is_call_paused) {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
-		} else {
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
-		}
+			if (is_call_paused) {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallResuming,conf_initial_stats.number_of_LinphoneCallResuming+1,2000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,initial_stats.number_of_LinphoneCallStreamsRunning + 1,3000));
+			} else {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,conf_initial_stats.number_of_LinphoneCallUpdating+1,5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(initial_stats.number_of_LinphoneCallUpdatedByRemote + 1),5000));
+			}
 
-		// Local conference
-		BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
+			// Local conference
+			BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_call));
+		}
 
 		// Remote  conference
-		BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
-		BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
+		BC_ASSERT_PTR_NOT_NULL(participant_call);
+		if (participant_call) {
+			BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
+			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+		}
 
 		counter++;
 	}
@@ -1244,15 +1253,17 @@ LinphoneStatus terminate_conference(bctbx_list_t *participants, LinphoneCoreMana
 		conferenceToDestroy = linphone_core_get_conference(conf_mgr->lc);
 	}
 	BC_ASSERT_PTR_NOT_NULL(conferenceToDestroy);
-	unsigned int no_participants = linphone_conference_get_participant_count(conferenceToDestroy);
-
 	if (conferenceToDestroy) {
-		bool_t core_held_conference = (conferenceToDestroy == linphone_core_get_conference(conf_mgr->lc));
-		linphone_conference_terminate(conferenceToDestroy);
-		if (focus_mgr) {
-			finish_terminate_remote_conference(lcs, lcm_stats, conf_mgr, focus_mgr, no_participants, core_held_conference);
-		} else {
-			finish_terminate_local_conference(lcs, lcm_stats, conf_mgr, no_participants, core_held_conference);
+		unsigned int no_participants = linphone_conference_get_participant_count(conferenceToDestroy);
+
+		if (conferenceToDestroy) {
+			bool_t core_held_conference = (conferenceToDestroy == linphone_core_get_conference(conf_mgr->lc));
+			linphone_conference_terminate(conferenceToDestroy);
+			if (focus_mgr) {
+				finish_terminate_remote_conference(lcs, lcm_stats, conf_mgr, focus_mgr, no_participants, core_held_conference);
+			} else {
+				finish_terminate_local_conference(lcs, lcm_stats, conf_mgr, no_participants, core_held_conference);
+			}
 		}
 	}
 
