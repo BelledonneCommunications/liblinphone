@@ -2994,8 +2994,10 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 		LinphoneCall * callee_call = linphone_core_get_call_by_remote_address2(callee->lc, caller_uri);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
-		// Take call - ringing ends
-		linphone_call_accept(callee_call);
+		if (callee_call) {
+			// Take call - ringing ends
+			linphone_call_accept(callee_call);
+		}
 	}
 
 	unsigned int no_callers = (unsigned int)bctbx_list_size(caller);
@@ -3022,7 +3024,7 @@ static void take_calls_to_callee(bctbx_list_t* lcs, bctbx_list_t* caller, Linpho
 			LinphoneCall * current_callee_call = linphone_core_get_current_call(callee->lc);
 			if (callee_call == current_callee_call) {
 				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallStreamsRunning, 2, 5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + 1, 5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &callee->stat.number_of_LinphoneCallStreamsRunning, initial_callee_stat.number_of_LinphoneCallStreamsRunning + no_callers + 1, 5000));
 			} else {
 				call_checked_cnt++;
 				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallPausedByRemote, 2, 5000));
@@ -3158,15 +3160,15 @@ static void conference_with_calls_queued_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(michelle->lc, 10000);
-	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
-		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(michelle->lc,mode);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
+		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(chloe->lc,mode);
 	}
 
 	bctbx_list_t* participants=NULL;
-	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,chloe);
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
@@ -3177,7 +3179,7 @@ static void conference_with_calls_queued_with_ice(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
-	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(chloe);
 }
 
 static void conference_with_back_to_back_call_accept_without_ice(void) {
@@ -3238,15 +3240,15 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(michelle->lc, 10000);
-	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
-		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(michelle->lc,mode);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
+		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(chloe->lc,mode);
 	}
 
 	bctbx_list_t* participants=NULL;
-	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,chloe);
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
@@ -3257,7 +3259,7 @@ static void conference_with_back_to_back_call_accept_with_ice(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
-	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(chloe);
 }
 
 static void conference_with_back_to_back_call_invite_accept_without_ice(void) {
@@ -3318,15 +3320,15 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	}
 
 	// ICE is enabled
-	LinphoneCoreManager* michelle = create_mgr_for_conference( "michelle_rc_udp", TRUE);
-	linphone_core_set_inc_timeout(michelle->lc, 10000);
-	if (linphone_core_media_encryption_supported(michelle->lc,mode)) {
-		linphone_core_set_firewall_policy(michelle->lc,LinphonePolicyUseIce);
-		linphone_core_set_media_encryption(michelle->lc,mode);
+	LinphoneCoreManager* chloe = create_mgr_for_conference( "chloe_rc", TRUE);
+	linphone_core_set_inc_timeout(chloe->lc, 10000);
+	if (linphone_core_media_encryption_supported(chloe->lc,mode)) {
+		linphone_core_set_firewall_policy(chloe->lc,LinphonePolicyUseIce);
+		linphone_core_set_media_encryption(chloe->lc,mode);
 	}
 
 	bctbx_list_t* participants=NULL;
-	participants=bctbx_list_append(participants,michelle);
+	participants=bctbx_list_append(participants,chloe);
 	participants=bctbx_list_append(participants,pauline);
 	participants=bctbx_list_append(participants,laure);
 
@@ -3337,7 +3339,7 @@ static void conference_with_back_to_back_call_invite_accept_with_ice(void) {
 	destroy_mgr_in_conference(marie);
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
-	destroy_mgr_in_conference(michelle);
+	destroy_mgr_in_conference(chloe);
 }
 
 static void back_to_back_conferences(void) {
