@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal-stream-description.h"
 #include "sal/sal_stream_description.h"
 #include "tester_utils.h"
@@ -92,7 +93,7 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 
 	if (sd1->type != sd2->type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	if (sd1->rtp_addr.compare(sd2->rtp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if ((sd1->rtp_addr.empty()==false) && (sd2->rtp_addr.empty()==false) && ms_is_multicast(sd1->rtp_addr.c_str()) != ms_is_multicast(sd2->rtp_addr.c_str()))
+	if ((sd1->rtp_addr.empty()==false) && (sd2->rtp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(sd1->rtp_addr)) != ms_is_multicast(L_STRING_TO_C(sd2->rtp_addr)))
 			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (sd1->multicast_role != sd2->multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (sd1->rtp_port != sd2->rtp_port) {
@@ -196,17 +197,11 @@ bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
 }
 
 const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd){
-	if (sd->rtcp_addr.empty()) {
-		return NULL;
-	}
-	return sd->rtcp_addr.c_str();
+	return L_STRING_TO_C(sd->rtcp_addr);
 }
 
 const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
-	if (sd->rtp_addr.empty()) {
-		return NULL;
-	}
-	return sd->rtp_addr.c_str();
+	return L_STRING_TO_C(sd->rtp_addr);
 }
 
 MSList * sal_stream_description_get_payloads(SalStreamDescription *sd){

@@ -192,8 +192,8 @@ void IceService::gatherLocalCandidates(){
 				for (const string & addr : localAddrs){
 					int family = addr.find(':') != string::npos ? AF_INET6 : AF_INET;
 					if (family == AF_INET6 && !ipv6Allowed) continue;
-					ice_add_local_candidate(cl, "host", family, addr.c_str(), stream->getPortConfig().rtpPort, 1, nullptr);
-					ice_add_local_candidate(cl, "host", family, addr.c_str(), stream->getPortConfig().rtcpPort, 2, nullptr);
+					ice_add_local_candidate(cl, "host", family, L_STRING_TO_C(addr), stream->getPortConfig().rtpPort, 1, nullptr);
+					ice_add_local_candidate(cl, "host", family, L_STRING_TO_C(addr), stream->getPortConfig().rtcpPort, 2, nullptr);
 				}
 			}
 		}
@@ -373,9 +373,9 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 				if (strchr(remoteCandidate->addr, ':'))
 					remoteFamily = AF_INET6;
 				int family = AF_INET;
-				if (addr.find(':') == std::string::npos)
+				if (addr.find(':') != std::string::npos)
 					family = AF_INET6;
-				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, remoteCandidate->addr, remoteCandidate->port, family, addr.c_str(), port);
+				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, remoteCandidate->addr, remoteCandidate->port, family, L_STRING_TO_C(addr), port);
 				losingPairsAdded = true;
 			}
 			if (losingPairsAdded)
