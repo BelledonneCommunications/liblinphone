@@ -260,8 +260,8 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		if (rtp_addr.find(':')!=std::string::npos){
 			inet6=TRUE;
 		}else inet6=FALSE;
-		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", rtp_addr.c_str());
-		if (ms_is_multicast(rtp_addr.c_str())) {
+		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", L_STRING_TO_C(rtp_addr));
+		if (ms_is_multicast(L_STRING_TO_C(rtp_addr))) {
 			/*remove session cline in case of multicast*/
 			belle_sdp_session_description_set_connection(session_desc,NULL);
 			if (inet6 == FALSE)
@@ -341,7 +341,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
 			if (different_rtp_and_rtcp_addr == TRUE) {
-				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, rtcp_addr.c_str());
+				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, L_STRING_TO_C(rtcp_addr));
 			} else {
 				snprintf(buffer, sizeof(buffer), "%u",rtcp_port);
 			}
@@ -444,7 +444,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 									  ,desc->session_ver
 									  ,"IN"
 									  , inet6 ? "IP6" :"IP4"
-									  ,desc->addr.c_str() );
+									  ,L_STRING_TO_C(desc->addr) );
 	bctbx_free(escaped_username);
 
 	belle_sdp_session_description_set_origin ( session_desc,origin );
@@ -455,7 +455,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || desc->ice_ufrag[0] != '\0' ) {
 		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
 		belle_sdp_session_description_set_connection ( session_desc
-				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",desc->addr.c_str() ) );
+				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",L_STRING_TO_C(desc->addr) ) );
 
 	} else 	{
 		belle_sdp_session_description_set_connection ( session_desc
