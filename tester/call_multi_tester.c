@@ -918,6 +918,7 @@ static void call_accepted_while_callee_is_updating_another_one(void) {
 	call_accepted_while_another_one_is_updating(TRUE);
 }
 
+#if 0
 static void call_accepted_while_caller_is_updating_to_same_callee(void) {
 	call_accepted_while_another_one_is_updating(FALSE);
 }
@@ -1104,7 +1105,7 @@ static void call_with_ice_negotiations_ending_while_accepting_call(void) {
 static void call_with_ice_negotiations_ending_while_accepting_call_back_to_back(void) {
 	call_with_ice_negotiations_ending_while_accepting_call_base(TRUE);
 }
-
+#endif
 
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
@@ -1115,9 +1116,9 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing),
 	TEST_NO_TAG("Incoming call accepted when outgoing call in outgoing ringing early media", incoming_call_accepted_when_outgoing_call_in_outgoing_ringing_early_media),
 	TEST_NO_TAG("Call accepted while callee is updating another one", call_accepted_while_callee_is_updating_another_one),
-	TEST_NO_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee),
-	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call", call_with_ice_negotiations_ending_while_accepting_call, "ICE"),
-	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call back to back", call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
+//	TEST_NO_TAG("Call accepted while caller is updating to same callee", call_accepted_while_caller_is_updating_to_same_callee),
+//	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call", call_with_ice_negotiations_ending_while_accepting_call, "ICE"),
+//	TEST_ONE_TAG("Call with ICE negotiations ending while accepting call back to back", call_with_ice_negotiations_ending_while_accepting_call_back_to_back, "ICE"),
 	TEST_NO_TAG("Simple call transfer", simple_call_transfer),
 	TEST_NO_TAG("Unattended call transfer", unattended_call_transfer),
 	TEST_NO_TAG("Unattended call transfer with error", unattended_call_transfer_with_error),
