@@ -437,7 +437,7 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 		be invalid. In any other case, IP/port should be always filled and valid*/
 		if (local_desc->rtp_addr.empty() == false) {
 			log->reporting.reports[stats_type]->info.local_addr.port = local_desc->rtp_port;
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.local_addr.ip, ms_strdup(local_desc->rtp_addr.c_str()));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.local_addr.ip, ms_strdup(L_STRING_TO_C(local_desc->rtp_addr)));
 		}
 	}
 
@@ -447,9 +447,9 @@ static void update_ip(LinphoneCall * call, int stats_type) {
 
 		/*for IP it can be not set if we are using a direct route*/
 		if (remote_desc->rtp_addr.empty() == false) {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(remote_desc->rtp_addr.c_str()));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(remote_desc->rtp_addr)));
 		} else {
-			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr.c_str()));
+			STR_REASSIGN(log->reporting.reports[stats_type]->info.remote_addr.ip, ms_strdup(L_STRING_TO_C(Call::toCpp(call)->getOp()->getRemoteMediaDescription()->addr)));
 		}
 	}
 }

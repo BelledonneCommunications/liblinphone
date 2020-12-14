@@ -18,6 +18,7 @@
  */
 
 #include "sal/sal_media_description.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal-media-description.h"
 #include "c-wrapper/internal/c-sal-stream-bundle.h"
 #include "tester_utils.h"
@@ -306,7 +307,7 @@ int sal_media_description_global_equals(const SalMediaDescription *md1, const Sa
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
 	if (md1->addr.compare(md2->addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (md1->addr.empty() == false && md2->addr.empty() == false && ms_is_multicast(md1->addr.c_str()) != ms_is_multicast(md2->addr.c_str()))
+	if (md1->addr.empty() == false && md2->addr.empty() == false && ms_is_multicast(L_STRING_TO_C(md1->addr)) != ms_is_multicast(L_STRING_TO_C(md2->addr)))
 		result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	if (md1->nb_streams != md2->nb_streams) result |= SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
 	if (md1->bandwidth != md2->bandwidth) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
@@ -367,7 +368,7 @@ const char * sal_media_description_get_address(SalMediaDescription *md){
 	if (md->addr.empty()) {
 		return NULL;
 	}
-	return md->addr.c_str();
+	return L_STRING_TO_C(md->addr);
 }
 
 SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx) {
