@@ -1357,8 +1357,9 @@ int SalCallOp::declineWithErrorInfo (const SalErrorInfo *info, const SalAddress 
 }
 
 void SalCallOp::haltSessionTimersTimer () {
-	if (mSessionTimersTimer) {
+	if (mSessionTimersTimer != nullptr) {
 		mRoot->cancelTimer(mSessionTimersTimer);
+		mSessionTimersTimer = nullptr;
 	}
 }
 
@@ -1622,11 +1623,20 @@ int SalCallOp::terminate (const SalErrorInfo *info) {
 	switch (dialogState) {
 		case BELLE_SIP_DIALOG_CONFIRMED: {
 			auto request = belle_sip_dialog_create_request(mDialog, "BYE");
+
+			/**
+			 * When the timer is quite short, it is possible that a timer renewal
+			 * is sent before the BYE ACK is received. Here we cancel the timer
+			 * before sending the BYE to prevent that oddly case.
+			 */
+			haltSessionTimersTimer();
+
 			if (info && (info->reason != SalReasonNone)) {
 				auto reasonHeader = makeReasonHeader(info);
 				belle_sip_message_add_header(BELLE_SIP_MESSAGE(request),BELLE_SIP_HEADER(reasonHeader));
 			}
 			sendRequest(request);
+
 			mState = State::Terminating;
 			break;
 		}
