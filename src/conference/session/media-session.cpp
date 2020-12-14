@@ -1163,8 +1163,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	string subject = q->getParams()->getSessionName();
 	if (!subject.empty()) {
-		strncpy(md->name, subject.c_str(), sizeof(md->name));
-		md->name[sizeof(md->name) - 1] = '\0';
+		md->name = subject;
 	}
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
@@ -1188,8 +1187,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		addr = linphone_address_new(linphone_core_get_identity(q->getCore()->getCCore()));
 	}
 	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
-		strncpy(md->username, linphone_address_get_username(addr), sizeof(md->username));
-		md->username[sizeof(md->username) - 1] = '\0';
+		md->username = linphone_address_get_username(addr);
 	}
 	linphone_address_unref(addr);
 
