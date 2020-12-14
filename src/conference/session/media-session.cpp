@@ -2557,7 +2557,7 @@ int MediaSession::startInvite (const Address *destination, const string &subject
 		srand((unsigned int)time(NULL));
 		for (int i = 0; i < d->localDesc->nb_streams; i++) {
 			// In case of multicasting, choose a random port to send with the invite
-			if (ms_is_multicast(d->localDesc->streams[i].rtp_addr.c_str())){
+			if (ms_is_multicast(L_STRING_TO_C(d->localDesc->streams[i].rtp_addr))){
 				pair<int, int> portRange = Stream::getPortRange(getCore()->getCCore(), d->localDesc->streams[i].type);
 				if (portRange.first <= 0) {
 					portRange.first = 1024;

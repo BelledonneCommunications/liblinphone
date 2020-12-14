@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "audio-stream-start.h"
 #include "private.h"
 
@@ -84,7 +85,7 @@ void AudioStreamStartCommand::exec(Daemon *app, const string& args) {
 	audio_stream_enable_adaptive_jittcomp(stream, linphone_core_audio_adaptive_jittcomp_enabled(app->getCore()));
 	rtp_session_set_symmetric_rtp(stream->ms.sessions.rtp_session, linphone_core_symmetric_rtp_enabled(app->getCore()));
 
-	int err = audio_stream_start_now(stream, prof, addr.c_str(), port, port + 1, payload_type, jitt, play_card, capture_card, echo_canceller);
+	int err = audio_stream_start_now(stream, prof, L_STRING_TO_C(addr), port, port + 1, payload_type, jitt, play_card, capture_card, echo_canceller);
 	if (err != 0) {
 		app->sendResponse(Response("Error during audio stream creation."));
 		return;
