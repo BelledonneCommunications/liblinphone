@@ -22,6 +22,8 @@
 #include "logger/logger.h"
 
 #include "stun-client.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "c-wrapper/internal/c-tools.h"
 
 // =============================================================================
 
@@ -223,7 +225,7 @@ int StunClient::recvStunResponse (ortp_socket_t sock, Candidate &candidate, int 
 					len = -1;
 			}
 			if (len > 0)
-				candidate.address = inet_ntoa(ia);
+				candidate.address = L_C_TO_STRING(inet_ntoa(ia));
 		}
 	}
 	return len;
