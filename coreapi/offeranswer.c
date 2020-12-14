@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "c-wrapper/internal/c-sal-stream-bundle.h"
 #include "sal/sal_media_description.h"
@@ -348,7 +349,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 	result->proto=remote_answer->proto;
 	result->type=local_offer->type;
 
-	if (local_offer->rtp_addr.empty() == false && ms_is_multicast(local_offer->rtp_addr.c_str())) {
+	if (local_offer->rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer->rtp_addr))) {
 			/*6.2 Multicast Streams
 			...
 		If a multicast stream is accepted, the address and port information
@@ -360,8 +361,8 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		multicast bias of RFC 2327.*/
 		if (local_offer->rtp_addr.compare(remote_answer->rtp_addr) !=0 ) {
 			ms_message("Remote answered IP [%s] does not match offered [%s] for local stream description [%p]"
-																,remote_answer->rtp_addr.c_str()
-																,local_offer->rtp_addr.c_str()
+																,L_STRING_TO_C(remote_answer->rtp_addr)
+																,L_STRING_TO_C(local_offer->rtp_addr)
 																,local_offer);
 			result->rtp_port=0;
 			return;
@@ -475,7 +476,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->rtp_port=0;
 		return;
 	}
-	if (remote_offer->rtp_addr.empty() == false && ms_is_multicast(remote_offer->rtp_addr.c_str())) {
+	if (remote_offer->rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer->rtp_addr))) {
 		if (sal_stream_description_has_srtp(result) == TRUE) {
 			ms_message("SAVP not supported for multicast address for remote stream [%p]",remote_offer);
 			result->rtp_port=0;
