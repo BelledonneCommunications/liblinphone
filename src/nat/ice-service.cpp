@@ -20,10 +20,10 @@
 #include "private.h"
 
 #include "ice-service.h"
+#include "c-wrapper/internal/c-tools.h"
 #include "conference/session/streams.h"
 #include "conference/session/media-session-p.h"
 #include "utils/if-addrs.h"
-
 
 using namespace::std;
 
@@ -478,8 +478,8 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			result = !!ice_check_list_default_local_candidate(ice_session_check_list(mIceSession, i), &rtpCandidate, &rtcpCandidate);
 		}
 		if (result) {
-			stream->rtp_addr = rtpCandidate->taddr.ip;
-			stream->rtcp_addr = rtcpCandidate->taddr.ip;
+			stream->rtp_addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
+			stream->rtcp_addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
 			stream->rtp_port = rtpCandidate->taddr.port;
 			stream->rtcp_port = rtcpCandidate->taddr.port;
 		} else {
@@ -501,7 +501,7 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			for (int j = 0; j < MIN((int)bctbx_list_size(cl->local_candidates), SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES); j++) {
 				SalIceCandidate *salCandidate = &stream->ice_candidates[nbCandidates];
 				IceCandidate *iceCandidate = reinterpret_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
-				std::string defaultAddr = nullptr;
+				std::string defaultAddr = std::string();
 				int defaultPort = 0;
 				if (iceCandidate->componentID == 1) {
 					defaultAddr = stream->rtp_addr;
