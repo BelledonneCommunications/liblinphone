@@ -27,9 +27,9 @@
 
 typedef struct SalMediaDescription {
 	int refcount;
-	char name[64];
+	std::string name;
 	std::string addr;
-	char username[64];
+	std::string username;
 	int nb_streams;
 	int bandwidth;
 	unsigned int session_ver;

@@ -699,7 +699,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls->custom_sdp_attributes);
 	}
 	result->nb_streams=i;
-	strcpy(result->username, local_capabilities->username);
+	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
 	result->session_ver=local_capabilities->session_ver;
@@ -710,7 +710,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	result->set_nortpproxy = local_capabilities->set_nortpproxy;
 	result->custom_sdp_attributes = sal_custom_sdp_attribute_clone(local_capabilities->custom_sdp_attributes);
 
-	strcpy(result->name,local_capabilities->name);
+	result->name=local_capabilities->name;
 
 	// Handle session RTCP XR attribute
 	memset(&result->rtcp_xr, 0, sizeof(result->rtcp_xr));
