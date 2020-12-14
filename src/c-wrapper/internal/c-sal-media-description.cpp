@@ -46,9 +46,10 @@ static bool_t has_dir(const SalMediaDescription *md, SalStreamDir stream_dir){
 }
 
 SalMediaDescription *sal_media_description_new(){
-	SalMediaDescription *md=ms_new0(SalMediaDescription,1);
+	SalMediaDescription *md= new SalMediaDescription();
 	int i;
 	md->refcount=1;
+
 	for(i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		md->streams[i].dir=SalStreamInactive;
 		md->streams[i].rtp_port = 0;
@@ -125,7 +126,7 @@ static void sal_media_description_destroy(SalMediaDescription *md){
 	}
 	bctbx_list_free_with_data(md->bundles, (void (*)(void*)) sal_stream_bundle_destroy);
 	sal_custom_sdp_attribute_free(md->custom_sdp_attributes);
-	ms_free(md);
+	delete md;
 }
 
 SalMediaDescription * sal_media_description_ref(SalMediaDescription *md){
@@ -281,7 +282,7 @@ bool_t sal_media_description_has_ipv6(const SalMediaDescription *md){
 	if (md->nb_streams == 0) return FALSE;
 	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
 		if (!sal_stream_description_enabled(&md->streams[i])) continue;
-		if (md->streams[i].rtp_addr[0] != '\0'){
+		if (md->streams[i].rtp_addr.empty() == false){
 			if (!sal_stream_description_has_ipv6(&md->streams[i])) return FALSE;
 		}else{
 			if (md->addr.find(':') == std::string::npos) return FALSE;
