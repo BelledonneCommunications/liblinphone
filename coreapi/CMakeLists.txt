@@ -37,7 +37,8 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 )
 
 set(LINPHONE_SOURCE_FILES_C
-	account_creator.c
+	account_creator_utils.c
+	account_creator_xmlrpc.c
 	account_creator_service.c
 	authentication.c
 	bellesip_sal/sal_address_impl.c
@@ -92,6 +93,7 @@ set(LINPHONE_SOURCE_FILES_C
 	vtables.c
 )
 set(LINPHONE_SOURCE_FILES_CXX
+	account_creator_flexiapi.cc
 	conference.cc
 	tester_utils.cpp
 )
