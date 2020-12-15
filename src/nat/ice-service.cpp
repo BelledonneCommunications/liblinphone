@@ -483,8 +483,8 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			stream->rtp_port = rtpCandidate->taddr.port;
 			stream->rtcp_port = rtcpCandidate->taddr.port;
 		} else {
-			stream->rtp_addr = "0";
-			stream->rtcp_addr = "0";
+			stream->rtp_addr.clear();
+			stream->rtcp_addr.clear();
 		}
 		if ((strlen(ice_check_list_local_pwd(cl)) != strlen(desc->ice_pwd)) || (strcmp(ice_check_list_local_pwd(cl), desc->ice_pwd)))
 			strncpy(stream->ice_pwd, ice_check_list_local_pwd(cl), sizeof(stream->ice_pwd) - 1);
