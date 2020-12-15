@@ -77,6 +77,7 @@ extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
 extern test_suite_t audio_video_conference_test_suite;
 extern test_suite_t multipart_test_suite;
+extern test_suite_t account_creator_flexiapi_suite;
 extern test_suite_t offeranswer_test_suite;
 extern test_suite_t player_test_suite;
 extern test_suite_t presence_server_test_suite;
@@ -497,8 +498,8 @@ LinphoneAddress * create_linphone_address_for_algo(const char * domain, const ch
 bool_t wait_for(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value);
 bool_t wait_for_list(MSList* lcs,int* counter,int value,int timeout_ms);
 bool_t wait_for_list_interval(MSList* lcs,int* counter,int min,int max,int timeout_ms);
-bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout_ms);
-bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timout_ms);
+bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timeout_ms);
+bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timeout_ms);
 
 bool_t call_with_params(LinphoneCoreManager* caller_mgr
 						,LinphoneCoreManager* callee_mgr
