@@ -217,26 +217,26 @@ LinphoneCore *configure_lc_from(LinphoneCoreCbs *cbs, const char *path, Linphone
 	return lc;
 }
 
-bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timout) {
+bool_t wait_for_until_interval(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int min,int max,int timeout) {
 	bctbx_list_t* lcs=NULL;
 	bool_t result;
 	if (lc_1)
 		lcs=bctbx_list_append(lcs,lc_1);
 	if (lc_2)
 		lcs=bctbx_list_append(lcs,lc_2);
-	result=wait_for_list_interval(lcs,counter,min,max,timout);
+	result=wait_for_list_interval(lcs,counter,min,max,timeout);
 	bctbx_list_free(lcs);
 	return result;
 }
 
-bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timout) {
+bool_t wait_for_until(LinphoneCore* lc_1, LinphoneCore* lc_2,int* counter,int value,int timeout) {
 	bctbx_list_t* lcs=NULL;
 	bool_t result;
 	if (lc_1)
 		lcs=bctbx_list_append(lcs,lc_1);
 	if (lc_2)
 		lcs=bctbx_list_append(lcs,lc_2);
-	result=wait_for_list(lcs,counter,value,timout);
+	result=wait_for_list(lcs,counter,value,timeout);
 	bctbx_list_free(lcs);
 	return result;
 }
@@ -997,7 +997,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 				if (local_participant_is_in) {
 					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallUpdating,(conf_initial_stats.number_of_LinphoneCallUpdating + 1),5000));
 					BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallUpdatedByRemote,(participants_initial_stats[idx].number_of_LinphoneCallUpdatedByRemote + 1),5000));
-					if (participants_initial_state[idx] == LinphoneCallStreamsRunning) { 
+					if (participants_initial_state[idx] == LinphoneCallStreamsRunning) {
 						BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallStreamsRunning,(conf_initial_stats.number_of_LinphoneCallStreamsRunning + 1), 5000));
 						BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[idx].number_of_LinphoneCallStreamsRunning + 1), 5000));
 					} else if (participants_initial_state[idx] == LinphoneCallPaused) {
@@ -1094,7 +1094,7 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	linphone_core_remove_from_conference(conf_mgr->lc, conf_call);
 
 	// If the conference already put the call in pause, then it will not be put in pause again
-	// Calls are paused or updated when removing a participant 
+	// Calls are paused or updated when removing a participant
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPausing,(conf_initial_stats.number_of_LinphoneCallPausing + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallPaused,(conf_initial_stats.number_of_LinphoneCallPaused + 1),5000));
 	// If the conference already put the call in pause, then the participant call is already in the state PausedByRemote
@@ -1496,7 +1496,7 @@ void linphone_core_manager_stop(LinphoneCoreManager *mgr) {
 				unlink(record_file);
 			}
 		}
-		
+
 		linphone_core_stop(mgr->lc);
 
 		linphone_core_unref(mgr->lc);
@@ -2618,7 +2618,7 @@ void tester_file_transfer_send_2(LinphoneChatMessage *msg, LinphoneContent* cont
 	if (file_to_send == NULL){
 		return;
 	}
-	
+
 	fseek(file_to_send, 0, SEEK_END);
 	file_size = ftell(file_to_send);
 	fseek(file_to_send, (long)offset, SEEK_SET);
