@@ -80,6 +80,7 @@ set(CERTIFICATE_CLIENT_FILES
 	certificates/client/cert3.pem
 	certificates/client/key3.pem
 	certificates/client/cert2-signed-by-other-ca.pem
+	certificates/client/key2-signed-by-other-ca.pem
 	certificates/client/user1_cert.pem
 	certificates/client/user1_key.pem
 	certificates/client/user1_multiple_aliases_cert.pem
