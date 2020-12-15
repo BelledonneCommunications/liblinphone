@@ -48,11 +48,11 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	struct addrinfo hints;
 	bctbx_list_t *ret = NULL;
 	int err;
-	
+
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
-	
+
 	err = getaddrinfo(name, NULL, &hints, &ai);
 	if (err != 0){
 		return NULL;
@@ -431,6 +431,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&dtmf_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
+	bc_tester_add_suite(&account_creator_flexiapi_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
 #ifdef HAVE_DB_STORAGE
 	bc_tester_add_suite(&main_db_test_suite);
