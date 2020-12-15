@@ -290,7 +290,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 
 	/* insert DTLS session attribute if needed */
 	if ((stream->proto == SalProtoUdpTlsRtpSavpf) || (stream->proto == SalProtoUdpTlsRtpSavp)) {
-		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",stream->rtp_ssrc,stream->rtcp_cname.c_str());
+		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",stream->rtp_ssrc,L_STRING_TO_C(stream->rtcp_cname));
 		if ((stream->dtls_role != SalDtlsRoleInvalid) && (strlen(stream->dtls_fingerprint)>0)) {
 			switch(stream->dtls_role) {
 				case SalDtlsRoleIsClient:
@@ -355,10 +355,10 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-mismatch",NULL));
 	} else {
 		if (rtp_port != 0) {
-			if (stream->ice_pwd[0] != '\0')
-				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",stream->ice_pwd));
-			if (stream->ice_ufrag[0] != '\0')
-				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-ufrag",stream->ice_ufrag));
+			if (!stream->ice_pwd.empty())
+				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",L_STRING_TO_C(stream->ice_pwd)));
+			if (!stream->ice_ufrag.empty())
+				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-ufrag",L_STRING_TO_C(stream->ice_ufrag)));
 			add_ice_candidates(media_desc,stream);
 			add_ice_remote_candidates(media_desc,stream);
 		}
@@ -432,7 +432,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
 	int i;
-	char *escaped_username = belle_sip_uri_to_escaped_username(desc->username.c_str());
+	char *escaped_username = belle_sip_uri_to_escaped_username(L_STRING_TO_C(desc->username));
 
 	if ( desc->addr.find(':' ) != std::string::npos ) {
 		inet6=1;
@@ -450,9 +450,9 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	belle_sdp_session_description_set_origin ( session_desc,origin );
 
 	belle_sdp_session_description_set_session_name ( session_desc,
-		belle_sdp_session_name_create ( desc->name.empty()==false ? desc->name.c_str() : "Talk" ) );
+		belle_sdp_session_name_create ( desc->name.empty()==false ? L_STRING_TO_C(desc->name) : "Talk" ) );
 
-	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || desc->ice_ufrag[0] != '\0' ) {
+	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || !desc->ice_ufrag.empty() ) {
 		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
 		belle_sdp_session_description_set_connection ( session_desc
 				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",L_STRING_TO_C(desc->addr) ) );
@@ -472,8 +472,8 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	}
 
 	if (desc->set_nortpproxy == TRUE) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy","yes"));
-	if (desc->ice_pwd[0] != '\0') belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",desc->ice_pwd));
-	if (desc->ice_ufrag[0] != '\0') belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",desc->ice_ufrag));
+	if (!desc->ice_pwd.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",L_STRING_TO_C(desc->ice_pwd)));
+	if (!desc->ice_ufrag.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",L_STRING_TO_C(desc->ice_ufrag)));
 
 	if (desc->rtcp_xr.enabled == TRUE) {
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&desc->rtcp_xr));
@@ -619,9 +619,9 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 				} else break;
 			}
 		} else if ((keywordcmp("ice-ufrag", att_name) == 0) && (value != NULL)) {
-			strncpy(stream->ice_ufrag, value, sizeof(stream->ice_ufrag)-1);
+			stream->ice_ufrag = L_C_TO_STRING(value);
 		} else if ((keywordcmp("ice-pwd", att_name) == 0) && (value != NULL)) {
-			strncpy(stream->ice_pwd, value, sizeof(stream->ice_pwd) -1);
+			stream->ice_pwd = L_C_TO_STRING(value);
 		} else if (keywordcmp("ice-mismatch", att_name) == 0) {
 			stream->ice_mismatch = TRUE;
 		}
@@ -1039,10 +1039,10 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
 	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-ufrag");
-	if (value) strncpy(desc->ice_ufrag, value, sizeof(desc->ice_ufrag) - 1);
+	if (value) desc->ice_ufrag = L_C_TO_STRING(value);
 
 	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-pwd");
-	if (value) strncpy(desc->ice_pwd, value, sizeof(desc->ice_pwd)-1);
+	if (value) desc->ice_pwd = L_C_TO_STRING(value);
 
 	value=belle_sdp_session_description_get_attribute_value(session_desc,"ice-lite");
 	if (value) desc->ice_lite = TRUE;
