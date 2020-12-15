@@ -121,6 +121,8 @@ BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreator);
 extern "C" {
 #endif
 
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus account_creator_flexiapi_ping(LinphoneAccountCreator *creator);
+
 /**
  * Account creator custom to set Linphone default values
  * @param[in] creator LinphoneAccountCreator object
