@@ -86,6 +86,7 @@ static void account_manager_generate_unique_id(AccountManager * am) {
 		am->unique_id[i] = tolower(the_am->unique_id[i]);
 	}
 }
+
 AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
@@ -115,20 +116,6 @@ Account *account_manager_get_account(AccountManager *m, const LinphoneAddress *i
 	}
 	return NULL;
 }
-
-LinphoneAddress *account_manager_get_identity_with_modified_identity(const LinphoneAddress *modified_identity){
-	AccountManager *m = account_manager_get();
-	bctbx_list_t *it;
-
-	for(it=m->accounts;it!=NULL;it=it->next){
-		Account *a=(Account*)it->data;
-		if (linphone_address_weak_equal(a->modified_identity,modified_identity)){
-			return a->identity;
-		}
-	}
-	return NULL;
-}
-
 
 static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const char *info){
 	Account *account=(Account*)linphone_core_get_user_data(lc);
@@ -314,7 +301,6 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 		};
 	}
 
-
 	if (linphone_account_creator_create_account(creator) ==	LinphoneAccountCreatorStatusMissingCallbacks) {
 		ms_fatal("Could not create account %s on db (missing callbacks)", linphone_proxy_config_get_identity(cfg));
 	}
@@ -336,9 +322,9 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	// activate account
 	linphone_account_creator_cbs_set_activate_account(creator_cbs, account_activated_cb);
 	if (linphone_account_creator_get_phone_number(creator))
-		linphone_account_creator_activate_account_linphone(creator);
+		linphone_account_creator_activate_phone_account_linphone_xmlrpc(creator);
 	else
-		linphone_account_creator_activate_email_account_linphone(creator);
+		linphone_account_creator_activate_email_account_linphone_xmlrpc(creator);
 
 	if (wait_for_until(lc, NULL, &state.account_activated, TRUE, 15000) == FALSE)
 		ms_fatal("Could not activate account %s", linphone_proxy_config_get_identity(cfg));
@@ -436,4 +422,21 @@ void linphone_core_manager_check_accounts(LinphoneCoreManager *m){
 		account_manager_check_account(am, cfg, m);
 	}
 	if (!liblinphonetester_show_account_manager_logs) linphone_core_set_log_level_mask(logmask);
+}
+
+LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) ms_new0(LinphoneAccountCreatorStats, 1);
+	return stats;
+}
+
+void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done++;
+	BC_ASSERT_TRUE(stats->cb_done);
+}
+
+void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done = 0;
+	BC_ASSERT_FALSE(stats->cb_done);
 }
