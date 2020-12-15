@@ -58,8 +58,8 @@ typedef struct SalStreamDescription {
 	SalCustomSdpAttribute *custom_sdp_attributes;
 	SalIceCandidate ice_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES];
 	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	std::string ice_ufrag;
+	std::string ice_pwd;
 	char mid[32]; /* Media line identifier for RTP bundle mode */
 	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
 	bool_t ice_mismatch;

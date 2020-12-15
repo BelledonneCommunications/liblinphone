@@ -50,11 +50,11 @@ MediaSessionPrivate &IceService::getMediaSessionPrivate() const{
 }
 
 bool IceService::iceFoundInMediaDescription (const SalMediaDescription *md) {
-	if ((md->ice_pwd[0] != '\0') && (md->ice_ufrag[0] != '\0'))
+	if ((!md->ice_pwd.empty()) && (!md->ice_ufrag.empty()))
 		return true;
 	for (int i = 0; i < md->nb_streams; i++) {
 		const SalStreamDescription *stream = &md->streams[i];
-		if ((stream->ice_pwd[0] != '\0') && (stream->ice_ufrag[0] != '\0')){
+		if ((!stream->ice_pwd.empty()) && (!stream->ice_ufrag.empty())){
 			return true;
 		}
 		
@@ -275,25 +275,25 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 		}
 	}
 	if (!ice_session_remote_ufrag(mIceSession) && !ice_session_remote_pwd(mIceSession)) {
-		ice_session_set_remote_credentials(mIceSession, md->ice_ufrag, md->ice_pwd);
-	} else if (ice_session_remote_credentials_changed(mIceSession, md->ice_ufrag, md->ice_pwd)) {
+		ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
+	} else if (ice_session_remote_credentials_changed(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd))) {
 		if (!iceRestarted) {
 			restartSession( isOffer ? IR_Controlled : IR_Controlling);
 			iceRestarted = true;
 		}
-		ice_session_set_remote_credentials(mIceSession, md->ice_ufrag, md->ice_pwd);
+		ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
 	}
 	for (int i = 0; i < md->nb_streams; i++) {
 		const SalStreamDescription *stream = &md->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
-		if (cl && (stream->ice_pwd[0] != '\0') && (stream->ice_ufrag[0] != '\0')) {
-			if (ice_check_list_remote_credentials_changed(cl, stream->ice_ufrag, stream->ice_pwd)) {
+		if (cl && (!stream->ice_pwd.empty()) && (!stream->ice_ufrag.empty())) {
+			if (ice_check_list_remote_credentials_changed(cl, L_STRING_TO_C(stream->ice_ufrag), L_STRING_TO_C(stream->ice_pwd))) {
 				if (!iceRestarted && ice_check_list_get_remote_ufrag(cl) && ice_check_list_get_remote_pwd(cl)) {
 					// Restart only if remote ufrag/paswd was already set.
 					restartSession(isOffer ? IR_Controlled : IR_Controlling);
 					iceRestarted = true;
 				}
-				ice_check_list_set_remote_credentials(cl, stream->ice_ufrag, stream->ice_pwd);
+				ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream->ice_ufrag), L_STRING_TO_C(stream->ice_pwd));
 			}
 		}
 	}
@@ -333,8 +333,8 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 			mStreamsGroup.getStream((size_t)i)->setIceCheckList(nullptr);
 			continue;
 		}
-		if ((stream->ice_pwd[0] != '\0') && (stream->ice_ufrag[0] != '\0'))
-			ice_check_list_set_remote_credentials(cl, stream->ice_ufrag, stream->ice_pwd);
+		if ((!stream->ice_pwd.empty()) && (!stream->ice_ufrag.empty()))
+			ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream->ice_ufrag), L_STRING_TO_C(stream->ice_pwd));
 		for (int j = 0; j < SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES; j++) {
 			bool defaultCandidate = false;
 			const SalIceCandidate *candidate = &stream->ice_candidates[j];
@@ -463,8 +463,8 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 		}
 	}
 
-	strncpy(desc->ice_pwd, ice_session_local_pwd(mIceSession), sizeof(desc->ice_pwd)-1);
-	strncpy(desc->ice_ufrag, ice_session_local_ufrag(mIceSession), sizeof(desc->ice_ufrag)-1);
+	desc->ice_pwd = L_C_TO_STRING(ice_session_local_pwd(mIceSession));
+	desc->ice_ufrag = L_C_TO_STRING(ice_session_local_ufrag(mIceSession));
 	
 	for (int i = 0; i < desc->nb_streams; i++) {
 		SalStreamDescription *stream = &desc->streams[i];
@@ -486,14 +486,17 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 			stream->rtp_addr.clear();
 			stream->rtcp_addr.clear();
 		}
-		if ((strlen(ice_check_list_local_pwd(cl)) != strlen(desc->ice_pwd)) || (strcmp(ice_check_list_local_pwd(cl), desc->ice_pwd)))
-			strncpy(stream->ice_pwd, ice_check_list_local_pwd(cl), sizeof(stream->ice_pwd) - 1);
+
+		if ((strlen(ice_check_list_local_pwd(cl)) != desc->ice_pwd.length()) || (desc->ice_pwd.compare(ice_check_list_local_pwd(cl))))
+			stream->ice_pwd = L_C_TO_STRING(ice_check_list_local_pwd(cl));
 		else
-			memset(stream->ice_pwd, 0, sizeof(stream->ice_pwd));
-		if ((strlen(ice_check_list_local_ufrag(cl)) != strlen(desc->ice_ufrag)) || (strcmp(ice_check_list_local_ufrag(cl), desc->ice_ufrag)))
-			strncpy(stream->ice_ufrag, ice_check_list_local_ufrag(cl), sizeof(stream->ice_ufrag) -1 );
+			stream->ice_pwd.clear();
+
+		if ((strlen(ice_check_list_local_ufrag(cl)) != desc->ice_ufrag.length()) || (desc->ice_ufrag.compare(ice_check_list_local_ufrag(cl))))
+			stream->ice_ufrag = L_C_TO_STRING(ice_check_list_local_ufrag(cl));
 		else
-			memset(stream->ice_pwd, 0, sizeof(stream->ice_pwd));
+			stream->ice_ufrag.clear();
+
 		stream->ice_mismatch = ice_check_list_is_mismatch(cl);
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
 			memset(stream->ice_candidates, 0, sizeof(stream->ice_candidates));
