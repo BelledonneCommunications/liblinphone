@@ -20,7 +20,16 @@
 #
 ############################################################################
 
-set(OTHER_LIBS_FOR_TESTER bctoolbox bctoolbox-tester ortp mediastreamer ${BELLESIP_TARGETNAME} belr ${XML2_LIBRARIES} ${XSD_LIBRARIES})
+set(OTHER_LIBS_FOR_TESTER
+	bctoolbox
+	bctoolbox-tester
+	ortp
+	mediastreamer
+	jsoncpp
+	${BELLESIP_TARGETNAME}
+	belr
+	${XML2_LIBRARIES} ${XSD_LIBRARIES}
+)
 
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
@@ -134,7 +143,7 @@ set(RC_FILES
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
 	rcfiles/marie_rtp_port_range_rc
-	rcfiles/marie_os_defined_rtp_ports_rc 
+	rcfiles/marie_os_defined_rtp_ports_rc
 	rcfiles/marie_rc_rtcp_xr
 	rcfiles/marie_remote_404_rc
 	rcfiles/marie_remote_default_values_rc
@@ -166,7 +175,7 @@ set(RC_FILES
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
 	rcfiles/pauline_rtp_port_range_rc
-	rcfiles/pauline_os_defined_rtp_ports_rc 
+	rcfiles/pauline_os_defined_rtp_ports_rc
 	rcfiles/pauline_rc_rtcp_xr
 	rcfiles/pauline_sips_rc
 	rcfiles/pauline_tcp_rc
@@ -186,7 +195,7 @@ set(RC_FILES
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
 	rcfiles/groupchat_lime_x3dh_rc
-	rcfiles/arthur_rc 
+	rcfiles/arthur_rc
 )
 
 set(IMAGE_FILES
@@ -219,7 +228,7 @@ set(IOS_RESOURCES_FILES
 )
 
 set(SOURCE_FILES_C
-	account_creator_tester.c
+	account_creator_xmlrpc_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
@@ -270,15 +279,16 @@ if(ENABLE_LIME_X3DH)
 endif()
 
 set(SOURCE_FILES_CXX
-	audio_quality_tester.cpp
+	audio-quality-tester.cpp
 	clonable-object-tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
+	account-creator-flexiapi-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
-	vfs_encryption-tester.cpp
+	vfs-encryption-tester.cpp
 )
 
 if(ENABLE_ADVANCED_IM)
