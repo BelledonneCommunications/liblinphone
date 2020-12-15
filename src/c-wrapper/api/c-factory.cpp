@@ -186,7 +186,6 @@ LinphoneConferenceCbs * linphone_factory_create_conference_cbs(const LinphoneFac
 
 LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(const LinphoneFactory *factory) {
   return Factory::toCpp(factory)->createChatRoomCbs();
-
 }
 
 LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory) {
@@ -210,7 +209,6 @@ LinphoneVideoDefinition * linphone_factory_create_video_definition_from_name(con
   return Factory::toCpp(factory)->createVideoDefinitionFromName(
     name ? name : ""
   );
-
 }
 
 const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory) {
@@ -219,7 +217,6 @@ const bctbx_list_t * linphone_factory_get_supported_video_definitions(const Linp
 
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition(const LinphoneFactory *factory, unsigned int width, unsigned int height) {
   return Factory::toCpp(factory)->findSupportedVideoDefinition(width, height);
-
 }
 
 LinphoneVideoDefinition * linphone_factory_find_supported_video_definition_by_name(const LinphoneFactory *factory, const char *name) {

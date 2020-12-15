@@ -124,7 +124,7 @@ liblinphonetester_la_HEADERS = audio_bypass_wav_header.h
 
 liblinphonetester_la_SOURCES = \
 				accountmanager.c \
-				account_creator_tester.c \
+				account_creator_xmlrpc_tester.c \
 				audio_bypass_tester.c \
 				call_multi_tester.c \
 				call_multicast_tester.c \
