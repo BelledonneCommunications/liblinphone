@@ -1401,7 +1401,7 @@ static void tls_authentication_requested_bad(LinphoneCore *lc, LinphoneAuthInfo 
 	if (method == LinphoneAuthTls){
 
 		char *cert = bc_tester_res("certificates/client/cert2-signed-by-other-ca.pem");
-		char *key = bc_tester_res("certificates/client/key2.pem");
+		char *key = bc_tester_res("certificates/client/key2-signed-by-other-ca.pem");
 
 		linphone_auth_info_set_tls_cert_path(auth_info, cert);
 		linphone_auth_info_set_tls_key_path(auth_info, key);
