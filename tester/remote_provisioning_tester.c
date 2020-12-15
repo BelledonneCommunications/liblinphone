@@ -23,7 +23,7 @@
 #include "tester_utils.h"
 
 static void remote_provisioning_skipped(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSkipped,1));
 	linphone_core_manager_destroy(marie);
 }
@@ -45,7 +45,7 @@ static void remote_provisioning_http(void) {
 }
 
 static void remote_provisioning_transient(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_transient_remote_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_transient_remote_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
 	BC_ASSERT_TRUE(linphone_core_is_provisioning_transient(marie->lc));
@@ -55,7 +55,7 @@ static void remote_provisioning_transient(void) {
 
 static void remote_provisioning_https(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_https_rc", FALSE);
+		LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_remote_https_rc", FALSE);
 		BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 		BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneRegistrationOk,1));
 		linphone_core_manager_destroy(marie);
@@ -63,26 +63,26 @@ static void remote_provisioning_https(void) {
 }
 
 static void remote_provisioning_not_found(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_404_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_remote_404_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_invalid(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_invalid_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_remote_invalid_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_invalid_uri(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_invalid_uri_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_remote_invalid_uri_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringFailed,1));
 	linphone_core_manager_destroy(marie);
 }
 
 static void remote_provisioning_default_values(void) {
 	LinphoneProxyConfig *lpc;
-	LinphoneCoreManager* marie = linphone_core_manager_new2("marie_remote_default_values_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check("marie_remote_default_values_rc", FALSE);
 	BC_ASSERT_TRUE(wait_for(marie->lc,NULL,&marie->stat.number_of_LinphoneConfiguringSuccessful,1));
 	lpc = linphone_core_create_proxy_config(marie->lc);
 	BC_ASSERT_TRUE(linphone_proxy_config_register_enabled(lpc));
@@ -105,9 +105,9 @@ static void remote_provisioning_file(void) {
 	ms_message("Skipping remote provisioning from file on iOS");
 	return;
 #elif defined(__ANDROID__)
-	marie = linphone_core_manager_new2("marie_remote_localfile_android_rc", FALSE);
+	marie = linphone_core_manager_new_with_proxies_check("marie_remote_localfile_android_rc", FALSE);
 #elif defined(LINPHONE_WINDOWS_UNIVERSAL)
-	marie = linphone_core_manager_new2("marie_remote_localfile_win10_rc", FALSE);
+	marie = linphone_core_manager_new_with_proxies_check("marie_remote_localfile_win10_rc", FALSE);
 #else
 	marie = ms_new0(LinphoneCoreManager, 1);
 	linphone_core_manager_init(marie, "marie_remote_localfile_rc",NULL);
