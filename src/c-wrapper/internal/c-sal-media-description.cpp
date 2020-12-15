@@ -313,8 +313,8 @@ int sal_media_description_global_equals(const SalMediaDescription *md1, const Sa
 	if (md1->bandwidth != md2->bandwidth) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
 	/* ICE */
-	if (strcmp(md1->ice_ufrag, md2->ice_ufrag) != 0 && md2->ice_ufrag[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
-	if (strcmp(md1->ice_pwd, md2->ice_pwd) != 0 && md2->ice_pwd[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
+	if (md1->ice_ufrag.compare(md2->ice_ufrag) != 0 && !md2->ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
+	if (md1->ice_pwd.compare(md2->ice_pwd) != 0 && !md2->ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
 	return result;
 }

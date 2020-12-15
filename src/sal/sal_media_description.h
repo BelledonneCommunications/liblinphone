@@ -38,8 +38,8 @@ typedef struct SalMediaDescription {
 	SalStreamDescription streams[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
 	SalCustomSdpAttribute *custom_sdp_attributes;
 	OrtpRtcpXrConfiguration rtcp_xr;
-	char ice_ufrag[SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN];
-	char ice_pwd[SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN];
+	std::string ice_ufrag;
+	std::string ice_pwd;
 	bctbx_list_t *bundles; /* list of SalStreamBundle */
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
