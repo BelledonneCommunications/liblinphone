@@ -227,9 +227,6 @@ typedef struct SalMessage{
 
 #define SAL_MEDIA_DESCRIPTION_MAX_MESSAGE_ATTRIBUTES 5
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_UFRAG_LEN 256
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_PWD_LEN 256
-
 typedef enum SalReason{
 	SalReasonNone, /*no error, please leave first so that it takes 0 value*/
 	SalReasonDeclined,

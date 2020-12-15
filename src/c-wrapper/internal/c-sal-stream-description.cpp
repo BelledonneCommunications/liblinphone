@@ -108,8 +108,8 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 	if (sd1->dir != sd2->dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
 	/* ICE */
-	if (strcmp(sd1->ice_ufrag, sd2->ice_ufrag) != 0 && sd2->ice_ufrag[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
-	if (strcmp(sd1->ice_pwd, sd2->ice_pwd) != 0 && sd2->ice_pwd[0] != '\0') result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
+	if (sd1->ice_ufrag.compare(sd2->ice_ufrag) != 0 && !sd2->ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
+	if (sd1->ice_pwd.compare(sd2->ice_pwd) != 0 && !sd2->ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
 
 	/*DTLS*/

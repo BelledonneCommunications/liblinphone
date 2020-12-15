@@ -538,8 +538,8 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		}
 	}
 
-	strcpy(result->ice_pwd, local_cap->ice_pwd);
-	strcpy(result->ice_ufrag, local_cap->ice_ufrag);
+	result->ice_pwd = local_cap->ice_pwd;
+	result->ice_ufrag = local_cap->ice_ufrag;
 	result->ice_mismatch = local_cap->ice_mismatch;
 	result->set_nortpproxy = local_cap->set_nortpproxy;
 	memcpy(result->ice_candidates, local_cap->ice_candidates, sizeof(result->ice_candidates));
@@ -614,8 +614,8 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 	result->nb_streams=local_offer->nb_streams;
 	result->bandwidth=remote_answer->bandwidth;
 	result->addr=remote_answer->addr;
-	strcpy(result->ice_pwd, local_offer->ice_pwd);
-	strcpy(result->ice_ufrag, local_offer->ice_ufrag);
+	result->ice_pwd = local_offer->ice_pwd;
+	result->ice_ufrag = local_offer->ice_ufrag;
 	memcpy(&result->rtcp_xr, &local_offer->rtcp_xr, sizeof(result->rtcp_xr));
 	if ((local_offer->rtcp_xr.enabled == TRUE) && (remote_answer->rtcp_xr.enabled == FALSE)) {
 		result->rtcp_xr.enabled = FALSE;
@@ -705,8 +705,8 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	result->bandwidth=local_capabilities->bandwidth;
 	result->session_ver=local_capabilities->session_ver;
 	result->session_id=local_capabilities->session_id;
-	strcpy(result->ice_pwd, local_capabilities->ice_pwd);
-	strcpy(result->ice_ufrag, local_capabilities->ice_ufrag);
+	result->ice_pwd = local_capabilities->ice_pwd;
+	result->ice_ufrag = local_capabilities->ice_ufrag;
 	result->ice_lite = local_capabilities->ice_lite;
 	result->set_nortpproxy = local_capabilities->set_nortpproxy;
 	result->custom_sdp_attributes = sal_custom_sdp_attribute_clone(local_capabilities->custom_sdp_attributes);
