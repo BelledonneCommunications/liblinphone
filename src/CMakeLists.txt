@@ -26,6 +26,7 @@ set(LINK_LIBS
 	belr
 	mediastreamer
 	ortp
+	jsoncpp
 )
 
 #APPLE_LIBS is mandatory for apple compilation
