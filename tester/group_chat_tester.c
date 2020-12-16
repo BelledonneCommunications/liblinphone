@@ -6510,7 +6510,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Reinvited after removed from group chat room 2", group_chat_room_reinvited_after_removed_2, "LeaksMemory"),
 	TEST_ONE_TAG("Reinvited after removed from group chat room while offline", group_chat_room_reinvited_after_removed_while_offline, "LeaksMemory"),
 	TEST_ONE_TAG("Reinvited after removed from group chat room while offline 2", group_chat_room_reinvited_after_removed_while_offline_2, "LeaksMemory"),
-	TEST_ONE_TAG("Reinvited after removed from group chat room with several devices", group_chat_room_reinvited_after_removed_with_several_devices, "LeaksMemory"),
+	TEST_NO_TAG("Reinvited after removed from group chat room with several devices", group_chat_room_reinvited_after_removed_with_several_devices),
 	TEST_NO_TAG("Notify after disconnection", group_chat_room_notify_after_disconnection),
 	TEST_NO_TAG("Send refer to all participants devices", group_chat_room_send_refer_to_all_devices),
 	TEST_NO_TAG("Admin add device and doesn't lose admin status", group_chat_room_add_device),
@@ -6547,7 +6547,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("New device after group chat room creation", group_chat_room_new_device_after_creation),
 	TEST_ONE_TAG("Chat room list subscription", group_chat_room_list_subscription, "LeaksMemory"),
 	TEST_ONE_TAG("Complex participant removal scenario", group_chat_room_complex_participant_removal_scenario, "LeaksMemory"),
-	TEST_ONE_TAG("Group chat room subscription denied", group_chat_room_subscription_denied, "LeaksMemory" /*due network up/down*/),
+	TEST_NO_TAG("Group chat room subscription denied", group_chat_room_subscription_denied),
 	TEST_ONE_TAG("Search friend result chat room participants", search_friend_chat_room_participants, "MagicSearch"),
 	TEST_ONE_TAG("Client loose context of a chatroom", group_chat_loss_of_client_context, "LeaksMemory"),
 	TEST_ONE_TAG("Participant removed then added", participant_removed_then_added, "LeaksMemory" /*due to core restart*/),
@@ -6556,7 +6556,7 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Send forward message", one_to_one_chat_room_send_forward_message, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Linphone core stop/start and chatroom ref", core_stop_start_with_chat_room_ref, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
-	TEST_ONE_TAG("Make sure device unregistration does not triger user to be removed from a group", group_chat_room_device_unregistered,  "LeaksMemory" /*due network up/down*/),
+	TEST_NO_TAG("Make sure device unregistration does not triger user to be removed from a group", group_chat_room_device_unregistered),
 	TEST_NO_TAG("Admin leaves the room and is reinvited", group_chat_room_admin_creator_leaves_and_is_reinvited),
 };
 
