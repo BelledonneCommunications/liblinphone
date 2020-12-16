@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal-stream-bundle.h"
 
 SalStreamBundle *sal_stream_bundle_new(void){
@@ -24,8 +25,7 @@ SalStreamBundle *sal_stream_bundle_new(void){
 }
 
 void sal_stream_bundle_add_stream(SalStreamBundle *bundle, SalStreamDescription *stream, const char *mid){
-	strncpy(stream->mid, mid ? mid : "", sizeof(stream->mid));
-	stream->mid[sizeof(stream->mid) -1] = '\0';
+	stream->mid = L_C_TO_STRING(mid);
 	bundle->mids = bctbx_list_append(bundle->mids, ms_strdup(mid));
 }
 
