@@ -60,7 +60,7 @@ typedef struct SalStreamDescription {
 	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
 	std::string ice_ufrag;
 	std::string ice_pwd;
-	char mid[32]; /* Media line identifier for RTP bundle mode */
+	std::string mid; /* Media line identifier for RTP bundle mode */
 	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
 	bool_t ice_mismatch;
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
@@ -68,7 +68,7 @@ typedef struct SalStreamDescription {
 	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
 	uint8_t haveLimeIk; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
-	char dtls_fingerprint[256];
+	std::string dtls_fingerprint;
 	SalDtlsRole dtls_role;
 	int ttl; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role;
