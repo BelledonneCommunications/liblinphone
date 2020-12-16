@@ -1095,14 +1095,14 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 	return true;
 }
 
-void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const char *mid){
+void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const std::string mid){
 	SalStreamBundle *bundle;
 	if (md->bundles == nullptr){
 		bundle = sal_media_description_add_new_bundle(md);
 	}else{
 		bundle = (SalStreamBundle*) md->bundles->data;
 	}
-	sal_stream_bundle_add_stream(bundle, sd, mid);
+	sal_stream_bundle_add_stream(bundle, sd, L_STRING_TO_C(mid));
 	sd->mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 	/* rtcp-mux must be enabled when bundle mode is proposed.*/
 	sd->rtcp_mux = TRUE;
