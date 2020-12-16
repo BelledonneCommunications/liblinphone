@@ -81,7 +81,7 @@ int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *
 	int index;
 	for (index = 0 ; index < md->nb_streams; ++index){
 		const SalStreamDescription * sd = &md->streams[index];
-		if (strcmp(sd->mid, mid) == 0){
+		if (sd->mid.compare(mid) == 0){
 			return index;
 		}
 	}
@@ -101,17 +101,17 @@ int sal_media_description_get_index_of_transport_owner(const SalMediaDescription
 	const SalStreamBundle *bundle;
 	const char *master_mid;
 	int index;
-	if (sd->mid[0] == '\0') return -1; /* not part of any bundle */
+	if (sd->mid.empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
-	bundle = sal_media_description_get_bundle_from_mid(md, sd->mid);
+	bundle = sal_media_description_get_bundle_from_mid(md, L_STRING_TO_C(sd->mid));
 	if (!bundle) {
-		ms_warning("Orphan stream with mid '%s'", sd->mid);
+		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd->mid));
 		return -1;
 	}
 	master_mid = sal_stream_bundle_get_mid_of_transport_owner(bundle);
 	index = sal_media_description_lookup_mid(md, master_mid);
 	if (index == -1){
-		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", sd->mid, master_mid);
+		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd->mid), master_mid);
 	}
 	return index;
 }

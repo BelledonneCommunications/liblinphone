@@ -114,7 +114,7 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 
 	/*DTLS*/
 	if (sd1->dtls_role != sd2->dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-	if (strcmp(sd1->dtls_fingerprint, sd2->dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	if (sd1->dtls_fingerprint.compare(sd2->dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
 	return result;
 }
@@ -127,7 +127,7 @@ bool_t sal_stream_description_enabled(const SalStreamDescription *sd) {
 void sal_stream_description_disable(SalStreamDescription *sd){
 	sd->rtp_port = 0;
 	/* Remove potential bundle parameters. A disabled stream is moved out of the bundle. */
-	sd->mid[0] = '\0';
+	sd->mid.clear();
 	sd->bundle_only = FALSE;
 }
 

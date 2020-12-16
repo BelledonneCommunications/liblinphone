@@ -228,7 +228,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const char *mid);
+	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const std::string mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();
