@@ -415,9 +415,9 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 	}
 
 	result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
-	if (remote_answer->mid[0] != '\0'){
-		if (local_offer->mid[0] != '\0'){
-			strncpy(result->mid, remote_answer->mid, sizeof(result->mid) - 1);
+	if (remote_answer->mid.empty() == false){
+		if (local_offer->mid.empty() == false){
+			result->mid = remote_answer->mid;
 			result->mid_rtp_ext_header_id = remote_answer->mid_rtp_ext_header_id;
 			result->bundle_only = remote_answer->bundle_only;
 			result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
@@ -449,15 +449,15 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((local_offer->dtls_role!=SalDtlsRoleInvalid) && (remote_answer->dtls_role!=SalDtlsRoleInvalid)
-			&&(strlen(local_offer->dtls_fingerprint)>0) && (strlen(remote_answer->dtls_fingerprint)>0)) {
-		strncpy(result->dtls_fingerprint, remote_answer->dtls_fingerprint,sizeof(result->dtls_fingerprint));
+			&&(!local_offer->dtls_fingerprint.empty()) && (!remote_answer->dtls_fingerprint.empty())) {
+		result->dtls_fingerprint = remote_answer->dtls_fingerprint;
 		if (remote_answer->dtls_role==SalDtlsRoleIsClient) {
 			result->dtls_role = SalDtlsRoleIsServer;
 		} else {
 			result->dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result->dtls_fingerprint[0] = '\0';
+		result->dtls_fingerprint.clear();
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
 	result->implicit_rtcp_fb = local_offer->implicit_rtcp_fb && remote_answer->implicit_rtcp_fb;
@@ -506,11 +506,11 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
 	
 	/* Handle RTP bundle negociation */
-	if (remote_offer->mid[0] != '\0' && bundle_owner_mid){
-		strncpy(result->mid, remote_offer->mid, sizeof(result->mid) - 1);
+	if (!remote_offer->mid.empty() && bundle_owner_mid){
+		result->mid = remote_offer->mid;
 		result->mid_rtp_ext_header_id = remote_offer->mid_rtp_ext_header_id;
 		
-		if (strcmp(bundle_owner_mid, remote_offer->mid) != 0){
+		if (remote_offer->mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
 			result->bundle_only = TRUE;
@@ -551,13 +551,13 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
 	if (((local_cap->dtls_role!=SalDtlsRoleInvalid)) && (remote_offer->dtls_role!=SalDtlsRoleInvalid)
-			&& (strlen(local_cap->dtls_fingerprint)>0) && (strlen(remote_offer->dtls_fingerprint)>0)) {
-		strncpy(result->dtls_fingerprint, local_cap->dtls_fingerprint,sizeof(result->dtls_fingerprint));
+			&& (!local_cap->dtls_fingerprint.empty()) && (!remote_offer->dtls_fingerprint.empty())) {
+		result->dtls_fingerprint = local_cap->dtls_fingerprint;
 		if (remote_offer->dtls_role==SalDtlsRoleUnset) {
 			result->dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result->dtls_fingerprint[0] = '\0';
+		result->dtls_fingerprint.clear();
 		result->dtls_role = SalDtlsRoleInvalid;
 	}
 	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
@@ -664,7 +664,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 			if (local_capabilities->accept_bundles){
 				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
 				if (owner_index != -1){
-					bundle_owner_mid = remote_offer->streams[owner_index].mid;
+					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[owner_index].mid);
 				}
 			}
 			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, bundle_owner_mid);

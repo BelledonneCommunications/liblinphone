@@ -109,7 +109,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 	RtpBundle * bundle = mBundleOwner->createOrGetRtpBundle(params.resultStreamDescription);
 	if (bundle && mBundleOwner != this && mRtpBundle == nullptr){
 		lInfo() << "Stream " << *this << " added to rtp bundle " << bundle << " with mid '" << params.resultStreamDescription->mid << "'";
-		rtp_bundle_add_session(bundle, params.resultStreamDescription->mid, mSessions.rtp_session);
+		rtp_bundle_add_session(bundle, L_STRING_TO_C(params.resultStreamDescription->mid), mSessions.rtp_session);
 		mRtpBundle = bundle;
 		mOwnsBundle = false;
 		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
@@ -124,7 +124,7 @@ RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
 	if (!mRtpBundle){
 		mRtpBundle = rtp_bundle_new();
 		lInfo() << "Stream " << *this << " with mid '" << sd->mid << "'is the owner of rtp bundle " << mRtpBundle;
-		rtp_bundle_add_session(mRtpBundle, sd->mid, mSessions.rtp_session);
+		rtp_bundle_add_session(mRtpBundle, L_STRING_TO_C(sd->mid), mSessions.rtp_session);
 		rtp_bundle_set_mid_extension_id(mRtpBundle, sd->mid_rtp_ext_header_id);
 		mOwnsBundle = true;
 		getMediaSessionPrivate().getCurrentParams()->enableRtpBundle(true);
@@ -198,11 +198,11 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	}
 	if (sal_stream_description_has_dtls(localDesc)) {
 		/* Get the self fingerprint from call (it's computed at stream init) */
-		strncpy(localDesc->dtls_fingerprint, mDtlsFingerPrint.c_str(), sizeof(localDesc->dtls_fingerprint) - 1);
+		localDesc->dtls_fingerprint = mDtlsFingerPrint.c_str();
 		/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
 		localDesc->dtls_role = SalDtlsRoleUnset;
 	} else {
-		localDesc->dtls_fingerprint[0] = '\0';
+		localDesc->dtls_fingerprint.clear();
 		localDesc->dtls_role = SalDtlsRoleInvalid;
 	}
 	/* In case we were offered multicast, we become multicast receiver. The local media description must reflect this. */
@@ -422,7 +422,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		
 		if (stream->dtls_role != SalDtlsRoleInvalid){ /* If DTLS is available at both end points */
 			/* Give the peer certificate fingerprint to dtls context */
-			ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+			ms_dtls_srtp_set_peer_fingerprint(ms->sessions.dtls_context, L_STRING_TO_C(params.remoteStreamDescription->dtls_fingerprint));
 		}
 	}
 	
@@ -570,7 +570,7 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 		
 		/* If DTLS is available at both end points */
 		/* Give the peer certificate fingerprint to dtls context */
-		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, params.remoteStreamDescription->dtls_fingerprint);
+		ms_dtls_srtp_set_peer_fingerprint(mSessions.dtls_context, L_STRING_TO_C(params.remoteStreamDescription->dtls_fingerprint));
 		ms_dtls_srtp_set_role(mSessions.dtls_context, (params.resultStreamDescription->dtls_role == SalDtlsRoleIsClient) ? MSDtlsSrtpRoleIsClient : MSDtlsSrtpRoleIsServer); /* Set the role to client */
 		ms_dtls_srtp_start(mSessions.dtls_context); /* Then start the engine, it will send the DTLS client Hello */
 		mDtlsStarted = true;
