@@ -6042,6 +6042,9 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	BC_ASSERT_FALSE(liblinphone_tester_copy_file(uri, uriCopy));
 	int initialPaulineEvent = linphone_chat_room_get_history_events_size(paulineCr);
 	// Simulate an uninstall of the application on Marie's side with unregistration (It should remove the device)
+
+	// Save the number of chat rooms at the moment of stopping the core
+	const int marie1_no_cr = bctbx_list_size(linphone_core_get_chat_rooms(marie1->lc));
 	coresManagerList = bctbx_list_remove(coresManagerList, marie1);
 	coresList = bctbx_list_remove(coresList, marie1->lc);
 	initialPaulineStats = pauline->stat;
@@ -6117,7 +6120,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	bctbx_list_free(tmpCoresManagerList);
 	coresList = bctbx_list_concat(coresList, tmpCoresList);
 	linphone_core_manager_start(marie1,TRUE);
-	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneConferenceStateCreated, initialMarie1Stats.number_of_LinphoneConferenceStateCreated + 2, 5000));
+	BC_ASSERT_TRUE(wait_for_list(coresList, &marie1->stat.number_of_LinphoneConferenceStateCreated, initialMarie1Stats.number_of_LinphoneConferenceStateCreated + marie1_no_cr, 5000));
 	wait_for_list(coresList, NULL, 0, 1000);
 	marie1Cr = check_has_chat_room_client_side(coresList, marie1, &initialMarie1Stats, confAddr, initialSubject, 1, FALSE);
 
