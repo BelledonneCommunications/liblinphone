@@ -265,28 +265,27 @@ static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *loca
 	return res;
 }
 
-static bool_t match_crypto_algo(const SalSrtpCryptoAlgo* local, const SalSrtpCryptoAlgo* remote,
-	SalSrtpCryptoAlgo* result, unsigned int* choosen_local_tag, bool_t use_local_key) {
-	int i,j;
-	for(i=0; i<SAL_CRYPTO_ALGO_MAX; i++) {
-		if (remote[i].algo == 0)
+static bool_t match_crypto_algo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
+	SalSrtpCryptoAlgo & result, unsigned int* choosen_local_tag, bool_t use_local_key) {
+	for(const auto & rc : remote) {
+		if (rc.algo == 0)
 			break;
 
 		/* Look for a local enabled crypto algo that matches one of the proposed by remote */
-		for(j=0; j<SAL_CRYPTO_ALGO_MAX; j++) {
-			if (remote[i].algo == local[j].algo) {
-				result->algo = remote[i].algo;
+		for(const auto & lc : local) {
+			if (rc.algo == lc.algo) {
+				result.algo = rc.algo;
 				/* We're answering an SDP offer. Supply our master key, associated with the remote supplied tag */
 				if (use_local_key) {
-					strncpy(result->master_key, local[j].master_key, sizeof(result->master_key) );
-					result->tag = remote[i].tag;
-					*choosen_local_tag = local[j].tag;
+					strncpy(result.master_key, lc.master_key, sizeof(result.master_key) );
+					result.tag = rc.tag;
+					*choosen_local_tag = lc.tag;
 				}
 				/* We received an answer to our SDP crypto proposal. Copy matching algo remote master key to result, and memorize local tag */
 				else {
-					strncpy(result->master_key, remote[i].master_key, sizeof(result->master_key));
-					result->tag = local[j].tag;
-					*choosen_local_tag = local[j].tag;
+					strncpy(result.master_key, rc.master_key, sizeof(result.master_key));
+					result.tag = lc.tag;
+					*choosen_local_tag = lc.tag;
 				}
 				return TRUE;
 			}
@@ -439,8 +438,10 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 	}
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* verify crypto algo */
-		memset(result->crypto, 0, sizeof(result->crypto));
-		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, &result->crypto[0], &result->crypto_local_tag, FALSE)){
+		result->crypto.clear();
+		SalSrtpCryptoAlgo crypto_result;
+		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
+			result->crypto.push_back(crypto_result);
 			sal_stream_description_disable(result);
 		}
 	}
@@ -521,8 +522,10 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 
 	if (sal_stream_description_has_srtp(result) == TRUE) {
 		/* select crypto algo */
-		memset(result->crypto, 0, sizeof(result->crypto));
-		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, &result->crypto[0], &result->crypto_local_tag, TRUE)) {
+		result->crypto.clear();
+		SalSrtpCryptoAlgo crypto_result;
+		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
+			result->crypto.push_back(crypto_result);
 			sal_stream_description_disable(result);
 			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
 		}

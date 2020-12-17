@@ -85,7 +85,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
 	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites(getCCore());
 	if (srtpSuites) {
-		for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < SAL_CRYPTO_ALGO_MAX) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
+		for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
 			switch (srtpSuites[i]) {
 				case MS_AES_128_SHA1_32:
 					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
