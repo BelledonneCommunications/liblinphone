@@ -262,7 +262,7 @@ bool MediaSessionPrivate::failure () {
 							if (i == 0)
 								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-							memset(localDesc->streams[i].crypto, 0, sizeof(localDesc->streams[i].crypto));
+							localDesc->streams[i].crypto.clear();
 							restartInvite();
 							return true;
 						}
@@ -1347,9 +1347,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	if (op) op->setLocalMediaDescription(localDesc);
 }
 
-int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCryptoSuite suite, unsigned int tag) {
-	crypto->tag = tag;
-	crypto->algo = suite;
+int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) {
+	crypto.tag = tag;
+	crypto.algo = suite;
 	size_t keylen = 0;
 	switch (suite) {
 		case MS_AES_128_SHA1_80:
@@ -1366,9 +1366,9 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo *crypto, MSCrypto
 		case MS_CRYPTO_SUITE_INVALID:
 			break;
 	}
-	if ((keylen == 0) || !generateB64CryptoKey(keylen, crypto->master_key, SAL_SRTP_KEY_SIZE)) {
+	if ((keylen == 0) || !generateB64CryptoKey(keylen, crypto.master_key, SAL_SRTP_KEY_SIZE)) {
 		lError() << "Could not generate SRTP key";
-		crypto->algo = MS_CRYPTO_SUITE_INVALID;
+		crypto.algo = MS_CRYPTO_SUITE_INVALID;
 		return -1;
 	}
 	return 0;
@@ -1443,13 +1443,11 @@ void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 		if (sal_stream_description_has_srtp(&md->streams[i])) {
 			if (keepSrtpKeys && oldMd && sal_stream_description_enabled(&oldMd->streams[i]) && sal_stream_description_has_srtp(&oldMd->streams[i])) {
 				lInfo() << "Keeping same crypto keys";
-				for (int j = 0; j < SAL_CRYPTO_ALGO_MAX; j++) {
-					memcpy(&md->streams[i].crypto[j], &oldMd->streams[i].crypto[j], sizeof(SalSrtpCryptoAlgo));
-				}
+				md->streams[i].crypto = oldMd->streams[i].crypto;
 			} else {
 				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
-				for (int j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID) && (j < SAL_CRYPTO_ALGO_MAX); j++) {
-					setupEncryptionKey(&md->streams[i].crypto[j], suites[j], static_cast<unsigned int>(j) + 1);
+				for (int j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID) && (j < (int)md->streams[i].crypto.size()); j++) {
+					setupEncryptionKey(md->streams[i].crypto[j], suites[j], static_cast<unsigned int>(j) + 1);
 				}
 			}
 		}
