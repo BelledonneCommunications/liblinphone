@@ -225,8 +225,6 @@ typedef struct SalMessage{
 	time_t time;
 }SalMessage;
 
-#define SAL_MEDIA_DESCRIPTION_MAX_MESSAGE_ATTRIBUTES 5
-
 typedef enum SalReason{
 	SalReasonNone, /*no error, please leave first so that it takes 0 value*/
 	SalReasonDeclined,
@@ -493,7 +491,6 @@ typedef struct SalSrtpCryptoAlgo {
 extern "C" {
 #endif
 
-
 SalCustomHeader *sal_custom_header_ref(SalCustomHeader *ch);
 void sal_custom_header_unref(SalCustomHeader *ch);
 SalCustomHeader *sal_custom_header_append(SalCustomHeader *ch, const char *name, const char *value);
@@ -501,8 +498,6 @@ const char *sal_custom_header_find(const SalCustomHeader *ch, const char *name);
 SalCustomHeader *sal_custom_header_remove(SalCustomHeader *ch, const char *name);
 void sal_custom_header_free(SalCustomHeader *ch);
 SalCustomHeader *sal_custom_header_clone(const SalCustomHeader *ch);
-
-
 
 SalCustomSdpAttribute * sal_custom_sdp_attribute_append(SalCustomSdpAttribute *csa, const char *name, const char *value);
 const char * sal_custom_sdp_attribute_find(const SalCustomSdpAttribute *csa, const char *name);
