@@ -774,6 +774,7 @@ void LocalConference::removeLocalEndpoint () {
 
 void LocalConference::leave () {
 	if (isIn()) {
+		lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress();
 		confParams->enableLocalParticipant(false);
 		removeLocalEndpoint();
 	}
@@ -1162,13 +1163,14 @@ void RemoteConference::leave () {
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
+			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << " while focus call is paused.";
 			break;
 		case LinphoneCallStreamsRunning:
+			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << ". Focus call is going to be paused.";
 			m_focusCall->pause();
 			break;
 		default:
-			ms_error("Could not leave the conference: bad focus call state (%s)",
-				linphone_call_state_to_string(callState));
+			lError() << getMe()->getAddress() << " cannot leave conference " << getConferenceAddress() << " because focus call is in state " << linphone_call_state_to_string(callState);
 	}
 }
 

@@ -403,8 +403,6 @@ LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc);
 
 void ec_calibrator_destroy(EcCalibrator *ecc);
 
-int linphone_core_preempt_sound_resources(LinphoneCore *lc);
-
 /*conferencing subsystem*/
 void _post_configure_audio_stream(AudioStream *st, LinphoneCore *lc, bool_t muted);
 bool_t linphone_core_sound_resources_available(LinphoneCore *lc);
