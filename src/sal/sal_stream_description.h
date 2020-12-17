@@ -24,9 +24,6 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES 2
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
-
 typedef struct SalStreamDescription {
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
@@ -54,8 +51,8 @@ typedef struct SalStreamDescription {
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes;
-	SalIceCandidate ice_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES];
-	SalIceRemoteCandidate ice_remote_candidates[SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES];
+	std::vector<SalIceCandidate> ice_candidates;
+	std::vector<SalIceRemoteCandidate> ice_remote_candidates;
 	std::string ice_ufrag;
 	std::string ice_pwd;
 	std::string mid; /* Media line identifier for RTP bundle mode */
