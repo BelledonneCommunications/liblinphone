@@ -90,24 +90,6 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 			result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 		}
 	}
-	const SalStreamDescription *sd = NULL;
-	if (sd1->crypto.size() < sd2->crypto.size()) {
-		sd = sd2;
-	} else if (sd1->crypto.size() > sd2->crypto.size()) {
-		sd = sd1;
-	}
-	if (sd) {
-		SalSrtpCryptoAlgo dummyCrypto;
-		for (int i = sdMinSize; i < (int)sd->crypto.size(); i++) {
-			if ((sd->crypto[i].tag != dummyCrypto.tag)
-				|| (sd->crypto[i].algo != dummyCrypto.algo)){
-				result|=SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
-			}
-			if ((strncmp(sd->crypto[i].master_key, dummyCrypto.master_key, sizeof(sd->crypto[i].master_key) - 1))) {
-				result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-			}
-		}
-	}
 
 	if (sd1->type != sd2->type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	if (sd1->rtp_addr.compare(sd2->rtp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
