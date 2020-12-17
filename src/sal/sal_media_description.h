@@ -44,7 +44,7 @@ typedef struct SalMediaDescription {
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
 	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	bool_t pad[1];
+	std::vector<bool_t> pad;
 } SalMediaDescription;
 
 #endif // ifndef _SAL_MEDIA_DESCRIPTION_H_
