@@ -383,7 +383,7 @@ void SalCallOp::sdpProcess () {
 				mResult->streams[i].rtcp_addr = mRemoteMedia->streams[i].rtcp_addr;
 				mResult->streams[i].rtcp_port = mRemoteMedia->streams[i].rtcp_port;
 				if (sal_stream_description_has_srtp(&mResult->streams[i])) {
-					int cryptoIdx = Sal::findCryptoIndexFromTag(	mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
+					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
 					if (cryptoIdx >= 0)
 						mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[cryptoIdx];
 					else
