@@ -545,8 +545,8 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->ice_ufrag = local_cap->ice_ufrag;
 	result->ice_mismatch = local_cap->ice_mismatch;
 	result->set_nortpproxy = local_cap->set_nortpproxy;
-	memcpy(result->ice_candidates, local_cap->ice_candidates, sizeof(result->ice_candidates));
-	memcpy(result->ice_remote_candidates, local_cap->ice_remote_candidates, sizeof(result->ice_remote_candidates));
+	result->ice_candidates = local_cap->ice_candidates;
+	result->ice_remote_candidates = local_cap->ice_remote_candidates;
 	result->name = local_cap->name;
 	result->rtp_ssrc=local_cap->rtp_ssrc;
 	result->rtcp_cname=local_cap->rtcp_cname;

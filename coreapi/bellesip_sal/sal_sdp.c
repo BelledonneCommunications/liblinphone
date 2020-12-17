@@ -32,10 +32,9 @@ static void add_ice_candidates(belle_sdp_media_description_t *md, const SalStrea
 	char buffer[1024];
 	const SalIceCandidate *candidate;
 	int nb;
-	int i;
 
-	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES; i++) {
-		candidate = &desc->ice_candidates[i];
+	for (const auto & ice_candidate : desc->ice_candidates) {
+		candidate = &ice_candidate;
 		if ((candidate->addr[0] == '\0') || (candidate->port == 0)) break;
 		nb = snprintf(buffer, sizeof(buffer), "%s %u UDP %u %s %d typ %s",
 			candidate->foundation, candidate->componentID, candidate->priority, candidate->addr, candidate->port, candidate->type);
@@ -62,7 +61,7 @@ static void add_ice_remote_candidates(belle_sdp_media_description_t *md, const S
 	int i;
 
 	buffer[0] = '\0';
-	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES; i++) {
+	for (i = 0; i < (int)desc->ice_remote_candidates.size(); i++) {
 		candidate = &desc->ice_remote_candidates[i];
 		if ((candidate->addr[0] != '\0') && (candidate->port != 0)) {
 			offset = snprintf(ptr, (size_t)(buffer + sizeof(buffer) - ptr), "%s%d %s %d", (i > 0) ? " " : "", i + 1, candidate->addr, candidate->port);
@@ -529,12 +528,12 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
 	char tmp[257]={0}, tmp2[129]={0}, parameters[257]={0};
-	int valid_count = 0;
+	unsigned int valid_count = 0;
 	int nb;
 
 	stream->crypto.clear();
 	for ( attribute_it=belle_sdp_media_description_get_attributes ( media_desc )
-						; valid_count < (int)stream->crypto.size() && attribute_it!=NULL;
+						; valid_count < (unsigned int)stream->crypto.size() && attribute_it!=NULL;
 			attribute_it=attribute_it->next ) {
 		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
 
@@ -587,7 +586,7 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 		att_name = belle_sdp_attribute_get_name(attribute);
 		value = belle_sdp_attribute_get_value(attribute);
 
-		if ((nb_ice_candidates < (int)(sizeof(stream->ice_candidates)/sizeof(SalIceCandidate)))
+		if ((nb_ice_candidates < (int)stream->ice_candidates.size())
 				&& (keywordcmp("candidate", att_name) == 0)
 				&& (value != NULL)) {
 			SalIceCandidate *candidate = &stream->ice_candidates[nb_ice_candidates];
@@ -607,10 +606,21 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 			const char *ptr = value;
 			const char *endptr = value + strlen(ptr);
 			while (3 == sscanf(ptr, "%u %s %u%n", &componentID, candidate.addr, &candidate.port, &offset)) {
-				if ((componentID > 0) && (componentID <= SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES)) {
-					SalIceRemoteCandidate *remote_candidate = &stream->ice_remote_candidates[componentID - 1];
-					strncpy(remote_candidate->addr, candidate.addr, sizeof(remote_candidate->addr));
-					remote_candidate->port = candidate.port;
+				if (componentID > 0) {
+					SalIceRemoteCandidate remote_candidate;
+					strncpy(remote_candidate.addr, candidate.addr, sizeof(remote_candidate.addr));
+					remote_candidate.port = candidate.port;
+					const int candidateIdx = componentID - 1;
+					const int noCandidates = (int)stream->ice_remote_candidates.size();
+					if (candidateIdx >= noCandidates) {
+						for (int i = noCandidates; i <= candidateIdx; i++) {
+							SalIceRemoteCandidate new_candidate;
+							new_candidate.addr[0] = '\0';
+							new_candidate.port = 0;
+							stream->ice_remote_candidates.push_back(new_candidate);
+						}
+					}
+					stream->ice_remote_candidates[candidateIdx] = remote_candidate;
 				}
 				ptr += offset;
 				if (ptr < endptr) {
