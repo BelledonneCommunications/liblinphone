@@ -58,11 +58,10 @@ static void add_ice_remote_candidates(belle_sdp_media_description_t *md, const S
 	char *ptr = buffer;
 	const SalIceRemoteCandidate *candidate;
 	int offset = 0;
-	int i;
 
 	buffer[0] = '\0';
-	for (i = 0; i < (int)desc->ice_remote_candidates.size(); i++) {
-		candidate = &desc->ice_remote_candidates[i];
+	for (int i = 0; i < (int)desc->ice_remote_candidates.size(); i++) {
+		candidate = &desc->ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)i];
 		if ((candidate->addr[0] != '\0') && (candidate->port != 0)) {
 			offset = snprintf(ptr, (size_t)(buffer + sizeof(buffer) - ptr), "%s%d %s %d", (i > 0) ? " " : "", i + 1, candidate->addr, candidate->port);
 			if (offset < 0) {
@@ -589,7 +588,7 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 		if ((nb_ice_candidates < (int)stream->ice_candidates.size())
 				&& (keywordcmp("candidate", att_name) == 0)
 				&& (value != NULL)) {
-			SalIceCandidate *candidate = &stream->ice_candidates[nb_ice_candidates];
+			SalIceCandidate *candidate = &stream->ice_candidates[(std::vector<SalIceCandidate>::size_type)nb_ice_candidates];
 			char proto[4];
 			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d",
 				candidate->foundation, &candidate->componentID, proto, &candidate->priority, candidate->addr, &candidate->port,
@@ -610,17 +609,17 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 					SalIceRemoteCandidate remote_candidate;
 					strncpy(remote_candidate.addr, candidate.addr, sizeof(remote_candidate.addr));
 					remote_candidate.port = candidate.port;
-					const int candidateIdx = componentID - 1;
-					const int noCandidates = (int)stream->ice_remote_candidates.size();
+					const unsigned int candidateIdx = componentID - 1;
+					const unsigned int noCandidates = (unsigned int)stream->ice_remote_candidates.size();
 					if (candidateIdx >= noCandidates) {
-						for (int i = noCandidates; i <= candidateIdx; i++) {
+						for (unsigned int i = noCandidates; i <= candidateIdx; i++) {
 							SalIceRemoteCandidate new_candidate;
 							new_candidate.addr[0] = '\0';
 							new_candidate.port = 0;
 							stream->ice_remote_candidates.push_back(new_candidate);
 						}
 					}
-					stream->ice_remote_candidates[candidateIdx] = remote_candidate;
+					stream->ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)candidateIdx] = remote_candidate;
 				}
 				ptr += offset;
 				if (ptr < endptr) {
