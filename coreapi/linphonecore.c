@@ -1290,7 +1290,6 @@ static void build_sound_devices_table(LinphoneCore *lc){
 	if (old!=NULL) ms_free((void *)old);
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->computeAudioDevicesList();
-	linphone_core_notify_audio_devices_list_updated(lc);
 }
 
 static string get_default_local_ring(LinphoneCore * lc) {
@@ -1362,6 +1361,10 @@ static void sound_config_read(LinphoneCore *lc) {
 	devid = linphone_config_get_string(lc->config, "sound", "media_dev_id", NULL);
 	linphone_core_set_media_device(lc, devid);
 
+	// Wait to have restored previous sound cards to notify list has been updated
+	// Otherwise app won't be able to change audio device in callback
+	linphone_core_notify_audio_devices_list_updated(lc);
+	
 /*
 	tmp=linphone_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
@@ -5089,6 +5092,9 @@ void linphone_core_reload_sound_devices(LinphoneCore *lc){
 		linphone_core_set_input_audio_device_by_id(lc, input_dev_id_copy);
 		ms_free(input_dev_id_copy);
 	}
+	// Wait to have restored previous sound cards to notify list has been updated
+	// Otherwise app won't be able to change audio device in callback
+	linphone_core_notify_audio_devices_list_updated(lc);
 }
 
 void linphone_core_reload_video_devices(LinphoneCore *lc){
