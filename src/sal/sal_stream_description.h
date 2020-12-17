@@ -20,14 +20,12 @@
 #ifndef _SAL_STREAM_DESCRIPTION_H_
 #define _SAL_STREAM_DESCRIPTION_H_
 
+#include <vector>
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
-
 #define SAL_MEDIA_DESCRIPTION_MAX_ICE_REMOTE_CANDIDATES 2
-
-#define SAL_CRYPTO_ALGO_MAX 4
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_CANDIDATES 20
 
 typedef struct SalStreamDescription {
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
@@ -47,12 +45,12 @@ typedef struct SalStreamDescription {
 	int ptime;
 	int maxptime;
 	SalStreamDir dir;
-	SalSrtpCryptoAlgo crypto[SAL_CRYPTO_ALGO_MAX];
+	std::vector<SalSrtpCryptoAlgo> crypto;
 	unsigned int crypto_local_tag;
 	int max_rate;
 	bool_t bundle_only;
 	bool_t implicit_rtcp_fb;
-	bool_t pad[2]; /* Use me */
+	std::vector<bool_t> pad; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes;

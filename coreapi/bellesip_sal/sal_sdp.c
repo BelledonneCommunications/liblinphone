@@ -211,7 +211,6 @@ static void add_mid_attributes(belle_sdp_media_description_t *media_desc, const 
 static void stream_description_to_sdp ( belle_sdp_session_description_t *session_desc, const SalMediaDescription *md, const SalStreamDescription *stream ) {
 	belle_sdp_mime_parameter_t* mime_param;
 	belle_sdp_media_description_t* media_desc;
-	int j;
 	bctbx_list_t* pt_it;
 	PayloadType* pt;
 	char buffer[1024];
@@ -275,13 +274,13 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 
 	if (sal_stream_description_has_srtp(stream)) {
 		/* add crypto lines */
-		for ( j=0; j<SAL_CRYPTO_ALGO_MAX; j++ ) {
+		for ( const auto & crypto : stream->crypto ) {
 			MSCryptoSuiteNameParams desc;
-			if (ms_crypto_suite_to_name_params(stream->crypto[j].algo,&desc)==0){
+			if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
 				if (desc.params)
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s %s", stream->crypto[j].tag, desc.name, stream->crypto[j].master_key,desc.params);
+					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key,desc.params);
 				else
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s", stream->crypto[j].tag, desc.name, stream->crypto[j].master_key );
+					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key );
 
 				belle_sdp_media_description_add_attribute( media_desc,belle_sdp_attribute_create ("crypto", buffer));
 			}else break;
@@ -533,9 +532,9 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 	int valid_count = 0;
 	int nb;
 
-	memset ( &stream->crypto, 0, sizeof ( stream->crypto ) );
+	stream->crypto.clear();
 	for ( attribute_it=belle_sdp_media_description_get_attributes ( media_desc )
-						; valid_count < SAL_CRYPTO_ALGO_MAX && attribute_it!=NULL;
+						; valid_count < (int)stream->crypto.size() && attribute_it!=NULL;
 			attribute_it=attribute_it->next ) {
 		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
 
