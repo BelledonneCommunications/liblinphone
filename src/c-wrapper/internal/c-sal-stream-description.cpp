@@ -105,7 +105,7 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 	/* A different proto should result in SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED but the encryption change
 	   needs a stream restart for now, so use SAL_MEDIA_DESCRIPTION_CODEC_CHANGED */
 	if (sd1->proto != sd2->proto) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	size_t sdMinSize = std::min(sd1->crypto.size(), sd2->crypto.size());
+	size_t sdMinSize = MIN(sd1->crypto.size(), sd2->crypto.size());
 	for (size_t i = 0; i < sdMinSize; i++) {
 		if ((sd1->crypto[i].tag != sd2->crypto[i].tag)
 			|| (sd1->crypto[i].algo != sd2->crypto[i].algo)){
