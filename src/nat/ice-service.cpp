@@ -52,9 +52,8 @@ MediaSessionPrivate &IceService::getMediaSessionPrivate() const{
 bool IceService::iceFoundInMediaDescription (const SalMediaDescription *md) {
 	if ((!md->ice_pwd.empty()) && (!md->ice_ufrag.empty()))
 		return true;
-	for (int i = 0; i < md->nb_streams; i++) {
-		const SalStreamDescription *stream = &md->streams[i];
-		if ((!stream->ice_pwd.empty()) && (!stream->ice_ufrag.empty())){
+	for (const auto & stream : md->streams) {
+		if ((!stream.ice_pwd.empty()) && (!stream.ice_ufrag.empty())){
 			return true;
 		}
 		
@@ -264,7 +263,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 		iceRestarted = true;
 	} else {
 		for (int i = 0; i < md->nb_streams; i++) {
-			const SalStreamDescription *stream = &md->streams[i];
+			const SalStreamDescription *stream = &md->streams[(size_t)i];
 			IceCheckList *cl = ice_session_check_list(mIceSession, i);
 			string rtpAddr = stream->rtp_addr;
 			if (cl && (rtpAddr == "0.0.0.0")) {
@@ -284,7 +283,7 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 		ice_session_set_remote_credentials(mIceSession, L_STRING_TO_C(md->ice_ufrag), L_STRING_TO_C(md->ice_pwd));
 	}
 	for (int i = 0; i < md->nb_streams; i++) {
-		const SalStreamDescription *stream = &md->streams[i];
+		const SalStreamDescription *stream = &md->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		if (cl && (!stream->ice_pwd.empty()) && (!stream->ice_ufrag.empty())) {
 			if (ice_check_list_remote_credentials_changed(cl, L_STRING_TO_C(stream->ice_ufrag), L_STRING_TO_C(stream->ice_pwd))) {
@@ -320,7 +319,7 @@ void IceService::getIceDefaultAddrAndPort (
 
 void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted) {
 	for (int i = 0; i < md->nb_streams; i++) {
-		const SalStreamDescription *stream = &md->streams[i];
+		const SalStreamDescription *stream = &md->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		if (!cl)
 			continue;
@@ -359,7 +358,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 		if (!iceRestarted) {
 			bool losingPairsAdded = false;
 			for (int j = 0; j < (int)stream->ice_remote_candidates.size(); j++) {
-				const SalIceRemoteCandidate *remoteCandidate = &stream->ice_remote_candidates[j];
+				const SalIceRemoteCandidate *remoteCandidate = &stream->ice_remote_candidates[(size_t)j];
 				std::string addr = std::string();
 				int port = 0;
 				int componentID = j + 1;
@@ -386,8 +385,8 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 
 void IceService::clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool localIsOfferer) {
 	for (int i = 0; i < remoteDesc->nb_streams; i++) {
-		const SalStreamDescription *localStream = &localDesc->streams[i];
-		const SalStreamDescription *stream = &remoteDesc->streams[i];
+		const SalStreamDescription *localStream = &localDesc->streams[(size_t)i];
+		const SalStreamDescription *stream = &remoteDesc->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		if (!cl || !localStream)
 			continue;
@@ -414,7 +413,7 @@ void IceService::updateFromRemoteMediaDescription(const SalMediaDescription *loc
 	// Create ICE check lists if needed and parse ICE attributes.
 	createIceCheckListsAndParseIceAttributes(remoteDesc, iceRestarted);
 	for (int i = 0; i < remoteDesc->nb_streams; i++) {
-		const SalStreamDescription *stream = &remoteDesc->streams[i];
+		const SalStreamDescription *stream = &remoteDesc->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		if (!cl) continue;
 		if (!sal_stream_description_enabled(stream) || stream->rtp_port == 0) {
@@ -467,7 +466,7 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 	desc->ice_ufrag = L_C_TO_STRING(ice_session_local_ufrag(mIceSession));
 	
 	for (int i = 0; i < desc->nb_streams; i++) {
-		SalStreamDescription *stream = &desc->streams[i];
+		SalStreamDescription *stream = &desc->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		rtpCandidate = rtcpCandidate = nullptr;
 		if (!sal_stream_description_enabled(stream) || !cl || stream->rtp_port == 0)
@@ -724,7 +723,7 @@ bool IceService::reinviteNeedsDeferedResponse(SalMediaDescription *remoteMd){
 		return false;
 
 	for (int i = 0; i < remoteMd->nb_streams; i++) {
-		SalStreamDescription *stream = &remoteMd->streams[i];
+		SalStreamDescription *stream = &remoteMd->streams[(size_t)i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, i);
 		if (!cl)
 			continue;

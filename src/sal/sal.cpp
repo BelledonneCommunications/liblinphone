@@ -855,9 +855,9 @@ belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *reque
 }
 
 int Sal::findCryptoIndexFromTag (const std::vector<SalSrtpCryptoAlgo> & crypto, unsigned char tag) {
-	for (int i = 0; i < (int)crypto.size(); i++) {
+	for (size_t i = 0; i < crypto.size(); i++) {
 		if (crypto[i].tag == tag)
-			return i;
+			return (int)i;
 	}
 	return -1;
 }
