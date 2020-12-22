@@ -1278,9 +1278,10 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_pause_all_calls(LinphoneCore *core)
 
 
 /**
- * Create a #LinphoneCallParams suitable for linphone_core_invite_with_params(), linphone_core_accept_call_with_params(), linphone_core_accept_early_media_with_params(),
- * linphone_core_accept_call_update().
- * The parameters are initialized according to the current #LinphoneCore configuration and the current state of the LinphoneCall.
+ * Create a #LinphoneCallParams suitable for linphone_core_invite_with_params(), linphone_core_accept_call_with_params(), 
+ * linphone_core_accept_early_media_with_params() or linphone_core_accept_call_update().
+ * The parameters are initialized according to the current #LinphoneCore configuration and the last used local #LinphoneCallParams, 
+ * the ones passed through linphone_call_update(), linphone_call_accept_with_params() or linphone_call_accept_update_with_params(). 
  * @param core #LinphoneCore object
  * @param call #LinphoneCall for which the parameters are to be build, or NULL in the case where the parameters are to be used for a new outgoing call. @maybenil
  * @return A new #LinphoneCallParams object. @maybenil
