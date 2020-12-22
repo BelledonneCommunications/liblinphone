@@ -251,10 +251,9 @@ const char *linphone_ice_state_to_string(LinphoneIceState state){
 }
 
 bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md){
-	int i;
 
-	for (i = 0; md && i < md->nb_streams; i++) {
-		if (md->streams[i].type == SalVideo && md->streams[i].rtp_port!=0)
+	for (const auto & stream : md->streams) {
+		if (stream.type == SalVideo && stream.rtp_port!=0)
 			return TRUE;
 	}
 	return FALSE;

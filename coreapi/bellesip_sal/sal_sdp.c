@@ -489,7 +489,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	}
 
 	for ( i=0; i<desc->nb_streams; i++ ) {
-		stream_description_to_sdp(session_desc, desc, &desc->streams[i]);
+		stream_description_to_sdp(session_desc, desc, &desc->streams[(size_t)i]);
 	}
 	return session_desc;
 }
