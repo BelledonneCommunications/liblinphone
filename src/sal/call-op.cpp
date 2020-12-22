@@ -358,10 +358,10 @@ void SalCallOp::sdpProcess () {
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && sal_media_description_has_dir(mResult,SalStreamSendOnly)) {
 			mResult->addr = setAddrTo0000(mResult->addr);
-			for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-				if (mResult->streams[i].dir == SalStreamSendOnly) {
-					mResult->streams[i].rtp_addr = setAddrTo0000(mResult->streams[i].rtp_addr);
-					mResult->streams[i].rtcp_addr = setAddrTo0000(mResult->streams[i].rtcp_addr);
+			for (auto & stream : mResult->streams) {
+				if (stream.dir == SalStreamSendOnly) {
+					stream.rtp_addr = setAddrTo0000(stream.rtp_addr);
+					stream.rtcp_addr = setAddrTo0000(stream.rtcp_addr);
 				}
 			}
 		}
@@ -372,7 +372,7 @@ void SalCallOp::sdpProcess () {
 		mResult->addr = mRemoteMedia->addr;
 		mResult->bandwidth = mRemoteMedia->bandwidth;
 
-		for(int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
+		for(int i = 0; i < (int)mResult->streams.size(); i++) {
 			// Copy back parameters from remote description that we need in our result description
 			if (mResult->streams[i].rtp_port != 0) { // If the stream was accepted
 				mResult->streams[i].rtp_addr = mRemoteMedia->streams[i].rtp_addr;

@@ -148,12 +148,12 @@ int StunClient::run (int audioPort, int videoPort, int textPort) {
 
 void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 	if (!stunDiscoveryDone) return;
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_enabled(&md->streams[i]))
+	for (auto & stream : md->streams) {
+		if (!sal_stream_description_enabled(&stream))
 			continue;
-		if (md->streams[i].type == SalAudio && audioCandidate.port != 0) {
-			md->streams[i].rtp_addr = audioCandidate.address;
-			md->streams[i].rtp_port = audioCandidate.port;
+		if (stream.type == SalAudio && audioCandidate.port != 0) {
+			stream.rtp_addr = audioCandidate.address;
+			stream.rtp_port = audioCandidate.port;
 			if (
 				(
 					!audioCandidate.address.empty() &&
@@ -164,12 +164,12 @@ void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 			) {
 				md->addr = audioCandidate.address;
 			}
-		} else if (md->streams[i].type == SalVideo && videoCandidate.port != 0) {
-			md->streams[i].rtp_addr = videoCandidate.address;
-			md->streams[i].rtp_port = videoCandidate.port;
-		} else if (md->streams[i].type == SalText && textCandidate.port != 0) {
-			md->streams[i].rtp_addr = textCandidate.address;
-			md->streams[i].rtp_port = textCandidate.port;
+		} else if (stream.type == SalVideo && videoCandidate.port != 0) {
+			stream.rtp_addr = videoCandidate.address;
+			stream.rtp_port = videoCandidate.port;
+		} else if (stream.type == SalText && textCandidate.port != 0) {
+			stream.rtp_addr = textCandidate.address;
+			stream.rtp_port = textCandidate.port;
 		}
 	}
 }

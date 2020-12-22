@@ -415,11 +415,10 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 }
 
 static const SalStreamDescription * get_media_stream_for_desc(const SalMediaDescription * smd, SalStreamType sal_stream_type) {
-	int count;
 	if (smd != NULL) {
-		for (count = 0; count < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; ++count) {
-			if (sal_stream_description_enabled(&smd->streams[count]) && smd->streams[count].type == sal_stream_type) {
-				return &smd->streams[count];
+		for (const auto & stream : smd->streams) {
+			if (sal_stream_description_enabled(&stream) && stream.type == sal_stream_type) {
+				return &stream;
 			}
 		}
 	}
@@ -684,18 +683,17 @@ void linphone_reporting_on_rtcp_update(LinphoneCall *call, SalStreamType stats_t
 
 static int publish_report(LinphoneCall *call, const char *event_type){
 	int ret = 0;
-	int i;
-	for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++){
-		int stream_index = i == _linphone_call_get_main_audio_stream_index(call) ? LINPHONE_CALL_STATS_AUDIO : _linphone_call_get_main_video_stream_index(call) ? LINPHONE_CALL_STATS_VIDEO : LINPHONE_CALL_STATS_TEXT;
+	for (const auto & idx : { _linphone_call_get_main_audio_stream_index(call), _linphone_call_get_main_video_stream_index(call), _linphone_call_get_main_text_stream_index(call) }) {
+		int stream_index = idx == _linphone_call_get_main_audio_stream_index(call) ? LINPHONE_CALL_STATS_AUDIO : _linphone_call_get_main_video_stream_index(call) ? LINPHONE_CALL_STATS_VIDEO : LINPHONE_CALL_STATS_TEXT;
 		if (media_report_enabled(call, stream_index)) {
 			int sndret;
 			linphone_reporting_update_media_info(call, stream_index);
 			sndret=send_report(call, Call::toCpp(call)->getLog()->reporting.reports[stream_index], event_type);
 			if (sndret>0){
-				ret += 10+(i+1)*sndret;
+				ret += 10+(idx+1)*sndret;
 			}
 		} else{
-			ret += i+1;
+			ret += idx+1;
 		}
 	}
 	return ret;
@@ -731,14 +729,12 @@ void linphone_reporting_call_state_updated(LinphoneCall *call){
 	}
 	switch (state){
 		case LinphoneCallStreamsRunning:{
-			int i = 0;
 			MediaStream *streams[3] = {
 				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeAudio),
 				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeVideo),
 				Call::toCpp(call)->getMediaStream(LinphoneStreamTypeText)
 			};
-			for (i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-				int stream_index = i == _linphone_call_get_main_audio_stream_index(call) ? LINPHONE_CALL_STATS_AUDIO : _linphone_call_get_main_video_stream_index(call) ? LINPHONE_CALL_STATS_VIDEO : LINPHONE_CALL_STATS_TEXT;
+			for (const auto & stream_index : { LINPHONE_CALL_STATS_AUDIO, LINPHONE_CALL_STATS_VIDEO, LINPHONE_CALL_STATS_TEXT }) {
 				bool_t enabled = media_report_enabled(call, stream_index);
 				if (enabled && set_on_action_suggested_cb(streams[stream_index], qos_analyzer_on_action_suggested, log->reporting.reports[stream_index])) {
 					log->reporting.reports[stream_index]->call=call;
