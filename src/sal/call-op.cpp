@@ -372,7 +372,7 @@ void SalCallOp::sdpProcess () {
 		mResult->addr = mRemoteMedia->addr;
 		mResult->bandwidth = mRemoteMedia->bandwidth;
 
-		for(int i = 0; i < (int)mResult->streams.size(); i++) {
+		for(size_t i = 0; i < mResult->streams.size(); i++) {
 			// Copy back parameters from remote description that we need in our result description
 			if (mResult->streams[i].rtp_port != 0) { // If the stream was accepted
 				mResult->streams[i].rtp_addr = mRemoteMedia->streams[i].rtp_addr;
@@ -385,7 +385,7 @@ void SalCallOp::sdpProcess () {
 				if (sal_stream_description_has_srtp(&mResult->streams[i])) {
 					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
 					if (cryptoIdx >= 0)
-						mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[cryptoIdx];
+						mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[(size_t)cryptoIdx];
 					else
 						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].crypto_local_tag << "from resulting description [" << mResult << "]";
 				}

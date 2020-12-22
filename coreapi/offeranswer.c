@@ -590,12 +590,12 @@ static bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherP
 int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *local_offer,
 					const SalMediaDescription *remote_answer,
 					SalMediaDescription *result){
-	int i;
+	size_t i;
 	const SalStreamDescription *rs;
 	SalStreamDescription *ls;
 
-	for(i=0;i<local_offer->nb_streams;++i){
-		ms_message("Processing for stream %i",i);
+	for(i=0;i<(size_t)local_offer->nb_streams;++i){
+		ms_message("Processing for stream %zu",i);
 		ls=&local_offer->streams[i];
 		rs=&remote_answer->streams[i];
 		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
@@ -604,7 +604,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 				ls->proto = rs->proto;
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
-			if (i <= (int)result->streams.size()) {
+			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1), *sal_stream_description_new());
 			}
 			initiate_outgoing(factory, ls,rs,&result->streams[i]);
@@ -615,7 +615,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 			result->streams[i].rtcp_fb.generic_nack_enabled = ls->rtcp_fb.generic_nack_enabled & rs->rtcp_fb.generic_nack_enabled;
 			result->streams[i].rtcp_fb.tmmbr_enabled = ls->rtcp_fb.tmmbr_enabled & rs->rtcp_fb.tmmbr_enabled;
 		}
-		else ms_warning("No matching stream for %i",i);
+		else ms_warning("No matching stream for %zu",i);
 	}
 	result->nb_streams=local_offer->nb_streams;
 	result->bandwidth=remote_answer->bandwidth;
@@ -648,7 +648,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription *local_capabilities,
 					SalMediaDescription *remote_offer,
 					SalMediaDescription *result, bool_t one_matching_codec){
-	int i;
+	size_t i;
 	const SalStreamDescription *ls=NULL;
 	SalStreamDescription *rs;
 
@@ -657,10 +657,10 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		result->bundles = bctbx_list_copy_with_data(remote_offer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
 	}
 	
-	for(i=0;i<remote_offer->nb_streams;++i){
+	for(i=0;i<(size_t)remote_offer->nb_streams;++i){
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
-		if (i <= (int)result->streams.size()) {
+		if (i <= result->streams.size()) {
 			result->streams.resize((i + 1), *sal_stream_description_new());
 		}
 		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
@@ -673,7 +673,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 			if (local_capabilities->accept_bundles){
 				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
 				if (owner_index != -1){
-					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[owner_index].mid);
+					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
 				}
 			}
 			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, bundle_owner_mid);
@@ -693,7 +693,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 				}
 			}
 		}else {
-			ms_message("Declining mline %i, no corresponding stream in local capabilities description.",i);
+			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
 			result->streams[i].dir=SalStreamInactive;
 			result->streams[i].rtp_port=0;
@@ -708,7 +708,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		}
 		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls->custom_sdp_attributes);
 	}
-	result->nb_streams=i;
+	result->nb_streams=(int)i;
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
