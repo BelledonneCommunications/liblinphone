@@ -58,6 +58,7 @@ public:
 private:
 	OfferAnswerContext(const OfferAnswerContext &other) = default;
 	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
+	SalStreamDescription * chooseStreamDescription(SalMediaDescription * md, const size_t & index) const;
 	bool mOwnsMediaDescriptions = false;
 };
 
