@@ -411,7 +411,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			if (cryptoIdx >= 0) {
 				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
 				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, stream->crypto[0].algo, 
-									params.localStreamDescription->crypto[cryptoIdx].master_key);
+									params.localStreamDescription->crypto[(size_t)cryptoIdx].master_key);
 			} else
 				lWarning() << "Failed to find local crypto algo with tag: " << stream->crypto_local_tag;
 		}
@@ -624,7 +624,7 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc->crypto, static_cast<unsigned char>(newStream->crypto_local_tag));
 		if (cryptoIdx >= 0) {
 			if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
-				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, newStream->crypto[0].algo, localStreamDesc->crypto[cryptoIdx].master_key);
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, newStream->crypto[0].algo, localStreamDesc->crypto[(size_t)cryptoIdx].master_key);
 			}
 			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, newStream->crypto[0].algo, newStream->crypto[0].master_key);
 		} else
