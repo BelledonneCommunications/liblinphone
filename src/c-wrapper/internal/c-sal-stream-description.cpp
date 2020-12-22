@@ -74,6 +74,31 @@ const char *sal_stream_description_get_proto_as_string(const SalStreamDescriptio
 	else return sal_media_proto_to_string(desc->proto);
 }
 
+SalStreamDescription *sal_stream_description_new(){
+	SalStreamDescription *sd= new SalStreamDescription();
+	sal_stream_description_init(sd);
+	return sd;
+}
+
+void sal_stream_description_init(SalStreamDescription *sd) {
+	sd->payloads=NULL;
+	sd->already_assigned_payloads=NULL;
+	sd->custom_sdp_attributes = NULL;
+
+	sd->pad.clear();
+	sd->crypto.clear();
+	sd->ice_candidates.clear();
+	sd->ice_remote_candidates.clear();
+}
+
+void sal_stream_description_destroy(SalStreamDescription *sd) {
+	bctbx_list_free_with_data(sd->payloads,(void (*)(void *))payload_type_destroy);
+	sd->payloads=NULL;
+	bctbx_list_free_with_data(sd->already_assigned_payloads,(void (*)(void *))payload_type_destroy);
+	sd->already_assigned_payloads=NULL;
+	sal_custom_sdp_attribute_free(sd->custom_sdp_attributes);
+}
+
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2) {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
@@ -89,6 +114,11 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 		if ((strncmp(sd1->crypto[i].master_key, sd2->crypto[i].master_key, sizeof(sd1->crypto[i].master_key) - 1))) {
 			result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 		}
+	}
+
+	if (sd1->crypto.size() != sd2->crypto.size()) {
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 	}
 
 	if (sd1->type != sd2->type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
