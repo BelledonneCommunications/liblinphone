@@ -28,6 +28,10 @@ typedef struct SalStreamDescription SalStreamDescription;
 extern "C" {
 #endif
 
+SalStreamDescription * sal_stream_description_new(void);
+void sal_stream_description_init(SalStreamDescription *sd);
+void sal_stream_description_destroy(SalStreamDescription *sd);
+
 /* Enabled means that the stream exists and is accepted as part of the session: the port value is non-zero or the stream has bundle-only attribute.
  *However, it may be marked with a=inactive, which is unrelated to the return value of this function.*/
 bool_t sal_stream_description_enabled(const SalStreamDescription *sd);

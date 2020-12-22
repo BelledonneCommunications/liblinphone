@@ -790,7 +790,7 @@ static void sdp_parse_media_rtcp_xr_parameters(belle_sdp_media_description_t *me
 }
 
 static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md, belle_sdp_media_description_t *media_desc) {
-	SalStreamDescription *stream;
+	SalStreamDescription *stream = sal_stream_description_new();
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -799,8 +799,9 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	const char *mtype,*proto;
 	bool_t has_avpf_attributes;
 
-	stream=&md->streams[md->nb_streams];
 	media=belle_sdp_media_description_get_media ( media_desc );
+
+	stream->custom_sdp_attributes = NULL;
 
 	proto = belle_sdp_media_get_protocol ( media );
 	stream->proto=SalProtoOther;
@@ -866,6 +867,8 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			stream->mid = L_C_TO_STRING(value);
 	}
 
+	stream->payloads = NULL;
+	stream->already_assigned_payloads = NULL;
 	/* Get media payload types */
 	sdp_parse_payload_types(media_desc, stream);
 
@@ -967,8 +970,9 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		}
 	}
 
+	md->streams.push_back(*stream);
 	md->nb_streams++;
-	return stream;
+	return &md->streams.back();
 }
 
 static void add_bundles(SalMediaDescription *desc, const char *ids){
@@ -995,7 +999,6 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 	belle_sip_list_t *custom_attribute_it;
 	const char* value;
 	SalDtlsRole session_role=SalDtlsRoleInvalid;
-	int i;
 
 	desc->nb_streams = 0;
 	desc->dir = SalStreamSendRecv;
@@ -1039,10 +1042,10 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 	}
 	value=belle_sdp_session_description_get_attribute_value(session_desc,"fingerprint");
 	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
-	for (i=0;i<SAL_MEDIA_DESCRIPTION_MAX_STREAMS;i++) {
+	for (auto & stream : desc->streams) {
 		if (value)
-			desc->streams[i].dtls_fingerprint = L_C_TO_STRING(value);
-		desc->streams[i].dtls_role=session_role; /*set or reset value*/
+			stream.dtls_fingerprint = L_C_TO_STRING(value);
+		stream.dtls_role=session_role; /*set or reset value*/
 	}
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
@@ -1074,10 +1077,6 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 	for ( media_desc_it=belle_sdp_session_description_get_media_descriptions ( session_desc )
 						; media_desc_it!=NULL
 			; media_desc_it=media_desc_it->next ) {
-		if (desc->nb_streams==SAL_MEDIA_DESCRIPTION_MAX_STREAMS){
-			ms_warning("Cannot convert mline at position [%i] from SDP to SalMediaDescription",desc->nb_streams);
-			break;
-		}
 		media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
 		sdp_to_stream_description(desc, media_desc);
 	}

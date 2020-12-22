@@ -348,7 +348,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	
-	if (stream->dir == SalStreamInactive || !sal_stream_description_enabled(stream)){
+	if (stream && (stream->dir == SalStreamInactive || !sal_stream_description_enabled(stream))){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
 		if (getState() != Stopped) stop();
 		return true;
