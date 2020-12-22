@@ -24,11 +24,26 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+SalStreamDescription * OfferAnswerContext::chooseStreamDescription(SalMediaDescription * md, const size_t & index) const {
+
+	SalStreamDescription *sd = nullptr;
+
+	if (md) {
+		if (index >= md->streams.size()) {
+			// Add a stream if not existent yet
+			md->streams.resize((index+1), *sal_stream_description_new());
+		}
+		sd = &md->streams[index];
+	}
+
+	return sd;
+}
+
 const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndex(size_t index) const{
 	streamIndex = index;
-	localStreamDescription = localMediaDescription ? &localMediaDescription->streams[index] : nullptr;
-	remoteStreamDescription = remoteMediaDescription ? &remoteMediaDescription->streams[index] : nullptr;
-	resultStreamDescription = resultMediaDescription ? &resultMediaDescription->streams[index] : nullptr;
+	localStreamDescription = chooseStreamDescription(localMediaDescription, index);
+	remoteStreamDescription = chooseStreamDescription(const_cast<SalMediaDescription *>(remoteMediaDescription), index);
+	resultStreamDescription = chooseStreamDescription(const_cast<SalMediaDescription *>(resultMediaDescription), index);
 	return *this;
 }
 
@@ -55,11 +70,11 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 	scopeStreamToIndex(index);
 	previousCtx.scopeStreamToIndex(index);
 	
-	if (previousCtx.localMediaDescription){
+	if (previousCtx.localMediaDescription && previousCtx.localStreamDescription){
 		localStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.localMediaDescription, localMediaDescription)
 		| sal_stream_description_equals(previousCtx.localStreamDescription, localStreamDescription);
 	}else localStreamDescriptionChanges = 0;
-	if (previousCtx.resultMediaDescription && resultMediaDescription){
+	if (previousCtx.resultMediaDescription && resultMediaDescription && previousCtx.resultStreamDescription && resultStreamDescription){
 		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
 		| sal_stream_description_equals(previousCtx.resultStreamDescription, resultStreamDescription);
 	}else resultStreamDescriptionChanges = 0;
