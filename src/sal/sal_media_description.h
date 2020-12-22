@@ -23,8 +23,6 @@
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_bundle.h"
 
-#define SAL_MEDIA_DESCRIPTION_MAX_STREAMS 8
-
 typedef struct SalMediaDescription {
 	int refcount;
 	std::string name;
@@ -35,7 +33,7 @@ typedef struct SalMediaDescription {
 	unsigned int session_ver;
 	unsigned int session_id;
 	SalStreamDir dir;
-	SalStreamDescription streams[SAL_MEDIA_DESCRIPTION_MAX_STREAMS];
+	std::vector<SalStreamDescription> streams;
 	SalCustomSdpAttribute *custom_sdp_attributes;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	std::string ice_ufrag;
