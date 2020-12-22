@@ -73,7 +73,7 @@ int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid){
 int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid){
 	int index;
 	for (index = 0 ; index < md->nb_streams; ++index){
-		const SalStreamDescription * sd = &md->streams[index];
+		const SalStreamDescription * sd = &md->streams[(size_t)index];
 		if (sd->mid.compare(mid) == 0){
 			return index;
 		}
@@ -272,8 +272,8 @@ bool_t sal_media_description_has_ipv6(const SalMediaDescription *md){
 
 int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2) {
 	int result = sal_media_description_global_equals(md1, md2);
-	int i;
-	for(i = 0; i < (int)std::min(md1->streams.size(), md2->streams.size()); ++i){
+	size_t i;
+	for(i = 0; i < std::min(md1->streams.size(), md2->streams.size()); ++i){
 		if (!sal_stream_description_enabled(&md1->streams[i]) && !sal_stream_description_enabled(&md2->streams[i])) continue;
 		result |= sal_stream_description_equals(&md1->streams[i], &md2->streams[i]);
 	}
