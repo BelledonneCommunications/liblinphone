@@ -39,9 +39,9 @@ typedef struct SalMediaDescription {
 	std::string ice_ufrag;
 	std::string ice_pwd;
 	bctbx_list_t *bundles; /* list of SalStreamBundle */
-	bool_t ice_lite;
-	bool_t set_nortpproxy;
-	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
+	bool_t ice_lite = FALSE;
+	bool_t set_nortpproxy = FALSE;
+	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 	std::vector<bool_t> pad;
 } SalMediaDescription;
 
