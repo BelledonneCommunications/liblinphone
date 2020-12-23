@@ -74,6 +74,12 @@ const char *sal_stream_description_get_proto_as_string(const SalStreamDescriptio
 	else return sal_media_proto_to_string(desc->proto);
 }
 
+SalStreamDescription sal_stream_description_create(){
+	SalStreamDescription sd;
+	sal_stream_description_init(&sd);
+	return sd;
+}
+
 SalStreamDescription *sal_stream_description_new(){
 	SalStreamDescription *sd= new SalStreamDescription();
 	sal_stream_description_init(sd);
