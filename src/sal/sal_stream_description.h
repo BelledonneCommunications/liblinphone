@@ -45,8 +45,8 @@ typedef struct SalStreamDescription {
 	std::vector<SalSrtpCryptoAlgo> crypto;
 	unsigned int crypto_local_tag;
 	int max_rate;
-	bool_t bundle_only;
-	bool_t implicit_rtcp_fb;
+	bool_t bundle_only = FALSE;
+	bool_t implicit_rtcp_fb = FALSE;
 	std::vector<bool_t> pad; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
@@ -57,9 +57,9 @@ typedef struct SalStreamDescription {
 	std::string ice_pwd;
 	std::string mid; /* Media line identifier for RTP bundle mode */
 	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
-	bool_t ice_mismatch;
-	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-	bool_t rtcp_mux;
+	bool_t ice_mismatch = FALSE;
+	bool_t set_nortpproxy = FALSE; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
+	bool_t rtcp_mux = FALSE;
 	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
 	uint8_t haveLimeIk; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
