@@ -1189,6 +1189,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
 		md->username = linphone_address_get_username(addr);
 	}
+
+	if (addr) {
+		ms_message("DEBUG: address %s username %s\n", linphone_address_as_string(addr), md->username.c_str());
+	} else {
+		ms_message("DEBUG: address is null -  username %s\n", md->username.c_str());
+	}
+
 	linphone_address_unref(addr);
 
 	int bandwidth = getParams()->getPrivate()->getDownBandwidth();
