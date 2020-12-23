@@ -31,7 +31,7 @@ SalStreamDescription * OfferAnswerContext::chooseStreamDescription(SalMediaDescr
 	if (md) {
 		if (index >= md->streams.size()) {
 			// Add a stream if not existent yet
-			md->streams.resize((index+1), *sal_stream_description_new());
+			md->streams.resize((index+1));
 		}
 		sd = &md->streams[index];
 	}
