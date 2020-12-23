@@ -1208,7 +1208,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	md->nb_streams = freeStreamIndex;
 
 	if ((int)md->streams.size() <= md->nb_streams) {
-		md->streams.resize((size_t)md->nb_streams, *sal_stream_description_new());
+		md->streams.resize((size_t)md->nb_streams);
 	}
 
 	bctbx_list_t *l = NULL;

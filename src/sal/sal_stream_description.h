@@ -36,8 +36,8 @@ typedef struct SalStreamDescription {
 	std::string rtcp_cname;
 	int rtp_port;
 	int rtcp_port;
-	MSList *payloads; /**<list of PayloadType */
-	MSList *already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
+	MSList *payloads = nullptr; /**<list of PayloadType */
+	MSList *already_assigned_payloads = nullptr; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 	int bandwidth;
 	int ptime;
 	int maxptime;
@@ -50,7 +50,7 @@ typedef struct SalStreamDescription {
 	std::vector<bool_t> pad; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
-	SalCustomSdpAttribute *custom_sdp_attributes;
+	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 	std::vector<SalIceCandidate> ice_candidates;
 	std::vector<SalIceRemoteCandidate> ice_remote_candidates;
 	std::string ice_ufrag;
@@ -64,9 +64,9 @@ typedef struct SalStreamDescription {
 	uint8_t haveLimeIk; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
 	std::string dtls_fingerprint;
-	SalDtlsRole dtls_role;
+	SalDtlsRole dtls_role = SalDtlsRoleInvalid;
 	int ttl; /*for multicast -1 to disable*/
-	SalMulticastRole multicast_role;
+	SalMulticastRole multicast_role = SalMulticastInactive;
 } SalStreamDescription;
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_

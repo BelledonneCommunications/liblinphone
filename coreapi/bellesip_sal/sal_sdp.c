@@ -790,7 +790,7 @@ static void sdp_parse_media_rtcp_xr_parameters(belle_sdp_media_description_t *me
 }
 
 static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md, belle_sdp_media_description_t *media_desc) {
-	SalStreamDescription *stream = sal_stream_description_new();
+	SalStreamDescription stream;
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -801,90 +801,90 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 
 	media=belle_sdp_media_description_get_media ( media_desc );
 
-	stream->custom_sdp_attributes = NULL;
+	stream.custom_sdp_attributes = NULL;
 
 	proto = belle_sdp_media_get_protocol ( media );
-	stream->proto=SalProtoOther;
+	stream.proto=SalProtoOther;
 	if ( proto ) {
 		if (strcasecmp(proto, "RTP/AVP") == 0) {
-			stream->proto = SalProtoRtpAvp;
+			stream.proto = SalProtoRtpAvp;
 		} else if (strcasecmp(proto, "RTP/SAVP") == 0) {
-			stream->proto = SalProtoRtpSavp;
+			stream.proto = SalProtoRtpSavp;
 		} else if (strcasecmp(proto, "RTP/AVPF") == 0) {
-			stream->proto = SalProtoRtpAvpf;
+			stream.proto = SalProtoRtpAvpf;
 		} else if (strcasecmp(proto, "RTP/SAVPF") == 0) {
-			stream->proto = SalProtoRtpSavpf;
+			stream.proto = SalProtoRtpSavpf;
 		} else if (strcasecmp(proto, "UDP/TLS/RTP/SAVP") == 0) {
-			stream->proto = SalProtoUdpTlsRtpSavp;
+			stream.proto = SalProtoUdpTlsRtpSavp;
 		} else if (strcasecmp(proto, "UDP/TLS/RTP/SAVPF") == 0) {
-			stream->proto = SalProtoUdpTlsRtpSavpf;
+			stream.proto = SalProtoUdpTlsRtpSavpf;
 		} else {
-			stream->proto_other = proto;
+			stream.proto_other = proto;
 		}
 	}
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
-		stream->rtp_addr = L_C_TO_STRING(belle_sdp_connection_get_address ( cnx ));
-		stream->ttl=belle_sdp_connection_get_ttl(cnx);
+		stream.rtp_addr = L_C_TO_STRING(belle_sdp_connection_get_address ( cnx ));
+		stream.ttl=belle_sdp_connection_get_ttl(cnx);
 	}
 
-	stream->rtp_port=belle_sdp_media_get_media_port ( media );
+	stream.rtp_port=belle_sdp_media_get_media_port ( media );
 
 	mtype = belle_sdp_media_get_media_type ( media );
 	if ( strcasecmp ( "audio", mtype ) == 0 ) {
-		stream->type=SalAudio;
+		stream.type=SalAudio;
 	} else if ( strcasecmp ( "video", mtype ) == 0 ) {
-		stream->type=SalVideo;
+		stream.type=SalVideo;
 	} else if ( strcasecmp ( "text", mtype ) == 0 ) {
-		stream->type=SalText;
+		stream.type=SalText;
 	} else {
-		stream->type=SalOther;
-		stream->typeother = mtype;
+		stream.type=SalOther;
+		stream.typeother = mtype;
 	}
 
 	if ( belle_sdp_media_description_get_bandwidth ( media_desc,"AS" ) >0 ) {
-		stream->bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
+		stream.bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
 	}
 
 	if ( belle_sdp_media_description_get_attribute ( media_desc,"sendrecv" ) ) {
-		stream->dir=SalStreamSendRecv;
+		stream.dir=SalStreamSendRecv;
 	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"sendonly" ) ) {
-		stream->dir=SalStreamSendOnly;
+		stream.dir=SalStreamSendOnly;
 	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"recvonly" ) ) {
-		stream->dir=SalStreamRecvOnly;
+		stream.dir=SalStreamRecvOnly;
 	} else if ( belle_sdp_media_description_get_attribute ( media_desc,"inactive" ) ) {
-		stream->dir=SalStreamInactive;
+		stream.dir=SalStreamInactive;
 	} else {
-		stream->dir=md->dir; /*takes default value if not present*/
+		stream.dir=md->dir; /*takes default value if not present*/
 	}
 
-	stream->rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
-	stream->bundle_only = belle_sdp_media_description_get_attribute(media_desc, "bundle-only") != NULL;
+	stream.rtcp_mux = belle_sdp_media_description_get_attribute(media_desc, "rtcp-mux") != NULL;
+	stream.bundle_only = belle_sdp_media_description_get_attribute(media_desc, "bundle-only") != NULL;
 
 	attribute = belle_sdp_media_description_get_attribute(media_desc, "mid");
 	if (attribute){
 		value = belle_sdp_attribute_get_value(attribute);
 		if (value)
-			stream->mid = L_C_TO_STRING(value);
+			stream.mid = L_C_TO_STRING(value);
 	}
 
-	stream->payloads = NULL;
-	stream->already_assigned_payloads = NULL;
+	stream.payloads = NULL;
+	stream.already_assigned_payloads = NULL;
 	/* Get media payload types */
-	sdp_parse_payload_types(media_desc, stream);
+	sdp_parse_payload_types(media_desc, &stream);
 
 	/* Get media specific RTCP attribute */
-	stream->rtcp_port = stream->rtp_port + 1;
-	if (!stream->rtp_addr.empty()) {
-		stream->rtcp_addr = stream->rtp_addr;
+	stream.rtcp_port = stream.rtp_port + 1;
+	if (!stream.rtp_addr.empty()) {
+		stream.rtcp_addr = stream.rtp_addr;
 	}
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 		char *tmp = (char *)ms_malloc0(strlen(value));
-		int nb = sscanf(value, "%d IN IP4 %s", &stream->rtcp_port, tmp);
+		int nb = sscanf(value, "%d IN IP4 %s", &stream.rtcp_port, tmp);
 		if (nb == 1) {
 			/* SDP rtcp attribute only contains the port */
 		} else if (nb == 2) {
-			stream->rtcp_addr = L_C_TO_STRING(tmp);
+			stream.rtcp_addr = L_C_TO_STRING(tmp);
 		} else {
 			ms_warning("sdp has a strange a=rtcp line (%s) nb=%i", value, nb);
 		}
@@ -892,25 +892,25 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	}
 
 	/* Read DTLS specific attributes : check is some are found in the stream description otherwise copy the session description one(which are at least set to Invalid) */
-	if (((stream->proto == SalProtoUdpTlsRtpSavpf) || (stream->proto == SalProtoUdpTlsRtpSavp))) {
+	if (((stream.proto == SalProtoUdpTlsRtpSavpf) || (stream.proto == SalProtoUdpTlsRtpSavp))) {
 		attribute=belle_sdp_media_description_get_attribute(media_desc,"setup");
 		if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 			if (strncmp(value, "actpass", 7) == 0) {
-				stream->dtls_role = SalDtlsRoleUnset;
+				stream.dtls_role = SalDtlsRoleUnset;
 			} else if (strncmp(value, "active", 6) == 0) {
-				stream->dtls_role = SalDtlsRoleIsClient;
+				stream.dtls_role = SalDtlsRoleIsClient;
 			} else if (strncmp(value, "passive", 7) == 0) {
-				stream->dtls_role = SalDtlsRoleIsServer;
+				stream.dtls_role = SalDtlsRoleIsServer;
 			}
 		}
-		if (stream->dtls_role != SalDtlsRoleInvalid && (attribute=belle_sdp_media_description_get_attribute(media_desc,"fingerprint"))) {
-			stream->dtls_fingerprint = belle_sdp_attribute_get_value(attribute);
+		if (stream.dtls_role != SalDtlsRoleInvalid && (attribute=belle_sdp_media_description_get_attribute(media_desc,"fingerprint"))) {
+			stream.dtls_fingerprint = belle_sdp_attribute_get_value(attribute);
 		}
 	}
 
 	/* Read crypto lines if any */
-	if (sal_stream_description_has_srtp(stream)) {
-		sdp_parse_media_crypto_parameters(media_desc, stream);
+	if (sal_stream_description_has_srtp(&stream)) {
+		sdp_parse_media_crypto_parameters(media_desc, &stream);
 	}
 
 	/* Read zrtp-hash attribute */
@@ -920,8 +920,8 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			#pragma GCC diagnostic push
 			#pragma GCC diagnostic ignored "-Wstringop-truncation"
 		#endif
-			strncpy((char *)(stream->zrtphash), belle_sdp_attribute_get_value(attribute),sizeof(stream->zrtphash));
-			stream->haveZrtpHash = 1;
+			strncpy((char *)(stream.zrtphash), belle_sdp_attribute_get_value(attribute),sizeof(stream.zrtphash));
+			stream.haveZrtpHash = 1;
 		#if __GNUC__ > 7
 			#pragma GCC diagnostic pop
 		#endif
@@ -931,53 +931,53 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	/* Do we have Lime Ik attribute */
 	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"Ik"))!=NULL) {
 		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			stream->haveLimeIk = 1;
+			stream.haveLimeIk = 1;
 		}
 	}
 	/* get ready to parse also lime-Ik */
 	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"lime-Ik"))!=NULL) {
 		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			stream->haveLimeIk = 1;
+			stream.haveLimeIk = 1;
 		}
 	}
 
 
 	/* Get ICE candidate attributes if any */
-	sdp_parse_media_ice_parameters(media_desc, stream);
+	sdp_parse_media_ice_parameters(media_desc, &stream);
 
-	has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, stream);
+	has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, &stream);
 
 	/* Get RTCP-FB attributes if any */
-	if (sal_stream_description_has_avpf(stream)) {
-		enable_avpf_for_stream(stream);
+	if (sal_stream_description_has_avpf(&stream)) {
+		enable_avpf_for_stream(&stream);
 	}else if (has_avpf_attributes ){
-		enable_avpf_for_stream(stream);
-		stream->implicit_rtcp_fb = TRUE;
+		enable_avpf_for_stream(&stream);
+		stream.implicit_rtcp_fb = TRUE;
 	}
 
 	/* Get RTCP-XR attributes if any */
-	stream->rtcp_xr = md->rtcp_xr;	// Use session parameters if no stream parameters are defined
-	sdp_parse_media_rtcp_xr_parameters(media_desc, &stream->rtcp_xr);
+	stream.rtcp_xr = md->rtcp_xr;	// Use session parameters if no stream parameters are defined
+	sdp_parse_media_rtcp_xr_parameters(media_desc, &stream.rtcp_xr);
 
 	/* Get the custom attributes, and parse some 'extmap'*/
 	for (custom_attribute_it = belle_sdp_media_description_get_attributes(media_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
 		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
 		const char *attr_name = belle_sdp_attribute_get_name(attr);
 		const char *attr_value = belle_sdp_attribute_get_value(attr);
-		stream->custom_sdp_attributes = sal_custom_sdp_attribute_append(stream->custom_sdp_attributes, attr_name, attr_value);
+		stream.custom_sdp_attributes = sal_custom_sdp_attribute_append(stream.custom_sdp_attributes, attr_name, attr_value);
 
 		if (strcasecmp(attr_name, "extmap") == 0){
 			char *extmap_urn = (char*)bctbx_malloc0(strlen(attr_value) + 1);
 			int rtp_ext_header_id = 0;
 			if (sscanf(attr_value, "%i %s", &rtp_ext_header_id, extmap_urn) > 0
 				&& strcasecmp(extmap_urn, "urn:ietf:params:rtp-hdrext:sdes:mid") == 0){
-				stream->mid_rtp_ext_header_id = rtp_ext_header_id;
+				stream.mid_rtp_ext_header_id = rtp_ext_header_id;
 			}
 			bctbx_free(extmap_urn);
 		}
 	}
 
-	md->streams.push_back(*stream);
+	md->streams.push_back(stream);
 	md->nb_streams++;
 	return &md->streams.back();
 }
