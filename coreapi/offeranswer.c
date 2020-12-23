@@ -605,7 +605,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
 			if (i <= result->streams.size()) {
-				result->streams.resize((i + 1), *sal_stream_description_new());
+				result->streams.resize((i + 1));
 			}
 			initiate_outgoing(factory, ls,rs,&result->streams[i]);
 			memcpy(&result->streams[i].rtcp_xr, &ls->rtcp_xr, sizeof(result->streams[i].rtcp_xr));
@@ -661,7 +661,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
 		if (i <= result->streams.size()) {
-			result->streams.resize((i + 1), *sal_stream_description_new());
+			result->streams.resize((i + 1));
 		}
 		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
 		{
