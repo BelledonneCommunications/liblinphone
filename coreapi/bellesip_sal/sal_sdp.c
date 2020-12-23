@@ -429,7 +429,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
 	int i;
-	char *escaped_username = belle_sip_uri_to_escaped_username(L_STRING_TO_C(desc->username));
+	char *escaped_username = belle_sip_uri_to_escaped_username(desc->username.c_str());
 
 	if ( desc->addr.find(':' ) != std::string::npos ) {
 		inet6=1;
