@@ -524,11 +524,15 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 				salCandidate.componentID = iceCandidate->componentID;
 				salCandidate.priority = iceCandidate->priority;
 				strncpy(salCandidate.type, ice_candidate_type(iceCandidate), sizeof(salCandidate.type) - 1);
+				salCandidate.type[sizeof(salCandidate.type) - 1] = '\0';
 				strncpy(salCandidate.addr, iceCandidate->taddr.ip, sizeof(salCandidate.addr));
 				salCandidate.port = iceCandidate->taddr.port;
 				if (iceCandidate->base && (iceCandidate->base != iceCandidate)) {
 					strncpy(salCandidate.raddr, iceCandidate->base->taddr.ip, sizeof(salCandidate.raddr));
 					salCandidate.rport = iceCandidate->base->taddr.port;
+				} else {
+					salCandidate.raddr[0] = '\0';
+					salCandidate.rport = 0;
 				}
 				stream->ice_candidates.push_back(salCandidate);
 			}
