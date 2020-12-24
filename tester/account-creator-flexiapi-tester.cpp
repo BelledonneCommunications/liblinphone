@@ -52,7 +52,7 @@ static void flexiapi_ping() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
-	ms_free(flexiAPIClient);
+	delete flexiAPIClient;
 }
 
 static void flexiapi_accounts() {
@@ -67,19 +67,22 @@ static void flexiapi_accounts() {
 	// Unauthenticated
 	flexiAPIClient
 		->me()
-		->error([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
 			code = response.code;
 			fetched = 1;
 		});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
-	BC_ASSERT_EQUAL(code, 401, int, "%d");
+
+	// The internal resolver will handle a 401 and then try to re-send
+	// the request with a proper DIGEST authentication
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	code = 0;
 	fetched = 0;
 
 	// Authenticated
-	flexiAPIClient->setApiKey("E74yK42XzarVILTTZUqHPrbHtNRESizfrrwe4RxU")
+	flexiAPIClient
 		->me()
 		->then([&code, &fetched, &resolvedDomain](AccountCreatorFlexiAPI::Response response) -> void {
 			code = response.code;
@@ -89,15 +92,66 @@ static void flexiapi_accounts() {
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
-	BC_ASSERT_STRING_EQUAL(resolvedDomain.c_str(), "sip.linphone.org");
+	BC_ASSERT_STRING_EQUAL(resolvedDomain.c_str(), "sip.example.org");
 
 	linphone_core_manager_destroy(marie);
-	ms_free(flexiAPIClient);
+	delete flexiAPIClient;
+}
+
+static void flexiapi_change_email() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie2_rc");
+
+	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+
+	int code = 0;
+	int fetched = 0;
+	string resolvedDomain;
+
+	flexiAPIClient
+		->emailChange("changed@test.com")
+		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+			code = response.code;
+			fetched = 1;
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	delete flexiAPIClient;
+}
+
+static void flexiapi_change_password() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie2_rc");
+
+	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+
+	int code = 0;
+	int fetched = 0;
+	string resolvedDomain;
+
+	flexiAPIClient
+		->passwordChange("MD5", "changeme", "secret")
+		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+			code = response.code;
+			fetched = 1;
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+
+	// The internal resolver will handle a 401 and then try to re-send
+	// the request with a proper DIGEST authentication
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	delete flexiAPIClient;
 }
 
 test_t account_creator_flexiapi_tests[] = {
 	TEST_NO_TAG("Ping", flexiapi_ping),
 	TEST_NO_TAG("Accounts", flexiapi_accounts),
+	TEST_NO_TAG("Change Email", flexiapi_change_email),
+	TEST_NO_TAG("Change Password", flexiapi_change_password),
 };
 
 test_suite_t account_creator_flexiapi_suite = {
