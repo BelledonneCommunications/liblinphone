@@ -1444,7 +1444,10 @@ void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 				md->streams[i].crypto = oldMd->streams[i].crypto;
 			} else {
 				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
-				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID) && (j < md->streams[i].crypto.size()); j++) {
+				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+					if (j >= md->streams[i].crypto.size()) {
+						md->streams[i].crypto.resize(j + 1);
+					}
 					setupEncryptionKey(md->streams[i].crypto[j], suites[j], static_cast<unsigned int>(j) + 1);
 				}
 			}
