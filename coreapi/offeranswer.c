@@ -441,9 +441,12 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
 		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
-			result->crypto.push_back(crypto_result);
 			sal_stream_description_disable(result);
 		}
+		if (result->crypto.empty()) {
+			result->crypto.resize(1);
+		}
+		result->crypto[0] = crypto_result;
 	}
 	result->rtp_ssrc=local_offer->rtp_ssrc;
 	result->rtcp_cname=local_offer->rtcp_cname;
@@ -525,11 +528,13 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
 		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
-			result->crypto.push_back(crypto_result);
 			sal_stream_description_disable(result);
 			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
 		}
-
+		if (result->crypto.empty()) {
+			result->crypto.resize(1);
+		}
+		result->crypto[0] = crypto_result;
 	}
 
 	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
