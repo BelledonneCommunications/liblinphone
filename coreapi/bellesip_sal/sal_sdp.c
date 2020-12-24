@@ -527,18 +527,18 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
 	char tmp[257]={0}, tmp2[129]={0}, parameters[257]={0};
-	unsigned int valid_count = 0;
 	int nb;
 
 	stream->crypto.clear();
 	for ( attribute_it=belle_sdp_media_description_get_attributes ( media_desc )
-						; valid_count < (unsigned int)stream->crypto.size() && attribute_it!=NULL;
+						; attribute_it!=NULL;
 			attribute_it=attribute_it->next ) {
 		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
 
 		if ( keywordcmp ( "crypto",belle_sdp_attribute_get_name ( attribute ) ) ==0 && belle_sdp_attribute_get_value ( attribute ) !=NULL ) {
+			SalSrtpCryptoAlgo crypto;
 			nb = sscanf ( belle_sdp_attribute_get_value ( attribute ), "%d %256s inline:%128s %256s",
-							&stream->crypto[valid_count].tag,
+							&crypto.tag,
 							tmp,
 							tmp2, parameters );
 
@@ -551,26 +551,27 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 				cs=ms_crypto_suite_build_from_name_params(&np);
 				if (cs==MS_CRYPTO_SUITE_INVALID){
 					ms_warning ( "Failed to parse crypto-algo: '%s'", tmp );
-					stream->crypto[valid_count].algo = MS_CRYPTO_SUITE_INVALID;
+					crypto.algo = MS_CRYPTO_SUITE_INVALID;
 				}else{
 					char *sep;
-					strncpy ( stream->crypto[valid_count].master_key, tmp2, sizeof(stream->crypto[valid_count].master_key));
-					stream->crypto[valid_count].master_key[sizeof(stream->crypto[valid_count].master_key) - 1] = '\0';
-					sep=strchr(stream->crypto[valid_count].master_key,'|');
+					strncpy ( crypto.master_key, tmp2, sizeof(crypto.master_key));
+					crypto.master_key[sizeof(crypto.master_key) - 1] = '\0';
+					sep=strchr(crypto.master_key,'|');
 					if (sep) *sep='\0';
-					stream->crypto[valid_count].algo = cs;
+					crypto.algo = cs;
 					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s'",
-									stream->crypto[valid_count].tag,
+									crypto.tag,
 									tmp,
-									stream->crypto[valid_count].master_key );
-					valid_count++;
+									crypto.master_key );
+					stream->crypto.push_back(crypto);
 				}
+
 			}else{
 				ms_warning ( "sdp has a strange a= line (%s) nb=%i",belle_sdp_attribute_get_value ( attribute ),nb );
 			}
 		}
 	}
-	ms_message("Found: %d valid crypto lines", valid_count );
+	ms_message("Found: %lu valid crypto lines", stream->crypto.size() );
 }
 
 static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_desc, SalStreamDescription *stream) {
