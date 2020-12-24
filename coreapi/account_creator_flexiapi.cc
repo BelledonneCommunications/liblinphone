@@ -40,7 +40,7 @@ using namespace std;
 AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
     mCore = lc;
     apiKey = nullptr;
-    callbacks mRequestCallbacks = *new callbacks();
+    mRequestCallbacks = *new callbacks();
 
     // Assign the core there as well to keep it in the callback contexts
     mRequestCallbacks.core = lc;

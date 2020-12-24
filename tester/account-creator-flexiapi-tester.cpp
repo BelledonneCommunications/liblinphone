@@ -52,7 +52,7 @@ static void flexiapi_ping() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
-	ms_free(flexiAPIClient);
+	delete flexiAPIClient;
 }
 
 static void flexiapi_accounts() {
@@ -92,7 +92,7 @@ static void flexiapi_accounts() {
 	BC_ASSERT_STRING_EQUAL(resolvedDomain.c_str(), "sip.linphone.org");
 
 	linphone_core_manager_destroy(marie);
-	ms_free(flexiAPIClient);
+	delete flexiAPIClient;
 }
 
 test_t account_creator_flexiapi_tests[] = {
