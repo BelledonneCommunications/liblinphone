@@ -40,7 +40,6 @@ using namespace std;
 AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
     mCore = lc;
     apiKey = nullptr;
-    callbacks mRequestCallbacks = *new callbacks();
 
     // Assign the core there as well to keep it in the callback contexts
     mRequestCallbacks.core = lc;
@@ -48,6 +47,36 @@ AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
 
 AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::ping() {
     prepareRequest("ping");
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::emailChange(string email) {
+    JsonParams params;
+    params.push("email", email);
+    prepareRequest("accounts/email/request", params);
+    return this;
+}
+
+/**
+ * Change the account password
+ * @param [in] algorithm can be SHA-256 or MD5
+ * @param [in] the new password
+ * @param [in] the old password if already set
+ */
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm, string password) {
+    return passwordChange(algorithm, password, "");
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm, string password, string oldPassword) {
+    JsonParams params;
+    params.push("algorithm", algorithm);
+    params.push("password", password);
+
+    if (!oldPassword.empty()) {
+        params.push("old_password", oldPassword);
+    }
+    prepareRequest("accounts/password", params);
     return this;
 }
 
@@ -72,21 +101,32 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::error(function<void (AccountCrea
 }
 
 void AccountCreatorFlexiAPI::prepareRequest(const char* path) {
+    JsonParams params;
+    prepareRequest(path, params);
+}
+
+void AccountCreatorFlexiAPI::prepareRequest(const char* path, JsonParams params) {
     belle_http_request_listener_callbacks_t internalCallbacks = {};
     belle_http_request_listener_t *listener;
     belle_http_request_t *req;
 
-    string uri = "https://subscribe.linphone.org/api/";
+    string uri = "http://fs-test.linphone.org/flexiapi/api/";
 
-    //LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
-    //char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
-    const char *addr = "sip:+33667545663@sip.linphone.org";
+    LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
+    char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 
-    req = belle_http_request_create("GET", belle_generic_uri_parse(uri.append(path).c_str()),
+    req = belle_http_request_create(
+        params.empty() ? "GET" : "POST",
+        belle_generic_uri_parse(uri.append(path).c_str()),
         belle_sip_header_content_type_create("application", "json"),
         belle_sip_header_accept_create("application", "json"),
         belle_http_header_create("From", addr),
     NULL);
+
+    if (!params.empty()) {
+        string body = params.json();
+        belle_sip_message_set_body(BELLE_SIP_MESSAGE(req), body.c_str(), body.size());
+    }
 
     if (apiKey != nullptr) {
         belle_sip_message_add_header(
@@ -94,8 +134,6 @@ void AccountCreatorFlexiAPI::prepareRequest(const char* path) {
             belle_http_header_create("x-api-key", apiKey)
         );
     }
-
-    //bctbx_free(addr);
 
     internalCallbacks.process_response = processResponse;
     internalCallbacks.process_auth_requested = processAuthRequested;
@@ -106,11 +144,11 @@ void AccountCreatorFlexiAPI::prepareRequest(const char* path) {
 }
 
 void AccountCreatorFlexiAPI::processResponse(void *ctx, const belle_http_response_event_t *event) {
-    auto cb = (callbacks_t *)ctx;
+    auto cb = (Callbacks *)ctx;
+    AccountCreatorFlexiAPI::Response response;
 
     if (event->response){
         int code = belle_http_response_get_status_code(event->response);
-        auto response = *new AccountCreatorFlexiAPI::Response();
         response.code = code;
 
         if (code >= 200 && code < 300) {
@@ -118,16 +156,17 @@ void AccountCreatorFlexiAPI::processResponse(void *ctx, const belle_http_respons
             const char *content = belle_sip_object_to_string(body);
 
             response.body = content;
-            cb->success(response);
-        } else {
+            if (cb->success) {
+                cb->success(response);
+            }
+        } else if(cb->error) {
             cb->error(response);
         }
     }
 }
 
 void AccountCreatorFlexiAPI::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
-    auto cb = (callbacks_t *)ctx;
-
+    auto cb = (Callbacks *)ctx;
     const char *username = belle_sip_auth_event_get_username(event);
     const char *domain = belle_sip_auth_event_get_domain(event);
 
