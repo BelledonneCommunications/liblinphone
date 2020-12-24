@@ -578,25 +578,23 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 	belle_sdp_attribute_t *attribute;
 	const char *att_name;
 	const char *value;
-	int nb_ice_candidates = 0;
 
 	for (attribute_it = belle_sdp_media_description_get_attributes(media_desc); attribute_it != NULL; attribute_it=attribute_it->next) {
 		attribute=BELLE_SDP_ATTRIBUTE(attribute_it->data);
 		att_name = belle_sdp_attribute_get_name(attribute);
 		value = belle_sdp_attribute_get_value(attribute);
 
-		if ((nb_ice_candidates < (int)stream->ice_candidates.size())
-				&& (keywordcmp("candidate", att_name) == 0)
+		if ((keywordcmp("candidate", att_name) == 0)
 				&& (value != NULL)) {
-			SalIceCandidate *candidate = &stream->ice_candidates[(std::vector<SalIceCandidate>::size_type)nb_ice_candidates];
+			SalIceCandidate candidate;
 			char proto[4];
 			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d",
-				candidate->foundation, &candidate->componentID, proto, &candidate->priority, candidate->addr, &candidate->port,
-				candidate->type, candidate->raddr, &candidate->rport);
-			if (strcasecmp("udp",proto)==0 && ((nb == 7) || (nb == 9))) nb_ice_candidates++;
-			else {
+				candidate.foundation, &candidate.componentID, proto, &candidate.priority, candidate.addr, &candidate.port,
+				candidate.type, candidate.raddr, &candidate.rport);
+			if (strcasecmp("udp",proto)==0 && ((nb == 7) || (nb == 9))) {
+				stream->ice_candidates.push_back(candidate);
+			} else {
 				ms_error("ice: Failed parsing a=candidate SDP attribute");
-				memset(candidate, 0, sizeof(*candidate));
 			}
 		} else if ((keywordcmp("remote-candidates", att_name) == 0) && (value != NULL)) {
 			SalIceRemoteCandidate candidate;
@@ -940,7 +938,6 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 			stream.haveLimeIk = 1;
 		}
 	}
-
 
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, &stream);
