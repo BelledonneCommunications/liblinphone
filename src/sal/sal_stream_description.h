@@ -32,19 +32,19 @@ typedef struct SalStreamDescription {
 	std::string proto_other;
 	std::string rtp_addr;
 	std::string rtcp_addr;
-	unsigned int rtp_ssrc;
+	unsigned int rtp_ssrc = 0;
 	std::string rtcp_cname;
-	int rtp_port;
-	int rtcp_port;
+	int rtp_port = 0;
+	int rtcp_port = 0;
 	MSList *payloads = nullptr; /**<list of PayloadType */
 	MSList *already_assigned_payloads = nullptr; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
-	int bandwidth;
-	int ptime;
-	int maxptime;
+	int bandwidth = 0;
+	int ptime = 0;
+	int maxptime = 0;
 	SalStreamDir dir;
 	std::vector<SalSrtpCryptoAlgo> crypto;
-	unsigned int crypto_local_tag;
-	int max_rate;
+	unsigned int crypto_local_tag = 0;
+	int max_rate = 0;
 	bool_t bundle_only = FALSE;
 	bool_t implicit_rtcp_fb = FALSE;
 	std::vector<bool_t> pad; /* Use me */
@@ -60,12 +60,12 @@ typedef struct SalStreamDescription {
 	bool_t ice_mismatch = FALSE;
 	bool_t set_nortpproxy = FALSE; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux = FALSE;
-	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
-	uint8_t haveLimeIk; /**< flag for lime Ik presence */
+	uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
+	uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
 	std::string dtls_fingerprint;
 	SalDtlsRole dtls_role = SalDtlsRoleInvalid;
-	int ttl; /*for multicast -1 to disable*/
+	int ttl = 0; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role = SalMulticastInactive;
 } SalStreamDescription;
 

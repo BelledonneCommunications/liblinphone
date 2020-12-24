@@ -24,14 +24,14 @@
 #include "sal/sal_stream_bundle.h"
 
 typedef struct SalMediaDescription {
-	int refcount;
+	int refcount = 0;
 	std::string name;
 	std::string addr;
 	std::string username;
-	int nb_streams;
-	int bandwidth;
-	unsigned int session_ver;
-	unsigned int session_id;
+	int nb_streams = 0;
+	int bandwidth = 0;
+	unsigned int session_ver = 0;
+	unsigned int session_id = 0;
 	SalStreamDir dir;
 	std::vector<SalStreamDescription> streams;
 	SalCustomSdpAttribute *custom_sdp_attributes;
