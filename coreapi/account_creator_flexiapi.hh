@@ -33,8 +33,9 @@ class AccountCreatorFlexiAPI {
     public:
         class Response {
             public:
-                int code;
-                const char* body;
+                int code = 0;
+                const char* body = "";
+
                 Json::Value json() {
                     Json::Reader reader;
                     Json::Value obj;
@@ -43,11 +44,49 @@ class AccountCreatorFlexiAPI {
                 };
         };
 
+        class JsonParams {
+            public:
+                list<pair<string, string>> params;
+
+                void push(string key, string value) {
+                    params.push_back(make_pair(key, value));
+                };
+
+                bool empty() {
+                    return params.empty();
+                };
+
+                string json() {
+                    Json::Value jsonParameters;
+
+                    list<pair<string, string>>::iterator it;
+
+                    for (it = params.begin(); it != params.end(); ++it) {
+                        jsonParameters[(*it).first] = (*it).second;
+                    }
+
+                    Json::StreamWriterBuilder builder;
+                    builder["indentation"] = "";
+
+                    return string(Json::writeString(builder, jsonParameters));
+                };
+        };
+
+        class Callbacks {
+            public:
+                function<void (Response)> success;
+                function<void (Response)> error;
+                LinphoneCore *core;
+        };
+
         AccountCreatorFlexiAPI(LinphoneCore *lc);
 
         // Endpoints
         AccountCreatorFlexiAPI* ping();
+        AccountCreatorFlexiAPI* emailChange(string email);
         AccountCreatorFlexiAPI* me();
+        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password);
+        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password, string oldPassword);
 
         // Authentication
         AccountCreatorFlexiAPI* setApiKey(const char* key);
@@ -57,17 +96,12 @@ class AccountCreatorFlexiAPI {
         AccountCreatorFlexiAPI* error(function<void (Response)> error);
 
     private:
-        typedef struct callbacks {
-            function<void (Response)> success;
-            function<void (Response)> error;
-            LinphoneCore *core;
-        } callbacks_t;
-
         LinphoneCore *mCore;
-        callbacks mRequestCallbacks;
+        Callbacks mRequestCallbacks;
         const char* apiKey;
 
-        void prepareRequest(const char* path);
+        void prepareRequest(const char *path);
+        void prepareRequest(const char *path, JsonParams params);
         static void processResponse(void *ctx, const belle_http_response_event_t *event);
         static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
 };
