@@ -872,10 +872,9 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	sdp_parse_payload_types(media_desc, &stream);
 
 	/* Get media specific RTCP attribute */
+	stream.rtcp_addr = stream.rtp_addr;
 	stream.rtcp_port = stream.rtp_port + 1;
-	if (!stream.rtp_addr.empty()) {
-		stream.rtcp_addr = stream.rtp_addr;
-	}
+
 	attribute=belle_sdp_media_description_get_attribute(media_desc,"rtcp");
 	if (attribute && (value=belle_sdp_attribute_get_value(attribute))!=NULL){
 		char *tmp = (char *)ms_malloc0(strlen(value));
