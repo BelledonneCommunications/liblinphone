@@ -440,7 +440,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		/* verify crypto algo */
 		result->crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
+		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, FALSE)) {
 			sal_stream_description_disable(result);
 		}
 		if (result->crypto.empty()) {
