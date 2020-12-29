@@ -272,9 +272,9 @@ bool_t sal_media_description_has_ipv6(const SalMediaDescription *md){
 
 int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaDescription *md2) {
 	int result = sal_media_description_global_equals(md1, md2);
-	for(size_t i = 0; i < MIN(md1->streams.size(), md2->streams.size()); ++i){
-		if (!sal_stream_description_enabled(&md1->streams[i]) && !sal_stream_description_enabled(&md2->streams[i])) continue;
-		result |= sal_stream_description_equals(&md1->streams[i], &md2->streams[i]);
+	for(auto stream1 = md1->streams.cbegin(), stream2 = md2->streams.cbegin(); (stream1 != md1->streams.cend() && stream2 != md2->streams.cend()); ++stream1, ++stream2){
+		if (!sal_stream_description_enabled(&(*stream1)) && !sal_stream_description_enabled(&(*stream2))) continue;
+		result |= sal_stream_description_equals(&(*stream1), &(*stream2));
 	}
 	return result;
 }
