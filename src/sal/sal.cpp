@@ -857,8 +857,10 @@ belle_sip_response_t *Sal::createResponseFromRequest (belle_sip_request_t *reque
 int Sal::findCryptoIndexFromTag (const std::vector<SalSrtpCryptoAlgo> & crypto, unsigned char tag) {
 	for (size_t i = 0; i < crypto.size(); i++) {
 		if (crypto[i].tag == tag)
+			lInfo() << "Found crypto algorithm matching tag " << (int)tag << ": algorithm " << crypto[i].algo << " master key " << crypto[i].master_key;
 			return (int)i;
 	}
+	lInfo() << "Unable to find crypto algorithm matching tag " << (int)tag;
 	return -1;
 }
 
