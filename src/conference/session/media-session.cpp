@@ -248,26 +248,27 @@ bool MediaSessionPrivate::failure () {
 			lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
 			if ((state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress)
 				|| (state == CallSession::State::OutgoingRinging) /* Push notification case */ || (state == CallSession::State::OutgoingEarlyMedia)) {
-				for (int i = 0; i < localDesc->nb_streams; i++) {
-					if (!sal_stream_description_enabled(&localDesc->streams[(size_t)i]))
+				for (auto & stream : localDesc->streams) {
+					bool firstStream = (sal_stream_description_equals(&stream, &localDesc->streams[0])  == SAL_MEDIA_DESCRIPTION_UNCHANGED);
+					if (!sal_stream_description_enabled(&stream))
 						continue;
 					if (getParams()->getMediaEncryption() == LinphoneMediaEncryptionSRTP) {
 						if (getParams()->avpfEnabled()) {
-							if (i == 0)
+							if (firstStream)
 								lInfo() << "Retrying CallSession [" << q << "] with SAVP";
 							getParams()->enableAvpf(false);
 							restartInvite();
 							return true;
 						} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
-							if (i == 0)
+							if (firstStream)
 								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-							localDesc->streams[(size_t)i].crypto.clear();
+							stream.crypto.clear();
 							restartInvite();
 							return true;
 						}
 					} else if (getParams()->avpfEnabled()) {
-						if (i == 0)
+						if (firstStream)
 							lInfo() << "Retrying CallSession [" << q << "] with AVP";
 						getParams()->enableAvpf(false);
 						restartInvite();
@@ -640,15 +641,14 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 
 
 int MediaSessionPrivate::getFirstStreamWithType(const SalMediaDescription *md, SalStreamType type){
-	int i;
-	for (i = 0; i < md->nb_streams; ++i) {
-		if (md->streams[(size_t)i].type == type) return i;
+	for (size_t i = 0; i < md->streams.size(); ++i) {
+		if (md->streams[i].type == type) return static_cast<int>(i);
 	}
 	return -1;
 }
 
 void MediaSessionPrivate::assignStreamsIndexes(bool localIsOfferer){
-	if (biggestDesc && freeStreamIndex < biggestDesc->nb_streams) freeStreamIndex = biggestDesc->nb_streams;
+	if (biggestDesc && freeStreamIndex < static_cast<int>(biggestDesc->streams.size())) freeStreamIndex = static_cast<int>(biggestDesc->streams.size());
 
 	/*Initialize stream indexes from potential incoming offer.*/
 	SalMediaDescription *rmd = op ? op->getRemoteMediaDescription() : nullptr;
@@ -680,7 +680,7 @@ void MediaSessionPrivate::assignStreamsIndexesIncoming(const SalMediaDescription
 	if (mainTextStreamIndex == -1){
 		mainTextStreamIndex = getFirstStreamWithType(md, SalText);
 	}
-	if (freeStreamIndex < md->nb_streams) freeStreamIndex = md->nb_streams;
+	if (freeStreamIndex < static_cast<int>(md->streams.size())) freeStreamIndex = static_cast<int>(md->streams.size());
 }
 
 /*
@@ -767,7 +767,7 @@ bool MediaSessionPrivate::hasAvpf(SalMediaDescription *md)const{
 	 * In practice, this means for a remote media description that AVPF is supported by the far end.
 	 */
 	bool hasAvpf = !!sal_media_description_has_avpf(md);
-	if (mainVideoStreamIndex != -1 && (mainVideoStreamIndex < (int)md->streams.size()) && sal_stream_description_has_avpf(&md->streams[(size_t)mainVideoStreamIndex])){
+	if (mainVideoStreamIndex != -1 && (mainVideoStreamIndex < (int)md->streams.size()) && sal_stream_description_has_avpf(&md->streams[static_cast<size_t>(mainVideoStreamIndex)])){
 		hasAvpf = true;
 	}
 	return hasAvpf;
@@ -801,8 +801,8 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionNone))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 	}
-	if ((mainAudioStreamIndex != -1) && (mainAudioStreamIndex < (int)md->streams.size())){
-		SalStreamDescription *sd = &md->streams[(size_t)mainAudioStreamIndex];
+	if ((mainAudioStreamIndex != -1) && (mainAudioStreamIndex < static_cast<int>(md->streams.size()))){
+		SalStreamDescription *sd = &md->streams[static_cast<size_t>(mainAudioStreamIndex)];
 		const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())){
 			lInfo() << "Incoming offer has audio multicast, enabling it in local params.";
@@ -810,7 +810,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 		}else getParams()->enableAudioMulticast(false);
 	}
 	if ((mainVideoStreamIndex != -1) && (mainVideoStreamIndex < (int)md->streams.size())){
-		SalStreamDescription *sd = &md->streams[(size_t)mainVideoStreamIndex];
+		SalStreamDescription *sd = &md->streams[static_cast<size_t>(mainVideoStreamIndex)];
 		const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
 		if (ms_is_multicast(rtpAddr.c_str())){
 			lInfo() << "Incoming offer has video multicast, enabling it in local params.";
@@ -827,7 +827,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 }
 
 void MediaSessionPrivate::updateBiggestDesc (SalMediaDescription *md) {
-	if (!biggestDesc || (md->nb_streams > biggestDesc->nb_streams)) {
+	if (!biggestDesc || (md->streams.size() > biggestDesc->streams.size())) {
 		/* We have been offered and now are ready to proceed, or we added a new stream,
 		 * store the media description to remember the mapping of streams within this call. */
 		if (biggestDesc) {
@@ -1034,8 +1034,8 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 
 void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *md) {
 	L_Q();
-	for (int i = 0; i < md->nb_streams; i++) {
-		SalStreamDescription *sd = &md->streams[(size_t)i];
+	for (size_t i = 0; i < md->streams.size(); i++) {
+		SalStreamDescription &sd = md->streams[i];
 		CallSession::State stateToConsider = state;
 		
 		switch (stateToConsider){
@@ -1049,20 +1049,20 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (SalMediaDescription *
 		switch (stateToConsider) {
 			case CallSession::State::Pausing:
 			case CallSession::State::Paused:
-				if (sd->dir != SalStreamInactive) {
-					sd->dir = SalStreamSendOnly;
-					if ((sd->type == SalVideo) && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
-						sd->dir = SalStreamInactive;
+				if (sd.dir != SalStreamInactive) {
+					sd.dir = SalStreamSendOnly;
+					if ((sd.type == SalVideo) && linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "inactive_video_on_pause", 0))
+						sd.dir = SalStreamInactive;
 				}
 				break;
 			default:
 				break;
 		}
 		/* Reflect the stream directions in the call params */
-		if (i == mainAudioStreamIndex)
-			getCurrentParams()->setAudioDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir));
-		else if (i == mainVideoStreamIndex)
-			getCurrentParams()->setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir));
+		if (static_cast<int>(i) == mainAudioStreamIndex)
+			getCurrentParams()->setAudioDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd.dir));
+		else if (static_cast<int>(i) == mainVideoStreamIndex)
+			getCurrentParams()->setVideoDirection(MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd.dir));
 	}
 }
 
@@ -1095,24 +1095,24 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 	return true;
 }
 
-void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const std::string mid){
+void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription &sd, const std::string mid){
 	SalStreamBundle *bundle;
 	if (md->bundles == nullptr){
 		bundle = sal_media_description_add_new_bundle(md);
 	}else{
 		bundle = (SalStreamBundle*) md->bundles->data;
 	}
-	sal_stream_bundle_add_stream(bundle, sd, L_STRING_TO_C(mid));
-	sd->mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
+	sal_stream_bundle_add_stream(bundle, &sd, L_STRING_TO_C(mid));
+	sd.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 	/* rtcp-mux must be enabled when bundle mode is proposed.*/
-	sd->rtcp_mux = TRUE;
+	sd.rtcp_mux = TRUE;
 }
 
 /* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
  * offer doesn't offer it consistently for all streams.
  */
 SalMediaProto MediaSessionPrivate::getAudioProto(SalMediaDescription *remote_md){
-	SalStreamDescription *remote_stream = remote_md ? &remote_md->streams[(size_t)mainAudioStreamIndex] : nullptr;
+	SalStreamDescription *remote_stream = remote_md ? &remote_md->streams[static_cast<size_t>(mainAudioStreamIndex)] : nullptr;
 	SalMediaProto requested = getParams()->getMediaProto();
 	if (remote_stream && !sal_stream_description_has_avpf(remote_stream)) {
 		switch(requested){
@@ -1169,7 +1169,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	}
 	md->session_id = (oldMd ? oldMd->session_id : (bctbx_random() & 0xfff));
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
-	md->nb_streams = (biggestDesc ? biggestDesc->nb_streams : 1);
 
 	md->accept_bundles = getParams()->rtpBundleEnabled() ||
 		linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_bundle", TRUE);
@@ -1206,15 +1205,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	PayloadTypeHandler pth(q->getCore());
 
-	md->nb_streams = freeStreamIndex;
-
-	if ((int)md->streams.size() <= md->nb_streams) {
-		md->streams.resize((size_t)md->nb_streams);
+	if (md->streams.size() <= static_cast<size_t>(freeStreamIndex)) {
+		md->streams.resize(static_cast<size_t>(freeStreamIndex));
 	}
 
 	bctbx_list_t *l = NULL;
 	if (mainAudioStreamIndex != -1){
-		size_t audioStreamIndex = (size_t)mainAudioStreamIndex;
+		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
 		l = nullptr;
 		md->streams[audioStreamIndex].proto = getAudioProto(op ? op->getRemoteMediaDescription() : nullptr);
 		md->streams[audioStreamIndex].dir = getParams()->getPrivate()->getSalAudioDirection();
@@ -1232,7 +1229,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[audioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
 			md->streams[audioStreamIndex].payloads = l;
 			md->streams[audioStreamIndex].rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[audioStreamIndex], "as");
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], "as");
 
 			if (getParams()->audioMulticastEnabled()) {
 				md->streams[audioStreamIndex].ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
@@ -1250,7 +1247,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[audioStreamIndex].custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 	}
 	if (mainVideoStreamIndex != -1){
-		size_t videoStreamIndex = (size_t)mainVideoStreamIndex;
+		size_t videoStreamIndex = static_cast<size_t>(mainVideoStreamIndex);
 		l = nullptr;
 		md->streams[videoStreamIndex].proto = getParams()->getMediaProto();
 		md->streams[videoStreamIndex].dir = getParams()->getPrivate()->getSalVideoDirection();
@@ -1263,7 +1260,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[videoStreamIndex].name = "Video";
 			md->streams[videoStreamIndex].payloads = l;
 			md->streams[videoStreamIndex].rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[videoStreamIndex], "vs");
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[videoStreamIndex], "vs");
 
 			if (getParams()->videoMulticastEnabled()) {
 				md->streams[videoStreamIndex].ttl = linphone_core_get_video_multicast_ttl(q->getCore()->getCCore());
@@ -1283,7 +1280,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	}
 
 	if (mainTextStreamIndex != -1){
-		size_t textStreamIndex = (size_t)mainTextStreamIndex;
+		size_t textStreamIndex = static_cast<size_t>(mainTextStreamIndex);
 		l = nullptr;
 		md->streams[textStreamIndex].proto = getParams()->getMediaProto();
 		md->streams[textStreamIndex].dir = SalStreamSendRecv;
@@ -1295,7 +1292,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[textStreamIndex].name = "Text";
 			md->streams[textStreamIndex].payloads = l;
 			md->streams[textStreamIndex].rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, &md->streams[textStreamIndex], "ts");
+			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[textStreamIndex], "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
 			md->streams[textStreamIndex].dir = SalStreamInactive;
@@ -1321,9 +1318,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	ctx.localIsOfferer = localIsOfferer;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
-	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainAudioStreamIndex);
-	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainVideoStreamIndex);
-	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain((size_t)mainTextStreamIndex);
+	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainAudioStreamIndex));
+	if (mainVideoStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainVideoStreamIndex));
+	if (mainTextStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainTextStreamIndex));
 	/* Get the transport addresses filled in to the media description. */
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 
@@ -1437,7 +1434,7 @@ void MediaSessionPrivate::setupEncryptionKeys (SalMediaDescription *md) {
 	L_Q();
 	SalMediaDescription *oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
-	for (size_t i = 0; i < (size_t)md->nb_streams; i++) {
+	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (sal_stream_description_has_srtp(&md->streams[i])) {
 			if (keepSrtpKeys && oldMd && sal_stream_description_enabled(&oldMd->streams[i]) && sal_stream_description_has_srtp(&oldMd->streams[i])) {
 				lInfo() << "Keeping same crypto keys";
@@ -1585,13 +1582,13 @@ void MediaSessionPrivate::tryEarlyMediaForking (SalMediaDescription *md) {
 	getStreamsGroup().tryEarlyMediaForking(ctx);
 }
 
-void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription *resultDesc, SalStreamDescription *localStreamDesc) {
+void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription &resultDesc, SalStreamDescription &localStreamDesc) {
 	L_Q();
-	for (bctbx_list_t *elem = resultDesc->payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
+	for (bctbx_list_t *elem = resultDesc.payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
 		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
-		if (PayloadTypeHandler::isPayloadTypeNumberAvailable(localStreamDesc->already_assigned_payloads, payload_type_get_number(pt), nullptr)) {
+		if (PayloadTypeHandler::isPayloadTypeNumberAvailable(localStreamDesc.already_assigned_payloads, payload_type_get_number(pt), nullptr)) {
 			/* New codec, needs to be added to the list */
-			localStreamDesc->already_assigned_payloads = bctbx_list_append(localStreamDesc->already_assigned_payloads, payload_type_clone(pt));
+			localStreamDesc.already_assigned_payloads = bctbx_list_append(localStreamDesc.already_assigned_payloads, payload_type_clone(pt));
 			lInfo() << "CallSession[" << q << "] : payload type " << payload_type_get_number(pt) << " " << pt->mime_type << "/" << pt->clock_rate
 				<< " fmtp=" << L_C_TO_STRING(pt->recv_fmtp) << " added to frozen list";
 		}
@@ -1599,8 +1596,8 @@ void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription *resu
 }
 
 void MediaSessionPrivate::updateFrozenPayloads (SalMediaDescription *result) {
-	for (size_t i = 0; i < (size_t)result->nb_streams; i++) {
-		updateStreamFrozenPayloads(&result->streams[i], &localDesc->streams[i]);
+	for (size_t i = 0; i < result->streams.size(); i++) {
+		updateStreamFrozenPayloads(result->streams[i], localDesc->streams[i]);
 	}
 }
 
@@ -1935,7 +1932,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 		else
 			getCurrentParams()->setAvpfRrInterval(0);
 		if ((mainAudioStreamIndex != -1) && (mainAudioStreamIndex < (int)md->streams.size())){
-			SalStreamDescription *sd = &md->streams[(size_t)mainAudioStreamIndex];
+			SalStreamDescription *sd = &md->streams[static_cast<size_t>(mainAudioStreamIndex)];
 			getCurrentParams()->setAudioDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getAudioDirection() != LinphoneMediaDirectionInactive) {
 				const std::string & rtpAddr = (sd->rtp_addr.empty() == false) ? sd->rtp_addr : md->addr;
@@ -1945,7 +1942,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->enableAudio(sal_stream_description_enabled(sd));
 		}
 		if ((mainVideoStreamIndex != -1) && (mainVideoStreamIndex < (int)md->streams.size())){
-			SalStreamDescription *sd = &md->streams[(size_t)mainVideoStreamIndex];
+			SalStreamDescription *sd = &md->streams[static_cast<size_t>(mainVideoStreamIndex)];
 			getCurrentParams()->getPrivate()->enableImplicitRtcpFb(sd && sal_stream_description_has_implicit_avpf(sd));
 			getCurrentParams()->setVideoDirection(sd ? MediaSessionParamsPrivate::salStreamDirToMediaDirection(sd->dir) : LinphoneMediaDirectionInactive);
 			if (getCurrentParams()->getVideoDirection() != LinphoneMediaDirectionInactive) {
@@ -1956,7 +1953,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			getCurrentParams()->enableVideo(sal_stream_description_enabled(sd));
 		}
 		if ((mainTextStreamIndex != -1) && (mainTextStreamIndex < (int)md->streams.size())){
-			SalStreamDescription *sd = &md->streams[(size_t)mainTextStreamIndex];
+			SalStreamDescription *sd = &md->streams[static_cast<size_t>(mainTextStreamIndex)];
 			// Direction and multicast are not supported for real-time text.
 			getCurrentParams()->enableRealtimeText(sal_stream_description_enabled(sd));
 		}
@@ -2922,24 +2919,24 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			SalStreamDescription *sd;
 			params = new MediaSessionParams();
 
-			if (d->mainAudioStreamIndex != -1 && d->mainAudioStreamIndex < md->nb_streams){
-				size_t audioStreamIndex = (size_t)d->mainAudioStreamIndex;
+			if (d->mainAudioStreamIndex != -1 && d->mainAudioStreamIndex < static_cast<int>(md->streams.size())){
+				size_t audioStreamIndex = static_cast<size_t>(d->mainAudioStreamIndex);
 				sd = &md->streams[audioStreamIndex];
 				params->enableAudio(sal_stream_description_enabled(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeAudio, md->streams[audioStreamIndex].custom_sdp_attributes);
 			}else params->enableAudio(false);
 
-			if (d->mainVideoStreamIndex != -1 && d->mainVideoStreamIndex < md->nb_streams){
-				size_t videoStreamIndex = (size_t)d->mainVideoStreamIndex;
+			if (d->mainVideoStreamIndex != -1 && d->mainVideoStreamIndex < static_cast<int>(md->streams.size())){
+				size_t videoStreamIndex = static_cast<size_t>(d->mainVideoStreamIndex);
 				sd = &md->streams[videoStreamIndex];
 				params->enableVideo(sal_stream_description_enabled(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
 				params->getPrivate()->setCustomSdpMediaAttributes(LinphoneStreamTypeVideo, md->streams[videoStreamIndex].custom_sdp_attributes);
 			}else params->enableVideo(false);
 
-			if (d->mainTextStreamIndex != -1 && d->mainTextStreamIndex < md->nb_streams){
-				size_t textStreamIndex = (size_t)d->mainTextStreamIndex;
+			if (d->mainTextStreamIndex != -1 && d->mainTextStreamIndex < static_cast<int>(md->streams.size())){
+				size_t textStreamIndex = static_cast<size_t>(d->mainTextStreamIndex);
 				sd = &md->streams[textStreamIndex];
 				params->enableRealtimeText(sal_stream_description_enabled(sd));
 				params->setMediaEncryption(sal_stream_description_has_srtp(sd) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionNone);
