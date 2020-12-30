@@ -43,7 +43,7 @@ static void add_ice_candidates(belle_sdp_media_description_t *md, const SalStrea
 			return;
 		}
 		if (candidate->raddr[0] != '\0') {
-			nb = snprintf(buffer + nb, sizeof(buffer) - (size_t)nb, " raddr %s rport %d", candidate->raddr, candidate->rport);
+			nb = snprintf(buffer + nb, sizeof(buffer) - static_cast<size_t>(nb), " raddr %s rport %d", candidate->raddr, candidate->rport);
 			if (nb < 0) {
 				ms_error("Cannot add ICE candidate attribute!");
 				return;
@@ -56,14 +56,13 @@ static void add_ice_candidates(belle_sdp_media_description_t *md, const SalStrea
 static void add_ice_remote_candidates(belle_sdp_media_description_t *md, const SalStreamDescription *desc){
 	char buffer[1024];
 	char *ptr = buffer;
-	const SalIceRemoteCandidate *candidate;
 	int offset = 0;
 
 	buffer[0] = '\0';
-	for (int i = 0; i < (int)desc->ice_remote_candidates.size(); i++) {
-		candidate = &desc->ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)i];
-		if ((candidate->addr[0] != '\0') && (candidate->port != 0)) {
-			offset = snprintf(ptr, (size_t)(buffer + sizeof(buffer) - ptr), "%s%d %s %d", (i > 0) ? " " : "", i + 1, candidate->addr, candidate->port);
+	for (size_t i = 0; i < desc->ice_remote_candidates.size(); i++) {
+		const auto & candidate = desc->ice_remote_candidates[i];
+		if ((candidate.addr[0] != '\0') && (candidate.port != 0)) {
+			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%lu %s %d", (i > 0) ? " " : "", i + 1, candidate.addr, candidate.port);
 			if (offset < 0) {
 				ms_error("Cannot add ICE remote-candidates attribute!");
 				return;
@@ -428,7 +427,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
-	int i;
+	size_t i;
 	char *escaped_username = belle_sip_uri_to_escaped_username(desc->username.c_str());
 
 	if ( desc->addr.find(':' ) != std::string::npos ) {
@@ -488,8 +487,8 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 		}
 	}
 
-	for ( i=0; i<desc->nb_streams; i++ ) {
-		stream_description_to_sdp(session_desc, desc, &desc->streams[(size_t)i]);
+	for ( i=0; i<desc->streams.size(); i++ ) {
+		stream_description_to_sdp(session_desc, desc, &desc->streams[i]);
 	}
 	return session_desc;
 }
@@ -975,7 +974,6 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	}
 
 	md->streams.push_back(stream);
-	md->nb_streams++;
 	return &md->streams.back();
 }
 
@@ -1004,7 +1002,6 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 	const char* value;
 	SalDtlsRole session_role=SalDtlsRoleInvalid;
 
-	desc->nb_streams = 0;
 	desc->dir = SalStreamSendRecv;
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( session_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
