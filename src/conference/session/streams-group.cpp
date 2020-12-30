@@ -100,7 +100,7 @@ void StreamsGroup::fillLocalMediaDescription(OfferAnswerContext & params){
 
 void StreamsGroup::createStreams(const OfferAnswerContext &params){
 	size_t index;
-	for(index = 0; index < (size_t)params.localMediaDescription->nb_streams; ++index){
+	for(index = 0; index < params.localMediaDescription->streams.size(); ++index){
 		Stream *s;
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 		

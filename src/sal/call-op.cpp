@@ -697,7 +697,7 @@ void SalCallOp::processTransactionTerminatedCb (void *userCtx, const belle_sip_t
 }
 
 bool SalCallOp::isMediaDescriptionAcceptable (SalMediaDescription *md) {
-	if (md->nb_streams == 0) {
+	if (md->streams.size() == 0) {
 		lWarning() << "Media description does not define any stream";
 		return false;
 	}
