@@ -197,7 +197,7 @@ private:
 	void freeResources ();
 	void prepareEarlyMediaForking ();
 	void tryEarlyMediaForking (SalMediaDescription *md);
-	void updateStreamFrozenPayloads (SalStreamDescription *resultDesc, SalStreamDescription *localStreamDesc);
+	void updateStreamFrozenPayloads (SalStreamDescription &resultDesc, SalStreamDescription &localStreamDesc);
 	void updateFrozenPayloads (SalMediaDescription *result);
 	void updateStreams (SalMediaDescription *newMd, CallSession::State targetState);
 
@@ -228,7 +228,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription *sd, const std::string mid);
+	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription &sd, const std::string mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();

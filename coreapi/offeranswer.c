@@ -599,7 +599,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 	const SalStreamDescription *rs;
 	SalStreamDescription *ls;
 
-	for(i=0;i<(size_t)local_offer->nb_streams;++i){
+	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
 		ls=&local_offer->streams[i];
 		rs=&remote_answer->streams[i];
@@ -622,7 +622,6 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 		}
 		else ms_warning("No matching stream for %zu",i);
 	}
-	result->nb_streams=local_offer->nb_streams;
 	result->bandwidth=remote_answer->bandwidth;
 	result->addr=remote_answer->addr;
 	result->ice_pwd = local_offer->ice_pwd;
@@ -662,7 +661,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		result->bundles = bctbx_list_copy_with_data(remote_offer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
 	}
 	
-	for(i=0;i<(size_t)remote_offer->nb_streams;++i){
+	for(i=0;i<remote_offer->streams.size();++i){
 		rs = &remote_offer->streams[i];
 		ls = &local_capabilities->streams[i];
 		if (i <= result->streams.size()) {
@@ -713,7 +712,6 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		}
 		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls->custom_sdp_attributes);
 	}
-	result->nb_streams=(int)i;
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
 	result->bandwidth=local_capabilities->bandwidth;
