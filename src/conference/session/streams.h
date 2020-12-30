@@ -356,7 +356,7 @@ public:
 	void unjoinMixerSession();
 	Stream * getStream(size_t index);
 	Stream * getStream(int index){
-		return getStream((size_t) index);
+		return getStream(static_cast<size_t>(index));
 	}
 	/**
 	 * Lookup the main stream for a given stream type.
