@@ -149,9 +149,9 @@ int StunClient::run (int audioPort, int videoPort, int textPort) {
 void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 	if (!stunDiscoveryDone) return;
 	for (auto & stream : md->streams) {
-		if (!sal_stream_description_enabled(&stream))
+		if (!stream.enabled())
 			continue;
-		if (stream.type == SalAudio && audioCandidate.port != 0) {
+		if (stream.getType() == SalAudio && audioCandidate.port != 0) {
 			stream.rtp_addr = audioCandidate.address;
 			stream.rtp_port = audioCandidate.port;
 			if (

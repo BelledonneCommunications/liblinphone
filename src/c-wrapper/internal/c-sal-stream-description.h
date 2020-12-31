@@ -52,6 +52,7 @@ int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStre
 LINPHONE_PUBLIC const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd);
 LINPHONE_PUBLIC const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd);
 LINPHONE_PUBLIC MSList * sal_stream_description_get_payloads(SalStreamDescription *sd);
+LINPHONE_PUBLIC SalStreamDir sal_stream_description_get_direction(SalStreamDescription *sd);
 
 #ifdef __cplusplus
 }
