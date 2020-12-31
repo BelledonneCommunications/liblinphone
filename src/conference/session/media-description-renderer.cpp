@@ -82,6 +82,11 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 }
 
 void OfferAnswerContext::clear(){
+	if (mOwnsMediaDescriptions) {
+		sal_media_description_unref(localMediaDescription);
+		sal_media_description_unref(const_cast<SalMediaDescription*>(remoteMediaDescription));
+		sal_media_description_unref(const_cast<SalMediaDescription*>(resultMediaDescription));
+	}
 	localMediaDescription = nullptr;
 	remoteMediaDescription = nullptr;
 	resultMediaDescription = nullptr;
