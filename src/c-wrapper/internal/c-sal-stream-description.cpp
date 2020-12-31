@@ -22,223 +22,82 @@
 #include "sal/sal_stream_description.h"
 #include "tester_utils.h"
 
-static bool_t is_recv_only(PayloadType *p){
-	return (p->flags & PAYLOAD_TYPE_FLAG_CAN_RECV) && ! (p->flags & PAYLOAD_TYPE_FLAG_CAN_SEND);
-}
-
-static bool_t payload_type_equals(const PayloadType *p1, const PayloadType *p2){
-	if (p1->type!=p2->type) return FALSE;
-	if (strcmp(p1->mime_type,p2->mime_type)!=0) return FALSE;
-	if (p1->clock_rate!=p2->clock_rate) return FALSE;
-	if (p1->channels!=p2->channels) return FALSE;
-	if (payload_type_get_number(p1) != payload_type_get_number(p2)) return FALSE;
-	/*
-	 Do not compare fmtp right now: they are modified internally when the call is started
-	*/
-	/*
-	if (!fmtp_equals(p1->recv_fmtp,p2->recv_fmtp) ||
-		!fmtp_equals(p1->send_fmtp,p2->send_fmtp))
-		return FALSE;
-	*/
-	return TRUE;
-}
-
-static bool_t payload_list_equals(const bctbx_list_t *l1, const bctbx_list_t *l2){
-	const bctbx_list_t *e1,*e2;
-	for(e1=l1,e2=l2;e1!=NULL && e2!=NULL; e1=e1->next,e2=e2->next){
-		PayloadType *p1=(PayloadType*)e1->data;
-		PayloadType *p2=(PayloadType*)e2->data;
-		if (!payload_type_equals(p1,p2))
-			return FALSE;
-	}
-	if (e1!=NULL){
-		/*skip possible recv-only payloads*/
-		for(;e1!=NULL && is_recv_only((PayloadType*)e1->data);e1=e1->next){
-			ms_message("Skipping recv-only payload type...");
-		}
-	}
-	if (e1!=NULL || e2!=NULL){
-		/*means one list is longer than the other*/
-		return FALSE;
-	}
-	return TRUE;
-}
-
 const char *sal_stream_description_get_type_as_string(const SalStreamDescription *desc){
-	if (desc->type==SalOther) return desc->typeother.c_str();
-	else return sal_stream_type_to_string(desc->type);
+//	return L_STRING_TO_C(desc->getTypeAsString());
+	if (desc->getType()==SalOther) return L_STRING_TO_C(desc->typeother);
+	else return sal_stream_type_to_string(desc->getType());
 }
 
 const char *sal_stream_description_get_proto_as_string(const SalStreamDescription *desc){
-	if (desc->proto==SalProtoOther) return desc->proto_other.c_str();
-	else return sal_media_proto_to_string(desc->proto);
+	if (desc->getProto()==SalProtoOther) return L_STRING_TO_C(desc->proto_other);
+	else return sal_media_proto_to_string(desc->getProto());
+	//return L_STRING_TO_C(desc->getProtoAsString());
 }
 
 SalStreamDescription sal_stream_description_create(){
 	SalStreamDescription sd;
-	sal_stream_description_init(&sd);
 	return sd;
 }
 
 SalStreamDescription *sal_stream_description_new(){
 	SalStreamDescription *sd= new SalStreamDescription();
-	sal_stream_description_init(sd);
 	return sd;
 }
 
-void sal_stream_description_init(SalStreamDescription *sd) {
-	sd->payloads=NULL;
-	sd->already_assigned_payloads=NULL;
-	sd->custom_sdp_attributes = NULL;
-
-	sd->pad.clear();
-	sd->crypto.clear();
-	sd->ice_candidates.clear();
-	sd->ice_remote_candidates.clear();
-}
-
 void sal_stream_description_destroy(SalStreamDescription *sd) {
-	bctbx_list_free_with_data(sd->payloads,(void (*)(void *))payload_type_destroy);
-	sd->payloads=NULL;
-	bctbx_list_free_with_data(sd->already_assigned_payloads,(void (*)(void *))payload_type_destroy);
-	sd->already_assigned_payloads=NULL;
-	sal_custom_sdp_attribute_free(sd->custom_sdp_attributes);
+	sd->destroy();
 }
 
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2) {
-	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
-
-	/* A different proto should result in SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED but the encryption change
-	   needs a stream restart for now, so use SAL_MEDIA_DESCRIPTION_CODEC_CHANGED */
-	if (sd1->proto != sd2->proto) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	for(auto crypto1 = sd1->crypto.cbegin(), crypto2 = sd2->crypto.cbegin(); (crypto1 != sd1->crypto.cend() && crypto2 != sd2->crypto.cend()); ++crypto1, ++crypto2){
-		if ((crypto1->tag != crypto2->tag)
-			|| (crypto1->algo != crypto2->algo)){
-			result|=SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
-		}
-		if ((strncmp(crypto1->master_key, crypto2->master_key, sizeof(crypto1->master_key) - 1))) {
-			result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-		}
-	}
-
-	if (sd1->crypto.size() != sd2->crypto.size()) {
-		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
-		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-	}
-
-	if (sd1->type != sd2->type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (sd1->rtp_addr.compare(sd2->rtp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if ((sd1->rtp_addr.empty()==false) && (sd2->rtp_addr.empty()==false) && ms_is_multicast(L_STRING_TO_C(sd1->rtp_addr)) != ms_is_multicast(L_STRING_TO_C(sd2->rtp_addr)))
-			result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
-	if (sd1->multicast_role != sd2->multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
-	if (sd1->rtp_port != sd2->rtp_port) {
-		if ((sd1->rtp_port == 0) || (sd2->rtp_port == 0)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-		else result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	}
-	if (sd1->rtcp_addr.compare(sd2->rtcp_addr) != 0) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (sd1->rtcp_port != sd2->rtcp_port) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
-	if (!payload_list_equals(sd1->payloads, sd2->payloads)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (sd1->bandwidth != sd2->bandwidth) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (sd1->ptime != sd2->ptime) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (sd1->dir != sd2->dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-
-	/* ICE */
-	if (sd1->ice_ufrag.compare(sd2->ice_ufrag) != 0 && !sd2->ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
-	if (sd1->ice_pwd.compare(sd2->ice_pwd) != 0 && !sd2->ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
-
-
-	/*DTLS*/
-	if (sd1->dtls_role != sd2->dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-	if (sd1->dtls_fingerprint.compare(sd2->dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
-
-	return result;
+	return sd1->equal(*sd2);
 }
 
 bool_t sal_stream_description_enabled(const SalStreamDescription *sd) {
-	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
-	return sd->rtp_port > 0 || sd->bundle_only;
+	return sd->enabled();
 }
 
 void sal_stream_description_disable(SalStreamDescription *sd){
-	sd->rtp_port = 0;
-	/* Remove potential bundle parameters. A disabled stream is moved out of the bundle. */
-	sd->mid.clear();
-	sd->bundle_only = FALSE;
+	sd->disable();
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd) {
-	switch (sd->proto){
-		case SalProtoRtpAvpf:
-		case SalProtoRtpSavpf:
-		case SalProtoUdpTlsRtpSavpf:
-			return TRUE;
-		case SalProtoRtpAvp:
-		case SalProtoRtpSavp:
-		case SalProtoUdpTlsRtpSavp:
-		case SalProtoOther:
-			return FALSE;
-	}
-	return FALSE;
+	return sd->hasAvpf();
 }
 
 bool_t sal_stream_description_has_ipv6(const SalStreamDescription *sd){
-	return sd->rtp_addr.find(':') != std::string::npos;
+	return sd->hasIpv6();
 }
 
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd){
-	return sd->implicit_rtcp_fb;
+	return sd->hasImplicitAvpf();
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd) {
-	switch (sd->proto){
-		case SalProtoRtpSavp:
-		case SalProtoRtpSavpf:
-			return TRUE;
-		case SalProtoRtpAvp:
-		case SalProtoRtpAvpf:
-		case SalProtoUdpTlsRtpSavpf:
-		case SalProtoUdpTlsRtpSavp:
-		case SalProtoOther:
-			return FALSE;
-	}
-	return FALSE;
+	return sd->hasSrtp();
 }
 
 bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd) {
-	switch (sd->proto){
-		case SalProtoUdpTlsRtpSavpf:
-		case SalProtoUdpTlsRtpSavp:
-			return TRUE;
-		case SalProtoRtpSavp:
-		case SalProtoRtpSavpf:
-		case SalProtoRtpAvp:
-		case SalProtoRtpAvpf:
-		case SalProtoOther:
-			return FALSE;
-	}
-	return FALSE;
+	return sd->hasDtls();
 }
 
 bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd) {
-	if (sd->haveZrtpHash==1) return TRUE;
-	return FALSE;
+	return sd->hasZrtp();
 }
 
 bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
-	if (sd->haveLimeIk==1) return TRUE;
-	return FALSE;
+	return sd->hasLimeIk();
 }
 
 const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd){
-	return L_STRING_TO_C(sd->rtcp_addr);
+	return L_STRING_TO_C(sd->getRtcpAddress());
 }
 
 const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
-	return L_STRING_TO_C(sd->rtp_addr);
+	return L_STRING_TO_C(sd->getRtpAddress());
 }
 
 MSList * sal_stream_description_get_payloads(SalStreamDescription *sd){
-	return sd->payloads;
+	return sd->getPayloads();
 }

@@ -144,8 +144,8 @@ void MediaSessionPrivate::accepted () {
 				BCTBX_NO_BREAK; /* Intentional no break */
 			case CallSession::State::Updating:
 			case CallSession::State::UpdatedByRemote:
-				if (!sal_media_description_has_dir(localDesc, SalStreamInactive)
-					&& (sal_media_description_has_dir(md, SalStreamRecvOnly) || sal_media_description_has_dir(md, SalStreamInactive))) {
+				if (!localDesc->hasDir(SalStreamInactive)
+					&& (md->hasDir(SalStreamRecvOnly) || md->hasDir(SalStreamInactive))) {
 					nextState = CallSession::State::PausedByRemote;
 					nextStateMsg = "Call paused by remote";
 				} else {
@@ -405,7 +405,7 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 	SalMediaDescription *rmd = op->getRemoteMediaDescription();
 	switch (state) {
 		case CallSession::State::PausedByRemote:
-			if (sal_media_description_has_dir(rmd, SalStreamSendRecv) || sal_media_description_has_dir(rmd, SalStreamRecvOnly)) {
+			if (rmd->hasDir(SalStreamSendRecv) || rmd->hasDir(SalStreamRecvOnly)) {
 				resumed();
 				return;
 			}
@@ -413,7 +413,7 @@ void MediaSessionPrivate::updated (bool isUpdate) {
 		case CallSession::State::StreamsRunning:
 		case CallSession::State::Connected:
 		case CallSession::State::UpdatedByRemote: /* Can happen on UAC connectivity loss */
-			if (sal_media_description_has_dir(rmd, SalStreamSendOnly) || sal_media_description_has_dir(rmd, SalStreamInactive)) {
+			if (rmd->hasDir(SalStreamSendOnly) || rmd->hasDir(SalStreamInactive)) {
 				pausedByRemote();
 				return;
 			}
@@ -1778,10 +1778,10 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	}
 
 	string subject;
-	if (sal_media_description_has_dir(resultDesc, SalStreamSendRecv))
+	if (resultDesc->hasDir(SalStreamSendRecv))
 		subject = "Call on hold";
-	else if (sal_media_description_has_dir(resultDesc, SalStreamRecvOnly) 
-				 || (sal_media_description_has_dir(resultDesc, SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
+	else if (resultDesc->hasDir(SalStreamRecvOnly)
+				 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
