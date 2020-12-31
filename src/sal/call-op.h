@@ -28,7 +28,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalCallOp : public SalOp, public SalMessageOpInterface {
 public:
 	SalCallOp (Sal *sal);
-	~SalCallOp ();
+	virtual ~SalCallOp ();
 
 	SalMediaDescription *getLocalMediaDescription () const { return mLocalMedia; }
 	int setLocalMediaDescription (SalMediaDescription *desc);
