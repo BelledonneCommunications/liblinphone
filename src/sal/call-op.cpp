@@ -356,7 +356,7 @@ void SalCallOp::sdpProcess () {
 			belle_sip_object_unref(mSdpAnswer);
 		offer_answer_initiate_incoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
 		// For backward compatibility purpose
-		if (mCnxIpTo0000IfSendOnlyEnabled && sal_media_description_has_dir(mResult,SalStreamSendOnly)) {
+		if (mCnxIpTo0000IfSendOnlyEnabled && mResult->hasDir(SalStreamSendOnly)) {
 			mResult->addr = setAddrTo0000(mResult->addr);
 			for (auto & stream : mResult->streams) {
 				if (stream.dir == SalStreamSendOnly) {
