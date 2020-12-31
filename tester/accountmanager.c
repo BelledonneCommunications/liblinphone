@@ -86,6 +86,7 @@ static void account_manager_generate_unique_id(AccountManager * am) {
 		am->unique_id[i] = tolower(the_am->unique_id[i]);
 	}
 }
+
 AccountManager *account_manager_get(void){
 	if (the_am==NULL){
 		the_am=ms_new0(AccountManager,1);
@@ -115,20 +116,6 @@ Account *account_manager_get_account(AccountManager *m, const LinphoneAddress *i
 	}
 	return NULL;
 }
-
-LinphoneAddress *account_manager_get_identity_with_modified_identity(const LinphoneAddress *modified_identity){
-	AccountManager *m = account_manager_get();
-	bctbx_list_t *it;
-
-	for(it=m->accounts;it!=NULL;it=it->next){
-		Account *a=(Account*)it->data;
-		if (linphone_address_weak_equal(a->modified_identity,modified_identity)){
-			return a->identity;
-		}
-	}
-	return NULL;
-}
-
 
 static void account_created_on_server_cb(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState state, const char *info){
 	Account *account=(Account*)linphone_core_get_user_data(lc);
@@ -313,7 +300,6 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 					 																, err);
 		};
 	}
-
 
 	if (linphone_account_creator_create_account(creator) ==	LinphoneAccountCreatorStatusMissingCallbacks) {
 		ms_fatal("Could not create account %s on db (missing callbacks)", linphone_proxy_config_get_identity(cfg));
