@@ -25,7 +25,50 @@
 
 typedef struct SalMediaDescription {
 	public:
+		SalMediaDescription();
+		SalMediaDescription(const SalMediaDescription & other);
+		~SalMediaDescription();
+		void init();
+		void destroy();
+
+		SalStreamBundle * addNewBundle();
+
+		int lookupMid(const std::string mid) const;
+		const SalStreamBundle *getBundleFromMid(const std::string mid) const;
+		int getIndexOfTransportOwner(const SalStreamDescription *sd) const;
+
+		SalMediaDescription * ref();
+		void unref();
+
+		const SalStreamDescription *findStream(SalMediaProto proto, SalStreamType type) const;
+		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
+		const SalStreamDescription * getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
+		const SalStreamDescription * findSecureStreamOfType(SalStreamType type) const;
+		const SalStreamDescription * findBestStream(SalStreamType type) const;
+
+		bool_t isEmpty() const;
+
+		void setDir(SalStreamDir stream_dir);
+
+		int getNbActiveStreams() const;
+
 		bool hasDir(const SalStreamDir & stream_dir) const;
+		bool_t hasAvpf() const;
+		bool_t hasImplicitAvpf() const;
+		bool_t hasSrtp() const;
+		bool_t hasDtls() const;
+		bool_t hasZrtp() const;
+		bool_t hasIpv6() const;
+
+		bool operator==(const SalMediaDescription & other) const;
+		int equal(const SalMediaDescription & otherMd) const;
+		int globalEqual(const SalMediaDescription & otherMd) const;
+
+		const std::string printDifferences(int result) const;
+
+		size_t getNbStreams() const;
+		const std::string & getAddress() const;
+		const SalStreamDescription * getStreamIdx(unsigned int idx) const;
 
 	int refcount = 0;
 	std::string name;
