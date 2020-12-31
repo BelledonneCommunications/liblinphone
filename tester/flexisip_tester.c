@@ -706,7 +706,7 @@ static void call_forking_not_responded(void){
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallEnd,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,5000));
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallReleased,1,5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,5000));
@@ -831,7 +831,7 @@ static void call_with_sips(void){
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline1->stat.number_of_LinphoneCallReleased,1,3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,3000));
-		
+
 		linphone_core_manager_destroy(marie);
 		linphone_core_manager_destroy(pauline1);
 		linphone_core_manager_destroy(pauline2);
@@ -1056,7 +1056,7 @@ static void dos_module_trigger(void) {
 	uint64_t time_begin, time_current;
 	int message_sent_index = 0;
 	int message_to_send_index = 0;
-	
+
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 
@@ -1081,7 +1081,7 @@ static void dos_module_trigger(void) {
 	// At this point we should be banned for a minute
 	BC_ASSERT_GREATER(message_sent_index, message_rate, int, "%d");
 	BC_ASSERT_LOWER_STRICT(marie->stat.number_of_LinphoneMessageReceived, message_sent_index - message_rate, int, "%d");
-	
+
 	wait_for_until(marie->lc, pauline->lc, &dummy, 1, 65000); // Wait several seconds to ensure we are not banned anymore
 
 	/*
@@ -1090,7 +1090,7 @@ static void dos_module_trigger(void) {
 	   No data can be send until all retransmissions succeeds.
 	*/
 	wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageReceived, message_sent_index, 60000);
-	
+
 	reset_counters(&marie->stat);
 	reset_counters(&pauline->stat);
 	chat_msg = linphone_chat_room_create_message_from_utf8(chat_room, passmsg);
@@ -1134,7 +1134,7 @@ static void test_subscribe_notify_with_sipp_publisher(void) {
 	scen = bc_tester_res("sipp/simple_publish.xml");
 
 	sip_example_org = linphone_core_manager_resolve(marie, marie->identity);
-	sipp_out = sip_start(scen, linphone_address_get_username(marie->identity), linphone_auth_info_get_passwd(marie_auth), sip_example_org);
+	sipp_out = sip_start(scen, linphone_address_get_username(marie->identity), linphone_auth_info_get_password(marie_auth), sip_example_org);
 	linphone_address_unref(sip_example_org);
 
 	if (sipp_out) {
@@ -1290,7 +1290,7 @@ static void test_subscribe_on_wrong_dialog(void) {
 
 	scen = bc_tester_res("sipp/subscribe_on_wrong_dialog.xml");
 	sip_example_org = linphone_core_manager_resolve(marie, marie->identity);
-	sipp_out = sip_start(scen, linphone_address_get_username(marie->identity),linphone_auth_info_get_passwd(marie_auth), sip_example_org);
+	sipp_out = sip_start(scen, linphone_address_get_username(marie->identity),linphone_auth_info_get_password(marie_auth), sip_example_org);
 	linphone_address_unref(sip_example_org);
 
 	if (sipp_out) {
@@ -1578,14 +1578,14 @@ static void test_protection_against_transport_address_reassignation(void){
 	char local_ip[LINPHONE_IPADDR_SIZE] = { 0 };
 	int client_port = (bctbx_random() % 64000) + 1024;
 	LinphoneCall *marie_call;
-	
+
 	LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(marie->lc);
 	LinphoneAddress *public_addr = linphone_proxy_config_get_transport_contact(cfg);
-	
+
 	if (!BC_ASSERT_PTR_NOT_NULL(public_addr)) goto end;
-	
-	linphone_core_get_local_ip(marie->lc, liblinphone_tester_ipv6_available() ? AF_INET6 : AF_INET, NULL, local_ip); 
-	
+
+	linphone_core_get_local_ip(marie->lc, liblinphone_tester_ipv6_available() ? AF_INET6 : AF_INET, NULL, local_ip);
+
 	if (strcmp(linphone_address_get_domain(public_addr), local_ip) != 0){
 		ms_warning("Apparently we're running behind a firewall. Exceptionnaly, this test must run with a direct connection to the SIP server.");
 		ms_warning("Test skipped.");
@@ -1593,7 +1593,7 @@ static void test_protection_against_transport_address_reassignation(void){
 	}
 	ms_message("Forced client bind port is %i", client_port);
 	pauline = linphone_core_manager_create("pauline_tcp_rc");
-	
+
 	/*
 	 * Force pauline to register using a specific client port
 	 */
@@ -1615,13 +1615,13 @@ static void test_protection_against_transport_address_reassignation(void){
 	linphone_call_terminate(marie_call);
 	BC_ASSERT_TRUE(wait_for_until(laure->lc,marie->lc,&marie->stat.number_of_LinphoneCallReleased,1,3000));
 	linphone_call_unref(marie_call);
-	
+
 	/*
 	 * Now shutdown pauline properly.
 	 */
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
 	wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneRegistrationOk,2,3000);
-	
+
 end:
 	if (public_addr) linphone_address_unref(public_addr);
 	linphone_core_manager_destroy(marie);
@@ -1823,7 +1823,7 @@ void sequential_forking_with_timeout_for_highest_priority(void) {
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallEnd,1,10000));
-	
+
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie3->stat.number_of_LinphoneCallReleased,1,10000));
 
@@ -2096,7 +2096,7 @@ static void deal_with_jwe_auth_module(const char *jwe, bool_t invalid_jwe, bool_
 	linphone_call_params_unref(gandalf_params);
 
 	int n_expected_calls = invalid_jwe || invalid_oid ? 0 : 1;
-	
+
 	if (n_expected_calls){
 		BC_ASSERT_TRUE(wait_for_list(lcs, &gandalf->stat.number_of_LinphoneCallOutgoingRinging, 1, 3000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1, 3000));
