@@ -39,7 +39,10 @@ SalCallOp::SalCallOp (Sal *sal) : SalOp(sal) {
 }
 
 SalCallOp::~SalCallOp () {
-
+	if (mLocalMedia)
+		sal_media_description_unref(mLocalMedia);
+	if (mRemoteMedia)
+		sal_media_description_unref(mRemoteMedia);
 }
 
 int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {

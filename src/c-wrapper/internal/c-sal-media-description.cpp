@@ -80,9 +80,6 @@ int sal_media_description_get_index_of_transport_owner(const SalMediaDescription
 }
 
 static void sal_media_description_destroy(SalMediaDescription *md){
-	md->streams.clear();
-	bctbx_list_free_with_data(md->bundles, (void (*)(void*)) sal_stream_bundle_destroy);
-	sal_custom_sdp_attribute_free(md->custom_sdp_attributes);
 	delete md;
 }
 
