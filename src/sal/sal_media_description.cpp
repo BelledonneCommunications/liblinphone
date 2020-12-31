@@ -39,7 +39,7 @@ bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
 bool SalMediaDescription::containsStreamWithDir(const SalStreamDir & stream_dir) const{
 	/* we are looking for at least one stream with requested direction, inactive streams are ignored*/
 	for(auto & stream : streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
+		if (!stream.enabled()) continue;
 		if (stream.dir==stream_dir) {
 			return TRUE;
 		}

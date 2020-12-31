@@ -98,6 +98,10 @@ const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
 	return L_STRING_TO_C(sd->getRtpAddress());
 }
 
+SalStreamDir sal_stream_description_get_direction(SalStreamDescription *sd){
+	return sd->getDirection();
+}
+
 MSList * sal_stream_description_get_payloads(SalStreamDescription *sd){
 	return sd->getPayloads();
 }

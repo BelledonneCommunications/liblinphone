@@ -72,11 +72,11 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 	
 	if (previousCtx.localMediaDescription && previousCtx.localStreamDescription){
 		localStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.localMediaDescription, localMediaDescription)
-		| sal_stream_description_equals(previousCtx.localStreamDescription, localStreamDescription);
+		| (previousCtx.localStreamDescription == localStreamDescription);
 	}else localStreamDescriptionChanges = 0;
 	if (previousCtx.resultMediaDescription && resultMediaDescription && previousCtx.resultStreamDescription && resultStreamDescription){
 		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
-		| sal_stream_description_equals(previousCtx.resultStreamDescription, resultStreamDescription);
+		| (previousCtx.resultStreamDescription == resultStreamDescription);
 	}else resultStreamDescriptionChanges = 0;
 	return *this;
 }

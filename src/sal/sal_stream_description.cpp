@@ -269,8 +269,16 @@ const std::string & SalStreamDescription::getRtcpAddress() const {
 	return rtcp_addr;
 }
 
+const int & SalStreamDescription::getRtcpPort() const {
+	return rtcp_port;
+}
+
 const std::string & SalStreamDescription::getRtpAddress() const {
 	return rtp_addr;
+}
+
+const int & SalStreamDescription::getRtpPort() const {
+	return rtp_port;
 }
 
 const SalStreamType & SalStreamDescription::getType() const {
@@ -289,6 +297,10 @@ const SalMediaProto & SalStreamDescription::getProto() const {
 const std::string SalStreamDescription::getProtoAsString() const {
 	if (proto==SalProtoOther) return proto_other;
 	else return sal_media_proto_to_string(proto);
+}
+
+SalStreamDir SalStreamDescription::getDirection() const {
+	return dir;
 }
 
 MSList * SalStreamDescription::getPayloads() const {
