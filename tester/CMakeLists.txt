@@ -287,6 +287,7 @@ set(SOURCE_FILES_CXX
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
 	account-creator-flexiapi-tester.cpp
+	flexiapiclient-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
