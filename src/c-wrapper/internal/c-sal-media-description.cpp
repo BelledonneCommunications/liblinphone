@@ -23,26 +23,6 @@
 #include "c-wrapper/internal/c-sal-stream-bundle.h"
 #include "tester_utils.h"
 
-static bool_t is_null_address(const std::string & addr){
-	return addr.compare("0.0.0.0")==0 || addr.compare("::0")==0;
-}
-
-/*check for the presence of at least one stream with requested direction */
-static bool_t has_dir(const SalMediaDescription *md, SalStreamDir stream_dir){
-	/* we are looking for at least one stream with requested direction, inactive streams are ignored*/
-	for(auto & stream : md->streams){
-		const SalStreamDescription *ss=&stream;
-		if (!sal_stream_description_enabled(ss)) continue;
-		if (ss->dir==stream_dir) {
-			return TRUE;
-		}
-		/*compatibility check for phones that only used the null address and no attributes */
-		if (ss->dir==SalStreamSendRecv && stream_dir==SalStreamSendOnly && (is_null_address(md->addr) || is_null_address(ss->rtp_addr))){
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
 
 SalMediaDescription *sal_media_description_new(){
 	SalMediaDescription *md= new SalMediaDescription();
@@ -110,9 +90,6 @@ int sal_media_description_get_index_of_transport_owner(const SalMediaDescription
 }
 
 static void sal_media_description_destroy(SalMediaDescription *md){
-	for(auto & stream : md->streams){
-		sal_stream_description_destroy(&stream);
-	}
 	md->streams.clear();
 	bctbx_list_free_with_data(md->bundles, (void (*)(void*)) sal_stream_bundle_destroy);
 	sal_custom_sdp_attribute_free(md->custom_sdp_attributes);
@@ -196,20 +173,8 @@ int sal_media_description_get_nb_active_streams(const SalMediaDescription *md) {
 	return nb;
 }
 
-bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir stream_dir){
-	if (stream_dir==SalStreamRecvOnly){
-		return has_dir(md, SalStreamRecvOnly) && !(has_dir(md,SalStreamSendOnly) || has_dir(md,SalStreamSendRecv));
-	}else if (stream_dir==SalStreamSendOnly){
-		return has_dir(md, SalStreamSendOnly) && !(has_dir(md,SalStreamRecvOnly) || has_dir(md,SalStreamSendRecv));
-	}else if (stream_dir==SalStreamSendRecv){
-		return has_dir(md,SalStreamSendRecv);
-	}else{
-		/*SalStreamInactive*/
-		if (has_dir(md,SalStreamSendOnly) || has_dir(md,SalStreamSendRecv)  || has_dir(md,SalStreamRecvOnly))
-			return FALSE;
-		else return TRUE;
-	}
-	return FALSE;
+bool_t sal_media_description_has_dir(const SalMediaDescription *md, const SalStreamDir stream_dir){
+	return md->hasDir(stream_dir);
 }
 
 bool_t sal_media_description_has_avpf(const SalMediaDescription *md) {
