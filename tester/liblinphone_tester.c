@@ -17,7 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -491,7 +490,6 @@ int liblinphone_tester_set_log_file(const char *filename) {
 	linphone_core_set_log_file(log_file);
 	return 0;
 }
-
 
 #if !TARGET_OS_IPHONE && !(defined(LINPHONE_WINDOWS_PHONE) || defined(LINPHONE_WINDOWS_UNIVERSAL))
 
