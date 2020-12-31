@@ -79,11 +79,11 @@ typedef struct SalMediaDescription {
 	unsigned int session_id = 0;
 	SalStreamDir dir;
 	std::vector<SalStreamDescription> streams;
-	SalCustomSdpAttribute *custom_sdp_attributes;
+	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	std::string ice_ufrag;
 	std::string ice_pwd;
-	bctbx_list_t *bundles; /* list of SalStreamBundle */
+	bctbx_list_t *bundles = nullptr; /* list of SalStreamBundle */
 	bool_t ice_lite = FALSE;
 	bool_t set_nortpproxy = FALSE;
 	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
