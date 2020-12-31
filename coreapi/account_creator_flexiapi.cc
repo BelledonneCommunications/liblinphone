@@ -45,6 +45,10 @@ AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
     mRequestCallbacks.core = lc;
 }
 
+/**
+ * Endpoints
+ */
+
 AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::ping() {
     prepareRequest("ping");
     return this;
@@ -76,7 +80,7 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm,
     if (!oldPassword.empty()) {
         params.push("old_password", oldPassword);
     }
-    prepareRequest("accounts/password", params);
+    prepareRequest("accounts/password", "POST", params);
     return this;
 }
 
@@ -85,10 +89,93 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::me() {
     return this;
 }
 
+/**
+ * Admin endpoints
+ */
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::createAccount(
+    string username,
+    string password,
+    string algorithm
+) {
+    return createAccount(username, password, algorithm, "", false);
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    string domain
+) {
+    return createAccount(username, password, algorithm, domain, false);
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    bool activated
+) {
+    return createAccount(username, password, algorithm, "", activated);
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    string domain,
+    bool activated
+) {
+    JsonParams params;
+    params.push("username", username);
+    params.push("password", password);
+    params.push("algorithm", algorithm);
+    params.push("activated", to_string(activated));
+
+    if (!domain.empty()) {
+        params.push("domain", domain);
+    }
+    prepareRequest("accounts", "POST", params);
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::accounts() {
+    prepareRequest("accounts");
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::accountDelete(int id) {
+    prepareRequest(string("accounts").append(to_string(id)).c_str(), "DELETE");
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::account(int id) {
+    prepareRequest(string("accounts").append(to_string(id)).c_str());
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::accountActivate(int id) {
+    prepareRequest(string("accounts").append(to_string(id)).append("/activate").c_str());
+    return this;
+}
+
+AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::accountDeactivate(int id) {
+    prepareRequest(string("accounts").append(to_string(id)).append("/deactivate").c_str());
+    return this;
+}
+
+/**
+ * Authentication
+ */
+
 AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::setApiKey(const char* key) {
     apiKey = key;
     return this;
 }
+
+/**
+ * Callback requests
+ */
 
 AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::then(function<void (AccountCreatorFlexiAPI::Response)> success) {
     mRequestCallbacks.success = success;
@@ -102,10 +189,15 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::error(function<void (AccountCrea
 
 void AccountCreatorFlexiAPI::prepareRequest(const char* path) {
     JsonParams params;
-    prepareRequest(path, params);
+    prepareRequest(path, "GET", params);
 }
 
-void AccountCreatorFlexiAPI::prepareRequest(const char* path, JsonParams params) {
+void AccountCreatorFlexiAPI::prepareRequest(const char* path, string type) {
+    JsonParams params;
+    prepareRequest(path, type, params);
+}
+
+void AccountCreatorFlexiAPI::prepareRequest(const char* path, string type, JsonParams params) {
     belle_http_request_listener_callbacks_t internalCallbacks = {};
     belle_http_request_listener_t *listener;
     belle_http_request_t *req;
@@ -116,7 +208,7 @@ void AccountCreatorFlexiAPI::prepareRequest(const char* path, JsonParams params)
     char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 
     req = belle_http_request_create(
-        params.empty() ? "GET" : "POST",
+        type.c_str(),
         belle_generic_uri_parse(uri.append(path).c_str()),
         belle_sip_header_content_type_create("application", "json"),
         belle_sip_header_accept_create("application", "json"),
