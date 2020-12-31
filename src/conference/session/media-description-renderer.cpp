@@ -72,21 +72,16 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 	
 	if (previousCtx.localMediaDescription && previousCtx.localStreamDescription){
 		localStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.localMediaDescription, localMediaDescription)
-		| (previousCtx.localStreamDescription == localStreamDescription);
+		| previousCtx.localStreamDescription->equal(*localStreamDescription);
 	}else localStreamDescriptionChanges = 0;
 	if (previousCtx.resultMediaDescription && resultMediaDescription && previousCtx.resultStreamDescription && resultStreamDescription){
 		resultStreamDescriptionChanges = sal_media_description_global_equals(previousCtx.resultMediaDescription, resultMediaDescription)
-		| (previousCtx.resultStreamDescription == resultStreamDescription);
+		| previousCtx.resultStreamDescription->equal(*resultStreamDescription);
 	}else resultStreamDescriptionChanges = 0;
 	return *this;
 }
 
 void OfferAnswerContext::clear(){
-	if (mOwnsMediaDescriptions){
-		if (localMediaDescription) sal_media_description_unref(localMediaDescription);
-		if (remoteMediaDescription) sal_media_description_unref(const_cast<SalMediaDescription*>(remoteMediaDescription));
-		if (resultMediaDescription) sal_media_description_unref(const_cast<SalMediaDescription*>(resultMediaDescription));
-	}
 	localMediaDescription = nullptr;
 	remoteMediaDescription = nullptr;
 	resultMediaDescription = nullptr;
