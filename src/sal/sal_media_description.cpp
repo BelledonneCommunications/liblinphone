@@ -18,3 +18,39 @@
  */
 
 #include "sal/sal_media_description.h"
+#include "c-wrapper/internal/c-sal-stream-description.h"
+
+bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
+	if (stream_dir==SalStreamRecvOnly){
+		return containsStreamWithDir(SalStreamRecvOnly) && !(containsStreamWithDir(SalStreamSendOnly) || containsStreamWithDir(SalStreamSendRecv));
+	}else if (stream_dir==SalStreamSendOnly){
+		return containsStreamWithDir(SalStreamSendOnly) && !(containsStreamWithDir(SalStreamRecvOnly) || containsStreamWithDir(SalStreamSendRecv));
+	}else if (stream_dir==SalStreamSendRecv){
+		return containsStreamWithDir(SalStreamSendRecv);
+	}else{
+		/*SalStreamInactive*/
+		if (containsStreamWithDir(SalStreamSendOnly) || containsStreamWithDir(SalStreamSendRecv)  || containsStreamWithDir(SalStreamRecvOnly))
+			return FALSE;
+		else return TRUE;
+	}
+	return FALSE;
+}
+
+bool SalMediaDescription::containsStreamWithDir(const SalStreamDir & stream_dir) const{
+	/* we are looking for at least one stream with requested direction, inactive streams are ignored*/
+	for(auto & stream : streams){
+		if (!sal_stream_description_enabled(&stream)) continue;
+		if (stream.dir==stream_dir) {
+			return TRUE;
+		}
+		/*compatibility check for phones that only used the null address and no attributes */
+		if (stream.dir==SalStreamSendRecv && stream_dir==SalStreamSendOnly && (isNullAddress(addr) || isNullAddress(stream.rtp_addr))){
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+bool SalMediaDescription::isNullAddress(const std::string & addr) const {
+	return addr.compare("0.0.0.0")==0 || addr.compare("::0")==0;
+}
