@@ -93,7 +93,7 @@ set(LINPHONE_SOURCE_FILES_C
 	vtables.c
 )
 set(LINPHONE_SOURCE_FILES_CXX
-	account_creator_flexiapi.cc
+	FlexiAPIClient.cc
 	conference.cc
 	tester_utils.cpp
 )

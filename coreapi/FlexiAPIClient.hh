@@ -29,7 +29,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-class AccountCreatorFlexiAPI {
+class FlexiAPIClient {
     public:
         class Response {
             public:
@@ -46,25 +46,17 @@ class AccountCreatorFlexiAPI {
 
         class JsonParams {
             public:
-                list<pair<string, string>> params;
+                Json::Value jsonParameters;
 
                 void push(string key, string value) {
-                    params.push_back(make_pair(key, value));
+                    jsonParameters[key] = value;
                 };
 
                 bool empty() {
-                    return params.empty();
+                    return jsonParameters.empty();
                 };
 
                 string json() {
-                    Json::Value jsonParameters;
-
-                    list<pair<string, string>>::iterator it;
-
-                    for (it = params.begin(); it != params.end(); ++it) {
-                        jsonParameters[(*it).first] = (*it).second;
-                    }
-
                     Json::StreamWriterBuilder builder;
                     builder["indentation"] = "";
 
@@ -79,29 +71,49 @@ class AccountCreatorFlexiAPI {
                 LinphoneCore *core;
         };
 
-        AccountCreatorFlexiAPI(LinphoneCore *lc);
+        FlexiAPIClient(LinphoneCore *lc);
 
-        // Endpoints
-        AccountCreatorFlexiAPI* ping();
-        AccountCreatorFlexiAPI* emailChange(string email);
-        AccountCreatorFlexiAPI* me();
-        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password);
-        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password, string oldPassword);
+        // Public endpoinds
+        FlexiAPIClient* ping();
+        FlexiAPIClient* accountInfo(string sip);
+        FlexiAPIClient* accountActivateEmail(string sip, string code);
+        FlexiAPIClient* accountActivatePhone(string sip, string code);
+
+        // Authenticated endpoints
+        FlexiAPIClient* emailChange(string email);
+        FlexiAPIClient* me();
+        FlexiAPIClient* accountDelete();
+        FlexiAPIClient* accountPasswordChange(string algorithm, string password);
+        FlexiAPIClient* accountPasswordChange(string algorithm, string password, string oldPassword);
+        FlexiAPIClient* accountDevices();
+        FlexiAPIClient* accountDevice(string uuid);
+
+        // Admin endpoints
+        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm);
+        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, string domain);
+        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, bool activated);
+        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, string domain, bool activated);
+        FlexiAPIClient* adminAccounts();
+        FlexiAPIClient* adminAccount(int id);
+        FlexiAPIClient* adminAccountDelete(int id);
+        FlexiAPIClient* adminAccountActivate(int id);
+        FlexiAPIClient* adminAccountDeactivate(int id);
 
         // Authentication
-        AccountCreatorFlexiAPI* setApiKey(const char* key);
+        FlexiAPIClient* setApiKey(const char* key);
 
         // Callbacks handlers
-        AccountCreatorFlexiAPI* then(function<void (Response)> success);
-        AccountCreatorFlexiAPI* error(function<void (Response)> error);
+        FlexiAPIClient* then(function<void (Response)> success);
+        FlexiAPIClient* error(function<void (Response)> error);
 
     private:
         LinphoneCore *mCore;
         Callbacks mRequestCallbacks;
         const char* apiKey;
 
-        void prepareRequest(const char *path);
-        void prepareRequest(const char *path, JsonParams params);
+        void prepareRequest(string path);
+        void prepareRequest(string path, string type);
+        void prepareRequest(string path, string type, JsonParams params);
         static void processResponse(void *ctx, const belle_http_response_event_t *event);
         static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
 };
