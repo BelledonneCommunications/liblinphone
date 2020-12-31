@@ -40,16 +40,6 @@ SalStreamBundle * sal_media_description_add_new_bundle(SalMediaDescription *md){
 	return bundle;
 }
 
-int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid){
-	const bctbx_list_t *elem;
-	for (elem = bundle->mids; elem != NULL; elem = elem->next){
-		const char *m = (const char *) elem->data;
-		if (strcmp(m, mid) == 0) return TRUE;
-	}
-	return FALSE;
-}
-
-
 int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *mid){
 	size_t index;
 	for (index = 0 ; index < md->streams.size(); ++index){

@@ -43,3 +43,12 @@ SalStreamBundle *sal_stream_bundle_clone(const SalStreamBundle *bundle){
 const char *sal_stream_bundle_get_mid_of_transport_owner(const SalStreamBundle *bundle){
 	return (const char*)bundle->mids->data; /* the first one is the transport owner*/
 }
+
+int sal_stream_bundle_has_mid(const SalStreamBundle *bundle, const char *mid){
+	const bctbx_list_t *elem;
+	for (elem = bundle->mids; elem != NULL; elem = elem->next){
+		const char *m = (const char *) elem->data;
+		if (strcmp(m, mid) == 0) return TRUE;
+	}
+	return FALSE;
+}
