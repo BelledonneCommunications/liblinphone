@@ -340,7 +340,7 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
 		params.scopeStreamToIndex(s->getIndex());
-		if (!sal_stream_description_enabled(params.resultStreamDescription) || params.resultStreamDescription->dir == SalStreamInactive)
+		if (!params.resultStreamDescription->enabled() || params.resultStreamDescription->getDirection() == SalStreamInactive)
 			continue;
 		
 		const SalStreamDescription *refStream = params.resultStreamDescription;

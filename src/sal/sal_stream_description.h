@@ -48,13 +48,16 @@ typedef struct SalStreamDescription {
 		bool_t hasZrtp() const;
 		bool_t hasLimeIk() const;
 		const std::string & getRtcpAddress() const;
+		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
+		const int & getRtpPort() const;
 		MSList * getPayloads() const;
 
 		const SalStreamType & getType() const;
 		const std::string getTypeAsString() const;
 		const SalMediaProto & getProto() const;
 		const std::string getProtoAsString() const;
+		SalStreamDir getDirection() const;
 
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
