@@ -3080,7 +3080,7 @@ extern "C" void Java_org_linphone_core_LinphoneAuthInfoImpl_delete(JNIEnv* env
  */
 extern "C" jstring  Java_org_linphone_core_LinphoneAuthInfoImpl_getPassword
 (JNIEnv *env , jobject, jlong auth_info) {
-	const char* passwd = linphone_auth_info_get_passwd((LinphoneAuthInfo*)auth_info);
+	const char* passwd = linphone_auth_info_get_password((LinphoneAuthInfo*)auth_info);
 	if (passwd) {
 		return env->NewStringUTF(passwd);
 	} else {
@@ -5409,7 +5409,7 @@ extern "C" jint Java_org_linphone_core_LinphoneProxyConfigImpl_getPrivacy(JNIEnv
 }
 
 extern "C" void  Java_org_linphone_core_LinphoneProxyConfigImpl_enableAvpf(JNIEnv *env, jobject thiz, jlong ptr, jboolean enable) {
-	
+
 }
 
 extern "C" jboolean  Java_org_linphone_core_LinphoneProxyConfigImpl_avpfEnabled(JNIEnv *env, jobject thiz, jlong ptr) {
