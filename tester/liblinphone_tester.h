@@ -73,7 +73,7 @@ extern test_suite_t multi_call_test_suite;
 extern test_suite_t multicast_call_test_suite;
 extern test_suite_t audio_video_conference_test_suite;
 extern test_suite_t multipart_test_suite;
-extern test_suite_t account_creator_flexiapi_suite;
+extern test_suite_t flexiapiclient_suite;
 extern test_suite_t offeranswer_test_suite;
 extern test_suite_t player_test_suite;
 extern test_suite_t presence_server_test_suite;
