@@ -111,7 +111,7 @@ void sal_media_description_unref(SalMediaDescription *md){
 SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type){
 	for(auto & stream : md->streams){
 		SalStreamDescription *ss=&stream;
-		if (!sal_stream_description_enabled(ss)) continue;
+		if (!ss->enabled()) continue;
 		if (ss->proto==proto && ss->type==type) return ss;
 	}
 	return NULL;
@@ -120,16 +120,16 @@ SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md,
 unsigned int sal_media_description_nb_active_streams_of_type(SalMediaDescription *md, SalStreamType type) {
 	unsigned int nb = 0;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (stream.type == type) nb++;
+		if (!stream.enabled()) continue;
+		if (stream.getType() == type) nb++;
 	}
 	return nb;
 }
 
 SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaDescription *md, SalStreamType type, unsigned int idx) {
 	for(auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (stream.type == type) {
+		if (!stream.enabled()) continue;
+		if (stream.getType() == type) {
 			if (idx-- == 0) return &stream;
 		}
 	}
@@ -160,7 +160,7 @@ bool_t sal_media_description_empty(const SalMediaDescription *md){
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir){
 	for(auto & stream : md->streams){
 		SalStreamDescription *ss=&stream;
-		if (!sal_stream_description_enabled(ss)) continue;
+		if (!ss->enabled()) continue;
 		stream.dir=stream_dir;
 	}
 }
@@ -168,7 +168,7 @@ void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_
 int sal_media_description_get_nb_active_streams(const SalMediaDescription *md) {
 	int nb = 0;
 	for(auto & stream : md->streams){
-		if (sal_stream_description_enabled(&stream)) nb++;
+		if (stream.enabled()) nb++;
 	}
 	return nb;
 }
@@ -180,8 +180,8 @@ bool_t sal_media_description_has_dir(const SalMediaDescription *md, const SalStr
 bool_t sal_media_description_has_avpf(const SalMediaDescription *md) {
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (sal_stream_description_has_avpf(&stream) != TRUE) return FALSE;
+		if (!stream.enabled()) continue;
+		if (stream.hasAvpf() != TRUE) return FALSE;
 	}
 	return TRUE;
 }
@@ -189,8 +189,8 @@ bool_t sal_media_description_has_avpf(const SalMediaDescription *md) {
 bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md) {
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (sal_stream_description_has_implicit_avpf(&stream) != TRUE) return FALSE;
+		if (!stream.enabled()) continue;
+		if (stream.hasImplicitAvpf() != TRUE) return FALSE;
 	}
 	return TRUE;
 }
@@ -198,8 +198,8 @@ bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md) {
 bool_t sal_media_description_has_srtp(const SalMediaDescription *md) {
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (sal_stream_description_has_srtp(&stream)) return TRUE;
+		if (!stream.enabled()) continue;
+		if (stream.hasSrtp()) return TRUE;
 	}
 	return FALSE;
 }
@@ -207,8 +207,8 @@ bool_t sal_media_description_has_srtp(const SalMediaDescription *md) {
 bool_t sal_media_description_has_dtls(const SalMediaDescription *md) {
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (sal_stream_description_has_dtls(&stream) != TRUE) return FALSE;
+		if (!stream.enabled()) continue;
+		if (stream.hasDtls() != TRUE) return FALSE;
 	}
 	return TRUE;
 }
@@ -216,8 +216,8 @@ bool_t sal_media_description_has_dtls(const SalMediaDescription *md) {
 bool_t sal_media_description_has_zrtp(const SalMediaDescription *md) {
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (sal_stream_description_has_zrtp(&stream) != TRUE) return FALSE;
+		if (!stream.enabled()) continue;
+		if (stream.hasZrtp() != TRUE) return FALSE;
 	}
 	return TRUE;
 }
@@ -225,9 +225,9 @@ bool_t sal_media_description_has_zrtp(const SalMediaDescription *md) {
 bool_t sal_media_description_has_ipv6(const SalMediaDescription *md){
 	if (md->streams.empty()) return FALSE;
 	for(const auto & stream : md->streams){
-		if (!sal_stream_description_enabled(&stream)) continue;
-		if (stream.rtp_addr.empty() == false){
-			if (!sal_stream_description_has_ipv6(&stream)) return FALSE;
+		if (!stream.enabled()) continue;
+		if (stream.getRtpAddress().empty() == false){
+			if (!stream.hasIpv6()) return FALSE;
 		}else{
 			if (md->addr.find(':') == std::string::npos) return FALSE;
 		}
