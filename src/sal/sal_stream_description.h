@@ -25,6 +25,37 @@
 #include "ortp/rtpsession.h"
 
 typedef struct SalStreamDescription {
+
+	public:
+		SalStreamDescription();
+		SalStreamDescription(const SalStreamDescription & other);
+		~SalStreamDescription();
+		void init();
+		void destroy();
+		int equal(const SalStreamDescription & other) const;
+		bool operator==(const SalStreamDescription & other) const;
+		bool_t enabled() const;
+		void disable();
+
+		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
+		bool_t hasAvpf() const;
+		bool_t hasIpv6() const;
+		bool_t hasImplicitAvpf() const;
+
+		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
+		bool_t hasSrtp() const;
+		bool_t hasDtls() const;
+		bool_t hasZrtp() const;
+		bool_t hasLimeIk() const;
+		const std::string & getRtcpAddress() const;
+		const std::string & getRtpAddress() const;
+		MSList * getPayloads() const;
+
+		const SalStreamType & getType() const;
+		const std::string getTypeAsString() const;
+		const SalMediaProto & getProto() const;
+		const std::string getProtoAsString() const;
+
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 	SalMediaProto proto;
 	SalStreamType type;
@@ -36,8 +67,8 @@ typedef struct SalStreamDescription {
 	std::string rtcp_cname;
 	int rtp_port = 0;
 	int rtcp_port = 0;
-	MSList *payloads = nullptr; /**<list of PayloadType */
-	MSList *already_assigned_payloads = nullptr; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
+	bctbx_list_t *payloads = nullptr; /**<list of PayloadType */
+	bctbx_list_t *already_assigned_payloads = nullptr; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 	int bandwidth = 0;
 	int ptime = 0;
 	int maxptime = 0;
@@ -67,6 +98,12 @@ typedef struct SalStreamDescription {
 	SalDtlsRole dtls_role = SalDtlsRoleInvalid;
 	int ttl = 0; /*for multicast -1 to disable*/
 	SalMulticastRole multicast_role = SalMulticastInactive;
+
+	private:
+		bool_t isRecvOnly(PayloadType *p) const;
+		bool_t isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
+		bool_t isSamePayloadList(const bctbx_list_t *l1, const bctbx_list_t *l2) const;
+
 } SalStreamDescription;
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_

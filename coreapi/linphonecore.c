@@ -4506,7 +4506,7 @@ int linphone_core_preempt_sound_resources(LinphoneCore *lc){
 
 		shared_ptr<LinphonePrivate::Call> cpp_call = Call::toCpp(current_call)->getSharedFromThis();
 		auto ms = static_pointer_cast<LinphonePrivate::MediaSession>(cpp_call->getActiveSession());
-		if (sal_media_description_has_dir(L_GET_PRIVATE(ms)->getResultDesc(), SalStreamSendOnly)) {
+		if (L_GET_PRIVATE(ms)->getResultDesc()->hasDir(SalStreamSendOnly)) {
 			ms_error("Trying to empty resources of a call whose SAL media direction is SendOnly - If you wish to do so, please set configuration parameter media_resources_mode to shared: linphone_core_set_media_resource_mode (lc, LinphoneSharedMediaResources)");
 		} else {
 			ms_message("Pausing automatically the current call.");

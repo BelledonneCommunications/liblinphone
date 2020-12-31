@@ -24,6 +24,9 @@
 #include "sal/sal_stream_bundle.h"
 
 typedef struct SalMediaDescription {
+	public:
+		bool hasDir(const SalStreamDir & stream_dir) const;
+
 	int refcount = 0;
 	std::string name;
 	std::string addr;
@@ -42,6 +45,13 @@ typedef struct SalMediaDescription {
 	bool_t set_nortpproxy = FALSE;
 	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 	std::vector<bool_t> pad;
+
+	private:
+		/*check for the presence of at least one stream with requested direction */
+		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
+
+		bool isNullAddress(const std::string & addr) const;
+
 } SalMediaDescription;
 
 #endif // ifndef _SAL_MEDIA_DESCRIPTION_H_
