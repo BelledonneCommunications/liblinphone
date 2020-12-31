@@ -21,7 +21,7 @@
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
 
-#include "account_creator_flexiapi.hh"
+#include "FlexiAPIClient.hh"
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
@@ -37,7 +37,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
+FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
     mCore = lc;
     apiKey = nullptr;
 
@@ -45,15 +45,19 @@ AccountCreatorFlexiAPI::AccountCreatorFlexiAPI(LinphoneCore *lc) {
     mRequestCallbacks.core = lc;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::ping() {
+/**
+ * Endpoints
+ */
+
+FlexiAPIClient* FlexiAPIClient::ping() {
     prepareRequest("ping");
     return this;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::emailChange(string email) {
+FlexiAPIClient* FlexiAPIClient::emailChange(string email) {
     JsonParams params;
     params.push("email", email);
-    prepareRequest("accounts/email/request", params);
+    prepareRequest("accounts/email/request", "POST", params);
     return this;
 }
 
@@ -64,11 +68,11 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::emailChange(string email) {
  * @param [in] the old password if already set
  */
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm, string password) {
+FlexiAPIClient* FlexiAPIClient::passwordChange(string algorithm, string password) {
     return passwordChange(algorithm, password, "");
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm, string password, string oldPassword) {
+FlexiAPIClient* FlexiAPIClient::passwordChange(string algorithm, string password, string oldPassword) {
     JsonParams params;
     params.push("algorithm", algorithm);
     params.push("password", password);
@@ -76,47 +80,135 @@ AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::passwordChange(string algorithm,
     if (!oldPassword.empty()) {
         params.push("old_password", oldPassword);
     }
-    prepareRequest("accounts/password", params);
+    prepareRequest("accounts/password", "POST", params);
     return this;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::me() {
+FlexiAPIClient* FlexiAPIClient::me() {
     prepareRequest("accounts/me");
     return this;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::setApiKey(const char* key) {
+/**
+ * Admin endpoints
+ */
+
+FlexiAPIClient* FlexiAPIClient::createAccount(
+    string username,
+    string password,
+    string algorithm
+) {
+    return createAccount(username, password, algorithm, "", false);
+}
+
+FlexiAPIClient* FlexiAPIClient::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    string domain
+) {
+    return createAccount(username, password, algorithm, domain, false);
+}
+
+FlexiAPIClient* FlexiAPIClient::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    bool activated
+) {
+    return createAccount(username, password, algorithm, "", activated);
+}
+
+FlexiAPIClient* FlexiAPIClient::createAccount(
+    string username,
+    string password,
+    string algorithm,
+    string domain,
+    bool activated
+) {
+    JsonParams params;
+    params.push("username", username);
+    params.push("password", password);
+    params.push("algorithm", algorithm);
+    params.push("activated", to_string(activated));
+
+    if (!domain.empty()) {
+        params.push("domain", domain);
+    }
+    prepareRequest("accounts", "POST", params);
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accounts() {
+    prepareRequest("accounts");
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountDelete(int id) {
+    prepareRequest(string("accounts/").append(to_string(id)).c_str(), "DELETE");
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::account(int id) {
+    prepareRequest(string("accounts/").append(to_string(id)).c_str());
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountActivate(int id) {
+    prepareRequest(string("accounts/").append(to_string(id)).append("/activate").c_str());
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountDeactivate(int id) {
+    prepareRequest(string("accounts/").append(to_string(id)).append("/deactivate").c_str());
+    return this;
+}
+
+/**
+ * Authentication
+ */
+
+FlexiAPIClient* FlexiAPIClient::setApiKey(const char* key) {
     apiKey = key;
     return this;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::then(function<void (AccountCreatorFlexiAPI::Response)> success) {
+/**
+ * Callback requests
+ */
+
+FlexiAPIClient* FlexiAPIClient::then(function<void (FlexiAPIClient::Response)> success) {
     mRequestCallbacks.success = success;
     return this;
 }
 
-AccountCreatorFlexiAPI* AccountCreatorFlexiAPI::error(function<void (AccountCreatorFlexiAPI::Response)> error) {
+FlexiAPIClient* FlexiAPIClient::error(function<void (FlexiAPIClient::Response)> error) {
     mRequestCallbacks.error = error;
     return this;
 }
 
-void AccountCreatorFlexiAPI::prepareRequest(const char* path) {
+void FlexiAPIClient::prepareRequest(const char* path) {
     JsonParams params;
-    prepareRequest(path, params);
+    prepareRequest(path, "GET", params);
 }
 
-void AccountCreatorFlexiAPI::prepareRequest(const char* path, JsonParams params) {
+void FlexiAPIClient::prepareRequest(const char* path, string type) {
+    JsonParams params;
+    prepareRequest(path, type, params);
+}
+
+void FlexiAPIClient::prepareRequest(const char* path, string type, JsonParams params) {
     belle_http_request_listener_callbacks_t internalCallbacks = {};
     belle_http_request_listener_t *listener;
     belle_http_request_t *req;
 
-    string uri = "http://fs-test.linphone.org/flexiapi/api/";
+    string uri = linphone_config_get_string(mCore->config, "sip", "flexiapi_url", NULL);
 
     LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
     char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
 
     req = belle_http_request_create(
-        params.empty() ? "GET" : "POST",
+        type.c_str(),
         belle_generic_uri_parse(uri.append(path).c_str()),
         belle_sip_header_content_type_create("application", "json"),
         belle_sip_header_accept_create("application", "json"),
@@ -143,9 +235,9 @@ void AccountCreatorFlexiAPI::prepareRequest(const char* path, JsonParams params)
     belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
 }
 
-void AccountCreatorFlexiAPI::processResponse(void *ctx, const belle_http_response_event_t *event) {
+void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) {
     auto cb = (Callbacks *)ctx;
-    AccountCreatorFlexiAPI::Response response;
+    FlexiAPIClient::Response response;
 
     if (event->response){
         int code = belle_http_response_get_status_code(event->response);
@@ -165,7 +257,7 @@ void AccountCreatorFlexiAPI::processResponse(void *ctx, const belle_http_respons
     }
 }
 
-void AccountCreatorFlexiAPI::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
+void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
     auto cb = (Callbacks *)ctx;
     const char *username = belle_sip_auth_event_get_username(event);
     const char *domain = belle_sip_auth_event_get_domain(event);

@@ -285,7 +285,7 @@ set(SOURCE_FILES_CXX
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
-	account-creator-flexiapi-tester.cpp
+	flexiapiclient-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
