@@ -122,28 +122,28 @@ static void flexiapi_change_email() {
 }
 
 static void flexiapi_change_password() {
-	LinphoneCoreManager *marie = linphone_core_manager_new("marie2_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 
-	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+	const char* passwd = linphone_config_get_string(linphone_core_get_config(pauline->lc), "auth_info_0", "password", NULL);
+	BC_ASSERT_PTR_NOT_NULL(passwd);
+
+	auto flexiAPIClient = new AccountCreatorFlexiAPI(pauline->lc);
 
 	int code = 0;
 	int fetched = 0;
 	string resolvedDomain;
 
 	flexiAPIClient
-		->passwordChange("MD5", "changeme", "secret")
-		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->passwordChange("MD5", "new_password", passwd)
+		->error([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
 			code = response.code;
 			fetched = 1;
 		});
 
-	wait_for_until(marie->lc, NULL, &fetched, 1, 15000);
+	wait_for_until(pauline->lc, NULL, &fetched, 1, 15000);
+	BC_ASSERT_EQUAL(code, 422, int, "%d");
 
-	// The internal resolver will handle a 401 and then try to re-send
-	// the request with a proper DIGEST authentication
-	BC_ASSERT_EQUAL(code, 200, int, "%d");
-
-	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 	delete flexiAPIClient;
 }
 
