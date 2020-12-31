@@ -196,7 +196,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		} else
 			localDesc->haveZrtpHash = 0;
 	}
-	if (sal_stream_description_has_dtls(localDesc)) {
+	if (localDesc->hasDtls()) {
 		/* Get the self fingerprint from call (it's computed at stream init) */
 		localDesc->dtls_fingerprint = mDtlsFingerPrint.c_str();
 		/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
@@ -348,7 +348,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const SalStreamDescription *stream = params.resultStreamDescription;
 	
-	if (stream && (stream->dir == SalStreamInactive || !sal_stream_description_enabled(stream))){
+	if (stream && (stream->dir == SalStreamInactive || !stream->enabled())){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
 		if (getState() != Stopped) stop();
 		return true;
@@ -406,7 +406,7 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			rtp_session_set_multicast_ttl(mSessions.rtp_session, stream->ttl);
 		rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream->rtcp_mux);
 			// Valid local tags are > 0
-		if (sal_stream_description_has_srtp(stream)) {
+		if (stream->hasSrtp()) {
 			int cryptoIdx = Sal::findCryptoIndexFromTag(params.localStreamDescription->crypto, static_cast<unsigned char>(stream->crypto_local_tag));
 			if (cryptoIdx >= 0) {
 				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream->crypto[0].algo, stream->crypto[0].master_key);
@@ -555,7 +555,7 @@ void MS2Stream::setupDtlsParams (MediaStream *ms) {
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
 	if (mDtlsStarted) return;
-	if (!sal_stream_description_has_dtls(params.resultStreamDescription)) return;
+	if (!params.resultStreamDescription->hasDtls()) return;
 	
 	if (params.resultStreamDescription->dtls_role == SalDtlsRoleInvalid){
 		lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";

@@ -120,7 +120,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 	for (auto & stream : streams){
 		size_t index = stream->getIndex();
 		params.scopeStreamToIndex(index);
-		bool streamActive = sal_stream_description_enabled(params.localStreamDescription);
+		bool streamActive = params.localStreamDescription->enabled();
 		
 		if (!params.localIsOfferer){
 			int bundleOwnerIndex = sal_media_description_get_index_of_transport_owner(params.remoteMediaDescription, params.remoteStreamDescription);
@@ -416,7 +416,7 @@ void IceService::updateFromRemoteMediaDescription(const SalMediaDescription *loc
 		const auto & remoteDescStream = remoteDesc->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		if (!cl) continue;
-		if (!sal_stream_description_enabled(&remoteDescStream) || remoteDescStream.rtp_port == 0) {
+		if (!remoteDescStream.enabled() || remoteDescStream.getRtpPort() == 0) {
 			/*
 			 * rtp_port == 0 is true when it is a secondary stream part of bundle.
 			 */
@@ -469,7 +469,7 @@ void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) 
 		auto & stream = desc->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		rtpCandidate = rtcpCandidate = nullptr;
-		if (!sal_stream_description_enabled(&stream) || !cl || stream.rtp_port == 0)
+		if (!stream.enabled() || !cl || stream.getRtpPort() == 0)
 			continue;
 		if (ice_check_list_state(cl) == ICL_Completed) {
 			result = !!ice_check_list_selected_valid_local_candidate(ice_session_check_list(mIceSession, (int)i), &rtpCandidate, &rtcpCandidate);
