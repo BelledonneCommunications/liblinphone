@@ -20,7 +20,7 @@
 #include "object/clonable-object-p.h"
 #include "object/clonable-object.h"
 
-#include "account_creator_flexiapi.hh"
+#include "FlexiAPIClient.hh"
 
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
@@ -29,10 +29,10 @@
 
 using namespace Json;
 
-static void flexiapi_ping() {
+static void flexiapiPing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
 
 	const char *resolvedContent;
 	int code = 0;
@@ -40,7 +40,7 @@ static void flexiapi_ping() {
 
 	flexiAPIClient
 		->ping()
-		->then([&resolvedContent, &code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) -> void {
 			resolvedContent = response.body;
 			code = response.code;
 			fetched = 1;
@@ -55,10 +55,10 @@ static void flexiapi_ping() {
 	delete flexiAPIClient;
 }
 
-static void flexiapi_accounts() {
+static void flexiapiAccounts() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -67,7 +67,7 @@ static void flexiapi_accounts() {
 	// Unauthenticated
 	flexiAPIClient
 		->me()
-		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			fetched = 1;
 		});
@@ -84,7 +84,7 @@ static void flexiapi_accounts() {
 	// Authenticated
 	flexiAPIClient
 		->me()
-		->then([&code, &fetched, &resolvedDomain](AccountCreatorFlexiAPI::Response response) -> void {
+		->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			resolvedDomain = response.json()["domain"].asString();
 			fetched = 1;
@@ -98,10 +98,10 @@ static void flexiapi_accounts() {
 	delete flexiAPIClient;
 }
 
-static void flexiapi_change_email() {
+static void flexiapiChangeEmail() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie2_rc");
 
-	auto flexiAPIClient = new AccountCreatorFlexiAPI(marie->lc);
+	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -109,7 +109,7 @@ static void flexiapi_change_email() {
 
 	flexiAPIClient
 		->emailChange("changed@test.com")
-		->then([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			fetched = 1;
 		});
@@ -121,37 +121,113 @@ static void flexiapi_change_email() {
 	delete flexiAPIClient;
 }
 
-static void flexiapi_change_password() {
+/**
+ * This test is only passing if the setting "everyone_is_admin" is set to true
+ * on the API
+ */
+static void flexiapiCreateAccount() {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie2_rc");
+
+	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
+
+	int code = 0;
+	int fetched = 0;
+	int id = 0;
+	string username = string("test_").append(sal_get_random_token(6));
+	string resolvedDomain;
+	bool activated = true;
+
+	// Create the account
+	flexiAPIClient
+		->createAccount(username, "test", "MD5", activated)
+		->then([&code, &fetched, &id](FlexiAPIClient::Response response) -> void {
+			code = response.code;
+			fetched = 1;
+			id = response.json()["id"].asInt();
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	code = 0;
+	fetched = 0;
+	string resolvedUsername;
+	bool resolvedActivated;
+
+	// Request it
+	flexiAPIClient
+		->account(id)
+		->then([&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) -> void {
+			code = response.code;
+			fetched = 1;
+			resolvedUsername = response.json()["username"].asString();
+			resolvedActivated = response.json()["activated"].asBool();
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+	BC_ASSERT_TRUE(resolvedActivated);
+	BC_ASSERT_STRING_EQUAL(resolvedUsername.c_str(), username.c_str());
+
+	code = 0;
+	fetched = 0;
+
+	// Destroy it
+	flexiAPIClient
+		->accountDelete(id)
+		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
+			code = response.code;
+			fetched = 1;
+		});
+
+	wait_for_until(marie->lc, NULL, &fetched, 1, 3000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
+
+	linphone_core_manager_destroy(marie);
+	delete flexiAPIClient;
+}
+
+static void flexiapiChangePassword() {
 	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_rc");
 
-	const char* passwd = linphone_config_get_string(linphone_core_get_config(pauline->lc), "auth_info_0", "password", NULL);
-	BC_ASSERT_PTR_NOT_NULL(passwd);
+	// Resolve the password
+	const LinphoneAddress *identityAddress = linphone_address_new(linphone_core_get_identity(pauline->lc));
+	const LinphoneAuthInfo *authInfo = linphone_core_find_auth_info(
+		pauline->lc,
+		linphone_address_get_domain(identityAddress),
+		linphone_address_get_username(identityAddress),
+		NULL
+	);
 
-	auto flexiAPIClient = new AccountCreatorFlexiAPI(pauline->lc);
+	const char* password = linphone_auth_info_get_password(authInfo);
+	BC_ASSERT_PTR_NOT_NULL(password);
+
+	auto flexiAPIClient = new FlexiAPIClient(pauline->lc);
 
 	int code = 0;
 	int fetched = 0;
 	string resolvedDomain;
 
 	flexiAPIClient
-		->passwordChange("MD5", "new_password", passwd)
-		->error([&code, &fetched](AccountCreatorFlexiAPI::Response response) -> void {
+		->passwordChange("MD5", "new_password", password)
+		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			fetched = 1;
 		});
 
-	wait_for_until(pauline->lc, NULL, &fetched, 1, 15000);
-	BC_ASSERT_EQUAL(code, 422, int, "%d");
+	wait_for_until(pauline->lc, NULL, &fetched, 1, 3000);
+	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(pauline);
 	delete flexiAPIClient;
 }
 
 test_t account_creator_flexiapi_tests[] = {
-	TEST_NO_TAG("Ping", flexiapi_ping),
-	TEST_NO_TAG("Accounts", flexiapi_accounts),
-	TEST_NO_TAG("Change Email", flexiapi_change_email),
-	TEST_NO_TAG("Change Password", flexiapi_change_password),
+	TEST_NO_TAG("Ping", flexiapiPing),
+	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
+	TEST_NO_TAG("Accounts", flexiapiAccounts),
+	TEST_NO_TAG("Change Email", flexiapiChangeEmail),
+	TEST_NO_TAG("Change Password", flexiapiChangePassword),
 };
 
 test_suite_t account_creator_flexiapi_suite = {

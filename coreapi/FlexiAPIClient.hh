@@ -29,7 +29,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-class AccountCreatorFlexiAPI {
+class FlexiAPIClient {
     public:
         class Response {
             public:
@@ -46,25 +46,17 @@ class AccountCreatorFlexiAPI {
 
         class JsonParams {
             public:
-                list<pair<string, string>> params;
+                Json::Value jsonParameters;
 
                 void push(string key, string value) {
-                    params.push_back(make_pair(key, value));
+                    jsonParameters[key] = value;
                 };
 
                 bool empty() {
-                    return params.empty();
+                    return jsonParameters.empty();
                 };
 
                 string json() {
-                    Json::Value jsonParameters;
-
-                    list<pair<string, string>>::iterator it;
-
-                    for (it = params.begin(); it != params.end(); ++it) {
-                        jsonParameters[(*it).first] = (*it).second;
-                    }
-
                     Json::StreamWriterBuilder builder;
                     builder["indentation"] = "";
 
@@ -79,21 +71,32 @@ class AccountCreatorFlexiAPI {
                 LinphoneCore *core;
         };
 
-        AccountCreatorFlexiAPI(LinphoneCore *lc);
+        FlexiAPIClient(LinphoneCore *lc);
 
         // Endpoints
-        AccountCreatorFlexiAPI* ping();
-        AccountCreatorFlexiAPI* emailChange(string email);
-        AccountCreatorFlexiAPI* me();
-        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password);
-        AccountCreatorFlexiAPI* passwordChange(string algorithm, string password, string oldPassword);
+        FlexiAPIClient* ping();
+        FlexiAPIClient* emailChange(string email);
+        FlexiAPIClient* me();
+        FlexiAPIClient* passwordChange(string algorithm, string password);
+        FlexiAPIClient* passwordChange(string algorithm, string password, string oldPassword);
+
+        // Admin endpoints
+        FlexiAPIClient* createAccount(string username, string password, string algorithm);
+        FlexiAPIClient* createAccount(string username, string password, string algorithm, string domain);
+        FlexiAPIClient* createAccount(string username, string password, string algorithm, bool activated);
+        FlexiAPIClient* createAccount(string username, string password, string algorithm, string domain, bool activated);
+        FlexiAPIClient* accounts();
+        FlexiAPIClient* accountDelete(int id);
+        FlexiAPIClient* account(int id);
+        FlexiAPIClient* accountActivate(int id);
+        FlexiAPIClient* accountDeactivate(int id);
 
         // Authentication
-        AccountCreatorFlexiAPI* setApiKey(const char* key);
+        FlexiAPIClient* setApiKey(const char* key);
 
         // Callbacks handlers
-        AccountCreatorFlexiAPI* then(function<void (Response)> success);
-        AccountCreatorFlexiAPI* error(function<void (Response)> error);
+        FlexiAPIClient* then(function<void (Response)> success);
+        FlexiAPIClient* error(function<void (Response)> error);
 
     private:
         LinphoneCore *mCore;
@@ -101,7 +104,8 @@ class AccountCreatorFlexiAPI {
         const char* apiKey;
 
         void prepareRequest(const char *path);
-        void prepareRequest(const char *path, JsonParams params);
+        void prepareRequest(const char *path, string type);
+        void prepareRequest(const char *path, string type, JsonParams params);
         static void processResponse(void *ctx, const belle_http_response_event_t *event);
         static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
 };

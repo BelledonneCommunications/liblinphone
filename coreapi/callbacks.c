@@ -111,7 +111,7 @@ static void call_received(SalCallOp *h) {
 			if (chatRoom) {
 				L_GET_PRIVATE(static_pointer_cast<ServerGroupChatRoom>(chatRoom))->confirmJoining(h);
 			} else if (_linphone_core_is_conference_creation(lc, toAddr)) {
-#ifdef HAVE_ADVANCED_IM 
+#ifdef HAVE_ADVANCED_IM
 				linphone_address_unref(toAddr);
 				linphone_address_unref(fromAddr);
 				if (sal_address_has_param(h->getRemoteContactAddress(), "text")) {
@@ -161,7 +161,7 @@ static void call_received(SalCallOp *h) {
 				if (participantList.size() == 1) {
 					IdentityAddress participant = participantList.front();
 					shared_ptr<AbstractChatRoom> chatRoom = L_GET_PRIVATE_FROM_C_OBJECT(lc)->findExhumableOneToOneChatRoom(
-						IdentityAddress(h->getTo()), 
+						IdentityAddress(h->getTo()),
 						participant,
 						endToEndEncrypted == "true");
 					if (chatRoom) {
@@ -208,9 +208,9 @@ static void call_received(SalCallOp *h) {
 	} else {
 		// TODO: handle media conference joining if the "text" feature tag is not present
 	}
-		
 
-	
+
+
 	/* First check if we can answer successfully to this invite */
 	LinphonePresenceActivity *activity = nullptr;
 	if ((linphone_presence_model_get_basic_status(lc->presence_model) == LinphonePresenceBasicStatusClosed)
@@ -611,7 +611,7 @@ static bool_t fill_auth_info(LinphoneCore *lc, SalAuthInfo* sai) {
 	if (ai) {
 		if (sai->mode == SalAuthModeHttpDigest) {
 			sai->userid = ms_strdup(linphone_auth_info_get_userid(ai) ? linphone_auth_info_get_userid(ai) : linphone_auth_info_get_username(ai));
-			sai->password = linphone_auth_info_get_passwd(ai)?ms_strdup(linphone_auth_info_get_passwd(ai)) : NULL;
+			sai->password = linphone_auth_info_get_password(ai)?ms_strdup(linphone_auth_info_get_password(ai)) : NULL;
 			sai->ha1 = linphone_auth_info_get_ha1(ai) ? ms_strdup(linphone_auth_info_get_ha1(ai)) : NULL;
 
 
