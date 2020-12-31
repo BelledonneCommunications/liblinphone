@@ -46,25 +46,17 @@ class AccountCreatorFlexiAPI {
 
         class JsonParams {
             public:
-                list<pair<string, string>> params;
+                Json::Value jsonParameters;
 
                 void push(string key, string value) {
-                    params.push_back(make_pair(key, value));
+                    jsonParameters[key] = value;
                 };
 
                 bool empty() {
-                    return params.empty();
+                    return jsonParameters.empty();
                 };
 
                 string json() {
-                    Json::Value jsonParameters;
-
-                    list<pair<string, string>>::iterator it;
-
-                    for (it = params.begin(); it != params.end(); ++it) {
-                        jsonParameters[(*it).first] = (*it).second;
-                    }
-
                     Json::StreamWriterBuilder builder;
                     builder["indentation"] = "";
 
@@ -88,6 +80,17 @@ class AccountCreatorFlexiAPI {
         AccountCreatorFlexiAPI* passwordChange(string algorithm, string password);
         AccountCreatorFlexiAPI* passwordChange(string algorithm, string password, string oldPassword);
 
+        // Admin endpoints
+        AccountCreatorFlexiAPI* createAccount(string username, string password, string algorithm);
+        AccountCreatorFlexiAPI* createAccount(string username, string password, string algorithm, string domain);
+        AccountCreatorFlexiAPI* createAccount(string username, string password, string algorithm, bool activated);
+        AccountCreatorFlexiAPI* createAccount(string username, string password, string algorithm, string domain, bool activated);
+        AccountCreatorFlexiAPI* accounts();
+        AccountCreatorFlexiAPI* accountDelete(int id);
+        AccountCreatorFlexiAPI* account(int id);
+        AccountCreatorFlexiAPI* accountActivate(int id);
+        AccountCreatorFlexiAPI* accountDeactivate(int id);
+
         // Authentication
         AccountCreatorFlexiAPI* setApiKey(const char* key);
 
@@ -101,7 +104,8 @@ class AccountCreatorFlexiAPI {
         const char* apiKey;
 
         void prepareRequest(const char *path);
-        void prepareRequest(const char *path, JsonParams params);
+        void prepareRequest(const char *path, string type);
+        void prepareRequest(const char *path, string type, JsonParams params);
         static void processResponse(void *ctx, const belle_http_response_event_t *event);
         static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
 };
