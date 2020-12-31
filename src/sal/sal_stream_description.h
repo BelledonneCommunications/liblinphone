@@ -90,7 +90,7 @@ typedef struct SalStreamDescription {
 	std::string ice_ufrag;
 	std::string ice_pwd;
 	std::string mid; /* Media line identifier for RTP bundle mode */
-	int mid_rtp_ext_header_id; /* Identifier for the MID field in the RTP extension header */
+	int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
 	bool_t ice_mismatch = FALSE;
 	bool_t set_nortpproxy = FALSE; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux = FALSE;
