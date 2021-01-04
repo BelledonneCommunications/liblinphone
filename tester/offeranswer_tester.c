@@ -721,10 +721,10 @@ static void check_avpf_features(LinphoneCore *lc, unsigned char expected_feature
 	BC_ASSERT_PTR_NOT_NULL(lcall);
 	if (lcall != NULL) {
 		SalMediaDescription *resultDesc = _linphone_call_get_result_desc(lcall);
-		SalStreamDescription *desc = sal_media_description_find_stream(resultDesc, SalProtoRtpAvpf, SalVideo);
+		const SalStreamDescription *desc = sal_media_description_find_stream(resultDesc, SalProtoRtpAvpf, SalVideo);
 		BC_ASSERT_PTR_NOT_NULL(desc);
 		if (desc != NULL) {
-			MSList * payloads = sal_stream_description_get_payloads(desc);
+			const MSList * payloads = sal_stream_description_get_payloads(desc);
 			BC_ASSERT_PTR_NOT_NULL(payloads);
 			if (payloads) {
 				PayloadType *pt = (PayloadType *)payloads->data;

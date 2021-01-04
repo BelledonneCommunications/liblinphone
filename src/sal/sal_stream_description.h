@@ -51,7 +51,7 @@ typedef struct SalStreamDescription {
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
 		const int & getRtpPort() const;
-		MSList * getPayloads() const;
+		const MSList * getPayloads() const;
 
 		const SalStreamType & getType() const;
 		const std::string getTypeAsString() const;

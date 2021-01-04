@@ -90,18 +90,18 @@ bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd) {
 	return sd->hasLimeIk();
 }
 
-const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd){
+const char * sal_stream_description_get_rtcp_address(const SalStreamDescription *sd){
 	return L_STRING_TO_C(sd->getRtcpAddress());
 }
 
-const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd){
+const char * sal_stream_description_get_rtp_address(const SalStreamDescription *sd){
 	return L_STRING_TO_C(sd->getRtpAddress());
 }
 
-SalStreamDir sal_stream_description_get_direction(SalStreamDescription *sd){
+SalStreamDir sal_stream_description_get_direction(const SalStreamDescription *sd){
 	return sd->getDirection();
 }
 
-MSList * sal_stream_description_get_payloads(SalStreamDescription *sd){
+const MSList * sal_stream_description_get_payloads(const SalStreamDescription *sd){
 	return sd->getPayloads();
 }

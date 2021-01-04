@@ -303,6 +303,6 @@ SalStreamDir SalStreamDescription::getDirection() const {
 	return dir;
 }
 
-MSList * SalStreamDescription::getPayloads() const {
+const MSList * SalStreamDescription::getPayloads() const {
 	return payloads;
 }
