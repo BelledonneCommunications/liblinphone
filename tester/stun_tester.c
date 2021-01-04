@@ -22,6 +22,7 @@
 #include "tester_utils.h"
 #include "mediastreamer2/stun.h"
 #include "ortp/port.h"
+#include "shared_tester_functions.h"
 
 
 static const char *stun_address = "stun.example.org";
