@@ -77,7 +77,7 @@ typedef struct SalMediaDescription {
 	int bandwidth = 0;
 	unsigned int session_ver = 0;
 	unsigned int session_id = 0;
-	SalStreamDir dir;
+	SalStreamDir dir = SalStreamSendRecv;
 	std::vector<SalStreamDescription> streams;
 	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
 	OrtpRtcpXrConfiguration rtcp_xr;

@@ -60,8 +60,8 @@ typedef struct SalStreamDescription {
 		SalStreamDir getDirection() const;
 
 	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
-	SalMediaProto proto;
-	SalStreamType type;
+	SalMediaProto proto = SalProtoRtpAvp;
+	SalStreamType type = SalAudio;
 	std::string typeother;
 	std::string proto_other;
 	std::string rtp_addr;
@@ -75,7 +75,7 @@ typedef struct SalStreamDescription {
 	int bandwidth = 0;
 	int ptime = 0;
 	int maxptime = 0;
-	SalStreamDir dir;
+	SalStreamDir dir = SalStreamSendRecv;
 	std::vector<SalSrtpCryptoAlgo> crypto;
 	unsigned int crypto_local_tag = 0;
 	int max_rate = 0;
