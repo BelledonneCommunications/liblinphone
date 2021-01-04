@@ -64,7 +64,7 @@ typedef struct SalMediaDescription {
 		int equal(const SalMediaDescription & otherMd) const;
 		int globalEqual(const SalMediaDescription & otherMd) const;
 
-		const std::string printDifferences(int result) const;
+		static const std::string printDifferences(int result);
 
 		size_t getNbStreams() const;
 		const std::string & getAddress() const;

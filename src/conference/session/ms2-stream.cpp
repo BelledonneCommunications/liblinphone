@@ -93,7 +93,7 @@ void MS2Stream::removeFromBundle(){
 }
 
 void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
-	int index = sal_media_description_get_index_of_transport_owner(params.resultMediaDescription, params.resultStreamDescription);
+	int index = params.resultMediaDescription->getIndexOfTransportOwner(params.resultStreamDescription);
 	if (index == -1) {
 		lInfo() << *this << " is not part of any bundle";
 		removeFromBundle();
@@ -256,7 +256,7 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	}
 	bool videoWillBeUsed = false;
 	MediaStream *ms = getMediaStream();
-	const SalStreamDescription *vstream = sal_media_description_find_best_stream(const_cast<SalMediaDescription*>(params.resultMediaDescription), SalVideo);
+	const SalStreamDescription *vstream = params.resultMediaDescription->findBestStream(SalVideo);
 	if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
 		/* When video is used, do not make adaptive rate control on audio, it is stupid */
 		videoWillBeUsed = true;

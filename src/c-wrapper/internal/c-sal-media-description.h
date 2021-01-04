@@ -40,10 +40,10 @@ int sal_media_description_equals(const SalMediaDescription *md1, const SalMediaD
 int sal_media_description_global_equals(const SalMediaDescription *md1, const SalMediaDescription *md2);
 char * sal_media_description_print_differences(int result);
 bool_t sal_media_description_has_dir(const SalMediaDescription *md, SalStreamDir dir);
-unsigned int sal_media_description_nb_active_streams_of_type(SalMediaDescription *md, SalStreamType type);
-SalStreamDescription * sal_media_description_get_active_stream_of_type(SalMediaDescription *md, SalStreamType type, unsigned int idx);
-SalStreamDescription * sal_media_description_find_secure_stream_of_type(SalMediaDescription *md, SalStreamType type);
-SalStreamDescription * sal_media_description_find_best_stream(SalMediaDescription *md, SalStreamType type);
+unsigned int sal_media_description_nb_active_streams_of_type(const SalMediaDescription *md, SalStreamType type);
+const SalStreamDescription * sal_media_description_get_active_stream_of_type(const SalMediaDescription *md, SalStreamType type, unsigned int idx);
+const SalStreamDescription * sal_media_description_find_secure_stream_of_type(const SalMediaDescription *md, SalStreamType type);
+const SalStreamDescription * sal_media_description_find_best_stream(const SalMediaDescription *md, SalStreamType type);
 void sal_media_description_set_dir(SalMediaDescription *md, SalStreamDir stream_dir);
 
 bool_t sal_media_description_has_avpf(const SalMediaDescription *md);
@@ -59,10 +59,10 @@ int sal_media_description_lookup_mid(const SalMediaDescription *md, const char *
 int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd);
 LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
 LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalStreamDescription * sal_media_description_get_stream_idx(SalMediaDescription *md, unsigned int idx);
-LINPHONE_PUBLIC SalStreamDescription *sal_media_description_find_stream(SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
-LINPHONE_PUBLIC const char * sal_media_description_get_address(SalMediaDescription *md);
-LINPHONE_PUBLIC size_t sal_media_description_get_nb_streams(SalMediaDescription *md);
+LINPHONE_PUBLIC const SalStreamDescription * sal_media_description_get_stream_idx(const SalMediaDescription *md, unsigned int idx);
+LINPHONE_PUBLIC const SalStreamDescription *sal_media_description_find_stream(const SalMediaDescription *md, SalMediaProto proto, SalStreamType type);
+LINPHONE_PUBLIC const char * sal_media_description_get_address(const SalMediaDescription *md);
+LINPHONE_PUBLIC size_t sal_media_description_get_nb_streams(const SalMediaDescription *md);
 #ifdef __cplusplus
 }
 #endif

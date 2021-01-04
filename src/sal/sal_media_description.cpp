@@ -123,7 +123,7 @@ const SalStreamBundle *SalMediaDescription::getBundleFromMid(const std::string m
 		SalStreamBundle *bundle = (SalStreamBundle *)elem->data;
 		if (sal_stream_bundle_has_mid(bundle, L_STRING_TO_C(mid))) return bundle;
 	}
-	return NULL;
+	return nullptr;
 }
 
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription *sd) const {
@@ -164,11 +164,11 @@ void SalMediaDescription::unref(){
 }
 
 const SalStreamDescription * SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
-	for(const auto & stream : streams){
+	for(auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.proto==proto && stream.type==type) return &stream;
+		if (stream.proto==proto && stream.getType()==type) return &stream;
 	}
-	return NULL;
+	return nullptr;
 }
 
 unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) const {
@@ -187,22 +187,22 @@ const SalStreamDescription * SalMediaDescription::getActiveStreamOfType(SalStrea
 			if (idx-- == 0) return &stream;
 		}
 	}
-	return NULL;
+	return nullptr;
 }
 
 const SalStreamDescription * SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
 	const SalStreamDescription *desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == NULL) desc = findStream(SalProtoRtpSavp, type);
+	if (desc == nullptr) desc = findStream(SalProtoRtpSavp, type);
 	return desc;
 }
 
 const SalStreamDescription * SalMediaDescription::findBestStream(SalStreamType type) const {
 	const SalStreamDescription *desc = findStream(SalProtoUdpTlsRtpSavpf, type);
-	if (desc == NULL) desc = findStream(SalProtoUdpTlsRtpSavp, type);
-	if (desc == NULL) desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == NULL) desc = findStream(SalProtoRtpSavp, type);
-	if (desc == NULL) desc = findStream(SalProtoRtpAvpf, type);
-	if (desc == NULL) desc = findStream(SalProtoRtpAvp, type);
+	if (desc == nullptr) desc = findStream(SalProtoUdpTlsRtpSavp, type);
+	if (desc == nullptr) desc = findStream(SalProtoRtpSavpf, type);
+	if (desc == nullptr) desc = findStream(SalProtoRtpSavp, type);
+	if (desc == nullptr) desc = findStream(SalProtoRtpAvpf, type);
+	if (desc == nullptr) desc = findStream(SalProtoRtpAvp, type);
 	return desc;
 }
 
@@ -313,7 +313,7 @@ int SalMediaDescription::globalEqual(const SalMediaDescription & otherMd) const 
 	return result;
 }
 
-const std::string SalMediaDescription::printDifferences(int result) const {
+const std::string SalMediaDescription::printDifferences(int result) {
 	std::string out = std::string();
 	if (result & SAL_MEDIA_DESCRIPTION_CODEC_CHANGED){
 		out.append("CODEC_CHANGED ");
@@ -366,5 +366,5 @@ const SalStreamDescription * SalMediaDescription::getStreamIdx(unsigned int idx)
 	if (idx < streams.size()) {
 		return &(streams[idx]);
 	}
-	return NULL;
+	return nullptr;
 }

@@ -123,7 +123,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		bool streamActive = params.localStreamDescription->enabled();
 		
 		if (!params.localIsOfferer){
-			int bundleOwnerIndex = sal_media_description_get_index_of_transport_owner(params.remoteMediaDescription, params.remoteStreamDescription);
+			int bundleOwnerIndex = params.remoteMediaDescription->getIndexOfTransportOwner(params.remoteStreamDescription);
 			if (bundleOwnerIndex != -1 && bundleOwnerIndex != (int) index){
 				lInfo() << *stream << " is part of a bundle as secondary stream, ICE not needed.";
 				streamActive = false;
