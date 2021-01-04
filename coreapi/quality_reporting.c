@@ -417,7 +417,7 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 static const SalStreamDescription * get_media_stream_for_desc(const SalMediaDescription * smd, SalStreamType sal_stream_type) {
 	if (smd != NULL) {
 		for (const auto & stream : smd->streams) {
-			if (sal_stream_description_enabled(&stream) && stream.type == sal_stream_type) {
+			if (stream.enabled() && stream.type == sal_stream_type) {
 				return &stream;
 			}
 		}
