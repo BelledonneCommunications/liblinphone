@@ -17,9 +17,13 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "call/call.h"
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
+#include "sal/sal_media_description.h"
+#include "sal/call-op.h"
+#include "shared_tester_functions.h"
 
 #ifdef VIDEO_ENABLED
 
@@ -95,8 +99,8 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	/*check if video stream is still offered even if disabled*/
-	BC_ASSERT_EQUAL(sal_media_description_get_nb_streams(_linphone_call_get_local_desc(call_pauline)), 2, int, "%i");
-	BC_ASSERT_EQUAL(sal_media_description_get_nb_streams(_linphone_call_get_local_desc(call_marie)), 2, int, "%i");
+	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,sdp_200_ack);
 
@@ -175,7 +179,7 @@ static void call_state_changed_callback_to_accept_video(LinphoneCore *lc, Linpho
 		linphone_call_params_unref(params);
 	}
 	ms_message("video acceptance listener about to be dropped");
-	cbs = belle_sip_object_data_get(BELLE_SIP_OBJECT(call), "call_state_changed_callback_to_accept_video");
+	cbs = (LinphoneCoreCbs*)belle_sip_object_data_get(BELLE_SIP_OBJECT(call), "call_state_changed_callback_to_accept_video");
 	linphone_core_remove_callbacks(lc, cbs);
 	belle_sip_object_data_set(BELLE_SIP_OBJECT(call), "call_state_changed_callback_to_accept_video", NULL, NULL);
 }
@@ -1857,7 +1861,7 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 	marie = linphone_core_manager_new( "marie_rc");
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
-	linphone_core_set_avpf_mode(pauline->lc,TRUE);
+	linphone_core_set_avpf_mode(pauline->lc,LinphoneAVPFEnabled);
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
@@ -1867,7 +1871,7 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 	}
 	linphone_core_set_video_device(pauline->lc,liblinphone_tester_mire_id);
 	linphone_core_set_video_device(marie->lc,liblinphone_tester_mire_id);
-	linphone_core_set_avpf_mode(marie->lc,TRUE);
+	linphone_core_set_avpf_mode(marie->lc,LinphoneAVPFEnabled);
 	lcs=bctbx_list_append(lcs,pauline->lc);
 	lcs=bctbx_list_append(lcs,marie->lc);
 
@@ -1953,7 +1957,9 @@ static void incoming_reinvite_with_invalid_ack_sdp(void){
 		const LinphoneCallParams *caller_params;
 		stats initial_caller_stat=caller->stat;
 		stats initial_callee_stat=callee->stat;
-		sal_call_set_sdp_handling(linphone_call_get_op_as_sal_op(inc_call), SalOpSDPSimulateError); /* will force a parse error for the ACK SDP*/
+		/* will force a parse error for the ACK SDP*/
+		LinphonePrivate::SalCallOp * op = LinphonePrivate::Call::toCpp(inc_call)->getOp();
+		op->setSdpHandling(SalOpSDPSimulateError);
 		BC_ASSERT_PTR_NOT_NULL(_request_video(caller, callee, TRUE));
 		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallUpdating,initial_callee_stat.number_of_LinphoneCallUpdating+1));
 		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,initial_callee_stat.number_of_LinphoneCallStreamsRunning+1));
@@ -1969,7 +1975,7 @@ static void incoming_reinvite_with_invalid_ack_sdp(void){
 		caller_params = linphone_call_get_current_params(linphone_core_get_current_call(caller->lc));
 		// TODO [refactoring]: BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,(int*)&caller_params->has_video,FALSE));
 		(void)caller_params;
-		sal_call_set_sdp_handling(linphone_call_get_op_as_sal_op(inc_call), SalOpSDPNormal);
+		op->setSdpHandling(SalOpSDPNormal);
 	}
 	end_call(caller, callee);
 
@@ -1988,7 +1994,9 @@ static void outgoing_reinvite_with_invalid_ack_sdp(void)  {
 	if (out_call) {
 		stats initial_caller_stat=caller->stat;
 		stats initial_callee_stat=callee->stat;
-		sal_call_set_sdp_handling(linphone_call_get_op_as_sal_op(out_call), SalOpSDPSimulateError); /* will force a parse error for the ACK SDP*/
+		/* will force a parse error for the ACK SDP*/
+		LinphonePrivate::SalCallOp * op = LinphonePrivate::Call::toCpp(out_call)->getOp();
+		op->setSdpHandling(SalOpSDPSimulateError);
 		BC_ASSERT_PTR_NOT_NULL(_request_video(caller, callee, TRUE));
 		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallUpdating,initial_callee_stat.number_of_LinphoneCallUpdating+1));
 		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,initial_callee_stat.number_of_LinphoneCallStreamsRunning+1));
@@ -2002,7 +2010,7 @@ static void outgoing_reinvite_with_invalid_ack_sdp(void)  {
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(linphone_core_get_current_call(callee->lc))));
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(linphone_core_get_current_call(caller->lc))));
 
-		sal_call_set_sdp_handling(linphone_call_get_op_as_sal_op(out_call), SalOpSDPNormal);
+		op->setSdpHandling(SalOpSDPNormal);
 	}
 	end_call(caller, callee);
 
