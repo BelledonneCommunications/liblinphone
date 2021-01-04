@@ -338,7 +338,7 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *local_offer,
 						const SalStreamDescription *remote_answer,
 						SalStreamDescription *result){
-	if (sal_stream_description_enabled(remote_answer))
+	if (remote_answer->enabled())
 		result->payloads=match_payloads(factory, local_offer->payloads,remote_answer->payloads,TRUE,FALSE);
 	else {
 		ms_message("Local stream description [%p] rejected by peer",local_offer);
@@ -434,14 +434,14 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		result->ptime=remote_answer->ptime;
 		result->maxptime=remote_answer->maxptime;
 	}else{
-		sal_stream_description_disable(result);
+		result->disable();
 	}
-	if (sal_stream_description_has_srtp(result) == TRUE) {
+	if (result->hasSrtp() == TRUE) {
 		/* verify crypto algo */
 		result->crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
 		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, FALSE)) {
-			sal_stream_description_disable(result);
+			result->disable();
 		}
 		if (result->crypto.empty()) {
 			result->crypto.resize(1);
@@ -476,12 +476,12 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 	result->type=local_cap->type;
 	result->dir=compute_dir_incoming(local_cap->dir,remote_offer->dir);
 	
-	if (!result->payloads || only_telephone_event(result->payloads) || !sal_stream_description_enabled(remote_offer)){
+	if (!result->payloads || only_telephone_event(result->payloads) || !remote_offer->enabled()){
 		result->rtp_port=0;
 		return;
 	}
 	if (remote_offer->rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer->rtp_addr))) {
-		if (sal_stream_description_has_srtp(result) == TRUE) {
+		if (result->hasSrtp() == TRUE) {
 			ms_message("SAVP not supported for multicast address for remote stream [%p]",remote_offer);
 			result->rtp_port=0;
 			return;
@@ -523,12 +523,12 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription *lo
 		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	if (sal_stream_description_has_srtp(result) == TRUE) {
+	if (result->hasSrtp() == TRUE) {
 		/* select crypto algo */
 		result->crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
 		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
-			sal_stream_description_disable(result);
+			result->disable();
 			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
 		}
 		if (result->crypto.empty()) {
@@ -605,7 +605,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
 		rs=&remote_answer->streams[i];
 		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
 		{
-			if (ls->proto != rs->proto && sal_stream_description_has_avpf(ls))	{
+			if (ls->proto != rs->proto && ls->hasAvpf())	{
 				ls->proto = rs->proto;
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
@@ -669,13 +669,13 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 		}
 		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
 		{
-			if (ls->proto != rs->proto && sal_stream_description_has_avpf(rs))	{
+			if (ls->proto != rs->proto && rs->hasAvpf())	{
 				rs->proto = ls->proto;
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
 			}
 			const char *bundle_owner_mid = NULL;
 			if (local_capabilities->accept_bundles){
-				int owner_index = sal_media_description_get_index_of_transport_owner(remote_offer, rs);
+				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
 				if (owner_index != -1){
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
 				}

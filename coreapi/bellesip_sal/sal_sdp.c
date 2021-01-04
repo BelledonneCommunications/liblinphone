@@ -217,7 +217,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	int rtp_port;
 	int rtcp_port;
 	bool_t different_rtp_and_rtcp_addr;
-	bool_t stream_enabled = sal_stream_description_enabled(stream);
+	bool_t stream_enabled = stream->enabled();
 
 	rtp_addr=stream->rtp_addr;
 	rtcp_addr=stream->rtcp_addr;
@@ -269,7 +269,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	if ( stream->bandwidth>0 )
 		belle_sdp_media_description_set_bandwidth ( media_desc,"AS",stream->bandwidth );
 
-	if (sal_stream_description_has_srtp(stream)) {
+	if (stream->hasSrtp()) {
 		/* add crypto lines */
 		for ( const auto & crypto : stream->crypto ) {
 			MSCryptoSuiteNameParams desc;
@@ -360,7 +360,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		}
 	}
 
-	if (stream_enabled && (sal_stream_description_has_avpf(stream) || sal_stream_description_has_implicit_avpf(stream))) {
+	if (stream_enabled && (stream->hasAvpf() || stream->hasImplicitAvpf())) {
 		add_rtcp_fb_attributes(media_desc, md, stream);
 	}
 
@@ -448,7 +448,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const SalMediaDescrip
 	belle_sdp_session_description_set_session_name ( session_desc,
 		belle_sdp_session_name_create ( desc->name.empty()==false ? L_STRING_TO_C(desc->name) : "Talk" ) );
 
-	if ( !sal_media_description_has_dir ( desc,SalStreamInactive ) || !desc->ice_ufrag.empty() ) {
+	if ( !desc->hasDir(SalStreamInactive) || !desc->ice_ufrag.empty() ) {
 		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
 		belle_sdp_session_description_set_connection ( session_desc
 				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",L_STRING_TO_C(desc->addr) ) );
@@ -906,7 +906,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	}
 
 	/* Read crypto lines if any */
-	if (sal_stream_description_has_srtp(&stream)) {
+	if (stream.hasSrtp()) {
 		sdp_parse_media_crypto_parameters(media_desc, &stream);
 	}
 
@@ -944,7 +944,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 	has_avpf_attributes = sdp_parse_rtcp_fb_parameters(media_desc, &stream);
 
 	/* Get RTCP-FB attributes if any */
-	if (sal_stream_description_has_avpf(&stream)) {
+	if (stream.hasAvpf()) {
 		enable_avpf_for_stream(&stream);
 	}else if (has_avpf_attributes ){
 		enable_avpf_for_stream(&stream);
@@ -980,7 +980,7 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 static void add_bundles(SalMediaDescription *desc, const char *ids){
 	char *tmp = (char*)ms_malloc0(strlen(ids) + 1);
 	int err;
-	SalStreamBundle *bundle = sal_media_description_add_new_bundle(desc);
+	SalStreamBundle *bundle = desc->addNewBundle();
 	do{
 		int consumed = 0;
 		err = sscanf(ids, "%s%n", tmp, &consumed);
