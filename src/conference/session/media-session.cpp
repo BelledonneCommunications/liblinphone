@@ -324,7 +324,7 @@ void MediaSessionPrivate::remoteRinging () {
 		q->getRemoteParams();
 		/* Accept early media */
 
-		if (getStreamsGroup().isStarted()){
+		if (rmd && getStreamsGroup().isStarted()){
 			OfferAnswerContext ctx;
 			ctx.localMediaDescription = localDesc;
 			ctx.resultMediaDescription = md;
