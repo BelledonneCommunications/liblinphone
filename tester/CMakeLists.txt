@@ -225,14 +225,12 @@ set(SOURCE_FILES_C
 	audio_bypass_tester.c
 	audio_routes_tester.c
 	audio_video_conference_tester.c
-	call_ice_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_push_incoming_tester.c
 	call_recovery_tester.c
 	call_secure_tester.c
 	call_single_tester.c
-	call_video_tester.c
 	call_with_rtp_bundle_tester.c
 	complex_sip_case_tester.c
 	dtmf_tester.c
@@ -246,7 +244,6 @@ set(SOURCE_FILES_C
 	liblinphone_tester.c
 	log_collection_tester.c
 	message_tester.c
-	offeranswer_tester.c
 	player_tester.c
 	presence_server_tester.c
 	presence_tester.c
@@ -273,9 +270,13 @@ endif()
 set(SOURCE_FILES_CXX
 	audio_quality_tester.cpp
 	clonable-object-tester.cpp
+	call_video_tester.cpp
+	call_ice_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
+	offeranswer_tester.cpp
+	shared_tester_functions.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
@@ -292,6 +293,7 @@ endif()
 
 set(HEADER_FILES
 	audio_quality_tester.h
+	shared_tester_functions.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
