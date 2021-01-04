@@ -291,8 +291,8 @@ bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
 int SalMediaDescription::equal(const SalMediaDescription & otherMd) const {
 	int result = globalEqual(otherMd);
 	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
-		if (!sal_stream_description_enabled(&(*stream1)) && !sal_stream_description_enabled(&(*stream2))) continue;
-		result |= sal_stream_description_equals(&(*stream1), &(*stream2));
+		if (!stream1->enabled() && !stream2->enabled()) continue;
+		result |= stream1->equal(*stream2);
 	}
 	return result;
 }
