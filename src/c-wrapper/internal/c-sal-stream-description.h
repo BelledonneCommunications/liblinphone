@@ -49,10 +49,10 @@ bool_t sal_stream_description_has_zrtp(const SalStreamDescription *sd);
 
 int sal_stream_description_equals(const SalStreamDescription *sd1, const SalStreamDescription *sd2);
 
-LINPHONE_PUBLIC const char * sal_stream_description_get_rtcp_address(SalStreamDescription *sd);
-LINPHONE_PUBLIC const char * sal_stream_description_get_rtp_address(SalStreamDescription *sd);
-LINPHONE_PUBLIC MSList * sal_stream_description_get_payloads(SalStreamDescription *sd);
-LINPHONE_PUBLIC SalStreamDir sal_stream_description_get_direction(SalStreamDescription *sd);
+LINPHONE_PUBLIC const char * sal_stream_description_get_rtcp_address(const SalStreamDescription *sd);
+LINPHONE_PUBLIC const char * sal_stream_description_get_rtp_address(const SalStreamDescription *sd);
+LINPHONE_PUBLIC const MSList * sal_stream_description_get_payloads(const SalStreamDescription *sd);
+LINPHONE_PUBLIC SalStreamDir sal_stream_description_get_direction(const SalStreamDescription *sd);
 
 #ifdef __cplusplus
 }
