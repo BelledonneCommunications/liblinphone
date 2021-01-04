@@ -130,7 +130,7 @@ void MediaSessionPrivate::accepted () {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (sal_media_description_empty(md) || linphone_core_incompatible_security(q->getCore()->getCCore(), md)))
+	if (md && (md->isEmpty() || linphone_core_incompatible_security(q->getCore()->getCCore(), md)))
 		md = nullptr;
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
@@ -448,7 +448,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
 		SalMediaDescription *md = op->getFinalMediaDescription();
-		if (md && (sal_media_description_empty(md) || linphone_core_incompatible_security(q->getCore()->getCCore(), md))) {
+		if (md && (md->isEmpty() || linphone_core_incompatible_security(q->getCore()->getCCore(), md))) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
@@ -456,7 +456,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		}
 		SalMediaDescription *prevResultDesc = resultDesc;
 		if (isUpdate && prevResultDesc && md){
-			int diff = sal_media_description_equals(prevResultDesc, md);
+			int diff = md->equal(*prevResultDesc);
 			if (diff & (SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED | SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED)) {
 				lWarning() << "Cannot accept this update, it is changing parameters that require user approval";
 				sal_error_info_set(&sei, SalReasonUnknown, "SIP", 504, "Cannot change the session parameters without prompting the user", nullptr);
@@ -764,7 +764,7 @@ bool MediaSessionPrivate::hasAvpf(SalMediaDescription *md)const{
 	 * - the video stream has AVPF.
 	 * In practice, this means for a remote media description that AVPF is supported by the far end.
 	 */
-	bool hasAvpf = !!sal_media_description_has_avpf(md);
+	bool hasAvpf = !!md->hasAvpf();
 	if (mainVideoStreamIndex != -1 && (mainVideoStreamIndex < (int)md->streams.size()) && md->streams[static_cast<size_t>(mainVideoStreamIndex)].hasAvpf()){
 		hasAvpf = true;
 	}
@@ -786,13 +786,13 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	else
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000));
 	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
-	if (sal_media_description_has_zrtp(md) && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
+	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-	} else if (sal_media_description_has_dtls(md) && media_stream_dtls_supported()) {
+	} else if (md->hasDtls() && media_stream_dtls_supported()) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
-	} else if (sal_media_description_has_srtp(md) && ms_srtp_supported()) {
+	} else if (md->hasSrtp() && ms_srtp_supported()) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
 	} else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
@@ -817,7 +817,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (SalMediaDescription *
 	}
 
 	/* In case of nat64, even ipv4 addresses are reachable from v6. Should be enhanced to manage stream by stream connectivity (I.E v6 or v4) */
-	/*if (!sal_media_description_has_ipv6(md)){
+	/*if (!md->hasIpv6()){
 		lInfo() << "The remote SDP doesn't seem to offer any IPv6 connectivity, so disabling IPv6 for this call";
 		af = AF_INET;
 	}*/
@@ -1096,7 +1096,7 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 void MediaSessionPrivate::addStreamToBundle(SalMediaDescription *md, SalStreamDescription &sd, const std::string mid){
 	SalStreamBundle *bundle;
 	if (md->bundles == nullptr){
-		bundle = sal_media_description_add_new_bundle(md);
+		bundle = md->addNewBundle();
 	}else{
 		bundle = (SalStreamBundle*) md->bundles->data;
 	}
@@ -1327,7 +1327,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	updateLocalMediaDescriptionFromIce(localIsOfferer);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
-		localDescChanged = sal_media_description_equals(md, oldMd);
+		localDescChanged = md->equal(*oldMd);
 		sal_media_description_unref(oldMd);
 		if (getParams()->getPrivate()->getInternalCallUpdate()) {
 			/*
@@ -1822,7 +1822,7 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 
 	op->accept();
 	SalMediaDescription *md = op->getFinalMediaDescription();
-	if (md && !sal_media_description_empty(md))
+	if (md && !md->isEmpty())
 		updateStreams(md, nextState);
 	setState(nextState, stateInfo);
 	return 0;
@@ -2451,7 +2451,7 @@ LinphoneStatus MediaSession::resume () {
 	if (as) as->stop();
 	d->setState(CallSession::State::Resuming, "Resuming");
 	d->makeLocalMediaDescription(true);
-	sal_media_description_set_dir(d->localDesc, SalStreamSendRecv);
+	d->localDesc->setDir(SalStreamSendRecv);
 
 	if (getCore()->getCCore()->sip_conf.sdp_200_ack)
 		d->op->setLocalMediaDescription(nullptr);
@@ -2527,7 +2527,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 
 	SalMediaDescription *md = d->op->getFinalMediaDescription();
 	if (md) {
-		if (sal_media_description_empty(md) || linphone_core_incompatible_security(getCore()->getCCore(), md)) {
+		if (md->isEmpty() || linphone_core_incompatible_security(getCore()->getCCore(), md)) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)

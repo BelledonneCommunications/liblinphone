@@ -105,9 +105,8 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 		params.scopeStreamToIndexWithDiff(index, mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.localStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
@@ -171,14 +170,12 @@ void StreamsGroup::render(const OfferAnswerContext &constParams, CallSession::St
 		params.scopeStreamToIndexWithDiff(stream->getIndex(), mCurrentOfferAnswerState);
 		
 		if (params.localStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.localStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.localStreamDescriptionChanges);
 			lInfo() << "Local stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (params.resultStreamDescriptionChanges) {
-			char *differences = sal_media_description_print_differences(params.resultStreamDescriptionChanges);
+			const std::string differences = SalMediaDescription::printDifferences(params.resultStreamDescriptionChanges);
 			lInfo() << "Result stream description has changed: " << differences;
-			ms_free(differences);
 		}
 		if (streamPtr->getState() == Stream::Preparing)
 			streamPtr->finishPrepare();
