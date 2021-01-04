@@ -160,7 +160,7 @@ void StunClient::updateMediaDescription (SalMediaDescription *md) const {
 					!videoCandidate.address.empty() &&
 					audioCandidate.address == videoCandidate.address
 				) ||
-				sal_media_description_get_nb_active_streams(md) == 1
+				md->getNbActiveStreams() == 1
 			) {
 				md->addr = audioCandidate.address;
 			}
