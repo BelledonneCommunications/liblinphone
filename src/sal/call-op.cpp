@@ -39,15 +39,11 @@ SalCallOp::SalCallOp (Sal *sal) : SalOp(sal) {
 }
 
 SalCallOp::~SalCallOp () {
-	if (mLocalMedia)
-		sal_media_description_unref(mLocalMedia);
-	if (mRemoteMedia)
-		sal_media_description_unref(mRemoteMedia);
+
 }
 
-int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {
+int SalCallOp::setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc) {
 	if (desc) {
-		sal_media_description_ref(desc);
 		belle_sip_error_code error;
 		belle_sdp_session_description_t *sdp = media_description_to_sdp(desc);
 		vector<char> buffer = marshalMediaDescription(sdp, error);
@@ -61,8 +57,6 @@ int SalCallOp::setLocalMediaDescription (SalMediaDescription *desc) {
 		mLocalBody = Content();
 	}
 
-	if (mLocalMedia)
-		sal_media_description_unref(mLocalMedia);
 	mLocalMedia = desc;
 
 	if (mRemoteMedia) {
@@ -87,19 +81,16 @@ int SalCallOp::setLocalBody (Content &&body) {
 		return -1;
 
 	if (body.getContentType() == ContentType::Sdp) {
-		SalMediaDescription *desc = nullptr;
+		std::shared_ptr<SalMediaDescription> desc = nullptr;
 		if (body.getSize() > 0) {
 			belle_sdp_session_description_t *sdp = belle_sdp_session_description_parse(body.getBodyAsString().c_str());
 			if (!sdp)
 				return -1;
-			desc = sal_media_description_new();
+			desc = std::make_shared<SalMediaDescription>();
 			if (sdp_to_media_description(sdp, desc) != 0) {
-				sal_media_description_unref(desc);
 				return -1;
 			}
 		}
-		if (mLocalMedia)
-			sal_media_description_unref(mLocalMedia);
 		mLocalMedia = desc;
 	}
 
@@ -165,7 +156,7 @@ int SalCallOp::setSdp (belle_sip_message_t *msg, belle_sdp_session_description_t
 	return 0;
 }
 
-int SalCallOp::setSdpFromDesc (belle_sip_message_t *msg, const SalMediaDescription *desc) {
+int SalCallOp::setSdpFromDesc (belle_sip_message_t *msg, const std::shared_ptr<SalMediaDescription> & desc) {
 	auto sdp = media_description_to_sdp(desc);
 	int err = setSdp(msg, sdp);
 	belle_sip_object_unref(sdp);
@@ -340,7 +331,6 @@ std::string SalCallOp::setAddrTo0000 (const std::string & value) {
 void SalCallOp::sdpProcess () {
 	lInfo() << "Doing SDP offer/answer process of type " << (mSdpOffering ? "outgoing" : "incoming");
 	if (mResult) {
-		sal_media_description_unref(mResult);
 		mResult = nullptr;
 	}
 
@@ -348,7 +338,7 @@ void SalCallOp::sdpProcess () {
 	if (!mRemoteMedia)
 		return;
 
-	mResult = sal_media_description_new();
+	mResult = std::make_shared<SalMediaDescription>();
 	if (mSdpOffering) {
 		offer_answer_initiate_outgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult);
 	} else {
@@ -416,7 +406,6 @@ void SalCallOp::handleSessionTimersFromResponse (belle_sip_response_t *response)
 void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 	Content body = extractBody(BELLE_SIP_MESSAGE(response));
 	if (mRemoteMedia) {
-		sal_media_description_unref(mRemoteMedia);
 		mRemoteMedia = nullptr;
 	}
 
@@ -437,7 +426,7 @@ void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 		SalReason reason;
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
-				mRemoteMedia = sal_media_description_new();
+				mRemoteMedia = std::make_shared<SalMediaDescription>();
 				sdp_to_media_description(sdp, mRemoteMedia);
 				mRemoteBody = move(sdpBody);
 			} // If no SDP in response, what can we do?
@@ -696,7 +685,7 @@ void SalCallOp::processTransactionTerminatedCb (void *userCtx, const belle_sip_t
 		op->setReleased();
 }
 
-bool SalCallOp::isMediaDescriptionAcceptable (SalMediaDescription *md) {
+bool SalCallOp::isMediaDescriptionAcceptable (std::shared_ptr<SalMediaDescription> & md) {
 	if (md->streams.size() == 0) {
 		lWarning() << "Media description does not define any stream";
 		return false;
@@ -727,9 +716,7 @@ SalReason SalCallOp::processBodyForInvite (belle_sip_request_t *invite) {
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
 				mSdpOffering = false;
-				if (mRemoteMedia)
-					sal_media_description_unref(mRemoteMedia);
-				mRemoteMedia = sal_media_description_new();
+				mRemoteMedia = std::make_shared<SalMediaDescription>();
 				sdp_to_media_description(sdp, mRemoteMedia);
 				// Make some sanity check about the received SDP
 				if (!isMediaDescriptionAcceptable(mRemoteMedia))
@@ -773,9 +760,7 @@ SalReason SalCallOp::processBodyForAck (belle_sip_request_t *ack) {
 		belle_sdp_session_description_t *sdp;
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
-				if (mRemoteMedia)
-					sal_media_description_unref(mRemoteMedia);
-				mRemoteMedia = sal_media_description_new();
+				mRemoteMedia = std::make_shared<SalMediaDescription>();
 				sdp_to_media_description(sdp, mRemoteMedia);
 				sdpProcess();
 				belle_sip_object_unref(sdp);
@@ -799,11 +784,9 @@ void SalCallOp::callTerminated (belle_sip_server_transaction_t *serverTransactio
 
 void SalCallOp::resetDescriptions () {
 	if (mRemoteMedia) {
-		sal_media_description_unref(mRemoteMedia);
 		mRemoteMedia = nullptr;
 	}
 	if (mResult) {
-		sal_media_description_unref(mResult);
 		mResult = nullptr;
 	}
 }
@@ -1475,7 +1458,7 @@ int SalCallOp::cancelInvite (const SalErrorInfo *info) {
 	return -1;
 }
 
-SalMediaDescription *SalCallOp::getFinalMediaDescription () {
+std::shared_ptr<SalMediaDescription> & SalCallOp::getFinalMediaDescription () {
 	if (mLocalMedia && mRemoteMedia && !mResult)
 		sdpProcess();
 	return mResult;

@@ -75,8 +75,8 @@ protected:
 	std::string getBindIp();
 	int getBindPort();
 	void initializeSessions(MediaStream *stream);
-	RtpProfile * makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt);
-	int getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
+	RtpProfile * makeProfile(const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalStreamDescription> & desc, int *usedPt);
+	int getIdealAudioBandwidth (const std::shared_ptr<SalMediaDescription> md, const std::shared_ptr<SalStreamDescription> desc);
 	RtpSession* createRtpIoSession();
 	void updateCryptoParameters(const OfferAnswerContext &params);
 	void updateDestinations(const OfferAnswerContext &params);
@@ -100,7 +100,7 @@ protected:
 	bool mDtlsStarted = false;
 private:
 	void initRtpBundle(const OfferAnswerContext &params);
-	RtpBundle *createOrGetRtpBundle(const SalStreamDescription *sd);
+	RtpBundle *createOrGetRtpBundle(const std::shared_ptr<SalStreamDescription> sd);
 	void removeFromBundle();
 	void notifyStatsUpdated();
 	void handleEvents();

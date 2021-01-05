@@ -35,16 +35,16 @@ typedef struct SalMediaDescription {
 
 		int lookupMid(const std::string mid) const;
 		const SalStreamBundle *getBundleFromMid(const std::string mid) const;
-		int getIndexOfTransportOwner(const SalStreamDescription *sd) const;
+		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 		SalMediaDescription * ref();
 		void unref();
 
-		const SalStreamDescription *findStream(SalMediaProto proto, SalStreamType type) const;
+		const std::vector<SalStreamDescription>::const_iterator findStream(SalMediaProto proto, SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
-		const SalStreamDescription * getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
-		const SalStreamDescription * findSecureStreamOfType(SalStreamType type) const;
-		const SalStreamDescription * findBestStream(SalStreamType type) const;
+		const std::vector<SalStreamDescription>::const_iterator getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
+		const std::vector<SalStreamDescription>::const_iterator findSecureStreamOfType(SalStreamType type) const;
+		const std::vector<SalStreamDescription>::const_iterator findBestStream(SalStreamType type) const;
 
 		bool_t isEmpty() const;
 
@@ -68,7 +68,7 @@ typedef struct SalMediaDescription {
 
 		size_t getNbStreams() const;
 		const std::string & getAddress() const;
-		const SalStreamDescription * getStreamIdx(unsigned int idx) const;
+		const std::vector<SalStreamDescription>::const_iterator getStreamIdx(unsigned int idx) const;
 
 	int refcount = 0;
 	std::string name;

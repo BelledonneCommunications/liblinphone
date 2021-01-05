@@ -33,18 +33,18 @@ extern "C" {
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *local_offer,
-									const SalMediaDescription *remote_answer,
-									SalMediaDescription *result);
+int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+									const std::shared_ptr<SalMediaDescription> remote_answer,
+									std::shared_ptr<SalMediaDescription> result);
 
 /**
  * Returns a media description to run the streams with, based on the local capabilities and
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int offer_answer_initiate_incoming(MSFactory* factory, const SalMediaDescription *local_capabilities,
-						SalMediaDescription *remote_offer,
-						SalMediaDescription *result, bool_t one_matching_codec);
+int offer_answer_initiate_incoming(MSFactory* factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+						std::shared_ptr<SalMediaDescription> remote_offer,
+						std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec);
 
 #ifdef __cplusplus
 }

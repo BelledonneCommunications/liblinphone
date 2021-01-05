@@ -70,7 +70,7 @@ void MS2RTTStream::finishPrepare(){
 }
 
 void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const SalStreamDescription *tstream = params.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> & tstream = params.resultStreamDescription;
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 	
 	if (basicChangesHandled) {
