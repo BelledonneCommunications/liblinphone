@@ -171,7 +171,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			video_preview_stop(getCCore()->previewstream);
 		getCCore()->previewstream = nullptr;
 	}
-	const SalStreamDescription *vstream = ctx.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> & vstream = ctx.resultStreamDescription;
 	
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
 	
@@ -303,7 +303,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (listener)
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
-	const SalStreamDescription *remoteStream = ctx.remoteStreamDescription;
+	const std::shared_ptr<SalStreamDescription> & remoteStream = ctx.remoteStreamDescription;
 	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1)) {
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */

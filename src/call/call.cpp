@@ -219,7 +219,7 @@ void Call::startRemoteRing () {
 		return;
 
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
-	SalMediaDescription *md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
+	std::shared_ptr<SalMediaDescription> md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
 	if (md){
 		int maxRate = md->streams[0].max_rate;
 		if (maxRate > 0)

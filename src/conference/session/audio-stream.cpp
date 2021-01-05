@@ -217,7 +217,7 @@ void MS2AudioStream::setupMediaLossCheck(){
 }
 
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const SalStreamDescription *stream = params.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> & stream = params.resultStreamDescription;
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
@@ -482,7 +482,7 @@ void MS2AudioStream::stop(){
 
 //To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
-	const SalStreamDescription *remote = params.remoteStreamDescription;
+	const std::shared_ptr<SalStreamDescription> & remote = params.remoteStreamDescription;
 	audio_stream_start_zrtp(mStream);
 	if (remote->haveZrtpHash == 1) {
 		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote->zrtphash, strlen((const char *)(remote->zrtphash)));

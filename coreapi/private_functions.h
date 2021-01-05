@@ -296,7 +296,6 @@ void linphone_core_start_waiting(LinphoneCore *lc, const char *purpose);
 void linphone_core_update_progress(LinphoneCore *lc, const char *purpose, float progresses);
 void linphone_core_stop_waiting(LinphoneCore *lc);
 
-bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md);
 extern LinphonePrivate::Sal::Callbacks linphone_sal_callbacks;
 LINPHONE_PUBLIC bool_t linphone_core_rtcp_enabled(const LinphoneCore *lc);
 LINPHONE_PUBLIC bool_t linphone_core_symmetric_rtp_enabled(LinphoneCore*lc);

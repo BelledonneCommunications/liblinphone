@@ -35,6 +35,7 @@
 L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
+typedef struct SalMediaDescription SalMediaDescription;
 
 namespace LinphoneTest {
 	class LocalConferenceTester;
@@ -257,6 +258,8 @@ public:
 	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
 	void destroyTimer(belle_sip_source_t *timer);
+
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 private:
 	Core ();
 
