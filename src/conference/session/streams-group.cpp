@@ -58,7 +58,7 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
-	SalStreamType type = params.localStreamDescription->type;
+	SalStreamType type = params.getLocalStreamDescription()->type;
 	switch(type){
 		case SalAudio:
 			ret = new MS2AudioStream(*this, params);
@@ -111,10 +111,10 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
 		}else{
-			if (s->getType() != params.localStreamDescription->type){
+			if (s->getType() != params.getLocalStreamDescription()->type){
 				lError() << "Inconsistency detected while creating streams. Type has changed from " <<
 					sal_stream_type_to_string(s->getType()) << " to " << 
-					sal_stream_type_to_string(params.localStreamDescription->type) << "!";
+					sal_stream_type_to_string(params.getLocalStreamDescription()->type) << "!";
 			}else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED ){
 				/*
 				* Special case: due to implementation constraint, it is necessary to instanciate a new Stream when changing 
@@ -260,10 +260,10 @@ int StreamsGroup::updateAllocatedAudioBandwidth (const PayloadType *pt, int maxb
 	return mAudioBandwidth;
 }
 
-int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> md, const std::shared_ptr<SalStreamDescription> desc) {
+int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> & md, const SalStreamDescription & desc) {
 	int remoteBandwidth = 0;
-	if (desc->bandwidth > 0)
-		remoteBandwidth = desc->bandwidth;
+	if (desc.bandwidth > 0)
+		remoteBandwidth = desc.bandwidth;
 	else if (md->bandwidth > 0) {
 		/* Case where b=AS is given globally, not per stream */
 		remoteBandwidth = PayloadTypeHandler::getRemainingBandwidthForVideo(md->bandwidth, mAudioBandwidth);
@@ -271,7 +271,6 @@ int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> 
 	return PayloadTypeHandler::getMinBandwidth(
 		PayloadTypeHandler::getRemainingBandwidthForVideo(linphone_core_get_upload_bandwidth(getCCore()), mAudioBandwidth), remoteBandwidth);
 }
-
 
 void StreamsGroup::zrtpStarted(Stream *mainZrtpStream){
 	for (auto &stream : mStreams){
@@ -337,11 +336,11 @@ Stream * StreamsGroup::lookupMainStream(SalStreamType type){
 void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
 		params.scopeStreamToIndex(s->getIndex());
-		if (!params.resultStreamDescription->enabled() || params.resultStreamDescription->getDirection() == SalStreamInactive)
+		const auto & refStream = params.getResultStreamDescription();
+		if (!refStream->enabled() || refStream->getDirection() == SalStreamInactive)
 			continue;
 		
-		const std::shared_ptr<SalStreamDescription> refStream = params.resultStreamDescription;
-		const std::shared_ptr<SalStreamDescription> newStream = params.remoteStreamDescription;
+		const auto & newStream = params.getRemoteStreamDescription();
 		
 		if ((refStream->type == newStream->type) && refStream->payloads && newStream->payloads) {
 			OrtpPayloadType *refpt = static_cast<OrtpPayloadType *>(refStream->payloads->data);
