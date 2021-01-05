@@ -155,6 +155,9 @@
 			}
 			deviceIt = deviceIt->next;
 		}
+		
+		// Notify the filter that the audio route changed
+		pcore->soundcardAudioRouteChanged();
 	});
 }
 
