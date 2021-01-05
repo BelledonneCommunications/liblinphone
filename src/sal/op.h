@@ -262,7 +262,7 @@ protected:
 	belle_sip_dialog_t *mDialog = nullptr;
 	belle_sip_header_replaces_t *mReplaces = nullptr;
 	belle_sip_header_referred_by_t *mReferredBy = nullptr;
-	SalMediaDescription *mResult = nullptr;
+	std::shared_ptr<SalMediaDescription> mResult = nullptr;
 	belle_sdp_session_description_t *mSdpAnswer = nullptr;
 	State mState = State::Early;
 	Dir mDir = Dir::Incoming;

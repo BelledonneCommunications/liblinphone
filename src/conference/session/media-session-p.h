@@ -81,7 +81,7 @@ public:
 	void setRemoteParams (MediaSessionParams *msp);
 
 	IceService &getIceService() const { return streamsGroup->getIceService(); }
-	SalMediaDescription *getLocalDesc () const { return localDesc; }
+	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
 
 	unsigned int getAudioStartCount () const;
 	unsigned int getVideoStartCount () const;
@@ -102,7 +102,7 @@ public:
 	int getMainAudioStreamIndex () const { return mainAudioStreamIndex; }
 	int getMainTextStreamIndex () const { return mainTextStreamIndex; }
 	int getMainVideoStreamIndex () const { return mainVideoStreamIndex; }
-	SalMediaDescription *getResultDesc () const { return resultDesc; }
+	std::shared_ptr<SalMediaDescription> getResultDesc () const { return resultDesc; }
 
 	// CoreListener
 	void onNetworkReachable (bool sipNetworkReachable, bool mediaNetworkReachable) override;
@@ -164,13 +164,13 @@ private:
 
 	
 
-	void assignStreamsIndexesIncoming(const SalMediaDescription *md);
+	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> md);
 	void assignStreamsIndexes(bool localIsOfferer);
-	int getFirstStreamWithType(const SalMediaDescription *md, SalStreamType type);
-	void fixCallParams (SalMediaDescription *rmd, bool fromOffer);
+	int getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> md, SalStreamType type);
+	void fixCallParams (std::shared_ptr<SalMediaDescription> rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
-	void setCompatibleIncomingCallParams (SalMediaDescription *md);
-	void updateBiggestDesc (SalMediaDescription *md);
+	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> md);
+	void updateBiggestDesc (std::shared_ptr<SalMediaDescription> md);
 	void updateRemoteSessionIdAndVer ();
 
 
@@ -180,26 +180,26 @@ private:
 	void selectIncomingIpVersion ();
 	void selectOutgoingIpVersion ();
 
-	void forceStreamsDirAccordingToState (SalMediaDescription *md);
+	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> md);
 	bool generateB64CryptoKey (size_t keyLength, char *keyOut, size_t keyOutSize);
 	void makeLocalMediaDescription (bool localIsOfferer);
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
-	void setupDtlsKeys (SalMediaDescription *md);
-	void setupEncryptionKeys (SalMediaDescription *md);
-	void setupRtcpFb (SalMediaDescription *md);
-	void setupRtcpXr (SalMediaDescription *md);
-	void setupZrtpHash (SalMediaDescription *md);
-	void setupImEncryptionEngineParameters (SalMediaDescription *md);
-	void transferAlreadyAssignedPayloadTypes (SalMediaDescription *oldMd, SalMediaDescription *md);
+	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> md);
+	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> md);
+	void setupRtcpFb (std::shared_ptr<SalMediaDescription> md);
+	void setupRtcpXr (std::shared_ptr<SalMediaDescription> md);
+	void setupZrtpHash (std::shared_ptr<SalMediaDescription> md);
+	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> md);
+	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> oldMd, std::shared_ptr<SalMediaDescription> md);
 	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
 	void prepareEarlyMediaForking ();
-	void tryEarlyMediaForking (SalMediaDescription *md);
+	void tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> md);
 	void updateStreamFrozenPayloads (SalStreamDescription &resultDesc, SalStreamDescription &localStreamDesc);
-	void updateFrozenPayloads (SalMediaDescription *result);
-	void updateStreams (SalMediaDescription *newMd, CallSession::State targetState);
+	void updateFrozenPayloads (std::shared_ptr<SalMediaDescription> result);
+	void updateStreams (std::shared_ptr<SalMediaDescription> newMd, CallSession::State targetState);
 
 	bool allStreamsAvpfEnabled () const;
 	bool allStreamsEncrypted () const;
@@ -228,7 +228,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(SalMediaDescription *md, SalStreamDescription &sd, const std::string mid);
+	void addStreamToBundle(std::shared_ptr<SalMediaDescription> md, SalStreamDescription &sd, const std::string mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();
@@ -237,8 +237,8 @@ private:
 	Stream *getStream(LinphoneStreamType type)const;
 	int portFromStreamIndex(int index);
 	SalMediaProto getAudioProto();
-	SalMediaProto getAudioProto(SalMediaDescription *remote_md);
-	bool hasAvpf(SalMediaDescription *md)const;
+	SalMediaProto getAudioProto(std::shared_ptr<SalMediaDescription> remote_md);
+	bool hasAvpf(std::shared_ptr<SalMediaDescription> md)const;
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
 private:
@@ -266,10 +266,10 @@ private:
 
 	std::string mediaLocalIp;
 
-	SalMediaDescription *localDesc = nullptr;
+	std::shared_ptr<SalMediaDescription> localDesc = nullptr;
 	int localDescChanged = 0;
-	SalMediaDescription *biggestDesc = nullptr;
-	SalMediaDescription *resultDesc = nullptr;
+	std::shared_ptr<SalMediaDescription> biggestDesc = nullptr;
+	std::shared_ptr<SalMediaDescription> resultDesc = nullptr;
 	bool localIsOfferer = false;
 	bool expectMediaInAck = false;
 	int freeStreamIndex = 0;

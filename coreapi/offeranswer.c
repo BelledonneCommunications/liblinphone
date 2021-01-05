@@ -335,20 +335,20 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 	return res;
 }
 
-static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *local_offer,
-						const SalStreamDescription *remote_answer,
-						SalStreamDescription *result){
-	if (remote_answer->enabled())
-		result->payloads=match_payloads(factory, local_offer->payloads,remote_answer->payloads,TRUE,FALSE);
+static void initiate_outgoing(MSFactory* factory, const SalStreamDescription & local_offer,
+						const SalStreamDescription & remote_answer,
+						SalStreamDescription & result){
+	if (remote_answer.enabled())
+		result.payloads=match_payloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
 	else {
-		ms_message("Local stream description [%p] rejected by peer",local_offer);
-		result->rtp_port=0;
+		ms_message("Local stream description [%p] rejected by peer",&local_offer);
+		result.rtp_port=0;
 		return;
 	}
-	result->proto=remote_answer->proto;
-	result->type=local_offer->type;
+	result.proto=remote_answer.proto;
+	result.type=local_offer.type;
 
-	if (local_offer->rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer->rtp_addr))) {
+	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 			/*6.2 Multicast Streams
 			...
 		If a multicast stream is accepted, the address and port information
@@ -358,217 +358,217 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription *lo
 		participants in a multicast session need to have equivalent views of
 		the parameters of the session, an underlying assumption of the
 		multicast bias of RFC 2327.*/
-		if (local_offer->rtp_addr.compare(remote_answer->rtp_addr) !=0 ) {
+		if (local_offer.rtp_addr.compare(remote_answer.rtp_addr) !=0 ) {
 			ms_message("Remote answered IP [%s] does not match offered [%s] for local stream description [%p]"
-																,L_STRING_TO_C(remote_answer->rtp_addr)
-																,L_STRING_TO_C(local_offer->rtp_addr)
-																,local_offer);
-			result->rtp_port=0;
+																,L_STRING_TO_C(remote_answer.rtp_addr)
+																,L_STRING_TO_C(local_offer.rtp_addr)
+																,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		if (local_offer->rtp_port!=remote_answer->rtp_port) {
+		if (local_offer.rtp_port!=remote_answer.rtp_port) {
 			ms_message("Remote answered rtp port [%i] does not match offered [%i] for local stream description [%p]"
-																,remote_answer->rtp_port
-																,local_offer->rtp_port
-																,local_offer);
-			result->rtp_port=0;
+																,remote_answer.rtp_port
+																,local_offer.rtp_port
+																,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		if (local_offer->dir!=remote_answer->dir) {
+		if (local_offer.dir!=remote_answer.dir) {
 			ms_message("Remote answered dir [%s] does not match offered [%s] for local stream description [%p]"
-																,sal_stream_dir_to_string(remote_answer->dir)
-																,sal_stream_dir_to_string(local_offer->dir)
-																,local_offer);
-			result->rtp_port=0;
+																,sal_stream_dir_to_string(remote_answer.dir)
+																,sal_stream_dir_to_string(local_offer.dir)
+																,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		if (local_offer->bandwidth!=remote_answer->bandwidth) {
+		if (local_offer.bandwidth!=remote_answer.bandwidth) {
 			ms_message("Remote answered bandwidth [%i] does not match offered [%i] for local stream description [%p]"
-																,remote_answer->bandwidth
-																,local_offer->bandwidth
-																,local_offer);
-			result->rtp_port=0;
+																,remote_answer.bandwidth
+																,local_offer.bandwidth
+																,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		if (local_offer->ptime > 0 && local_offer->ptime!=remote_answer->ptime) {
+		if (local_offer.ptime > 0 && local_offer.ptime!=remote_answer.ptime) {
 			ms_message("Remote answered ptime [%i] does not match offered [%i] for local stream description [%p]"
-																,remote_answer->ptime
-																,local_offer->ptime
-																,local_offer);
-			result->rtp_port=0;
+																,remote_answer.ptime
+																,local_offer.ptime
+																,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		if (local_offer->ttl > 0 && local_offer->ttl!=remote_answer->ttl) {
+		if (local_offer.ttl > 0 && local_offer.ttl!=remote_answer.ttl) {
 			ms_message("Remote answered ttl [%i] does not match offered [%i] for local stream description [%p]"
-																		,remote_answer->ttl
-																		,local_offer->ttl
-																		,local_offer);
-			result->rtp_port=0;
+																		,remote_answer.ttl
+																		,local_offer.ttl
+																		,&local_offer);
+			result.rtp_port=0;
 			return;
 		}
-		result->ttl=local_offer->ttl;
-		result->dir=local_offer->dir;
-		result->multicast_role = SalMulticastSender;
+		result.ttl=local_offer.ttl;
+		result.dir=local_offer.dir;
+		result.multicast_role = SalMulticastSender;
 	} else {
-		result->dir=compute_dir_outgoing(local_offer->dir,remote_answer->dir);
+		result.dir=compute_dir_outgoing(local_offer.dir,remote_answer.dir);
 	}
 
-	result->rtcp_mux = remote_answer->rtcp_mux && local_offer->rtcp_mux;
-	if (remote_answer->mid.empty() == false){
-		if (local_offer->mid.empty() == false){
-			result->mid = remote_answer->mid;
-			result->mid_rtp_ext_header_id = remote_answer->mid_rtp_ext_header_id;
-			result->bundle_only = remote_answer->bundle_only;
-			result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
+	if (remote_answer.mid.empty() == false){
+		if (local_offer.mid.empty() == false){
+			result.mid = remote_answer.mid;
+			result.mid_rtp_ext_header_id = remote_answer.mid_rtp_ext_header_id;
+			result.bundle_only = remote_answer.bundle_only;
+			result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
 	}
 
-	if (result->payloads && !only_telephone_event(result->payloads)){
-		result->rtp_addr=remote_answer->rtp_addr;
-		result->rtcp_addr=remote_answer->rtcp_addr;
-		result->rtp_port=remote_answer->rtp_port;
-		result->rtcp_port=remote_answer->rtcp_port;
-		result->bandwidth=remote_answer->bandwidth;
-		result->ptime=remote_answer->ptime;
-		result->maxptime=remote_answer->maxptime;
+	if (result.payloads && !only_telephone_event(result.payloads)){
+		result.rtp_addr=remote_answer.rtp_addr;
+		result.rtcp_addr=remote_answer.rtcp_addr;
+		result.rtp_port=remote_answer.rtp_port;
+		result.rtcp_port=remote_answer.rtcp_port;
+		result.bandwidth=remote_answer.bandwidth;
+		result.ptime=remote_answer.ptime;
+		result.maxptime=remote_answer.maxptime;
 	}else{
-		result->disable();
+		result.disable();
 	}
-	if (result->hasSrtp() == TRUE) {
+	if (result.hasSrtp() == TRUE) {
 		/* verify crypto algo */
-		result->crypto.clear();
+		result.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!match_crypto_algo(local_offer->crypto, remote_answer->crypto, crypto_result, &result->crypto_local_tag, FALSE)) {
-			result->disable();
+		if (!match_crypto_algo(local_offer.crypto, remote_answer.crypto, crypto_result, &result.crypto_local_tag, FALSE)) {
+			result.disable();
 		}
-		if (result->crypto.empty()) {
-			result->crypto.resize(1);
+		if (result.crypto.empty()) {
+			result.crypto.resize(1);
 		}
-		result->crypto[0] = crypto_result;
+		result.crypto[0] = crypto_result;
 	}
-	result->rtp_ssrc=local_offer->rtp_ssrc;
-	result->rtcp_cname=local_offer->rtcp_cname;
+	result.rtp_ssrc=local_offer.rtp_ssrc;
+	result.rtcp_cname=local_offer.rtcp_cname;
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
-	if ((local_offer->dtls_role!=SalDtlsRoleInvalid) && (remote_answer->dtls_role!=SalDtlsRoleInvalid)
-			&&(!local_offer->dtls_fingerprint.empty()) && (!remote_answer->dtls_fingerprint.empty())) {
-		result->dtls_fingerprint = remote_answer->dtls_fingerprint;
-		if (remote_answer->dtls_role==SalDtlsRoleIsClient) {
-			result->dtls_role = SalDtlsRoleIsServer;
+	if ((local_offer.dtls_role!=SalDtlsRoleInvalid) && (remote_answer.dtls_role!=SalDtlsRoleInvalid)
+			&&(!local_offer.dtls_fingerprint.empty()) && (!remote_answer.dtls_fingerprint.empty())) {
+		result.dtls_fingerprint = remote_answer.dtls_fingerprint;
+		if (remote_answer.dtls_role==SalDtlsRoleIsClient) {
+			result.dtls_role = SalDtlsRoleIsServer;
 		} else {
-			result->dtls_role = SalDtlsRoleIsClient;
+			result.dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result->dtls_fingerprint.clear();
-		result->dtls_role = SalDtlsRoleInvalid;
+		result.dtls_fingerprint.clear();
+		result.dtls_role = SalDtlsRoleInvalid;
 	}
-	result->implicit_rtcp_fb = local_offer->implicit_rtcp_fb && remote_answer->implicit_rtcp_fb;
+	result.implicit_rtcp_fb = local_offer.implicit_rtcp_fb && remote_answer.implicit_rtcp_fb;
 }
 
 
-static void initiate_incoming(MSFactory *factory, const SalStreamDescription *local_cap,
-						const SalStreamDescription *remote_offer,
-						SalStreamDescription *result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	result->payloads=match_payloads(factory, local_cap->payloads,remote_offer->payloads, FALSE, one_matching_codec);
-	result->proto=remote_offer->proto;
-	result->type=local_cap->type;
-	result->dir=compute_dir_incoming(local_cap->dir,remote_offer->dir);
+static void initiate_incoming(MSFactory *factory, const SalStreamDescription & local_cap,
+						const SalStreamDescription & remote_offer,
+						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
+	result.payloads=match_payloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
+	result.proto=remote_offer.proto;
+	result.type=local_cap.type;
+	result.dir=compute_dir_incoming(local_cap.dir,remote_offer.dir);
 	
-	if (!result->payloads || only_telephone_event(result->payloads) || !remote_offer->enabled()){
-		result->rtp_port=0;
+	if (!result.payloads || only_telephone_event(result.payloads) || !remote_offer.enabled()){
+		result.rtp_port=0;
 		return;
 	}
-	if (remote_offer->rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer->rtp_addr))) {
-		if (result->hasSrtp() == TRUE) {
-			ms_message("SAVP not supported for multicast address for remote stream [%p]",remote_offer);
-			result->rtp_port=0;
+	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
+		if (result.hasSrtp() == TRUE) {
+			ms_message("SAVP not supported for multicast address for remote stream [%p]",&remote_offer);
+			result.rtp_port=0;
 			return;
 		}
-		result->dir=remote_offer->dir;
-		result->rtp_addr=remote_offer->rtp_addr;
-		result->rtcp_addr=remote_offer->rtcp_addr;
-		result->rtp_port=remote_offer->rtp_port;
-		/*result->rtcp_port=remote_offer->rtcp_port;*/
-		result->rtcp_port=0; /* rtcp not supported yet*/
-		result->bandwidth=remote_offer->bandwidth;
-		result->ptime=remote_offer->ptime;
-		result->maxptime=remote_offer->maxptime;
-		result->ttl=remote_offer->ttl;
-		result->multicast_role = SalMulticastReceiver;
+		result.dir=remote_offer.dir;
+		result.rtp_addr=remote_offer.rtp_addr;
+		result.rtcp_addr=remote_offer.rtcp_addr;
+		result.rtp_port=remote_offer.rtp_port;
+		/*result.rtcp_port=remote_offer.rtcp_port;*/
+		result.rtcp_port=0; /* rtcp not supported yet*/
+		result.bandwidth=remote_offer.bandwidth;
+		result.ptime=remote_offer.ptime;
+		result.maxptime=remote_offer.maxptime;
+		result.ttl=remote_offer.ttl;
+		result.multicast_role = SalMulticastReceiver;
 	} else {
-		result->rtp_addr=local_cap->rtp_addr;
-		result->rtcp_addr=local_cap->rtcp_addr;
-		result->rtp_port=local_cap->rtp_port;
-		result->rtcp_port=local_cap->rtcp_port;
-		result->bandwidth=local_cap->bandwidth;
-		result->ptime=local_cap->ptime;
-		result->maxptime=local_cap->maxptime;
+		result.rtp_addr=local_cap.rtp_addr;
+		result.rtcp_addr=local_cap.rtcp_addr;
+		result.rtp_port=local_cap.rtp_port;
+		result.rtcp_port=local_cap.rtcp_port;
+		result.bandwidth=local_cap.bandwidth;
+		result.ptime=local_cap.ptime;
+		result.maxptime=local_cap.maxptime;
 	}
 	
-	result->rtcp_mux = remote_offer->rtcp_mux && local_cap->rtcp_mux;
+	result.rtcp_mux = remote_offer.rtcp_mux && local_cap.rtcp_mux;
 	
 	/* Handle RTP bundle negociation */
-	if (!remote_offer->mid.empty() && bundle_owner_mid){
-		result->mid = remote_offer->mid;
-		result->mid_rtp_ext_header_id = remote_offer->mid_rtp_ext_header_id;
+	if (!remote_offer.mid.empty() && bundle_owner_mid){
+		result.mid = remote_offer.mid;
+		result.mid_rtp_ext_header_id = remote_offer.mid_rtp_ext_header_id;
 		
-		if (remote_offer->mid.compare(bundle_owner_mid) != 0){
+		if (remote_offer.mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
-			result->bundle_only = TRUE;
-			result->rtp_port = 0;
+			result.bundle_only = TRUE;
+			result.rtp_port = 0;
 		}
-		result->rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+		result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	if (result->hasSrtp() == TRUE) {
+	if (result.hasSrtp() == TRUE) {
 		/* select crypto algo */
-		result->crypto.clear();
+		result.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!match_crypto_algo(local_cap->crypto, remote_offer->crypto, crypto_result, &result->crypto_local_tag, TRUE)) {
-			result->disable();
-			ms_message("No matching crypto algo for remote stream's offer [%p]",remote_offer);
+		if (!match_crypto_algo(local_cap.crypto, remote_offer.crypto, crypto_result, &result.crypto_local_tag, TRUE)) {
+			result.disable();
+			ms_message("No matching crypto algo for remote stream's offer [%p]",&remote_offer);
 		}
-		if (result->crypto.empty()) {
-			result->crypto.resize(1);
+		if (result.crypto.empty()) {
+			result.crypto.resize(1);
 		}
-		result->crypto[0] = crypto_result;
+		result.crypto[0] = crypto_result;
 	}
 
 	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
 	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
-	if ((remote_offer->haveZrtpHash == 1) || (local_cap->haveZrtpHash == 1)) {
-		if (local_cap->zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
-			strncpy((char *)(result->zrtphash), (char *)(local_cap->zrtphash), sizeof(result->zrtphash));
-			result->haveZrtpHash =  1;
+	if ((remote_offer.haveZrtpHash == 1) || (local_cap.haveZrtpHash == 1)) {
+		if (local_cap.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+			strncpy((char *)(result.zrtphash), (char *)(local_cap.zrtphash), sizeof(result.zrtphash));
+			result.haveZrtpHash =  1;
 		}
 	}
 
-	result->ice_pwd = local_cap->ice_pwd;
-	result->ice_ufrag = local_cap->ice_ufrag;
-	result->ice_mismatch = local_cap->ice_mismatch;
-	result->set_nortpproxy = local_cap->set_nortpproxy;
-	result->ice_candidates = local_cap->ice_candidates;
-	result->ice_remote_candidates = local_cap->ice_remote_candidates;
-	result->name = local_cap->name;
-	result->rtp_ssrc=local_cap->rtp_ssrc;
-	result->rtcp_cname=local_cap->rtcp_cname;
+	result.ice_pwd = local_cap.ice_pwd;
+	result.ice_ufrag = local_cap.ice_ufrag;
+	result.ice_mismatch = local_cap.ice_mismatch;
+	result.set_nortpproxy = local_cap.set_nortpproxy;
+	result.ice_candidates = local_cap.ice_candidates;
+	result.ice_remote_candidates = local_cap.ice_remote_candidates;
+	result.name = local_cap.name;
+	result.rtp_ssrc=local_cap.rtp_ssrc;
+	result.rtcp_cname=local_cap.rtcp_cname;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
-	if (((local_cap->dtls_role!=SalDtlsRoleInvalid)) && (remote_offer->dtls_role!=SalDtlsRoleInvalid)
-			&& (!local_cap->dtls_fingerprint.empty()) && (!remote_offer->dtls_fingerprint.empty())) {
-		result->dtls_fingerprint = local_cap->dtls_fingerprint;
-		if (remote_offer->dtls_role==SalDtlsRoleUnset) {
-			result->dtls_role = SalDtlsRoleIsClient;
+	if (((local_cap.dtls_role!=SalDtlsRoleInvalid)) && (remote_offer.dtls_role!=SalDtlsRoleInvalid)
+			&& (!local_cap.dtls_fingerprint.empty()) && (!remote_offer.dtls_fingerprint.empty())) {
+		result.dtls_fingerprint = local_cap.dtls_fingerprint;
+		if (remote_offer.dtls_role==SalDtlsRoleUnset) {
+			result.dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result->dtls_fingerprint.clear();
-		result->dtls_role = SalDtlsRoleInvalid;
+		result.dtls_fingerprint.clear();
+		result.dtls_role = SalDtlsRoleInvalid;
 	}
-	result->implicit_rtcp_fb = local_cap->implicit_rtcp_fb && remote_offer->implicit_rtcp_fb;
+	result.implicit_rtcp_fb = local_cap.implicit_rtcp_fb && remote_offer.implicit_rtcp_fb;
 }
 
 static bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherProto)
@@ -592,33 +592,31 @@ static bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherP
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *local_offer,
-					const SalMediaDescription *remote_answer,
-					SalMediaDescription *result){
+int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+					const std::shared_ptr<SalMediaDescription> remote_answer,
+					std::shared_ptr<SalMediaDescription> result){
 	size_t i;
-	const SalStreamDescription *rs;
-	SalStreamDescription *ls;
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
-		ls=&local_offer->streams[i];
-		rs=&remote_answer->streams[i];
-		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
+		SalStreamDescription & ls = local_offer->streams[i];
+		const SalStreamDescription & rs = remote_answer->streams[i];
+		if ((i < remote_answer->streams.size()) && rs.type == ls.type && are_proto_compatibles(ls.proto, rs.proto))
 		{
-			if (ls->proto != rs->proto && ls->hasAvpf())	{
-				ls->proto = rs->proto;
+			if (ls.proto != rs.proto && ls.hasAvpf()) {
+				ls.proto = rs.proto;
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
 			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1));
 			}
-			initiate_outgoing(factory, ls,rs,&result->streams[i]);
-			memcpy(&result->streams[i].rtcp_xr, &ls->rtcp_xr, sizeof(result->streams[i].rtcp_xr));
-			if ((ls->rtcp_xr.enabled == TRUE) && (rs->rtcp_xr.enabled == FALSE)) {
+			initiate_outgoing(factory, ls,rs,result->streams[i]);
+			memcpy(&result->streams[i].rtcp_xr, &ls.rtcp_xr, sizeof(result->streams[i].rtcp_xr));
+			if ((ls.rtcp_xr.enabled == TRUE) && (rs.rtcp_xr.enabled == FALSE)) {
 				result->streams[i].rtcp_xr.enabled = FALSE;
 			}
-			result->streams[i].rtcp_fb.generic_nack_enabled = ls->rtcp_fb.generic_nack_enabled & rs->rtcp_fb.generic_nack_enabled;
-			result->streams[i].rtcp_fb.tmmbr_enabled = ls->rtcp_fb.tmmbr_enabled & rs->rtcp_fb.tmmbr_enabled;
+			result->streams[i].rtcp_fb.generic_nack_enabled = ls.rtcp_fb.generic_nack_enabled & rs.rtcp_fb.generic_nack_enabled;
+			result->streams[i].rtcp_fb.tmmbr_enabled = ls.rtcp_fb.tmmbr_enabled & rs.rtcp_fb.tmmbr_enabled;
 		}
 		else ms_warning("No matching stream for %zu",i);
 	}
@@ -649,12 +647,10 @@ int offer_answer_initiate_outgoing(MSFactory *factory, SalMediaDescription *loca
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription *local_capabilities,
-					SalMediaDescription *remote_offer,
-					SalMediaDescription *result, bool_t one_matching_codec){
+int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+					std::shared_ptr<SalMediaDescription> remote_offer,
+					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
-	const SalStreamDescription *ls=NULL;
-	SalStreamDescription *rs;
 
 	if (remote_offer->bundles && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
@@ -662,15 +658,19 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 	}
 	
 	for(i=0;i<remote_offer->streams.size();++i){
-		rs = &remote_offer->streams[i];
-		ls = &local_capabilities->streams[i];
-		if (i <= result->streams.size()) {
+
+		if (i >= local_capabilities->streams.size()) {
+			local_capabilities->streams.resize((i + 1));
+		}
+		const SalStreamDescription & ls = local_capabilities->streams[i];
+		SalStreamDescription & rs = remote_offer->streams[i];
+		if (i >= result->streams.size()) {
 			result->streams.resize((i + 1));
 		}
-		if (rs && rs->type == ls->type && are_proto_compatibles(ls->proto, rs->proto))
+		if (rs.type == ls.type && are_proto_compatibles(ls.proto, rs.proto))
 		{
-			if (ls->proto != rs->proto && rs->hasAvpf())	{
-				rs->proto = ls->proto;
+			if (ls.proto != rs.proto && rs.hasAvpf())	{
+				rs.proto = ls.proto;
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
 			}
 			const char *bundle_owner_mid = NULL;
@@ -680,17 +680,17 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
 				}
 			}
-			initiate_incoming(factory, ls,rs,&result->streams[i],one_matching_codec, bundle_owner_mid);
+			initiate_incoming(factory, ls,rs,result->streams[i],one_matching_codec, bundle_owner_mid);
 			// Handle global RTCP FB attributes
-			result->streams[i].rtcp_fb.generic_nack_enabled = rs->rtcp_fb.generic_nack_enabled;
-			result->streams[i].rtcp_fb.tmmbr_enabled = rs->rtcp_fb.tmmbr_enabled;
+			result->streams[i].rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
+			result->streams[i].rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
 			memset(&result->streams[i].rtcp_xr, 0, sizeof(result->streams[i].rtcp_xr));
-			if (rs->rtcp_xr.enabled == TRUE) {
+			if (rs.rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls->rtcp_xr;
+				if (ls.rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
-				if ((rtcp_xr_conf != NULL) && (ls->dir == SalStreamSendRecv)) {
+				if ((rtcp_xr_conf != NULL) && (ls.dir == SalStreamSendRecv)) {
 					memcpy(&result->streams[i].rtcp_xr, rtcp_xr_conf, sizeof(result->streams[i].rtcp_xr));
 				} else {
 					result->streams[i].rtcp_xr.enabled = TRUE;
@@ -701,16 +701,16 @@ int offer_answer_initiate_incoming(MSFactory *factory, const SalMediaDescription
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
 			result->streams[i].dir=SalStreamInactive;
 			result->streams[i].rtp_port=0;
-			result->streams[i].type=rs->type;
-			result->streams[i].proto=rs->proto;
-			if (rs->type==SalOther){
-				result->streams[i].typeother = rs->typeother;
+			result->streams[i].type=rs.type;
+			result->streams[i].proto=rs.proto;
+			if (rs.type==SalOther){
+				result->streams[i].typeother = rs.typeother;
 			}
-			if (rs->proto==SalProtoOther){
-				result->streams[i].proto_other = rs->proto_other;
+			if (rs.proto==SalProtoOther){
+				result->streams[i].proto_other = rs.proto_other;
 			}
 		}
-		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls->custom_sdp_attributes);
+		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;

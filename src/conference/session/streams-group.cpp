@@ -260,7 +260,7 @@ int StreamsGroup::updateAllocatedAudioBandwidth (const PayloadType *pt, int maxb
 	return mAudioBandwidth;
 }
 
-int StreamsGroup::getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
+int StreamsGroup::getVideoBandwidth (const std::shared_ptr<SalMediaDescription> md, const std::shared_ptr<SalStreamDescription> desc) {
 	int remoteBandwidth = 0;
 	if (desc->bandwidth > 0)
 		remoteBandwidth = desc->bandwidth;
@@ -340,8 +340,8 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 		if (!params.resultStreamDescription->enabled() || params.resultStreamDescription->getDirection() == SalStreamInactive)
 			continue;
 		
-		const SalStreamDescription *refStream = params.resultStreamDescription;
-		const SalStreamDescription *newStream = params.remoteStreamDescription;
+		const std::shared_ptr<SalStreamDescription> refStream = params.resultStreamDescription;
+		const std::shared_ptr<SalStreamDescription> newStream = params.remoteStreamDescription;
 		
 		if ((refStream->type == newStream->type) && refStream->payloads && newStream->payloads) {
 			OrtpPayloadType *refpt = static_cast<OrtpPayloadType *>(refStream->payloads->data);

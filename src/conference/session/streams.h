@@ -457,7 +457,7 @@ public:
 protected:
 	
 	int updateAllocatedAudioBandwidth (const PayloadType *pt, int maxbw);
-	int getVideoBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc);
+	int getVideoBandwidth (const std::shared_ptr<SalMediaDescription> md, const std::shared_ptr<SalStreamDescription> desc);
 	void zrtpStarted(Stream *mainZrtpStream);
 	void propagateEncryptionChanged();
 	void authTokenReady(const std::string &token, bool verified);

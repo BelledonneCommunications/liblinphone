@@ -47,7 +47,7 @@ const SalStreamBundle *sal_media_description_get_bundle_from_mid(const SalMediaD
 }
 
 int sal_media_description_get_index_of_transport_owner(const SalMediaDescription *md, const SalStreamDescription *sd){
-	return md->getIndexOfTransportOwner(sd);
+	return md->getIndexOfTransportOwner(*sd);
 }
 
 SalMediaDescription * sal_media_description_ref(SalMediaDescription *md){
@@ -63,7 +63,7 @@ void sal_media_description_unref(SalMediaDescription *md){
 }
 
 const SalStreamDescription *sal_media_description_find_stream(const SalMediaDescription *md, SalMediaProto proto, SalStreamType type){
-	return md->findStream(proto, type);
+	return &(*md->findStream(proto, type));
 }
 
 unsigned int sal_media_description_nb_active_streams_of_type(const SalMediaDescription *md, SalStreamType type) {
@@ -71,15 +71,15 @@ unsigned int sal_media_description_nb_active_streams_of_type(const SalMediaDescr
 }
 
 const SalStreamDescription * sal_media_description_get_active_stream_of_type(const SalMediaDescription *md, SalStreamType type, unsigned int idx) {
-	return md->getActiveStreamOfType(type, idx);
+	return &(*md->getActiveStreamOfType(type, idx));
 }
 
 const SalStreamDescription * sal_media_description_find_secure_stream_of_type(const SalMediaDescription *md, SalStreamType type) {
-	return md->findSecureStreamOfType(type);
+	return &(*md->findSecureStreamOfType(type));
 }
 
 const SalStreamDescription * sal_media_description_find_best_stream(const SalMediaDescription *md, SalStreamType type) {
-	return md->findBestStream(type);
+	return &(*md->findBestStream(type));
 }
 
 bool_t sal_media_description_empty(const SalMediaDescription *md){
@@ -180,5 +180,5 @@ const char * sal_media_description_get_address(const SalMediaDescription *md){
 }
 
 const SalStreamDescription * sal_media_description_get_stream_idx(const SalMediaDescription *md, unsigned int idx) {
-	return md->getStreamIdx(idx);
+	return &(*md->getStreamIdx(idx));
 }

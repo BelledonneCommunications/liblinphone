@@ -59,6 +59,8 @@
 #include "conference/participant.h"
 #include "conference_private.h"
 
+#include "sal/sal_media_description.h"
+
 // TODO: Remove me later.
 #include "c-wrapper/c-wrapper.h"
 #include "private.h"
@@ -1285,4 +1287,10 @@ shared_ptr<MediaConference::Conference> Core::searchAudioVideoConference(const s
 
 	return conference;
 }
+
+bool Core::incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const {
+	LinphoneCore *lc = L_GET_C_BACK_PTR(this);
+	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !md->hasSrtp();
+}
+
 LINPHONE_END_NAMESPACE
