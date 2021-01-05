@@ -30,6 +30,7 @@ typedef struct SalStreamDescription {
 		SalStreamDescription();
 		SalStreamDescription(const SalStreamDescription & other);
 		~SalStreamDescription();
+		SalStreamDescription &operator=(const SalStreamDescription& other);
 		void init();
 		void destroy();
 		int equal(const SalStreamDescription & other) const;

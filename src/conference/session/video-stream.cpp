@@ -171,7 +171,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			video_preview_stop(getCCore()->previewstream);
 		getCCore()->previewstream = nullptr;
 	}
-	const std::shared_ptr<SalStreamDescription> & vstream = ctx.resultStreamDescription;
+	const auto & vstream = *(ctx.getResultStreamDescription());
 	
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
 	
@@ -238,11 +238,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	getRtpDestination(ctx, &dest);
 	MediaStreamDir dir = MediaStreamSendRecv;
 		
-	if ((vstream->dir == SalStreamSendOnly) && getCCore()->video_conf.capture)
+	if ((vstream.dir == SalStreamSendOnly) && getCCore()->video_conf.capture)
 		dir = MediaStreamSendOnly;
-	else if ((vstream->dir == SalStreamRecvOnly) && getCCore()->video_conf.display)
+	else if ((vstream.dir == SalStreamRecvOnly) && getCCore()->video_conf.display)
 		dir = MediaStreamRecvOnly;
-	else if (vstream->dir == SalStreamSendRecv) {
+	else if (vstream.dir == SalStreamSendRecv) {
 		if (getCCore()->video_conf.display && getCCore()->video_conf.capture)
 			dir = MediaStreamSendRecv;
 		else if (getCCore()->video_conf.display)
@@ -255,9 +255,9 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		stop();
 		return;
 	}
-	if (vstream->multicast_role == SalMulticastReceiver){
+	if (vstream.multicast_role == SalMulticastReceiver){
 			dir = MediaStreamRecvOnly;
-	}else if (vstream->multicast_role == SalMulticastSender){
+	}else if (vstream.multicast_role == SalMulticastSender){
 		dir = MediaStreamSendOnly;
 	}
 	
@@ -303,7 +303,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	if (listener)
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
-	const std::shared_ptr<SalStreamDescription> & remoteStream = ctx.remoteStreamDescription;
+	const auto & remoteStream = ctx.getRemoteStreamDescription();
 	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1)) {
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
@@ -328,7 +328,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	if (videoMixer){
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream->dir == SalStreamRecvOnly));
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.dir == SalStreamRecvOnly));
 	}
 }
 

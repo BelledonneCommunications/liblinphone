@@ -24,28 +24,29 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-std::shared_ptr<SalStreamDescription> OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
+const std::vector<SalStreamDescription>::iterator OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
 
-	std::shared_ptr<SalStreamDescription> sd = nullptr;
-
-	if (md) {
-/*
-		if (index >= md->streams.size()) {
-			// Add a stream if not existent yet
-			md->streams.resize((index+1));
-		}
-*/
-		sd.reset(&md->streams[index]);
+	if (index < md->streams.size()) {
+		return md->streams.begin() + index;
 	}
 
-	return sd;
+	return md->streams.end();
+}
+
+const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getLocalStreamDescription() const {
+	return chooseStreamDescription(localMediaDescription, streamIndex);
+}
+
+const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getRemoteStreamDescription() const {
+	return chooseStreamDescription(remoteMediaDescription, streamIndex);
+}
+
+const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getResultStreamDescription() const {
+	return chooseStreamDescription(resultMediaDescription, streamIndex);
 }
 
 const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndex(size_t index) const{
 	streamIndex = index;
-	localStreamDescription = chooseStreamDescription(localMediaDescription, index);
-	remoteStreamDescription = chooseStreamDescription(remoteMediaDescription, index);
-	resultStreamDescription = chooseStreamDescription(resultMediaDescription, index);
 	return *this;
 }
 
@@ -72,13 +73,13 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 	scopeStreamToIndex(index);
 	previousCtx.scopeStreamToIndex(index);
 	
-	if (previousCtx.localMediaDescription && previousCtx.localStreamDescription){
+	if (previousCtx.localMediaDescription && (previousCtx.getLocalStreamDescription() != previousCtx.localMediaDescription->streams.cend())){
 		localStreamDescriptionChanges = previousCtx.localMediaDescription->globalEqual(*localMediaDescription)
-		| previousCtx.localStreamDescription->equal(*localStreamDescription);
+		| previousCtx.getLocalStreamDescription()->equal(*getLocalStreamDescription());
 	}else localStreamDescriptionChanges = 0;
-	if (previousCtx.resultMediaDescription && resultMediaDescription && previousCtx.resultStreamDescription && resultStreamDescription){
+	if (previousCtx.resultMediaDescription && resultMediaDescription  && (previousCtx.getResultStreamDescription() != previousCtx.resultMediaDescription->streams.cend()) &&  (getResultStreamDescription() != resultMediaDescription->streams.cend())){
 		resultStreamDescriptionChanges = previousCtx.resultMediaDescription->globalEqual(*resultMediaDescription)
-		| previousCtx.resultStreamDescription->equal(*resultStreamDescription);
+		| previousCtx.getResultStreamDescription()->equal(*getResultStreamDescription());
 	}else resultStreamDescriptionChanges = 0;
 	return *this;
 }
@@ -87,9 +88,6 @@ void OfferAnswerContext::clear(){
 	localMediaDescription.reset();
 	remoteMediaDescription.reset();
 	resultMediaDescription.reset();
-	localStreamDescription.reset();
-	remoteStreamDescription.reset();
-	resultStreamDescription.reset();
 	localStreamDescriptionChanges = 0;
 	resultStreamDescriptionChanges = 0;
 	mOwnsMediaDescriptions = false;
