@@ -42,7 +42,7 @@ LINPHONE_BEGIN_NAMESPACE
  */
 
 
-Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.localStreamDescription->type), mIndex(params.streamIndex){
+Stream::Stream(StreamsGroup &sg, const OfferAnswerContext &params) : mStreamsGroup(sg), mStreamType(params.getLocalStreamDescription()->type), mIndex(params.streamIndex){
 	setPortConfig();
 	fillMulticastMediaAddresses();
 }

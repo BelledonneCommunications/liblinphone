@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 /**
  * Represents all offer/answer context.
  * When passed to a Stream object scopeStreamToIndex() must be called to specify the considered stream index, which
- * initialize the localStreamDescription, remoteStreamDescription, and resultStreamDescription.
+ * set the index of the stream descriptions
  */
 class OfferAnswerContext{
 public:
@@ -42,10 +42,11 @@ public:
 	
 	mutable int localStreamDescriptionChanges = 0;
 	mutable int resultStreamDescriptionChanges = 0;
-	mutable std::shared_ptr<SalStreamDescription> localStreamDescription = nullptr;
-	mutable std::shared_ptr<SalStreamDescription> remoteStreamDescription = nullptr;
-	mutable std::shared_ptr<SalStreamDescription> resultStreamDescription = nullptr;
 	mutable size_t streamIndex = 0;
+
+	const std::vector<SalStreamDescription>::iterator getLocalStreamDescription() const;
+	const std::vector<SalStreamDescription>::iterator getRemoteStreamDescription() const;
+	const std::vector<SalStreamDescription>::iterator getResultStreamDescription() const;
 	
 	const OfferAnswerContext & scopeStreamToIndex(size_t index)const;
 	const OfferAnswerContext & scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
@@ -58,7 +59,7 @@ public:
 private:
 	OfferAnswerContext(const OfferAnswerContext &other) = default;
 	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
-	std::shared_ptr<SalStreamDescription> chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
+	const std::vector<SalStreamDescription>::iterator chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
 	bool mOwnsMediaDescriptions = false;
 };
 
