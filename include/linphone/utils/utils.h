@@ -30,6 +30,7 @@
 
 #include "linphone/utils/enum-generator.h"
 #include "address/address.h"
+#include "conference/session/streams.h"
 
 // =============================================================================
 
