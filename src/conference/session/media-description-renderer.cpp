@@ -24,16 +24,18 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalStreamDescription * OfferAnswerContext::chooseStreamDescription(SalMediaDescription * md, const size_t & index) const {
+std::shared_ptr<SalStreamDescription> OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
 
-	SalStreamDescription *sd = nullptr;
+	std::shared_ptr<SalStreamDescription> sd = nullptr;
 
 	if (md) {
+/*
 		if (index >= md->streams.size()) {
 			// Add a stream if not existent yet
 			md->streams.resize((index+1));
 		}
-		sd = &md->streams[index];
+*/
+		sd.reset(&md->streams[index]);
 	}
 
 	return sd;
@@ -42,16 +44,16 @@ SalStreamDescription * OfferAnswerContext::chooseStreamDescription(SalMediaDescr
 const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndex(size_t index) const{
 	streamIndex = index;
 	localStreamDescription = chooseStreamDescription(localMediaDescription, index);
-	remoteStreamDescription = chooseStreamDescription(const_cast<SalMediaDescription *>(remoteMediaDescription), index);
-	resultStreamDescription = chooseStreamDescription(const_cast<SalMediaDescription *>(resultMediaDescription), index);
+	remoteStreamDescription = chooseStreamDescription(remoteMediaDescription, index);
+	resultStreamDescription = chooseStreamDescription(resultMediaDescription, index);
 	return *this;
 }
 
 void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
 	OfferAnswerContext oldCtx = *this; // Transfers *this to a temporary object.
-	localMediaDescription = ctx.localMediaDescription ? sal_media_description_ref(ctx.localMediaDescription) : nullptr;
-	remoteMediaDescription = ctx.remoteMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.remoteMediaDescription)) : nullptr;
-	resultMediaDescription = ctx.resultMediaDescription ? sal_media_description_ref(const_cast<SalMediaDescription*>(ctx.resultMediaDescription)) : nullptr;
+	localMediaDescription = ctx.localMediaDescription ? ctx.localMediaDescription : nullptr;
+	remoteMediaDescription = ctx.remoteMediaDescription ? ctx.remoteMediaDescription : nullptr;
+	resultMediaDescription = ctx.resultMediaDescription ? ctx.resultMediaDescription : nullptr;
 	localIsOfferer = ctx.localIsOfferer;
 	mOwnsMediaDescriptions = true;
 	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
@@ -82,17 +84,12 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 }
 
 void OfferAnswerContext::clear(){
-	if (mOwnsMediaDescriptions) {
-		sal_media_description_unref(localMediaDescription);
-		sal_media_description_unref(const_cast<SalMediaDescription*>(remoteMediaDescription));
-		sal_media_description_unref(const_cast<SalMediaDescription*>(resultMediaDescription));
-	}
-	localMediaDescription = nullptr;
-	remoteMediaDescription = nullptr;
-	resultMediaDescription = nullptr;
-	localStreamDescription = nullptr;
-	remoteStreamDescription = nullptr;
-	resultStreamDescription = nullptr;
+	localMediaDescription.reset();
+	remoteMediaDescription.reset();
+	resultMediaDescription.reset();
+	localStreamDescription.reset();
+	remoteStreamDescription.reset();
+	resultStreamDescription.reset();
 	localStreamDescriptionChanges = 0;
 	resultStreamDescriptionChanges = 0;
 	mOwnsMediaDescriptions = false;

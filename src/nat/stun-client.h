@@ -45,7 +45,7 @@ public:
 	StunClient (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
 
 	int run (int audioPort, int videoPort, int textPort);
-	void updateMediaDescription (SalMediaDescription *md) const;
+	void updateMediaDescription (std::shared_ptr<SalMediaDescription> md) const;
 
 	const Candidate &getAudioCandidate () const {
 		return audioCandidate;
