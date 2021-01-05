@@ -1785,7 +1785,8 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	string subject;
 	if (sal_media_description_has_dir(resultDesc, SalStreamSendRecv))
 		subject = "Call on hold";
-	else if (sal_media_description_has_dir(resultDesc, SalStreamRecvOnly))
+	else if (sal_media_description_has_dir(resultDesc, SalStreamRecvOnly) 
+				 || (sal_media_description_has_dir(resultDesc, SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";

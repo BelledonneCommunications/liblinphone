@@ -666,7 +666,7 @@ const char* sal_stream_dir_to_string(SalStreamDir type) {
 	case SalStreamSendRecv:return "sendrecv";
 	case SalStreamSendOnly:return "sendonly";
 	case SalStreamRecvOnly:return "recvonly";
-	case SalStreamInactive:return "inative";
+	case SalStreamInactive:return "inactive";
 	default: return "unknown";
 	}
 

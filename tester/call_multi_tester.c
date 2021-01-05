@@ -1107,6 +1107,103 @@ static void call_with_ice_negotiations_ending_while_accepting_call_back_to_back(
 }
 #endif
 
+/* Workflow:
+ * Marie-Pauline-Laure : Accounts
+ * - Pauline call Marie
+ * - Pauline pauses Marie with inactive stream
+ * - Laure call Marie
+ * - Laure pauses Marie
+ * - Pauline resumes
+ * - Marie resumes Pauline
+ * - Pauline pauses Marie with inactive stream
+ * - Pauline resumes
+ * */
+void resuming_inactive_stream(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_new("pauline_tcp_rc");
+	LinphoneCoreManager *laure = linphone_core_manager_new(get_laure_rc());
+	LinphoneCall *pauline_call_marie, *laure_call_marie;
+	LinphoneCall *marie_called_by_pauline;
+	LinphoneCallParams *pauline_call_marie_params;
+	
+	bctbx_list_t *lcs = bctbx_list_append(NULL, marie->lc);
+	lcs = bctbx_list_append(lcs, pauline->lc);
+	lcs = bctbx_list_append(lcs, laure->lc);
+
+	// Pauline call Marie. Prepare early media to have meta-data debug for checking stream state (inactive/sendrecv)
+	pauline_call_marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_early_media_sending(pauline_call_marie_params, TRUE);
+	pauline_call_marie = linphone_core_invite_address_with_params(pauline->lc, marie->identity, pauline_call_marie_params);
+	linphone_call_params_unref(pauline_call_marie_params);
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+	linphone_call_accept_early_media(linphone_core_get_current_call(marie->lc));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallOutgoingEarlyMedia, 1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallIncomingEarlyMedia, 1, 2000));
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallOutgoingProgress,1, int, "%d");
+	
+	if (pauline_call_marie!=NULL) {
+		marie_called_by_pauline = linphone_core_get_current_call(marie->lc);
+		pauline_call_marie = linphone_core_get_current_call(pauline->lc);
+// Marie accept call
+		linphone_call_accept(marie_called_by_pauline);
+		if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning, 1, 2000))) goto end;// Marie is in call with Pauline
+		if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 2000))) goto end;
+// Pauline set inactive stream
+		pauline_call_marie_params = linphone_core_create_call_params(pauline->lc, NULL);
+		linphone_call_params_set_audio_direction(pauline_call_marie_params, LinphoneMediaDirectionInactive);
+		linphone_call_update(pauline_call_marie, pauline_call_marie_params);
+		linphone_call_params_unref(pauline_call_marie_params);
+		if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2, 2000))) goto end;// By setting the current stream to inactive, Pauline has been entered in Running state
+		if(!BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallPausedByRemote,1))) goto end;// Marie detect the inactive stream as a Paused from remote
+//Laure call Marie	
+		if (BC_ASSERT_TRUE(call(laure, marie))) {
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing,1, 2000))) goto end;// Marie do pause when accepting the new call
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused,1, 2000))) goto end;// Marie is paused on Pauline inactive call
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote,1, 2000))) goto end;// Pauline receive the paused state from Marie
+			laure_call_marie = linphone_core_get_current_call(laure->lc);
+// Laure pauses Marie
+			linphone_call_pause(laure_call_marie);
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &laure->stat.number_of_LinphoneCallPaused,1, 2000))) goto end;// Laure do pauses
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausedByRemote,2, 2000))) goto end;// Marie get paused
+// Pauline set sendrecv stream
+			pauline_call_marie_params = linphone_core_create_call_params(pauline->lc, NULL);
+			linphone_call_params_set_audio_direction(pauline_call_marie_params, LinphoneMediaDirectionSendRecv);
+			linphone_call_update(pauline_call_marie, pauline_call_marie_params);
+			linphone_call_params_unref(pauline_call_marie_params);			
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallPausedByRemote,2, 2000))) goto end;// When reactivating the call by stream, Pauline get the paused state from Marie. That allows Marie to resume			
+// Marie resumes Pauline
+			linphone_call_resume(marie_called_by_pauline);
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused,2, 2000))) goto end;// Marie pauses Laure call
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallResuming,1, 2000))) goto end;	// Marie resumes
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,3, 2000))) goto end;// Marie open the stream
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning,3, 2000))) goto end;// Pauline run the stream as it is unpaused from Marie and in SendRecv state
+// Pauline set inactive
+			pauline_call_marie_params = linphone_core_create_call_params(pauline->lc, NULL);
+			linphone_call_params_set_audio_direction(pauline_call_marie_params, LinphoneMediaDirectionInactive);
+			linphone_call_update(pauline_call_marie, pauline_call_marie_params);
+			linphone_call_params_unref(pauline_call_marie_params);
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausedByRemote,3, 2000))) goto end; // Marie has been paused from Inactive stream
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning,4, 2000))) goto end;// By setting the stream to inactive, Pauline has been entered in Running state
+// Pauline set sendrecv stream
+			pauline_call_marie_params = linphone_core_create_call_params(pauline->lc, NULL);
+			linphone_call_params_set_audio_direction(pauline_call_marie_params, LinphoneMediaDirectionSendRecv);
+			linphone_call_update(pauline_call_marie, pauline_call_marie_params);			
+			linphone_call_params_unref(pauline_call_marie_params);			
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallStreamsRunning,4, 2000))) goto end;// comes from : Pauline call, Laure Call, 2 resumes
+			if(!BC_ASSERT_TRUE(wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning,5, 2000))) goto end;// comes from  : first call, 2 inactives, 2 sendrecv
+			
+			wait_for_list(lcs, NULL, 5, 200);
+			end_call(laure, marie);
+		}
+		end_call(pauline, marie);
+	}
+end:	
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
+}
+
 test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call waiting indication", call_waiting_indication),
 	TEST_NO_TAG("Call waiting indication with privacy", call_waiting_indication_with_privacy),
@@ -1127,7 +1224,8 @@ test_t multi_call_tests[] = {
 	TEST_NO_TAG("Call transfer existing incoming call", call_transfer_existing_call_incoming_call),
 	TEST_NO_TAG("Call transfer existing ringing call", call_transfer_existing_ringing_call),
 	TEST_NO_TAG("Do not stop ringing when declining one of two incoming calls", do_not_stop_ringing_when_declining_one_of_two_incoming_calls),
-	TEST_NO_TAG("No auto answer on fake call with Replaces header", no_auto_answer_on_fake_call_with_replaces_header)
+	TEST_NO_TAG("No auto answer on fake call with Replaces header", no_auto_answer_on_fake_call_with_replaces_header),
+	TEST_NO_TAG("Resuming on inactive stream", resuming_inactive_stream)
 };
 
 test_suite_t multi_call_test_suite = {"Multi call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
