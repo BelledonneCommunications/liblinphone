@@ -243,6 +243,36 @@ void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline)
 
 /****************************** Tests starting below ******************************/
 
+static void file_transfer_content(void) {
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, laure->identity);
+
+	LinphoneContent* file_transfer_content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	linphone_content_set_file_path(file_transfer_content, send_filepath);
+
+	LinphoneChatMessage *message = linphone_chat_room_create_file_transfer_message(chat_room, file_transfer_content);
+	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
+	BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int, "%d");
+
+	LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+	BC_ASSERT_PTR_NOT_NULL(content);
+	if (content) {
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), send_filepath);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "octet-stream");
+	}
+
+	linphone_chat_message_unref(message);
+	linphone_content_unref(file_transfer_content);
+	bc_free(send_filepath);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void text_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -3435,6 +3465,7 @@ static void migration_from_messages_db (void) {
 }
 
 test_t message_tests[] = {
+	TEST_NO_TAG("File transfer content", file_transfer_content),
 	TEST_NO_TAG("Text message", text_message),
 	TEST_NO_TAG("Transfer forward message", text_forward_message),
 	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),
