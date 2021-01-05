@@ -72,7 +72,53 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	dtls_role = other.dtls_role;
 	ttl = other.ttl;
 	multicast_role = other.multicast_role;
+}
 
+SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription & other){
+	name = other.name;
+	proto = other.proto;
+	type = other.type;
+	typeother = other.typeother;
+	proto_other = other.proto_other;
+	rtp_addr = other.rtp_addr;
+	rtcp_addr = other.rtcp_addr;
+	rtp_ssrc = other.rtp_ssrc;
+	rtcp_cname = other.rtcp_cname;
+	rtp_port = other.rtp_port;
+	rtcp_port = other.rtcp_port;
+	payloads = bctbx_list_copy_with_data(other.payloads, (bctbx_list_copy_func)payload_type_clone);
+	already_assigned_payloads = bctbx_list_copy_with_data(other.already_assigned_payloads, (bctbx_list_copy_func)payload_type_clone);
+	bandwidth = other.bandwidth;
+	ptime = other.ptime;
+	maxptime = other.maxptime;
+	dir = other.dir;
+	crypto = other.crypto;
+	crypto_local_tag = other.crypto_local_tag;
+	max_rate = other.max_rate;
+	bundle_only = other.bundle_only;
+	implicit_rtcp_fb = other.implicit_rtcp_fb;
+	pad = other.pad;
+	rtcp_fb = other.rtcp_fb;
+	rtcp_xr = other.rtcp_xr;
+	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
+	ice_candidates = other.ice_candidates;
+	ice_remote_candidates = other.ice_remote_candidates;
+	ice_ufrag = other.ice_ufrag;
+	ice_pwd = other.ice_pwd;
+	mid = other.mid;
+	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
+	ice_mismatch = other.ice_mismatch;
+	set_nortpproxy = other.set_nortpproxy;
+	rtcp_mux = other.rtcp_mux;
+	haveZrtpHash = other.haveZrtpHash;
+	haveLimeIk = other.haveLimeIk;
+	memcpy(zrtphash, other.zrtphash, sizeof(zrtphash));
+	dtls_fingerprint = other.dtls_fingerprint;
+	dtls_role = other.dtls_role;
+	ttl = other.ttl;
+	multicast_role = other.multicast_role;
+
+	return *this;
 }
 
 void SalStreamDescription::init() {
