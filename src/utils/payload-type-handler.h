@@ -50,6 +50,7 @@ public:
 
 	static bool bandwidthIsGreater (int bandwidth1, int bandwidth2);
 	static int getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth);
+	static int getVideoPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth);
 	static double getAudioPayloadTypeBandwidthFromCodecBitrate (const OrtpPayloadType *pt);
 	static int getMaxCodecSampleRate (const bctbx_list_t *codecs);
 	static int getMinBandwidth (int downBandwidth, int upBandwidth);

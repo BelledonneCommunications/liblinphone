@@ -219,6 +219,14 @@ int PayloadTypeHandler::getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt,
 	return (int)ceil(getAudioPayloadTypeBandwidthFromCodecBitrate(pt) / 1000.0);
 }
 
+int PayloadTypeHandler::getVideoPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth) {
+	if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
+		lDebug() << "PayloadType " << pt->mime_type << "/" << pt->clock_rate << " has bitrate override";
+		return getMinBandwidth(maxBandwidth, pt->normal_bitrate / 1000);
+	}else
+		return maxBandwidth;
+}
+
 /*
  *((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
  * ptime=1/npacket
