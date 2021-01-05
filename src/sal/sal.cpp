@@ -1052,7 +1052,7 @@ LINPHONE_PUBLIC void sal_call_set_sdp_handling (SalOp *op, SalOpSDPHandling hand
 		callOp->setSdpHandling(handling);
 }
 
-LINPHONE_PUBLIC SalMediaDescription *sal_call_get_final_media_description (SalOp *op) {
+LINPHONE_PUBLIC std::shared_ptr<SalMediaDescription> sal_call_get_final_media_description (SalOp *op) {
 	auto callOp = dynamic_cast<SalCallOp *>(op);
 	if (!callOp)
 		return nullptr;

@@ -30,16 +30,16 @@ public:
 	SalCallOp (Sal *sal);
 	virtual ~SalCallOp ();
 
-	SalMediaDescription *getLocalMediaDescription () const { return mLocalMedia; }
-	int setLocalMediaDescription (SalMediaDescription *desc);
+	std::shared_ptr<SalMediaDescription> getLocalMediaDescription () const { return mLocalMedia; }
+	int setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc);
 	int setLocalBody (const Content &body);
 	int setLocalBody (Content &&body);
 	void addAdditionalLocalBody (const Content &content);
 	const std::list<Content>& getAdditionalRemoteBodies () const;
 
-	SalMediaDescription *getRemoteMediaDescription () { return mRemoteMedia; }
+	const std::shared_ptr<SalMediaDescription> & getRemoteMediaDescription () { return mRemoteMedia; }
 	const Content &getRemoteBody () const { return mRemoteBody; }
-	SalMediaDescription *getFinalMediaDescription ();
+	std::shared_ptr<SalMediaDescription> & getFinalMediaDescription ();
 
 	int call (const std::string &from, const std::string &to, const std::string &subject);
 	int notifyRinging (bool earlyMedia);
@@ -103,7 +103,7 @@ private:
 	void processNotify (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
 
 	static std::string setAddrTo0000 (const std::string & value);
-	static bool isMediaDescriptionAcceptable (SalMediaDescription *md);
+	static bool isMediaDescriptionAcceptable (std::shared_ptr<SalMediaDescription> & md);
 	static bool isAPendingIncomingInviteTransaction (belle_sip_transaction_t *transaction);
 	static void setCallAsReleased (SalCallOp *op);
 	static void unsupportedMethod (belle_sip_server_transaction_t *serverTransaction, belle_sip_request_t *request);
@@ -113,7 +113,7 @@ private:
 
 	// belle_sip_message handlers
 	static int setSdp (belle_sip_message_t *message, belle_sdp_session_description_t *sessionDesc);
-	static int setSdpFromDesc (belle_sip_message_t *message, const SalMediaDescription *desc);
+	static int setSdpFromDesc (belle_sip_message_t *message, const std::shared_ptr<SalMediaDescription> & desc);
 	static void processIoErrorCb (void *userCtx, const belle_sip_io_error_event_t *event);
 	static Content extractBody (belle_sip_message_t *message);
 
@@ -130,8 +130,8 @@ private:
 	static const int MIN_SE = 1800; // Min-Session-Expires, in seconds
 
 	// Attributes
-	SalMediaDescription *mLocalMedia = nullptr;
-	SalMediaDescription *mRemoteMedia = nullptr;
+	std::shared_ptr<SalMediaDescription> mLocalMedia = nullptr;
+	std::shared_ptr<SalMediaDescription> mRemoteMedia = nullptr;
 	Content mLocalBody;
 	Content mRemoteBody;
 	std::list<Content> mAdditionalLocalBodies;

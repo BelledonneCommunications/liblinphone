@@ -49,7 +49,7 @@ MediaSessionPrivate &IceService::getMediaSessionPrivate() const{
 	return mStreamsGroup.getMediaSessionPrivate();
 }
 
-bool IceService::iceFoundInMediaDescription (const SalMediaDescription *md) {
+bool IceService::iceFoundInMediaDescription (const std::shared_ptr<SalMediaDescription> & md) {
 	if ((!md->ice_pwd.empty()) && (!md->ice_ufrag.empty()))
 		return true;
 	for (const auto & stream : md->streams) {
@@ -123,7 +123,7 @@ void IceService::createStreams(const OfferAnswerContext &params){
 		bool streamActive = params.localStreamDescription->enabled();
 		
 		if (!params.localIsOfferer){
-			int bundleOwnerIndex = params.remoteMediaDescription->getIndexOfTransportOwner(params.remoteStreamDescription);
+			int bundleOwnerIndex = params.remoteMediaDescription->getIndexOfTransportOwner(*(params.remoteStreamDescription));
 			if (bundleOwnerIndex != -1 && bundleOwnerIndex != (int) index){
 				lInfo() << *stream << " is part of a bundle as secondary stream, ICE not needed.";
 				streamActive = false;
@@ -255,7 +255,7 @@ int IceService::gatherIceCandidates () {
 	return err;
 }
 
-bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescription *md, bool isOffer) {
+bool IceService::checkForIceRestartAndSetRemoteCredentials (const std::shared_ptr<SalMediaDescription> &md, bool isOffer) {
 	bool iceRestarted = false;
 	string addr = md->addr;
 	if ((addr == "0.0.0.0") || (addr == "::0")) {
@@ -301,23 +301,23 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const SalMediaDescri
 
 void IceService::getIceDefaultAddrAndPort (
 	uint16_t componentID,
-	const SalMediaDescription *md,
-	const SalStreamDescription *stream,
+	const std::shared_ptr<SalMediaDescription> &md,
+	const SalStreamDescription & stream,
 	std::string & addr,
 	int & port
 ) {
 	if (componentID == 1) {
-		addr = stream->rtp_addr;
-		port = stream->rtp_port;
+		addr = stream.rtp_addr;
+		port = stream.rtp_port;
 	} else if (componentID == 2) {
-		addr = stream->rtcp_addr;
-		port = stream->rtcp_port;
+		addr = stream.rtcp_addr;
+		port = stream.rtcp_port;
 	} else
 		return;
 	if (addr.empty() == true) addr = md->addr;
 }
 
-void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted) {
+void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr<SalMediaDescription> &md, bool iceRestarted) {
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		const auto & stream = md->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
@@ -343,7 +343,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 				continue;
 			std::string addr = std::string();
 			int port = 0;
-			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate->componentID), md, &stream, addr, port);
+			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate->componentID), md, stream, addr, port);
 			if ((addr.empty() == false) && (candidate->port == port) && (strlen(candidate->addr) == addr.length()) && (addr.compare(candidate->addr) == 0))
 				defaultCandidate = true;
 			int family = AF_INET;
@@ -363,7 +363,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 				int port = 0;
 				int componentID = j + 1;
 				if (remoteCandidate.addr[0] == '\0') break;
-				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, &stream, addr, port);
+				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, stream, addr, port);
 
 				// If we receive a re-invite with remote-candidates, supply these pairs to the ice check list.
 				// They might be valid pairs already selected, or losing pairs.
@@ -383,7 +383,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const SalMediaDescrip
 	}
 }
 
-void IceService::clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool localIsOfferer) {
+void IceService::clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescription> &localDesc, const std::shared_ptr<SalMediaDescription> &remoteDesc, bool localIsOfferer) {
 	for (size_t i = 0; i < MIN(remoteDesc->streams.size(), localDesc->streams.size()); i++) {
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		if (!cl)
@@ -397,7 +397,7 @@ void IceService::clearUnusedIceCandidates (const SalMediaDescription *localDesc,
 	}
 }
 
-void IceService::updateFromRemoteMediaDescription(const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool isOffer) {
+void IceService::updateFromRemoteMediaDescription(const std::shared_ptr<SalMediaDescription> & localDesc, const std::shared_ptr<SalMediaDescription> & remoteDesc, bool isOffer) {
 	if (!mIceSession)
 		return;
 
@@ -436,7 +436,7 @@ void IceService::updateFromRemoteMediaDescription(const SalMediaDescription *loc
 }
 
 
-void IceService::updateLocalMediaDescriptionFromIce (SalMediaDescription *desc) {
+void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDescription> & desc) {
 	if (!mIceSession)
 		return;
 	IceCandidate *rtpCandidate = nullptr;
@@ -722,7 +722,7 @@ bool IceService::isControlling () const {
 	return ice_session_role(mIceSession) == IR_Controlling;
 }
 
-bool IceService::reinviteNeedsDeferedResponse(SalMediaDescription *remoteMd){
+bool IceService::reinviteNeedsDeferedResponse(std::shared_ptr<SalMediaDescription> & remoteMd){
 	if (!mIceSession || (ice_session_state(mIceSession) != IS_Running))
 		return false;
 

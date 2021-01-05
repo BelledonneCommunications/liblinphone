@@ -93,7 +93,7 @@ void MS2Stream::removeFromBundle(){
 }
 
 void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
-	int index = params.resultMediaDescription->getIndexOfTransportOwner(params.resultStreamDescription);
+	int index = params.resultMediaDescription->getIndexOfTransportOwner(*(params.resultStreamDescription));
 	if (index == -1) {
 		lInfo() << *this << " is not part of any bundle";
 		removeFromBundle();
@@ -120,7 +120,7 @@ void MS2Stream::initRtpBundle(const OfferAnswerContext &params){
 	rtp_session_set_source_description(mSessions.rtp_session, getMediaSessionPrivate().getMe()->getAddress().asString().c_str(), NULL, NULL, NULL, NULL, userAgent.c_str(), NULL);
 }
 
-RtpBundle *MS2Stream::createOrGetRtpBundle(const SalStreamDescription *sd){
+RtpBundle *MS2Stream::createOrGetRtpBundle(const std::shared_ptr<SalStreamDescription> sd){
 	if (!mRtpBundle){
 		mRtpBundle = rtp_bundle_new();
 		lInfo() << "Stream " << *this << " with mid '" << sd->mid << "'is the owner of rtp bundle " << mRtpBundle;
@@ -170,7 +170,7 @@ string MS2Stream::getBindIp(){
 }
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
-	SalStreamDescription *localDesc = ctx.localStreamDescription;
+	std::shared_ptr<SalStreamDescription> localDesc = ctx.localStreamDescription;
 	localDesc->rtp_addr = getPublicIp();
 	localDesc->rtcp_addr = getPublicIp();
 	
@@ -256,8 +256,8 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	}
 	bool videoWillBeUsed = false;
 	MediaStream *ms = getMediaStream();
-	const SalStreamDescription *vstream = params.resultMediaDescription->findBestStream(SalVideo);
-	if (vstream && (vstream->dir != SalStreamInactive) && vstream->payloads) {
+	const auto & vstream = params.resultMediaDescription->findBestStream(SalVideo);
+	if ((vstream != params.resultMediaDescription->streams.cend()) && (vstream->dir != SalStreamInactive) && vstream->payloads) {
 		/* When video is used, do not make adaptive rate control on audio, it is stupid */
 		videoWillBeUsed = true;
 	}
@@ -300,7 +300,7 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 
 void MS2Stream::tryEarlyMediaForking(const OfferAnswerContext &ctx){
 	RtpSession *session = mSessions.rtp_session;
-	const SalStreamDescription *newStream = ctx.remoteStreamDescription;
+	const std::shared_ptr<SalStreamDescription> newStream = ctx.remoteStreamDescription;
 	std::string rtpAddr = (newStream->rtp_addr.empty() == false) ? newStream->rtp_addr : ctx.remoteMediaDescription->addr;
 	std::string rtcpAddr = (newStream->rtcp_addr.empty() == false) ? newStream->rtcp_addr : ctx.remoteMediaDescription->addr;
 	if (!ms_is_multicast(rtpAddr.c_str())){
@@ -325,12 +325,12 @@ void MS2Stream::finishEarlyMediaForking(){
  * Indeed, when RTP bundle mode is ON, this information is to be taken in the transport owner stream.
  */
 void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressInfo *info){
-	const SalStreamDescription *stream = params.resultStreamDescription;
+	std::shared_ptr<SalStreamDescription> stream = params.resultStreamDescription;
 	if (mRtpBundle && !mOwnsBundle){
 		if (!mBundleOwner){
 			lError() << "Bundle owner shall be set !";
 		}else{
-			stream = &params.resultMediaDescription->streams[mBundleOwner->getIndex()];
+			stream.reset(&params.resultMediaDescription->streams[mBundleOwner->getIndex()]);
 		}
 	}
 	
@@ -346,7 +346,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
  * Return true everything was handled, false otherwise, in which case the caller will have to restart the stream.
  */
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
-	const SalStreamDescription *stream = params.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> stream = params.resultStreamDescription;
 	
 	if (stream && (stream->dir == SalStreamInactive || !stream->enabled())){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
@@ -389,7 +389,7 @@ bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession
 }
 
 void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const SalStreamDescription *stream = params.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> stream = params.resultStreamDescription;
 	std::string rtpAddr = (stream->rtp_addr.empty() == false) ? stream->rtp_addr : params.resultMediaDescription->addr;
 	bool isMulticast = !!ms_is_multicast(rtpAddr.c_str());
 	MediaStream *ms = getMediaStream();
@@ -616,8 +616,8 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 }
 
 void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
-	const SalStreamDescription *localStreamDesc = params.localStreamDescription;
-	const SalStreamDescription *newStream = params.resultStreamDescription;
+	const std::shared_ptr<SalStreamDescription> localStreamDesc = params.localStreamDescription;
+	const std::shared_ptr<SalStreamDescription> newStream = params.resultStreamDescription;
 	MediaStream * ms = getMediaStream();
 	
 	if (newStream->proto == SalProtoRtpSavpf || newStream->proto == SalProtoRtpSavp){
@@ -705,7 +705,7 @@ void MS2Stream::finishPrepare(){
 	stopEventHandling();
 }
 
-int MS2Stream::getIdealAudioBandwidth (const SalMediaDescription *md, const SalStreamDescription *desc) {
+int MS2Stream::getIdealAudioBandwidth (const std::shared_ptr<SalMediaDescription> md, const std::shared_ptr<SalStreamDescription> desc) {
 	int remoteBandwidth = 0;
 	if (desc->bandwidth > 0)
 		remoteBandwidth = desc->bandwidth;
@@ -721,7 +721,7 @@ int MS2Stream::getIdealAudioBandwidth (const SalMediaDescription *md, const SalS
 	} else
 		uploadBandwidth = linphone_core_get_upload_bandwidth(getCCore());
 	uploadBandwidth = PayloadTypeHandler::getMinBandwidth(uploadBandwidth, remoteBandwidth);
-	if (!linphone_core_media_description_contains_video_stream(md) || forced)
+	if ((md->nbActiveStreamsOfType(SalVideo) != 0) || forced)
 		return uploadBandwidth;
 	
 	/*
@@ -739,7 +739,7 @@ int MS2Stream::getIdealAudioBandwidth (const SalMediaDescription *md, const SalS
 	return uploadBandwidth;
 }
 
-RtpProfile * MS2Stream::makeProfile(const SalMediaDescription *md, const SalStreamDescription *desc, int *usedPt) {
+RtpProfile * MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> & md, const std::shared_ptr<SalStreamDescription> & desc, int *usedPt) {
 	if (mRtpProfile){
 		rtp_profile_destroy(mRtpProfile);
 		mRtpProfile = nullptr;

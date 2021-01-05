@@ -49,8 +49,6 @@ SalOp::~SalOp () {
 		belle_sip_object_unref(mSdpAnswer);
 	if (mRefresher)
 		belle_sip_object_unref(mRefresher);
-	if (mResult)
-		sal_media_description_unref(mResult);
 	if(mReplaces)
 		belle_sip_object_unref(mReplaces);
 	if(mReferredBy)

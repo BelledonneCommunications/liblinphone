@@ -35,16 +35,16 @@ LINPHONE_BEGIN_NAMESPACE
 class OfferAnswerContext{
 public:
 	OfferAnswerContext() = default;
-	SalMediaDescription *localMediaDescription = nullptr;
-	const SalMediaDescription *remoteMediaDescription = nullptr;
-	const SalMediaDescription *resultMediaDescription = nullptr;
+	std::shared_ptr<SalMediaDescription> localMediaDescription = nullptr;
+	std::shared_ptr<SalMediaDescription> remoteMediaDescription = nullptr;
+	std::shared_ptr<SalMediaDescription> resultMediaDescription = nullptr;
 	bool localIsOfferer = false;
 	
 	mutable int localStreamDescriptionChanges = 0;
 	mutable int resultStreamDescriptionChanges = 0;
-	mutable SalStreamDescription *localStreamDescription = nullptr;
-	mutable const SalStreamDescription *remoteStreamDescription = nullptr;
-	mutable const SalStreamDescription *resultStreamDescription = nullptr;
+	mutable std::shared_ptr<SalStreamDescription> localStreamDescription = nullptr;
+	mutable std::shared_ptr<SalStreamDescription> remoteStreamDescription = nullptr;
+	mutable std::shared_ptr<SalStreamDescription> resultStreamDescription = nullptr;
 	mutable size_t streamIndex = 0;
 	
 	const OfferAnswerContext & scopeStreamToIndex(size_t index)const;
@@ -58,7 +58,7 @@ public:
 private:
 	OfferAnswerContext(const OfferAnswerContext &other) = default;
 	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
-	SalStreamDescription * chooseStreamDescription(SalMediaDescription * md, const size_t & index) const;
+	std::shared_ptr<SalStreamDescription> chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
 	bool mOwnsMediaDescriptions = false;
 };
 

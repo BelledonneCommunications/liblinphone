@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "linphone/utils/utils.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_stream_description.h"
 
@@ -287,7 +288,7 @@ const SalStreamType & SalStreamDescription::getType() const {
 
 const std::string SalStreamDescription::getTypeAsString() const {
 	if (type==SalOther) return typeother;
-	else return sal_stream_type_to_string(type);
+	else return LinphonePrivate::Utils::toString(type);
 }
 
 const SalMediaProto & SalStreamDescription::getProto() const {
@@ -296,7 +297,7 @@ const SalMediaProto & SalStreamDescription::getProto() const {
 
 const std::string SalStreamDescription::getProtoAsString() const {
 	if (proto==SalProtoOther) return proto_other;
-	else return sal_media_proto_to_string(proto);
+	else return LinphonePrivate::Utils::toString(proto);
 }
 
 SalStreamDir SalStreamDescription::getDirection() const {
