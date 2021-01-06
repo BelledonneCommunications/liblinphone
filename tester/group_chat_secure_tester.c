@@ -3406,11 +3406,12 @@ static void group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participa
 	group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants_curve(448);
 }
 
-static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const int curveId) {
+static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const int curveId, bool_t unreachable_during_setup) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_lime_x3dh_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_lime_x3dh_rc");
 	bctbx_list_t *coresManagerList = NULL;
 	bctbx_list_t *participantsAddresses = NULL;
+	LinphoneChatRoom *paulineCr = NULL;
 	coresManagerList = bctbx_list_append(coresManagerList, marie);
 	coresManagerList = bctbx_list_append(coresManagerList, pauline);
 
@@ -3428,19 +3429,27 @@ static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const i
 	// Check encryption status
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(marie->lc));
 	BC_ASSERT_TRUE(linphone_core_lime_x3dh_enabled(pauline->lc));
+	
+	if (unreachable_during_setup){
+		// Simulate pauline has disconnected
+		linphone_core_set_network_reachable(pauline->lc, FALSE);
+	}
 
 	// Marie creates a new group chat room
 	const char *initialSubject = "Friends";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
 
-	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
-	if (!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr))
-		goto end;
+	
+	if (!unreachable_during_setup){
+		// Check that the chat room is correctly created on Pauline's side and that the participants are added
+		paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+		if (!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr))
+			goto end;
 
-	// Simulate pauline has disconnected
-	linphone_core_set_network_reachable(pauline->lc, FALSE);
+		// Simulate pauline has disconnected
+		linphone_core_set_network_reachable(pauline->lc, FALSE);
+	}
 
 	// Marie starts composing a message
 	linphone_chat_room_compose(marieCr);
@@ -3451,6 +3460,12 @@ static void group_chat_lime_x3dh_message_while_network_unreachable_curve(const i
 
 	// Reconnect pauline
 	linphone_core_set_network_reachable(pauline->lc, TRUE);
+	
+	if (unreachable_during_setup){
+		paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+		if (!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr))
+			goto end;
+	}
 
 	// Check if the message is received
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, initialPaulineStats.number_of_LinphoneMessageReceived + 1, 10000));
@@ -3480,9 +3495,14 @@ end:
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
 static void group_chat_lime_x3dh_message_while_network_unreachable(void) {
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(25519);
-	group_chat_lime_x3dh_message_while_network_unreachable_curve(448);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(25519, FALSE);
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(448, FALSE);
+}
+
+static void group_chat_lime_x3dh_message_while_network_unreachable_2(void){
+	group_chat_lime_x3dh_message_while_network_unreachable_curve(448, TRUE);
 }
 
 static void group_chat_lime_x3dh_update_keys_curve(const int curveId) {
@@ -3956,6 +3976,7 @@ test_t secure_group_chat_tests[] = {
 	TEST_ONE_TAG("LIME X3DH plain message to enabled LIME X3DH", group_chat_lime_x3dh_send_plain_message_to_enabled_lime_x3dh, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH message to multidevice participants", group_chat_lime_x3dh_send_encrypted_message_to_multidevice_participants, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH messages while network unreachable", group_chat_lime_x3dh_message_while_network_unreachable, "LimeX3DH"),
+	TEST_ONE_TAG("LIME X3DH messages while network unreachable 2", group_chat_lime_x3dh_message_while_network_unreachable_2, "LimeX3DH"),
 	TEST_ONE_TAG("LIME X3DH update keys", group_chat_lime_x3dh_update_keys, "LimeX3DH"),
 	TEST_ONE_TAG("Imdn", imdn_for_group_chat_room, "LimeX3DH"),
 	TEST_ONE_TAG("Lime Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message, "LimeX3DH"),
