@@ -19,7 +19,6 @@
 
 #include <cstring>
 
-#include "c-wrapper/internal/c-sal-media-description.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "bellesip_sal/sal_impl.h"
 #include "sal/op.h"
