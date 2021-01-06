@@ -75,6 +75,7 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 }
 
 SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription & other){
+	destroy();
 	name = other.name;
 	proto = other.proto;
 	type = other.type;
