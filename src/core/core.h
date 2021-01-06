@@ -35,7 +35,7 @@
 L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
-typedef struct SalMediaDescription SalMediaDescription;
+class SalMediaDescription;
 
 namespace LinphoneTest {
 	class LocalConferenceTester;
