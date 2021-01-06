@@ -21,9 +21,14 @@
 #define _SAL_MEDIA_DESCRIPTION_H_
 
 #include <list>
+#include <string>
+#include <vector>
 
+#include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
-#include "sal/sal_stream_bundle.h"
+
+typedef struct SalStreamDescription SalStreamDescription;
+typedef struct SalStreamBundle SalStreamBundle;
 
 typedef struct SalMediaDescription {
 	public:
@@ -33,10 +38,10 @@ typedef struct SalMediaDescription {
 		void init();
 		void destroy();
 
-		SalStreamBundle * addNewBundle();
+		void addNewBundle(const SalStreamBundle & bundle);
 
 		int lookupMid(const std::string mid) const;
-		const SalStreamBundle *getBundleFromMid(const std::string mid) const;
+		const std::list<SalStreamBundle>::const_iterator getBundleFromMid(const std::string mid) const;
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
 		SalMediaDescription * ref();
@@ -85,7 +90,7 @@ typedef struct SalMediaDescription {
 	OrtpRtcpXrConfiguration rtcp_xr;
 	std::string ice_ufrag;
 	std::string ice_pwd;
-	std::list<SalStreamBundle*> bundles;
+	std::list<SalStreamBundle> bundles;
 	bool_t ice_lite = FALSE;
 	bool_t set_nortpproxy = FALSE;
 	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/

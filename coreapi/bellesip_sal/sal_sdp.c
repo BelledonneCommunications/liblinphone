@@ -20,6 +20,7 @@
 
 #include "sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
+#include "sal/sal_stream_bundle.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
 inline OrtpRtcpXrStatSummaryFlag operator|=(OrtpRtcpXrStatSummaryFlag a, OrtpRtcpXrStatSummaryFlag b) {
@@ -403,13 +404,11 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	belle_sdp_session_description_add_media_description(session_desc, media_desc);
 }
 
-static void bundles_to_sdp(const std::list<SalStreamBundle*> bundles, belle_sdp_session_description_t *session_desc){
+static void bundles_to_sdp(const std::list<SalStreamBundle> bundles, belle_sdp_session_description_t *session_desc){
 	for (auto & bundle : bundles){
-		const bctbx_list_t * id_iterator;
 		char *attr_value = ms_strdup("BUNDLE");
-		for (id_iterator = bundle->mids; id_iterator != NULL; id_iterator = id_iterator->next){
-			const char *mid = (const char*) id_iterator->data;
-			char *tmp = ms_strdup_printf("%s %s", attr_value, mid);
+		for (const auto & mid : bundle.mids){
+			char *tmp = ms_strdup_printf("%s %s", attr_value, mid.c_str());
 			ms_free(attr_value);
 			attr_value = tmp;
 
@@ -976,15 +975,16 @@ static SalStreamDescription sdp_to_stream_description(std::shared_ptr<SalMediaDe
 static void add_bundles(std::shared_ptr<SalMediaDescription> &desc, const char *ids){
 	char *tmp = (char*)ms_malloc0(strlen(ids) + 1);
 	int err;
-	SalStreamBundle *bundle = desc->addNewBundle();
+	SalStreamBundle bundle;
 	do{
 		int consumed = 0;
 		err = sscanf(ids, "%s%n", tmp, &consumed);
 		if (err > 0){
-			bundle->mids = bctbx_list_append(bundle->mids, bctbx_strdup(tmp));
+			bundle.mids.push_back(tmp);
 			ids += consumed;
 		}else break;
 	}while( *ids != '\0');
+	desc->addNewBundle(bundle);
 	ms_free(tmp);
 }
 
