@@ -1093,10 +1093,10 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 
 void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> md, SalStreamDescription &sd, const std::string mid){
 	SalStreamBundle *bundle;
-	if (md->bundles == nullptr){
+	if (md->bundles.empty()){
 		bundle = md->addNewBundle();
 	}else{
-		bundle = (SalStreamBundle*) md->bundles->data;
+		bundle = md->bundles.front();
 	}
 	sal_stream_bundle_add_stream(bundle, &sd, L_STRING_TO_C(mid));
 	sd.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
@@ -2951,7 +2951,7 @@ const MediaSessionParams * MediaSession::getRemoteParams () {
 			if (md->name[0] != '\0')
 				params->setSessionName(md->name);
 			params->getPrivate()->setCustomSdpAttributes(md->custom_sdp_attributes);
-			params->enableRtpBundle(md->bundles != nullptr);
+			params->enableRtpBundle(!md->bundles.empty());
 		}
 		const SalCustomHeader *ch = d->op->getRecvCustomHeaders();
 		if (ch) {
