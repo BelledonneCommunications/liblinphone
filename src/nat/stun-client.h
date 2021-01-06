@@ -31,7 +31,7 @@
 
 // =============================================================================
 
-L_DECL_C_STRUCT_PREFIX_LESS(SalMediaDescription);
+class SalMediaDescription;
 
 LINPHONE_BEGIN_NAMESPACE
 
