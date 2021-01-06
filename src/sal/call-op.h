@@ -25,7 +25,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalCallOp : public SalOp, public SalMessageOpInterface {
+class LINPHONE_PUBLIC SalCallOp : public SalOp, public SalMessageOpInterface {
 public:
 	SalCallOp (Sal *sal);
 	virtual ~SalCallOp ();

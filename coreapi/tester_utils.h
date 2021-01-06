@@ -35,7 +35,7 @@ typedef struct _SalOp SalOp;
 #endif
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
-typedef struct SalMediaDescription SalMediaDescription;
+class SalMediaDescription;
 
 typedef enum _LinphoneProxyConfigAddressComparisonResult{
 	LinphoneProxyConfigAddressDifferent,
