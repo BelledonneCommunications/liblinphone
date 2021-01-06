@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "c-wrapper/internal/c-sal-media-description.h"
-#include "c-wrapper/internal/c-sal-stream-description.h"
 #include "bellesip_sal/sal_impl.h"
 #include "offeranswer.h"
 #include "sal/call-op.h"
