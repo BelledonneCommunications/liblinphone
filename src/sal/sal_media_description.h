@@ -20,6 +20,8 @@
 #ifndef _SAL_MEDIA_DESCRIPTION_H_
 #define _SAL_MEDIA_DESCRIPTION_H_
 
+#include <list>
+
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_bundle.h"
 
@@ -83,7 +85,7 @@ typedef struct SalMediaDescription {
 	OrtpRtcpXrConfiguration rtcp_xr;
 	std::string ice_ufrag;
 	std::string ice_pwd;
-	bctbx_list_t *bundles = nullptr; /* list of SalStreamBundle */
+	std::list<SalStreamBundle*> bundles;
 	bool_t ice_lite = FALSE;
 	bool_t set_nortpproxy = FALSE;
 	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/

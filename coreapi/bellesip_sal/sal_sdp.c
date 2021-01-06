@@ -16,6 +16,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
+#include <list>
+
 #include "sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
@@ -401,10 +403,8 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 	belle_sdp_session_description_add_media_description(session_desc, media_desc);
 }
 
-static void bundles_to_sdp(const bctbx_list_t *bundles, belle_sdp_session_description_t *session_desc){
-	const bctbx_list_t *elem;
-	for (elem = bundles; elem != NULL; elem = elem->next){
-		SalStreamBundle *bundle = (SalStreamBundle*) elem->data;
+static void bundles_to_sdp(const std::list<SalStreamBundle*> bundles, belle_sdp_session_description_t *session_desc){
+	for (auto & bundle : bundles){
 		const bctbx_list_t * id_iterator;
 		char *attr_value = ms_strdup("BUNDLE");
 		for (id_iterator = bundle->mids; id_iterator != NULL; id_iterator = id_iterator->next){
@@ -471,7 +471,7 @@ belle_sdp_session_description_t * media_description_to_sdp(const std::shared_ptr
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&desc->rtcp_xr));
 	}
 
-	if (desc->bundles)
+	if (!desc->bundles.empty())
 		bundles_to_sdp(desc->bundles, session_desc);
 
 	if (desc->custom_sdp_attributes) {
