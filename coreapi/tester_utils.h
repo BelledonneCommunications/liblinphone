@@ -26,8 +26,6 @@
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
 #include "c-wrapper/internal/c-sal.h"
-#include "c-wrapper/internal/c-sal-stream-description.h"
-#include "c-wrapper/internal/c-sal-media-description.h"
 #include "quality_reporting.h"
 #include "vcard_private.h"
 
@@ -37,6 +35,7 @@ typedef struct _SalOp SalOp;
 #endif
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
+typedef struct SalMediaDescription SalMediaDescription;
 
 typedef enum _LinphoneProxyConfigAddressComparisonResult{
 	LinphoneProxyConfigAddressDifferent,
@@ -53,6 +52,9 @@ typedef struct _LinphoneCoreToneManagerStats {
 	int number_of_stopRingtone;
 	int number_of_stopTone;
 } LinphoneCoreToneManagerStats;
+
+LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
+LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
 
 #ifdef __cplusplus
 extern "C" {

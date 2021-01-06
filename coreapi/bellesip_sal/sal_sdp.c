@@ -18,8 +18,6 @@
  */
 #include "sal_impl.h"
 #include "c-wrapper/internal/c-tools.h"
-#include "c-wrapper/internal/c-sal-stream-description.h"
-#include "c-wrapper/internal/c-sal-media-description.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
 inline OrtpRtcpXrStatSummaryFlag operator|=(OrtpRtcpXrStatSummaryFlag a, OrtpRtcpXrStatSummaryFlag b) {
