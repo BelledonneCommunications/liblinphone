@@ -630,12 +630,14 @@ int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<SalMediaD
 	}
 	/* TODO: check that the bundle answer is compliant with our offer.
 	 * For now, just check the presence of a bundle response. */
-	if (local_offer->bundles){
-		if (remote_answer->bundles){
+	if (!local_offer->bundles.empty()){
+		if (!remote_answer->bundles.empty()){
 			/* Copy the bundle offering to the result media description. */
-			result->bundles = bctbx_list_copy_with_data(remote_answer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
+			for (const auto & bundle : remote_answer->bundles){
+				result->bundles.push_back(sal_stream_bundle_clone(bundle));
+			}
 		}
-	}else if (remote_answer->bundles){
+	}else if (!remote_answer->bundles.empty()){
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
 	}
 
@@ -652,9 +654,11 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Sal
 					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
 
-	if (remote_offer->bundles && local_capabilities->accept_bundles){
+	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
-		result->bundles = bctbx_list_copy_with_data(remote_offer->bundles, (bctbx_list_copy_func) sal_stream_bundle_clone);
+		for (const auto & bundle : remote_offer->bundles){
+			result->bundles.push_back(sal_stream_bundle_clone(bundle));
+		}
 	}
 	
 	for(i=0;i<remote_offer->streams.size();++i){
