@@ -28,7 +28,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalMessageOpInterface {
+class LINPHONE_PUBLIC SalMessageOpInterface {
 public:
 	virtual ~SalMessageOpInterface() = default;
 

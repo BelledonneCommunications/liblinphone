@@ -24,7 +24,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 
-typedef struct SalStreamDescription {
+class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:
 		SalStreamDescription();
@@ -108,6 +108,6 @@ typedef struct SalStreamDescription {
 		bool_t isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
 		bool_t isSamePayloadList(const bctbx_list_t *l1, const bctbx_list_t *l2) const;
 
-} SalStreamDescription;
+};
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_
