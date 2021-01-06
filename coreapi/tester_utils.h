@@ -261,7 +261,6 @@ LINPHONE_PUBLIC bool_t sal_transport_available(Sal *ctx, SalTransport t);
 LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending(const SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling);
-LINPHONE_PUBLIC SalMediaDescription * sal_call_get_final_media_description(SalOp *h);
 LINPHONE_PUBLIC const char *sal_call_get_local_tag (SalOp *op);
 LINPHONE_PUBLIC const char *sal_call_get_remote_tag (SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_replaces (SalOp *op, const char *callId, const char *fromTag, const char *toTag);
