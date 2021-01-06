@@ -147,7 +147,7 @@ LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore* core, bo
 LINPHONE_PUBLIC void linphone_core_enable_callkit (LinphoneCore* core, bool_t enabled);
 
 /**
- * Deprecated : now handled in the linphone SDK directly
+ * @Deprecated : now handled in the linphone SDK directly
  * Special function to indicate if the audio route is changed. Must be called in the callback of AVAudioSessionRouteChangeNotification.
  * @param core The #LinphoneCore object. @notnil
  * @ingroup IOS
