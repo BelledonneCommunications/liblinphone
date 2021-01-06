@@ -21,8 +21,6 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
-#include "sal/sal_stream_description.h"
-#include "sal/sal_stream_bundle.h"
 
 SalMediaDescription::SalMediaDescription(){
 	init();
