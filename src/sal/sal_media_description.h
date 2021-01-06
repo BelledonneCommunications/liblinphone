@@ -25,16 +25,17 @@
 #include <vector>
 
 #include "c-wrapper/internal/c-sal.h"
+#include "sal/sal_stream_description.h"
+#include "sal/sal_stream_bundle.h"
 #include "ortp/rtpsession.h"
 
-typedef struct SalStreamDescription SalStreamDescription;
-typedef struct SalStreamBundle SalStreamBundle;
+class SalStreamDescription;
 
-typedef struct SalMediaDescription {
+class LINPHONE_PUBLIC SalMediaDescription {
 	public:
 		SalMediaDescription();
 		SalMediaDescription(const SalMediaDescription & other);
-		~SalMediaDescription();
+		virtual ~SalMediaDescription();
 		void init();
 		void destroy();
 
@@ -102,6 +103,6 @@ typedef struct SalMediaDescription {
 
 		bool isNullAddress(const std::string & addr) const;
 
-} SalMediaDescription;
+};
 
 #endif // ifndef _SAL_MEDIA_DESCRIPTION_H_

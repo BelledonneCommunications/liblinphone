@@ -35,7 +35,12 @@ typedef struct _SalOp SalOp;
 #endif
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
-typedef struct SalMediaDescription SalMediaDescription;
+
+#ifdef __cplusplus
+class SalMediaDescription;
+LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
+LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
+#endif
 
 typedef enum _LinphoneProxyConfigAddressComparisonResult{
 	LinphoneProxyConfigAddressDifferent,
@@ -52,9 +57,6 @@ typedef struct _LinphoneCoreToneManagerStats {
 	int number_of_stopRingtone;
 	int number_of_stopTone;
 } LinphoneCoreToneManagerStats;
-
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
 
 #ifdef __cplusplus
 extern "C" {

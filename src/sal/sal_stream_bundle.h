@@ -23,23 +23,24 @@
 #include <list>
 #include <string>
 
-typedef struct SalStreamDescription SalStreamDescription;
+class SalStreamDescription;
 
-typedef struct SalStreamBundle{
+class SalStreamBundle{
 
-	SalStreamBundle();
-	SalStreamBundle(const SalStreamBundle &other);
-	~SalStreamBundle();
+	public:
+		SalStreamBundle();
+		SalStreamBundle(const SalStreamBundle &other);
+		virtual ~SalStreamBundle();
 
-	SalStreamBundle &operator=(const SalStreamBundle& other);
+		SalStreamBundle &operator=(const SalStreamBundle& other);
 
-	void addStream(SalStreamDescription & stream, const std::string &mid);
+		void addStream(SalStreamDescription & stream, const std::string &mid);
 
-	const std::string & getMidOfTransportOwner() const;
+		const std::string & getMidOfTransportOwner() const;
 
-	bool hasMid(const std::string & mid) const;
+		bool hasMid(const std::string & mid) const;
 
-	std::list<std::string> mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
-} SalStreamBundle;
+		std::list<std::string> mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
+};
 
 #endif // ifndef _SAL_STREAM_BUNDLE_H_
