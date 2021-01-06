@@ -51,7 +51,9 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 	ice_lite = other.ice_lite;
 
 	accept_bundles = other.accept_bundles;
-	bundles = bctbx_list_copy_with_data(other.bundles, (bctbx_list_copy_func)sal_stream_bundle_clone);
+	for (const auto & bundle : other.bundles) {
+		bundles.push_back(sal_stream_bundle_clone(bundle));
+	}
 
 	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
@@ -61,9 +63,9 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 void SalMediaDescription::init() {
 	refcount=1;
 	streams.clear();
+	bundles.clear();
 	pad.clear();
 	custom_sdp_attributes = nullptr;
-	bundles = nullptr;
 }
 
 bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
@@ -103,7 +105,7 @@ bool SalMediaDescription::isNullAddress(const std::string & addr) const {
 
 SalStreamBundle * SalMediaDescription::addNewBundle(){
 	SalStreamBundle *bundle = sal_stream_bundle_new();
-	bundles = bctbx_list_append(bundles, bundle);
+	bundles.push_back(bundle);
 	return bundle;
 }
 
@@ -119,10 +121,11 @@ int SalMediaDescription::lookupMid(const std::string mid) const {
 }
 
 const SalStreamBundle *SalMediaDescription::getBundleFromMid(const std::string mid) const {
-	const bctbx_list_t *elem;
-	for (elem = bundles; elem != NULL; elem = elem->next){
-		SalStreamBundle *bundle = (SalStreamBundle *)elem->data;
-		if (sal_stream_bundle_has_mid(bundle, L_STRING_TO_C(mid))) return bundle;
+	const auto & bundleIt = std::find_if(bundles.cbegin(), bundles.cend(), [&mid] (const auto & bundle) {
+		return (sal_stream_bundle_has_mid(bundle, L_STRING_TO_C(mid)));
+	});
+	if (bundleIt != bundles.cend()) {
+		return *bundleIt;
 	}
 	return nullptr;
 }
@@ -148,7 +151,10 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & s
 
 void SalMediaDescription::destroy(){
 	streams.clear();
-	bctbx_list_free_with_data(bundles, (void (*)(void*)) sal_stream_bundle_destroy);
+	for (auto & bundle: bundles) {
+		sal_stream_bundle_destroy(bundle);
+	}
+	bundles.clear();
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
