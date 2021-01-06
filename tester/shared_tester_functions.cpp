@@ -42,7 +42,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 		ms=linphone_call_get_stream(c1, LinphoneStreamTypeText);
 		break;
 	default:
-		ms_error("Unknown stream type [%s]",  linphone_stream_type_to_string(stream_type));
+		lError() << "Unknown stream type [" << linphone_stream_type_to_string(stream_type) << "]";
 		BC_ASSERT_FALSE(stream_type >= LinphoneStreamTypeUnknown);
 		return;
 	}
