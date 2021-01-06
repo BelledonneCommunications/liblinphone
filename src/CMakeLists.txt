@@ -116,7 +116,6 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	auth-info/auth-stack.h
 	c-wrapper/c-wrapper.h
 	c-wrapper/internal/c-sal.h
-	c-wrapper/internal/c-sal-stream-bundle.h
 	c-wrapper/internal/c-tools.h
 	call/call.h
 	call/audio-device/audio-device.h
@@ -316,7 +315,6 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-push-notification-message.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
-	c-wrapper/internal/c-sal-stream-bundle.cpp
 	c-wrapper/internal/c-tools.cpp
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp

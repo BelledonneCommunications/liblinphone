@@ -21,7 +21,8 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
-#include "c-wrapper/internal/c-sal-stream-bundle.h"
+#include "sal/sal_stream_description.h"
+#include "sal/sal_stream_bundle.h"
 
 SalMediaDescription::SalMediaDescription(){
 	init();
@@ -51,9 +52,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 	ice_lite = other.ice_lite;
 
 	accept_bundles = other.accept_bundles;
-	for (const auto & bundle : other.bundles) {
-		bundles.push_back(sal_stream_bundle_clone(bundle));
-	}
+	bundles = other.bundles;
 
 	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
@@ -103,10 +102,8 @@ bool SalMediaDescription::isNullAddress(const std::string & addr) const {
 	return addr.compare("0.0.0.0")==0 || addr.compare("::0")==0;
 }
 
-SalStreamBundle * SalMediaDescription::addNewBundle(){
-	SalStreamBundle *bundle = sal_stream_bundle_new();
+void SalMediaDescription::addNewBundle(const SalStreamBundle & bundle){
 	bundles.push_back(bundle);
-	return bundle;
 }
 
 int SalMediaDescription::lookupMid(const std::string mid) const {
@@ -120,28 +117,24 @@ int SalMediaDescription::lookupMid(const std::string mid) const {
 	return -1;
 }
 
-const SalStreamBundle *SalMediaDescription::getBundleFromMid(const std::string mid) const {
+const std::list<SalStreamBundle>::const_iterator SalMediaDescription::getBundleFromMid(const std::string mid) const {
 	const auto & bundleIt = std::find_if(bundles.cbegin(), bundles.cend(), [&mid] (const auto & bundle) {
-		return (sal_stream_bundle_has_mid(bundle, L_STRING_TO_C(mid)));
+		return (bundle.hasMid(mid));
 	});
-	if (bundleIt != bundles.cend()) {
-		return *bundleIt;
-	}
-	return nullptr;
+	return bundleIt;
 }
 
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
-	const SalStreamBundle *bundle;
 	std::string master_mid;
 	int index;
 	if (sd.mid.empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
-	bundle = getBundleFromMid(sd.mid);
-	if (!bundle) {
+	const auto &bundle = getBundleFromMid(sd.mid);
+	if (bundle == bundles.cend()) {
 		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.mid));
 		return -1;
 	}
-	master_mid = sal_stream_bundle_get_mid_of_transport_owner(bundle);
+	master_mid = bundle->getMidOfTransportOwner();
 	index = lookupMid(master_mid);
 	if (index == -1){
 		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.mid), L_STRING_TO_C(master_mid));
@@ -151,9 +144,6 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & s
 
 void SalMediaDescription::destroy(){
 	streams.clear();
-	for (auto & bundle: bundles) {
-		sal_stream_bundle_destroy(bundle);
-	}
 	bundles.clear();
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }

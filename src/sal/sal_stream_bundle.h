@@ -20,10 +20,26 @@
 #ifndef _SAL_STREAM_BUNDLE_H_
 #define _SAL_STREAM_BUNDLE_H_
 
-#include "sal/sal_stream_description.h"
+#include <list>
+#include <string>
+
+typedef struct SalStreamDescription SalStreamDescription;
 
 typedef struct SalStreamBundle{
-	bctbx_list_t *mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
+
+	SalStreamBundle();
+	SalStreamBundle(const SalStreamBundle &other);
+	~SalStreamBundle();
+
+	SalStreamBundle &operator=(const SalStreamBundle& other);
+
+	void addStream(SalStreamDescription & stream, const std::string &mid);
+
+	const std::string & getMidOfTransportOwner() const;
+
+	bool hasMid(const std::string & mid) const;
+
+	std::list<std::string> mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
 } SalStreamBundle;
 
 #endif // ifndef _SAL_STREAM_BUNDLE_H_

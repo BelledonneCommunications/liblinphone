@@ -30,7 +30,7 @@
 #include "conference/session/media-session.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
-#include "c-wrapper/internal/c-sal-stream-bundle.h"
+#include "sal/sal_stream_bundle.h"
 #include "sal/sal_media_description.h"
 #include "sal/call-op.h"
 #include "sal/sal.h"
@@ -1092,16 +1092,17 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 }
 
 void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> md, SalStreamDescription &sd, const std::string mid){
-	SalStreamBundle *bundle;
-	if (md->bundles.empty()){
-		bundle = md->addNewBundle();
-	}else{
+	SalStreamBundle bundle;
+	if (!md->bundles.empty()){
 		bundle = md->bundles.front();
+		// Delete first element
+		md->bundles.erase(md->bundles.begin());
 	}
-	sal_stream_bundle_add_stream(bundle, &sd, L_STRING_TO_C(mid));
+	bundle.addStream(sd, mid);
 	sd.mid_rtp_ext_header_id = rtpExtHeaderMidNumber;
 	/* rtcp-mux must be enabled when bundle mode is proposed.*/
 	sd.rtcp_mux = TRUE;
+	md->bundles.push_front(bundle);
 }
 
 /* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
