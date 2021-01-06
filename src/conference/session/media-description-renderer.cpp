@@ -25,7 +25,7 @@ LINPHONE_BEGIN_NAMESPACE
 const std::vector<SalStreamDescription>::iterator OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
 
 	if (index < md->streams.size()) {
-		return md->streams.begin() + index;
+		return md->streams.begin() + static_cast<long>(index);
 	}
 
 	return md->streams.end();
