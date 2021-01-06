@@ -2712,8 +2712,7 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 	return L_DB_TRANSACTION {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
-		soci::rowset<soci::row> rows = ( getBackend() == MainDb::Backend::Sqlite3 ?
-		d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)), soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB) : d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)));
+		soci::rowset<soci::row> rows = getBackend() == MainDb::Backend::Sqlite3 ? (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)),  soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB)) : (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)));
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);
