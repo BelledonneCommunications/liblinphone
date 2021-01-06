@@ -42,7 +42,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 		ms=linphone_call_get_stream(c1, LinphoneStreamTypeText);
 		break;
 	default:
-		ms_error("Unknown stream type [%s]",  linphone_stream_type_to_string(stream_type));
+		lError() << "Unknown stream type [" << linphone_stream_type_to_string(stream_type) << "]";
 		BC_ASSERT_FALSE(stream_type >= LinphoneStreamTypeUnknown);
 		return;
 	}
@@ -78,7 +78,7 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 			}
 			bctbx_sockaddr_to_ip_address((struct sockaddr *)&remaddr, remaddrlen, ip, sizeof(ip), &port);
 
-			BC_ASSERT_STRING_EQUAL(ip, L_STRING_TO_C(expected_addr));
+			BC_ASSERT_STRING_EQUAL(ip, expected_addr.c_str());
 
 		}
 	}
