@@ -1901,15 +1901,12 @@ static bool_t get_codec(LinphoneCore *lc, SalStreamType type, int index, Payload
 		pt->type=(type==SalAudio) ? PAYLOAD_AUDIO_PACKETIZED : type == SalVideo ? PAYLOAD_VIDEO : PAYLOAD_TEXT;
 		pt->mime_type=ortp_strdup(mime);
 		pt->clock_rate=rate;
-		if( bitrate>0 ) {
-			pt->normal_bitrate = bitrate;
-			pt->flags|=PAYLOAD_TYPE_BITRATE_OVERRIDE;
-		}
 		pt->channels=channels;
 		payload_type_set_number(pt,-1); /*dynamic assignment*/
 		payload_type_set_recv_fmtp(pt,fmtp);
 		*default_list=bctbx_list_append(*default_list, pt);
-	}else if( bitrate>0 ) {
+	}
+	if( bitrate>0 ) {
 		pt->normal_bitrate = bitrate;
 		pt->flags|=PAYLOAD_TYPE_BITRATE_OVERRIDE;
 	}
@@ -6731,7 +6728,8 @@ void _linphone_core_codec_config_write(LinphoneCore *lc){
 			sprintf(key,"audio_codec_%i",index);
 			linphone_config_set_string(lc->config,key,"mime",pt->mime_type);
 			linphone_config_set_int(lc->config,key,"rate",pt->clock_rate);
-			linphone_config_set_int(lc->config,key,"bitrate",pt->normal_bitrate);
+			if(pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
+				linphone_config_set_int(lc->config,key,"bitrate",pt->normal_bitrate);
 			linphone_config_set_int(lc->config,key,"channels",pt->channels);
 			linphone_config_set_int(lc->config,key,"enabled",payload_type_enabled(pt));
 			linphone_config_set_string(lc->config,key,"recv_fmtp",pt->recv_fmtp);
@@ -6746,7 +6744,8 @@ void _linphone_core_codec_config_write(LinphoneCore *lc){
 			sprintf(key,"video_codec_%i",index);
 			linphone_config_set_string(lc->config,key,"mime",pt->mime_type);
 			linphone_config_set_int(lc->config,key,"rate",pt->clock_rate);
-			linphone_config_set_int(lc->config,key,"bitrate",pt->normal_bitrate);
+			if(pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE)
+				linphone_config_set_int(lc->config,key,"bitrate",pt->normal_bitrate);
 			linphone_config_set_int(lc->config,key,"enabled",payload_type_enabled(pt));
 			linphone_config_set_string(lc->config,key,"recv_fmtp",pt->recv_fmtp);
 			index++;
