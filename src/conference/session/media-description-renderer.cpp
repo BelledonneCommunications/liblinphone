@@ -19,8 +19,6 @@
 
 
 #include "media-description-renderer.h"
-#include "c-wrapper/internal/c-sal-media-description.h"
-#include "c-wrapper/internal/c-sal-stream-description.h"
 
 LINPHONE_BEGIN_NAMESPACE
 

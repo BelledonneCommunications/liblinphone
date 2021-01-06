@@ -21,7 +21,6 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
-#include "c-wrapper/internal/c-sal-stream-description.h"
 #include "c-wrapper/internal/c-sal-stream-bundle.h"
 
 SalMediaDescription::SalMediaDescription(){
