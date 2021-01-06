@@ -17,4 +17,40 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <algorithm>
+
 #include "sal/sal_stream_bundle.h"
+#include "sal/sal_stream_description.h"
+
+SalStreamBundle::SalStreamBundle(){
+	mids.clear();
+}
+
+SalStreamBundle::SalStreamBundle(const SalStreamBundle &other){
+	mids = other.mids;
+}
+
+SalStreamBundle::~SalStreamBundle(){
+	mids.clear();
+}
+
+SalStreamBundle &SalStreamBundle::operator=(const SalStreamBundle & other){
+	mids = other.mids;
+	return *this;
+}
+
+void SalStreamBundle::addStream(SalStreamDescription & stream, const std::string &mid){
+	stream.mid = mid;
+	mids.push_back(mid);
+}
+
+const std::string & SalStreamBundle::getMidOfTransportOwner() const {
+	return mids.front(); /* the first one is the transport owner*/
+}
+
+bool SalStreamBundle::hasMid(const std::string & mid) const{
+	const auto & midIt = std::find_if(mids.cbegin(), mids.cend(), [&mid] (const auto & bundleMid) {
+		return (bundleMid.compare(mid) == 0);
+	});
+	return (midIt != mids.cend());
+}

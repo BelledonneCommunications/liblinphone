@@ -19,7 +19,7 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "c-wrapper/internal/c-sal.h"
-#include "c-wrapper/internal/c-sal-stream-bundle.h"
+#include "sal/sal_stream_bundle.h"
 #include "sal/sal_media_description.h"
 #include "sal/sal.h"
 #include "offeranswer.h"
@@ -633,9 +633,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<SalMediaD
 	if (!local_offer->bundles.empty()){
 		if (!remote_answer->bundles.empty()){
 			/* Copy the bundle offering to the result media description. */
-			for (const auto & bundle : remote_answer->bundles){
-				result->bundles.push_back(sal_stream_bundle_clone(bundle));
-			}
+			result->bundles = remote_answer->bundles;
 		}
 	}else if (!remote_answer->bundles.empty()){
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
@@ -656,9 +654,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Sal
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
-		for (const auto & bundle : remote_offer->bundles){
-			result->bundles.push_back(sal_stream_bundle_clone(bundle));
-		}
+		result->bundles = remote_offer->bundles;
 	}
 	
 	for(i=0;i<remote_offer->streams.size();++i){
