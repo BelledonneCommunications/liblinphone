@@ -1207,15 +1207,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		md->streams.resize(static_cast<size_t>(freeStreamIndex));
 	}
 
-	bctbx_list_t *l = NULL;
+	std::list<OrtpPayloadType*> l;
+	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
+	std::list<OrtpPayloadType*> emptyList;
+	emptyList.clear();
 	if (mainAudioStreamIndex != -1){
 		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
-		l = nullptr;
 		md->streams[audioStreamIndex].proto = getAudioProto(op ? op->getRemoteMediaDescription() : nullptr);
 		md->streams[audioStreamIndex].dir = getParams()->getPrivate()->getSalAudioDirection();
 		md->streams[audioStreamIndex].type = SalAudio;
-		if (getParams()->audioEnabled() && (l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1,
-		(oldMd && (audioStreamIndex < oldMd->streams.size())) ? oldMd->streams[audioStreamIndex].already_assigned_payloads : nullptr))) {
+		l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, (oldMd && (audioStreamIndex < oldMd->streams.size())) ? oldMd->streams[audioStreamIndex].already_assigned_payloads : emptyList);
+		if (getParams()->audioEnabled() && !l.empty()) {
 			md->streams[audioStreamIndex].name = "Audio";
 			md->streams[audioStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[audioStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
@@ -1225,7 +1227,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			else
 				md->streams[audioStreamIndex].ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
 			md->streams[audioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
-			md->streams[audioStreamIndex].payloads = l;
+			md->streams[audioStreamIndex].payloads = std::move(l);
 			md->streams[audioStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], "as");
 
@@ -1237,8 +1239,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		} else {
 			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
 			md->streams[audioStreamIndex].dir = SalStreamInactive;
-			if(l)
-				l = bctbx_list_free_with_data(l, (bctbx_list_free_func)payload_type_destroy);
+			l.clear();
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio);
 		if (customSdpAttributes)
@@ -1246,17 +1247,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	}
 	if (mainVideoStreamIndex != -1){
 		size_t videoStreamIndex = static_cast<size_t>(mainVideoStreamIndex);
-		l = nullptr;
 		md->streams[videoStreamIndex].proto = getParams()->getMediaProto();
 		md->streams[videoStreamIndex].dir = getParams()->getPrivate()->getSalVideoDirection();
 		md->streams[videoStreamIndex].type = SalVideo;
-
-		if (getParams()->videoEnabled() && (l = pth.makeCodecsList(SalVideo, 0, -1,
-			(oldMd && (videoStreamIndex < oldMd->streams.size())) ? oldMd->streams[videoStreamIndex].already_assigned_payloads : nullptr)) ){
+		l = pth.makeCodecsList(SalVideo, 0, -1,
+			(oldMd && (videoStreamIndex < oldMd->streams.size())) ? oldMd->streams[videoStreamIndex].already_assigned_payloads : emptyList);
+		if (getParams()->videoEnabled() && !l.empty()){
 			md->streams[videoStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[videoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			md->streams[videoStreamIndex].name = "Video";
-			md->streams[videoStreamIndex].payloads = l;
+			md->streams[videoStreamIndex].payloads = std::move(l);
 			md->streams[videoStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[videoStreamIndex], "vs");
 
@@ -1269,8 +1269,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
 			md->streams[videoStreamIndex].dir = SalStreamInactive;
-			if(l)
-				l = bctbx_list_free_with_data(l, (bctbx_list_free_func)payload_type_destroy);
+			l.clear();
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo);
 		if (customSdpAttributes)
@@ -1279,23 +1278,23 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	if (mainTextStreamIndex != -1){
 		size_t textStreamIndex = static_cast<size_t>(mainTextStreamIndex);
-		l = nullptr;
+		l.clear();
 		md->streams[textStreamIndex].proto = getParams()->getMediaProto();
 		md->streams[textStreamIndex].dir = SalStreamSendRecv;
 		md->streams[textStreamIndex].type = SalText;
-		if (getParams()->realtimeTextEnabled() && (l = pth.makeCodecsList(SalText, 0, -1,
-				(oldMd && (textStreamIndex < oldMd->streams.size())) ? oldMd->streams[textStreamIndex].already_assigned_payloads : nullptr)) ) {
+		l = pth.makeCodecsList(SalText, 0, -1,
+				(oldMd && (textStreamIndex < oldMd->streams.size())) ? oldMd->streams[textStreamIndex].already_assigned_payloads : emptyList);
+		if (getParams()->realtimeTextEnabled() && !l.empty()) {
 			md->streams[textStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[textStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
 			md->streams[textStreamIndex].name = "Text";
-			md->streams[textStreamIndex].payloads = l;
+			md->streams[textStreamIndex].payloads = std::move(l);
 			md->streams[textStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[textStreamIndex], "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
 			md->streams[textStreamIndex].dir = SalStreamInactive;
-			if(l)
-				l = bctbx_list_free_with_data(l, (bctbx_list_free_func)payload_type_destroy);
+			l.clear();
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText);
 		if (customSdpAttributes)
@@ -1372,8 +1371,7 @@ void MediaSessionPrivate::setupRtcpFb (std::shared_ptr<SalMediaDescription> md) 
 		stream.rtcp_fb.generic_nack_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
 		stream.rtcp_fb.tmmbr_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_tmmbr_enabled", 1);
 		stream.implicit_rtcp_fb = getParams()->getPrivate()->implicitRtcpFbEnabled();
-		for (const bctbx_list_t *it = stream.payloads; it != nullptr; it = bctbx_list_next(it)) {
-			OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
+		for (const auto & pt : stream.payloads) {
 			PayloadTypeAvpfParams avpf_params;
 			if (!getParams()->avpfEnabled() && !getParams()->getPrivate()->implicitRtcpFbEnabled()) {
 				payload_type_unset_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
@@ -1452,10 +1450,10 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> oldMd, std::shared_ptr<SalMediaDescription> md) {
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (i < oldMd->streams.size()) {
-			md->streams[i].already_assigned_payloads = oldMd->streams[i].already_assigned_payloads;
-			oldMd->streams[i].already_assigned_payloads = nullptr;
+			md->streams[i].already_assigned_payloads = std::move(oldMd->streams[i].already_assigned_payloads);
+			oldMd->streams[i].already_assigned_payloads.clear();
 		} else {
-			md->streams[i].already_assigned_payloads = nullptr;
+			md->streams[i].already_assigned_payloads.clear();
 		}
 	}
 }
@@ -1581,11 +1579,10 @@ void MediaSessionPrivate::tryEarlyMediaForking (std::shared_ptr<SalMediaDescript
 
 void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription &resultDesc, SalStreamDescription &localStreamDesc) {
 	L_Q();
-	for (bctbx_list_t *elem = resultDesc.payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
-		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+	for (const auto & pt : resultDesc.payloads) {
 		if (PayloadTypeHandler::isPayloadTypeNumberAvailable(localStreamDesc.already_assigned_payloads, payload_type_get_number(pt), nullptr)) {
 			/* New codec, needs to be added to the list */
-			localStreamDesc.already_assigned_payloads = bctbx_list_append(localStreamDesc.already_assigned_payloads, payload_type_clone(pt));
+			localStreamDesc.already_assigned_payloads.push_back(payload_type_clone(pt));
 			lInfo() << "CallSession[" << q << "] : payload type " << payload_type_get_number(pt) << " " << pt->mime_type << "/" << pt->clock_rate
 				<< " fmtp=" << L_C_TO_STRING(pt->recv_fmtp) << " added to frozen list";
 		}

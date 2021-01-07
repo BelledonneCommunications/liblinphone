@@ -52,7 +52,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
 		const int & getRtpPort() const;
-		const MSList * getPayloads() const;
+		const std::list<PayloadType*> & getPayloads() const;
 
 		const SalStreamType & getType() const;
 		const std::string getTypeAsString() const;
@@ -71,8 +71,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	std::string rtcp_cname;
 	int rtp_port = 0;
 	int rtcp_port = 0;
-	bctbx_list_t *payloads = nullptr; /**<list of PayloadType */
-	bctbx_list_t *already_assigned_payloads = nullptr; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
+	std::list<PayloadType*> payloads; /**<list of PayloadType */
+	std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
 	int bandwidth = 0;
 	int ptime = 0;
 	int maxptime = 0;
@@ -104,9 +104,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	SalMulticastRole multicast_role = SalMulticastInactive;
 
 	private:
-		bool_t isRecvOnly(PayloadType *p) const;
+		bool_t isRecvOnly(const PayloadType *p) const;
 		bool_t isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
-		bool_t isSamePayloadList(const bctbx_list_t *l1, const bctbx_list_t *l2) const;
+		bool_t isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const;
 
 };
 

@@ -27,16 +27,14 @@
 
 #include "utils/payload-type-handler.h"
 
-static bool_t only_telephone_event(const bctbx_list_t *l){
-	for(;l!=NULL;l=l->next){
-		PayloadType *p=(PayloadType*)l->data;
+static bool_t only_telephone_event(const std::list<OrtpPayloadType*> & l){
+	for (const auto & p : l) {
 		if (strcasecmp(p->mime_type,"telephone-event")!=0){
 			return FALSE;
 		}
 	}
 	return TRUE;
 }
-
 
 static PayloadType * opus_match(MSOfferAnswerContext *ctx, const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads, bool_t reading_response){
 	PayloadType *pt;
@@ -137,12 +135,8 @@ MSOfferAnswerProvider red_offer_answer_provider={
 	red_offer_answer_create_context
 };
 
-static PayloadType * generic_match(const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads){
-	PayloadType *pt;
-	const bctbx_list_t *elem;
-
-	for (elem=local_payloads;elem!=NULL;elem=elem->next){
-		pt=(PayloadType*)elem->data;
+static PayloadType * generic_match(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
+	for (const auto & pt : local_payloads) {
 		
 		if ( pt->mime_type && refpt->mime_type 
 			&& strcasecmp(pt->mime_type, refpt->mime_type)==0
@@ -164,15 +158,15 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 /*
  * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
 */
-static PayloadType * find_payload_type_best_match(MSFactory *factory, const bctbx_list_t *local_payloads, const PayloadType *refpt,
-						  const bctbx_list_t *remote_payloads, bool_t reading_response){
+static PayloadType * find_payload_type_best_match(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt,
+						  const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response){
 	PayloadType *ret = NULL;
 	MSOfferAnswerContext *ctx = NULL;
 
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		ret = ms_offer_answer_context_match_payload(ctx, local_payloads, refpt, remote_payloads, reading_response);
+		ret = ms_offer_answer_context_match_payload(ctx, LinphonePrivate::Utils::listToBctbxList(local_payloads), refpt, LinphonePrivate::Utils::listToBctbxList(remote_payloads), reading_response);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
@@ -180,14 +174,12 @@ static PayloadType * find_payload_type_best_match(MSFactory *factory, const bctb
 }
 
 
-static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *local, const bctbx_list_t *remote, bool_t reading_response, bool_t one_matching_codec){
-	const bctbx_list_t *e2,*e1;
-	bctbx_list_t *res=NULL;
+static std::list<OrtpPayloadType*> match_payloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec){
+	std::list<OrtpPayloadType*> res;
 	PayloadType *matched;
 	bool_t found_codec=FALSE;
 
-	for(e2=remote;e2!=NULL;e2=e2->next){
-		PayloadType *p2=(PayloadType*)e2->data;
+	for (const auto & p2 : remote) {
 		matched=find_payload_type_best_match(factory, local, p2, remote, reading_response);
 		if (matched){
 			int local_number=payload_type_get_number(matched);
@@ -217,7 +209,7 @@ static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *loca
 			}else{
 				payload_type_unset_flag(matched, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 			}
-			res=bctbx_list_append(res,matched);
+			res.push_back(matched);
 			/* we should use the remote numbering even when parsing a response */
 			payload_type_set_number(matched,remote_number);
 			payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
@@ -233,7 +225,7 @@ static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *loca
 				payload_type_set_number(matched,local_number);
 				payload_type_set_flag(matched, PAYLOAD_TYPE_FLAG_CAN_RECV);
 				payload_type_set_flag(matched, PAYLOAD_TYPE_FROZEN_NUMBER);
-				res=bctbx_list_append(res,matched);
+				res.push_back(matched);
 			}
 		}else{
 			if (p2->channels>0)
@@ -243,11 +235,9 @@ static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *loca
 	}
 	if (reading_response){
 		/* add remaning local payload as CAN_RECV only so that if we are in front of a non-compliant equipment we are still able to decode the RTP stream*/
-		for(e1=local;e1!=NULL;e1=e1->next){
-			PayloadType *p1=(PayloadType*)e1->data;
+		for (const auto & p1 : local) {
 			bool_t found=FALSE;
-			for(e2=res;e2!=NULL;e2=e2->next){
-				PayloadType *p2=(PayloadType*)e2->data;
+			for (const auto & p2 : remote) {
 				if (payload_type_get_number(p2)==payload_type_get_number(p1)){
 					found=TRUE;
 					break;
@@ -255,10 +245,10 @@ static bctbx_list_t *match_payloads(MSFactory *factory, const bctbx_list_t *loca
 			}
 			if (!found){
 				ms_message("Adding %s/%i for compatibility, just in case.",p1->mime_type,p1->clock_rate);
-				p1=payload_type_clone(p1);
-				payload_type_set_flag(p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
-				payload_type_set_flag(p1, PAYLOAD_TYPE_FROZEN_NUMBER);
-				res=bctbx_list_append(res,p1);
+				PayloadType *cloned_p1=payload_type_clone(p1);
+				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FLAG_CAN_RECV);
+				payload_type_set_flag(cloned_p1, PAYLOAD_TYPE_FROZEN_NUMBER);
+				res.push_back(cloned_p1);
 			}
 		}
 	}
@@ -425,7 +415,7 @@ static void initiate_outgoing(MSFactory* factory, const SalStreamDescription & l
 		}
 	}
 
-	if (result.payloads && !only_telephone_event(result.payloads)){
+	if (!result.payloads.empty() && !only_telephone_event(result.payloads)){
 		result.rtp_addr=remote_answer.rtp_addr;
 		result.rtcp_addr=remote_answer.rtcp_addr;
 		result.rtp_port=remote_answer.rtp_port;
@@ -476,7 +466,7 @@ static void initiate_incoming(MSFactory *factory, const SalStreamDescription & l
 	result.type=local_cap.type;
 	result.dir=compute_dir_incoming(local_cap.dir,remote_offer.dir);
 	
-	if (!result.payloads || only_telephone_event(result.payloads) || !remote_offer.enabled()){
+	if (result.payloads.empty() || only_telephone_event(result.payloads) || !remote_offer.enabled()){
 		result.rtp_port=0;
 		return;
 	}
