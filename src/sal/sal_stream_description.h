@@ -39,35 +39,30 @@ typedef struct SalIceCandidate {
        int rport;
 } SalIceCandidate;
 
-typedef struct SalIceRemoteCandidate {
-       char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-       int port;
-} SalIceRemoteCandidate;
-
 /*
 typedef struct SalIceCandidate {
 	std::string addr;
 	std::string raddr;
 	std::string foundation;
 	std::string type;
-	unsigned int componentID;
-	unsigned int priority;
-	int port;
-	int rport;
+	unsigned int componentID = 0;
+	unsigned int priority = 0;
+	int port = 0;
+	int rport = 0;
 } SalIceCandidate;
+*/
 
 typedef struct SalIceRemoteCandidate {
 	std::string addr;
-	int port;
+	int port = 0;
 } SalIceRemoteCandidate;
-*/
 
 /*sufficient for 256bit keys encoded in base 64*/
 #define SAL_SRTP_KEY_SIZE 128
 
 typedef struct SalSrtpCryptoAlgo {
-	unsigned int tag;
-	MSCryptoSuite algo;
+	unsigned int tag = 0;
+	MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
 	std::string master_key;
 } SalSrtpCryptoAlgo;
 
