@@ -28,6 +28,8 @@ const std::vector<SalStreamDescription>::iterator OfferAnswerContext::chooseStre
 		return md->streams.begin() + static_cast<long>(index);
 	}
 
+	lError() << "Unable to find stream at index " << index << " because media description " << md << " has " << md->streams.size() << " streams";
+
 	return md->streams.end();
 }
 
