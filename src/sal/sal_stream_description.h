@@ -24,6 +24,53 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN 64
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN 32
+#define SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN 6
+
+typedef struct SalIceCandidate {
+       char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
+       char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
+       char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN];
+       char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN];
+       unsigned int componentID;
+       unsigned int priority;
+       int port;
+       int rport;
+} SalIceCandidate;
+
+typedef struct SalIceRemoteCandidate {
+       char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
+       int port;
+} SalIceRemoteCandidate;
+
+/*
+typedef struct SalIceCandidate {
+	std::string addr;
+	std::string raddr;
+	std::string foundation;
+	std::string type;
+	unsigned int componentID;
+	unsigned int priority;
+	int port;
+	int rport;
+} SalIceCandidate;
+
+typedef struct SalIceRemoteCandidate {
+	std::string addr;
+	int port;
+} SalIceRemoteCandidate;
+*/
+
+/*sufficient for 256bit keys encoded in base 64*/
+#define SAL_SRTP_KEY_SIZE 128
+
+typedef struct SalSrtpCryptoAlgo {
+	unsigned int tag;
+	MSCryptoSuite algo;
+	std::string master_key;
+} SalSrtpCryptoAlgo;
+
 class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:

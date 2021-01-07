@@ -455,37 +455,6 @@ const char* sal_privacy_to_string(SalPrivacy privacy);
 }
 #endif
 
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN 64
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN 32
-#define SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN 6
-
-typedef struct SalIceCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN];
-	char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN];
-	unsigned int componentID;
-	unsigned int priority;
-	int port;
-	int rport;
-} SalIceCandidate;
-
-typedef struct SalIceRemoteCandidate {
-	char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-	int port;
-} SalIceRemoteCandidate;
-
-/*sufficient for 256bit keys encoded in base 64*/
-#define SAL_SRTP_KEY_SIZE 128
-
-typedef struct SalSrtpCryptoAlgo {
-	unsigned int tag;
-	MSCryptoSuite algo;
-	char master_key[SAL_SRTP_KEY_SIZE + 1];
-} SalSrtpCryptoAlgo;
-
-
-
 #define payload_type_set_number(pt,n) (pt)->user_data=(void*)((intptr_t)n);
 #define payload_type_get_number(pt) ((int)(intptr_t)(pt)->user_data)
 

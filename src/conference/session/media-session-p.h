@@ -181,7 +181,7 @@ private:
 	void selectOutgoingIpVersion ();
 
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> md);
-	bool generateB64CryptoKey (size_t keyLength, char *keyOut, size_t keyOutSize);
+	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
 	void makeLocalMediaDescription (bool localIsOfferer);
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> md);
