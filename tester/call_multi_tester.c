@@ -766,6 +766,19 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	linphone_core_set_video_activation_policy(chloe->lc, pol);
 	linphone_video_activation_policy_unref(pol);
 
+	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
+	linphone_core_enable_video_capture(marie->lc, TRUE);
+	linphone_core_enable_video_display(marie->lc, TRUE);
+
+	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
+		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+		LinphoneCore * c = m->lc;
+
+		linphone_core_set_video_device(c, liblinphone_tester_mire_id);
+		linphone_core_enable_video_capture(c, TRUE);
+		linphone_core_enable_video_display(c, TRUE);
+	}
+
 	bctbx_list_t* lcs = NULL;
 	lcs=bctbx_list_append(lcs,marie->lc);
 
@@ -775,18 +788,10 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 
 	unsigned int idx = 0;
 
-	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
-	linphone_core_enable_video_capture(marie->lc, TRUE);
-	linphone_core_enable_video_display(marie->lc, TRUE);
-
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		LinphoneCore * c = m->lc;
 		lcs=bctbx_list_append(lcs,c);
-
-		linphone_core_set_video_device(c, liblinphone_tester_mire_id);
-		linphone_core_enable_video_capture(c, TRUE);
-		linphone_core_enable_video_display(c, TRUE);
 
 		const LinphoneAddress *caller_uri = m->identity;
 		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(caller_uri));
