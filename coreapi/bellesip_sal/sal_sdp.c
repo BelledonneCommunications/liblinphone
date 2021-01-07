@@ -73,10 +73,8 @@ static void add_ice_remote_candidates(belle_sdp_media_description_t *md, const S
 }
 
 static bool_t is_rtcp_fb_trr_int_the_same_for_all_payloads(const SalStreamDescription &stream, uint16_t *trr_int) {
-	bctbx_list_t *pt_it;
 	bool_t first = TRUE;
-	for (pt_it = stream.payloads; pt_it != NULL; pt_it = pt_it->next) {
-		PayloadType *pt = (PayloadType *)pt_it->data;
+	for (const auto & pt : stream.payloads) {
 		if (payload_type_get_flags(pt) & PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED) {
 			if (first == TRUE) {
 				*trr_int = payload_type_get_avpf_params(pt).trr_interval;
@@ -122,8 +120,6 @@ static void add_rtcp_fb_ccm_attribute(belle_sdp_media_description_t *media_desc,
 }
 
 static void add_rtcp_fb_attributes(belle_sdp_media_description_t *media_desc, const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &stream) {
-	bctbx_list_t *pt_it;
-	PayloadType *pt;
 	PayloadTypeAvpfParams avpf_params;
 	bool_t general_trr_int;
 	uint16_t trr_int = 0;
@@ -139,8 +135,7 @@ static void add_rtcp_fb_attributes(belle_sdp_media_description_t *media_desc, co
 		add_rtcp_fb_ccm_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_TMMBR);
 	}
 
-	for (pt_it = stream.payloads; pt_it != NULL; pt_it = pt_it->next) {
-		pt = (PayloadType *)pt_it->data;
+	for (const auto & pt : stream.payloads) {
 
 		/* AVPF/SAVPF profile is used so enable AVPF for all payload types. */
 		payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
@@ -207,8 +202,6 @@ static void add_mid_attributes(belle_sdp_media_description_t *media_desc, const 
 static void stream_description_to_sdp ( belle_sdp_session_description_t *session_desc, const std::shared_ptr<SalMediaDescription> &md, const SalStreamDescription &stream ) {
 	belle_sdp_mime_parameter_t* mime_param;
 	belle_sdp_media_description_t* media_desc;
-	bctbx_list_t* pt_it;
-	PayloadType* pt;
 	char buffer[1024];
 	const char* dir=NULL;
 	std::string rtp_addr;
@@ -228,9 +221,8 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 				 ,1
 				 ,L_STRING_TO_C(stream.getProtoAsString())
 				 ,NULL );
-	if (stream.payloads) {
-		for ( pt_it=stream.payloads; pt_it!=NULL; pt_it=pt_it->next ) {
-			pt= ( PayloadType* ) pt_it->data;
+	if (!stream.payloads.empty()) {
+		for (const auto & pt : stream.payloads) {
 			mime_param= belle_sdp_mime_parameter_create ( pt->mime_type
 					, payload_type_get_number ( pt )
 					, pt->clock_rate
@@ -508,7 +500,7 @@ static void sdp_parse_payload_types(belle_sdp_media_description_t *media_desc, S
 		pt->channels=belle_sdp_mime_parameter_get_channel_count ( mime_param );
 		payload_type_set_send_fmtp ( pt,belle_sdp_mime_parameter_get_parameters ( mime_param ) );
 		payload_type_set_avpf_params(pt, avpf_params);
-		stream.payloads=bctbx_list_append ( stream.payloads,pt );
+		stream.payloads.push_back(pt);
 		stream.ptime=belle_sdp_mime_parameter_get_ptime ( mime_param );
 		stream.maxptime=belle_sdp_mime_parameter_get_max_ptime ( mime_param );
 		ms_message ( "Found payload %s/%i fmtp=%s",pt->mime_type,pt->clock_rate,
@@ -630,9 +622,7 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 }
 
 static void enable_avpf_for_stream(const SalStreamDescription &stream) {
-	bctbx_list_t *pt_it;
-	for (pt_it = stream.payloads; pt_it != NULL; pt_it = pt_it->next) {
-		PayloadType *pt = (PayloadType *)pt_it->data;
+	for (auto & pt : stream.payloads) {
 		payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 	}
 }
@@ -692,8 +682,6 @@ static bool_t sdp_parse_rtcp_fb_parameters(belle_sdp_media_description_t *media_
 	belle_sip_list_t *it;
 	belle_sdp_attribute_t *attribute;
 	belle_sdp_rtcp_fb_attribute_t *fb_attribute;
-	bctbx_list_t *pt_it;
-	PayloadType *pt;
 	int8_t pt_num;
 	bool_t retval = FALSE;
 
@@ -703,8 +691,7 @@ static bool_t sdp_parse_rtcp_fb_parameters(belle_sdp_media_description_t *media_
 		if (keywordcmp("rtcp-fb", belle_sdp_attribute_get_name(attribute)) == 0) {
 			fb_attribute = BELLE_SDP_RTCP_FB_ATTRIBUTE(attribute);
 			if (belle_sdp_rtcp_fb_attribute_get_id(fb_attribute) == -1) {
-				for (pt_it = stream.payloads; pt_it != NULL; pt_it = pt_it->next) {
-					pt = (PayloadType *)pt_it->data;
+				for (const auto & pt : stream.payloads) {
 					apply_rtcp_fb_attribute_to_payload(fb_attribute, stream, pt);
 					retval = TRUE;
 				}
@@ -718,8 +705,7 @@ static bool_t sdp_parse_rtcp_fb_parameters(belle_sdp_media_description_t *media_
 		if (keywordcmp("rtcp-fb", belle_sdp_attribute_get_name(attribute)) == 0) {
 			fb_attribute = BELLE_SDP_RTCP_FB_ATTRIBUTE(attribute);
 			pt_num = belle_sdp_rtcp_fb_attribute_get_id(fb_attribute);
-			for (pt_it = stream.payloads; pt_it != NULL; pt_it = pt_it->next) {
-				pt = (PayloadType *)pt_it->data;
+			for (const auto & pt : stream.payloads) {
 				retval = TRUE;
 				if (payload_type_get_number(pt) == (int)pt_num) {
 					apply_rtcp_fb_attribute_to_payload(fb_attribute, stream, pt);
@@ -860,8 +846,8 @@ static SalStreamDescription sdp_to_stream_description(std::shared_ptr<SalMediaDe
 			stream.mid = L_C_TO_STRING(value);
 	}
 
-	stream.payloads = NULL;
-	stream.already_assigned_payloads = NULL;
+	stream.payloads.clear();
+	stream.already_assigned_payloads.clear();
 	/* Get media payload types */
 	sdp_parse_payload_types(media_desc, stream);
 

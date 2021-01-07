@@ -159,6 +159,15 @@ namespace Utils {
 		return v;
 	}
 
+	template<class T>
+	bctbx_list_t* listToBctbxList (const std::list<T> & l) {
+		bctbx_list_t* bcList = NULL;
+		for (const auto & e : l) {
+			bcList = bctbx_list_append(bcList, e);
+		}
+		return bcList;
+	}
+
 	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t t);
 	LINPHONE_PUBLIC time_t getTmAsTimeT (const std::tm &t);
 

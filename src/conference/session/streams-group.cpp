@@ -342,9 +342,9 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 		
 		const auto & newStream = params.getRemoteStreamDescription();
 		
-		if ((refStream->type == newStream->type) && refStream->payloads && newStream->payloads) {
-			OrtpPayloadType *refpt = static_cast<OrtpPayloadType *>(refStream->payloads->data);
-			OrtpPayloadType *newpt = static_cast<OrtpPayloadType *>(newStream->payloads->data);
+		if ((refStream->type == newStream->type) && !refStream->payloads.empty() && !newStream->payloads.empty()) {
+			OrtpPayloadType *refpt = refStream->payloads.front();
+			OrtpPayloadType *newpt = newStream->payloads.front();
 			if ((strcmp(refpt->mime_type, newpt->mime_type) == 0) && (refpt->clock_rate == newpt->clock_rate)
 				&& (payload_type_get_number(refpt) == payload_type_get_number(newpt))) {
 					s->tryEarlyMediaForking(params);

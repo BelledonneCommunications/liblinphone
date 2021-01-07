@@ -175,7 +175,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	localDesc->rtp_addr = getPublicIp();
 	localDesc->rtcp_addr = getPublicIp();
 	
-	if (localDesc->rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && localDesc->payloads != nullptr){
+	if (localDesc->rtp_port == SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED && !localDesc->payloads.empty()){
 		/* Don't fill ports if no codecs are defined. The stream is not valid and should be disabled.*/
 		localDesc->rtp_port = mPortConfig.rtpPort;
 		localDesc->rtcp_port = mPortConfig.rtcpPort;
@@ -260,7 +260,7 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	bool videoWillBeUsed = false;
 	MediaStream *ms = getMediaStream();
 	const auto & vstream = params.resultMediaDescription->findBestStream(SalVideo);
-	if ((vstream != params.resultMediaDescription->streams.cend()) && (vstream->dir != SalStreamInactive) && vstream->payloads) {
+	if ((vstream != params.resultMediaDescription->streams.cend()) && (vstream->dir != SalStreamInactive) && !vstream->payloads.empty()) {
 		/* When video is used, do not make adaptive rate control on audio, it is stupid */
 		videoWillBeUsed = true;
 	}
@@ -760,16 +760,15 @@ RtpProfile * MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &
 
 	bool first = true;
 	RtpProfile *profile = rtp_profile_new("Call profile");
-	for (const bctbx_list_t *elem = desc.payloads; elem != nullptr; elem = bctbx_list_next(elem)) {
-		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+	for (const auto & pt : desc.payloads) {
 		/* Make a copy of the payload type, so that we left the ones from the SalStreamDescription unchanged.
 		 * If the SalStreamDescription is freed, this will have no impact on the running streams. */
-		pt = payload_type_clone(pt);
+		auto clonedPt = payload_type_clone(pt);
 		int upPtime = 0;
-		if ((pt->flags & PAYLOAD_TYPE_FLAG_CAN_SEND) && first) {
+		if ((clonedPt->flags & PAYLOAD_TYPE_FLAG_CAN_SEND) && first) {
 			/* First codec in list is the selected one */
 			if (desc.type == SalAudio) {
-				bandwidth = getGroup().updateAllocatedAudioBandwidth(pt, bandwidth);
+				bandwidth = getGroup().updateAllocatedAudioBandwidth(clonedPt, bandwidth);
 				upPtime = getMediaSessionPrivate().getParams()->getPrivate()->getUpPtime();
 				if (!upPtime)
 					upPtime = linphone_core_get_upload_ptime(getCCore());
@@ -778,31 +777,31 @@ RtpProfile * MS2Stream::makeProfile(const std::shared_ptr<SalMediaDescription> &
 		}
 		if (*usedPt == -1) {
 			/* Don't select telephone-event as a payload type */
-			if (strcasecmp(pt->mime_type, "telephone-event") != 0)
-				*usedPt = payload_type_get_number(pt);
+			if (strcasecmp(clonedPt->mime_type, "telephone-event") != 0)
+				*usedPt = payload_type_get_number(clonedPt);
 		}
-		if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
-			lInfo() << "Payload type [" << pt->mime_type << "/" << pt->clock_rate << "] has explicit bitrate [" << (pt->normal_bitrate / 1000) << "] kbit/s";
-			pt->normal_bitrate = PayloadTypeHandler::getMinBandwidth(pt->normal_bitrate, bandwidth * 1000);
+		if (clonedPt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
+			lInfo() << "Payload type [" << clonedPt->mime_type << "/" << clonedPt->clock_rate << "] has explicit bitrate [" << (clonedPt->normal_bitrate / 1000) << "] kbit/s";
+			clonedPt->normal_bitrate = PayloadTypeHandler::getMinBandwidth(clonedPt->normal_bitrate, bandwidth * 1000);
 		} else
-			pt->normal_bitrate = bandwidth * 1000;
+			clonedPt->normal_bitrate = bandwidth * 1000;
 		if (desc.maxptime > 0) {// follow the same schema for maxptime as for ptime. (I.E add it to fmtp)
 			ostringstream os;
 			os << "maxptime=" << desc.maxptime;
-			payload_type_append_send_fmtp(pt, os.str().c_str());
+			payload_type_append_send_fmtp(clonedPt, os.str().c_str());
 		}
 		if (desc.ptime > 0)
 			upPtime = desc.ptime;
 		if (upPtime > 0) {
 			ostringstream os;
 			os << "ptime=" << upPtime;
-			payload_type_append_send_fmtp(pt, os.str().c_str());
+			payload_type_append_send_fmtp(clonedPt, os.str().c_str());
 		}
-		int number = payload_type_get_number(pt);
+		int number = payload_type_get_number(clonedPt);
 		if (rtp_profile_get_payload(profile, number))
 			lWarning() << "A payload type with number " << number << " already exists in profile!";
 		else
-			rtp_profile_set_payload(profile, number, pt);
+			rtp_profile_set_payload(profile, number, clonedPt);
 	}
 	mRtpProfile = profile;
 	mOutputBandwidth = bandwidth;
