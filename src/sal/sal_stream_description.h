@@ -35,19 +35,19 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void destroy();
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
-		bool_t enabled() const;
+		bool enabled() const;
 		void disable();
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-		bool_t hasAvpf() const;
-		bool_t hasIpv6() const;
-		bool_t hasImplicitAvpf() const;
+		bool hasAvpf() const;
+		bool hasIpv6() const;
+		bool hasImplicitAvpf() const;
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-		bool_t hasSrtp() const;
-		bool_t hasDtls() const;
-		bool_t hasZrtp() const;
-		bool_t hasLimeIk() const;
+		bool hasSrtp() const;
+		bool hasDtls() const;
+		bool hasZrtp() const;
+		bool hasLimeIk() const;
 		const std::string & getRtcpAddress() const;
 		const int & getRtcpPort() const;
 		const std::string & getRtpAddress() const;
@@ -76,13 +76,13 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	int bandwidth = 0;
 	int ptime = 0;
 	int maxptime = 0;
-	SalStreamDir dir = SalStreamSendRecv;
+	SalStreamDir dir = SalStreamInactive;
 	std::vector<SalSrtpCryptoAlgo> crypto;
 	unsigned int crypto_local_tag = 0;
 	int max_rate = 0;
-	bool_t bundle_only = FALSE;
-	bool_t implicit_rtcp_fb = FALSE;
-	std::vector<bool_t> pad; /* Use me */
+	bool bundle_only = false;
+	bool implicit_rtcp_fb = false;
+	std::vector<bool> pad; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
@@ -92,9 +92,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	std::string ice_pwd;
 	std::string mid; /* Media line identifier for RTP bundle mode */
 	int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
-	bool_t ice_mismatch = FALSE;
-	bool_t set_nortpproxy = FALSE; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-	bool_t rtcp_mux = FALSE;
+	bool ice_mismatch = false;
+	bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
+	bool rtcp_mux = false;
 	uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
 	uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
@@ -104,9 +104,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	SalMulticastRole multicast_role = SalMulticastInactive;
 
 	private:
-		bool_t isRecvOnly(const PayloadType *p) const;
-		bool_t isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
-		bool_t isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const;
+		bool isRecvOnly(const PayloadType *p) const;
+		bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
+		bool isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const;
 
 };
 
