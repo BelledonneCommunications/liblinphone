@@ -23,6 +23,7 @@
 #include <list>
 #include <vector>
 
+#include "sal/sal_stream_description.h"
 #include "linphone/utils/general.h"
 #include "linphone/types.h"
 

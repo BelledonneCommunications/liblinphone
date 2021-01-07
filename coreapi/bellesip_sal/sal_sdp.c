@@ -266,9 +266,9 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 			MSCryptoSuiteNameParams desc;
 			if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
 				if (desc.params)
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key,desc.params);
+					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
 				else
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key );
+					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
 
 				belle_sdp_media_description_add_attribute( media_desc,belle_sdp_attribute_create ("crypto", buffer));
 			}else break;
@@ -539,16 +539,15 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 					ms_warning ( "Failed to parse crypto-algo: '%s'", tmp );
 					crypto.algo = MS_CRYPTO_SUITE_INVALID;
 				}else{
-					char *sep;
-					strncpy ( crypto.master_key, tmp2, sizeof(crypto.master_key));
-					crypto.master_key[sizeof(crypto.master_key) - 1] = '\0';
-					sep=strchr(crypto.master_key,'|');
-					if (sep) *sep='\0';
+					crypto.master_key = tmp2;
+					size_t sep = crypto.master_key.find("|");
+					// Erase all characters after | if it is found
+					if (sep != std::string::npos) crypto.master_key.erase(crypto.master_key.begin() + sep, crypto.master_key.end());
 					crypto.algo = cs;
 					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s'",
 									crypto.tag,
 									tmp,
-									crypto.master_key );
+									crypto.master_key.c_str() );
 					stream.crypto.push_back(crypto);
 				}
 

@@ -267,13 +267,13 @@ static bool_t match_crypto_algo(const std::vector<SalSrtpCryptoAlgo> &local, con
 				result.algo = rc.algo;
 				/* We're answering an SDP offer. Supply our master key, associated with the remote supplied tag */
 				if (use_local_key) {
-					strncpy(result.master_key, lc.master_key, sizeof(result.master_key) );
+					result.master_key = lc.master_key;
 					result.tag = rc.tag;
 					*choosen_local_tag = lc.tag;
 				}
 				/* We received an answer to our SDP crypto proposal. Copy matching algo remote master key to result, and memorize local tag */
 				else {
-					strncpy(result.master_key, rc.master_key, sizeof(result.master_key));
+					result.master_key = rc.master_key;
 					result.tag = lc.tag;
 					*choosen_local_tag = lc.tag;
 				}
