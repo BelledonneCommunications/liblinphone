@@ -45,9 +45,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const std::list<SalStreamBundle>::const_iterator getBundleFromMid(const std::string mid) const;
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
-		SalMediaDescription * ref();
-		void unref();
-
 		const std::vector<SalStreamDescription>::const_iterator findStream(SalMediaProto proto, SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
 		const std::vector<SalStreamDescription>::const_iterator getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
@@ -78,7 +75,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const std::string & getAddress() const;
 		const std::vector<SalStreamDescription>::const_iterator getStreamIdx(unsigned int idx) const;
 
-	int refcount = 0;
 	std::string name;
 	std::string addr;
 	std::string username;
