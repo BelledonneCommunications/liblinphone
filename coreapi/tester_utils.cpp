@@ -26,6 +26,7 @@
 
 #include "call/call.h"
 #include "chat/chat-room/chat-room-p.h"
+#include "chat/chat-room/client-group-chat-room-p.h"
 #include "core/core-p.h"
 #include "c-wrapper/c-wrapper.h"
 #include "conference/session/media-session-p.h"
@@ -226,4 +227,10 @@ void linphone_shared_core_helpers_on_msg_written_in_user_defaults(LinphoneCore *
 
 char * linphone_core_get_download_path(LinphoneCore *lc) {
 	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDownloadPath().c_str());
+}
+
+size_t linphone_chat_room_get_previouses_conference_ids_count(LinphoneChatRoom *cr) {
+	auto abstract = L_GET_CPP_PTR_FROM_C_OBJECT(cr);
+
+	return L_GET_PRIVATE(static_pointer_cast<ClientGroupChatRoom>(abstract))->getPreviousConferenceIds().size();
 }

@@ -57,7 +57,7 @@ public:
 	ChatRoom::SecurityLevel getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const;
 	bool hasBeenLeft () const override;
 
-	const ConferenceAddress getConferenceAddress () const override;
+	const ConferenceAddress &getConferenceAddress () const override;
 
 	void deleteFromDb () override;
 
@@ -88,7 +88,6 @@ public:
 	void join () override;
 	void leave () override;
 	void exhume ();
-	void onConferenceExhumed (const IdentityAddress &addr);
 	
 	void enableEphemeral (bool ephem, bool updateDb) override;
 	bool ephemeralEnabled () const override;

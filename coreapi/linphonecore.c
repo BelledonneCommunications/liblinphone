@@ -577,6 +577,13 @@ void linphone_core_cbs_set_ec_calibration_audio_uninit(LinphoneCoreCbs *cbs, Lin
 	cbs->vtable->ec_calibration_audio_uninit = cb;
 }
 
+LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room_exhumed(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->chat_room_exhumed;
+}
+
+void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb) {
+	cbs->vtable->chat_room_exhumed = cb;
+}
 
 void lc_callback_obj_init(LCCallbackObj *obj,LinphoneCoreCbFunc func,void* ud) {
 	obj->_func=func;
@@ -7911,6 +7918,21 @@ LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *lc
 		return NULL;
 	}
 	return conf;
+}
+
+LinphoneConference *linphone_core_search_conference(const LinphoneCore *lc, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
+	shared_ptr<LinphonePrivate::ConferenceParams> conferenceParams = params ? LinphonePrivate::ConferenceParams::toCpp(params)->clone()->toSharedPtr() : nullptr;
+	const list<LinphonePrivate::IdentityAddress> participantsList = L_GET_CPP_LIST_FROM_C_LIST_2(participants, LinphoneAddress *, LinphonePrivate::IdentityAddress, [] (LinphoneAddress *addr) {
+		return LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
+	});
+	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, false);
+	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
+	shared_ptr<LinphonePrivate::MediaConference::Conference> conf = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->searchAudioVideoConference(conferenceParams, identityAddress, remoteAddress, participantsList);
+	LinphoneConference* c_conference = NULL;
+	if (conf) {
+		c_conference = conf->toC();
+	}
+	return c_conference;
 }
 
 LinphoneConferenceParams * linphone_core_create_conference_params(LinphoneCore *lc){

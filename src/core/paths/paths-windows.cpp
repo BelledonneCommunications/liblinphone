@@ -35,7 +35,6 @@
 
 // =============================================================================
 
-
 using namespace std;
 
 static bool dirExists(const std::string& dirName) {

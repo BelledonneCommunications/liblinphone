@@ -38,6 +38,7 @@ import org.linphone.core.tools.Log;
 import org.linphone.core.tools.PushNotificationUtils;
 import org.linphone.core.tools.audio.AudioHelper;
 import org.linphone.core.tools.audio.BluetoothHelper;
+import org.linphone.core.tools.compatibility.DeviceUtils;
 import org.linphone.core.tools.receiver.ShutdownReceiver;
 import org.linphone.mediastream.Version;
 
@@ -89,6 +90,7 @@ public class CoreManager {
         // Dump some debugging information to the logs
         dumpDeviceInformation();
         dumpLinphoneInformation();
+        DeviceUtils.logPreviousCrashesIfAny(mContext); // Android 11 only
 
         mActivityCallbacks = new ActivityMonitor();
         ((Application) mContext).registerActivityLifecycleCallbacks(mActivityCallbacks);
@@ -345,6 +347,7 @@ public class CoreManager {
             sb.append(abi).append(", ");
         }
         Log.i(sb.substring(0, sb.length() - 2));
+		Log.i("=========================================");
     }
 
     private void dumpLinphoneInformation() {
@@ -359,5 +362,6 @@ public class CoreManager {
         Log.i(sb.substring(0, sb.length() - 2));
         Log.i("PACKAGE=", org.linphone.core.BuildConfig.LIBRARY_PACKAGE_NAME);
         Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
+		Log.i("=========================================");
     }
 }

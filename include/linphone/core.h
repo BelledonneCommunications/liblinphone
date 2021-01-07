@@ -238,6 +238,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsAudioDeviceChangedCb audio_device_changed;
 	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
 	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
+	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -923,6 +924,22 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_ec_calibration_audio_init(LinphoneCor
  * @param cb The callback to use
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_ec_calibration_audio_uninit(LinphoneCoreCbs *cbs, LinphoneCoreCbsEcCalibrationAudioUninitCb cb);
+
+/**
+ * @brief Sets a callback to call when a chat room is exhumed. Internal use only!
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @return The callback to use
+ * @donotwrap
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room_exhumed(LinphoneCoreCbs *cbs);
+
+/**
+ * @brief Sets a callback to call when a chat room is exhumed. Internal use only!
+ * @param cbs LinphoneCoreCbs object @notnil
+ * @param cb The callback to use
+ * @donotwrap
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb);
 
 /**
  * @}
@@ -3796,6 +3813,17 @@ LINPHONE_PUBLIC LinphoneConferenceParams * linphone_core_create_conference_param
  */
 LINPHONE_PUBLIC LinphoneConference *linphone_core_create_conference_with_params(LinphoneCore *core, const LinphoneConferenceParams *params);
 
+/**
+ * Find a conference.
+ *
+ * @param core A #LinphoneCore object @notnil
+ * @param params The conference parameters to match #LinphoneConferenceParams or NULL @maybenil
+ * @param localAddr #LinphoneAddress representing the local proxy configuration or NULL @maybenil
+ * @param remoteAddr #LinphoneAddress to search for or NULL @maybenil
+ * @param participants \bctbx_list{LinphoneAddress} The participants that must be present in the chat room to find @maybenil
+ * @return A matching conference or NULL if none matches. @maybenil
+ */
+LINPHONE_PUBLIC LinphoneConference *linphone_core_search_conference(const LinphoneCore *core, const LinphoneConferenceParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants);
 
 /**
  * Add a participant to the conference. If no conference is going on
