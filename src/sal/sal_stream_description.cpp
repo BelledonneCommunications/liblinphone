@@ -209,7 +209,7 @@ int SalStreamDescription::equal(const SalStreamDescription & other) const {
 			|| (crypto1->algo != crypto2->algo)){
 			result|=SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
 		}
-		if ((strncmp(crypto1->master_key, crypto2->master_key, sizeof(crypto1->master_key) - 1))) {
+		if (crypto1->master_key.compare(crypto2->master_key)) {
 			result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 		}
 	}
