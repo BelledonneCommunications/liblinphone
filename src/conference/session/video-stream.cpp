@@ -171,10 +171,8 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			video_preview_stop(getCCore()->previewstream);
 		getCCore()->previewstream = nullptr;
 	}
-	const auto & vstream = *(ctx.getResultStreamDescription());
-	
 	bool basicChangesHandled = handleBasicChanges(ctx, targetState);
-	
+
 	if (basicChangesHandled) {
 		bool muted = mMuted;
 		if (getState() == Running) {
@@ -190,6 +188,15 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	int usedPt = -1;
+	const auto & vstreamIt = ctx.getResultStreamDescription();
+
+	if (vstreamIt == ctx.resultMediaDescription->streams.cend()) {
+		lError() << "Unable to find video stream";
+		stop();
+		return;
+	}
+
+	const auto & vstream = *vstreamIt;
 	RtpProfile *videoProfile = makeProfile(ctx.resultMediaDescription, vstream, &usedPt);
 	if (usedPt == -1){
 		lError() << "No payload types accepted for video stream !";

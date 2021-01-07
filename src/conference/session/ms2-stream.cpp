@@ -353,7 +353,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 bool MS2Stream::handleBasicChanges(const OfferAnswerContext &params, CallSession::State targetState){
 	const auto & stream = params.getResultStreamDescription();
 	
-	if ((stream != params.resultMediaDescription->streams.cend()) && (stream->dir == SalStreamInactive || !stream->enabled())){
+	if ((stream == params.resultMediaDescription->streams.cend()) || stream->dir == SalStreamInactive || !stream->enabled()){
 		/* In this case all we have to do is to ensure that the stream is stopped. */
 		if (getState() != Stopped) stop();
 		return true;
