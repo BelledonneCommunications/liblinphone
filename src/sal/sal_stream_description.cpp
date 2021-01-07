@@ -145,9 +145,11 @@ void SalStreamDescription::destroy() {
 	for (auto & pt : payloads) {
 		payload_type_destroy(pt);
 	}
+	payloads.clear();
 	for (auto & pt : already_assigned_payloads) {
 		payload_type_destroy(pt);
 	}
+	already_assigned_payloads.clear();
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
