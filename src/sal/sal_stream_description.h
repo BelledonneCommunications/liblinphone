@@ -29,18 +29,6 @@
 #define SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN 6
 
 typedef struct SalIceCandidate {
-       char addr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-       char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
-       char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_FOUNDATION_LEN];
-       char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_TYPE_LEN];
-       unsigned int componentID;
-       unsigned int priority;
-       int port;
-       int rport;
-} SalIceCandidate;
-
-/*
-typedef struct SalIceCandidate {
 	std::string addr;
 	std::string raddr;
 	std::string foundation;
@@ -50,7 +38,6 @@ typedef struct SalIceCandidate {
 	int port = 0;
 	int rport = 0;
 } SalIceCandidate;
-*/
 
 typedef struct SalIceRemoteCandidate {
 	std::string addr;

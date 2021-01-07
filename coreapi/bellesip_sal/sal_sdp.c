@@ -34,15 +34,15 @@ static void add_ice_candidates(belle_sdp_media_description_t *md, const SalStrea
 	int nb;
 
 	for (const auto & candidate : desc.ice_candidates) {
-		if ((candidate.addr[0] == '\0') || (candidate.port == 0)) break;
+		if ((candidate.addr.empty()) || (candidate.port == 0)) break;
 		nb = snprintf(buffer, sizeof(buffer), "%s %u UDP %u %s %d typ %s",
-			candidate.foundation, candidate.componentID, candidate.priority, candidate.addr, candidate.port, candidate.type);
+			candidate.foundation.c_str(), candidate.componentID, candidate.priority, candidate.addr.c_str(), candidate.port, candidate.type.c_str());
 		if (nb < 0) {
 			ms_error("Cannot add ICE candidate attribute!");
 			return;
 		}
-		if (candidate.raddr[0] != '\0') {
-			nb = snprintf(buffer + nb, sizeof(buffer) - static_cast<size_t>(nb), " raddr %s rport %d", candidate.raddr, candidate.rport);
+		if (!candidate.raddr.empty()) {
+			nb = snprintf(buffer + nb, sizeof(buffer) - static_cast<size_t>(nb), " raddr %s rport %d", candidate.raddr.c_str(), candidate.rport);
 			if (nb < 0) {
 				ms_error("Cannot add ICE candidate attribute!");
 				return;
@@ -61,7 +61,7 @@ static void add_ice_remote_candidates(belle_sdp_media_description_t *md, const S
 	for (size_t i = 0; i < desc.ice_remote_candidates.size(); i++) {
 		const auto & candidate = desc.ice_remote_candidates[i];
 		if ((!candidate.addr.empty()) && (candidate.port != 0)) {
-			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%lu %s %d", (i > 0) ? " " : "", i + 1, L_STRING_TO_C(candidate.addr), candidate.port);
+			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%lu %s %d", (i > 0) ? " " : "", i + 1, candidate.addr.c_str(), candidate.port);
 			if (offset < 0) {
 				ms_error("Cannot add ICE remote-candidates attribute!");
 				return;
@@ -328,7 +328,7 @@ static void stream_description_to_sdp ( belle_sdp_session_description_t *session
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
 			if (different_rtp_and_rtcp_addr == TRUE) {
-				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, L_STRING_TO_C(rtcp_addr));
+				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, rtcp_addr.c_str());
 			} else {
 				snprintf(buffer, sizeof(buffer), "%u",rtcp_port);
 			}
@@ -542,7 +542,7 @@ static void sdp_parse_media_crypto_parameters(belle_sdp_media_description_t *med
 					crypto.master_key = tmp2;
 					size_t sep = crypto.master_key.find("|");
 					// Erase all characters after | if it is found
-					if (sep != std::string::npos) crypto.master_key.erase(crypto.master_key.begin() + sep, crypto.master_key.end());
+					if (sep != std::string::npos) crypto.master_key.erase(crypto.master_key.begin() + static_cast<long>(sep), crypto.master_key.end());
 					crypto.algo = cs;
 					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s'",
 									crypto.tag,
@@ -574,10 +574,17 @@ static void sdp_parse_media_ice_parameters(belle_sdp_media_description_t *media_
 		if ((keywordcmp("candidate", att_name) == 0)
 				&& (value != NULL)) {
 			SalIceCandidate candidate;
+			char raddr[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
+			char foundation[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
+			char type[SAL_MEDIA_DESCRIPTION_MAX_ICE_ADDR_LEN];
 			char proto[4];
 			int nb = sscanf(value, "%s %u %3s %u %s %d typ %s raddr %s rport %d",
-				candidate.foundation, &candidate.componentID, proto, &candidate.priority, candidate.addr, &candidate.port,
-				candidate.type, candidate.raddr, &candidate.rport);
+				foundation, &candidate.componentID, proto, &candidate.priority, addr, &candidate.port,
+				type, raddr, &candidate.rport);
+			candidate.addr = addr;
+			candidate.raddr = raddr;
+			candidate.foundation = foundation;
+			candidate.type = type;
 			if (strcasecmp("udp",proto)==0 && ((nb == 7) || (nb == 9))) {
 				stream.ice_candidates.push_back(candidate);
 			} else {

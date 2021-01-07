@@ -343,15 +343,15 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 			std::string addr = std::string();
 			int port = 0;
 			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate.componentID), md, stream, addr, port);
-			if ((addr.empty() == false) && (candidate.port == port) && (strlen(candidate.addr) == addr.length()) && (addr.compare(candidate.addr) == 0))
+			if ((addr.empty() == false) && (candidate.port == port) && (candidate.addr.length() == addr.length()) && (addr.compare(candidate.addr) == 0))
 				defaultCandidate = true;
 			int family = AF_INET;
-			if (strchr(candidate.addr, ':'))
+			if (candidate.addr.find(":") != std::string::npos)
 				family = AF_INET6;
 			ice_add_remote_candidate(
-				cl, candidate.type, family, candidate.addr, candidate.port,
+				cl, L_STRING_TO_C(candidate.type), family, L_STRING_TO_C(candidate.addr), candidate.port,
 				static_cast<uint16_t>(candidate.componentID),
-				candidate.priority, candidate.foundation, defaultCandidate
+				candidate.priority, L_STRING_TO_C(candidate.foundation), defaultCandidate
 			);
 		}
 		if (!iceRestarted) {
@@ -519,18 +519,17 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 				)
 					continue;
 				SalIceCandidate salCandidate;
-				strncpy(salCandidate.foundation, iceCandidate->foundation, sizeof(salCandidate.foundation));
+				salCandidate.foundation = L_C_TO_STRING(iceCandidate->foundation);
 				salCandidate.componentID = iceCandidate->componentID;
 				salCandidate.priority = iceCandidate->priority;
-				strncpy(salCandidate.type, ice_candidate_type(iceCandidate), sizeof(salCandidate.type) - 1);
-				salCandidate.type[sizeof(salCandidate.type) - 1] = '\0';
-				strncpy(salCandidate.addr, iceCandidate->taddr.ip, sizeof(salCandidate.addr));
+				salCandidate.type = L_C_TO_STRING(ice_candidate_type(iceCandidate));
+				salCandidate.addr = L_C_TO_STRING(iceCandidate->taddr.ip);
 				salCandidate.port = iceCandidate->taddr.port;
 				if (iceCandidate->base && (iceCandidate->base != iceCandidate)) {
-					strncpy(salCandidate.raddr, iceCandidate->base->taddr.ip, sizeof(salCandidate.raddr));
+					salCandidate.raddr = L_C_TO_STRING(iceCandidate->base->taddr.ip);
 					salCandidate.rport = iceCandidate->base->taddr.port;
 				} else {
-					salCandidate.raddr[0] = '\0';
+					salCandidate.raddr.clear();
 					salCandidate.rport = 0;
 				}
 				stream.ice_candidates.push_back(salCandidate);
