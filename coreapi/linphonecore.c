@@ -2858,7 +2858,11 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	 * If this creates problem, we may need to implement parallel ipv6/ ipv4 http requests in belle-sip.
 	 * ipv6 config value is read later in fonction sip_config_read*/
 	int use_ipv6_for_sip = linphone_config_get_int(lc->config,"sip","use_ipv6",TRUE);
-	lc->http_provider = belle_sip_stack_create_http_provider(reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), (use_ipv6_for_sip?"::0":"0.0.0.0"));
+	if (linphone_config_get_bool(lc->config,"sip","https_only",FALSE) == FALSE) {
+		lc->http_provider = belle_sip_stack_create_http_provider(reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), (use_ipv6_for_sip?"::0":"0.0.0.0"));
+	} else {
+		lc->http_provider = belle_sip_stack_create_https_only_provider(reinterpret_cast<belle_sip_stack_t *>(lc->sal->getStackImpl()), (use_ipv6_for_sip?"::0":"0.0.0.0"));
+	}
 	lc->http_crypto_config = belle_tls_crypto_config_new();
 	belle_http_provider_set_tls_crypto_config(lc->http_provider,lc->http_crypto_config);
 
