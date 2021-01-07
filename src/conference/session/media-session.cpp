@@ -1060,7 +1060,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 	}
 }
 
-bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, size_t keyOutSize) {
+bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) {
 	uint8_t *tmp = (uint8_t *)ms_malloc0(keyLength);
 	if (!sal_get_random_bytes(tmp, keyLength)) {
 		lError() << "Failed to generate random key";
@@ -1078,13 +1078,15 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, char *keyOut, 
 		ms_free(tmp);
 		return false;
 	}
-	b64Size = b64::b64_encode((const char *)tmp, keyLength, keyOut, keyOutSize);
+	char * key = new char [keyOutSize];
+	b64Size = b64::b64_encode((const char *)tmp, keyLength, key, keyOutSize);
 	if (b64Size == 0) {
 		lError() << "Failed to b64 encode key";
 		ms_free(tmp);
 		return false;
 	}
-	keyOut[b64Size] = '\0';
+	keyOut = key;
+	delete[] key;
 	ms_free(tmp);
 	return true;
 }
