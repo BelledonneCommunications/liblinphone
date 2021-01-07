@@ -656,7 +656,11 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Sal
 		/* Copy the bundle offering to the result media description. */
 		result->bundles = remote_offer->bundles;
 	}
-	
+
+	if (result->streams.size() < remote_offer->streams.size()) {
+		result->streams.resize(remote_offer->streams.size());
+	}
+
 	for(i=0;i<remote_offer->streams.size();++i){
 
 		if (i >= local_capabilities->streams.size()) {
@@ -664,9 +668,8 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Sal
 		}
 		const SalStreamDescription & ls = local_capabilities->streams[i];
 		SalStreamDescription & rs = remote_offer->streams[i];
-		if (i >= result->streams.size()) {
-			result->streams.resize((i + 1));
-		}
+		SalStreamDescription & resultStream = result->streams[i];
+
 		if (rs.type == ls.type && are_proto_compatibles(ls.proto, rs.proto))
 		{
 			if (ls.proto != rs.proto && rs.hasAvpf())	{
@@ -680,37 +683,37 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Sal
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
 				}
 			}
-			initiate_incoming(factory, ls,rs,result->streams[i],one_matching_codec, bundle_owner_mid);
+			initiate_incoming(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
 			// Handle global RTCP FB attributes
-			result->streams[i].rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
-			result->streams[i].rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
+			resultStream.rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
+			resultStream.rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
-			memset(&result->streams[i].rtcp_xr, 0, sizeof(result->streams[i].rtcp_xr));
+			memset(&resultStream.rtcp_xr, 0, sizeof(resultStream.rtcp_xr));
 			if (rs.rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
 				if (ls.rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
 				if ((rtcp_xr_conf != NULL) && (ls.dir == SalStreamSendRecv)) {
-					memcpy(&result->streams[i].rtcp_xr, rtcp_xr_conf, sizeof(result->streams[i].rtcp_xr));
+					memcpy(&resultStream.rtcp_xr, rtcp_xr_conf, sizeof(resultStream.rtcp_xr));
 				} else {
-					result->streams[i].rtcp_xr.enabled = TRUE;
+					resultStream.rtcp_xr.enabled = TRUE;
 				}
 			}
 		}else {
 			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
-			result->streams[i].dir=SalStreamInactive;
-			result->streams[i].rtp_port=0;
-			result->streams[i].type=rs.type;
-			result->streams[i].proto=rs.proto;
+			resultStream.dir=SalStreamInactive;
+			resultStream.rtp_port=0;
+			resultStream.type=rs.type;
+			resultStream.proto=rs.proto;
 			if (rs.type==SalOther){
-				result->streams[i].typeother = rs.typeother;
+				resultStream.typeother = rs.typeother;
 			}
 			if (rs.proto==SalProtoOther){
-				result->streams[i].proto_other = rs.proto_other;
+				resultStream.proto_other = rs.proto_other;
 			}
 		}
-		result->streams[i].custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
+		resultStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
