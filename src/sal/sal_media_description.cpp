@@ -75,10 +75,10 @@ bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
 	}else{
 		/*SalStreamInactive*/
 		if (containsStreamWithDir(SalStreamSendOnly) || containsStreamWithDir(SalStreamSendRecv)  || containsStreamWithDir(SalStreamRecvOnly))
-			return FALSE;
-		else return TRUE;
+			return false;
+		else return true;
 	}
-	return FALSE;
+	return false;
 }
 
 bool SalMediaDescription::containsStreamWithDir(const SalStreamDir & stream_dir) const{
@@ -86,14 +86,14 @@ bool SalMediaDescription::containsStreamWithDir(const SalStreamDir & stream_dir)
 	for(auto & stream : streams){
 		if (!stream.enabled()) continue;
 		if (stream.getDirection()==stream_dir) {
-			return TRUE;
+			return true;
 		}
 		/*compatibility check for phones that only used the null address and no attributes */
 		if (stream.getDirection()==SalStreamSendRecv && stream_dir==SalStreamSendOnly && (isNullAddress(addr) || isNullAddress(stream.rtp_addr))){
-			return TRUE;
+			return true;
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 bool SalMediaDescription::isNullAddress(const std::string & addr) const {
@@ -195,9 +195,9 @@ const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::fin
 	return desc;
 }
 
-bool_t SalMediaDescription::isEmpty() const {
-	if (getNbActiveStreams() > 0) return FALSE;
-	return TRUE;
+bool SalMediaDescription::isEmpty() const {
+	if (getNbActiveStreams() > 0) return false;
+	return true;
 }
 
 void SalMediaDescription::setDir(SalStreamDir stream_dir){
@@ -215,62 +215,62 @@ int SalMediaDescription::getNbActiveStreams() const {
 	return nb;
 }
 
-bool_t SalMediaDescription::hasAvpf() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasAvpf() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasAvpf() != TRUE) return FALSE;
+		if (stream.hasAvpf() != true) return false;
 	}
-	return TRUE;
+	return true;
 }
 
-bool_t SalMediaDescription::hasImplicitAvpf() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasImplicitAvpf() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasImplicitAvpf() != TRUE) return FALSE;
+		if (stream.hasImplicitAvpf() != true) return false;
 	}
-	return TRUE;
+	return true;
 }
 
-bool_t SalMediaDescription::hasSrtp() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasSrtp() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasSrtp()) return TRUE;
+		if (stream.hasSrtp()) return true;
 	}
-	return FALSE;
+	return false;
 }
 
-bool_t SalMediaDescription::hasDtls() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasDtls() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasDtls() != TRUE) return FALSE;
+		if (stream.hasDtls() != true) return false;
 	}
-	return TRUE;
+	return true;
 }
 
-bool_t SalMediaDescription::hasZrtp() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasZrtp() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
-		if (stream.hasZrtp() != TRUE) return FALSE;
+		if (stream.hasZrtp() != true) return false;
 	}
-	return TRUE;
+	return true;
 }
 
-bool_t SalMediaDescription::hasIpv6() const {
-	if (streams.empty()) return FALSE;
+bool SalMediaDescription::hasIpv6() const {
+	if (streams.empty()) return false;
 	for(const auto & stream : streams){
 		if (!stream.enabled()) continue;
 		if (stream.getRtpAddress().empty() == false){
-			if (!stream.hasIpv6()) return FALSE;
+			if (!stream.hasIpv6()) return false;
 		}else{
-			if (addr.find(':') == std::string::npos) return FALSE;
+			if (addr.find(':') == std::string::npos) return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
