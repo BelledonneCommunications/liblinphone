@@ -728,10 +728,10 @@ static void check_avpf_features(LinphoneCore *lc, unsigned char expected_feature
 		const auto & desc = resultDesc->findStream(SalProtoRtpAvpf, SalVideo);
 		BC_ASSERT_TRUE(desc != resultDesc->streams.cend());
 		if (desc != resultDesc->streams.cend()) {
-			const MSList * payloads = desc->getPayloads();
-			BC_ASSERT_PTR_NOT_NULL(payloads);
-			if (payloads) {
-				PayloadType *pt = (PayloadType *)payloads->data;
+			const auto & payloads = desc->getPayloads();
+			BC_ASSERT_FALSE(payloads.empty());
+			if (!payloads.empty()) {
+				PayloadType *pt = payloads.front();
 				BC_ASSERT_STRING_EQUAL(pt->mime_type, "VP8");
 				BC_ASSERT_EQUAL(pt->avpf.features, expected_features, int, "%d");
 			}

@@ -41,8 +41,12 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	rtcp_cname = other.rtcp_cname;
 	rtp_port = other.rtp_port;
 	rtcp_port = other.rtcp_port;
-	payloads = bctbx_list_copy_with_data(other.payloads, (bctbx_list_copy_func)payload_type_clone);
-	already_assigned_payloads = bctbx_list_copy_with_data(other.already_assigned_payloads, (bctbx_list_copy_func)payload_type_clone);
+	for (const auto & pt : other.payloads) {
+		payloads.push_back(payload_type_clone(pt));
+	}
+	for (const auto & pt : other.already_assigned_payloads) {
+		already_assigned_payloads.push_back(payload_type_clone(pt));
+	}
 	bandwidth = other.bandwidth;
 	ptime = other.ptime;
 	maxptime = other.maxptime;
@@ -87,8 +91,12 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	rtcp_cname = other.rtcp_cname;
 	rtp_port = other.rtp_port;
 	rtcp_port = other.rtcp_port;
-	payloads = bctbx_list_copy_with_data(other.payloads, (bctbx_list_copy_func)payload_type_clone);
-	already_assigned_payloads = bctbx_list_copy_with_data(other.already_assigned_payloads, (bctbx_list_copy_func)payload_type_clone);
+	for (const auto & pt : other.payloads) {
+		payloads.push_back(payload_type_clone(pt));
+	}
+	for (const auto & pt : other.already_assigned_payloads) {
+		already_assigned_payloads.push_back(payload_type_clone(pt));
+	}
 	bandwidth = other.bandwidth;
 	ptime = other.ptime;
 	maxptime = other.maxptime;
@@ -123,10 +131,10 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 }
 
 void SalStreamDescription::init() {
-	payloads=NULL;
-	already_assigned_payloads=NULL;
 	custom_sdp_attributes = NULL;
 
+	payloads.clear();
+	already_assigned_payloads.clear();
 	pad.clear();
 	crypto.clear();
 	ice_candidates.clear();
@@ -134,14 +142,16 @@ void SalStreamDescription::init() {
 }
 
 void SalStreamDescription::destroy() {
-	bctbx_list_free_with_data(payloads,(void (*)(void *))payload_type_destroy);
-	payloads=NULL;
-	bctbx_list_free_with_data(already_assigned_payloads,(void (*)(void *))payload_type_destroy);
-	already_assigned_payloads=NULL;
+	for (auto & pt : payloads) {
+		payload_type_destroy(pt);
+	}
+	for (auto & pt : already_assigned_payloads) {
+		payload_type_destroy(pt);
+	}
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
-bool_t SalStreamDescription::isRecvOnly(PayloadType *p) const {
+bool_t SalStreamDescription::isRecvOnly(const PayloadType *p) const {
 	return (p->flags & PAYLOAD_TYPE_FLAG_CAN_RECV) && ! (p->flags & PAYLOAD_TYPE_FLAG_CAN_SEND);
 }
 
@@ -162,21 +172,20 @@ bool_t SalStreamDescription::isSamePayloadType(const PayloadType *p1, const Payl
 	return TRUE;
 }
 
-bool_t SalStreamDescription::isSamePayloadList(const bctbx_list_t *l1, const bctbx_list_t *l2) const {
-	const bctbx_list_t *e1,*e2;
-	for(e1=l1,e2=l2;e1!=NULL && e2!=NULL; e1=e1->next,e2=e2->next){
-		PayloadType *p1=(PayloadType*)e1->data;
-		PayloadType *p2=(PayloadType*)e2->data;
-		if (!isSamePayloadType(p1,p2))
+bool_t SalStreamDescription::isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const {
+	auto p1 = l1.cbegin();
+	auto p2 = l2.cbegin();
+	for(; (p1 != l1.cend() && p2 != l2.cend()); ++p1, ++p2){
+		if (!isSamePayloadType(*p1,*p2))
 			return FALSE;
 	}
-	if (e1!=NULL){
+	if (p1!=l1.cend()){
 		/*skip possible recv-only payloads*/
-		for(;e1!=NULL && isRecvOnly((PayloadType*)e1->data);e1=e1->next){
+		for(;p1!=l1.cend() && isRecvOnly(*p1);++p1){
 			ms_message("Skipping recv-only payload type...");
 		}
 	}
-	if (e1!=NULL || e2!=NULL){
+	if (p1!=l1.cend() || p2!=l2.cend()){
 		/*means one list is longer than the other*/
 		return FALSE;
 	}
@@ -351,6 +360,6 @@ SalStreamDir SalStreamDescription::getDirection() const {
 	return dir;
 }
 
-const MSList * SalStreamDescription::getPayloads() const {
+const std::list<PayloadType*> & SalStreamDescription::getPayloads() const {
 	return payloads;
 }
