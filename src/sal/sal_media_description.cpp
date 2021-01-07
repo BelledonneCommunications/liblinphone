@@ -31,7 +31,6 @@ SalMediaDescription::~SalMediaDescription(){
 }
 
 SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
-	refcount = other.refcount;
 	name = other.name;
 	username = other.username;
 	addr = other.addr;
@@ -58,7 +57,6 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 }
 
 void SalMediaDescription::init() {
-	refcount=1;
 	streams.clear();
 	bundles.clear();
 	pad.clear();
@@ -144,18 +142,6 @@ void SalMediaDescription::destroy(){
 	streams.clear();
 	bundles.clear();
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
-}
-
-SalMediaDescription * SalMediaDescription::ref(){
-	refcount++;
-	return this;
-}
-
-void SalMediaDescription::unref(){
-	refcount--;
-	if (refcount==0){
-		destroy ();
-	}
 }
 
 const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {

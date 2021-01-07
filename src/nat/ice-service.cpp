@@ -334,25 +334,24 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 		}
 		if ((!stream.ice_pwd.empty()) && (!stream.ice_ufrag.empty()))
 			ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream.ice_ufrag), L_STRING_TO_C(stream.ice_pwd));
-		for (const auto & ice_candidate : stream.ice_candidates) {
+		for (const auto & candidate : stream.ice_candidates) {
 			bool defaultCandidate = false;
-			const SalIceCandidate *candidate = &ice_candidate;
-			if (candidate->addr[0] == '\0')
+			if (candidate.addr[0] == '\0')
 				break;
-			if ((candidate->componentID == 0) || (candidate->componentID > 2))
+			if ((candidate.componentID == 0) || (candidate.componentID > 2))
 				continue;
 			std::string addr = std::string();
 			int port = 0;
-			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate->componentID), md, stream, addr, port);
-			if ((addr.empty() == false) && (candidate->port == port) && (strlen(candidate->addr) == addr.length()) && (addr.compare(candidate->addr) == 0))
+			getIceDefaultAddrAndPort(static_cast<uint16_t>(candidate.componentID), md, stream, addr, port);
+			if ((addr.empty() == false) && (candidate.port == port) && (strlen(candidate.addr) == addr.length()) && (addr.compare(candidate.addr) == 0))
 				defaultCandidate = true;
 			int family = AF_INET;
-			if (strchr(candidate->addr, ':'))
+			if (strchr(candidate.addr, ':'))
 				family = AF_INET6;
 			ice_add_remote_candidate(
-				cl, candidate->type, family, candidate->addr, candidate->port,
-				static_cast<uint16_t>(candidate->componentID),
-				candidate->priority, candidate->foundation, defaultCandidate
+				cl, candidate.type, family, candidate.addr, candidate.port,
+				static_cast<uint16_t>(candidate.componentID),
+				candidate.priority, candidate.foundation, defaultCandidate
 			);
 		}
 		if (!iceRestarted) {
