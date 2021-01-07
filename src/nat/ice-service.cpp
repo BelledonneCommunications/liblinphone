@@ -361,19 +361,19 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 				std::string addr = std::string();
 				int port = 0;
 				int componentID = j + 1;
-				if (remoteCandidate.addr[0] == '\0') break;
+				if (remoteCandidate.addr.empty()) break;
 				getIceDefaultAddrAndPort(static_cast<uint16_t>(componentID), md, stream, addr, port);
 
 				// If we receive a re-invite with remote-candidates, supply these pairs to the ice check list.
 				// They might be valid pairs already selected, or losing pairs.
 
 				int remoteFamily = AF_INET;
-				if (strchr(remoteCandidate.addr, ':'))
+				if (remoteCandidate.addr.find(":") != std::string::npos)
 					remoteFamily = AF_INET6;
 				int family = AF_INET;
 				if (addr.find(':') != std::string::npos)
 					family = AF_INET6;
-				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, remoteCandidate.addr, remoteCandidate.port, family, L_STRING_TO_C(addr), port);
+				ice_add_losing_pair(cl, static_cast<uint16_t>(j + 1), remoteFamily, L_STRING_TO_C(remoteCandidate.addr), remoteCandidate.port, family, L_STRING_TO_C(addr), port);
 				losingPairsAdded = true;
 			}
 			if (losingPairsAdded)
@@ -540,12 +540,12 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			stream.ice_remote_candidates.clear();
 			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)) {
 				SalIceRemoteCandidate rtp_remote_candidate;
-				strncpy(rtp_remote_candidate.addr, rtpCandidate->taddr.ip, sizeof(rtp_remote_candidate.addr));
+				rtp_remote_candidate.addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
 				rtp_remote_candidate.port = rtpCandidate->taddr.port;
 				stream.ice_remote_candidates.push_back(rtp_remote_candidate);
 				if (rtcpCandidate){
 					SalIceRemoteCandidate rtcp_remote_candidate;
-					strncpy(rtcp_remote_candidate.addr, rtcpCandidate->taddr.ip, sizeof(rtcp_remote_candidate.addr));
+					rtcp_remote_candidate.addr = L_C_TO_STRING(rtcpCandidate->taddr.ip);
 					rtcp_remote_candidate.port = rtcpCandidate->taddr.port;
 					stream.ice_remote_candidates.push_back(rtcp_remote_candidate);
 				}
@@ -553,7 +553,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 				lError() << "ice: Selected valid remote candidates should be present if the check list is in the Completed state";
 		} else {
 			for (auto & ice_remote_candidate : stream.ice_remote_candidates) {
-				ice_remote_candidate.addr[0] = '\0';
+				ice_remote_candidate.addr.clear();
 				ice_remote_candidate.port = 0;
 			}
 		}
@@ -737,7 +737,7 @@ bool IceService::reinviteNeedsDeferedResponse(std::shared_ptr<SalMediaDescriptio
 			continue;
 
 		for (const auto & ice_remote_candidate : stream.ice_remote_candidates) {
-			if (ice_remote_candidate.addr[0] != '\0')
+			if (!ice_remote_candidate.addr.empty())
 				return true;
 		}
 	}
