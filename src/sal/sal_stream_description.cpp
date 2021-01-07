@@ -153,33 +153,33 @@ void SalStreamDescription::destroy() {
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
-bool_t SalStreamDescription::isRecvOnly(const PayloadType *p) const {
+bool SalStreamDescription::isRecvOnly(const PayloadType *p) const {
 	return (p->flags & PAYLOAD_TYPE_FLAG_CAN_RECV) && ! (p->flags & PAYLOAD_TYPE_FLAG_CAN_SEND);
 }
 
-bool_t SalStreamDescription::isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const {
-	if (p1->type!=p2->type) return FALSE;
-	if (strcmp(p1->mime_type,p2->mime_type)!=0) return FALSE;
-	if (p1->clock_rate!=p2->clock_rate) return FALSE;
-	if (p1->channels!=p2->channels) return FALSE;
-	if (payload_type_get_number(p1) != payload_type_get_number(p2)) return FALSE;
+bool SalStreamDescription::isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const {
+	if (p1->type!=p2->type) return false;
+	if (strcmp(p1->mime_type,p2->mime_type)!=0) return false;
+	if (p1->clock_rate!=p2->clock_rate) return false;
+	if (p1->channels!=p2->channels) return false;
+	if (payload_type_get_number(p1) != payload_type_get_number(p2)) return false;
 	/*
 	 Do not compare fmtp right now: they are modified internally when the call is started
 	*/
 	/*
 	if (!fmtp_equals(p1->recv_fmtp,p2->recv_fmtp) ||
 		!fmtp_equals(p1->send_fmtp,p2->send_fmtp))
-		return FALSE;
+		return false;
 	*/
-	return TRUE;
+	return true;
 }
 
-bool_t SalStreamDescription::isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const {
+bool SalStreamDescription::isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const {
 	auto p1 = l1.cbegin();
 	auto p2 = l2.cbegin();
 	for(; (p1 != l1.cend() && p2 != l2.cend()); ++p1, ++p2){
 		if (!isSamePayloadType(*p1,*p2))
-			return FALSE;
+			return false;
 	}
 	if (p1!=l1.cend()){
 		/*skip possible recv-only payloads*/
@@ -189,9 +189,9 @@ bool_t SalStreamDescription::isSamePayloadList(const std::list<PayloadType*> & l
 	}
 	if (p1!=l1.cend() || p2!=l2.cend()){
 		/*means one list is longer than the other*/
-		return FALSE;
+		return false;
 	}
-	return TRUE;
+	return true;
 }
 
 bool SalStreamDescription::operator==(const SalStreamDescription & other) const {
@@ -247,7 +247,7 @@ int SalStreamDescription::equal(const SalStreamDescription & other) const {
 	return result;
 }
 
-bool_t SalStreamDescription::enabled() const {
+bool SalStreamDescription::enabled() const {
 	/* When the bundle-only attribute is present, a 0 rtp port doesn't mean that the stream is disabled.*/
 	return rtp_port > 0 || bundle_only;
 }
@@ -256,72 +256,72 @@ void SalStreamDescription::disable(){
 	rtp_port = 0;
 	/* Remove potential bundle parameters. A disabled stream is moved out of the bundle. */
 	mid.clear();
-	bundle_only = FALSE;
+	bundle_only = false;
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-bool_t SalStreamDescription::hasAvpf() const {
+bool SalStreamDescription::hasAvpf() const {
 	switch (proto){
 		case SalProtoRtpAvpf:
 		case SalProtoRtpSavpf:
 		case SalProtoUdpTlsRtpSavpf:
-			return TRUE;
+			return true;
 		case SalProtoRtpAvp:
 		case SalProtoRtpSavp:
 		case SalProtoUdpTlsRtpSavp:
 		case SalProtoOther:
-			return FALSE;
+			return false;
 	}
-	return FALSE;
+	return false;
 }
 
-bool_t SalStreamDescription::hasIpv6() const {
+bool SalStreamDescription::hasIpv6() const {
 	return rtp_addr.find(':') != std::string::npos;
 }
 
-bool_t SalStreamDescription::hasImplicitAvpf() const {
+bool SalStreamDescription::hasImplicitAvpf() const {
 	return implicit_rtcp_fb;
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
-bool_t SalStreamDescription::hasSrtp() const {
+bool SalStreamDescription::hasSrtp() const {
 	switch (proto){
 		case SalProtoRtpSavp:
 		case SalProtoRtpSavpf:
-			return TRUE;
+			return true;
 		case SalProtoRtpAvp:
 		case SalProtoRtpAvpf:
 		case SalProtoUdpTlsRtpSavpf:
 		case SalProtoUdpTlsRtpSavp:
 		case SalProtoOther:
-			return FALSE;
+			return false;
 	}
-	return FALSE;
+	return false;
 }
 
-bool_t SalStreamDescription::hasDtls() const {
+bool SalStreamDescription::hasDtls() const {
 	switch (proto){
 		case SalProtoUdpTlsRtpSavpf:
 		case SalProtoUdpTlsRtpSavp:
-			return TRUE;
+			return true;
 		case SalProtoRtpSavp:
 		case SalProtoRtpSavpf:
 		case SalProtoRtpAvp:
 		case SalProtoRtpAvpf:
 		case SalProtoOther:
-			return FALSE;
+			return false;
 	}
-	return FALSE;
+	return false;
 }
 
-bool_t SalStreamDescription::hasZrtp() const {
-	if (haveZrtpHash==1) return TRUE;
-	return FALSE;
+bool SalStreamDescription::hasZrtp() const {
+	if (haveZrtpHash==1) return true;
+	return false;
 }
 
-bool_t SalStreamDescription::hasLimeIk() const {
-	if (haveLimeIk==1) return TRUE;
-	return FALSE;
+bool SalStreamDescription::hasLimeIk() const {
+	if (haveLimeIk==1) return true;
+	return false;
 }
 
 const std::string & SalStreamDescription::getRtcpAddress() const {
