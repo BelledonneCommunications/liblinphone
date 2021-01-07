@@ -54,19 +54,19 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const std::vector<SalStreamDescription>::const_iterator findSecureStreamOfType(SalStreamType type) const;
 		const std::vector<SalStreamDescription>::const_iterator findBestStream(SalStreamType type) const;
 
-		bool_t isEmpty() const;
+		bool isEmpty() const;
 
 		void setDir(SalStreamDir stream_dir);
 
 		int getNbActiveStreams() const;
 
 		bool hasDir(const SalStreamDir & stream_dir) const;
-		bool_t hasAvpf() const;
-		bool_t hasImplicitAvpf() const;
-		bool_t hasSrtp() const;
-		bool_t hasDtls() const;
-		bool_t hasZrtp() const;
-		bool_t hasIpv6() const;
+		bool hasAvpf() const;
+		bool hasImplicitAvpf() const;
+		bool hasSrtp() const;
+		bool hasDtls() const;
+		bool hasZrtp() const;
+		bool hasIpv6() const;
 
 		bool operator==(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
@@ -92,10 +92,10 @@ class LINPHONE_PUBLIC SalMediaDescription {
 	std::string ice_ufrag;
 	std::string ice_pwd;
 	std::list<SalStreamBundle> bundles;
-	bool_t ice_lite = FALSE;
-	bool_t set_nortpproxy = FALSE;
-	bool_t accept_bundles = FALSE; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	std::vector<bool_t> pad;
+	bool ice_lite = false;
+	bool set_nortpproxy = false;
+	bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
+	std::vector<bool> pad;
 
 	private:
 		/*check for the presence of at least one stream with requested direction */
