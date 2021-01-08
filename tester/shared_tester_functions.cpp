@@ -17,8 +17,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-
-
 #include <bctoolbox/tester.h>
 
 #include "tester_utils.h"
@@ -27,6 +25,8 @@
 #include "sal/sal_media_description.h"
 #include "shared_tester_functions.h"
 #include "c-wrapper/internal/c-tools.h"
+
+using namespace LinphonePrivate;
 
 static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStreamType stream_type) {
 	MediaStream *ms;

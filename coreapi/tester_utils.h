@@ -37,9 +37,11 @@ typedef struct _SalOp SalOp;
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
 
 #ifdef __cplusplus
-class SalMediaDescription;
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
+LINPHONE_BEGIN_NAMESPACE
+	class SalMediaDescription;
+LINPHONE_END_NAMESPACE
+LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
+LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
 #endif
 
 typedef enum _LinphoneProxyConfigAddressComparisonResult{

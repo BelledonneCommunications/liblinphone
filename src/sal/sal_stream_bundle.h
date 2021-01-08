@@ -23,6 +23,10 @@
 #include <list>
 #include <string>
 
+#include "linphone/utils/general.h"
+
+LINPHONE_BEGIN_NAMESPACE
+
 class SalStreamDescription;
 
 class SalStreamBundle{
@@ -42,5 +46,7 @@ class SalStreamBundle{
 
 		std::list<std::string> mids; /* List of mids corresponding to streams associated in the bundle. The first one is the "tagged" one. */
 };
+
+LINPHONE_END_NAMESPACE
 
 #endif // ifndef _SAL_STREAM_BUNDLE_H_
