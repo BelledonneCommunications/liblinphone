@@ -407,6 +407,13 @@ ChatMessageModifier::Result LimeX3dhEncryptionEngine::processIncomingMessage (
 		}
 	}
 
+	// Early discard of malformed incoming message: we must have a sender Id to decrypt the message
+	if (senderDeviceId.empty()) {
+			lWarning() << "[LIME] discard malformed incoming message ["<< message <<"] for ["<<localDeviceId<<"]: no sender Device Id found ";
+			errorCode = 488; // Not Acceptable
+			return ChatMessageModifier::Result::Done;
+	}
+
 	// Discard incoming messages from unsafe peer devices
 	lime::PeerDeviceStatus peerDeviceStatus = limeManager->get_peerDeviceStatus(senderDeviceId);
 	if (linphone_config_get_int(linphone_core_get_config(chatRoom->getCore()->getCCore()), "lime", "allow_message_in_unsafe_chatroom", 0) == 0) {
