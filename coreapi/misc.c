@@ -250,7 +250,7 @@ const char *linphone_ice_state_to_string(LinphoneIceState state){
 	return "invalid";
 }
 
-bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md){
+bool_t linphone_core_media_description_contains_video_stream(const LinphonePrivate::SalMediaDescription *md){
 
 	for (const auto & stream : md->streams) {
 		if (stream.type == SalVideo && stream.rtp_port!=0)

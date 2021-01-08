@@ -22,6 +22,8 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
 
+LINPHONE_BEGIN_NAMESPACE
+
 SalMediaDescription::SalMediaDescription(){
 	init();
 }
@@ -343,3 +345,5 @@ const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::get
 	}
 	return streams.cend();
 }
+
+LINPHONE_END_NAMESPACE

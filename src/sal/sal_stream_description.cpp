@@ -21,6 +21,8 @@
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_stream_description.h"
 
+LINPHONE_BEGIN_NAMESPACE
+
 SalStreamDescription::SalStreamDescription(){
 	init();
 }
@@ -365,3 +367,5 @@ SalStreamDir SalStreamDescription::getDirection() const {
 const std::list<PayloadType*> & SalStreamDescription::getPayloads() const {
 	return payloads;
 }
+
+LINPHONE_END_NAMESPACE

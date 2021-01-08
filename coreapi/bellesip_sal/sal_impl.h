@@ -25,8 +25,8 @@
 #include "belle-sip/belle-sip.h"
 #include "belle-sip/belle-sdp.h"
 
-belle_sdp_session_description_t * media_description_to_sdp(const std::shared_ptr<SalMediaDescription> &desc);
-int sdp_to_media_description(belle_sdp_session_description_t  *sdp, std::shared_ptr<SalMediaDescription> &desc);
+belle_sdp_session_description_t * media_description_to_sdp(const std::shared_ptr<LinphonePrivate::SalMediaDescription> &desc);
+int sdp_to_media_description(belle_sdp_session_description_t  *sdp, std::shared_ptr<LinphonePrivate::SalMediaDescription> &desc);
 
 bool_t _sal_compute_sal_errors(belle_sip_response_t* response, SalReason* sal_reason, char* reason, size_t reason_size);
 SalReason _sal_reason_from_sip_code(int code);

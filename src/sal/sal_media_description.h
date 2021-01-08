@@ -29,6 +29,8 @@
 #include "sal/sal_stream_bundle.h"
 #include "ortp/rtpsession.h"
 
+LINPHONE_BEGIN_NAMESPACE
+
 class SalStreamDescription;
 
 class LINPHONE_PUBLIC SalMediaDescription {
@@ -100,5 +102,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool isNullAddress(const std::string & addr) const;
 
 };
+
+LINPHONE_END_NAMESPACE
 
 #endif // ifndef _SAL_MEDIA_DESCRIPTION_H_

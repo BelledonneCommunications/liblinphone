@@ -272,7 +272,7 @@ void _linphone_call_stats_set_ip_family_of_remote (LinphoneCallStats *stats, Lin
 // FIXME: Remove this declaration, use LINPHONE_PUBLIC as ugly workaround, already defined in tester_utils.h
 LINPHONE_PUBLIC bool_t _linphone_call_stats_rtcp_received_via_mux (const LinphoneCallStats *stats);
 
-bool_t linphone_core_media_description_contains_video_stream(const SalMediaDescription *md);
+bool_t linphone_core_media_description_contains_video_stream(const LinphonePrivate::SalMediaDescription *md);
 
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
 
@@ -388,7 +388,7 @@ void linphone_tunnel_enable_logs_with_handler(LinphoneTunnel *tunnel, bool_t ena
 LINPHONE_PUBLIC int linphone_core_get_calls_nb(const LinphoneCore *lc);
 
 void linphone_core_set_state(LinphoneCore *lc, LinphoneGlobalState gstate, const char *message);
-void linphone_call_update_biggest_desc(LinphoneCall *call, SalMediaDescription *md);
+void linphone_call_update_biggest_desc(LinphoneCall *call, LinphonePrivate::SalMediaDescription *md);
 void linphone_call_make_local_media_description_with_params(LinphoneCore *lc, LinphoneCall *call, LinphoneCallParams *params);
 
 bool_t linphone_core_is_payload_type_usable_for_bandwidth(const LinphoneCore *lc, const PayloadType *pt, int bandwidth_limit);
