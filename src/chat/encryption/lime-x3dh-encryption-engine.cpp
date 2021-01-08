@@ -664,8 +664,8 @@ list<EncryptionParameter> LimeX3dhEncryptionEngine::getEncryptionParameters () {
 
 void LimeX3dhEncryptionEngine::mutualAuthentication (
 	MSZrtpContext *zrtpContext,
-	std::shared_ptr<SalMediaDescription> localMediaDescription,
-	std::shared_ptr<SalMediaDescription> remoteMediaDescription,
+	const std::shared_ptr<SalMediaDescription> & localMediaDescription,
+	const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 	LinphoneCallDir direction
 ) {
 	// Get local and remote identity keys from sdp attributes
@@ -732,7 +732,7 @@ void LimeX3dhEncryptionEngine::mutualAuthentication (
 
 void LimeX3dhEncryptionEngine::authenticationVerified (
 	MSZrtpContext *zrtpContext,
-	std::shared_ptr<SalMediaDescription> remoteMediaDescription,
+	const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 	const char *peerDeviceId
 ) {
 	// Get peer's Ik
