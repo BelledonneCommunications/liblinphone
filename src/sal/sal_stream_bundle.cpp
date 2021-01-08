@@ -22,6 +22,8 @@
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_stream_description.h"
 
+LINPHONE_BEGIN_NAMESPACE
+
 SalStreamBundle::SalStreamBundle(){
 	mids.clear();
 }
@@ -54,3 +56,5 @@ bool SalStreamBundle::hasMid(const std::string & mid) const{
 	});
 	return (midIt != mids.cend());
 }
+
+LINPHONE_END_NAMESPACE

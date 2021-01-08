@@ -31,9 +31,9 @@
 
 // =============================================================================
 
-class SalMediaDescription;
-
 LINPHONE_BEGIN_NAMESPACE
+
+class SalMediaDescription;
 
 class StunClient : public CoreAccessor {
 	struct Candidate {
