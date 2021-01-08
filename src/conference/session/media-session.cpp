@@ -1080,7 +1080,8 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 		ms_free(tmp);
 		return false;
 	}
-	char * key = new char [keyOutSize];
+	// Initialize characters with \0
+	char * key = new char [keyOutSize] {'\0'};
 	b64Size = b64::b64_encode((const char *)tmp, keyLength, key, keyOutSize);
 	if (b64Size == 0) {
 		lError() << "Failed to b64 encode key";
@@ -1088,7 +1089,6 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 		delete[] key;
 		return false;
 	}
-	key[keyOutSize-1] = '\0';
 	keyOut.assign(key);
 	delete[] key;
 	ms_free(tmp);
