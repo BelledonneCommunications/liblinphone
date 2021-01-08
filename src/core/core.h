@@ -35,7 +35,6 @@
 L_DECL_C_STRUCT(LinphoneCore);
 
 typedef struct belle_sip_source belle_sip_source_t;
-class SalMediaDescription;
 
 namespace LinphoneTest {
 	class LocalConferenceTester;
@@ -54,6 +53,7 @@ class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
+class SalMediaDescription;
 class EventLog;
 
 namespace MediaConference {

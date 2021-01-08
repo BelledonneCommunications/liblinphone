@@ -414,7 +414,7 @@ static int send_report(LinphoneCall* call, reporting_session_report_t * report, 
 	return ret;
 }
 
-static const SalStreamDescription * get_media_stream_for_desc(const std::shared_ptr<SalMediaDescription> & smd, SalStreamType sal_stream_type) {
+static const LinphonePrivate::SalStreamDescription * get_media_stream_for_desc(const std::shared_ptr<LinphonePrivate::SalMediaDescription> & smd, SalStreamType sal_stream_type) {
 	if (smd != NULL) {
 		for (const auto & stream : smd->streams) {
 			if (stream.enabled() && stream.type == sal_stream_type) {
@@ -427,8 +427,8 @@ static const SalStreamDescription * get_media_stream_for_desc(const std::shared_
 
 static void update_ip(LinphoneCall * call, int stats_type) {
 	SalStreamType sal_stream_type = stats_type == LINPHONE_CALL_STATS_AUDIO ? SalAudio : stats_type == LINPHONE_CALL_STATS_VIDEO ? SalVideo : SalText;
-	const SalStreamDescription * local_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getLocalMediaDescription(), sal_stream_type);
-	const SalStreamDescription * remote_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getRemoteMediaDescription(), sal_stream_type);
+	const LinphonePrivate::SalStreamDescription * local_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getLocalMediaDescription(), sal_stream_type);
+	const LinphonePrivate::SalStreamDescription * remote_desc = get_media_stream_for_desc(Call::toCpp(call)->getOp()->getRemoteMediaDescription(), sal_stream_type);
 	LinphoneCallLog *log = Call::toCpp(call)->getLog();
 
 	if (local_desc != NULL) {

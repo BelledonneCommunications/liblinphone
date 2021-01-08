@@ -21,6 +21,7 @@
 #define _SAL_STREAM_DESCRIPTION_H_
 
 #include <vector>
+#include "linphone/utils/general.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 
@@ -52,6 +53,8 @@ typedef struct SalSrtpCryptoAlgo {
 	MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
 	std::string master_key;
 } SalSrtpCryptoAlgo;
+
+LINPHONE_BEGIN_NAMESPACE
 
 class LINPHONE_PUBLIC SalStreamDescription {
 
@@ -138,5 +141,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const;
 
 };
+
+LINPHONE_END_NAMESPACE
 
 #endif // ifndef _SAL_STREAM_DESCRIPTION_H_

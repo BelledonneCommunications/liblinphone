@@ -26,6 +26,8 @@
 #include "sal/sal_media_description.h"
 #include "sal/sal_stream_description.h"
 
+using namespace LinphonePrivate;
+
 static int get_codec_position(const MSList *l, const char *mime_type, int rate){
 	const MSList *elem;
 	int i;

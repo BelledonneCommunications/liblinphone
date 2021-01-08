@@ -4378,10 +4378,6 @@ bool_t linphone_core_is_incoming_invite_pending(LinphoneCore*lc) {
 	return FALSE;
 }
 
-bool_t linphone_core_incompatible_security(LinphoneCore *lc, SalMediaDescription *md){
-	return linphone_core_is_media_encryption_mandatory(lc) && linphone_core_get_media_encryption(lc)==LinphoneMediaEncryptionSRTP && !md->hasSrtp();
-}
-
 LinphoneStatus linphone_core_accept_early_media_with_params(LinphoneCore *lc, LinphoneCall *call, const LinphoneCallParams *params) {
 	return linphone_call_accept_early_media_with_params(call, params);
 }

@@ -23,6 +23,8 @@
 #include "sal/sal_stream_bundle.h"
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
+using namespace LinphonePrivate;
+
 inline OrtpRtcpXrStatSummaryFlag operator|=(OrtpRtcpXrStatSummaryFlag a, OrtpRtcpXrStatSummaryFlag b) {
 	int ia = static_cast<int>(a);
 	int ib = static_cast<int>(b);
