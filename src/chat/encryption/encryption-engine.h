@@ -89,14 +89,14 @@ public:
 
 	virtual void mutualAuthentication (
 		MSZrtpContext *zrtpContext,
-		std::shared_ptr<SalMediaDescription> localMediaDescription,
-		std::shared_ptr<SalMediaDescription> remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & localMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		LinphoneCallDir direction
 	) {}
 
 	virtual void authenticationVerified (
 		MSZrtpContext *zrtpContext,
-		std::shared_ptr<SalMediaDescription> remoteMediaDescription,
+		const std::shared_ptr<SalMediaDescription> & remoteMediaDescription,
 		const char *peerDeviceId
 	) {}
 

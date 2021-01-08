@@ -146,7 +146,7 @@ int StunClient::run (int audioPort, int videoPort, int textPort) {
 	return ret;
 }
 
-void StunClient::updateMediaDescription (std::shared_ptr<SalMediaDescription> md) const {
+void StunClient::updateMediaDescription (std::shared_ptr<SalMediaDescription> & md) const {
 	if (!stunDiscoveryDone) return;
 	for (auto & stream : md->streams) {
 		if (!stream.enabled())

@@ -164,13 +164,13 @@ private:
 
 	
 
-	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> md);
+	void assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md);
 	void assignStreamsIndexes(bool localIsOfferer);
-	int getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> md, SalStreamType type);
-	void fixCallParams (std::shared_ptr<SalMediaDescription> rmd, bool fromOffer);
+	int getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> & md, SalStreamType type);
+	void fixCallParams (std::shared_ptr<SalMediaDescription> & rmd, bool fromOffer);
 	void initializeParamsAccordingToIncomingCallParams () override;
-	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> md);
-	void updateBiggestDesc (std::shared_ptr<SalMediaDescription> md);
+	void setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> & md);
+	void updateBiggestDesc (std::shared_ptr<SalMediaDescription> & md);
 	void updateRemoteSessionIdAndVer ();
 
 
@@ -180,26 +180,26 @@ private:
 	void selectIncomingIpVersion ();
 	void selectOutgoingIpVersion ();
 
-	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> md);
+	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
 	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
 	void makeLocalMediaDescription (bool localIsOfferer);
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
-	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> md);
-	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> md);
-	void setupRtcpFb (std::shared_ptr<SalMediaDescription> md);
-	void setupRtcpXr (std::shared_ptr<SalMediaDescription> md);
-	void setupZrtpHash (std::shared_ptr<SalMediaDescription> md);
-	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> md);
-	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> oldMd, std::shared_ptr<SalMediaDescription> md);
+	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
+	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md);
+	void setupRtcpFb (std::shared_ptr<SalMediaDescription> & md);
+	void setupRtcpXr (std::shared_ptr<SalMediaDescription> & md);
+	void setupZrtpHash (std::shared_ptr<SalMediaDescription> & md);
+	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> & md);
+	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md);
 	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
 	void prepareEarlyMediaForking ();
-	void tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> md);
+	void tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> & md);
 	void updateStreamFrozenPayloads (SalStreamDescription &resultDesc, SalStreamDescription &localStreamDesc);
-	void updateFrozenPayloads (std::shared_ptr<SalMediaDescription> result);
-	void updateStreams (std::shared_ptr<SalMediaDescription> newMd, CallSession::State targetState);
+	void updateFrozenPayloads (std::shared_ptr<SalMediaDescription> & result);
+	void updateStreams (std::shared_ptr<SalMediaDescription> & newMd, CallSession::State targetState);
 
 	bool allStreamsAvpfEnabled () const;
 	bool allStreamsEncrypted () const;
@@ -228,7 +228,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(std::shared_ptr<SalMediaDescription> md, SalStreamDescription &sd, const std::string mid);
+	void addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, const std::string mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();
@@ -237,8 +237,8 @@ private:
 	Stream *getStream(LinphoneStreamType type)const;
 	int portFromStreamIndex(int index);
 	SalMediaProto getAudioProto();
-	SalMediaProto getAudioProto(std::shared_ptr<SalMediaDescription> remote_md);
-	bool hasAvpf(std::shared_ptr<SalMediaDescription> md)const;
+	SalMediaProto getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md);
+	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
 private:
