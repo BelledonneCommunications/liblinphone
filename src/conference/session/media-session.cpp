@@ -1083,9 +1083,11 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 	if (b64Size == 0) {
 		lError() << "Failed to b64 encode key";
 		ms_free(tmp);
+		delete[] key;
 		return false;
 	}
-	keyOut = key;
+	key[keyOutSize-1] = '\0';
+	keyOut.assign(key);
 	delete[] key;
 	ms_free(tmp);
 	return true;
