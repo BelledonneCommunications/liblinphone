@@ -4245,17 +4245,20 @@ LINPHONE_PUBLIC void linphone_core_set_call_error_tone(LinphoneCore *core, Linph
 LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *core, LinphoneToneID tone_id, const char *audiofile);
 
 /**
- * Globaly set an http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml. This value can also be set for a dedicated account using #linphone_proxy_config_set_file_transfer_server
+ * Globaly set an http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml. 
+ * Url may be like: "https://file.linphone.org/upload.php".
+ * This value can also be set for a dedicated account using #linphone_proxy_config_set_file_transfer_server.
  * @param core #LinphoneCore to be modified @notnil
- * @param server_url URL of the file server like https://file.linphone.org/upload.php. @maybenil
+ * @param server_url URL of the file server. @maybenil
  * @ingroup misc
  * */
 LINPHONE_PUBLIC void linphone_core_set_file_transfer_server(LinphoneCore *core, const char * server_url);
 
 /**
  * Get the globaly set http file transfer server to be used for content type application/vnd.gsma.rcs-ft-http+xml.
+ * Url may be like: "https://file.linphone.org/upload.php".
  * @param core #LinphoneCore from which to get the server_url @notnil
- * @return URL of the file server like https://file.linphone.org/upload.php. @maybenil
+ * @return URL of the file server. @maybenil
  * @ingroup misc
  * */
 LINPHONE_PUBLIC const char * linphone_core_get_file_transfer_server(LinphoneCore *core);

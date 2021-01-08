@@ -224,7 +224,6 @@ LINPHONE_PUBLIC void linphone_call_params_set_media_encryption(LinphoneCallParam
 
 /**
  * Set requested level of privacy for the call.
- * \xmlonly <language-tags>javascript</language-tags> \endxmlonly
  * @param call_params #LinphoneCallParams object @notnil
  * @param privacy The #LinphonePrivacyMask to used for the call.
 **/
