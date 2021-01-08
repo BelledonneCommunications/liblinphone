@@ -125,7 +125,7 @@ void MediaSessionPrivate::accepted () {
 	/* Reset the internal call update flag, so it doesn't risk to be copied and used in further re-INVITEs */
 	getParams()->getPrivate()->setInternalCallUpdate(false);
 	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
-	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 	if (!md && (prevState == CallSession::State::OutgoingEarlyMedia) && resultDesc) {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
@@ -320,7 +320,7 @@ void MediaSessionPrivate::remoteRinging () {
 	L_Q();
 	/* Set privacy */
 	getCurrentParams()->setPrivacy((LinphonePrivacyMask)op->getPrivacy());
-	const std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
 	if (md) {
 		std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
 		/* Initialize the remote call params by invoking linphone_call_get_remote_params(). This is useful as the SDP may not be present in the 200Ok */
@@ -402,7 +402,7 @@ void MediaSessionPrivate::terminated () {
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
 void MediaSessionPrivate::updated (bool isUpdate) {
-	std::shared_ptr<SalMediaDescription> rmd = op->getRemoteMediaDescription();
+	const std::shared_ptr<SalMediaDescription> & rmd = op->getRemoteMediaDescription();
 	switch (state) {
 		case CallSession::State::PausedByRemote:
 			if (rmd->hasDir(SalStreamSendRecv) || rmd->hasDir(SalStreamRecvOnly)) {
@@ -447,14 +447,14 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		SalErrorInfo sei;
 		memset(&sei, 0, sizeof(sei));
 		expectMediaInAck = false;
-		std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
+		std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 		if (md && (md->isEmpty() || q->getCore()->incompatibleSecurity(md))) {
 			sal_error_info_set(&sei, SalReasonNotAcceptable, "SIP", 0, nullptr, nullptr);
 			op->declineWithErrorInfo(&sei, nullptr);
 			sal_error_info_reset(&sei);
 			return;
 		}
-		std::shared_ptr<SalMediaDescription> prevResultDesc = resultDesc;
+		std::shared_ptr<SalMediaDescription> & prevResultDesc = resultDesc;
 		if (isUpdate && prevResultDesc && md){
 			int diff = md->equal(*prevResultDesc);
 			if (diff & (SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED | SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED)) {
@@ -638,7 +638,7 @@ void MediaSessionPrivate::setState (CallSession::State newState, const string &m
 // -----------------------------------------------------------------------------
 
 
-int MediaSessionPrivate::getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> md, SalStreamType type){
+int MediaSessionPrivate::getFirstStreamWithType(const std::shared_ptr<SalMediaDescription> & md, SalStreamType type){
 	for (size_t i = 0; i < md->streams.size(); ++i) {
 		if (md->streams[i].type == type) return static_cast<int>(i);
 	}
@@ -668,7 +668,7 @@ void MediaSessionPrivate::assignStreamsIndexes(bool localIsOfferer){
 		", mainVideoStreamIndex=" << mainVideoStreamIndex << ", mainTextStreamIndex=" << mainTextStreamIndex;
 }
 
-void MediaSessionPrivate::assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::assignStreamsIndexesIncoming(const std::shared_ptr<SalMediaDescription> & md) {
 	if (mainAudioStreamIndex == -1){
 		mainAudioStreamIndex = getFirstStreamWithType(md, SalAudio);
 	}
@@ -687,7 +687,7 @@ void MediaSessionPrivate::assignStreamsIndexesIncoming(const std::shared_ptr<Sal
  * - the video enablement parameter according to what is offered and our local policy.
  * Fixing the params to proper values avoid request video by accident during internal call updates, pauses and resumes
  */
-void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> rmd, bool fromOffer) {
+void MediaSessionPrivate::fixCallParams (std::shared_ptr<SalMediaDescription> & rmd, bool fromOffer) {
 	L_Q();
 	if (!rmd) return;
 
@@ -758,7 +758,7 @@ void MediaSessionPrivate::initializeParamsAccordingToIncomingCallParams () {
 	}
 }
 
-bool MediaSessionPrivate::hasAvpf(std::shared_ptr<SalMediaDescription> md)const{
+bool MediaSessionPrivate::hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const{
 	/* We consider that AVPF is enabled if at least one of these condition is satisfied:
 	 * - all the offered streams have AVPF
 	 * - the video stream has AVPF.
@@ -774,7 +774,7 @@ bool MediaSessionPrivate::hasAvpf(std::shared_ptr<SalMediaDescription> md)const{
 /**
  * Fix call parameters on incoming call to eg. enable AVPF if the incoming call propose it and it is not enabled locally.
  */
-void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
 	LinphoneCore *lc = q->getCore()->getCCore();
 	/* Handle AVPF, SRTP and DTLS */
@@ -824,7 +824,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	fixCallParams(md, true);
 }
 
-void MediaSessionPrivate::updateBiggestDesc (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::updateBiggestDesc (std::shared_ptr<SalMediaDescription> & md) {
 	if (!biggestDesc || (md->streams.size() > biggestDesc->streams.size())) {
 		/* We have been offered and now are ready to proceed, or we added a new stream,
 		 * store the media description to remember the mapping of streams within this call. */
@@ -833,7 +833,7 @@ void MediaSessionPrivate::updateBiggestDesc (std::shared_ptr<SalMediaDescription
 }
 
 void MediaSessionPrivate::updateRemoteSessionIdAndVer () {
-	std::shared_ptr<SalMediaDescription> desc = op->getRemoteMediaDescription();
+	const std::shared_ptr<SalMediaDescription> & desc = op->getRemoteMediaDescription();
 	if (desc) {
 		remoteSessionId = desc->session_id;
 		remoteSessionVer = desc->session_ver;
@@ -841,11 +841,6 @@ void MediaSessionPrivate::updateRemoteSessionIdAndVer () {
 }
 
 // -----------------------------------------------------------------------------
-
-
-
-// -----------------------------------------------------------------------------
-
 
 unsigned int MediaSessionPrivate::getAudioStartCount () const {
 	Stream *s = getStreamsGroup().lookupMainStream(SalAudio);
@@ -1026,7 +1021,7 @@ void MediaSessionPrivate::selectOutgoingIpVersion () {
 
 // -----------------------------------------------------------------------------
 
-void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		SalStreamDescription &sd = md->streams[i];
@@ -1093,7 +1088,7 @@ bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & 
 	return true;
 }
 
-void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> md, SalStreamDescription &sd, const std::string mid){
+void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, const std::string mid){
 	SalStreamBundle bundle;
 	if (!md->bundles.empty()){
 		bundle = md->bundles.front();
@@ -1110,7 +1105,7 @@ void MediaSessionPrivate::addStreamToBundle(std::shared_ptr<SalMediaDescription>
 /* This function is to authorize the downgrade from avpf to non-avpf, when avpf is enabled locally but the remote
  * offer doesn't offer it consistently for all streams.
  */
-SalMediaProto MediaSessionPrivate::getAudioProto(std::shared_ptr<SalMediaDescription> remote_md){
+SalMediaProto MediaSessionPrivate::getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md){
 	SalMediaProto requested = getAudioProto();
 	if (remote_md) {
 		const SalStreamDescription &remote_stream = remote_md->streams[static_cast<size_t>(mainAudioStreamIndex)];
@@ -1156,7 +1151,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>();
-	std::shared_ptr<SalMediaDescription> oldMd = localDesc;
+	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
 	assignStreamsIndexes(localIsOfferer);
@@ -1367,7 +1362,7 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCrypt
 	return 0;
 }
 
-void MediaSessionPrivate::setupRtcpFb (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::setupRtcpFb (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
 	for (auto & stream : md->streams) {
 		stream.rtcp_fb.generic_nack_enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_fb_generic_nack_enabled", 0);
@@ -1388,7 +1383,7 @@ void MediaSessionPrivate::setupRtcpFb (std::shared_ptr<SalMediaDescription> md) 
 	}
 }
 
-void MediaSessionPrivate::setupRtcpXr (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::setupRtcpXr (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
 	md->rtcp_xr.enabled = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_xr_enabled", 1);
 	if (md->rtcp_xr.enabled) {
@@ -1412,7 +1407,7 @@ void MediaSessionPrivate::setupRtcpXr (std::shared_ptr<SalMediaDescription> md) 
 }
 
 
-void MediaSessionPrivate::setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
 	auto encryptionEngine = q->getCore()->getEncryptionEngine();
 	if (!encryptionEngine)
@@ -1427,9 +1422,9 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (std::shared_ptr<Sal
 	}
 }
 
-void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md) {
 	L_Q();
-	std::shared_ptr<SalMediaDescription> oldMd = localDesc;
+	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (md->streams[i].hasSrtp()) {
@@ -1449,7 +1444,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	}
 }
 
-void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> oldMd, std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md) {
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (i < oldMd->streams.size()) {
 			md->streams[i].already_assigned_payloads = std::move(oldMd->streams[i].already_assigned_payloads);
@@ -1570,7 +1565,7 @@ void MediaSessionPrivate::onIceRestartNeeded(IceService & service){
 	q->update(&newParams);
 }
 
-void MediaSessionPrivate::tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> md) {
+void MediaSessionPrivate::tryEarlyMediaForking (std::shared_ptr<SalMediaDescription> & md) {
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = md;
@@ -1591,13 +1586,13 @@ void MediaSessionPrivate::updateStreamFrozenPayloads (SalStreamDescription &resu
 	}
 }
 
-void MediaSessionPrivate::updateFrozenPayloads (std::shared_ptr<SalMediaDescription> result) {
+void MediaSessionPrivate::updateFrozenPayloads (std::shared_ptr<SalMediaDescription> & result) {
 	for (size_t i = 0; i < result->streams.size(); i++) {
 		updateStreamFrozenPayloads(result->streams[i], localDesc->streams[i]);
 	}
 }
 
-void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> newMd, CallSession::State targetState) {
+void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & newMd, CallSession::State targetState) {
 	L_Q();
 
 	if (state == CallSession::State::Connected || state == CallSession::State::Resuming ||
@@ -1813,7 +1808,7 @@ void MediaSessionPrivate::setTerminated () {
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
 
 	op->accept();
-	std::shared_ptr<SalMediaDescription> md = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> & md = op->getFinalMediaDescription();
 	if (md && !md->isEmpty())
 		updateStreams(md, nextState);
 	setState(nextState, stateInfo);
@@ -1915,7 +1910,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 				getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 			break;
 	}
-	std::shared_ptr<SalMediaDescription> md = resultDesc;
+	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
 	
 	if (md) {
 		getCurrentParams()->enableAvpf(hasAvpf(md));
@@ -2012,7 +2007,7 @@ void MediaSessionPrivate::startAccept(){
 		listener->onSetCurrentSession(q->getSharedFromThis());
 	}
 
-	std::shared_ptr<SalMediaDescription> newMd = op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> & newMd = op->getFinalMediaDescription();
 	if (newMd) {
 		updateStreams(newMd, CallSession::State::StreamsRunning);
 		setState(CallSession::State::StreamsRunning, "Connected (streams running)");
@@ -2044,7 +2039,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
 	L_Q();
-	std::shared_ptr<SalMediaDescription> desc = op->getRemoteMediaDescription();
+	const std::shared_ptr<SalMediaDescription> & desc = op->getRemoteMediaDescription();
 
 	bool keepSdpVersion = !!linphone_config_get_int(
 		linphone_core_get_config(q->getCore()->getCCore()),
@@ -2272,7 +2267,7 @@ LinphoneStatus MediaSession::acceptEarlyMedia (const MediaSessionParams *msp) {
 	}
 	d->op->notifyRinging(true);
 	d->setState(CallSession::State::IncomingEarlyMedia, "Incoming call early media");
-	std::shared_ptr<SalMediaDescription> md = d->op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md)
 		d->updateStreams(md, d->state);
 	return 0;
@@ -2528,7 +2523,7 @@ void MediaSession::sendVfuRequest () {
 void MediaSession::startIncomingNotification (bool notifyRinging) {
 	L_D();
 
-	std::shared_ptr<SalMediaDescription> md = d->op->getFinalMediaDescription();
+	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md) {
 		if (md->isEmpty() || getCore()->incompatibleSecurity(md)) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
@@ -2916,7 +2911,7 @@ float MediaSession::getRecordVolume () const {
 const MediaSessionParams * MediaSession::getRemoteParams () {
 	L_D();
 	if (d->op){
-		std::shared_ptr<SalMediaDescription> md = d->op->getRemoteMediaDescription();
+		const std::shared_ptr<SalMediaDescription> & md = d->op->getRemoteMediaDescription();
 		MediaSessionParams * params = nullptr;
 		if (md) {
 			params = new MediaSessionParams();
