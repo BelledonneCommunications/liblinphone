@@ -885,7 +885,11 @@ std::shared_ptr<LimeManager> LimeX3dhEncryptionEngine::getLimeManager () {
 }
 
 void LimeX3dhEncryptionEngine::stale_session (const std::string localDeviceId, const std::string peerDeviceId) {
-	limeManager->stale_sessions(localDeviceId, peerDeviceId);
+	try {
+		limeManager->stale_sessions(localDeviceId, peerDeviceId);
+	} catch (const BctbxException &e) {
+		lError() << "[LIME] fail to stale session between local ["<<localDeviceId<<"] and "<<" remote ["<<peerDeviceId<<"]. lime says: "<<e.what();
+	}
 }
 
 lime::limeCallback LimeX3dhEncryptionEngine::setLimeCallback (string operation) {
