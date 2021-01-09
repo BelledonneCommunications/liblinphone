@@ -212,7 +212,10 @@ void Imdn::parse (const shared_ptr<ChatMessage> &chatMessage) {
 					// When the IMDN status is failed for reason code 488 (Not acceptable here) and the chatroom is encrypted,
 					// something is wrong with our encryption session with this peer, stale the active session the next
 					// message (which can be a resend of this one) will be encrypted with a new session
-					if (status.getFailed().present() && status.getReason().present() && (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
+					if (cr->getLocalAddress() == cm->getFromAddress() // check the imdn is in response to a message sent by the local user
+							&& status.getFailed().present() // that we have a fail tag
+							&& status.getReason().present() // and a reason tag
+							&& (cr->getCapabilities() & ChatRoom::Capabilities::Encrypted)) { // and the chatroom is encrypted
 						// Check the reason code is 488
 						auto reason = status.getReason().get();
 						auto imee = cm->getCore()->getEncryptionEngine();
