@@ -4506,7 +4506,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				linphone_core_add_callbacks(pauline->lc, cbs);
 
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomExhumed, 1, 5000));
-				BC_ASSERT_EQUAL(linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 1, int, "%d");
+				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 1, int, "%d");
 
 				linphone_core_cbs_unref(cbs);				
 				coresList = bctbx_list_remove(coresList, pauline->lc);
@@ -4526,7 +4526,7 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 
 				paulineOneToOneCr = linphone_core_get_chat_room(pauline->lc, exhumedConfAddr);
-				BC_ASSERT_EQUAL(linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int, "%d");
+				BC_ASSERT_EQUAL((int)linphone_chat_room_get_previouses_conference_ids_count(paulineOneToOneCr), 0, int, "%d");
 			} else {
 				BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreated, 2, 5000));
 				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, 2, 5000));
@@ -4566,17 +4566,17 @@ static void exhume_one_to_one_chat_room_3_base(bool_t core_restart) {
 		linphone_config_set_int(linphone_core_get_config(pauline2->lc), "misc", "hide_empty_chat_rooms", 0);
 		linphone_config_set_int(linphone_core_get_config(pauline2->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *pauline2_chat_rooms = linphone_core_get_chat_rooms(pauline2->lc);
-		BC_ASSERT_EQUAL(bctbx_list_size(pauline2_chat_rooms), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(pauline2_chat_rooms), 1, int , "%d");
 
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_empty_chat_rooms", 0);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *pauline_chat_rooms = linphone_core_get_chat_rooms(pauline->lc);
-		BC_ASSERT_EQUAL(bctbx_list_size(pauline_chat_rooms), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_chat_rooms), 1, int , "%d");
 
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "hide_empty_chat_rooms", 0);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
-		BC_ASSERT_EQUAL(bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
 	}
 
 end:
@@ -4636,7 +4636,7 @@ static void exhume_one_to_one_chat_room_4(void) {
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneConferenceStateTerminated, 1, 5000));
 
 		bctbx_list_t *participants = linphone_chat_room_get_participants(paulineOneToOneCr);
-		BC_ASSERT_EQUAL(bctbx_list_size(participants), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(participants), 1, int , "%d");
 		bctbx_list_free_with_data(participants, (bctbx_list_free_func)linphone_participant_unref);
 
 		// Marie goes offline
@@ -4677,12 +4677,12 @@ static void exhume_one_to_one_chat_room_4(void) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_empty_chat_rooms", 0);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *pauline_chat_rooms = linphone_core_get_chat_rooms(pauline->lc);
-		BC_ASSERT_EQUAL(bctbx_list_size(pauline_chat_rooms), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(pauline_chat_rooms), 1, int , "%d");
 
 		linphone_config_set_int(linphone_core_get_config(marie->lc), "misc", "hide_empty_chat_rooms", 0);
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "misc", "hide_chat_rooms_from_removed_proxies", 0);
 		const bctbx_list_t *marie_chat_rooms = linphone_core_get_chat_rooms(marie->lc);
-		BC_ASSERT_EQUAL(bctbx_list_size(marie_chat_rooms), 1, int , "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(marie_chat_rooms), 1, int , "%d");
 	}
 
 end:
