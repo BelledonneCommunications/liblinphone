@@ -1108,19 +1108,31 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	}
 
 	if (!belle_http_request_is_cancelled(httpRequest)) {
-		shared_ptr<ChatMessage> message = chatMessage.lock();
-		if (message) {
-			lInfo() << "Canceling file transfer " << currentFileContentToTransfer->getFilePath();
-			lWarning() << "Deleting incomplete file " << currentFileContentToTransfer->getFilePath();
-			int result = unlink(currentFileContentToTransfer->getFilePath().c_str());
-			if (result != 0) {
-				lError() << "Couldn't delete file " << currentFileContentToTransfer->getFilePath() << ", errno is " << result;
+		if (currentFileContentToTransfer) {
+			string filePath = currentFileContentToTransfer->getFilePath();
+			if (!filePath.empty()) {
+				lInfo() << "Canceling file transfer using file: " << filePath;
+
+				shared_ptr<ChatMessage> message = chatMessage.lock();
+				if (message && message->getDirection() == ChatMessage::Direction::Incoming) {
+					lWarning() << "Deleting incomplete file " << filePath;
+					int result = unlink(filePath.c_str());
+					if (result != 0) {
+						lError() << "Couldn't delete file " << filePath << ", errno is " << result;
+					}
+				} else {
+					lWarning() << "http request still running for ORPHAN msg: this is a memory leak";
+				}
+			} else {
+				lInfo() << "Cancelling file transfer.";
 			}
 		} else {
-			lInfo() << "Warning: http request still running for ORPHAN msg: this is a memory leak";
+			lWarning() << "Found a http request for file transfer but no Content";
 		}
+
 		belle_http_provider_cancel_request(provider, httpRequest);
 	}
+	
 	releaseHttpRequest();
 }
 

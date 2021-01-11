@@ -27,6 +27,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Real time text related function linphone_chat_message_get_char() now will always return the new line character,
   which wasn't the case before if the getChar() was done after the composing callback was triggered for this character.
 - linphone_core_interpret_url() will unescape characters first if possible if only a username is given as input parameter.
+- linphone_chat_message_cancel_file_transfer() no longer deletes the file for outgoing messages.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.
@@ -34,6 +35,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Error IMDN in LIME chat rooms not properly sent.
 - Chat message lost during attachment auto download if Core stopped during the process.
 - Windows tests.
+- Name of MediaCodec encoder and decoder filters in H264Helper Java class.
 
 ## [4.4.0] 2020-06-16
     
