@@ -122,15 +122,15 @@ namespace Private {
 	private:
 		// Workaround for MSVC 2015.
 		// See: https://stackoverflow.com/questions/41593649/why-wont-visual-studio-let-me-use-a-templatized-constexpr-function-in-enable-i/41597153
-		struct IsNeg { static const bool value = Value < 0; };
+		//struct IsNeg { static const bool value = Value < 0; };
 
 		// Subtract 2 from N because powers of 10 must start at 0 and \0 are accounted in the value of N
-		template<std::size_t... Index, typename Int = int, typename std::enable_if<!IsNeg::value, Int>::type* = nullptr>
+		template<std::size_t... Index, typename Int = int, typename std::enable_if<Value >= 0, Int>::type* = nullptr>
 		constexpr StaticIntStringHelper (const IndexSequence<Index...> &) :
 			raw{ char('0' + Value / pow10(N - Index - 2) % 10)..., '\0' } {}
 
 		// Subtract 3 from N because powers of 10 must start at 0 and - sign as well as \0 are accounted in the value of N
-		template<std::size_t... Index, typename Int = int, typename std::enable_if<IsNeg::value, Int>::type* = nullptr>
+		template<std::size_t... Index, typename Int = int, typename std::enable_if<Value < 0, Int>::type* = nullptr>
 		constexpr StaticIntStringHelper (const IndexSequence<Index...> &) :
 			raw{ '-', char('0' + abs(Value) / pow10(N - Index - 3) % 10)..., '\0' } {}
 	};

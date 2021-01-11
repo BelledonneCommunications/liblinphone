@@ -236,7 +236,7 @@ void simple_call_base_with_rcs(const char *caller_rc, const char *callee_rc, boo
 		if (use_multipart_invite_body) {
 			BC_ASSERT_PTR_NOT_NULL(parts);
 			if (parts) {
-				BC_ASSERT_EQUAL(bctbx_list_size(parts), 1, int, "%i");
+				BC_ASSERT_EQUAL((int)bctbx_list_size(parts), 1, int, "%i");
 				LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(parts);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				if (content) {
@@ -4614,13 +4614,13 @@ static void call_logs_if_no_db_set(void) {
 	LinphoneCoreManager* laure = linphone_core_manager_new("laure_call_logs_rc");
 
 	linphone_core_set_call_logs_database_path(laure->lc, NULL);
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 0, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 0, int, "%d");
 
 	BC_ASSERT_TRUE(call(marie, laure));
 	wait_for_until(marie->lc, laure->lc, NULL, 5, 1000);
 	end_call(marie, laure);
 
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 1, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 1, int, "%d");
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(laure);
 }
@@ -4640,7 +4640,7 @@ static void call_logs_migrate(void) {
 	linphone_config_read_file(linphone_core_get_config(laure->lc), logs_rc);
 	linphone_core_migrate_logs_from_rc_to_db(laure->lc);
 
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 10, int , "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_core_get_call_logs(laure->lc)), 10, int , "%d");
 
 	// Need to reset migration flag & restore call logs in rc file
 	// because when the Core started it automatically migrated the call logs & removed them from the rc
