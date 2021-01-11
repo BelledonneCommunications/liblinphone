@@ -102,7 +102,7 @@ static void get_unread_messages_count (void) {
 static void get_history (void) {
 	MainDbProvider provider;
 	const MainDb &mainDb = provider.getMainDb();
-	BC_ASSERT_EQUAL(
+	BC_ASSERT_EQUAL((int)
 		mainDb.getHistoryRange(
 			ConferenceId(IdentityAddress("sip:test-4@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
 			0, -1, MainDb::Filter::ConferenceChatMessageFilter
@@ -111,7 +111,7 @@ static void get_history (void) {
 		int,
 		"%d"
 	);
-	BC_ASSERT_EQUAL(
+	BC_ASSERT_EQUAL((int)
 		mainDb.getHistoryRange(
 			ConferenceId(IdentityAddress("sip:test-7@sip.linphone.org"), IdentityAddress("sip:test-7@sip.linphone.org")),
 			0, -1, MainDb::Filter::ConferenceCallFilter
@@ -120,7 +120,7 @@ static void get_history (void) {
 		int,
 		"%d"
 	);
-	BC_ASSERT_EQUAL(
+	BC_ASSERT_EQUAL((int)
 		mainDb.getHistoryRange(
 			ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
 			0, -1, MainDb::Filter::ConferenceChatMessageFilter
@@ -129,7 +129,7 @@ static void get_history (void) {
 		int,
 		"%d"
 	);
-	BC_ASSERT_EQUAL(
+	BC_ASSERT_EQUAL((int)
 		mainDb.getHistory(
 			ConferenceId(IdentityAddress("sip:test-1@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
 			100, MainDb::Filter::ConferenceChatMessageFilter
@@ -147,7 +147,7 @@ static void get_conference_notified_events (void) {
 		ConferenceId(IdentityAddress("sip:test-44@sip.linphone.org"), IdentityAddress("sip:test-1@sip.linphone.org")),
 		1
 	);
-	BC_ASSERT_EQUAL(events.size(), 3, int, "%d");
+	BC_ASSERT_EQUAL((int)events.size(), 3, int, "%d");
 	if (events.size() != 3)
 		return;
 
@@ -193,7 +193,7 @@ static void get_chat_rooms() {
 	MainDb &mainDb = provider.getMainDb();
 	std::string utf8Txt = "Héllo world ! Welcome to ベルドンヌ通信.";
 	list<shared_ptr<AbstractChatRoom>> chatRooms = mainDb.getChatRooms();
-	BC_ASSERT_EQUAL(chatRooms.size(), 86, int, "%d");
+	BC_ASSERT_EQUAL((int)chatRooms.size(), 86, int, "%d");
 
 	list<shared_ptr<AbstractChatRoom>> emptyChatRooms;
 	shared_ptr<AbstractChatRoom> emptyMessageRoom = nullptr;
@@ -218,7 +218,7 @@ static void get_chat_rooms() {
 			BC_ASSERT_PTR_NOT_NULL(lastMessage);
 		}
 	}
-	BC_ASSERT_EQUAL(emptyChatRooms.size(), 4, int, "%d");
+	BC_ASSERT_EQUAL((int)emptyChatRooms.size(), 4, int, "%d");
 
 	// Check an empty chat room last_message_id is updated after adding a message into it
 	BC_ASSERT_PTR_NOT_NULL(emptyMessageRoom);
