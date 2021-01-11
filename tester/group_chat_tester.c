@@ -6040,7 +6040,7 @@ static void group_chat_room_join_one_to_one_chat_room_with_a_new_device_not_noti
 	// Simulate an uninstall of the application on Marie's side with unregistration (It should remove the device)
 
 	// Save the number of chat rooms at the moment of stopping the core
-	const int marie1_no_cr = bctbx_list_size(linphone_core_get_chat_rooms(marie1->lc));
+	const int marie1_no_cr = (int)bctbx_list_size(linphone_core_get_chat_rooms(marie1->lc));
 	coresManagerList = bctbx_list_remove(coresManagerList, marie1);
 	coresList = bctbx_list_remove(coresList, marie1->lc);
 	initialPaulineStats = pauline->stat;
