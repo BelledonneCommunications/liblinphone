@@ -20,6 +20,7 @@
 #include "linphone/utils/utils.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_stream_description.h"
+#include "utils/payload-type-handler.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -144,14 +145,8 @@ void SalStreamDescription::init() {
 }
 
 void SalStreamDescription::destroy() {
-	for (auto & pt : payloads) {
-		payload_type_destroy(pt);
-	}
-	payloads.clear();
-	for (auto & pt : already_assigned_payloads) {
-		payload_type_destroy(pt);
-	}
-	already_assigned_payloads.clear();
+	PayloadTypeHandler::clearPayloadList(payloads);
+	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
