@@ -59,7 +59,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	}
 	for(ai_it = ai; ai_it != NULL ; ai_it = ai_it->ai_next){
 		char ipaddress[NI_MAXHOST] = { 0 };
-		err = getnameinfo(ai_it->ai_addr, ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+		err = getnameinfo(ai_it->ai_addr, (socklen_t)ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
 		if (err != 0){
 			ms_error("liblinphone_tester_resolve_name_to_ip_address(): getnameinfo() error : %s", gai_strerror(err));
 			continue;
