@@ -58,6 +58,7 @@ public:
 	static int getMinBandwidth (int downBandwidth, int upBandwidth);
 	static int getRemainingBandwidthForVideo (int total, int audio);
 	static bool isPayloadTypeNumberAvailable (const std::list<OrtpPayloadType*> & codecs, int number, const OrtpPayloadType *ignore);
+	static void clearPayloadList(std::list<OrtpPayloadType*> & payloads);
 
 private:
 	static int findPayloadTypeNumber (const std::list<OrtpPayloadType*> & assigned, const OrtpPayloadType *pt);
