@@ -341,7 +341,7 @@ void linphone_lpconfig_invalid_friend(void) {
 	LinphoneCoreManager* mgr = linphone_core_manager_new2("invalid_friends_rc",FALSE);
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(mgr->lc);
 	const bctbx_list_t *friends = linphone_friend_list_get_friends(friendList);
-	BC_ASSERT_EQUAL(bctbx_list_size(friends), 3, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(friends), 3, int, "%d");
 	linphone_core_manager_destroy(mgr);
 }
 
@@ -354,7 +354,7 @@ void linphone_lpconfig_invalid_friend_remote_provisioning(void) {
 
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(mgr->lc);
 	const bctbx_list_t *friends = linphone_friend_list_get_friends(friendList);
-	BC_ASSERT_EQUAL(bctbx_list_size(friends), 3, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(friends), 3, int, "%d");
 	linphone_core_manager_destroy(mgr);
 	ms_free(xml_path);
 }
@@ -667,7 +667,7 @@ static void search_friend_in_alphabetical_order(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, name3SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, name2SipUri, NULL);//"sip:alber@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, name5SipUri, NULL);//"sip:gal@sip.example.org"
@@ -716,7 +716,7 @@ static void search_friend_without_filter(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), S_SIZE_FRIEND, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -756,7 +756,7 @@ static void search_friend_with_domain_without_filter(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "sip.test.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
@@ -790,7 +790,7 @@ static void search_friend_all_domains(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "llo", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 3, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 3, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[2], NULL);//"sip:allo@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[3], NULL);//"sip:hello@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
@@ -816,7 +816,7 @@ static void search_friend_one_domain(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "llo", "sip.example.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[2], NULL);//"sip:allo@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[3], NULL);//"sip:hello@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -841,7 +841,7 @@ static void search_friend_research_estate(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "l", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 7, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 7, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[2], NULL);//"sip:allo@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[3], NULL);//"sip:hello@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
@@ -855,7 +855,7 @@ static void search_friend_research_estate(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "la", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[6], NULL);//"sip:laura@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[8], NULL);//"sip:laure@sip.test.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -880,7 +880,7 @@ static void search_friend_research_estate_reset(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "la", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[6], NULL);//"sip:laura@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[8], NULL);//"sip:laure@sip.test.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -891,7 +891,7 @@ static void search_friend_research_estate_reset(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "l", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 7, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 7, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[2], NULL);//"sip:allo@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[3], NULL);//"sip:hello@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[4], NULL);//"sip:hello@sip.test.org"
@@ -933,7 +933,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "33", "*");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[10], NULL);//"sip:+111223344@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -944,7 +944,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "5", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[5], NULL);//"sip:marie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -953,7 +953,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "55", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[5], NULL);//"sip:marie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -962,7 +962,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "556", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[5], NULL);//"sip:marie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -971,7 +971,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "5566", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[5], NULL);//"sip:marie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -980,7 +980,7 @@ static void search_friend_with_phone_number(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "55667", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
@@ -1153,7 +1153,7 @@ static void search_friend_with_presence(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "33", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 4, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 4, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[10], NULL);//"sip:+111223344@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
@@ -1166,7 +1166,7 @@ static void search_friend_with_presence(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "chloe", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, "sip:chloe@sip.example.org", NULL);//"sip:chloe@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1209,7 +1209,7 @@ static void search_friend_in_call_log(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "ch", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 4, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 4, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[1], NULL);//"sip:charette@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, charlesSipUri, NULL);//"sip:charles@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 2, sFriends[0], NULL);//"sip:charu@sip.test.org"
@@ -1222,7 +1222,7 @@ static void search_friend_in_call_log(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "ch", "sip.test.org");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, charlesSipUri, NULL);//"sip:charles@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1283,7 +1283,7 @@ static void search_friend_in_call_log_already_exist(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "ch", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 6, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 6, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[1], NULL);//"sip:charette@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[0], NULL);//"sip:charu@sip.test.org"
 		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, NULL);//"sip:chloe@sip.example.org"
@@ -1326,7 +1326,7 @@ static void search_friend_last_item_is_filter(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "newaddress", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		const LinphoneSearchResult *sr = bctbx_list_nth_data(resultList, 0);
 		if (BC_ASSERT_PTR_NOT_NULL(sr)) {
 			const LinphoneAddress *srAddress = linphone_search_result_get_address(sr);
@@ -1376,7 +1376,7 @@ static void search_friend_with_name(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stephanie", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanie2SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, stephanie1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1387,7 +1387,7 @@ static void search_friend_with_name(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "delarue", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanie2SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, stephanie1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1438,7 +1438,7 @@ static void search_friend_with_name_with_uppercase(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stephanie", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanie2SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, stephanie1SipUri, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1483,7 +1483,7 @@ static void search_friend_with_multiple_sip_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stephanie", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanieSipUri2, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, stephanieSipUri1, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1494,7 +1494,7 @@ static void search_friend_with_multiple_sip_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "delarue", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanieSipUri2, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, stephanieSipUri1, NULL);//"sip:toto@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1540,7 +1540,7 @@ static void search_friend_with_same_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "stephanie", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanieSipUri, NULL);//"sip:stephanie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
@@ -1550,7 +1550,7 @@ static void search_friend_with_same_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "delarue", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 1, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, stephanieSipUri, NULL);//"sip:stephanie@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
@@ -1560,7 +1560,7 @@ static void search_friend_with_same_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), S_SIZE_FRIEND+1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND+1, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1569,7 +1569,7 @@ static void search_friend_with_same_address(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "*");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), S_SIZE_FRIEND+1, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), S_SIZE_FRIEND+1, int, "%d");
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
@@ -1745,7 +1745,7 @@ static void search_friend_chat_room_remote(void) {
 	magicSearch = linphone_magic_search_new(marie->lc);
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 2, int, "%d");
 		_check_friend_result_list(marie->lc, resultList, 0, addr, NULL);
 		_check_friend_result_list(marie->lc, resultList, 1, "sip:pauline@sip.example.org", NULL); // marie_rc has an hardcoded friend for pauline
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
@@ -1832,7 +1832,7 @@ static void search_friend_non_default_list(void) {
 	resultList = linphone_magic_search_get_contact_list_from_filter(magicSearch, "", "");
 
 	if (BC_ASSERT_PTR_NOT_NULL(resultList)) {
-		BC_ASSERT_EQUAL(bctbx_list_size(resultList), 5, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(resultList), 5, int, "%d");
 		_check_friend_result_list(manager->lc, resultList, 0, name3SipUri, NULL);//"sip:stephanie@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, name2SipUri, NULL);//"sip:alber@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, name5SipUri, NULL);//"sip:gal@sip.example.org"
@@ -1910,7 +1910,7 @@ static void delete_friend_from_rc(void) {
 
 	BC_ASSERT_PTR_NOT_NULL(friends);
 	if (friends) {
-		BC_ASSERT_EQUAL(bctbx_list_size(friends), 3, int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(friends), 3, int, "%i");
 		bctbx_list_t *it = NULL;
 		int index = 2;
 		for (it = (bctbx_list_t *)friends; it != NULL; it = bctbx_list_next(it)) {
@@ -1926,10 +1926,10 @@ static void delete_friend_from_rc(void) {
 	LinphoneFriend *friend = linphone_friend_new_with_address("sip:pauline@sip.linphone.org");
 	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
 	linphone_friend_list_add_friend(friend_list, friend);
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 4, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 4, int, "%i");
 	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
 	linphone_friend_list_remove_friend(friend_list, friend);
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 3, int, "%i");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 3, int, "%i");
 	BC_ASSERT_EQUAL(linphone_friend_get_rc_index(friend), -1, int, "%i");
 	linphone_friend_unref(friend);
 
@@ -1940,7 +1940,7 @@ static void delete_friend_from_rc(void) {
 		const char *section = "friend_1";
 		BC_ASSERT_EQUAL(linphone_config_has_section(config, section), 0, int, "%i");
 		BC_ASSERT_PTR_NULL(linphone_friend_new_from_config_file(core, 1));
-		BC_ASSERT_EQUAL(bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 2, int, "%i");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(linphone_friend_list_get_friends(friend_list)), 2, int, "%i");
 		linphone_friend_unref(francois);
 	}
 
@@ -1956,7 +1956,7 @@ static void dial_plan(void) {
 		char *e164 = generate_random_e164_phone_from_dial_plan(dialplan);
 		if (BC_ASSERT_PTR_NOT_NULL(e164)) {
 		const char *calling_code = linphone_dial_plan_get_country_calling_code(dialplan);
-		BC_ASSERT_EQUAL((strlen(e164)-strlen(calling_code) -1) ,linphone_dial_plan_get_national_number_length(dialplan),int,"%i");
+		BC_ASSERT_EQUAL((int)(strlen(e164)-strlen(calling_code) -1) ,linphone_dial_plan_get_national_number_length(dialplan),int,"%i");
 		BC_ASSERT_EQUAL(	  linphone_dial_plan_lookup_ccc_from_e164(e164)
 							, strtol(calling_code, NULL,10)
 							, int
@@ -1974,13 +1974,13 @@ static void audio_devices(void) {
 	LinphoneCore *core = manager->lc;
 
 	bctbx_list_t *sound_devices = linphone_core_get_sound_devices_list(core);
-	int sound_devices_count = bctbx_list_size(sound_devices);
+	int sound_devices_count = (int)bctbx_list_size(sound_devices);
 	BC_ASSERT_GREATER_STRICT(sound_devices_count, 0, int, "%d");
 	bctbx_list_free(sound_devices);
 
 	// Check extended audio devices list matches legacy sound devices list
 	bctbx_list_t *audio_devices = linphone_core_get_extended_audio_devices(core);
-	int audio_devices_count = bctbx_list_size(audio_devices);
+	int audio_devices_count =(int) bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
@@ -2012,7 +2012,7 @@ static void audio_devices(void) {
 	
 	// Check that devices list is empty as the current one type is UNKNOWN
 	audio_devices = linphone_core_get_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, 0, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
@@ -2024,7 +2024,7 @@ static void audio_devices(void) {
 	BC_ASSERT_EQUAL(manager->stat.number_of_LinphoneCoreAudioDevicesListUpdated, 1, int, "%d");
 
 	audio_devices = linphone_core_get_extended_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 1, int, "%d");
 	LinphoneAudioDevice *audio_device = (LinphoneAudioDevice *)bctbx_list_get_data(audio_devices);
 	BC_ASSERT_PTR_NOT_NULL(audio_device);
@@ -2042,7 +2042,7 @@ static void audio_devices(void) {
 	
 	// Check that device is in the audio devices list
 	audio_devices = linphone_core_get_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, 1, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
@@ -2084,13 +2084,13 @@ static void audio_devices(void) {
 
 	// Check that device is in the extended audio devices list
 	audio_devices = linphone_core_get_extended_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 2, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 	
 	// Check that device is not in the simple audio devices list as we already have a bluetooth audio device
 	audio_devices = linphone_core_get_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, 1, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
@@ -2100,7 +2100,7 @@ static void audio_devices(void) {
 
 	// Check that device is no longer in the extended audio devices list
 	audio_devices = linphone_core_get_extended_audio_devices(core);
-	audio_devices_count = bctbx_list_size(audio_devices);
+	audio_devices_count = (int)bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 1, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
 
