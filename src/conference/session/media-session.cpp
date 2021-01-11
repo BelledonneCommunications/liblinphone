@@ -1430,7 +1430,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (md->streams[i].hasSrtp()) {
-			if (keepSrtpKeys && oldMd && oldMd->streams[i].enabled() && oldMd->streams[i].hasSrtp()) {
+			if (keepSrtpKeys && oldMd && (i < oldMd->streams.size()) && oldMd->streams[i].enabled() && oldMd->streams[i].hasSrtp()) {
 				lInfo() << "Keeping same crypto keys";
 				md->streams[i].crypto = oldMd->streams[i].crypto;
 			} else {
