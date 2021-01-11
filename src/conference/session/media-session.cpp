@@ -1224,7 +1224,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			else
 				md->streams[audioStreamIndex].ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
 			md->streams[audioStreamIndex].max_rate = pth.getMaxCodecSampleRate(l);
-			md->streams[audioStreamIndex].payloads = std::move(l);
+			md->streams[audioStreamIndex].payloads = l;
 			md->streams[audioStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], "as");
 
@@ -1236,7 +1236,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		} else {
 			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
 			md->streams[audioStreamIndex].dir = SalStreamInactive;
-			l.clear();
+			PayloadTypeHandler::clearPayloadList(l);
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio);
 		if (customSdpAttributes)
@@ -1253,7 +1253,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[videoStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[videoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
 			md->streams[videoStreamIndex].name = "Video";
-			md->streams[videoStreamIndex].payloads = std::move(l);
+			md->streams[videoStreamIndex].payloads = l;
 			md->streams[videoStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[videoStreamIndex], "vs");
 
@@ -1266,7 +1266,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		} else {
 			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
 			md->streams[videoStreamIndex].dir = SalStreamInactive;
-			l.clear();
+			PayloadTypeHandler::clearPayloadList(l);
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo);
 		if (customSdpAttributes)
@@ -1285,13 +1285,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			md->streams[textStreamIndex].rtcp_mux = rtcpMux;
 			md->streams[textStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
 			md->streams[textStreamIndex].name = "Text";
-			md->streams[textStreamIndex].payloads = std::move(l);
+			md->streams[textStreamIndex].payloads = l;
 			md->streams[textStreamIndex].rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[textStreamIndex], "ts");
 		} else {
 			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
 			md->streams[textStreamIndex].dir = SalStreamInactive;
-			l.clear();
+			PayloadTypeHandler::clearPayloadList(l);
 		}
 		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText);
 		if (customSdpAttributes)

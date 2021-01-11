@@ -329,4 +329,11 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 	return result;
 }
 
+void PayloadTypeHandler::clearPayloadList(std::list<OrtpPayloadType*> & payloads) {
+	for (auto & pt : payloads) {
+		payload_type_destroy(pt);
+	}
+	payloads.clear();
+}
+
 LINPHONE_END_NAMESPACE
