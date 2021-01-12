@@ -239,7 +239,7 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 			auto source = lc->ringstream ? lc->ringstream->source : nullptr;
 			MSPlayerState state;
 			if (source && ms_filter_call_method(source, MS_PLAYER_GET_STATE, &state) == 0) {
-				if (state == MSPlayerPlaying) {
+				if (state != MSPlayerPlaying) {
 					deleteTimer();
 					return false;
 				}else{
