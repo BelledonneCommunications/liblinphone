@@ -4723,10 +4723,9 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_linphone_specs_list (Linph
  * @param params The chat room creation parameters #LinphoneChatRoomParams @maybenil
  * @param localAddr #LinphoneAddress representing the local proxy configuration to use for the chat room creation or NULL @maybenil
  * @param participants \bctbx_list{LinphoneAddress} The initial list of participants of the chat room @notnil
- * @return The newly created chat room or NULL. @maybenil
+ * @return The newly created chat room (can be an existing one if backend is Basic) or NULL. @maybenil
  */
 LINPHONE_PUBLIC LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *core, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const bctbx_list_t *participants);
-
 
 /**
  * Find a chat room.

@@ -273,6 +273,30 @@ static void file_transfer_content(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void create_two_basic_chat_room_with_same_remote(void) {
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(pauline->lc);
+	linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_encryption(chat_room_params, FALSE);
+	linphone_chat_room_params_enable_group(chat_room_params, FALSE);
+	linphone_chat_room_params_enable_rtt(chat_room_params, FALSE);
+	bctbx_list_t *participants = bctbx_list_append(NULL, laure->identity);
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_6(pauline->lc, chat_room_params, pauline->identity, participants);
+	BC_ASSERT_PTR_NOT_NULL(chat_room);
+
+	LinphoneChatRoom *chat_room2 = linphone_core_create_chat_room_6(pauline->lc, chat_room_params, pauline->identity, participants);
+	BC_ASSERT_PTR_NOT_NULL(chat_room2);
+	BC_ASSERT_PTR_EQUAL(chat_room, chat_room2);
+
+	bctbx_list_free(participants);
+	linphone_chat_room_params_unref(chat_room_params);
+	linphone_chat_room_unref(chat_room);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void text_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
@@ -3466,6 +3490,7 @@ static void migration_from_messages_db (void) {
 
 test_t message_tests[] = {
 	TEST_NO_TAG("File transfer content", file_transfer_content),
+	TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
 	TEST_NO_TAG("Text message", text_message),
 	TEST_NO_TAG("Transfer forward message", text_forward_message),
 	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),
