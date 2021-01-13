@@ -393,10 +393,8 @@ void MediaSessionPrivate::telephoneEventReceived (int event) {
 }
 
 void MediaSessionPrivate::terminated () {
-	L_Q();
 	stopStreams();
 	CallSessionPrivate::terminated();
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 }
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */

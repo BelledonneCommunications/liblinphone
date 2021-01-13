@@ -427,11 +427,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::Error:
 			// Exit call from conference if an error occurred
 			exitFromConference(session);
-		BCTBX_NO_BREAK; // No break because a notification of last call ended may also be issued if the last remainign call errors out
+		BCTBX_NO_BREAK; // No break because a notification of last call ended may also be issued if the last remaining call errors out
 		case CallSession::State::End:
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
+			getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallEnd);	// Play end tone for each ended call
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{

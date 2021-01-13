@@ -1089,7 +1089,8 @@ typedef enum _LinphoneToneID {
 	LinphoneToneBusy, /**< Busy tone */
 	LinphoneToneCallWaiting, /** Call waiting tone */
 	LinphoneToneCallOnHold, /** Call on hold tone */
-	LinphoneToneCallLost /** Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallLost, /** Tone played when call is abruptly disconnected (media lost)*/
+	LinphoneToneCallEnd /** When the call end for any reason but lost */
 } LinphoneToneID;
 
 /**
