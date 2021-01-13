@@ -2803,7 +2803,10 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	if (system_context) {
 		lc->system_context = system_context;
 	}
-	lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
+	if (lc->platform_helper == NULL) {
+		lc->platform_helper = LinphonePrivate::createIosPlatformHelpers(lc->cppPtr, lc->system_context);
+	}
+	getPlatformHelpers(lc)->start(lc->cppPtr);
 #endif
 	if (lc->platform_helper == NULL)
 		lc->platform_helper = new LinphonePrivate::GenericPlatformHelpers(lc->cppPtr);
@@ -2969,6 +2972,7 @@ LinphoneCore *_linphone_core_new_with_config(LinphoneCoreCbs *cbs, struct _LpCon
 LinphoneCore *_linphone_core_new_shared_with_config(LinphoneCoreCbs *cbs, struct _LpConfig *config, void *userdata, void *system_context, bool_t automatically_start, const char *app_group_id, bool_t main_core) {
 	bctbx_message("[SHARED] Creating %s Shared Core", main_core ? "Main" : "Executor");
 	linphone_config_set_string(config, "shared_core", "app_group_id", app_group_id);
+	linphone_config_set_bool(config, "shared_core", "is_main_core", main_core);
 	LinphoneCore *core = _linphone_core_new_with_config(cbs, config, userdata, system_context, automatically_start);
 	core->is_main_core = main_core;
 	// allow ios app extension to mark msg as read without being registered
@@ -3011,6 +3015,12 @@ LinphoneCore *linphone_core_ref(LinphoneCore *lc) {
 }
 
 void linphone_core_unref(LinphoneCore *lc) {
+#if TARGET_OS_IPHONE
+	if (lc->platform_helper) {
+		delete getPlatformHelpers(lc);
+	}
+	lc->platform_helper = NULL;
+#endif
 	belle_sip_object_unref(BELLE_SIP_OBJECT(lc));
 }
 
@@ -6924,9 +6934,11 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 
 #if TARGET_OS_IPHONE
 	bool_t is_shared_core = getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared();
-#endif
+	getPlatformHelpers(lc)->stop();
+#else
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
+#endif
 
 #if TARGET_OS_IPHONE
 	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
