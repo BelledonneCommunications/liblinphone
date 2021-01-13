@@ -428,7 +428,7 @@ static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
 }
 
 bool IosPlatformHelpers::startNetworkMonitoring(void) {
-	if (!mStart) return;
+	if (!mStart) return false;
 
 	if (reachabilityRef != NULL) {
 		stopNetworkMonitoring();
