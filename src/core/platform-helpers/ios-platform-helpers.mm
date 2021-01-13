@@ -90,6 +90,9 @@ public:
 
 	void startAudioForEchoTestOrCalibration () override;
 	void stopAudioForEchoTestOrCalibration () override;
+	
+	void start (std::shared_ptr<LinphonePrivate::Core> core) override;
+	void stop (void) override;
 
 	//IosHelper specific
 	bool isReachable(SCNetworkReachabilityFlags flags);
@@ -112,7 +115,10 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
-	IosAppDelegate *mAppDelegate;
+	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
+	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
+	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
+	NSTimer* mIterateTimer = NULL;
 };
 
 static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo);
@@ -122,13 +128,19 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
+	mUseAppDelgate = (!getSharedCoreHelpers()->isCoreShared() || linphone_config_get_bool(core->getCCore()->config, "shared_core", "is_main_core", false)) && !linphone_config_get_int(core->getCCore()->config, "tester", "test_env", false);
+	if (mUseAppDelgate) {
+		mAppDelegate = [[IosAppDelegate alloc] init];
+		[mAppDelegate configure:core];
+	}
+	ms_message("IosPlatformHelpers is fully initialised");
+}
+
+void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockCount = 0;
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
-
-	mAppDelegate = [[IosAppDelegate alloc] init];
-	[mAppDelegate setCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -157,7 +169,13 @@ IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> c
      name:AVAudioSessionRouteChangeNotification
      object:nil];
     
-	ms_message("IosPlatformHelpers is fully initialised");
+	ms_message("IosPlatformHelpers is fully started");
+	mStart = true;
+}
+
+void IosPlatformHelpers::stop () {
+	mStart = false;
+	ms_message("IosPlatformHelpers is fully stopped");
 }
 
 //Safely get an UTF-8 string from the given CFStringRef
@@ -197,6 +215,8 @@ void IosPlatformHelpers::sBgTaskTimeout (void *data) {
 // -----------------------------------------------------------------------------
 
 void IosPlatformHelpers::acquireCpuLock () {
+	if (!mStart) return;
+
 	// on iOS, cpu lock is implemented by a long running task and it is abstracted by belle-sip, so let's use belle-sip directly.
 	if (mCpuLockCount == 0)
 		mCpuLockTaskId = static_cast<long>(belle_sip_begin_background_task("Liblinphone cpu lock", sBgTaskTimeout, this));
@@ -205,6 +225,8 @@ void IosPlatformHelpers::acquireCpuLock () {
 }
 
 void IosPlatformHelpers::releaseCpuLock () {
+	if (!mStart) return;
+
 	mCpuLockCount--;
 	if (mCpuLockCount != 0)
 		return;
@@ -268,17 +290,42 @@ void *IosPlatformHelpers::getPathContext () {
 }
 
 void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
+	if (!mStart) return;
+
 	mNetworkMonitoringEnabled = monitoringEnabled;
 	if (monitoringEnabled) {
 		startNetworkMonitoring();
-		[mAppDelegate onLinphoneCoreStart];
+	}
+
+	if (mUseAppDelgate) {
+		if (linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
+			if (mIterateTimer && mIterateTimer.valid) {
+				ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
+				return;
+			}
+			mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
+			// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
+			[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+			ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
+		} else {
+			ms_warning("[IosPlatformHelpers] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+		}
 	}
 }
 
 void IosPlatformHelpers::onLinphoneCoreStop() {
+	if (!mStart) return;
+
 	if (mNetworkMonitoringEnabled) {
 		stopNetworkMonitoring();
-		[mAppDelegate onLinphoneCoreStop];
+	}
+
+	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
+		if (mIterateTimer) {
+			[mIterateTimer invalidate];
+			mIterateTimer = NULL;
+		}
+		ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
 	}
 
 	getSharedCoreHelpers()->onLinphoneCoreStop();
@@ -293,6 +340,8 @@ void IosPlatformHelpers::stopAudioForEchoTestOrCalibration () {
 }
 
 void IosPlatformHelpers::onWifiOnlyEnabled(bool enabled) {
+	if (!mStart) return;
+
 	mWifiOnly = enabled;
 	if (isNetworkReachable()) {
 		//Nothing to do if we have no connection
@@ -308,6 +357,8 @@ void IosPlatformHelpers::setDnsServers () {
 
 //Set proxy settings on core
 void IosPlatformHelpers::setHttpProxy (const string &host, int port) {
+	if (!mStart) return;
+
 	linphone_core_set_http_proxy_host(getCore()->getCCore(), host.c_str());
 	linphone_core_set_http_proxy_port(getCore()->getCCore(), port);
 }
@@ -377,6 +428,8 @@ static void showNetworkFlags(SCNetworkReachabilityFlags flags) {
 }
 
 bool IosPlatformHelpers::startNetworkMonitoring(void) {
+	if (!mStart) return false;
+
 	if (reachabilityRef != NULL) {
 		stopNetworkMonitoring();
 	}
@@ -402,6 +455,8 @@ bool IosPlatformHelpers::startNetworkMonitoring(void) {
 }
 
 void IosPlatformHelpers::stopNetworkMonitoring(void) {
+	if (!mStart) return;
+
 	if (reachabilityRef) {
 		CFRelease(reachabilityRef);
 		reachabilityRef = NULL;
@@ -422,6 +477,8 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 }
 
 void IosPlatformHelpers::networkChangeCallback() {
+	if (!mStart) return;
+
 	//We receive this notification multiple time for possibly unknown reasons
 	//So take actions only if state changed of our internal network-related properties
 

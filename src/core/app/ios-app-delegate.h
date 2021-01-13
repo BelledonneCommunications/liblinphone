@@ -23,12 +23,9 @@
 
 @interface IosAppDelegate : NSObject {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
-	NSTimer* mIterateTimer;
 }
 
-- (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-- (void)onLinphoneCoreStart;
-- (void)onLinphoneCoreStop;
+- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
 
 @end
