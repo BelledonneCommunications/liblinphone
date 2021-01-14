@@ -92,6 +92,7 @@ extern test_suite_t tunnel_test_suite;
 extern test_suite_t upnp_test_suite;
 extern test_suite_t utils_test_suite;
 extern test_suite_t video_test_suite;
+extern test_suite_t capability_negotiation_test_suite;
 extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
