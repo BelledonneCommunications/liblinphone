@@ -28,6 +28,8 @@
 #include <vector>
 #include <map>
 
+#include "bctoolbox/utils.hh"
+
 #include "linphone/utils/enum-generator.h"
 #include "address/address.h"
 #include "conference/session/streams.h"
@@ -69,12 +71,6 @@ namespace Utils {
 
 	LINPHONE_PUBLIC bool iequals (const std::string &a, const std::string &b);
 
-	LINPHONE_PUBLIC std::vector<std::string> split (const std::string &str, const std::string &delimiter);
-
-	LINPHONE_PUBLIC inline std::vector<std::string> split (const std::string &str, char delimiter) {
-		return split(str, std::string(1, delimiter));
-	}
-
 	LINPHONE_PUBLIC std::string toString (int val);
 	LINPHONE_PUBLIC std::string toString (long val);
 	LINPHONE_PUBLIC std::string toString (long long val);
@@ -114,6 +110,8 @@ namespace Utils {
 		return str ? str : "";
 	}
 
+
+
 	template<typename S, typename T>
 	inline std::string join (const std::vector<T>& elems, const S& delim) {
 		std::stringstream ss;
@@ -140,8 +138,7 @@ namespace Utils {
 	template<typename T, typename std::enable_if<!std::is_base_of<Address, T>::value>::type* = nullptr>
 
 	inline const T &getEmptyConstRefObject () {
-		static const T object{};
-		return object;
+		return bctoolbox::Utils::getEmptyConstRefObject<T>();
 	}
 
 	template<class Container>
@@ -168,6 +165,15 @@ namespace Utils {
 		return bcList;
 	}
 
+	template<class T>
+	std::list<T> bctbxListToList (bctbx_list_t* l) {
+		std::list<T> cppList;
+		for(bctbx_list_t *elem = l;elem!=NULL;elem=elem->next){
+			T data = static_cast<T>(bctbx_list_get_data(elem));
+			cppList.push_back(data);
+		}
+		return cppList;
+	}
 	LINPHONE_PUBLIC std::tm getTimeTAsTm (time_t t);
 	LINPHONE_PUBLIC time_t getTmAsTimeT (const std::tm &t);
 
@@ -176,7 +182,6 @@ namespace Utils {
 	LINPHONE_PUBLIC std::string convertAnyToUtf8 (const std::string &str, const std::string &encoding);
 	LINPHONE_PUBLIC std::string quoteStringIfNotAlready(const std::string &str);
 
-	
 	class Version{
 		public:
 			LINPHONE_PUBLIC Version() = default;
