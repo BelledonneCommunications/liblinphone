@@ -54,19 +54,6 @@ bool Utils::iequals (const string &a, const string &b) {
 
 // -----------------------------------------------------------------------------
 
-vector<string> Utils::split (const string &str, const string &delimiter) {
-	vector<string> out;
-
-	size_t pos = 0, oldPos = 0;
-	for (; (pos = str.find(delimiter, pos)) != string::npos; oldPos = pos + delimiter.length(), pos = oldPos)
-		out.push_back(str.substr(oldPos, pos - oldPos));
-	out.push_back(str.substr(oldPos));
-
-	return out;
-}
-
-// -----------------------------------------------------------------------------
-
 #ifndef __ANDROID__
 #define TO_STRING_IMPL(TYPE) \
 	string Utils::toString (TYPE val) { \
