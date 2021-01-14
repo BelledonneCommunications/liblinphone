@@ -20,42 +20,113 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-static void call_with_encryption_negotiation_failure(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	if (linphone_core_media_encryption_supported(pauline->lc,LinphoneMediaEncryptionSRTP)) {
-		LpConfig *marie_lp = linphone_core_get_config(marie->lc);
-		linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",1);
-		LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
-		linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",1);
-		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
-		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
-		linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
-		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
+static void call_with_mandatory_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
+	if (linphone_core_media_encryption_supported(caller->lc,encryption)) {
+		linphone_core_set_media_encryption_mandatory(callee->lc,TRUE);
+		linphone_core_set_media_encryption(callee->lc,encryption);
+		linphone_core_set_media_encryption_mandatory(caller->lc,TRUE);
+		linphone_core_set_media_encryption(caller->lc,encryption);
 
-		LinphoneCallTestParams marie_test_params = {0}, pauline_test_params = {0};
+		BC_ASSERT_TRUE(call(caller, callee));
+		end_call(callee, caller);
 
-		pauline_test_params.sdp_simulate_error = TRUE;
-		BC_ASSERT_FALSE(call_with_params2(marie,pauline,&marie_test_params, &pauline_test_params, FALSE));
-
-		BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallError,1, int, "%d");
-		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallReleased,1, int, "%d");
-		// actually pauline does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
-		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallError,0, int, "%d");
-
-		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(marie->lc), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(pauline->lc), 0, int, "%d");
 	} else {
 		ms_warning ("not tested because srtp not available");
 	}
+}
+
+static void call_with_mandatory_encryption_wrapper(const LinphoneMediaEncryption encryption) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
+	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
+
+	call_with_mandatory_encryption_base(marie, pauline, encryption);
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
+	call_with_mandatory_encryption_base(pauline, marie, encryption);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
+static void srtp_call_with_mandatory_encryption(void) {
+	call_with_mandatory_encryption_wrapper(LinphoneMediaEncryptionSRTP);
+}
+
+static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
+	if (linphone_core_media_encryption_supported(callee->lc,encryption)) {
+
+		const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
+		int initLogsSize = (int)bctbx_list_size(initLogs);
+
+		LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
+
+		callee_test_params.sdp_simulate_error = TRUE;
+		BC_ASSERT_FALSE(call_with_params2(caller,callee,&caller_test_params, &callee_test_params, FALSE));
+
+		BC_ASSERT_PTR_NULL(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,1, int, "%d");
+		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallReleased,1, int, "%d");
+		// actually callee does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
+		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallIncomingReceived,0, int, "%d");
+
+		const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize+1), int, "%i");
+		// Forward logs pointer to the element desired
+		for (int i = 0; i < initLogsSize; i++) logs=logs->next;
+		if (logs){
+			const LinphoneErrorInfo *ei;
+			LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
+			BC_ASSERT_EQUAL(linphone_call_log_get_status(cl), LinphoneCallEarlyAborted, int, "%d");
+			BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
+			ei = linphone_call_log_get_error_info(cl);
+			BC_ASSERT_PTR_NOT_NULL(ei);
+			if (ei){
+				BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+			}
+		}
+
+
+
+		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
+	} else {
+		ms_warning ("not tested because srtp not available");
+	}
+}
+
+static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMediaEncryption encryption) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
+	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
+
+	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
+		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
+		linphone_core_set_media_encryption(pauline->lc,encryption);
+		linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
+		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
+	}
+
+	call_with_encryption_negotiation_failure_base(marie, pauline, encryption);
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
+	call_with_encryption_negotiation_failure_base(pauline, marie, encryption);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void srtp_call_with_encryption_negotiation_failure(void) {
+	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionSRTP);
+}
 
 test_t capability_negotiation_tests[] = {
-	TEST_NO_TAG("SRTP call with encryption negotiation failure", call_with_encryption_negotiation_failure)
+	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
+	TEST_NO_TAG("SRTP call with encryption negotiation failure", srtp_call_with_encryption_negotiation_failure)
 };
 
 test_suite_t capability_negotiation_test_suite = {"Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
