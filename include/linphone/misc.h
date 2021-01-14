@@ -81,6 +81,14 @@ LINPHONE_PUBLIC const char *linphone_registration_state_to_string(LinphoneRegist
 **/
 LINPHONE_PUBLIC const char *linphone_media_encryption_to_string(LinphoneMediaEncryption media_encryption);
 
+/**
+ * Convert string to enum member.
+ * @param a string representation of the #LinphoneMediaEncryption to convert @notnil
+ * @return integer value of the media_encryption in enum #LinphoneMediaEncryption or -1 if it is not found
+ * @ingroup media_parameters
+**/
+LINPHONE_PUBLIC int linphone_media_encryption_from_string(const char * value);
+
 LINPHONE_PUBLIC const char* linphone_privacy_to_string(LinphonePrivacy privacy);
 
 LINPHONE_PUBLIC const char *linphone_subscription_state_to_string(LinphoneSubscriptionState state);

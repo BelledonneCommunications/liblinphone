@@ -2773,6 +2773,7 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	ms_message("Initializing LinphoneCore %s", linphone_core_get_version());
 
 	lc->is_unreffing = FALSE;
+	lc->supported_encryptions=NULL;
 	lc->config=linphone_config_ref(config);
 	lc->data=userdata;
 
@@ -7244,6 +7245,11 @@ void _linphone_core_uninit(LinphoneCore *lc)
 		_linphone_core_stop(lc);
 	}
 
+	if (lc->supported_encryptions) {
+		bctbx_list_free(lc->supported_encryptions);
+	}
+	lc->supported_encryptions = NULL;
+
 	linphone_config_unref(lc->config);
 	lc->config = NULL;
 #ifdef __ANDROID__
@@ -7712,6 +7718,22 @@ void linphone_core_set_srtp_enabled(LinphoneCore *lc, bool_t enabled) {
 	linphone_config_set_int(lc->config,"sip","srtp",(int)enabled);
 }
 
+int linphone_media_encryption_from_string(const char * value){
+	if (strcmp(value, "LinphoneMediaEncryptionSRTP") == 0) {
+		return LinphoneMediaEncryptionSRTP;
+	} else if (strcmp(value, "LinphoneMediaEncryptionDTLS") == 0) {
+		return LinphoneMediaEncryptionDTLS;
+	} else if (strcmp(value, "LinphoneMediaEncryptionZRTP") == 0) {
+		return LinphoneMediaEncryptionZRTP;
+	} else if (strcmp(value, "LinphoneMediaEncryptionNone") == 0) {
+		return LinphoneMediaEncryptionNone;
+	} else {
+		ms_error("Unable to find LinphoneMediaEncryption for %s",value);
+		return -1;
+	}
+	return -1;
+}
+
 const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 	switch(menc){
 		case LinphoneMediaEncryptionSRTP:
@@ -7727,19 +7749,25 @@ const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 	return "INVALID";
 }
 
+bool_t linphone_core_media_encryption_supported(LinphoneCore *lc, LinphoneMediaEncryption menc){
 
-bool_t linphone_core_media_encryption_supported(const LinphoneCore *lc, LinphoneMediaEncryption menc){
+	bool_t menc_supported_by_core = linphone_core_is_media_encryption_supported(lc, menc) || (linphone_core_get_media_encryption(lc) == menc);
+	bool_t menc_supported_by_library = FALSE;
 	switch(menc){
 		case LinphoneMediaEncryptionSRTP:
-			return ms_srtp_supported();
+			menc_supported_by_library = ms_srtp_supported();
+			break;
 		case LinphoneMediaEncryptionDTLS:
-			return ms_dtls_srtp_available();
+			menc_supported_by_library = ms_dtls_srtp_available();
+			break;
 		case LinphoneMediaEncryptionZRTP:
-			return ms_zrtp_available() && !lc->zrtp_not_available_simulation;
+			menc_supported_by_library = ms_zrtp_available() && !lc->zrtp_not_available_simulation;
+			break;
 		case LinphoneMediaEncryptionNone:
-			return TRUE;
+			menc_supported_by_library = TRUE;
+			break;
 	}
-	return FALSE;
+	return (menc_supported_by_core && menc_supported_by_library);
 }
 
 LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMediaEncryption menc) {
@@ -7786,7 +7814,7 @@ LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMedi
 	return ret;
 }
 
-LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *lc) {
+LinphoneMediaEncryption linphone_core_get_media_encryption(const LinphoneCore *lc) {
 	const char* menc = linphone_config_get_string(lc->config, "sip", "media_encryption", NULL);
 
 	if (menc == NULL)
@@ -7807,6 +7835,110 @@ bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc) {
 
 void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
+}
+
+bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
+}
+
+void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "capability_negotiations_reinvite", (int)enable);
+}
+
+bool_t linphone_core_capability_negociation_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "support_capability_negotiations", 0);
+}
+
+void linphone_core_enable_capability_negociation(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
+}
+
+bool_t linphone_core_tcap_lines_merging_enabled(const LinphoneCore *lc) {
+	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
+	if (capability_negotiation_supported) {
+		return (bool_t)!!linphone_config_get_int(lc->config, "sip", "tcap_line_merge", 0);
+	}
+
+	return FALSE;
+}
+
+void linphone_core_enable_tcap_line_merging(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "tcap_line_merge", (int)enable);
+}
+
+void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, const bctbx_list_t * encs) {
+	bctbx_list_t * enc_list = NULL;
+	for(const bctbx_list_t * enc = encs;enc!=NULL;enc=enc->next){
+		int enc_enum = LINPHONE_PTR_TO_INT(bctbx_list_get_data(enc));
+		const char * enc_string = linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(enc_enum));
+		enc_list = bctbx_list_append(enc_list, ms_strdup(enc_string));
+	}
+	linphone_config_set_string_list(lc->config,"sip","supported_encryptions",enc_list);
+	if (enc_list) {
+		bctbx_list_free_with_data(enc_list, (bctbx_list_free_func)bctbx_free);
+	}
+}
+
+bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time() {
+	bctbx_list_t * encryption_list = NULL;
+	if (ms_srtp_supported()) {
+		encryption_list = bctbx_list_append(encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionSRTP));
+	}
+	if (ms_dtls_srtp_available()) {
+		encryption_list = bctbx_list_append(encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionDTLS));
+	}
+	if (ms_zrtp_available()) {
+		encryption_list = bctbx_list_append(encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionZRTP));
+	}
+	encryption_list = bctbx_list_append(encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionNone));
+
+	return encryption_list;
+}
+
+const bctbx_list_t * linphone_core_get_supported_media_encryptions(LinphoneCore *lc) {
+	bctbx_list_t * supported_encryptions = linphone_config_get_string_list(lc->config,"sip","supported_encryptions",NULL);
+	bool_t capability_negotiation_supported = linphone_core_capability_negociation_enabled(lc);
+
+	if (lc->supported_encryptions) {
+		bctbx_list_free(lc->supported_encryptions);
+		lc->supported_encryptions = NULL;
+	}
+
+	// If capability negotiation is not enabled or user didn't specify the list of supported encryption, then it is assumed that all encryptions that were enabled at compile time are supported
+	if (!capability_negotiation_supported || (supported_encryptions == NULL)) {
+		bctbx_list_t * default_encryption_list = linphone_core_get_supported_media_encryptions_at_compile_time();
+		if (lc->zrtp_not_available_simulation) {
+			bctbx_list_t * zrtp_encryption = bctbx_list_find(default_encryption_list, LINPHONE_INT_TO_PTR(LinphoneMediaEncryptionZRTP));
+			if (zrtp_encryption) {
+				default_encryption_list = bctbx_list_unlink(default_encryption_list, zrtp_encryption);
+				bctbx_list_free(zrtp_encryption);
+			}
+		}
+		if (default_encryption_list) {
+			lc->supported_encryptions = bctbx_list_copy(default_encryption_list);
+			bctbx_list_free(default_encryption_list);
+		}
+	} else {
+		for(bctbx_list_t * enc = supported_encryptions;enc!=NULL;enc=enc->next){
+			const char * enc_string = static_cast<const char *>(bctbx_list_get_data(enc));
+			int enc_enum = linphone_media_encryption_from_string(enc_string);
+			lc->supported_encryptions = bctbx_list_append(lc->supported_encryptions, LINPHONE_INT_TO_PTR(enc_enum));
+		}
+	}
+
+	if (supported_encryptions) {
+		bctbx_list_free_with_data(supported_encryptions, (bctbx_list_free_func)bctbx_free);
+	}
+
+	return lc->supported_encryptions;
+}
+
+bool_t linphone_core_is_media_encryption_supported(LinphoneCore *lc, LinphoneMediaEncryption menc) {
+
+	const bctbx_list_t * encryption_list = linphone_core_get_supported_media_encryptions(lc);
+	bctbx_list_t * enc = bctbx_list_find((bctbx_list_t *)encryption_list, LINPHONE_INT_TO_PTR(menc));
+	bool supported = (enc != NULL);
+	return supported;
 }
 
 void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
@@ -8419,4 +8551,12 @@ bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {
 	if (sound_description == NULL) return FALSE;
 	if (sound_description->flags & DEVICE_HAS_CRAPPY_OPENGL) return TRUE;
 	return FALSE;
+}
+
+void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites) {
+	linphone_config_set_string(core->config, "sip", "srtp_crypto_suites", suites);
+}
+
+const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
+	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
 }
