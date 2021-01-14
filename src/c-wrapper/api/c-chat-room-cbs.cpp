@@ -49,6 +49,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 	LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb chatMessageParticipantImdnStateChangedCb;
+	LinphoneChatRoomCbsEventLogCreatedCb eventLogCreatedCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -99,6 +100,14 @@ LinphoneChatRoomCbsMessageReceivedCb linphone_chat_room_cbs_get_message_received
 
 void linphone_chat_room_cbs_set_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageReceivedCb cb) {
 	cbs->messageReceivedCb = cb;
+}
+
+LinphoneChatRoomCbsEventLogCreatedCb linphone_chat_room_cbs_get_event_log_created (const LinphoneChatRoomCbs *cbs) {
+	return cbs->eventLogCreatedCb;
+}
+
+void linphone_chat_room_cbs_set_event_log_created (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEventLogCreatedCb cb) {
+	cbs->eventLogCreatedCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageReceivedCb linphone_chat_room_cbs_get_chat_message_received (const LinphoneChatRoomCbs *cbs) {

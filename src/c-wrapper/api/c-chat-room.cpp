@@ -522,23 +522,32 @@ void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneC
 	NOTIFY_IF_EXIST(MessageReceived, message_received, cr, msg)
 }
 
+void _linphone_chat_room_notify_event_log_created(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	NOTIFY_IF_EXIST(EventLogCreated, event_log_created, cr, event_log)
+}
+
 void _linphone_chat_room_notify_participant_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantAdded, participant_added, cr, event_log)
 }
 
 void _linphone_chat_room_notify_participant_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantRemoved, participant_removed, cr, event_log)
 }
 
 void _linphone_chat_room_notify_participant_device_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantDeviceAdded, participant_device_added, cr, event_log)
 }
 
 void _linphone_chat_room_notify_participant_device_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantDeviceRemoved, participant_device_removed, cr, event_log)
 }
 
 void _linphone_chat_room_notify_participant_admin_status_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ParticipantAdminStatusChanged, participant_admin_status_changed, cr, event_log)
 }
 
@@ -547,31 +556,38 @@ void _linphone_chat_room_notify_state_changed(LinphoneChatRoom *cr, LinphoneChat
 }
 
 void _linphone_chat_room_notify_security_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(SecurityEvent, security_event, cr, event_log)
 }
 
 void _linphone_chat_room_notify_subject_changed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(SubjectChanged, subject_changed, cr, event_log)
 }
 
-void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(ConferenceJoined, conference_joined, cr, eventLog)
+void _linphone_chat_room_notify_conference_joined(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
+	NOTIFY_IF_EXIST(ConferenceJoined, conference_joined, cr, event_log)
 }
 
-void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, eventLog)
+void _linphone_chat_room_notify_conference_left(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
+	NOTIFY_IF_EXIST(ConferenceLeft, conference_left, cr, event_log)
 }
 
-void _linphone_chat_room_notify_ephemeral_event(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(EphemeralEvent, ephemeral_event, cr, eventLog)
+void _linphone_chat_room_notify_ephemeral_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
+	NOTIFY_IF_EXIST(EphemeralEvent, ephemeral_event, cr, event_log)
 }
 
-void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, cr, eventLog)
+void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
+	NOTIFY_IF_EXIST(EphemeralMessageTimerStarted, ephemeral_message_timer_started, cr, event_log)
 }
 
-void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *eventLog) {
-	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, eventLog)
+void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
+	NOTIFY_IF_EXIST(EphemeralMessageDeleted, ephemeral_message_deleted, cr, event_log)
 }
 
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg) {
@@ -579,10 +595,12 @@ void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom 
 }
 
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ChatMessageReceived, chat_message_received, cr, event_log)
 }
 
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_event_log_created(cr, event_log);
 	NOTIFY_IF_EXIST(ChatMessageSent, chat_message_sent, cr, event_log)
 }
 

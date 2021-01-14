@@ -90,6 +90,20 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsMessageReceivedCb linphone_chat_room_cbs_get_
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsMessageReceivedCb cb);
 
 /**
+ * Get the event log created callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current event log created callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsEventLogCreatedCb linphone_chat_room_cbs_get_event_log_created (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the event log created callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The event log created callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_event_log_created (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsEventLogCreatedCb cb);
+
+/**
  * Get the chat message received callback.
  * @param cbs #LinphoneChatRoomCbs object. @notnil
  * @return The current chat message received callback.
