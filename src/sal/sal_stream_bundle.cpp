@@ -21,6 +21,7 @@
 
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_stream_description.h"
+#include "sal/sal_stream_configuration.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -74,8 +75,8 @@ bool SalStreamBundle::operator!=(const SalStreamBundle & other) const {
 	return !(*this == other);
 }
 
-void SalStreamBundle::addStream(SalStreamDescription & stream, const std::string &mid){
-	stream.mid = mid;
+void SalStreamBundle::addStream(SalStreamConfiguration & cfg, const std::string &mid){
+	cfg.mid = mid;
 	mids.push_back(mid);
 }
 
