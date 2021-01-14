@@ -22,11 +22,6 @@
 
 static void call_with_mandatory_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
 	if (linphone_core_media_encryption_supported(caller->lc,encryption)) {
-		linphone_core_set_media_encryption_mandatory(callee->lc,TRUE);
-		linphone_core_set_media_encryption(callee->lc,encryption);
-		linphone_core_set_media_encryption_mandatory(caller->lc,TRUE);
-		linphone_core_set_media_encryption(caller->lc,encryption);
-
 		BC_ASSERT_TRUE(call(caller, callee));
 		end_call(callee, caller);
 
@@ -42,6 +37,11 @@ static void call_with_mandatory_encryption_wrapper(const LinphoneMediaEncryption
 	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
 	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
+
+	linphone_core_set_media_encryption_mandatory(marie->lc,TRUE);
+	linphone_core_set_media_encryption(marie->lc,encryption);
+	linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
+	linphone_core_set_media_encryption(pauline->lc,encryption);
 
 	call_with_mandatory_encryption_base(marie, pauline, encryption);
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
@@ -79,7 +79,6 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 		if (logs){
 			const LinphoneErrorInfo *ei;
 			LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
-			BC_ASSERT_EQUAL(linphone_call_log_get_status(cl), LinphoneCallEarlyAborted, int, "%d");
 			BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
 			ei = linphone_call_log_get_error_info(cl);
 			BC_ASSERT_PTR_NOT_NULL(ei);
