@@ -20,7 +20,7 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-static void call_with_mandatory_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
+static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
 	if (linphone_core_media_encryption_supported(caller->lc,encryption)) {
 		BC_ASSERT_TRUE(call(caller, callee));
 		end_call(callee, caller);
@@ -43,9 +43,9 @@ static void call_with_mandatory_encryption_wrapper(const LinphoneMediaEncryption
 	linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 	linphone_core_set_media_encryption(pauline->lc,encryption);
 
-	call_with_mandatory_encryption_base(marie, pauline, encryption);
+	call_with_encryption_base(marie, pauline, encryption);
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
-	call_with_mandatory_encryption_base(pauline, marie, encryption);
+	call_with_encryption_base(pauline, marie, encryption);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -53,6 +53,14 @@ static void call_with_mandatory_encryption_wrapper(const LinphoneMediaEncryption
 
 static void srtp_call_with_mandatory_encryption(void) {
 	call_with_mandatory_encryption_wrapper(LinphoneMediaEncryptionSRTP);
+}
+
+static void dtls_call_with_mandatory_encryption(void) {
+	call_with_mandatory_encryption_wrapper(LinphoneMediaEncryptionDTLS);
+}
+
+static void zrtp_call_with_mandatory_encryption(void) {
+	call_with_mandatory_encryption_wrapper(LinphoneMediaEncryptionZRTP);
 }
 
 static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
@@ -123,9 +131,44 @@ static void srtp_call_with_encryption_negotiation_failure(void) {
 	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionSRTP);
 }
 
+static void dtls_call_with_encryption_negotiation_failure(void) {
+	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionDTLS);
+}
+
+static void zrtp_call_with_encryption_negotiation_failure(void) {
+	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionZRTP);
+}
+
+static void call_with_no_encryption(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
+	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
+
+	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
+	linphone_core_set_media_encryption_mandatory(pauline->lc,FALSE);
+	linphone_core_set_media_encryption(pauline->lc,encryption);
+	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
+	linphone_core_set_media_encryption(marie->lc,encryption);
+
+	call_with_encryption_base(marie, pauline, encryption);
+	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
+	call_with_encryption_base(pauline, marie, encryption);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t capability_negotiation_tests[] = {
+	TEST_NO_TAG("SRTP call with no encryption", call_with_no_encryption),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
-	TEST_NO_TAG("SRTP call with encryption negotiation failure", srtp_call_with_encryption_negotiation_failure)
+	TEST_NO_TAG("SRTP call with encryption negotiation failure", srtp_call_with_encryption_negotiation_failure),
+	TEST_NO_TAG("DTLS call with mandatory encryption", dtls_call_with_mandatory_encryption),
+	TEST_NO_TAG("DTLS call with encryption negotiation failure", dtls_call_with_encryption_negotiation_failure),
+	TEST_NO_TAG("ZRTP call with mandatory encryption", zrtp_call_with_mandatory_encryption),
+	TEST_NO_TAG("ZRTP call with encryption negotiation failure", zrtp_call_with_encryption_negotiation_failure)
 };
 
 test_suite_t capability_negotiation_test_suite = {"Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
