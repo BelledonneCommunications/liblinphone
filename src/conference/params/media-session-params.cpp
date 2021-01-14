@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "c-wrapper/internal/c-tools.h"
 #include "call-session-params-p.h"
 #include "media-session-params-p.h"
 
@@ -526,12 +527,7 @@ void MediaSessionParams::setMediaEncryption (LinphoneMediaEncryption encryption)
 // -----------------------------------------------------------------------------
 
 SalMediaProto MediaSessionParams::getMediaProto () const {
-	if ((getMediaEncryption() == LinphoneMediaEncryptionSRTP) && avpfEnabled()) return SalProtoRtpSavpf;
-	if (getMediaEncryption() == LinphoneMediaEncryptionSRTP) return SalProtoRtpSavp;
-	if ((getMediaEncryption() == LinphoneMediaEncryptionDTLS) && avpfEnabled()) return SalProtoUdpTlsRtpSavpf;
-	if (getMediaEncryption() == LinphoneMediaEncryptionDTLS) return SalProtoUdpTlsRtpSavp;
-	if (avpfEnabled()) return SalProtoRtpAvpf;
-	return SalProtoRtpAvp;
+	return linphone_media_encryption_to_sal_media_proto(getMediaEncryption(), (avpfEnabled() ? TRUE : FALSE));
 }
 
 const char * MediaSessionParams::getRtpProfile () const {
@@ -542,7 +538,7 @@ const char * MediaSessionParams::getRtpProfile () const {
 
 void MediaSessionParams::addCustomSdpAttribute (const string &attributeName, const string &attributeValue) {
 	L_D();
-	d->customSdpAttributes = sal_custom_sdp_attribute_append(d->customSdpAttributes, attributeName.c_str(), attributeValue.c_str());
+	d->customSdpAttributes = sal_custom_sdp_attribute_append(d->customSdpAttributes, attributeName.c_str(), L_STRING_TO_C(attributeValue));
 }
 
 void MediaSessionParams::clearCustomSdpAttributes () {
@@ -559,7 +555,7 @@ const char * MediaSessionParams::getCustomSdpAttribute (const string &attributeN
 
 void MediaSessionParams::addCustomSdpMediaAttribute (LinphoneStreamType lst, const string &attributeName, const string &attributeValue) {
 	L_D();
-	d->customSdpMediaAttributes[lst] = sal_custom_sdp_attribute_append(d->customSdpMediaAttributes[lst], attributeName.c_str(), attributeValue.c_str());
+	d->customSdpMediaAttributes[lst] = sal_custom_sdp_attribute_append(d->customSdpMediaAttributes[lst], attributeName.c_str(), L_STRING_TO_C(attributeValue));
 }
 
 void MediaSessionParams::clearCustomSdpMediaAttributes (LinphoneStreamType lst) {
