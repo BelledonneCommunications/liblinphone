@@ -692,10 +692,10 @@ typedef enum _LinphoneMediaResourceMode {
  * @ingroup media_parameters
 **/
 typedef enum _LinphoneMediaEncryption {
-	LinphoneMediaEncryptionNone, /**< No media encryption is used */
-	LinphoneMediaEncryptionSRTP, /**< Use SRTP media encryption */
-	LinphoneMediaEncryptionZRTP, /**< Use ZRTP media encryption */
-	LinphoneMediaEncryptionDTLS /**< Use DTLS media encryption */
+	LinphoneMediaEncryptionNone,  /**< No media encryption is used */
+	LinphoneMediaEncryptionSRTP,  /**< Use SRTP media encryption */
+	LinphoneMediaEncryptionZRTP,  /**< Use ZRTP media encryption */
+	LinphoneMediaEncryptionDTLS   /**< Use DTLS media encryption */
 } LinphoneMediaEncryption;
 
 /**
