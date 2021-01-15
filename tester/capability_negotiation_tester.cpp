@@ -134,10 +134,11 @@ static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMedia
 
 	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
+	std::string cfg_enc_pref = create_confg_encryption_preference_string_except(encryption);
+	linphone_config_set_string(marie_lp,"sip","encryption_preference",cfg_enc_pref.c_str());
 	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 		linphone_core_set_media_encryption(pauline->lc,encryption);
-		std::string encryptionList;
 	}
 
 	ms_message("Core with no encryption calls core with mandatory encryption");
