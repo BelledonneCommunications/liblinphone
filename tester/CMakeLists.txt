@@ -225,7 +225,6 @@ set(SOURCE_FILES_C
 	audio_bypass_tester.c
 	audio_routes_tester.c
 	audio_video_conference_tester.c
-	capability_negotiation_tester.c
 	call_multicast_tester.c
 	call_multi_tester.c
 	call_push_incoming_tester.c
@@ -273,6 +272,7 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
