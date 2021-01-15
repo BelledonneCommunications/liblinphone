@@ -17,6 +17,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 #include <list>
+#include <string>
 
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
@@ -35,29 +36,46 @@ struct encryption_params {
 };
 
 static void set_encryption_preference(std::list<LinphoneMediaEncryption> & preferences, const bool_t encryption_preferred) {
-	preferences.push_back(LinphoneMediaEncryptionSRTP); /**< Use SRTP media encryption */
-	preferences.push_back(LinphoneMediaEncryptionZRTP); /**< Use ZRTP media encryption */
-	preferences.push_back(LinphoneMediaEncryptionDTLS); /**< Use DTLS media encryption */
-	if (encryption_preferred) {
-		preferences.push_front(LinphoneMediaEncryptionNone); /**< No media encryption is used */
-	} else {
-		preferences.push_back(LinphoneMediaEncryptionNone); /**< No media encryption is used */
+
+	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
+		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
+		if (candidateEncryption != LinphoneMediaEncryptionNone) {
+			preferences.push_back(candidateEncryption);
+		}
 	}
+
+	if (encryption_preferred) {
+		preferences.push_back(LinphoneMediaEncryptionNone); /**< No media encryption is used */
+	} else {
+		preferences.push_front(LinphoneMediaEncryptionNone); /**< No media encryption is used */
+	}
+
 }
 
 static void set_encryption_preference_except(std::list<LinphoneMediaEncryption> & preferences, const LinphoneMediaEncryption encryption) {
-	if (encryption != LinphoneMediaEncryptionSRTP) {
-		preferences.push_back(LinphoneMediaEncryptionSRTP); /**< Use SRTP media encryption */
+	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
+		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
+		if (candidateEncryption != encryption) {
+			if (candidateEncryption == LinphoneMediaEncryptionNone) {
+				// No encryption should be added last
+				preferences.push_back(candidateEncryption);
+			} else {
+				preferences.push_front(candidateEncryption);
+			}
+		}
 	}
-	if (encryption != LinphoneMediaEncryptionZRTP) {
-		preferences.push_back(LinphoneMediaEncryptionZRTP); /**< Use ZRTP media encryption */
+}
+
+static std::string create_confg_encryption_preference_string_except(const LinphoneMediaEncryption encryption) {
+	std::string enc_list;
+	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
+		if (static_cast<LinphoneMediaEncryption>(idx) != encryption) {
+			// Add comma if it is not the first element
+			if (!enc_list.empty()) enc_list.append(",");
+			enc_list.append(std::to_string(idx));
+		}
 	}
-	if (encryption != LinphoneMediaEncryptionDTLS) {
-		preferences.push_back(LinphoneMediaEncryptionDTLS); /**< Use DTLS media encryption */
-	}
-	if (encryption != LinphoneMediaEncryptionNone) {
-		preferences.push_back(LinphoneMediaEncryptionNone); /**< No media encryption is used */
-	}
+	return enc_list;
 }
 
 static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
@@ -119,6 +137,7 @@ static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMedia
 	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 		linphone_core_set_media_encryption(pauline->lc,encryption);
+		std::string encryptionList;
 	}
 
 	ms_message("Core with no encryption calls core with mandatory encryption");
@@ -165,11 +184,21 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 	if (linphone_core_media_encryption_supported(pauline->lc,pauline_encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,(pauline_enc_params.level == E_MANDATORY));
 		linphone_core_set_media_encryption(pauline->lc,pauline_encryption);
+
+		if (pauline_enc_params.level == E_OPTIONAL) {
+			std::string cfg_enc_pref = create_confg_encryption_preference_string_except(pauline_encryption);
+			linphone_config_set_string(pauline_lp,"sip","encryption_preference",cfg_enc_pref.c_str());
+		}
 	}
 	const LinphoneMediaEncryption marie_encryption = marie_enc_params.encryption;
 	if (linphone_core_media_encryption_supported(marie->lc,marie_encryption)) {
 		linphone_core_set_media_encryption_mandatory(marie->lc,(marie_enc_params.level == E_MANDATORY));
 		linphone_core_set_media_encryption(marie->lc,marie_encryption);
+
+		if (pauline_enc_params.level == E_OPTIONAL) {
+			std::string cfg_enc_pref = create_confg_encryption_preference_string_except(marie_encryption);
+			linphone_config_set_string(marie_lp,"sip","encryption_preference",cfg_enc_pref.c_str());
+		}
 	}
 
 	call_with_encryption_base(marie, pauline, marie_encryption);
