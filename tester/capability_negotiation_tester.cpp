@@ -124,7 +124,7 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 	}
 }
 
-static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMediaEncryption encryption) {
+static void call_from_enc_to_no_enc_wrapper(const LinphoneMediaEncryption encryption, bool_t enc_to_no_enc) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
@@ -141,26 +141,40 @@ static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMedia
 		linphone_core_set_media_encryption(pauline->lc,encryption);
 	}
 
-	ms_message("Core with no encryption calls core with mandatory encryption");
-	call_with_encryption_negotiation_failure_base(marie, pauline, encryption);
-	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
-	ms_message("Core with mandatory encryption calls core with no encryption");
-	call_with_encryption_negotiation_failure_base(pauline, marie, encryption);
+	if (enc_to_no_enc) {
+		ms_message("Core with mandatory encryption calls core with no encryption");
+		call_with_encryption_negotiation_failure_base(pauline, marie, encryption);
+	} else {
+		ms_message("Core with no encryption calls core with mandatory encryption");
+		call_with_encryption_negotiation_failure_base(marie, pauline, encryption);
+	}
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void srtp_call_with_encryption_negotiation_failure(void) {
-	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionSRTP);
+static void srtp_call_from_enc_to_no_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionSRTP, TRUE);
 }
 
-static void dtls_call_with_encryption_negotiation_failure(void) {
-	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionDTLS);
+static void dtls_call_from_enc_to_no_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionDTLS, TRUE);
 }
 
-static void zrtp_call_with_encryption_negotiation_failure(void) {
-	call_with_encryption_negotiation_failure_wrapper(LinphoneMediaEncryptionZRTP);
+static void zrtp_call_from_enc_to_no_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionZRTP, TRUE);
+}
+
+static void srtp_call_from_no_enc_to_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionSRTP, FALSE);
+}
+
+static void dtls_call_from_no_enc_to_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionDTLS, FALSE);
+}
+
+static void zrtp_call_from_no_enc_to_enc(void) {
+	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionZRTP, FALSE);
 }
 
 static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
@@ -203,8 +217,6 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 	}
 
 	call_with_encryption_base(marie, pauline, marie_encryption);
-	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
-	call_with_encryption_base(pauline, marie, pauline_encryption);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -244,7 +256,7 @@ static void zrtp_call_with_mandatory_encryption(void) {
 	call_with_mandatory_encryption_wrapper(LinphoneMediaEncryptionZRTP);
 }
 
-static void call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_wrapper(const LinphoneMediaEncryption encryption) {
+static void call_from_opt_enc_to_enc_wrapper(const LinphoneMediaEncryption encryption, bool_t opt_enc_to_enc) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = LinphoneMediaEncryptionNone;
 	marie_enc_params.level = E_OPTIONAL;
@@ -253,42 +265,74 @@ static void call_with_optional_encryption_on_one_side_and_mandatory_on_the_other
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_MANDATORY;
-	call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	if (opt_enc_to_enc) {
+		call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	} else {
+		call_with_encryption_wrapper(pauline_enc_params, FALSE, marie_enc_params, FALSE);
+	}
 }
 
-static void srtp_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_wrapper(LinphoneMediaEncryptionSRTP);
+static void srtp_call_from_opt_enc_to_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionSRTP, TRUE);
 }
 
-static void dtls_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_wrapper(LinphoneMediaEncryptionDTLS);
+static void dtls_call_from_opt_enc_to_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionDTLS, TRUE);
 }
 
-static void zrtp_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_wrapper(LinphoneMediaEncryptionZRTP);
+static void zrtp_call_from_opt_enc_to_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionZRTP, TRUE);
 }
 
-static void call_with_optional_encryption_on_one_side_and_none_on_the_other_wrapper(const LinphoneMediaEncryption encryption) {
+static void srtp_call_from_enc_to_opt_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionSRTP, FALSE);
+}
+
+static void dtls_call_from_enc_to_opt_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionDTLS, FALSE);
+}
+
+static void zrtp_call_from_enc_to_opt_enc(void) {
+	call_from_opt_enc_to_enc_wrapper(LinphoneMediaEncryptionZRTP, FALSE);
+}
+
+static void call_from_opt_enc_to_none_wrapper(const LinphoneMediaEncryption encryption, bool_t opt_enc_to_none) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = LinphoneMediaEncryptionNone;
 	marie_enc_params.level = E_DISABLED;
 
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
-	pauline_enc_params.level = E_MANDATORY;
-	call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	pauline_enc_params.level = E_OPTIONAL;
+	if (opt_enc_to_none) {
+		call_with_encryption_wrapper(pauline_enc_params, FALSE, marie_enc_params, FALSE);
+	} else {
+		call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	}
 }
 
-static void srtp_call_with_optional_encryption_on_one_side_and_none_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_none_on_the_other_wrapper(LinphoneMediaEncryptionSRTP);
+static void srtp_call_from_opt_enc_to_none(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionSRTP, TRUE);
 }
 
-static void dtls_call_with_optional_encryption_on_one_side_and_none_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_none_on_the_other_wrapper(LinphoneMediaEncryptionDTLS);
+static void dtls_call_from_opt_enc_to_none(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionDTLS, TRUE);
 }
 
-static void zrtp_call_with_optional_encryption_on_one_side_and_none_on_the_other_side(void) {
-	call_with_optional_encryption_on_one_side_and_none_on_the_other_wrapper(LinphoneMediaEncryptionZRTP);
+static void zrtp_call_from_opt_enc_to_none(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionZRTP, TRUE);
+}
+
+static void srtp_call_from_no_enc_to_opt(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionSRTP, FALSE);
+}
+
+static void dtls_call_from_no_enc_to_opt(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionDTLS, FALSE);
+}
+
+static void zrtp_call_from_no_enc_to_opt(void) {
+	call_from_opt_enc_to_none_wrapper(LinphoneMediaEncryptionZRTP, FALSE);
 }
 
 static void call_with_optional_encryption_on_both_sides_wrapper(const LinphoneMediaEncryption encryption) {
@@ -319,19 +363,28 @@ static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call with no encryption", call_with_no_encryption),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
-	TEST_NO_TAG("SRTP call with encryption negotiation failure", srtp_call_with_encryption_negotiation_failure),
-	TEST_NO_TAG("SRTP call with optional encryption on one side and mandatory on the other side", srtp_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side),
-	TEST_NO_TAG("SRTP call with optional encryption on one side and none on the other side", srtp_call_with_optional_encryption_on_one_side_and_none_on_the_other_side),
+	TEST_NO_TAG("SRTP call from endpoint with mandatory encryption to endpoint with none", srtp_call_from_enc_to_no_enc),
+	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with mandatory", srtp_call_from_no_enc_to_enc),
+	TEST_NO_TAG("SRTP call from endpoint with optional encryption to endpoint with mandatory", srtp_call_from_opt_enc_to_enc),
+	TEST_NO_TAG("SRTP call from endpoint with mandatory encryption to endpoint with optional", srtp_call_from_enc_to_opt_enc),
+	TEST_NO_TAG("SRTP call from endpoint with optional encryption to endpoint with none", srtp_call_from_opt_enc_to_none),
+	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with optional", srtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("SRTP call with optional encryption on both sides", srtp_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("DTLS call with mandatory encryption", dtls_call_with_mandatory_encryption),
-	TEST_NO_TAG("DTLS call with encryption negotiation failure", dtls_call_with_encryption_negotiation_failure),
-	TEST_NO_TAG("DTLS call with optional encryption on one side and mandatory on the other side", dtls_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side),
-	TEST_NO_TAG("DTLS call with optional encryption on one side and none on the other side", dtls_call_with_optional_encryption_on_one_side_and_none_on_the_other_side),
+	TEST_NO_TAG("DTLS call from endpoint with mandatory encryption to endpoint with none", dtls_call_from_enc_to_no_enc),
+	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with mandatory", dtls_call_from_no_enc_to_enc),
+	TEST_NO_TAG("DTLS call from endpoint with optional encryption to endpoint with mandatory", dtls_call_from_opt_enc_to_enc),
+	TEST_NO_TAG("DTLS call from endpoint with mandatory encryption to endpoint with optional", dtls_call_from_enc_to_opt_enc),
+	TEST_NO_TAG("DTLS call from endpoint with optional encryption to endpoint with none", dtls_call_from_opt_enc_to_none),
+	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with optional", dtls_call_from_no_enc_to_opt),
 	TEST_NO_TAG("DTLS call with optional encryption on both sides", dtls_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("ZRTP call with mandatory encryption", zrtp_call_with_mandatory_encryption),
-	TEST_NO_TAG("ZRTP call with encryption negotiation failure", zrtp_call_with_encryption_negotiation_failure),
-	TEST_NO_TAG("ZRTP call with optional encryption on one side and mandatory on the other side", zrtp_call_with_optional_encryption_on_one_side_and_mandatory_on_the_other_side),
-	TEST_NO_TAG("ZRTP call with optional encryption on one side and none on the other side", zrtp_call_with_optional_encryption_on_one_side_and_none_on_the_other_side),
+	TEST_NO_TAG("ZRTP call from endpoint with mandatory encryption to endpoint with none", zrtp_call_from_enc_to_no_enc),
+	TEST_NO_TAG("ZRTP call from endpoint with no encryption to endpoint with mandatory", zrtp_call_from_no_enc_to_enc),
+	TEST_NO_TAG("ZRTP call from endpoint with optional encryption to endpoint with mandatory", zrtp_call_from_opt_enc_to_enc),
+	TEST_NO_TAG("ZRTP call from endpoint with mandatory encryption to endpoint with optional", zrtp_call_from_enc_to_opt_enc),
+	TEST_NO_TAG("ZRTP call from endpoint with optional encryption to endpoint with none", zrtp_call_from_opt_enc_to_none),
+	TEST_NO_TAG("ZRTP call from endpoint with no encryption to endpoint with optional", zrtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("ZRTP call with optional encryption on both sides", zrtp_call_with_optional_encryption_on_both_sides_side)
 };
 
