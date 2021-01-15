@@ -35,13 +35,18 @@ static void call_with_mandatory_encryption_wrapper(const LinphoneMediaEncryption
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
-	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
 	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
 
-	linphone_core_set_media_encryption_mandatory(marie->lc,TRUE);
-	linphone_core_set_media_encryption(marie->lc,encryption);
-	linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
-	linphone_core_set_media_encryption(pauline->lc,encryption);
+	if (linphone_core_media_encryption_supported(marie->lc,encryption)) {
+		linphone_core_set_media_encryption_mandatory(marie->lc,TRUE);
+		linphone_core_set_media_encryption(marie->lc,encryption);
+	}
+
+	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
+		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
+		linphone_core_set_media_encryption(pauline->lc,encryption);
+	}
 
 	call_with_encryption_base(marie, pauline, encryption);
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
@@ -68,11 +73,16 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 
 		const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
 		int initLogsSize = (int)bctbx_list_size(initLogs);
+		stats initial_callee=callee->stat;
 
-		LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
-
-		callee_test_params.sdp_simulate_error = TRUE;
-		BC_ASSERT_FALSE(call_with_params2(caller,callee,&caller_test_params, &callee_test_params, FALSE));
+		LinphoneCall *caller_call=linphone_core_invite_address(caller->lc,callee->identity);
+		BC_ASSERT_PTR_NOT_NULL(caller_call);
+		BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
+		//test ios simulator needs more time, 3s plus for connectng the network
+		BC_ASSERT_FALSE(wait_for_until(callee->lc
+					,caller->lc
+					,&callee->stat.number_of_LinphoneCallIncomingReceived
+					,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000));
 
 		BC_ASSERT_PTR_NULL(linphone_core_get_current_call(callee->lc));
 		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,1, int, "%d");
@@ -95,8 +105,6 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 			}
 		}
 
-
-
 		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
 		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
 	} else {
@@ -109,18 +117,20 @@ static void call_with_encryption_negotiation_failure_wrapper(const LinphoneMedia
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
-	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
 	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
 
+	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 		linphone_core_set_media_encryption(pauline->lc,encryption);
-		linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
-		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 	}
 
+	ms_message("Core with no encryption calls core with mandatory encryption");
 	call_with_encryption_negotiation_failure_base(marie, pauline, encryption);
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 1000);
+	ms_message("Core with mandatory encryption calls core with no encryption");
 	call_with_encryption_negotiation_failure_base(pauline, marie, encryption);
 
 	linphone_core_manager_destroy(marie);
@@ -144,7 +154,7 @@ static void call_with_no_encryption(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
 	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
-	LpConfig *pauline_lp = linphone_core_get_config(marie->lc);
+	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
 	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
 
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
