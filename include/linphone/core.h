@@ -4062,6 +4062,31 @@ LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(Linph
 LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *core);
 
 /**
+ * Sets the supported media encryptions
+ * @param core #LinphoneCore object. @notnil
+ * @param enc_list \bctbx_list{char *} The supported media encryptions. Elements of the list are tring representation of value of enum #LinphoneMediaEncryption. You can convert enum value to strings by calling linphone_media_encryption_to_string. @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_t * enc_list);
+
+/**
+ * Get list of supported media descriptions.
+ * @param core #LinphoneCore object. @notnil
+ * @return  \bctbx_list{char *} list of supported media encryptions as strings. They can be converted to #LinphoneMediaEncryption by calling string_to_linphone_media_encryption. @notnil
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore *lc);
+
+/**
+ * Check if media encryption is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param menc The media encryption policy to be used.
+ * @return TRUE if the media encryption is supported, FALSE otherwise
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_supported(const LinphoneCore *core, LinphoneMediaEncryption menc);
+
+/**
  * Define whether the configured media encryption is mandatory, if it is and the negotation cannot result
  * in the desired media encryption then the call will fail. If not an INVITE will be resent with encryption
  * disabled.
