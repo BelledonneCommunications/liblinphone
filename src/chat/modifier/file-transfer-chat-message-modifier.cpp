@@ -591,6 +591,15 @@ void FileTransferChatMessageModifier::fileUploadEndBackgroundTask () {
 
 // ----------------------------------------------------------
 
+/* clean the download file name: we must avoid any directory separator (/ or \)
+ * so the file is saved in the intended directory */
+static std::string cleanDownloadFileName(std::string fileName) {
+	auto dirSepPos = fileName.find_last_of("/\\");
+	if (dirSepPos == std::string::npos) {
+		return fileName;
+	}
+	return fileName.substr(dirSepPos+1);
+}
 static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTransferContent *fileTransferContent) {
 	xmlChar *fileUrl = nullptr;
 	xmlDocPtr xmlMessageBody;
@@ -616,7 +625,7 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileName((char *)filename);
+							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
 							xmlFree(filename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
@@ -731,7 +740,7 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileContent->setFileName((char *)filename);
+							fileContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
 
 							xmlFree(filename);
 						}
