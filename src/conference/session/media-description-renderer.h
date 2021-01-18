@@ -60,7 +60,6 @@ private:
 	OfferAnswerContext(const OfferAnswerContext &other) = default;
 	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
 	const std::vector<SalStreamDescription>::iterator chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
-	bool mOwnsMediaDescriptions = false;
 };
 
 /*

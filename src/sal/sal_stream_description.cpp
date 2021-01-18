@@ -59,7 +59,8 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	max_rate = other.max_rate;
 	bundle_only = other.bundle_only;
 	implicit_rtcp_fb = other.implicit_rtcp_fb;
-	pad = other.pad;
+	pad[0] = other.pad[0];
+	pad[1] = other.pad[1];
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
@@ -109,7 +110,8 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	max_rate = other.max_rate;
 	bundle_only = other.bundle_only;
 	implicit_rtcp_fb = other.implicit_rtcp_fb;
-	pad = other.pad;
+	pad[0] = other.pad[0];
+	pad[1] = other.pad[1];
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
@@ -138,7 +140,6 @@ void SalStreamDescription::init() {
 
 	payloads.clear();
 	already_assigned_payloads.clear();
-	pad.clear();
 	crypto.clear();
 	ice_candidates.clear();
 	ice_remote_candidates.clear();
