@@ -7451,6 +7451,22 @@ void linphone_core_set_srtp_enabled(LinphoneCore *lc, bool_t enabled) {
 	linphone_config_set_int(lc->config,"sip","srtp",(int)enabled);
 }
 
+int string_to_linphone_media_encryption(const char * value){
+	if (strcmp(value, "LinphoneMediaEncryptionSRTP") == 0) {
+		return LinphoneMediaEncryptionSRTP;
+	} else if (strcmp(value, "LinphoneMediaEncryptionDTLS") == 0) {
+		return LinphoneMediaEncryptionDTLS;
+	} else if (strcmp(value, "LinphoneMediaEncryptionZRTP") == 0) {
+		return LinphoneMediaEncryptionZRTP;
+	} else if (strcmp(value, "LinphoneMediaEncryptionNone") == 0) {
+		return LinphoneMediaEncryptionNone;
+	} else {
+		ms_error("Unable to find LinphoneMediaEncryption for %s",value);
+		return -1;
+	}
+	return -1;
+}
+
 const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 	switch(menc){
 		case LinphoneMediaEncryptionSRTP:
@@ -7466,19 +7482,25 @@ const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 	return "INVALID";
 }
 
-
 bool_t linphone_core_media_encryption_supported(const LinphoneCore *lc, LinphoneMediaEncryption menc){
+
+	bool_t menc_supported_by_core = linphone_core_is_media_encryption_supported(lc, menc);
+	bool_t menc_supported_by_library = FALSE;
 	switch(menc){
 		case LinphoneMediaEncryptionSRTP:
-			return ms_srtp_supported();
+			menc_supported_by_library = ms_srtp_supported();
+			break;
 		case LinphoneMediaEncryptionDTLS:
-			return ms_dtls_srtp_available();
+			menc_supported_by_library = ms_dtls_srtp_available();
+			break;
 		case LinphoneMediaEncryptionZRTP:
-			return ms_zrtp_available() && !lc->zrtp_not_available_simulation;
+			menc_supported_by_library = ms_zrtp_available() && !lc->zrtp_not_available_simulation;
+			break;
 		case LinphoneMediaEncryptionNone:
-			return TRUE;
+			menc_supported_by_library = TRUE;
+			break;
 	}
-	return FALSE;
+	return (menc_supported_by_core && menc_supported_by_library);
 }
 
 LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMediaEncryption menc) {
@@ -7546,6 +7568,41 @@ bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore *lc) {
 
 void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
+}
+
+void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_t * enc_list) {
+	linphone_config_set_string_list(lc->config,"sip","supported_encryptions",enc_list);
+}
+
+bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore *lc) {
+	bctbx_list_t * supported_encryptions = linphone_config_get_string_list(lc->config,"sip","supported_encryptions",NULL);
+	bctbx_list_t * encryption_list = NULL;
+	if (supported_encryptions == NULL) {
+		if (ms_srtp_supported()) {
+			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+		}
+		if (ms_dtls_srtp_available()) {
+			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+		}
+		if (ms_zrtp_available() && !lc->zrtp_not_available_simulation) {
+			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+		}
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	} else {
+		encryption_list = supported_encryptions;
+	}
+	return encryption_list;
+}
+
+static int string_compare(char * str1, char * str2) {
+	return strcmp(str1, str2);
+}
+
+bool_t linphone_core_is_media_encryption_supported(const LinphoneCore *lc, LinphoneMediaEncryption menc) {
+
+	bctbx_list_t * encryption_list = linphone_core_get_supported_media_encryptions(lc);
+	bctbx_list_t *enc = bctbx_list_find_custom(encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(menc));
+	return (enc != NULL);
 }
 
 void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
