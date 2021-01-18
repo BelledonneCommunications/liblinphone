@@ -324,5 +324,5 @@ void payload_type_set_enable(OrtpPayloadType *pt, bool_t value) {
 }
 
 bool_t payload_type_enabled(const OrtpPayloadType *pt) {
-	return (pt->flags & PAYLOAD_TYPE_ENABLED);
+	return !!(pt->flags & PAYLOAD_TYPE_ENABLED);
 }
