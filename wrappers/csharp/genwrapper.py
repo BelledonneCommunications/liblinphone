@@ -469,7 +469,9 @@ if __name__ == '__main__':
 		'linphone_push_notification_message_get_local_addr',
 		'linphone_push_notification_message_get_peer_addr',
 		'linphone_core_get_new_message_from_callid',
-		'linphone_core_get_new_chat_room_from_conf_addr'
+		'linphone_core_get_new_chat_room_from_conf_addr',
+		'linphone_core_set_native_preview_window_id',
+		'linphone_core_set_native_video_window_id'
 	]
 	parser.classBl += 'LinphoneCoreVTable'
 	parser.methodBl.remove('getCurrentCallbacks')
