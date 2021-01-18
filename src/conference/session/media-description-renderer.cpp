@@ -56,7 +56,6 @@ void OfferAnswerContext::dupFrom(const OfferAnswerContext &ctx){
 	remoteMediaDescription = ctx.remoteMediaDescription ? ctx.remoteMediaDescription : nullptr;
 	resultMediaDescription = ctx.resultMediaDescription ? ctx.resultMediaDescription : nullptr;
 	localIsOfferer = ctx.localIsOfferer;
-	mOwnsMediaDescriptions = true;
 	// if the temporary oldCtx owns media descriptions, they will be unrefed by the destructor here.
 }
 
@@ -90,7 +89,6 @@ void OfferAnswerContext::clear(){
 	resultMediaDescription.reset();
 	localStreamDescriptionChanges = 0;
 	resultStreamDescriptionChanges = 0;
-	mOwnsMediaDescriptions = false;
 }
 
 OfferAnswerContext::~OfferAnswerContext(){

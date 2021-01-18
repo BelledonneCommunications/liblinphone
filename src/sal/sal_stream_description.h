@@ -114,7 +114,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	int max_rate = 0;
 	bool bundle_only = false;
 	bool implicit_rtcp_fb = false;
-	std::vector<bool> pad; /* Use me */
+	bool pad[2]; /* Use me */
 	OrtpRtcpFbConfiguration rtcp_fb;
 	OrtpRtcpXrConfiguration rtcp_xr;
 	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
