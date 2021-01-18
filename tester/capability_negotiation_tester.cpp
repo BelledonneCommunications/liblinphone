@@ -132,15 +132,15 @@ static void call_from_enc_to_no_enc_wrapper(const LinphoneMediaEncryption encryp
 
 	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
-	BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(marie->lc, encryption));
 	bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(encryption);
 	linphone_config_set_string_list(marie_lp,"sip","supported_encryptions",cfg_enc);
+	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, encryption));
 	bctbx_list_free(cfg_enc);
 	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 		linphone_core_set_media_encryption(pauline->lc,encryption);
 	}
-	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, encryption));
+	BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, encryption));
 
 	if (enc_to_no_enc) {
 		ms_message("Core with mandatory encryption calls core with no encryption");
@@ -206,6 +206,7 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 			linphone_config_set_string_list(pauline_lp,"sip","supported_encryptions",cfg_enc);
 			bctbx_list_free(cfg_enc);
 		}
+		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, encryption));
 	}
 	const LinphoneMediaEncryption marie_encryption = marie_enc_params.encryption;
 	if (linphone_core_media_encryption_supported(marie->lc,marie_encryption)) {
@@ -217,6 +218,7 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 			linphone_config_set_string_list(marie_lp,"sip","supported_encryptions",cfg_enc);
 			bctbx_list_free(cfg_enc);
 		}
+		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, encryption));
 	}
 
 	call_with_encryption_base(marie, pauline, marie_encryption);
