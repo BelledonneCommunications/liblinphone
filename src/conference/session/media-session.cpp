@@ -801,10 +801,10 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-	} else if (md->hasDtls() && media_stream_dtls_supported()) {
+	} else if (md->hasDtls() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionDTLS)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionDTLS))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionDTLS);
-	} else if (md->hasSrtp() && ms_srtp_supported()) {
+	} else if (md->hasSrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionSRTP)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionSRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionSRTP);
 	} else if (getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) {
