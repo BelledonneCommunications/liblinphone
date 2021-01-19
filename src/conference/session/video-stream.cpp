@@ -459,7 +459,12 @@ void MS2VideoControl::setNativePreviewWindowId(void *w){
 }
 
 void * MS2VideoControl::getNativePreviewWindowId() const{
-	return mNativePreviewWindowId;
+	VideoStream *vs = getVideoStream();
+	if (mNativePreviewWindowId){
+		return mNativePreviewWindowId;
+	}
+	/* It was not set but we want to get the one automatically created by mediastreamer2 (desktop versions only) */
+	return vs ? video_stream_get_native_preview_window_id(vs) : nullptr;
 }
 
 void MS2VideoControl::requestNotifyNextVideoFrameDecoded () {
