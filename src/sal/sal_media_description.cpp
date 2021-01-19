@@ -21,7 +21,8 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
-#include "bellesip_sal/sal_impl.h"
+#include "sal/sal_stream_description.h"
+#include "sal/sal_stream_bundle.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -39,7 +40,7 @@ SalMediaDescription::~SalMediaDescription(){
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
-SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
+SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) : std::enable_shared_from_this<SalMediaDescription>() {
 	name = other.name;
 	username = other.username;
 	addr = other.addr;
@@ -357,12 +358,162 @@ const SalStreamDescription & SalMediaDescription::getStreamIdx(unsigned int idx)
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-std::shared_ptr<SalMediaDescription> SalMediaDescription::fromSDP(belle_sdp_session_description_t  *sdp) {
-	std::shared_ptr<SalMediaDescription> desc = std::make_shared<SalMediaDescription>();
-	sdp_to_media_description(sdp, desc);
-	return desc;
-}
-	
+SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) {
+	belle_sdp_connection_t* cnx;
+	belle_sdp_session_name_t *sname;
+	belle_sip_list_t *custom_attribute_it;
+	const char* value;
+	SalDtlsRole session_role=SalDtlsRoleInvalid;
 
+	dir = SalStreamSendRecv;
+
+	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
+		addr = belle_sdp_connection_get_address ( cnx );
+	}
+	if ( (sname=belle_sdp_session_description_get_session_name(sdp)) && belle_sdp_session_name_get_value(sname) ){
+		name = belle_sdp_session_name_get_value(sname);
+	}
+
+	if ( belle_sdp_session_description_get_bandwidth ( sdp,"AS" ) >0 ) {
+		bandwidth=belle_sdp_session_description_get_bandwidth ( sdp,"AS" );
+	}
+
+	belle_sdp_origin_t *origin = belle_sdp_session_description_get_origin(sdp);
+	session_id = belle_sdp_origin_get_session_id(origin);
+	session_ver = belle_sdp_origin_get_session_version(origin);
+
+	/*in some very rare case, session attribute may set stream dir*/
+	if ( belle_sdp_session_description_get_attribute ( sdp,"sendrecv" ) ) {
+		dir=SalStreamSendRecv;
+	} else if ( belle_sdp_session_description_get_attribute ( sdp,"sendonly" ) ) {
+		dir=SalStreamSendOnly;
+	} else if ( belle_sdp_session_description_get_attribute ( sdp,"recvonly" ) ) {
+		dir=SalStreamRecvOnly;
+	} else if ( belle_sdp_session_description_get_attribute ( sdp,"inactive" ) ) {
+		dir=SalStreamInactive;
+	}
+
+	/*DTLS attributes can be defined at session level.*/
+	value=belle_sdp_session_description_get_attribute_value(sdp,"setup");
+	if (value){
+		if (strncmp(value, "actpass", 7) == 0) {
+			session_role = SalDtlsRoleUnset;
+		} else if (strncmp(value, "active", 6) == 0) {
+			session_role = SalDtlsRoleIsClient;
+		} else if (strncmp(value, "passive", 7) == 0) {
+			session_role = SalDtlsRoleIsServer;
+		}
+	}
+	value=belle_sdp_session_description_get_attribute_value(sdp,"fingerprint");
+	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
+	for (auto & stream : streams) {
+		if (value)
+			stream.dtls_fingerprint = L_C_TO_STRING(value);
+		stream.dtls_role=session_role; /*set or reset value*/
+	}
+
+	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
+	value=belle_sdp_session_description_get_attribute_value(sdp,"ice-ufrag");
+	if (value) ice_ufrag = L_C_TO_STRING(value);
+
+	value=belle_sdp_session_description_get_attribute_value(sdp,"ice-pwd");
+	if (value) ice_pwd = L_C_TO_STRING(value);
+
+	value=belle_sdp_session_description_get_attribute_value(sdp,"ice-lite");
+	if (value) ice_lite = TRUE;
+
+	/* Get session RTCP-XR attributes if any */
+	sdp_parse_session_rtcp_xr_parameters(sdp, &rtcp_xr);
+
+	/* Get the custom attributes, parse some of them that are relevant */
+	for (custom_attribute_it = belle_sdp_session_description_get_attributes(sdp); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {
+		belle_sdp_attribute_t *attr = (belle_sdp_attribute_t *)custom_attribute_it->data;
+		custom_sdp_attributes = sal_custom_sdp_attribute_append(custom_sdp_attributes, belle_sdp_attribute_get_name(attr), belle_sdp_attribute_get_value(attr));
+
+		if (strcasecmp(belle_sdp_attribute_get_name(attr), "group") == 0){
+			value = belle_sdp_attribute_get_value(attr);
+			if (value && strncasecmp(value, "BUNDLE", strlen("BUNDLE")) == 0){
+				SalStreamBundle bundle(value + strlen("BUNDLE"));
+				addNewBundle(bundle);
+			}
+		}
+	}
+
+	for ( belle_sip_list_t* media_desc_it=belle_sdp_session_description_get_media_descriptions ( sdp ); media_desc_it!=NULL; media_desc_it=media_desc_it->next ) {
+		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
+		SalStreamDescription stream(shared_from_this(), media_desc);
+		streams.push_back(stream);
+	}
+}
+
+belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
+	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
+	bool_t inet6;
+	belle_sdp_origin_t* origin;
+	char *escaped_username = belle_sip_uri_to_escaped_username(username.c_str());
+
+	if ( addr.find(':' ) != std::string::npos ) {
+		inet6=1;
+	} else inet6=0;
+	belle_sdp_session_description_set_version ( session_desc,belle_sdp_version_create ( 0 ) );
+
+	origin = belle_sdp_origin_create ( escaped_username
+									  ,session_id
+									  ,session_ver
+									  ,"IN"
+									  , inet6 ? "IP6" :"IP4"
+									  ,L_STRING_TO_C(addr) );
+	bctbx_free(escaped_username);
+
+	belle_sdp_session_description_set_origin ( session_desc,origin );
+
+	belle_sdp_session_description_set_session_name ( session_desc,
+		belle_sdp_session_name_create ( name.empty()==false ? L_STRING_TO_C(name) : "Talk" ) );
+
+	if ( !hasDir(SalStreamInactive) || !ice_ufrag.empty() ) {
+		/*in case of sendonly, setting of the IP on cnx we give a chance to receive stun packets*/
+		belle_sdp_session_description_set_connection ( session_desc
+				,belle_sdp_connection_create ( "IN",inet6 ? "IP6" :"IP4",L_STRING_TO_C(addr) ) );
+
+	} else 	{
+		belle_sdp_session_description_set_connection ( session_desc
+				,belle_sdp_connection_create ( "IN"
+								,inet6 ? "IP6" :"IP4"
+								,inet6 ? "::0" :"0.0.0.0" ) );
+
+	}
+
+	belle_sdp_session_description_set_time_description ( session_desc,belle_sdp_time_description_create ( 0,0 ) );
+
+	if ( bandwidth>0 ) {
+		belle_sdp_session_description_set_bandwidth ( session_desc,"AS",bandwidth );
+	}
+
+	if (set_nortpproxy == TRUE) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy","yes"));
+	if (!ice_pwd.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",L_STRING_TO_C(ice_pwd)));
+	if (!ice_ufrag.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",L_STRING_TO_C(ice_ufrag)));
+
+	if (rtcp_xr.enabled == TRUE) {
+		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&rtcp_xr));
+	}
+
+	for (const auto & bundle : bundles){
+		bundle.addToSdp(session_desc);
+	}
+
+	if (custom_sdp_attributes) {
+		belle_sdp_session_description_t *custom_desc = (belle_sdp_session_description_t *)custom_sdp_attributes;
+		belle_sip_list_t *l = belle_sdp_session_description_get_attributes(custom_desc);
+		belle_sip_list_t *elem;
+		for (elem = l; elem != NULL; elem = elem->next) {
+			belle_sdp_session_description_add_attribute(session_desc, (belle_sdp_attribute_t *)elem->data);
+		}
+	}
+
+	for ( const auto & stream : streams) {
+		belle_sdp_session_description_add_media_description(session_desc, stream.toSdpMediaDescription(session_desc));
+	}
+	return session_desc;
+}
 
 LINPHONE_END_NAMESPACE

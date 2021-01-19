@@ -133,6 +133,8 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 	ms_factory_register_offer_answer_provider(factory, &opus_offer_answer_provider);
 }
 
+LINPHONE_BEGIN_NAMESPACE
+
 bool_t OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
 	for (const auto & p : l) {
 		if (strcasecmp(p->mime_type,"telephone-event")!=0){
@@ -165,7 +167,7 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 	// When a stream is inactive, refpt->mime_type might be null
 	if (refpt->mime_type && (ctx = ms_factory_create_offer_answer_context(factory, refpt->mime_type))) {
 		ms_message("Doing offer/answer processing with specific provider for codec [%s]", refpt->mime_type); 
-		ret = ms_offer_answer_context_match_payload(ctx, LinphonePrivate::Utils::listToBctbxList(local_payloads), refpt, LinphonePrivate::Utils::listToBctbxList(remote_payloads), reading_response);
+		ret = ms_offer_answer_context_match_payload(ctx, Utils::listToBctbxList(local_payloads), refpt, Utils::listToBctbxList(remote_payloads), reading_response);
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
@@ -322,9 +324,9 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
-void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const LinphonePrivate::SalStreamDescription & local_offer,
-						const LinphonePrivate::SalStreamDescription & remote_answer,
-						LinphonePrivate::SalStreamDescription & result){
+void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
+						const SalStreamDescription & remote_answer,
+						SalStreamDescription & result){
 	if (remote_answer.enabled())
 		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
 	else {
@@ -455,9 +457,9 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const Linphon
 }
 
 
-void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const LinphonePrivate::SalStreamDescription & local_cap,
-						const LinphonePrivate::SalStreamDescription & remote_offer,
-						LinphonePrivate::SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
+void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
+						const SalStreamDescription & remote_offer,
+						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
 	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
 	result.proto=remote_offer.proto;
 	result.type=local_cap.type;
@@ -579,15 +581,15 @@ bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaPr
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<LinphonePrivate::SalMediaDescription> local_offer,
-					const std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_answer,
-					std::shared_ptr<LinphonePrivate::SalMediaDescription> result){
+int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+					const std::shared_ptr<SalMediaDescription> remote_answer,
+					std::shared_ptr<SalMediaDescription> result){
 	size_t i;
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
-		LinphonePrivate::SalStreamDescription & ls = local_offer->streams[i];
-		const LinphonePrivate::SalStreamDescription & rs = remote_answer->streams[i];
+		SalStreamDescription & ls = local_offer->streams[i];
+		const SalStreamDescription & rs = remote_answer->streams[i];
 		if ((i < remote_answer->streams.size()) && rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
 		{
 			if (ls.proto != rs.proto && ls.hasAvpf()) {
@@ -634,9 +636,9 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<Linp
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<LinphonePrivate::SalMediaDescription> local_capabilities,
-					std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_offer,
-					std::shared_ptr<LinphonePrivate::SalMediaDescription> result, bool_t one_matching_codec){
+int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+					std::shared_ptr<SalMediaDescription> remote_offer,
+					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
@@ -653,9 +655,9 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		if (i >= local_capabilities->streams.size()) {
 			local_capabilities->streams.resize((i + 1));
 		}
-		const LinphonePrivate::SalStreamDescription & ls = local_capabilities->streams[i];
-		LinphonePrivate::SalStreamDescription & rs = remote_offer->streams[i];
-		LinphonePrivate::SalStreamDescription & resultStream = result->streams[i];
+		const SalStreamDescription & ls = local_capabilities->streams[i];
+		SalStreamDescription & rs = remote_offer->streams[i];
+		SalStreamDescription & resultStream = result->streams[i];
 
 		if (rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
 		{
@@ -727,3 +729,5 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 
 	return 0;
 }
+
+LINPHONE_END_NAMESPACE

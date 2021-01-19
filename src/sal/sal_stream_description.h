@@ -56,16 +56,21 @@ typedef struct SalSrtpCryptoAlgo {
 
 LINPHONE_BEGIN_NAMESPACE
 
+class SalMediaDescription;
+
 class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:
+
 		SalStreamDescription();
+		SalStreamDescription(const std::shared_ptr<SalMediaDescription> & salMediaDesc, belle_sdp_media_description_t *media_desc);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
 		bool operator!=(const SalStreamDescription & other) const;
+		belle_sdp_media_description_t * toSdpMediaDescription(belle_sdp_session_description_t *session_desc) const;
 		bool enabled() const;
 		void disable();
 
@@ -139,6 +144,20 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2) const;
 		bool isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2) const;
 
+		void addIceRemoteCandidatesToSdp(belle_sdp_media_description_t *md) const;
+		void addIceCandidatesToSdp(belle_sdp_media_description_t *md) const;
+		void addRtcpFbAttributesToSdp(belle_sdp_media_description_t *media_desc) const;
+		bool_t isRtcpFbTrrIntTheSameForAllPayloads(uint16_t *trr_int) const;
+		void addMidAttributesToSdp(belle_sdp_media_description_t *media_desc) const;
+		void applyRtcpFbAttributeToPayload(belle_sdp_rtcp_fb_attribute_t *fb_attribute, PayloadType *pt);
+		bool_t sdpParseRtcpFbParameters(belle_sdp_media_description_t *media_desc);
+		void sdpParsePayloadTypes(belle_sdp_media_description_t *media_desc);
+		void sdpParseMediaCryptoParameters(belle_sdp_media_description_t *media_desc);
+		void sdpParseMediaIceParameters(belle_sdp_media_description_t *media_desc);
+		void enableAvpfForStream();
+
+		std::weak_ptr<SalMediaDescription> md;
+		const std::shared_ptr<SalMediaDescription> getMediaDesc() const;
 };
 
 LINPHONE_END_NAMESPACE
