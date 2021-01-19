@@ -25,11 +25,15 @@
 LINPHONE_BEGIN_NAMESPACE
 
 SalMediaDescription::SalMediaDescription(){
-	init();
+	streams.clear();
+	bundles.clear();
+	custom_sdp_attributes = nullptr;
 }
 
 SalMediaDescription::~SalMediaDescription(){
-	destroy();
+	streams.clear();
+	bundles.clear();
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
@@ -43,6 +47,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 
 	dir = other.dir;
 	streams = other.streams;
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 	rtcp_xr = other.rtcp_xr;
 
@@ -56,12 +61,6 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
 
-}
-
-void SalMediaDescription::init() {
-	streams.clear();
-	bundles.clear();
-	custom_sdp_attributes = nullptr;
 }
 
 bool SalMediaDescription::hasDir(const SalStreamDir & stream_dir) const {
@@ -140,12 +139,6 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & s
 		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.mid), L_STRING_TO_C(master_mid));
 	}
 	return index;
-}
-
-void SalMediaDescription::destroy(){
-	streams.clear();
-	bundles.clear();
-	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
