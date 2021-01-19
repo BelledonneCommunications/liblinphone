@@ -61,10 +61,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	public:
 		SalStreamDescription();
 		SalStreamDescription(const SalStreamDescription & other);
-		~SalStreamDescription();
+		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
-		void init();
-		void destroy();
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
 		bool operator!=(const SalStreamDescription & other) const;

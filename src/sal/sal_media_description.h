@@ -38,8 +38,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalMediaDescription();
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
-		void init();
-		void destroy();
 
 		void addNewBundle(const SalStreamBundle & bundle);
 

@@ -25,11 +25,20 @@
 LINPHONE_BEGIN_NAMESPACE
 
 SalStreamDescription::SalStreamDescription(){
-	init();
+	custom_sdp_attributes = NULL;
+
+	payloads.clear();
+	already_assigned_payloads.clear();
+	crypto.clear();
+	ice_candidates.clear();
+	ice_remote_candidates.clear();
+
 }
 
 SalStreamDescription::~SalStreamDescription(){
-	destroy();
+	PayloadTypeHandler::clearPayloadList(payloads);
+	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
@@ -83,7 +92,6 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 }
 
 SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription & other){
-	destroy();
 	name = other.name;
 	proto = other.proto;
 	type = other.type;
@@ -95,9 +103,11 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	rtcp_cname = other.rtcp_cname;
 	rtp_port = other.rtp_port;
 	rtcp_port = other.rtcp_port;
+	PayloadTypeHandler::clearPayloadList(payloads);
 	for (const auto & pt : other.payloads) {
 		payloads.push_back(payload_type_clone(pt));
 	}
+	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto & pt : other.already_assigned_payloads) {
 		already_assigned_payloads.push_back(payload_type_clone(pt));
 	}
@@ -114,6 +124,7 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	pad[1] = other.pad[1];
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
+	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
 	ice_candidates = other.ice_candidates;
 	ice_remote_candidates = other.ice_remote_candidates;
@@ -133,22 +144,6 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	multicast_role = other.multicast_role;
 
 	return *this;
-}
-
-void SalStreamDescription::init() {
-	custom_sdp_attributes = NULL;
-
-	payloads.clear();
-	already_assigned_payloads.clear();
-	crypto.clear();
-	ice_candidates.clear();
-	ice_remote_candidates.clear();
-}
-
-void SalStreamDescription::destroy() {
-	PayloadTypeHandler::clearPayloadList(payloads);
-	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
-	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
 bool SalStreamDescription::isRecvOnly(const PayloadType *p) const {
