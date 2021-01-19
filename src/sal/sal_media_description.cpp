@@ -21,6 +21,7 @@
 
 #include "c-wrapper/internal/c-tools.h"
 #include "sal/sal_media_description.h"
+#include "bellesip_sal/sal_impl.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -355,5 +356,13 @@ const SalStreamDescription & SalMediaDescription::getStreamIdx(unsigned int idx)
 	lError() << "Unable to find stream at index " << idx << " because media description " << this << " has " << streams.size() << " streams";
 	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
+
+std::shared_ptr<SalMediaDescription> SalMediaDescription::fromSDP(belle_sdp_session_description_t  *sdp) {
+	std::shared_ptr<SalMediaDescription> desc = std::make_shared<SalMediaDescription>();
+	sdp_to_media_description(sdp, desc);
+	return desc;
+}
+	
+
 
 LINPHONE_END_NAMESPACE

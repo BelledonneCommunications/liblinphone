@@ -979,7 +979,6 @@ static void add_bundles(std::shared_ptr<SalMediaDescription> &desc, const char *
 	ms_free(tmp);
 }
 
-
 int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, std::shared_ptr<SalMediaDescription> &desc ) {
 	belle_sdp_connection_t* cnx;
 	belle_sip_list_t* media_desc_it;
