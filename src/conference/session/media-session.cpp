@@ -1626,6 +1626,7 @@ void MediaSessionPrivate::updateStreams (SalMediaDescription *newMd, CallSession
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op->getRemoteMediaDescription();
 	ctx.resultMediaDescription = resultDesc;
+	ctx.localIsOfferer = localIsOfferer;
 	getStreamsGroup().render(ctx, targetState);
 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
