@@ -18,30 +18,31 @@
  */
 
 
+#include "linphone/utils/utils.h"
 #include "media-description-renderer.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-const std::vector<SalStreamDescription>::iterator OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
+const SalStreamDescription & OfferAnswerContext::chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const {
 
 	if (index < md->streams.size()) {
-		return md->streams.begin() + static_cast<long>(index);
+		return md->streams[index];
 	}
 
 	lError() << "Unable to find stream at index " << index << " because media description " << md << " has " << md->streams.size() << " streams";
 
-	return md->streams.end();
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getLocalStreamDescription() const {
+const SalStreamDescription & OfferAnswerContext::getLocalStreamDescription() const {
 	return chooseStreamDescription(localMediaDescription, streamIndex);
 }
 
-const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getRemoteStreamDescription() const {
+const SalStreamDescription & OfferAnswerContext::getRemoteStreamDescription() const {
 	return chooseStreamDescription(remoteMediaDescription, streamIndex);
 }
 
-const std::vector<SalStreamDescription>::iterator OfferAnswerContext::getResultStreamDescription() const {
+const SalStreamDescription & OfferAnswerContext::getResultStreamDescription() const {
 	return chooseStreamDescription(resultMediaDescription, streamIndex);
 }
 
@@ -72,13 +73,13 @@ const OfferAnswerContext & OfferAnswerContext::scopeStreamToIndexWithDiff(size_t
 	scopeStreamToIndex(index);
 	previousCtx.scopeStreamToIndex(index);
 	
-	if (previousCtx.localMediaDescription && (previousCtx.getLocalStreamDescription() != previousCtx.localMediaDescription->streams.cend())){
+	if (previousCtx.localMediaDescription && (previousCtx.getLocalStreamDescription() != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		localStreamDescriptionChanges = previousCtx.localMediaDescription->globalEqual(*localMediaDescription)
-		| previousCtx.getLocalStreamDescription()->equal(*getLocalStreamDescription());
+		| previousCtx.getLocalStreamDescription().equal(getLocalStreamDescription());
 	}else localStreamDescriptionChanges = 0;
-	if (previousCtx.resultMediaDescription && resultMediaDescription  && (previousCtx.getResultStreamDescription() != previousCtx.resultMediaDescription->streams.cend()) &&  (getResultStreamDescription() != resultMediaDescription->streams.cend())){
+	if (previousCtx.resultMediaDescription && resultMediaDescription && (previousCtx.getResultStreamDescription() != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (getResultStreamDescription() != Utils::getEmptyConstRefObject<SalStreamDescription>())){
 		resultStreamDescriptionChanges = previousCtx.resultMediaDescription->globalEqual(*resultMediaDescription)
-		| previousCtx.getResultStreamDescription()->equal(*getResultStreamDescription());
+		| previousCtx.getResultStreamDescription().equal(getResultStreamDescription());
 	}else resultStreamDescriptionChanges = 0;
 	return *this;
 }

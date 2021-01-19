@@ -217,7 +217,7 @@ void MS2AudioStream::setupMediaLossCheck(){
 }
 
 void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const auto & stream = *(params.getResultStreamDescription());
+	const auto & stream = params.getResultStreamDescription();
 	CallSessionListener *listener = getMediaSessionPrivate().getCallSessionListener();
 	
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
@@ -413,10 +413,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().performMutualAuthentication();
 		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
 		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
-		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription()->haveZrtpHash == 1)) {
+		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().haveZrtpHash == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
 			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
-			if (!params.localIsOfferer && params.getRemoteStreamDescription()->hasLimeIk()) {
+			if (!params.localIsOfferer && params.getRemoteStreamDescription().hasLimeIk()) {
 				mStartZrtpLater = true;
 			} else {
 				startZrtpPrimaryChannel(params);
@@ -484,8 +484,8 @@ void MS2AudioStream::stop(){
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const auto & remote = params.getRemoteStreamDescription();
 	audio_stream_start_zrtp(mStream);
-	if (remote->haveZrtpHash == 1) {
-		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote->zrtphash, strlen((const char *)(remote->zrtphash)));
+	if (remote.haveZrtpHash == 1) {
+		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.zrtphash, strlen((const char *)(remote.zrtphash)));
 		if (retval != 0)
 			lError() << "ZRTP hash mismatch 0x" << hex << retval;
 	}

@@ -58,7 +58,7 @@ IceService & StreamsGroup::getIceService()const{
 
 Stream * StreamsGroup::createStream(const OfferAnswerContext &params){
 	Stream *ret = nullptr;
-	SalStreamType type = params.getLocalStreamDescription()->type;
+	SalStreamType type = params.getLocalStreamDescription().type;
 	switch(type){
 		case SalAudio:
 			ret = new MS2AudioStream(*this, params);
@@ -111,10 +111,10 @@ void StreamsGroup::createStreams(const OfferAnswerContext &params){
 		if (index >= mStreams.size() || (s = mStreams[index].get()) == nullptr){
 			s = createStream(params);
 		}else{
-			if (s->getType() != params.getLocalStreamDescription()->type){
+			if (s->getType() != params.getLocalStreamDescription().type){
 				lError() << "Inconsistency detected while creating streams. Type has changed from " <<
 					sal_stream_type_to_string(s->getType()) << " to " << 
-					sal_stream_type_to_string(params.getLocalStreamDescription()->type) << "!";
+					sal_stream_type_to_string(params.getLocalStreamDescription().type) << "!";
 			}else if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED ){
 				/*
 				* Special case: due to implementation constraint, it is necessary to instanciate a new Stream when changing 
@@ -337,14 +337,14 @@ void StreamsGroup::tryEarlyMediaForking(const OfferAnswerContext &params) {
 	for (auto & s : mStreams) {
 		params.scopeStreamToIndex(s->getIndex());
 		const auto & refStream = params.getResultStreamDescription();
-		if (!refStream->enabled() || refStream->getDirection() == SalStreamInactive)
+		if (!refStream.enabled() || refStream.getDirection() == SalStreamInactive)
 			continue;
 		
 		const auto & newStream = params.getRemoteStreamDescription();
 		
-		if ((refStream->type == newStream->type) && !refStream->payloads.empty() && !newStream->payloads.empty()) {
-			OrtpPayloadType *refpt = refStream->payloads.front();
-			OrtpPayloadType *newpt = newStream->payloads.front();
+		if ((refStream.type == newStream.type) && !refStream.payloads.empty() && !newStream.payloads.empty()) {
+			OrtpPayloadType *refpt = refStream.payloads.front();
+			OrtpPayloadType *newpt = newStream.payloads.front();
 			if ((strcmp(refpt->mime_type, newpt->mime_type) == 0) && (refpt->clock_rate == newpt->clock_rate)
 				&& (payload_type_get_number(refpt) == payload_type_get_number(newpt))) {
 					s->tryEarlyMediaForking(params);

@@ -196,6 +196,10 @@ bool SalStreamDescription::operator==(const SalStreamDescription & other) const 
 	return equal(other) == SAL_MEDIA_DESCRIPTION_UNCHANGED;
 }
 
+bool SalStreamDescription::operator!=(const SalStreamDescription & other) const {
+	return !(*this == other);
+}
+
 int SalStreamDescription::equal(const SalStreamDescription & other) const {
 	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
