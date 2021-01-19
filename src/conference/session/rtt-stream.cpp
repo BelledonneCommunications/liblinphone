@@ -70,7 +70,7 @@ void MS2RTTStream::finishPrepare(){
 }
 
 void MS2RTTStream::render(const OfferAnswerContext &params, CallSession::State targetState){
-	const auto & tstream = *(params.getResultStreamDescription());
+	const auto & tstream = params.getResultStreamDescription();
 	bool basicChangesHandled = handleBasicChanges(params, targetState);
 	
 	if (basicChangesHandled) {

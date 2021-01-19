@@ -339,11 +339,12 @@ const std::string & SalMediaDescription::getAddress() const {
 	return addr;
 }
 
-const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::getStreamIdx(unsigned int idx) const {
+const SalStreamDescription & SalMediaDescription::getStreamIdx(unsigned int idx) const {
 	if (idx < streams.size()) {
-		return streams.cbegin() + idx;
+		return streams[idx];
 	}
-	return streams.cend();
+	lError() << "Unable to find stream at index " << idx << " because media description " << this << " has " << streams.size() << " streams";
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
 LINPHONE_END_NAMESPACE
