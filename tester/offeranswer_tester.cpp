@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include "linphone/core.h"
 #include "linphone/lpconfig.h"
+#include "linphone/utils/utils.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 #include "sal/sal_media_description.h"
@@ -728,9 +729,9 @@ static void check_avpf_features(LinphoneCore *lc, unsigned char expected_feature
 	if (lcall != NULL) {
 		SalMediaDescription *resultDesc = _linphone_call_get_result_desc(lcall);
 		const auto & desc = resultDesc->findStream(SalProtoRtpAvpf, SalVideo);
-		BC_ASSERT_TRUE(desc != resultDesc->streams.cend());
-		if (desc != resultDesc->streams.cend()) {
-			const auto & payloads = desc->getPayloads();
+		BC_ASSERT_TRUE(desc != Utils::getEmptyConstRefObject<SalStreamDescription>());
+		if (desc !=  Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+			const auto & payloads = desc.getPayloads();
 			BC_ASSERT_FALSE(payloads.empty());
 			if (!payloads.empty()) {
 				PayloadType *pt = payloads.front();

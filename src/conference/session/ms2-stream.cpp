@@ -260,7 +260,7 @@ void MS2Stream::configureAdaptiveRateControl (const OfferAnswerContext &params) 
 	bool videoWillBeUsed = false;
 	MediaStream *ms = getMediaStream();
 	const auto & vstream = params.resultMediaDescription->findBestStream(SalVideo);
-	if ((vstream != params.resultMediaDescription->streams.cend()) && (vstream->dir != SalStreamInactive) && !vstream->payloads.empty()) {
+	if ((vstream != Utils::getEmptyConstRefObject<SalStreamDescription>()) && (vstream.dir != SalStreamInactive) && !vstream.payloads.empty()) {
 		/* When video is used, do not make adaptive rate control on audio, it is stupid */
 		videoWillBeUsed = true;
 	}

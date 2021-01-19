@@ -61,7 +61,6 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other){
 void SalMediaDescription::init() {
 	streams.clear();
 	bundles.clear();
-	pad.clear();
 	custom_sdp_attributes = nullptr;
 }
 
@@ -115,11 +114,14 @@ int SalMediaDescription::lookupMid(const std::string mid) const {
 	return -1;
 }
 
-const std::list<SalStreamBundle>::const_iterator SalMediaDescription::getBundleFromMid(const std::string mid) const {
+const SalStreamBundle & SalMediaDescription::getBundleFromMid(const std::string mid) const {
 	const auto & bundleIt = std::find_if(bundles.cbegin(), bundles.cend(), [&mid] (const auto & bundle) {
 		return (bundle.hasMid(mid));
 	});
-	return bundleIt;
+	if (bundleIt != bundles.cend()) {
+		return *bundleIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamBundle>();
 }
 
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
@@ -128,11 +130,11 @@ int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & s
 	if (sd.mid.empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
 	const auto &bundle = getBundleFromMid(sd.mid);
-	if (bundle == bundles.cend()) {
+	if (bundle == Utils::getEmptyConstRefObject<SalStreamBundle>()) {
 		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.mid));
 		return -1;
 	}
-	master_mid = bundle->getMidOfTransportOwner();
+	master_mid = bundle.getMidOfTransportOwner();
 	index = lookupMid(master_mid);
 	if (index == -1){
 		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.mid), L_STRING_TO_C(master_mid));
@@ -146,10 +148,14 @@ void SalMediaDescription::destroy(){
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 }
 
-const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
-	return std::find_if(streams.cbegin(), streams.cend(), [&type, &proto] (const auto & stream) { 
+const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type, &proto] (const auto & stream) { 
 		return (stream.enabled() && (stream.proto==proto) && (stream.getType()==type));
 	});
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
 unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) const {
@@ -161,25 +167,29 @@ unsigned int SalMediaDescription::nbActiveStreamsOfType(SalStreamType type) cons
 	return nb;
 }
 
-const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::getActiveStreamOfType(SalStreamType type, unsigned int idx) const {
-	return std::find_if(streams.cbegin(), streams.cend(), [&type, &idx] (const auto & stream) { 
+const SalStreamDescription & SalMediaDescription::getActiveStreamOfType(SalStreamType type, unsigned int idx) const {
+	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type, &idx] (const auto & stream) { 
 		return (stream.enabled() && (idx-- == 0) && (stream.getType()==type));
 	});
+	if (streamIt != streams.end()) {
+		return *streamIt;
+	}
+	return Utils::getEmptyConstRefObject<SalStreamDescription>();
 }
 
-const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
-	std::vector<SalStreamDescription>::const_iterator desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoRtpSavp, type);
+const SalStreamDescription SalMediaDescription::findSecureStreamOfType(SalStreamType type) const {
+	auto desc = findStream(SalProtoRtpSavpf, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavp, type);
 	return desc;
 }
 
-const std::vector<SalStreamDescription>::const_iterator SalMediaDescription::findBestStream(SalStreamType type) const {
-	std::vector<SalStreamDescription>::const_iterator desc = findStream(SalProtoUdpTlsRtpSavpf, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoUdpTlsRtpSavp, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoRtpSavpf, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoRtpSavp, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoRtpAvpf, type);
-	if (desc == streams.cend()) desc = findStream(SalProtoRtpAvp, type);
+const SalStreamDescription SalMediaDescription::findBestStream(SalStreamType type) const {
+	auto desc = findStream(SalProtoUdpTlsRtpSavpf, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoUdpTlsRtpSavp, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavpf, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpSavp, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpAvpf, type);
+	if (desc == Utils::getEmptyConstRefObject<SalStreamDescription>()) desc = findStream(SalProtoRtpAvp, type);
 	return desc;
 }
 
@@ -263,6 +273,10 @@ bool SalMediaDescription::hasIpv6() const {
 
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
 	return (equal(other) == SAL_MEDIA_DESCRIPTION_UNCHANGED);
+}
+
+bool SalMediaDescription::operator!=(const SalMediaDescription & other) const {
+	return !(*this == other);
 }
 
 int SalMediaDescription::equal(const SalMediaDescription & otherMd) const {

@@ -41,6 +41,14 @@ SalStreamBundle &SalStreamBundle::operator=(const SalStreamBundle & other){
 	return *this;
 }
 
+bool SalStreamBundle::operator==(const SalStreamBundle & other) const {
+	return (mids == other.mids);
+}
+
+bool SalStreamBundle::operator!=(const SalStreamBundle & other) const {
+	return !(*this == other);
+}
+
 void SalStreamBundle::addStream(SalStreamDescription & stream, const std::string &mid){
 	stream.mid = mid;
 	mids.push_back(mid);
