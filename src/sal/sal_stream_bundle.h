@@ -24,6 +24,7 @@
 #include <string>
 
 #include "linphone/utils/general.h"
+#include "bellesip_sal/sal_impl.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
@@ -33,8 +34,11 @@ class SalStreamBundle{
 
 	public:
 		SalStreamBundle();
+		SalStreamBundle(const char * ids);
 		SalStreamBundle(const SalStreamBundle &other);
 		virtual ~SalStreamBundle();
+
+		void addToSdp(belle_sdp_session_description_t * session_desc) const;
 
 		SalStreamBundle &operator=(const SalStreamBundle& other);
 		bool operator==(const SalStreamBundle & other) const;

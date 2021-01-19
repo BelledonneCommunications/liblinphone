@@ -20,27 +20,29 @@
 #ifndef _SAL_MEDIA_DESCRIPTION_H_
 #define _SAL_MEDIA_DESCRIPTION_H_
 
+#include <memory>
 #include <list>
 #include <string>
 #include <vector>
 
+#include "linphone/utils/general.h"
 #include "c-wrapper/internal/c-sal.h"
-#include "sal/sal_stream_description.h"
-#include "sal/sal_stream_bundle.h"
 #include "ortp/rtpsession.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class SalStreamDescription;
+class SalStreamBundle;
 
-class LINPHONE_PUBLIC SalMediaDescription {
+class LINPHONE_PUBLIC SalMediaDescription : public std::enable_shared_from_this<SalMediaDescription> {
 	public:
 
-		static std::shared_ptr<SalMediaDescription> fromSDP(belle_sdp_session_description_t  *sdp);
-
 		SalMediaDescription();
+		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
+
+		belle_sdp_session_description_t * toSdp() const;
 
 		void addNewBundle(const SalStreamBundle & bundle);
 

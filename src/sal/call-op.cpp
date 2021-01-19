@@ -43,7 +43,7 @@ SalCallOp::~SalCallOp () {
 int SalCallOp::setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc) {
 	if (desc) {
 		belle_sip_error_code error;
-		belle_sdp_session_description_t *sdp = media_description_to_sdp(desc);
+		belle_sdp_session_description_t *sdp = desc->toSdp();
 		vector<char> buffer = marshalMediaDescription(sdp, error);
 		belle_sip_object_unref(sdp);
 		if (error != BELLE_SIP_OK)
@@ -84,7 +84,7 @@ int SalCallOp::setLocalBody (Content &&body) {
 			belle_sdp_session_description_t *sdp = belle_sdp_session_description_parse(body.getBodyAsString().c_str());
 			if (!sdp)
 				return -1;
-			desc = SalMediaDescription::fromSDP(sdp);
+			desc = std::make_shared<SalMediaDescription>(sdp);
 			if (!desc) {
 				return -1;
 			}
@@ -155,7 +155,7 @@ int SalCallOp::setSdp (belle_sip_message_t *msg, belle_sdp_session_description_t
 }
 
 int SalCallOp::setSdpFromDesc (belle_sip_message_t *msg, const std::shared_ptr<SalMediaDescription> & desc) {
-	auto sdp = media_description_to_sdp(desc);
+	auto sdp = desc->toSdp();
 	int err = setSdp(msg, sdp);
 	belle_sip_object_unref(sdp);
 	return err;
@@ -354,7 +354,7 @@ void SalCallOp::sdpProcess () {
 			}
 		}
 
-		mSdpAnswer = reinterpret_cast<belle_sdp_session_description_t *>(belle_sip_object_ref(media_description_to_sdp(mResult)));
+		mSdpAnswer = reinterpret_cast<belle_sdp_session_description_t *>(belle_sip_object_ref(mResult->toSdp()));
 		// Once we have generated the SDP answer, we modify the result description for processing by the upper layer
 		// It should contain media parameters constraints from the remote offer, not our response
 		mResult->addr = mRemoteMedia->addr;
@@ -424,7 +424,8 @@ void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 		SalReason reason;
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
-				mRemoteMedia = SalMediaDescription::fromSDP(sdp);
+
+				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				mRemoteBody = move(sdpBody);
 			} // If no SDP in response, what can we do?
 		}
@@ -713,7 +714,7 @@ SalReason SalCallOp::processBodyForInvite (belle_sip_request_t *invite) {
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
 				mSdpOffering = false;
-				mRemoteMedia = SalMediaDescription::fromSDP(sdp);
+				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				// Make some sanity check about the received SDP
 				if (!isMediaDescriptionAcceptable(mRemoteMedia))
 					reason = SalReasonNotAcceptable;
@@ -756,7 +757,7 @@ SalReason SalCallOp::processBodyForAck (belle_sip_request_t *ack) {
 		belle_sdp_session_description_t *sdp;
 		if (parseSdpBody(sdpBody, &sdp, &reason) == 0) {
 			if (sdp) {
-				mRemoteMedia = SalMediaDescription::fromSDP(sdp);
+				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				sdpProcess();
 				belle_sip_object_unref(sdp);
 			} else {
