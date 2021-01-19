@@ -67,6 +67,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void destroy();
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
+		bool operator!=(const SalStreamDescription & other) const;
 		bool enabled() const;
 		void disable();
 

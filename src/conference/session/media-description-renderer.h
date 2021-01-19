@@ -44,9 +44,9 @@ public:
 	mutable int resultStreamDescriptionChanges = 0;
 	mutable size_t streamIndex = 0;
 
-	const std::vector<SalStreamDescription>::iterator getLocalStreamDescription() const;
-	const std::vector<SalStreamDescription>::iterator getRemoteStreamDescription() const;
-	const std::vector<SalStreamDescription>::iterator getResultStreamDescription() const;
+	const SalStreamDescription & getLocalStreamDescription() const;
+	const SalStreamDescription & getRemoteStreamDescription() const;
+	const SalStreamDescription & getResultStreamDescription() const;
 	
 	const OfferAnswerContext & scopeStreamToIndex(size_t index)const;
 	const OfferAnswerContext & scopeStreamToIndexWithDiff(size_t index, const OfferAnswerContext &previousCtx)const;
@@ -59,7 +59,7 @@ public:
 private:
 	OfferAnswerContext(const OfferAnswerContext &other) = default;
 	OfferAnswerContext & operator=(const OfferAnswerContext &other) = default;
-	const std::vector<SalStreamDescription>::iterator chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
+	const SalStreamDescription & chooseStreamDescription(const std::shared_ptr<SalMediaDescription> & md, const size_t & index) const;
 };
 
 /*

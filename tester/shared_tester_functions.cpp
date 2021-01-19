@@ -64,8 +64,8 @@ static void check_ice_from_rtp(LinphoneCall *c1, LinphoneCall *c2, LinphoneStrea
 			LinphonePrivate::SalCallOp * op = LinphonePrivate::Call::toCpp(c2)->getOp();
 			const std::shared_ptr<SalMediaDescription> & result_desc = op->getFinalMediaDescription();
 			const auto & result_stream = result_desc->getStreamIdx(0);
-			if (result_stream != result_desc->streams.cend()) {
-				expected_addr = result_stream->getRtpAddress();
+			if (result_stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+				expected_addr = result_stream.getRtpAddress();
 			}
 			if (expected_addr.empty()) {
 				expected_addr = result_desc->getAddress();

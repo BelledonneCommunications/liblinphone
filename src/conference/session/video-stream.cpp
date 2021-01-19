@@ -188,15 +188,14 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 
 	int usedPt = -1;
-	const auto & vstreamIt = ctx.getResultStreamDescription();
+	const auto & vstream = ctx.getResultStreamDescription();
 
-	if (vstreamIt == ctx.resultMediaDescription->streams.cend()) {
+	if (vstream == Utils::getEmptyConstRefObject<SalStreamDescription>()) {
 		lError() << "Unable to find video stream";
 		stop();
 		return;
 	}
 
-	const auto & vstream = *vstreamIt;
 	RtpProfile *videoProfile = makeProfile(ctx.resultMediaDescription, vstream, &usedPt);
 	if (usedPt == -1){
 		lError() << "No payload types accepted for video stream !";
@@ -311,13 +310,13 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
 	const auto & remoteStream = ctx.getRemoteStreamDescription();
-	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream->haveZrtpHash == 1)) {
+	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream.haveZrtpHash == 1)) {
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
 			activateZrtp();
-			if (remoteStream->haveZrtpHash == 1) {
-				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream->zrtphash, strlen((const char *)(remoteStream->zrtphash)));
+			if (remoteStream.haveZrtpHash == 1) {
+				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.zrtphash, strlen((const char *)(remoteStream.zrtphash)));
 				if (retval != 0)
 					lError() << "Video stream ZRTP hash mismatch 0x" << hex << retval;
 			}

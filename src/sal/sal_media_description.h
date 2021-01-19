@@ -75,7 +75,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		size_t getNbStreams() const;
 		const std::string & getAddress() const;
-		const std::vector<SalStreamDescription>::const_iterator getStreamIdx(unsigned int idx) const;
+		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
 
 	std::string name;
 	std::string addr;
