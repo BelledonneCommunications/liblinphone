@@ -2003,6 +2003,9 @@ void MediaSessionPrivate::startAccept(){
 			ms_snd_card_set_preferred_sample_rate(q->getCore()->getCCore()->sound_conf.capt_sndcard, localDesc->streams[0].max_rate);
 	}
 
+	/* We shall already have all the information to prepare the zrtp/lime mutual authentication */
+	performMutualAuthentication();
+
 	CallSessionPrivate::accept(nullptr);
 	if (!getParams()->getPrivate()->getInConference() && listener){
 		listener->onSetCurrentSession(q->getSharedFromThis());
