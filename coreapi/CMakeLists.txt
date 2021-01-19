@@ -29,7 +29,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	enum.h
 	lime.h
 	lpc2xml.h
-	offeranswer.h
 	private.h
 	quality_reporting.h
 	sqlite3_bctbx_vfs.h
@@ -75,7 +74,6 @@ set(LINPHONE_SOURCE_FILES_C
 	lsd.c
 	misc.c
 	nat_policy.c
-	offeranswer.c
 	payload_type.c
 	player.c
 	presence.c

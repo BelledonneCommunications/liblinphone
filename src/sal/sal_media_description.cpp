@@ -25,6 +25,8 @@
 LINPHONE_BEGIN_NAMESPACE
 
 SalMediaDescription::SalMediaDescription(){
+	pad = false;
+
 	streams.clear();
 	bundles.clear();
 	custom_sdp_attributes = nullptr;

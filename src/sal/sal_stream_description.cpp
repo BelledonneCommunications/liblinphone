@@ -27,6 +27,9 @@ LINPHONE_BEGIN_NAMESPACE
 SalStreamDescription::SalStreamDescription(){
 	custom_sdp_attributes = NULL;
 
+	pad[0] = false;
+	pad[1] = false;
+
 	payloads.clear();
 	already_assigned_payloads.clear();
 	crypto.clear();

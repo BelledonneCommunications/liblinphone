@@ -27,15 +27,6 @@
 
 #include "utils/payload-type-handler.h"
 
-static bool_t only_telephone_event(const std::list<OrtpPayloadType*> & l){
-	for (const auto & p : l) {
-		if (strcasecmp(p->mime_type,"telephone-event")!=0){
-			return FALSE;
-		}
-	}
-	return TRUE;
-}
-
 static PayloadType * opus_match(MSOfferAnswerContext *ctx, const bctbx_list_t *local_payloads, const PayloadType *refpt, const bctbx_list_t *remote_payloads, bool_t reading_response){
 	PayloadType *pt;
 	const bctbx_list_t *elem;
@@ -135,7 +126,23 @@ MSOfferAnswerProvider red_offer_answer_provider={
 	red_offer_answer_create_context
 };
 
-static PayloadType * generic_match(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
+void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
+	MSFactory *factory = lc->factory;
+	ms_factory_register_offer_answer_provider(factory, &red_offer_answer_provider);
+	ms_factory_register_offer_answer_provider(factory, &g729a_offer_answer_provider);
+	ms_factory_register_offer_answer_provider(factory, &opus_offer_answer_provider);
+}
+
+bool_t OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
+	for (const auto & p : l) {
+		if (strcasecmp(p->mime_type,"telephone-event")!=0){
+			return FALSE;
+		}
+	}
+	return TRUE;
+}
+
+PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
 	for (const auto & pt : local_payloads) {
 		
 		if ( pt->mime_type && refpt->mime_type 
@@ -147,18 +154,10 @@ static PayloadType * generic_match(const std::list<OrtpPayloadType*> & local_pay
 	return NULL;
 }
 
-
-void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
-	MSFactory *factory = lc->factory;
-	ms_factory_register_offer_answer_provider(factory, &red_offer_answer_provider);
-	ms_factory_register_offer_answer_provider(factory, &g729a_offer_answer_provider);
-	ms_factory_register_offer_answer_provider(factory, &opus_offer_answer_provider);
-}
-
 /*
  * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
 */
-static PayloadType * find_payload_type_best_match(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt,
+PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt,
 						  const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response){
 	PayloadType *ret = NULL;
 	MSOfferAnswerContext *ctx = NULL;
@@ -170,17 +169,17 @@ static PayloadType * find_payload_type_best_match(MSFactory *factory, const std:
 		ms_offer_answer_context_destroy(ctx);
 		return ret;
 	}
-	return generic_match(local_payloads, refpt, remote_payloads);
+	return OfferAnswerEngine::genericMatch(local_payloads, refpt, remote_payloads);
 }
 
 
-static std::list<OrtpPayloadType*> match_payloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec){
+std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec){
 	std::list<OrtpPayloadType*> res;
 	PayloadType *matched;
 	bool_t found_codec=FALSE;
 
 	for (const auto & p2 : remote) {
-		matched=find_payload_type_best_match(factory, local, p2, remote, reading_response);
+		matched=OfferAnswerEngine::findPayloadTypeBestMatch(factory, local, p2, remote, reading_response);
 		if (matched){
 			int local_number=payload_type_get_number(matched);
 			int remote_number=payload_type_get_number(p2);
@@ -255,7 +254,7 @@ static std::list<OrtpPayloadType*> match_payloads(MSFactory *factory, const std:
 	return res;
 }
 
-static bool_t match_crypto_algo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
+bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
 	SalSrtpCryptoAlgo & result, unsigned int* choosen_local_tag, bool_t use_local_key) {
 	for(const auto & rc : remote) {
 		if (rc.algo == 0)
@@ -284,9 +283,7 @@ static bool_t match_crypto_algo(const std::vector<SalSrtpCryptoAlgo> &local, con
 	return FALSE;
 }
 
-
-
-static SalStreamDir compute_dir_outgoing(SalStreamDir local, SalStreamDir answered){
+SalStreamDir OfferAnswerEngine::computeDirOutgoing(SalStreamDir local, SalStreamDir answered){
 	SalStreamDir res=local;
 	if (local==SalStreamSendRecv){
 		if (answered==SalStreamRecvOnly){
@@ -301,7 +298,7 @@ static SalStreamDir compute_dir_outgoing(SalStreamDir local, SalStreamDir answer
 	return res;
 }
 
-static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offered){
+SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStreamDir offered){
 	SalStreamDir res=SalStreamSendRecv;
 	if (local==SalStreamSendRecv){
 		if (offered==SalStreamSendOnly)
@@ -325,11 +322,11 @@ static SalStreamDir compute_dir_incoming(SalStreamDir local, SalStreamDir offere
 	return res;
 }
 
-static void initiate_outgoing(MSFactory* factory, const LinphonePrivate::SalStreamDescription & local_offer,
+void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const LinphonePrivate::SalStreamDescription & local_offer,
 						const LinphonePrivate::SalStreamDescription & remote_answer,
 						LinphonePrivate::SalStreamDescription & result){
 	if (remote_answer.enabled())
-		result.payloads=match_payloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
+		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
 	else {
 		ms_message("Local stream description [%p] rejected by peer",&local_offer);
 		result.rtp_port=0;
@@ -400,7 +397,7 @@ static void initiate_outgoing(MSFactory* factory, const LinphonePrivate::SalStre
 		result.dir=local_offer.dir;
 		result.multicast_role = SalMulticastSender;
 	} else {
-		result.dir=compute_dir_outgoing(local_offer.dir,remote_answer.dir);
+		result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
 	}
 
 	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
@@ -415,7 +412,7 @@ static void initiate_outgoing(MSFactory* factory, const LinphonePrivate::SalStre
 		}
 	}
 
-	if (!result.payloads.empty() && !only_telephone_event(result.payloads)){
+	if (!result.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(result.payloads)){
 		result.rtp_addr=remote_answer.rtp_addr;
 		result.rtcp_addr=remote_answer.rtcp_addr;
 		result.rtp_port=remote_answer.rtp_port;
@@ -430,7 +427,7 @@ static void initiate_outgoing(MSFactory* factory, const LinphonePrivate::SalStre
 		/* verify crypto algo */
 		result.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!match_crypto_algo(local_offer.crypto, remote_answer.crypto, crypto_result, &result.crypto_local_tag, FALSE)) {
+		if (!OfferAnswerEngine::matchCryptoAlgo(local_offer.crypto, remote_answer.crypto, crypto_result, &result.crypto_local_tag, FALSE)) {
 			result.disable();
 		}
 		if (result.crypto.empty()) {
@@ -458,15 +455,15 @@ static void initiate_outgoing(MSFactory* factory, const LinphonePrivate::SalStre
 }
 
 
-static void initiate_incoming(MSFactory *factory, const LinphonePrivate::SalStreamDescription & local_cap,
+void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const LinphonePrivate::SalStreamDescription & local_cap,
 						const LinphonePrivate::SalStreamDescription & remote_offer,
 						LinphonePrivate::SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	result.payloads=match_payloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
+	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
 	result.proto=remote_offer.proto;
 	result.type=local_cap.type;
-	result.dir=compute_dir_incoming(local_cap.dir,remote_offer.dir);
+	result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
 	
-	if (result.payloads.empty() || only_telephone_event(result.payloads) || !remote_offer.enabled()){
+	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
 		result.rtp_port=0;
 		return;
 	}
@@ -517,7 +514,7 @@ static void initiate_incoming(MSFactory *factory, const LinphonePrivate::SalStre
 		/* select crypto algo */
 		result.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!match_crypto_algo(local_cap.crypto, remote_offer.crypto, crypto_result, &result.crypto_local_tag, TRUE)) {
+		if (!OfferAnswerEngine::matchCryptoAlgo(local_cap.crypto, remote_offer.crypto, crypto_result, &result.crypto_local_tag, TRUE)) {
 			result.disable();
 			ms_message("No matching crypto algo for remote stream's offer [%p]",&remote_offer);
 		}
@@ -561,7 +558,7 @@ static void initiate_incoming(MSFactory *factory, const LinphonePrivate::SalStre
 	result.implicit_rtcp_fb = local_cap.implicit_rtcp_fb && remote_offer.implicit_rtcp_fb;
 }
 
-static bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherProto)
+bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto)
 {
 	switch (localProto) {
 		case SalProtoRtpAvp:
@@ -582,7 +579,7 @@ static bool are_proto_compatibles(SalMediaProto localProto, SalMediaProto otherP
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<LinphonePrivate::SalMediaDescription> local_offer,
+int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<LinphonePrivate::SalMediaDescription> local_offer,
 					const std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_answer,
 					std::shared_ptr<LinphonePrivate::SalMediaDescription> result){
 	size_t i;
@@ -591,7 +588,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<LinphoneP
 		ms_message("Processing for stream %zu",i);
 		LinphonePrivate::SalStreamDescription & ls = local_offer->streams[i];
 		const LinphonePrivate::SalStreamDescription & rs = remote_answer->streams[i];
-		if ((i < remote_answer->streams.size()) && rs.type == ls.type && are_proto_compatibles(ls.proto, rs.proto))
+		if ((i < remote_answer->streams.size()) && rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
 		{
 			if (ls.proto != rs.proto && ls.hasAvpf()) {
 				ls.proto = rs.proto;
@@ -600,7 +597,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<LinphoneP
 			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1));
 			}
-			initiate_outgoing(factory, ls,rs,result->streams[i]);
+			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i]);
 			memcpy(&result->streams[i].rtcp_xr, &ls.rtcp_xr, sizeof(result->streams[i].rtcp_xr));
 			if ((ls.rtcp_xr.enabled == TRUE) && (rs.rtcp_xr.enabled == FALSE)) {
 				result->streams[i].rtcp_xr.enabled = FALSE;
@@ -637,7 +634,7 @@ int offer_answer_initiate_outgoing(MSFactory *factory, std::shared_ptr<LinphoneP
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<LinphonePrivate::SalMediaDescription> local_capabilities,
+int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<LinphonePrivate::SalMediaDescription> local_capabilities,
 					std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_offer,
 					std::shared_ptr<LinphonePrivate::SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
@@ -660,7 +657,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Lin
 		LinphonePrivate::SalStreamDescription & rs = remote_offer->streams[i];
 		LinphonePrivate::SalStreamDescription & resultStream = result->streams[i];
 
-		if (rs.type == ls.type && are_proto_compatibles(ls.proto, rs.proto))
+		if (rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
 		{
 			if (ls.proto != rs.proto && rs.hasAvpf())	{
 				rs.proto = ls.proto;
@@ -673,7 +670,7 @@ int offer_answer_initiate_incoming(MSFactory *factory, const std::shared_ptr<Lin
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
 				}
 			}
-			initiate_incoming(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
+			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
 			// Handle global RTCP FB attributes
 			resultStream.rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
 			resultStream.rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
