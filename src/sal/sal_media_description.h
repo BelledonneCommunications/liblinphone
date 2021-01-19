@@ -44,14 +44,14 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		void addNewBundle(const SalStreamBundle & bundle);
 
 		int lookupMid(const std::string mid) const;
-		const std::list<SalStreamBundle>::const_iterator getBundleFromMid(const std::string mid) const;
+		const SalStreamBundle & getBundleFromMid(const std::string mid) const;
 		int getIndexOfTransportOwner(const SalStreamDescription & sd) const;
 
-		const std::vector<SalStreamDescription>::const_iterator findStream(SalMediaProto proto, SalStreamType type) const;
+		const SalStreamDescription & findStream(SalMediaProto proto, SalStreamType type) const;
 		unsigned int nbActiveStreamsOfType(SalStreamType type) const;
-		const std::vector<SalStreamDescription>::const_iterator getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
-		const std::vector<SalStreamDescription>::const_iterator findSecureStreamOfType(SalStreamType type) const;
-		const std::vector<SalStreamDescription>::const_iterator findBestStream(SalStreamType type) const;
+		const SalStreamDescription & getActiveStreamOfType(SalStreamType type, unsigned int idx) const;
+		const SalStreamDescription findSecureStreamOfType(SalStreamType type) const;
+		const SalStreamDescription findBestStream(SalStreamType type) const;
 
 		bool isEmpty() const;
 
@@ -68,6 +68,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasIpv6() const;
 
 		bool operator==(const SalMediaDescription & other) const;
+		bool operator!=(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
 		int globalEqual(const SalMediaDescription & otherMd) const;
 
@@ -77,23 +78,23 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const std::string & getAddress() const;
 		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
 
-	std::string name;
-	std::string addr;
-	std::string username;
-	int bandwidth = 0;
-	unsigned int session_ver = 0;
-	unsigned int session_id = 0;
-	SalStreamDir dir = SalStreamSendRecv;
-	std::vector<SalStreamDescription> streams;
-	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	std::string ice_ufrag;
-	std::string ice_pwd;
-	std::list<SalStreamBundle> bundles;
-	bool ice_lite = false;
-	bool set_nortpproxy = false;
-	bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	std::vector<bool> pad;
+		std::string name;
+		std::string addr;
+		std::string username;
+		int bandwidth = 0;
+		unsigned int session_ver = 0;
+		unsigned int session_id = 0;
+		SalStreamDir dir = SalStreamSendRecv;
+		std::vector<SalStreamDescription> streams;
+		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
+		OrtpRtcpXrConfiguration rtcp_xr;
+		std::string ice_ufrag;
+		std::string ice_pwd;
+		std::list<SalStreamBundle> bundles;
+		bool ice_lite = false;
+		bool set_nortpproxy = false;
+		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
+		bool pad;
 
 	private:
 		/*check for the presence of at least one stream with requested direction */
