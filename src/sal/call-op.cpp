@@ -338,11 +338,11 @@ void SalCallOp::sdpProcess () {
 
 	mResult = std::make_shared<SalMediaDescription>();
 	if (mSdpOffering) {
-		offer_answer_initiate_outgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult);
+		OfferAnswerEngine::initiateOutgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult);
 	} else {
 		if (mSdpAnswer)
 			belle_sip_object_unref(mSdpAnswer);
-		offer_answer_initiate_incoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
+		OfferAnswerEngine::initiateIncoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && mResult->hasDir(SalStreamSendOnly)) {
 			mResult->addr = setAddrTo0000(mResult->addr);
