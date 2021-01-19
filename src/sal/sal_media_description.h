@@ -35,6 +35,9 @@ class SalStreamDescription;
 
 class LINPHONE_PUBLIC SalMediaDescription {
 	public:
+
+		static std::shared_ptr<SalMediaDescription> fromSDP(belle_sdp_session_description_t  *sdp);
+
 		SalMediaDescription();
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
