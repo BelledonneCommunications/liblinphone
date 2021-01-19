@@ -906,20 +906,6 @@ static SalStreamDescription * sdp_to_stream_description(SalMediaDescription *md,
 		}
 	}
 
-	/* Do we have Lime Ik attribute */
-	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"Ik"))!=NULL) {
-		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			stream->haveLimeIk = 1;
-		}
-	}
-	/* get ready to parse also lime-Ik */
-	if ((attribute=belle_sdp_media_description_get_attribute(media_desc,"lime-Ik"))!=NULL) {
-		if (belle_sdp_attribute_get_value(attribute)!=NULL) {
-			stream->haveLimeIk = 1;
-		}
-	}
-
-
 	/* Get ICE candidate attributes if any */
 	sdp_parse_media_ice_parameters(media_desc, stream);
 
@@ -1045,6 +1031,14 @@ int sdp_to_media_description( belle_sdp_session_description_t  *session_desc, Sa
 
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(session_desc, &desc->rtcp_xr);
+
+	/* Do we have Lime Ik attribute */
+	value = belle_sdp_session_description_get_attribute_value(session_desc,"Ik");
+	if (value) desc->haveLimeIk = TRUE;
+
+	/* get ready to parse also lime-Ik */
+	value = belle_sdp_session_description_get_attribute_value(session_desc,"lime-Ik");
+	if (value) desc->haveLimeIk = TRUE;
 
 	/* Get the custom attributes, parse some of them that are relevant */
 	for (custom_attribute_it = belle_sdp_session_description_get_attributes(session_desc); custom_attribute_it != NULL; custom_attribute_it = custom_attribute_it->next) {

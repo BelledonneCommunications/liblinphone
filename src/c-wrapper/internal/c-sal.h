@@ -287,7 +287,6 @@ typedef struct SalStreamDescription{
 	bool_t set_nortpproxy; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 	bool_t rtcp_mux;
 	uint8_t haveZrtpHash; /**< flag for zrtp hash presence */
-	uint8_t haveLimeIk; /**< flag for lime Ik presence */
 	uint8_t zrtphash[128];
 	char dtls_fingerprint[256];
 	SalDtlsRole dtls_role;
@@ -328,7 +327,7 @@ typedef struct SalMediaDescription{
 	bool_t ice_lite;
 	bool_t set_nortpproxy;
 	bool_t accept_bundles; /* Set to TRUE if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
-	bool_t pad[1];
+	bool_t haveLimeIk; /**< flag for lime Ik presence */
 } SalMediaDescription;
 
 typedef struct SalMessage{
@@ -371,8 +370,8 @@ bool_t sal_stream_description_has_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_implicit_avpf(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_srtp(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_dtls(const SalStreamDescription *sd);
-bool_t sal_stream_description_has_limeIk(const SalStreamDescription *sd);
 bool_t sal_stream_description_has_ipv6(const SalStreamDescription *md);
+bool_t sal_media_description_has_limeIk(const SalMediaDescription *md);
 bool_t sal_media_description_has_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_implicit_avpf(const SalMediaDescription *md);
 bool_t sal_media_description_has_srtp(const SalMediaDescription *md);
