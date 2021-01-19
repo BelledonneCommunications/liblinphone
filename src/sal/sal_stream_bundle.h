@@ -37,6 +37,8 @@ class SalStreamBundle{
 		virtual ~SalStreamBundle();
 
 		SalStreamBundle &operator=(const SalStreamBundle& other);
+		bool operator==(const SalStreamBundle & other) const;
+		bool operator!=(const SalStreamBundle & other) const;
 
 		void addStream(SalStreamDescription & stream, const std::string &mid);
 

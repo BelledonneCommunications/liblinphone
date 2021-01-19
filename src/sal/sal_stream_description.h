@@ -93,48 +93,48 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::string getProtoAsString() const;
 		SalStreamDir getDirection() const;
 
-	std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
-	SalMediaProto proto = SalProtoRtpAvp;
-	SalStreamType type = SalAudio;
-	std::string typeother;
-	std::string proto_other;
-	std::string rtp_addr;
-	std::string rtcp_addr;
-	unsigned int rtp_ssrc = 0;
-	std::string rtcp_cname;
-	int rtp_port = 0;
-	int rtcp_port = 0;
-	std::list<PayloadType*> payloads; /**<list of PayloadType */
-	std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
-	int bandwidth = 0;
-	int ptime = 0;
-	int maxptime = 0;
-	SalStreamDir dir = SalStreamInactive;
-	std::vector<SalSrtpCryptoAlgo> crypto;
-	unsigned int crypto_local_tag = 0;
-	int max_rate = 0;
-	bool bundle_only = false;
-	bool implicit_rtcp_fb = false;
-	bool pad[2]; /* Use me */
-	OrtpRtcpFbConfiguration rtcp_fb;
-	OrtpRtcpXrConfiguration rtcp_xr;
-	SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
-	std::vector<SalIceCandidate> ice_candidates;
-	std::vector<SalIceRemoteCandidate> ice_remote_candidates;
-	std::string ice_ufrag;
-	std::string ice_pwd;
-	std::string mid; /* Media line identifier for RTP bundle mode */
-	int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
-	bool ice_mismatch = false;
-	bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
-	bool rtcp_mux = false;
-	uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
-	uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
-	uint8_t zrtphash[128];
-	std::string dtls_fingerprint;
-	SalDtlsRole dtls_role = SalDtlsRoleInvalid;
-	int ttl = 0; /*for multicast -1 to disable*/
-	SalMulticastRole multicast_role = SalMulticastInactive;
+		std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
+		SalMediaProto proto = SalProtoRtpAvp;
+		SalStreamType type = SalAudio;
+		std::string typeother;
+		std::string proto_other;
+		std::string rtp_addr;
+		std::string rtcp_addr;
+		unsigned int rtp_ssrc = 0;
+		std::string rtcp_cname;
+		int rtp_port = 0;
+		int rtcp_port = 0;
+		std::list<PayloadType*> payloads; /**<list of PayloadType */
+		std::list<PayloadType*> already_assigned_payloads; /**<list of PayloadType offered in the past, used for correct allocation of payload type numbers*/
+		int bandwidth = 0;
+		int ptime = 0;
+		int maxptime = 0;
+		SalStreamDir dir = SalStreamInactive;
+		std::vector<SalSrtpCryptoAlgo> crypto;
+		unsigned int crypto_local_tag = 0;
+		int max_rate = 0;
+		bool bundle_only = false;
+		bool implicit_rtcp_fb = false;
+		bool pad[2]; /* Use me */
+		OrtpRtcpFbConfiguration rtcp_fb;
+		OrtpRtcpXrConfiguration rtcp_xr;
+		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
+		std::vector<SalIceCandidate> ice_candidates;
+		std::vector<SalIceRemoteCandidate> ice_remote_candidates;
+		std::string ice_ufrag;
+		std::string ice_pwd;
+		std::string mid; /* Media line identifier for RTP bundle mode */
+		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
+		bool ice_mismatch = false;
+		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
+		bool rtcp_mux = false;
+		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
+		uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
+		uint8_t zrtphash[128];
+		std::string dtls_fingerprint;
+		SalDtlsRole dtls_role = SalDtlsRoleInvalid;
+		int ttl = 0; /*for multicast -1 to disable*/
+		SalMulticastRole multicast_role = SalMulticastInactive;
 
 	private:
 		bool isRecvOnly(const PayloadType *p) const;
