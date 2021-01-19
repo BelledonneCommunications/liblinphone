@@ -28,12 +28,37 @@ SalStreamBundle::SalStreamBundle(){
 	mids.clear();
 }
 
+SalStreamBundle::SalStreamBundle(const char * ids){
+	char *tmp = (char*)ms_malloc0(strlen(ids) + 1);
+	int err;
+	do{
+		int consumed = 0;
+		err = sscanf(ids, "%s%n", tmp, &consumed);
+		if (err > 0){
+			mids.push_back(tmp);
+			ids += consumed;
+		}else break;
+	}while( *ids != '\0');
+	ms_free(tmp);
+}
+
 SalStreamBundle::SalStreamBundle(const SalStreamBundle &other){
 	mids = other.mids;
 }
 
 SalStreamBundle::~SalStreamBundle(){
 	mids.clear();
+}
+
+void SalStreamBundle::addToSdp(belle_sdp_session_description_t * session_desc) const {
+	char *attr_value = ms_strdup("BUNDLE");
+	for (const auto & mid : mids){
+		char *tmp = ms_strdup_printf("%s %s", attr_value, mid.c_str());
+		ms_free(attr_value);
+		attr_value = tmp;
+	}
+	belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("group", attr_value));
+	bctbx_free(attr_value);
 }
 
 SalStreamBundle &SalStreamBundle::operator=(const SalStreamBundle & other){

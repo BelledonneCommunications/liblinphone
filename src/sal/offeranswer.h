@@ -20,10 +20,21 @@
 #ifndef OFFERANSWER_H
 #define OFFERANSWER_H
 
+#include <memory>
+#include <list>
+#include <vector>
+
+#include "linphone/utils/general.h"
+#include "sal/sal_stream_description.h"
+
 /**
  This header files defines the SDP offer answer API.
  It can be used by implementations of SAL directly.
 **/
+
+LINPHONE_BEGIN_NAMESPACE
+
+class SalMediaDescription;
 
 class OfferAnswerEngine {
 
@@ -32,18 +43,18 @@ class OfferAnswerEngine {
 		 * Returns a media description to run the streams with, based on a local offer
 		 * and the returned response (remote).
 		**/
-		static int  initiateOutgoing(MSFactory *factory, std::shared_ptr<LinphonePrivate::SalMediaDescription> local_offer,
-							const std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_answer,
-							std::shared_ptr<LinphonePrivate::SalMediaDescription> result);
+		static int  initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+							const std::shared_ptr<SalMediaDescription> remote_answer,
+							std::shared_ptr<SalMediaDescription> result);
 
 		/**
 		 * Returns a media description to run the streams with, based on the local capabilities and
 		 * and the received offer.
 		 * The returned media description is an answer and should be sent to the offerer.
 		**/
-		static int initiateIncoming(MSFactory* factory, const std::shared_ptr<LinphonePrivate::SalMediaDescription> local_capabilities,
-							std::shared_ptr<LinphonePrivate::SalMediaDescription> remote_offer,
-							std::shared_ptr<LinphonePrivate::SalMediaDescription> result, bool_t one_matching_codec);
+		static int initiateIncoming(MSFactory* factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+							std::shared_ptr<SalMediaDescription> remote_offer,
+							std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec);
 
 	private:
 
@@ -56,10 +67,12 @@ class OfferAnswerEngine {
 		static PayloadType * genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads);
 		static PayloadType * findPayloadTypeBestMatch(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response);
 
-		static void initiateIncomingStream(MSFactory *factory, const LinphonePrivate::SalStreamDescription & local_cap, const LinphonePrivate::SalStreamDescription & remote_offer, LinphonePrivate::SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid);
+		static void initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid);
 
-		static void initiateOutgoingStream(MSFactory* factory, const LinphonePrivate::SalStreamDescription & local_offer, const LinphonePrivate::SalStreamDescription & remote_answer, LinphonePrivate::SalStreamDescription & result);
+		static void initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result);
 
 };
+
+LINPHONE_END_NAMESPACE
 
 #endif
