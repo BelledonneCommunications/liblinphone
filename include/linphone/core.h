@@ -3289,6 +3289,10 @@ LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
 
 /**
  * Get the native window handle of the video window.
+ * On Desktop platforms, the display filter is MSOGL by default. That means :
+ * - On UWP and Windows with the Windows Store compatibility, the result is a SwapChainPanel.
+ * - On other platform, the result is a MSOglContextInfo defined in msogl.h of mediastreamer2
+ * - When Qt is used, the MSQOGL filter must be selected. The result is an instanciated QQuickFramebufferObject::Renderer that must be returned to Qt in QQuickFramebufferObject::createRenderer(). linphone_core_iterate() can be called while being in this Qt function.
  * @param core #LinphoneCore object @notnil
  * @return The native window handle of the video window. @maybenil
  * @ingroup media_parameters
@@ -3311,6 +3315,10 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
  * @ingroup media_parameters
  * Set the native video window id where the video is to be displayed.
  * For MacOS, Linux, Windows: if not set or LINPHONE_VIDEO_DISPLAY_AUTO the core will create its own window, unless the special id LINPHONE_VIDEO_DISPLAY_NONE is given.
+ * On Desktop platforms, the display filter is MSOGL by default. That means :
+ * - On UWP and Windows with the Windows Store compatibility, window_id is a SwapChainPanel.
+ * - On other platform, window_id is a MSOglContextInfo defined in msogl.h of mediastreamer2
+ * - When Qt is used, the MSQOGL filter must be selected. Setting window id is only used to stop rendering by passing a NULL pointer. See linphone_core_get_native_video_window_id() for more details.
  * @param core #LinphoneCore object @notnil
  * @param window_id The native window id where the remote video is to be displayed. @maybenil
 **/
@@ -3318,6 +3326,10 @@ LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core
 
 /**
  * Get the native window handle of the video preview window.
+ * On Desktop platforms, the display filter is MSOGL by default. That means :
+ * - On UWP and Windows with the Windows Store compatibility, the result is a SwapChainPanel.
+ * - On other platform, the result is a MSOglContextInfo defined in msogl.h of mediastreamer2
+ * - When Qt is used, the MSQOGL filter must be selected. The result is an instanciated QQuickFramebufferObject::Renderer that must be used by Qt in QQuickFramebufferObject::createRenderer(). linphone_core_iterate() can be called while being in this Qt function.
  * @param core #LinphoneCore object @notnil
  * @return The native window handle of the video preview window. @maybenil
  * @ingroup media_parameters
@@ -3328,6 +3340,10 @@ LINPHONE_PUBLIC void * linphone_core_get_native_preview_window_id(const Linphone
  * Set the native window id where the preview video (local camera) is to be displayed.
  * This has to be used in conjonction with linphone_core_use_preview_window().
  * MacOS, Linux, Windows: if not set or zero the core will create its own window, unless the special id -1 is given.
+ * On Desktop platforms, the display filter is MSOGL by default. That means :
+ * - On UWP and Windows with the Windows Store compatibility, window_id is a SwapChainPanel.
+ * - On other platform, window_id is a MSOglContextInfo defined in msogl.h of mediastreamer2.
+ * - When Qt is used, the MSQOGL filter must be selected. Setting window id is only used to stop rendering by passing a NULL pointer. See linphone_core_get_native_preview_window_id() for more details.
  * @param core #LinphoneCore object @notnil
  * @param window_id The native window id where the preview video is to be displayed. @maybenil
  * @ingroup media_parameters

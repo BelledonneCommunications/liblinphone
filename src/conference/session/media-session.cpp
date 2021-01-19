@@ -2862,7 +2862,7 @@ void * MediaSession::getNativeVideoWindowId () const {
 	L_D();
 	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
-		iface->getNativeWindowId();
+		return iface->getNativeWindowId();
 	}
 	return nullptr;
 }
@@ -2887,7 +2887,7 @@ void * MediaSession::getNativePreviewVideoWindowId () const{
 	L_D();
 	auto iface = d->getStreamsGroup().lookupMainStreamInterface<VideoControlInterface>(SalVideo);
 	if (iface) {
-		iface->getNativePreviewWindowId();
+		return iface->getNativePreviewWindowId();
 	}
 	return nullptr;
 }

@@ -104,6 +104,13 @@ if(BELCARD_FOUND)
 	list(APPEND INTERFACE_LIBS belcard)
 	list(APPEND LINK_LIBS belcard)
 endif()
+if(ENABLE_QT_GL)
+	set(QT5_PACKAGES Core Gui Quick )
+	find_package(Qt5 COMPONENTS ${QT5_PACKAGES} REQUIRED)
+	foreach (package ${QT5_PACKAGES})
+		list(APPEND LINK_LIBS ${Qt5${package}_LIBRARIES})
+	endforeach ()
+endif()
 
 #define log domain for this part of code
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
