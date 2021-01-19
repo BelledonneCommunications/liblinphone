@@ -854,7 +854,9 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
 
 	const LinphoneAddress *phead_uri = phead->identity;
-	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, linphone_address_as_string(phead_uri));
+	char * phead_address = linphone_address_as_string(phead_uri);
+	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, phead_address);
+	ms_free(phead_address);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 	const LinphoneCallParams *marie_params = linphone_call_get_params(marie_call);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_params));
