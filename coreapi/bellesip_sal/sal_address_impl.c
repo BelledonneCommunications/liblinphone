@@ -241,7 +241,7 @@ bctbx_map_t* sal_address_get_uri_params(const SalAddress *addr) {
 		const char * name = (const char *)it->data;
 		const char * value = belle_sip_parameters_get_parameter(parameters, name);
 		bctbx_pair_t *pair = (bctbx_pair_t*) bctbx_pair_cchar_new(name, ms_strdup(value));
-		bctbx_map_cchar_insert(param_map, pair);
+		bctbx_map_cchar_insert_and_delete(param_map, pair);
 	}
 
 	return param_map;
