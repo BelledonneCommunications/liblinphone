@@ -23,7 +23,6 @@ This file contains SAL API functions that do not depend on the underlying implem
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#include "sal/sal_media_description.h"
 #include "c-wrapper/internal/c-sal.h"
 
 #include <ctype.h>
