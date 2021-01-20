@@ -28,6 +28,7 @@
 #include "linphone/utils/general.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
+#include "sal/sal_stream_bundle.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
