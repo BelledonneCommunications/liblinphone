@@ -97,7 +97,7 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	multicast_role = other.multicast_role;
 }
 
-SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
+SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -744,7 +744,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	return media_desc;
 }
 
-bool_t SalStreamDescription::sdpParseRtcpFbParameters(belle_sdp_media_description_t *media_desc) {
+bool_t SalStreamDescription::sdpParseRtcpFbParameters(const belle_sdp_media_description_t *media_desc) {
 	belle_sip_list_t *it;
 	belle_sdp_attribute_t *attribute;
 	belle_sdp_rtcp_fb_attribute_t *fb_attribute;
@@ -782,7 +782,7 @@ bool_t SalStreamDescription::sdpParseRtcpFbParameters(belle_sdp_media_descriptio
 	return retval;
 }
 
-void SalStreamDescription::sdpParsePayloadTypes(belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::sdpParsePayloadTypes(const belle_sdp_media_description_t *media_desc) {
 	PayloadType *pt;
 	PayloadTypeAvpfParams avpf_params;
 	belle_sip_list_t* mime_param_it=NULL;
@@ -810,7 +810,7 @@ void SalStreamDescription::sdpParsePayloadTypes(belle_sdp_media_description_t *m
 	if ( mime_params ) belle_sip_list_free_with_data ( mime_params,belle_sip_object_unref );
 }
 
-void SalStreamDescription::sdpParseMediaCryptoParameters(belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::sdpParseMediaCryptoParameters(const belle_sdp_media_description_t *media_desc) {
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
 	char tmp[257]={0}, tmp2[129]={0}, parameters[257]={0};
@@ -860,7 +860,7 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(belle_sdp_media_descrip
 	ms_message("Found: %lu valid crypto lines", crypto.size() );
 }
 
-void SalStreamDescription::sdpParseMediaIceParameters(belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_description_t *media_desc) {
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
 	const char *att_name;

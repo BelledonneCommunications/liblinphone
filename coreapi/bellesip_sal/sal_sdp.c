@@ -118,12 +118,12 @@ static void sdp_parse_rtcp_xr_parameters(const belle_sdp_attribute_t *attribute,
 	}
 }
 
-void sdp_parse_session_rtcp_xr_parameters(belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config) {
+void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config) {
 	const belle_sdp_attribute_t *attribute = belle_sdp_session_description_get_attribute(session_desc, "rtcp-xr");
 	sdp_parse_rtcp_xr_parameters(attribute, config);
 }
 
-void sdp_parse_media_rtcp_xr_parameters(belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config) {
+void sdp_parse_media_rtcp_xr_parameters(const belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config) {
 	const belle_sdp_attribute_t *attribute = belle_sdp_media_description_get_attribute(media_desc, "rtcp-xr");
 	sdp_parse_rtcp_xr_parameters(attribute, config);
 }

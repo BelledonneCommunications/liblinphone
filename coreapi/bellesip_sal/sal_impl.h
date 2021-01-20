@@ -30,8 +30,8 @@ void add_rtcp_fb_nack_attribute(belle_sdp_media_description_t *media_desc, int8_
 void add_rtcp_fb_ack_attribute(belle_sdp_media_description_t *media_desc, int8_t id, belle_sdp_rtcp_fb_val_param_t param);
 void add_rtcp_fb_trr_int_attribute(belle_sdp_media_description_t *media_desc, int8_t id, uint16_t trr_int);
 
-void sdp_parse_session_rtcp_xr_parameters(belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config);
-void sdp_parse_media_rtcp_xr_parameters(belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config);
+void sdp_parse_session_rtcp_xr_parameters(const belle_sdp_session_description_t *session_desc, OrtpRtcpXrConfiguration *config);
+void sdp_parse_media_rtcp_xr_parameters(const belle_sdp_media_description_t *media_desc, OrtpRtcpXrConfiguration *config);
 
 bool_t _sal_compute_sal_errors(belle_sip_response_t* response, SalReason* sal_reason, char* reason, size_t reason_size);
 SalReason _sal_reason_from_sip_code(int code);
