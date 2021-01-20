@@ -128,7 +128,7 @@ static void sNetworkChangeCallback(CFNotificationCenterRef center, void *observe
 const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
-	mUseAppDelgate = (!getSharedCoreHelpers()->isCoreShared() || linphone_config_get_bool(core->getCCore()->config, "shared_core", "is_main_core", false)) && !linphone_config_get_int(core->getCCore()->config, "tester", "test_env", false);
+	mUseAppDelgate = core->getCCore()->is_main_core && !linphone_config_get_int(core->getCCore()->config, "tester", "test_env", false);
 	if (mUseAppDelgate) {
 		mAppDelegate = [[IosAppDelegate alloc] init];
 		[mAppDelegate configure:core];
