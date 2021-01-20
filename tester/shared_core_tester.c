@@ -227,7 +227,6 @@ static void shared_executor_core_get_message_by_starting_a_core(void) {
 	const char *text = "Bli bli bli \n blu";
 	LinphoneCoreManager *sender_mgr = linphone_core_manager_new_without_auto_iterate("marie_rc");
 	LinphoneCoreManager *receiver_mgr = linphone_core_manager_create_shared("pauline_rc", TEST_GROUP_ID, FALSE, NULL);
-	linphone_core_set_auto_iterate_enabled(receiver_mgr->lc, FALSE);
 	linphone_core_manager_start(receiver_mgr, TRUE);
 
 	const char *call_id = shared_core_send_msg_and_get_call_id(sender_mgr, receiver_mgr, text);

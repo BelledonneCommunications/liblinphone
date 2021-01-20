@@ -3020,12 +3020,6 @@ LinphoneCore *linphone_core_ref(LinphoneCore *lc) {
 }
 
 void linphone_core_unref(LinphoneCore *lc) {
-#if TARGET_OS_IPHONE
-	if (lc->platform_helper) {
-		delete getPlatformHelpers(lc);
-	}
-	lc->platform_helper = NULL;
-#endif
 	belle_sip_object_unref(BELLE_SIP_OBJECT(lc));
 }
 

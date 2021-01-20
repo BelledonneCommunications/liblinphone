@@ -36,6 +36,7 @@ LINPHONE_BEGIN_NAMESPACE
 class LoggerPrivate : public BaseObjectPrivate {
 public:
 	Logger::Level level;
+	string str;
 	ostringstream os;
 };
 
@@ -49,25 +50,25 @@ Logger::Logger (Level level) : BaseObject(*new LoggerPrivate) {
 Logger::~Logger () {
 	L_D();
 
-	const string str = d->os.str();
+	d->str = d->os.str();
 
 	switch (d->level) {
 		case Debug:
 			#if DEBUG_LOGS
-				bctbx_debug("%s", str.c_str());
+				bctbx_debug("%s", d->str.c_str());
 			#endif // if DEBUG_LOGS
 			break;
 		case Info:
-			bctbx_message("%s", str.c_str());
+			bctbx_message("%s", d->str.c_str());
 			break;
 		case Warning:
-			bctbx_warning("%s", str.c_str());
+			bctbx_warning("%s", d->str.c_str());
 			break;
 		case Error:
-			bctbx_error("%s", str.c_str());
+			bctbx_error("%s", d->str.c_str());
 			break;
 		case Fatal:
-			bctbx_fatal("%s", str.c_str());
+			bctbx_fatal("%s", d->str.c_str());
 			break;
 	}
 }
