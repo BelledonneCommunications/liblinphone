@@ -34,7 +34,7 @@ LINPHONE_BEGIN_NAMESPACE
 class SalStreamDescription;
 class SalStreamBundle;
 
-class LINPHONE_PUBLIC SalMediaDescription : public std::enable_shared_from_this<SalMediaDescription> {
+class LINPHONE_PUBLIC SalMediaDescription {
 	public:
 
 		SalMediaDescription();

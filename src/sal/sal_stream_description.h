@@ -63,14 +63,14 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	public:
 
 		SalStreamDescription();
-		SalStreamDescription(const std::shared_ptr<SalMediaDescription> & salMediaDesc, belle_sdp_media_description_t *media_desc);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, belle_sdp_media_description_t *media_desc);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
 		bool operator!=(const SalStreamDescription & other) const;
-		belle_sdp_media_description_t * toSdpMediaDescription(belle_sdp_session_description_t *session_desc) const;
+		belle_sdp_media_description_t * toSdpMediaDescription(const SalMediaDescription * salMediaDesc, belle_sdp_session_description_t *session_desc) const;
 		bool enabled() const;
 		void disable();
 
@@ -156,8 +156,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void sdpParseMediaIceParameters(belle_sdp_media_description_t *media_desc);
 		void enableAvpfForStream();
 
-		std::weak_ptr<SalMediaDescription> md;
-		const std::shared_ptr<SalMediaDescription> getMediaDesc() const;
 };
 
 LINPHONE_END_NAMESPACE
