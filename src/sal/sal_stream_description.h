@@ -63,7 +63,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	public:
 
 		SalStreamDescription();
-		SalStreamDescription(const SalMediaDescription * salMediaDesc, belle_sdp_media_description_t *media_desc);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
@@ -150,10 +150,10 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool_t isRtcpFbTrrIntTheSameForAllPayloads(uint16_t *trr_int) const;
 		void addMidAttributesToSdp(belle_sdp_media_description_t *media_desc) const;
 		void applyRtcpFbAttributeToPayload(belle_sdp_rtcp_fb_attribute_t *fb_attribute, PayloadType *pt);
-		bool_t sdpParseRtcpFbParameters(belle_sdp_media_description_t *media_desc);
-		void sdpParsePayloadTypes(belle_sdp_media_description_t *media_desc);
-		void sdpParseMediaCryptoParameters(belle_sdp_media_description_t *media_desc);
-		void sdpParseMediaIceParameters(belle_sdp_media_description_t *media_desc);
+		bool_t sdpParseRtcpFbParameters(const belle_sdp_media_description_t *media_desc);
+		void sdpParsePayloadTypes(const belle_sdp_media_description_t *media_desc);
+		void sdpParseMediaCryptoParameters(const belle_sdp_media_description_t *media_desc);
+		void sdpParseMediaIceParameters(const belle_sdp_media_description_t *media_desc);
 		void enableAvpfForStream();
 
 };
