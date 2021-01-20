@@ -245,6 +245,9 @@ void ToneManager::createTimerToCleanTonePlayer(unsigned int delay) {
 				}else{
 					return false;
 				}
+			}else if(!source) {// Stop the timer if there is no more ring stream. It can happen when forcing ring to stop while playing a tone. Deleting timer here avoid concurrency issue
+				deleteTimer();
+				return false;
 			}
 			return true;
 		};
@@ -602,7 +605,7 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 	MSDtmfGenCustomTone def;
 	memset(&def, 0, sizeof(def));
 	def.amplitude = 1;
-	/*these are french tones, excepted the failed one, which is USA congestion tone (does not exist in France)*/
+	/*these are french tones, excepted the failed one, which comes USA congestion on mono-frequency*/
 	switch(toneId) {
 		case LinphoneToneCallOnHold:
 			def.repeat_count=3;
@@ -623,10 +626,18 @@ MSDtmfGenCustomTone ToneManager::generateToneFromId(LinphoneToneID toneId) {
 		break;
 		case LinphoneToneCallLost:
 			def.duration=250;
-			def.frequencies[0]=480;
+			//def.frequencies[0]=480;  // Second frequency that is hide
 			def.frequencies[0]=620;
 			def.interval=250;
 			def.repeat_count=3;
+		break;
+		case LinphoneToneCallEnd://From Android TONE_PROP_PROMPT value : Proprietary tone, prompt tone: 400Hz+1200Hz, 200ms ON
+			def.duration=200;
+			def.frequencies[0]=400;
+			def.frequencies[1]=1200;
+			def.interval=200;
+			def.repeat_count=2;
+			def.amplitude = 0.5f;// This tone can be in parallel of other calls. This will be played on a lighter amplitude
 		break;
 		default:
 			lWarning() << "[ToneManager] Unhandled tone id.";

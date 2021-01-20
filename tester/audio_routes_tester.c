@@ -1685,6 +1685,50 @@ static void conference_with_simple_audio_device_change(void) {
 
 }
 
+static void regex_card_selection(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_reload_sound_devices(marie->lc);
+	MSFactory *factory = linphone_core_get_ms_factory(marie->lc);
+	MSSndCardManager *sndcard_manager = ms_factory_get_snd_card_manager(factory);
+
+	ms_snd_card_manager_register_desc(sndcard_manager, &dummy_test_snd_card_desc);
+	ms_snd_card_manager_register_desc(sndcard_manager, &dummy2_test_snd_card_desc);
+
+	linphone_core_reload_sound_devices(marie->lc);
+// Get dummy
+	MSSndCard * card = ms_snd_card_manager_get_card(sndcard_manager, ".*dummy .*");
+	if(!BC_ASSERT_PTR_NOT_NULL(card)) goto end;
+	BC_ASSERT_STRING_EQUAL(card->name, DUMMY_TEST_SOUNDCARD);
+// Get dummy2
+	card = ms_snd_card_manager_get_card(sndcard_manager, ".*dummy2 .*");
+	if(!BC_ASSERT_PTR_NOT_NULL(card)) goto end;
+	BC_ASSERT_STRING_EQUAL(card->name, DUMMY2_TEST_SOUNDCARD);
+// Get a card only from filter
+	card = ms_snd_card_manager_get_card(sndcard_manager, "dummyTest?( .*)?:.*");
+	if(!BC_ASSERT_PTR_NOT_NULL(card)) goto end;
+	BC_ASSERT_STRING_EQUAL(card->desc->driver_type, "dummyTest");
+// Get a card only from filter
+	card = ms_snd_card_manager_get_card(sndcard_manager, "dummyTest2?( .*)?:.*");
+	if(!BC_ASSERT_PTR_NOT_NULL(card)) goto end;
+	BC_ASSERT_STRING_EQUAL(card->desc->driver_type, "dummyTest2");
+// Get a card from bad filter and good id
+	card = ms_snd_card_manager_get_card(sndcard_manager, "dummyTest?( .*)?:.*dummy2.*");
+	if(!BC_ASSERT_PTR_NULL(card)) goto end;
+// Get a card from good filter and bad id
+	card = ms_snd_card_manager_get_card(sndcard_manager, "dummyTest2?( .*)?:.*dummy3.*");
+	if(!BC_ASSERT_PTR_NULL(card)) goto end;
+// Get a card from good filter and id
+	card = ms_snd_card_manager_get_card(sndcard_manager, "dummyTest2?( .*)?:.*dummy2.*");
+	if(!BC_ASSERT_PTR_NOT_NULL(card)) goto end;
+	BC_ASSERT_STRING_EQUAL(card->name, DUMMY2_TEST_SOUNDCARD);
+// ID doesn't exists
+	card = ms_snd_card_manager_get_card(sndcard_manager, ".*dummy3.*");
+	if(!BC_ASSERT_PTR_NULL(card)) goto end;
+
+end:
+	linphone_core_manager_destroy(marie);
+}
+
 test_t audio_routes_tests[] = {
 	TEST_NO_TAG("Simple call with audio devices reload", simple_call_with_audio_devices_reload),
 	TEST_NO_TAG("Call with disconnecting device before ringback", call_with_disconnecting_device_before_ringback),
@@ -1706,7 +1750,9 @@ test_t audio_routes_tests[] = {
 	TEST_NO_TAG("Simple conference with audio device change ping pong", simple_conference_with_audio_device_change_pingpong),
 	TEST_NO_TAG("Simple conference with audio device change during pause callee", simple_conference_with_audio_device_change_during_pause_callee),
 	TEST_NO_TAG("Simple conference with audio device change during pause caller", simple_conference_with_audio_device_change_during_pause_caller),
-	TEST_NO_TAG("Simple conference with audio device change during pause both parties", simple_conference_with_audio_device_change_during_pause_caller_callee)
+	TEST_NO_TAG("Simple conference with audio device change during pause both parties", simple_conference_with_audio_device_change_during_pause_caller_callee),
+	TEST_NO_TAG("Regex audio card selection", regex_card_selection)
+	
 };
 
 test_suite_t audio_routes_test_suite = {"Audio Routes", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
