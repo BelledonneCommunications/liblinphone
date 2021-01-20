@@ -109,6 +109,12 @@ static char* _get_identity(const LinphoneAccountCreator *creator) {
 		LinphoneProxyConfig* proxy = linphone_core_create_proxy_config(creator->core);
 		LinphoneAddress* addr;
 
+		if (creator->domain) {
+			char * tmpidentity = ms_strdup_printf("sip:username@%s", creator->domain);
+			linphone_proxy_config_set_identity(proxy, tmpidentity);
+			ms_free(tmpidentity);
+		}
+
 		addr = linphone_proxy_config_normalize_sip_uri(proxy, creator->username ? creator->username : creator->phone_number);
 		if (addr == NULL || (creator->domain && strcmp(linphone_address_get_domain(addr), creator->domain) != 0)) {
 			if ((creator->username || creator->phone_number) && creator->domain) {
@@ -172,6 +178,9 @@ LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const Linphon
 		}
 		ms_free(url);
 	}
+
+	if (linphone_proxy_config_get_server_addr(cfg) == NULL && creator->domain)
+		linphone_proxy_config_set_server_addr(cfg, creator->domain);
 
 	linphone_proxy_config_enable_register(cfg, TRUE);
 
