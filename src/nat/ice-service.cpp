@@ -720,7 +720,7 @@ bool IceService::isControlling () const {
 	return ice_session_role(mIceSession) == IR_Controlling;
 }
 
-bool IceService::reinviteNeedsDeferedResponse(std::shared_ptr<SalMediaDescription> & remoteMd){
+bool IceService::reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDescription> & remoteMd){
 	if (!mIceSession || (ice_session_state(mIceSession) != IS_Running))
 		return false;
 
