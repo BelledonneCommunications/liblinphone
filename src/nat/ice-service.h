@@ -53,7 +53,7 @@ public:
 	void resetSession();
 	
 	/* Returns true if the incoming offer requires a defered response, due to check-list(s) not yet completed.*/
-	bool reinviteNeedsDeferedResponse(std::shared_ptr<SalMediaDescription> &remoteMd);
+	bool reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDescription> &remoteMd);
 	
 	void createStreams(const OfferAnswerContext &params);
 	/**
