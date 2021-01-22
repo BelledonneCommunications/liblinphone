@@ -393,8 +393,11 @@ void MediaSessionPrivate::telephoneEventReceived (int event) {
 }
 
 void MediaSessionPrivate::terminated () {
+	L_Q();
 	stopStreams();
 	CallSessionPrivate::terminated();
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());// Stop all tones and start limited one
+	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 /* This callback is called when an incoming re-INVITE/ SIP UPDATE modifies the session */
@@ -1743,9 +1746,10 @@ void MediaSessionPrivate::lossOfMediaDetected() {
 
 void MediaSessionPrivate::abort (const string &errorMsg) {
 	L_Q();
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 	stopStreams();
 	CallSessionPrivate::abort(errorMsg);
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
+	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 void MediaSessionPrivate::handleIncomingReceivedStateInIncomingNotification () {
@@ -1849,9 +1853,10 @@ void MediaSessionPrivate::terminate () {
 		lInfo() << "Media session is being terminated, stop recording";
 		q->stopRecording();
 	}
-	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
 	stopStreams();
 	CallSessionPrivate::terminate();
+	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
+	q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallEnd);
 }
 
 void MediaSessionPrivate::updateCurrentParams () const {

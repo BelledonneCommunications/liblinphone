@@ -432,7 +432,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (linphone_core_get_calls_nb(lc) == 0) {
 				linphone_core_notify_last_call_ended(lc);
 			}
-			getCore()->getPrivate()->getToneManager()->startNamedTone(getActiveSession(), LinphoneToneCallEnd);	// Play end tone for each ended call
 		break;
 		case CallSession::State::UpdatedByRemote:
 		{
