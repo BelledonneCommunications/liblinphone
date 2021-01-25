@@ -270,3 +270,76 @@ void VideoSourceReload::exec(Daemon* app, const string& args)
 		app->sendResponse(Response(ost.str(), Response::Ok));
 	}
 }
+
+//--------------------------------------------------
+
+
+VideoDisplayGet::VideoDisplayGet():
+	DaemonCommand("videodisplay-get",
+				  "videodisplay-get",
+				  "Get the current video display filter")
+{
+	addExample(new DaemonCommandExample("videodisplay-get",
+										"Status: Ok\n\n"
+										"MSOGL"));
+}
+
+void VideoDisplayGet::exec(Daemon* app, const string& args)
+{
+	const char *display_filter = linphone_core_get_video_display_filter(app->getCore());
+	if( display_filter == NULL){
+		display_filter = linphone_core_get_default_video_display_filter(app->getCore());
+	}
+	if( display_filter == NULL)
+		app->sendResponse(Response("No filter has been set", Response::Error));
+	else
+		app->sendResponse(Response(display_filter, Response::Ok));
+}
+
+VideoDisplaySet::VideoDisplaySet():
+	DaemonCommand("videodisplay-set",
+				  "videodisplay-set",
+				  "Set the video display filter")
+{
+	addExample(new DaemonCommandExample("videodisplay-set MSOGL",
+										"Status: Ok\n\n"
+										"MSOGL"));
+}
+
+void VideoDisplaySet::exec(Daemon* app, const string& args)
+{
+	if(linphone_core_is_media_filter_supported(app->getCore(), args.c_str())){
+		linphone_core_set_video_display_filter(app->getCore(), args.c_str());
+		app->sendResponse(Response(args, Response::Ok));
+	}else {
+		app->sendResponse(Response("No display filter found.", Response::Error));
+	}
+}
+
+Video::Preview::Preview():
+	DaemonCommand("videopreview",
+				  "videopreview",
+				  "Show/hide video preview")
+{
+	addExample(new DaemonCommandExample("videopreview on",
+										"Status: Ok\n\n"
+										"Enabled"));
+	addExample(new DaemonCommandExample("videopreview off",
+										"Status: Ok\n\n"
+										"Desabled"));
+}
+
+void Video::Preview::exec(Daemon* app, const string& args)
+{
+	if(args == "on"){
+		linphone_core_enable_video_preview(app->getCore(), TRUE);
+		linphone_core_set_native_preview_window_id(app->getCore(), LINPHONE_VIDEO_DISPLAY_AUTO);
+		linphone_core_set_native_video_window_id(app->getCore(), LINPHONE_VIDEO_DISPLAY_AUTO);
+		app->sendResponse(Response("Enabled", Response::Ok));
+	}else if(args == "off"){
+		linphone_core_enable_video_preview(app->getCore(), FALSE);
+		app->sendResponse(Response("Desabled", Response::Ok));
+	}else {
+		app->sendResponse(Response("Bad command. Use on/off.", Response::Error));
+	}
+}
