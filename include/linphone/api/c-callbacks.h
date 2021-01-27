@@ -238,6 +238,13 @@ typedef void (*LinphoneChatRoomCbsChatMessageReceivedCb) (LinphoneChatRoom *chat
  * @param chat_room #LinphoneChatRoom object @notnil
  * @param event_log #LinphoneEventLog The event to be notified @notnil
  */
+typedef void (*LinphoneChatRoomCbsChatMessageSendingCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
+
+/**
+ * Callback used to notify a chat room that a chat message has been sent.
+ * @param chat_room #LinphoneChatRoom object @notnil
+ * @param event_log #LinphoneEventLog The event to be notified @notnil
+ */
 typedef void (*LinphoneChatRoomCbsChatMessageSentCb) (LinphoneChatRoom *chat_room, const LinphoneEventLog *event_log);
 
 /**

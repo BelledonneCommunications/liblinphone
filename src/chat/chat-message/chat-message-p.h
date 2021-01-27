@@ -57,6 +57,7 @@ public:
 		FileDownload = 1 << 6,
 		AutoFileDownload = 1 << 7,
 		Sent = 1 << 8,
+		Sending = 1 << 9
 	};
 
 	void setApplyModifiers (bool value) { applyModifiers = value; }

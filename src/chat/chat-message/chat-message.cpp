@@ -866,6 +866,16 @@ void ChatMessagePrivate::send () {
 
 	if (toBeStored && currentSendStep == (ChatMessagePrivate::Step::Started | ChatMessagePrivate::Step::None)) {
 		storeInDb();
+
+		if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
+			if ((currentSendStep & ChatMessagePrivate::Step::Sending) != ChatMessagePrivate::Step::Sending) {
+				LinphoneChatRoom *cr = L_GET_C_BACK_PTR(q->getChatRoom());
+				unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+				shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
+				_linphone_chat_room_notify_chat_message_sending(cr, L_GET_C_BACK_PTR(eventLog));
+				currentSendStep |= ChatMessagePrivate::Step::Sending;
+			}
+		}
 	}
 
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
@@ -878,6 +888,7 @@ void ChatMessagePrivate::send () {
 			currentSendStep = ChatMessagePrivate::Step::None;
 			return;
 		}
+
 		if (result == ChatMessageModifier::Result::Suspended) {
 			setState(ChatMessage::State::FileTransferInProgress);
 			return;
