@@ -120,6 +120,20 @@ LINPHONE_PUBLIC LinphoneChatRoomCbsChatMessageReceivedCb linphone_chat_room_cbs_
 LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageReceivedCb cb);
 
 /**
+ * Get the chat message sending callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @return The current chat message being sent callback.
+ */
+LINPHONE_PUBLIC LinphoneChatRoomCbsChatMessageSendingCb linphone_chat_room_cbs_get_chat_message_sending (const LinphoneChatRoomCbs *cbs);
+
+/**
+ * Set the chat message sending callback.
+ * @param cbs #LinphoneChatRoomCbs object. @notnil
+ * @param cb The chat message being sent callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_chat_room_cbs_set_chat_message_sending (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageSendingCb cb);
+
+/**
  * Get the chat message sent callback.
  * @param cbs #LinphoneChatRoomCbs object. @notnil
  * @return The current chat message sent callback.

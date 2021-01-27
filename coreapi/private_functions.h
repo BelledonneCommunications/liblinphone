@@ -345,6 +345,7 @@ void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom
 void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+void _linphone_chat_room_notify_chat_message_sending(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_address_generation(LinphoneChatRoom *cr);
 void _linphone_chat_room_notify_participant_device_fetch_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
