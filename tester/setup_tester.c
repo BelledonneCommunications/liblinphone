@@ -1157,7 +1157,7 @@ static void search_friend_with_presence(void) {
 		_check_friend_result_list(manager->lc, resultList, 0, sFriends[10], NULL);//"sip:+111223344@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 1, sFriends[11], NULL);//"sip:+33655667788@sip.example.org"
 		_check_friend_result_list(manager->lc, resultList, 2, chloeSipUri, chloePhoneNumber);//"sip:ch@sip.example.org"
-		_check_friend_result_list(manager->lc, resultList, 3, "sip:33@sip.example.org", NULL);//"sip:33@sip.example.org"
+		_check_friend_result_list(manager->lc, resultList, 3, "sip:+3333@sip.example.org", NULL);//"sip:+3333@sip.example.org"
 		bctbx_list_free_with_data(resultList, (bctbx_list_free_func)linphone_magic_search_unref);
 	}
 
