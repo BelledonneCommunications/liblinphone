@@ -599,6 +599,11 @@ void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, cons
 	NOTIFY_IF_EXIST(ChatMessageReceived, chat_message_received, cr, event_log)
 }
 
+void _linphone_chat_room_notify_chat_message_sending(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
+	_linphone_chat_room_notify_new_event(cr, event_log);
+	NOTIFY_IF_EXIST(ChatMessageSending, chat_message_sending, cr, event_log)
+}
+
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log) {
 	_linphone_chat_room_notify_new_event(cr, event_log);
 	NOTIFY_IF_EXIST(ChatMessageSent, chat_message_sent, cr, event_log)
