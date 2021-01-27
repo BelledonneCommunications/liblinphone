@@ -6939,18 +6939,14 @@ static void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	lc->factory = NULL;
 
 #if TARGET_OS_IPHONE
-	bool_t is_shared_core = getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared();
 	getPlatformHelpers(lc)->stop();
-#else
-	if (lc->platform_helper) delete getPlatformHelpers(lc);
-	lc->platform_helper = NULL;
-#endif
-
-#if TARGET_OS_IPHONE
 	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
 	We need to unlock them at the very end of the stopping process otherwise two Cores will
 	process at the same time until this one is finally stopped */
-	if (is_shared_core) LinphonePrivate::uninitSharedCore(lc);
+	LinphonePrivate::uninitSharedCore(lc);
+#else
+	if (lc->platform_helper) delete getPlatformHelpers(lc);
+	lc->platform_helper = NULL;
 #endif
 
 	linphone_core_set_state(lc, LinphoneGlobalOff, "Off");

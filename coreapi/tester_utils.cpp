@@ -217,10 +217,6 @@ void linphone_core_reset_shared_core_state(LinphoneCore *lc) {
 	static_cast<PlatformHelpers *>(lc->platform_helper)->getSharedCoreHelpers()->resetSharedCoreState();
 }
 
-void linphone_shared_core_helpers_on_msg_written_in_user_defaults(LinphoneCore *lc) {
-	static_cast<PlatformHelpers *>(lc->platform_helper)->getSharedCoreHelpers()->onMsgWrittenInUserDefaults();
-}
-
 char * linphone_core_get_download_path(LinphoneCore *lc) {
 	return bctbx_strdup(L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getDownloadPath().c_str());
 }
