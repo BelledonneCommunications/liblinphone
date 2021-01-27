@@ -162,8 +162,7 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 			if (domain) {
 				string strTmp = filter;
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c){ return tolower(c); });
-				string filterAddress = "sip:" + strTmp + "@" + domain;
-				LinphoneAddress *lastResult = linphone_core_create_address(this->getCore()->getCCore(), filterAddress.c_str());
+				LinphoneAddress *lastResult = linphone_core_interpret_url(this->getCore()->getCCore(), strTmp.c_str());
 				if (lastResult) {
 					returnList.push_back(SearchResult(0, lastResult, "", nullptr));
 					linphone_address_unref(lastResult);
