@@ -857,7 +857,7 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(const belle_sdp_media_d
 			}
 		}
 	}
-	ms_message("Found: %lu valid crypto lines", crypto.size() );
+	ms_message("Found: %u valid crypto lines", static_cast<unsigned int>(crypto.size()) );
 }
 
 void SalStreamDescription::sdpParseMediaIceParameters(const belle_sdp_media_description_t *media_desc) {
@@ -1090,7 +1090,7 @@ void SalStreamDescription::addIceRemoteCandidatesToSdp(belle_sdp_media_descripti
 	for (size_t i = 0; i < ice_remote_candidates.size(); i++) {
 		const auto & candidate = ice_remote_candidates[i];
 		if ((!candidate.addr.empty()) && (candidate.port != 0)) {
-			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%lu %s %d", (i > 0) ? " " : "", i + 1, candidate.addr.c_str(), candidate.port);
+			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%u %s %d", (i > 0) ? " " : "", static_cast<unsigned int>(i + 1), candidate.addr.c_str(), candidate.port);
 			if (offset < 0) {
 				ms_error("Cannot add ICE remote-candidates attribute!");
 				return;
