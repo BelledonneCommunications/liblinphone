@@ -2189,7 +2189,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED OrtpPayloadType *linphone_core_find_payload_
  * This function searches in audio and video codecs for the given payload type name and clockrate.
  * @param lc #LinphoneCore object
  * @param type payload mime type (I.E SPEEX, PCMU, VP8)
- * @param rate can be #LINPHONE_FIND_PAYLOAD_IGNORE_RATE
+ * @param rate (bits/s)  can be #LINPHONE_FIND_PAYLOAD_IGNORE_RATE
  * @param channels  number of channels, can be #LINPHONE_FIND_PAYLOAD_IGNORE_CHANNELS
  * @return Returns NULL if not found. If a #LinphonePayloadType is returned, it must be released with
  * linphone_payload_type_unref() after using it.
