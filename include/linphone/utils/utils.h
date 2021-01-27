@@ -114,19 +114,7 @@ namespace Utils {
 		return str ? str : "";
 	}
 
-	template<class Container, class = typename std::enable_if<std::is_same<typename Container::value_type, std::string>::value>::type>
-	Container split(const std::string & str, const char delim) {
-		Container splittedStr;
-		std::size_t current, previous = 0;
-		current = str.find(delim);
-		while (current != std::string::npos) {
-			splittedStr.push_back(str.substr(previous, current - previous));
-			previous = current + 1;
-			current = str.find(delim, previous);
-		}
-		splittedStr.push_back(str.substr(previous, current - previous));
-		return splittedStr;
-	}
+
 
 	template<typename S, typename T>
 	inline std::string join (const std::vector<T>& elems, const S& delim) {
