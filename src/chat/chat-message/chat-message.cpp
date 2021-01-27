@@ -868,6 +868,13 @@ void ChatMessagePrivate::send () {
 		storeInDb();
 	}
 
+	if (!isResend && getContentType() != ContentType::Imdn && getContentType() != ContentType::ImIsComposing) {
+		LinphoneChatRoom *chatRoom = static_pointer_cast<ChatRoom>(q->getChatRoom())->getPrivate()->getCChatRoom();
+		unique_ptr<MainDb> &mainDb = q->getCore()->getPrivate()->mainDb;
+		shared_ptr<EventLog> eventLog = mainDb->getEvent(mainDb, q->getStorageId());
+		_linphone_chat_room_notify_chat_message_sending(chatRoom, L_GET_C_BACK_PTR(eventLog));
+	}
+
 	if ((currentSendStep & ChatMessagePrivate::Step::FileUpload) == ChatMessagePrivate::Step::FileUpload) {
 		lInfo() << "File upload step already done, skipping";
 	} else {
