@@ -17,6 +17,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Auto acquire and release of audio focus for Android.
 - Added API to play user's ringtone instead of default ringtone for Android.
 - New method linphone_core_audio_route_changed(), to fix audio issues when switching audio to some low sample rate Bluetooth devices.
+- Added callback to notify a message is about to be sent.
 
 ### Changed
 - Improved Android network manager.
@@ -28,6 +29,7 @@ This changelog file was started on October 2019. Previous changes were more or l
   which wasn't the case before if the getChar() was done after the composing callback was triggered for this character.
 - linphone_core_interpret_url() will unescape characters first if possible if only a username is given as input parameter.
 - linphone_chat_message_cancel_file_transfer() no longer deletes the file for outgoing messages.
+- magic search result created from filter now applies the international prefix of the default proxy config if possible.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.
@@ -36,6 +38,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - Chat message lost during attachment auto download if Core stopped during the process.
 - Windows tests.
 - Name of MediaCodec encoder and decoder filters in H264Helper Java class.
+- Both FileContent and FileTransferContent being present in linphone_chat_message_get_contents() list until upload is finished.
 
 ## [4.4.0] 2020-06-16
     
