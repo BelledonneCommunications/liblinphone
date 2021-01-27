@@ -47,6 +47,7 @@ public:
 	virtual void onMsgWrittenInUserDefaults() = 0;
 
     virtual void *getPathContext () = 0;
+	virtual void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) = 0;
 
 protected:
 	inline explicit SharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core) : CoreAccessor(core) {}
@@ -70,6 +71,7 @@ public:
 	void onMsgWrittenInUserDefaults() override;
 
     void *getPathContext () override;
+	void setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) override;
 };
 
 std::shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (std::shared_ptr<LinphonePrivate::Core> core);
