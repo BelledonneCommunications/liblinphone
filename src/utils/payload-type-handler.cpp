@@ -303,8 +303,10 @@ bctbx_list_t *PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwi
 			continue;
 		}
 
-		if (!isPayloadTypeUsable(pt))
+		if (!isPayloadTypeUsable(pt)) {
+			lInfo() << "Codec " << pt->mime_type << "/" << pt->clock_rate << "is unusable";
 			continue;
+		}
 
 		pt = payload_type_clone(pt);
 
