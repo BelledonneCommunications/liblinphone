@@ -88,7 +88,7 @@ LINPHONE_PUBLIC int linphone_payload_type_get_normal_bitrate(const LinphonePaylo
 /**
  * Change the normal bitrate of a payload type..
  * @param[in] pt The payload type to change.
- * @param[in] bitrate The new bitrate in bits/s.
+ * @param[in] bitrate The new bitrate in kbits/s.
  */
 LINPHONE_PUBLIC void linphone_payload_type_set_normal_bitrate(LinphonePayloadType *pt, int bitrate);
 
