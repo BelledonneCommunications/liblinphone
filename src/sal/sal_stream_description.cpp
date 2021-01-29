@@ -36,6 +36,8 @@ bool SalConfigurationCmp::operator()(const unsigned int& lhs, const unsigned int
 }
 
 SalStreamDescription::SalStreamDescription(){
+	// By default, the current index points to the actual configuration
+	cfgIndex = SalStreamDescription::actualConfigurationIndex;
 	cfgs.clear();
 	already_assigned_payloads.clear();
 }
@@ -122,7 +124,7 @@ void SalStreamDescription::setProtoInCfg(SalStreamConfiguration & cfg, const std
 	if ( !str.empty() ) {
 		auto protoAsString = str;
 		// Make mtype lowercase to emulate case insensitive comparison
-		std::transform(protoAsString.begin(), protoAsString.end(), protoAsString.begin(), ::tolower);
+		std::transform(protoAsString.begin(), protoAsString.end(), protoAsString.begin(), ::toupper);
 		if (protoAsString.compare("RTP/AVP") == 0) {
 			proto = SalProtoRtpAvp;
 		} else if (protoAsString.compare("RTP/SAVP") == 0) {
@@ -441,7 +443,13 @@ const std::vector<SalSrtpCryptoAlgo> & SalStreamDescription::getCryptos() const 
 }
 
 const SalSrtpCryptoAlgo & SalStreamDescription::getCryptoAtIndex(const size_t & idx) const {
-	return getChosenConfiguration().crypto.at(idx);
+	try {
+		const auto & el = getChosenConfiguration().crypto.at(idx);
+		return el;
+	} catch (const std::out_of_range& e) {
+		lError() << "Unable to find element at index " << idx << " in the available cryptop vector";
+		return Utils::getEmptyConstRefObject<SalSrtpCryptoAlgo>();
+	}
 }
 
 void SalStreamDescription::setCrypto(const size_t & idx, const SalSrtpCryptoAlgo & newCrypto) {
