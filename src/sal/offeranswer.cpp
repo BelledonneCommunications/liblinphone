@@ -21,6 +21,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_media_description.h"
+#include "sal/sal_stream_configuration.h"
 #include "sal/sal.h"
 #include "offeranswer.h"
 #include "private.h"
@@ -257,7 +258,7 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 }
 
 bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
-	SalSrtpCryptoAlgo & result, unsigned int* choosen_local_tag, bool_t use_local_key) {
+	SalSrtpCryptoAlgo & result, unsigned int & choosen_local_tag, bool_t use_local_key) {
 	for(const auto & rc : remote) {
 		if (rc.algo == 0)
 			break;
@@ -270,13 +271,13 @@ bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &
 				if (use_local_key) {
 					result.master_key = lc.master_key;
 					result.tag = rc.tag;
-					*choosen_local_tag = lc.tag;
+					choosen_local_tag = lc.tag;
 				}
 				/* We received an answer to our SDP crypto proposal. Copy matching algo remote master key to result, and memorize local tag */
 				else {
 					result.master_key = rc.master_key;
 					result.tag = lc.tag;
-					*choosen_local_tag = lc.tag;
+					choosen_local_tag = lc.tag;
 				}
 				return TRUE;
 			}
@@ -327,15 +328,16 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
 						const SalStreamDescription & remote_answer,
 						SalStreamDescription & result){
+	SalStreamConfiguration cfg = result.getActualConfiguration();
 	if (remote_answer.enabled())
-		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
+		cfg.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.getChosenConfiguration().payloads,remote_answer.getChosenConfiguration().payloads,TRUE,FALSE);
 	else {
 		ms_message("Local stream description [%p] rejected by peer",&local_offer);
 		result.rtp_port=0;
 		return;
 	}
-	result.proto=remote_answer.proto;
-	result.type=local_offer.type;
+	cfg.proto=remote_answer.getProto();
+	result.type=local_offer.getType();
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 			/*6.2 Multicast Streams
@@ -363,10 +365,10 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 			result.rtp_port=0;
 			return;
 		}
-		if (local_offer.dir!=remote_answer.dir) {
+		if (local_offer.getDirection()!=remote_answer.getDirection()) {
 			ms_message("Remote answered dir [%s] does not match offered [%s] for local stream description [%p]"
-																,sal_stream_dir_to_string(remote_answer.dir)
-																,sal_stream_dir_to_string(local_offer.dir)
+																,sal_stream_dir_to_string(remote_answer.getDirection())
+																,sal_stream_dir_to_string(local_offer.getDirection())
 																,&local_offer);
 			result.rtp_port=0;
 			return;
@@ -379,112 +381,114 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 			result.rtp_port=0;
 			return;
 		}
-		if (local_offer.ptime > 0 && local_offer.ptime!=remote_answer.ptime) {
+		if (local_offer.getChosenConfiguration().ptime > 0 && local_offer.getChosenConfiguration().ptime!=remote_answer.getChosenConfiguration().ptime) {
 			ms_message("Remote answered ptime [%i] does not match offered [%i] for local stream description [%p]"
-																,remote_answer.ptime
-																,local_offer.ptime
+																,remote_answer.getChosenConfiguration().ptime
+																,local_offer.getChosenConfiguration().ptime
 																,&local_offer);
 			result.rtp_port=0;
 			return;
 		}
-		if (local_offer.ttl > 0 && local_offer.ttl!=remote_answer.ttl) {
+		if (local_offer.getChosenConfiguration().ttl > 0 && local_offer.getChosenConfiguration().ttl!=remote_answer.getChosenConfiguration().ttl) {
 			ms_message("Remote answered ttl [%i] does not match offered [%i] for local stream description [%p]"
-																		,remote_answer.ttl
-																		,local_offer.ttl
+																		,remote_answer.getChosenConfiguration().ttl
+																		,local_offer.getChosenConfiguration().ttl
 																		,&local_offer);
 			result.rtp_port=0;
 			return;
 		}
-		result.ttl=local_offer.ttl;
-		result.dir=local_offer.dir;
+		cfg.ttl=local_offer.getChosenConfiguration().ttl;
+		cfg.dir=local_offer.getDirection();
 		result.multicast_role = SalMulticastSender;
 	} else {
-		result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
+		cfg.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.getDirection(),remote_answer.getDirection());
 	}
 
-	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
-	if (remote_answer.mid.empty() == false){
-		if (local_offer.mid.empty() == false){
-			result.mid = remote_answer.mid;
-			result.mid_rtp_ext_header_id = remote_answer.mid_rtp_ext_header_id;
-			result.bundle_only = remote_answer.bundle_only;
-			result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+	cfg.rtcp_mux = remote_answer.getChosenConfiguration().rtcp_mux && local_offer.getChosenConfiguration().rtcp_mux;
+	if (remote_answer.getChosenConfiguration().mid.empty() == false){
+		if (local_offer.getChosenConfiguration().mid.empty() == false){
+			cfg.mid = remote_answer.getChosenConfiguration().mid;
+			cfg.mid_rtp_ext_header_id = remote_answer.getChosenConfiguration().mid_rtp_ext_header_id;
+			cfg.bundle_only = remote_answer.getChosenConfiguration().bundle_only;
+			cfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
 	}
 
-	if (!result.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(result.payloads)){
+	if (!cfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(cfg.payloads)){
 		result.rtp_addr=remote_answer.rtp_addr;
 		result.rtcp_addr=remote_answer.rtcp_addr;
 		result.rtp_port=remote_answer.rtp_port;
 		result.rtcp_port=remote_answer.rtcp_port;
 		result.bandwidth=remote_answer.bandwidth;
-		result.ptime=remote_answer.ptime;
-		result.maxptime=remote_answer.maxptime;
+		cfg.ptime=remote_answer.getChosenConfiguration().ptime;
+		cfg.maxptime=remote_answer.getChosenConfiguration().maxptime;
 	}else{
 		result.disable();
 	}
-	if (result.hasSrtp() == TRUE) {
+	if (cfg.hasSrtp() == TRUE) {
 		/* verify crypto algo */
-		result.crypto.clear();
+		cfg.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(local_offer.crypto, remote_answer.crypto, crypto_result, &result.crypto_local_tag, FALSE)) {
+		if (!OfferAnswerEngine::matchCryptoAlgo(local_offer.getChosenConfiguration().crypto, remote_answer.getChosenConfiguration().crypto, crypto_result, cfg.crypto_local_tag, FALSE)) {
 			result.disable();
 		}
-		if (result.crypto.empty()) {
-			result.crypto.resize(1);
+		if (cfg.crypto.empty()) {
+			cfg.crypto.resize(1);
 		}
-		result.crypto[0] = crypto_result;
+		cfg.crypto[0] = crypto_result;
 	}
-	result.rtp_ssrc=local_offer.rtp_ssrc;
-	result.rtcp_cname=local_offer.rtcp_cname;
+	cfg.rtp_ssrc=local_offer.getChosenConfiguration().rtp_ssrc;
+	cfg.rtcp_cname=local_offer.getChosenConfiguration().rtcp_cname;
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
-	if ((local_offer.dtls_role!=SalDtlsRoleInvalid) && (remote_answer.dtls_role!=SalDtlsRoleInvalid)
-			&&(!local_offer.dtls_fingerprint.empty()) && (!remote_answer.dtls_fingerprint.empty())) {
-		result.dtls_fingerprint = remote_answer.dtls_fingerprint;
-		if (remote_answer.dtls_role==SalDtlsRoleIsClient) {
-			result.dtls_role = SalDtlsRoleIsServer;
+	if ((local_offer.getChosenConfiguration().dtls_role!=SalDtlsRoleInvalid) && (remote_answer.getChosenConfiguration().dtls_role!=SalDtlsRoleInvalid)
+			&&(!local_offer.getChosenConfiguration().dtls_fingerprint.empty()) && (!remote_answer.getChosenConfiguration().dtls_fingerprint.empty())) {
+		cfg.dtls_fingerprint = remote_answer.getChosenConfiguration().dtls_fingerprint;
+		if (remote_answer.getChosenConfiguration().dtls_role==SalDtlsRoleIsClient) {
+			cfg.dtls_role = SalDtlsRoleIsServer;
 		} else {
-			result.dtls_role = SalDtlsRoleIsClient;
+			cfg.dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result.dtls_fingerprint.clear();
-		result.dtls_role = SalDtlsRoleInvalid;
+		cfg.dtls_fingerprint.clear();
+		cfg.dtls_role = SalDtlsRoleInvalid;
 	}
-	result.implicit_rtcp_fb = local_offer.implicit_rtcp_fb && remote_answer.implicit_rtcp_fb;
-}
+	cfg.implicit_rtcp_fb = local_offer.getChosenConfiguration().implicit_rtcp_fb && remote_answer.getChosenConfiguration().implicit_rtcp_fb;
 
+	result.addActualConfiguration(cfg);
+}
 
 void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
 						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
-	result.proto=remote_offer.proto;
-	result.type=local_cap.type;
-	result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
+	SalStreamConfiguration cfg = result.getActualConfiguration();
+	cfg.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.getChosenConfiguration().payloads,remote_offer.getChosenConfiguration().payloads, FALSE, one_matching_codec);
+	cfg.proto=remote_offer.getProto();
+	result.type=local_cap.getType();
+	cfg.dir=OfferAnswerEngine::computeDirIncoming(local_cap.getDirection(),remote_offer.getDirection());
 	
-	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
+	if (cfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(cfg.payloads) || !remote_offer.enabled()){
 		result.rtp_port=0;
 		return;
 	}
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
-		if (result.hasSrtp() == TRUE) {
+		if (cfg.hasSrtp() == TRUE) {
 			ms_message("SAVP not supported for multicast address for remote stream [%p]",&remote_offer);
 			result.rtp_port=0;
 			return;
 		}
-		result.dir=remote_offer.dir;
+		cfg.dir=remote_offer.getDirection();
 		result.rtp_addr=remote_offer.rtp_addr;
 		result.rtcp_addr=remote_offer.rtcp_addr;
 		result.rtp_port=remote_offer.rtp_port;
 		/*result.rtcp_port=remote_offer.rtcp_port;*/
 		result.rtcp_port=0; /* rtcp not supported yet*/
 		result.bandwidth=remote_offer.bandwidth;
-		result.ptime=remote_offer.ptime;
-		result.maxptime=remote_offer.maxptime;
-		result.ttl=remote_offer.ttl;
+		cfg.ptime=remote_offer.getChosenConfiguration().ptime;
+		cfg.maxptime=remote_offer.getChosenConfiguration().maxptime;
+		cfg.ttl=remote_offer.getChosenConfiguration().ttl;
 		result.multicast_role = SalMulticastReceiver;
 	} else {
 		result.rtp_addr=local_cap.rtp_addr;
@@ -492,72 +496,73 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		result.rtp_port=local_cap.rtp_port;
 		result.rtcp_port=local_cap.rtcp_port;
 		result.bandwidth=local_cap.bandwidth;
-		result.ptime=local_cap.ptime;
-		result.maxptime=local_cap.maxptime;
+		cfg.ptime=local_cap.getChosenConfiguration().ptime;
+		cfg.maxptime=local_cap.getChosenConfiguration().maxptime;
 	}
 	
-	result.rtcp_mux = remote_offer.rtcp_mux && local_cap.rtcp_mux;
+	cfg.rtcp_mux = remote_offer.getChosenConfiguration().rtcp_mux && local_cap.getChosenConfiguration().rtcp_mux;
 	
 	/* Handle RTP bundle negociation */
-	if (!remote_offer.mid.empty() && bundle_owner_mid){
-		result.mid = remote_offer.mid;
-		result.mid_rtp_ext_header_id = remote_offer.mid_rtp_ext_header_id;
+	if (!remote_offer.getChosenConfiguration().mid.empty() && bundle_owner_mid){
+		cfg.mid = remote_offer.getChosenConfiguration().mid;
+		cfg.mid_rtp_ext_header_id = remote_offer.getChosenConfiguration().mid_rtp_ext_header_id;
 		
-		if (remote_offer.mid.compare(bundle_owner_mid) != 0){
+		if (remote_offer.getChosenConfiguration().mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
-			result.bundle_only = TRUE;
+			cfg.bundle_only = TRUE;
 			result.rtp_port = 0;
 		}
-		result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+		cfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	if (result.hasSrtp() == TRUE) {
+	if (cfg.hasSrtp() == TRUE) {
 		/* select crypto algo */
-		result.crypto.clear();
+		cfg.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(local_cap.crypto, remote_offer.crypto, crypto_result, &result.crypto_local_tag, TRUE)) {
+		if (!OfferAnswerEngine::matchCryptoAlgo(local_cap.getChosenConfiguration().crypto, remote_offer.getChosenConfiguration().crypto, crypto_result, cfg.crypto_local_tag, TRUE)) {
 			result.disable();
 			ms_message("No matching crypto algo for remote stream's offer [%p]",&remote_offer);
 		}
-		if (result.crypto.empty()) {
-			result.crypto.resize(1);
+		if (cfg.crypto.empty()) {
+			cfg.crypto.resize(1);
 		}
-		result.crypto[0] = crypto_result;
+		cfg.crypto[0] = crypto_result;
 	}
 
 	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
 	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
-	if ((remote_offer.haveZrtpHash == 1) || (local_cap.haveZrtpHash == 1)) {
-		if (local_cap.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
-			strncpy((char *)(result.zrtphash), (char *)(local_cap.zrtphash), sizeof(result.zrtphash));
-			result.haveZrtpHash =  1;
+	if ((remote_offer.getChosenConfiguration().haveZrtpHash == 1) || (local_cap.getChosenConfiguration().haveZrtpHash == 1)) {
+		if (local_cap.getChosenConfiguration().zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+			strncpy((char *)(cfg.zrtphash), (char *)(local_cap.getChosenConfiguration().zrtphash), sizeof(cfg.zrtphash));
+			cfg.haveZrtpHash =  1;
 		}
 	}
 
-	result.ice_pwd = local_cap.ice_pwd;
-	result.ice_ufrag = local_cap.ice_ufrag;
-	result.ice_mismatch = local_cap.ice_mismatch;
-	result.set_nortpproxy = local_cap.set_nortpproxy;
-	result.ice_candidates = local_cap.ice_candidates;
-	result.ice_remote_candidates = local_cap.ice_remote_candidates;
+	cfg.ice_pwd = local_cap.getChosenConfiguration().ice_pwd;
+	cfg.ice_ufrag = local_cap.getChosenConfiguration().ice_ufrag;
+	cfg.ice_mismatch = local_cap.getChosenConfiguration().ice_mismatch;
+	cfg.set_nortpproxy = local_cap.getChosenConfiguration().set_nortpproxy;
+	cfg.ice_candidates = local_cap.getChosenConfiguration().ice_candidates;
+	cfg.ice_remote_candidates = local_cap.getChosenConfiguration().ice_remote_candidates;
 	result.name = local_cap.name;
-	result.rtp_ssrc=local_cap.rtp_ssrc;
-	result.rtcp_cname=local_cap.rtcp_cname;
+	cfg.rtp_ssrc=local_cap.getChosenConfiguration().rtp_ssrc;
+	cfg.rtcp_cname=local_cap.getChosenConfiguration().rtcp_cname;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
-	if (((local_cap.dtls_role!=SalDtlsRoleInvalid)) && (remote_offer.dtls_role!=SalDtlsRoleInvalid)
-			&& (!local_cap.dtls_fingerprint.empty()) && (!remote_offer.dtls_fingerprint.empty())) {
-		result.dtls_fingerprint = local_cap.dtls_fingerprint;
-		if (remote_offer.dtls_role==SalDtlsRoleUnset) {
-			result.dtls_role = SalDtlsRoleIsClient;
+	if (((local_cap.getChosenConfiguration().dtls_role!=SalDtlsRoleInvalid)) && (remote_offer.getChosenConfiguration().dtls_role!=SalDtlsRoleInvalid)
+			&& (!local_cap.getChosenConfiguration().dtls_fingerprint.empty()) && (!remote_offer.getChosenConfiguration().dtls_fingerprint.empty())) {
+		cfg.dtls_fingerprint = local_cap.getChosenConfiguration().dtls_fingerprint;
+		if (remote_offer.getChosenConfiguration().dtls_role==SalDtlsRoleUnset) {
+			cfg.dtls_role = SalDtlsRoleIsClient;
 		}
 	} else {
-		result.dtls_fingerprint.clear();
-		result.dtls_role = SalDtlsRoleInvalid;
+		cfg.dtls_fingerprint.clear();
+		cfg.dtls_role = SalDtlsRoleInvalid;
 	}
-	result.implicit_rtcp_fb = local_cap.implicit_rtcp_fb && remote_offer.implicit_rtcp_fb;
+	cfg.implicit_rtcp_fb = local_cap.getChosenConfiguration().implicit_rtcp_fb && remote_offer.getChosenConfiguration().implicit_rtcp_fb;
+	result.addActualConfiguration(cfg);
 }
 
 bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto)
@@ -590,22 +595,24 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 		ms_message("Processing for stream %zu",i);
 		SalStreamDescription & ls = local_offer->streams[i];
 		const SalStreamDescription & rs = remote_answer->streams[i];
-		if ((i < remote_answer->streams.size()) && rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
+		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoCompatibles(ls.getProto(), rs.getProto()))
 		{
-			if (ls.proto != rs.proto && ls.hasAvpf()) {
-				ls.proto = rs.proto;
+			if (ls.getProto() != rs.getProto() && ls.hasAvpf()) {
+				ls.setProto(rs.getProto());
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
 			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1));
 			}
+			SalStreamConfiguration cfg = result->streams[i].getActualConfiguration();
 			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i]);
-			memcpy(&result->streams[i].rtcp_xr, &ls.rtcp_xr, sizeof(result->streams[i].rtcp_xr));
-			if ((ls.rtcp_xr.enabled == TRUE) && (rs.rtcp_xr.enabled == FALSE)) {
-				result->streams[i].rtcp_xr.enabled = FALSE;
+			memcpy(&cfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(result->streams[i].getChosenConfiguration().rtcp_xr));
+			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
+				cfg.rtcp_xr.enabled = FALSE;
 			}
-			result->streams[i].rtcp_fb.generic_nack_enabled = ls.rtcp_fb.generic_nack_enabled & rs.rtcp_fb.generic_nack_enabled;
-			result->streams[i].rtcp_fb.tmmbr_enabled = ls.rtcp_fb.tmmbr_enabled & rs.rtcp_fb.tmmbr_enabled;
+			cfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			cfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+			result->streams[i].addActualConfiguration(cfg);
 		}
 		else ms_warning("No matching stream for %zu",i);
 	}
@@ -659,50 +666,55 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		SalStreamDescription & rs = remote_offer->streams[i];
 		SalStreamDescription & resultStream = result->streams[i];
 
-		if (rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
+		SalStreamConfiguration cfg = resultStream.getActualConfiguration();
+
+		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoCompatibles(ls.getProto(), rs.getProto()))
 		{
-			if (ls.proto != rs.proto && rs.hasAvpf())	{
-				rs.proto = ls.proto;
+			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
+				rs.setProto(ls.getProto());
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
 			}
 			const char *bundle_owner_mid = NULL;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
 				if (owner_index != -1){
-					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
+					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid());
 				}
 			}
 			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
+			// Get an up to date actual configuration as it may have changed
+			cfg = resultStream.getActualConfiguration();
 			// Handle global RTCP FB attributes
-			resultStream.rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
-			resultStream.rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
+			cfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			cfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
-			memset(&resultStream.rtcp_xr, 0, sizeof(resultStream.rtcp_xr));
-			if (rs.rtcp_xr.enabled == TRUE) {
+			memset(&cfg.rtcp_xr, 0, sizeof(cfg.rtcp_xr));
+			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls.rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.rtcp_xr;
+				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
-				if ((rtcp_xr_conf != NULL) && (ls.dir == SalStreamSendRecv)) {
-					memcpy(&resultStream.rtcp_xr, rtcp_xr_conf, sizeof(resultStream.rtcp_xr));
+				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
+					memcpy(&cfg.rtcp_xr, rtcp_xr_conf, sizeof(cfg.rtcp_xr));
 				} else {
-					resultStream.rtcp_xr.enabled = TRUE;
+					cfg.rtcp_xr.enabled = TRUE;
 				}
 			}
 		}else {
 			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
-			resultStream.dir=SalStreamInactive;
+			cfg.dir=SalStreamInactive;
 			resultStream.rtp_port=0;
-			resultStream.type=rs.type;
-			resultStream.proto=rs.proto;
-			if (rs.type==SalOther){
+			resultStream.type=rs.getType();
+			cfg.proto=rs.getProto();
+			if (rs.getType()==SalOther){
 				resultStream.typeother = rs.typeother;
 			}
-			if (rs.proto==SalProtoOther){
-				resultStream.proto_other = rs.proto_other;
+			if (rs.getProto()==SalProtoOther){
+				cfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		resultStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
+		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
+		resultStream.addActualConfiguration(cfg);
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
