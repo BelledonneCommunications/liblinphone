@@ -249,11 +249,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
-	if (stream.dir == SalStreamSendOnly)
+	if (stream.getDirection() == SalStreamSendOnly)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
-	else if (stream.dir == SalStreamRecvOnly)
+	else if (stream.getDirection() == SalStreamRecvOnly)
 		media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
-	else if (stream.dir == SalStreamSendRecv)
+	else if (stream.getDirection() == SalStreamSendRecv)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
 
 	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
@@ -287,7 +287,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
 	string recfile = L_C_TO_STRING(getCCore()->rec_file);
 	/* Don't use file or soundcard capture when placed in recv-only mode */
-	if ((stream.rtp_port == 0) || (stream.dir == SalStreamRecvOnly) || (stream.multicast_role == SalMulticastReceiver)) {
+	if ((stream.rtp_port == 0) || (stream.getDirection() == SalStreamRecvOnly) || (stream.multicast_role == SalMulticastReceiver)) {
 		captcard = nullptr;
 		playfile = "";
 	}
@@ -328,10 +328,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	configureAudioStream();
 	bool useEc = captcard && linphone_core_echo_cancellation_enabled(getCCore());
 	audio_stream_enable_echo_canceller(mStream, useEc);
-	if (playcard && (stream.max_rate > 0))
-		ms_snd_card_set_preferred_sample_rate(playcard, stream.max_rate);
-	if (captcard && (stream.max_rate > 0))
-		ms_snd_card_set_preferred_sample_rate(captcard, stream.max_rate);
+	if (playcard && (stream.getMaxRate() > 0))
+		ms_snd_card_set_preferred_sample_rate(playcard, stream.getMaxRate());
+	if (captcard && (stream.getMaxRate() > 0))
+		ms_snd_card_set_preferred_sample_rate(captcard, stream.getMaxRate());
 	
 	if (!audioMixer && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
@@ -404,7 +404,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	if (audioMixer){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
-		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.dir == SalStreamRecvOnly));
+		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
@@ -414,7 +414,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().performMutualAuthentication();
 		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
 		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
-		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().haveZrtpHash == 1)) {
+		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().getChosenConfiguration().hasZrtpHash() == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
 			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
 			if (!params.localIsOfferer && params.remoteMediaDescription->hasLimeIk()) {
@@ -485,8 +485,10 @@ void MS2AudioStream::stop(){
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const auto & remote = params.getRemoteStreamDescription();
 	audio_stream_start_zrtp(mStream);
-	if (remote.haveZrtpHash == 1) {
-		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.zrtphash, strlen((const char *)(remote.zrtphash)));
+	if (remote.getChosenConfiguration().hasZrtpHash() == 1) {
+		uint8_t zrtphash[128];
+		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)zrtphash, strlen((const char *)(zrtphash)));
+		const_cast<SalStreamDescription &>(remote).setZrtpHash(remote.getChosenConfiguration().hasZrtpHash(), zrtphash);
 		if (retval != 0)
 			lError() << "ZRTP hash mismatch 0x" << hex << retval;
 	}
