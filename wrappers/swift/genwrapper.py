@@ -271,9 +271,9 @@ class SwiftTranslator(object):
             enumValDict = {}
             enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
             enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
-            enumValDict['firstValue'] = i==0
             if isinstance(enumValue.value, int):
                 lastValue = enumValue.value
+                enumValDict['isNone'] = i==0
                 enumValDict['value'] = str(enumValue.value)
             elif isinstance(enumValue.value, AbsApi.Flag):
                 enumValDict['value'] = '1<<' + str(enumValue.value.position)
