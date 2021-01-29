@@ -604,8 +604,8 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1));
 			}
-			SalStreamConfiguration cfg = result->streams[i].getActualConfiguration();
 			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i]);
+			SalStreamConfiguration cfg = result->streams[i].getActualConfiguration();
 			memcpy(&cfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(result->streams[i].getChosenConfiguration().rtcp_xr));
 			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
 				cfg.rtcp_xr.enabled = FALSE;
