@@ -1019,7 +1019,7 @@ const unsigned int & SalStreamDescription::getActualConfigurationIndex() const {
 	return SalStreamDescription::actualConfigurationIndex;
 }
 
-const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const int & index) const {
+const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const unsigned int & index) const {
 	try {
 		const auto & cfg = cfgs.at(index);
 		return cfg;
