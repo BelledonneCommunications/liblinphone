@@ -74,7 +74,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const unsigned int & getChosenConfigurationIndex() const;
 		const unsigned int & getActualConfigurationIndex() const;
 
-		const SalStreamConfiguration & getConfigurationAtIndex(const int & index) const;
+		const SalStreamConfiguration & getConfigurationAtIndex(const unsigned int & index) const;
 		const SalStreamConfiguration & getActualConfiguration() const;
 		const SalStreamConfiguration & getChosenConfiguration() const;
 
