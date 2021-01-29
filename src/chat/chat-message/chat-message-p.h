@@ -47,7 +47,7 @@ class ChatMessagePrivate : public ObjectPrivate {
 	friend class NotificationMessagePrivate;
 
 public:
-	enum Step {
+	enum Step: int {
 		None = 1 << 0,
 		FileUpload = 1 << 1,
 		Multipart = 1 << 2,
@@ -244,8 +244,8 @@ private:
 	mutable LinphoneErrorInfo *errorInfo = nullptr;
 	SalOp *salOp = nullptr;
 	SalCustomHeader *salCustomHeaders = nullptr;
-	short int currentSendStep = Step::None;
-	short int currentRecvStep = Step::None;
+	int currentSendStep = Step::None;
+	int currentRecvStep = Step::None;
 	bool applyModifiers = true;
 	FileTransferChatMessageModifier fileTransferChatMessageModifier;
 

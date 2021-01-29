@@ -438,7 +438,7 @@ void ChatMessagePrivate::setContentType (const ContentType &contentType) {
 	}
 	internalContent.setContentType(contentType);
 
-	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+	if ((currentSendStep & ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
 			contents.front()->setContentType(contentType);
@@ -476,7 +476,7 @@ void ChatMessagePrivate::setText (const string &text) {
 	}
 	internalContent.setBodyFromLocale(text);
 
-	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+	if ((currentSendStep & ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
 			contents.front()->setBodyFromLocale(text);
@@ -514,7 +514,7 @@ void ChatMessagePrivate::setUtf8Text (const string &text) {
 	}
 	internalContent.setBodyFromUtf8(text);
 
-	if ((currentSendStep &ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
+	if ((currentSendStep & ChatMessagePrivate::Step::Started) != ChatMessagePrivate::Step::Started) {
 		// if not started yet the sending also alter the first content
 		if (!contents.empty())
 			contents.front()->setBodyFromUtf8(text);
@@ -657,7 +657,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// Start of message modification
 	// ---------------------------------------
 
-	if ((currentRecvStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+	if ((currentRecvStep & ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 		lInfo() << "Encryption step already done, skipping";
 	} else {
 		EncryptionChatMessageModifier ecmm;
@@ -694,7 +694,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 		}
 	}
 
-	if ((currentRecvStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+	if ((currentRecvStep & ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 		lInfo() << "Cpim step already done, skipping";
 	} else {
 		if (internalContent.getContentType() == ContentType::Cpim) {
@@ -705,7 +705,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Go through multipart otherwise Imdn::isError won't work in case of aggregated IMDN
-	if ((currentRecvStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
+	if ((currentRecvStep & ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 		lInfo() << "Multipart step already done, skipping";
 	} else {
 		MultipartChatMessageModifier mcmm;
@@ -853,7 +853,7 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
 			FileContent *fileContent = fileTransferContent->getFileContent();
 			it = contents.erase(it);
-			it =contents.insert(it, fileContent);
+			it = contents.insert(it, fileContent);
 			delete fileTransferContent;
 		} else {
 			it++;
@@ -873,7 +873,7 @@ void ChatMessagePrivate::send () {
 	int errorCode = 0;
 	bool isResend = state == ChatMessage::State::NotDelivered;
 	// Remove the sent flag so the message will be sent by the OP in case of resend
-	currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Sent;
+	currentSendStep &= ~ChatMessagePrivate::Step::Sent;
 
 	currentSendStep |= ChatMessagePrivate::Step::Started;
 	q->getChatRoom()->getPrivate()->addTransientChatMessage(q->getSharedFromThis());
@@ -962,7 +962,7 @@ void ChatMessagePrivate::send () {
 	if (applyModifiers) {
 		// Do not multipart or encapsulate with CPIM in an old ChatRoom to maintain backward compatibility
 		if (chatRoom->canHandleMultipart()) {
-			if ((currentSendStep &ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
+			if ((currentSendStep & ChatMessagePrivate::Step::Multipart) == ChatMessagePrivate::Step::Multipart) {
 				lInfo() << "Multipart step already done, skipping";
 			} else {
 				if (contents.size() > 1) {
@@ -974,7 +974,7 @@ void ChatMessagePrivate::send () {
 		}
 
 		if (chatRoom->canHandleCpim()) {
-			if ((currentSendStep &ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
+			if ((currentSendStep & ChatMessagePrivate::Step::Cpim) == ChatMessagePrivate::Step::Cpim) {
 				lInfo() << "Cpim step already done, skipping";
 			} else {
 				CpimChatMessageModifier ccmm;
@@ -983,7 +983,7 @@ void ChatMessagePrivate::send () {
 			}
 		}
 
-		if ((currentSendStep &ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
+		if ((currentSendStep & ChatMessagePrivate::Step::Encryption) == ChatMessagePrivate::Step::Encryption) {
 			lInfo() << "Encryption step already done, skipping";
 		} else {
 			if (!encryptionPrevented) {
@@ -1019,7 +1019,7 @@ void ChatMessagePrivate::send () {
 	}
 
 	// If message already sent by LIME X3DH synchronous encryption, do not send another one
-	if ((currentSendStep &ChatMessagePrivate::Step::Sent) == ChatMessagePrivate::Step::Sent) {
+	if ((currentSendStep & ChatMessagePrivate::Step::Sent) == ChatMessagePrivate::Step::Sent) {
 		lInfo() << "Send step already done, skipping";
 		return;
 	}
@@ -1433,9 +1433,9 @@ void ChatMessage::send () {
 	}
 
 	// Remove the modifiers flag so the message will go through CPIM, Multipart and Encryption again in case of resent
-	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Multipart;
-	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Cpim;
-	d->currentSendStep &= (unsigned char)~ChatMessagePrivate::Step::Encryption;
+	d->currentSendStep &= ~ChatMessagePrivate::Step::Multipart;
+	d->currentSendStep &= ~ChatMessagePrivate::Step::Cpim;
+	d->currentSendStep &= ~ChatMessagePrivate::Step::Encryption;
 
 	d->loadContentsFromDatabase();
 	getChatRoom()->getPrivate()->sendChatMessage(getSharedFromThis());
