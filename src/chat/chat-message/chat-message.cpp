@@ -552,6 +552,20 @@ void ChatMessagePrivate::removeContent (Content *content) {
 	getContents().remove(content);
 }
 
+void ChatMessagePrivate::replaceContent (Content *contentToRemove, Content *contentToAdd) {
+	list<Content*>::iterator it = contents.begin();
+	while (it != contents.end()) {
+		Content *content = *it;
+		if (content == contentToRemove) {
+			it = contents.erase(it);
+			it = contents.insert(it, contentToAdd);
+			break;
+		} else {
+			it++;
+		}
+	}
+}
+
 void ChatMessagePrivate::loadFileTransferUrlFromBodyToContent() {
 	L_Q();
 	int errorCode = 0;
@@ -837,8 +851,9 @@ void ChatMessagePrivate::restoreFileTransferContentAsFileContent() {
 		Content *content = *it;
 		if (content->isFileTransfer()) {
 			FileTransferContent *fileTransferContent = static_cast<FileTransferContent *>(content);
+			FileContent *fileContent = fileTransferContent->getFileContent();
 			it = contents.erase(it);
-			addContent(fileTransferContent->getFileContent());
+			it =contents.insert(it, fileContent);
 			delete fileTransferContent;
 		} else {
 			it++;

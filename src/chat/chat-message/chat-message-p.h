@@ -200,6 +200,7 @@ public:
 
 	void addContent (Content *content);
 	void removeContent (Content *content);
+	void replaceContent (Content *contentToRemove, Content *contentToAdd);
 
 	bool downloadFile ();
 

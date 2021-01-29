@@ -244,11 +244,10 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 	fileTransferContent->setContentType(ContentType::FileTransfer);
 	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
 	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
-	message->getPrivate()->addContent(fileTransferContent);
-	currentFileTransferContent = fileTransferContent;
 	
+	currentFileTransferContent = fileTransferContent;
 	currentFileTransferContent->setFileContent(currentFileContentToTransfer);
-	message->getPrivate()->removeContent(currentFileContentToTransfer);
+	message->getPrivate()->replaceContent(currentFileContentToTransfer, currentFileTransferContent);
 
 	// shall we encrypt the file
 	if (isFileEncryptionEnabled && message->getChatRoom()) {
@@ -418,7 +417,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				fileUploadEndBackgroundTask();
 			} else {
 				lWarning() << "Received empty response from server, file transfer failed";
-				message->getPrivate()->removeContent(currentFileTransferContent);
+				message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 				delete currentFileTransferContent;
 				currentFileTransferContent = nullptr;
 
@@ -428,7 +427,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			}
 		} else if (code == 400) {
 			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning file is too large";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
@@ -437,7 +436,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			fileUploadEndBackgroundTask();
 		} else if (code == 401) {
 			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning that our credentials were rejected";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
@@ -446,7 +445,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			fileUploadEndBackgroundTask();
 		} else {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
