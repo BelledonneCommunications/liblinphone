@@ -125,7 +125,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	private:
 
-		unsigned int cfgIndex;
+		unsigned int cfgIndex = 0;
 
 		// Map of the available configurations
 		std::map<unsigned int, SalStreamConfiguration, SalConfigurationCmp> cfgs;
