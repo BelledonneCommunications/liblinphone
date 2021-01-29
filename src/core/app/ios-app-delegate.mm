@@ -132,7 +132,7 @@
 		const LinphoneAudioDevice * inputDevice = linphone_core_get_input_audio_device(pcore->getCCore());
 		const LinphoneAudioDevice * outputDevice = linphone_core_get_output_audio_device(pcore->getCCore());
 		std::string currentInputDeviceInCore( (inputDevice == NULL) ? "" : linphone_audio_device_get_device_name(inputDevice) );
-		std::string currentOutputDeviceInCore( (outputDevice == NULL) ? "" : linphone_audio_device_get_device_name(inputDevice) );
+		std::string currentOutputDeviceInCore( (outputDevice == NULL) ? "" : linphone_audio_device_get_device_name(outputDevice) );
 		
 		// Make sure that the current device the core is using match the reality of the IOS audio route. If not, set it properly
 		if (deviceMatchCurrentInput(currentInputDeviceInCore) && deviceMatchCurrentOutput(currentOutputDeviceInCore) )
