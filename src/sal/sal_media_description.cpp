@@ -114,9 +114,10 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	value=belle_sdp_session_description_get_attribute_value(sdp,"fingerprint");
 	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
 	for (auto & stream : streams) {
+		std::string fingerprint;
 		if (value)
-			stream.dtls_fingerprint = L_C_TO_STRING(value);
-		stream.dtls_role=session_role; /*set or reset value*/
+			fingerprint = L_C_TO_STRING(value);
+		stream.setDtls(session_role, fingerprint);
 	}
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
@@ -204,7 +205,7 @@ int SalMediaDescription::lookupMid(const std::string mid) const {
 	size_t index;
 	for (index = 0 ; index < streams.size(); ++index){
 		const auto & sd = streams[index];
-		if (sd.mid.compare(mid) == 0){
+		if (sd.getChosenConfiguration().getMid().compare(mid) == 0){
 			return static_cast<int>(index);
 		}
 	}
@@ -224,24 +225,24 @@ const SalStreamBundle & SalMediaDescription::getBundleFromMid(const std::string 
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
 	std::string master_mid;
 	int index;
-	if (sd.mid.empty() == true) return -1; /* not part of any bundle */
+	if (sd.getChosenConfiguration().getMid().empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
-	const auto &bundle = getBundleFromMid(sd.mid);
+	const auto &bundle = getBundleFromMid(sd.getChosenConfiguration().getMid());
 	if (bundle == Utils::getEmptyConstRefObject<SalStreamBundle>()) {
-		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.mid));
+		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
 		return -1;
 	}
 	master_mid = bundle.getMidOfTransportOwner();
 	index = lookupMid(master_mid);
 	if (index == -1){
-		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.mid), L_STRING_TO_C(master_mid));
+		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.getChosenConfiguration().getMid()), L_STRING_TO_C(master_mid));
 	}
 	return index;
 }
 
 const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
 	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type, &proto] (const auto & stream) { 
-		return (stream.enabled() && (stream.proto==proto) && (stream.getType()==type));
+		return (stream.enabled() && (stream.getProto()==proto) && (stream.getType()==type));
 	});
 	if (streamIt != streams.end()) {
 		return *streamIt;
@@ -292,7 +293,7 @@ bool SalMediaDescription::isEmpty() const {
 void SalMediaDescription::setDir(SalStreamDir stream_dir){
 	for(auto & stream : streams){
 		if (!stream.enabled()) continue;
-		stream.dir=stream_dir;
+		stream.setDirection(stream_dir);
 	}
 }
 
