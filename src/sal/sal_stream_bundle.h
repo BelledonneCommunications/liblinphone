@@ -28,7 +28,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalStreamDescription;
+class SalStreamConfiguration;
 
 class SalStreamBundle{
 
@@ -44,7 +44,7 @@ class SalStreamBundle{
 		bool operator==(const SalStreamBundle & other) const;
 		bool operator!=(const SalStreamBundle & other) const;
 
-		void addStream(SalStreamDescription & stream, const std::string &mid);
+		void addStream(SalStreamConfiguration & stream, const std::string &mid);
 
 		const std::string & getMidOfTransportOwner() const;
 
