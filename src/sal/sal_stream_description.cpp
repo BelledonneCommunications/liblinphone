@@ -310,7 +310,7 @@ bool SalStreamDescription::operator!=(const SalStreamDescription & other) const 
 }
 
 int SalStreamDescription::equal(const SalStreamDescription & other) const {
-	int result = (getChosenConfiguration() == other.getChosenConfiguration());
+	int result = (getChosenConfiguration().equal(other.getChosenConfiguration()));
 
 	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
