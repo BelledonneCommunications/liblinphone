@@ -725,7 +725,6 @@ void LocalConference::participantUnplugged(LinphoneCall *call){
 	if (mixer_connected_remote_participants_count == 0) {
 		if (m_localParticipantStream){
 			removeLocalEndpoint();
-			linphone_core_soundcard_hint_check(m_core);
 		}
 		if (m_recordEndpoint) {
 			ms_audio_conference_remove_member(m_conf, m_recordEndpoint);
