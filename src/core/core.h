@@ -123,7 +123,6 @@ public:
 	unsigned int getCallCount () const;
 	std::shared_ptr<Call> getCurrentCall () const;
 	LinphoneStatus pauseAllCalls ();
-	void soundcardHintCheck ();
 	void soundcardActivateAudioSession (bool active);
 	void soundcardEnableCallkit (bool enabled);
 	void soundcardAudioRouteChanged ();

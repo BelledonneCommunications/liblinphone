@@ -235,7 +235,6 @@ void linphone_notify_parse_presence(const char *content_type, const char *conten
 void linphone_notify_convert_presence_to_xml(LinphonePrivate::SalOp *op, SalPresenceModel *presence, const char *contact, char **content);
 void linphone_notify_recv(LinphoneCore *lc, LinphonePrivate::SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model);
 void linphone_proxy_config_process_authentication_failure(LinphoneCore *lc, LinphonePrivate::SalOp *op);
-void linphone_core_soundcard_hint_check(LinphoneCore* lc);
 
 
 void linphone_subscription_answered(LinphoneCore *lc, LinphonePrivate::SalOp *op);
