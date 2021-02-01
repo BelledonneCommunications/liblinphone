@@ -486,9 +486,7 @@ void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const auto & remote = params.getRemoteStreamDescription();
 	audio_stream_start_zrtp(mStream);
 	if (remote.getChosenConfiguration().hasZrtpHash() == 1) {
-		uint8_t zrtphash[128];
-		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)zrtphash, strlen((const char *)(zrtphash)));
-		const_cast<SalStreamDescription &>(remote).setZrtpHash(remote.getChosenConfiguration().hasZrtpHash(), zrtphash);
+		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remote.getChosenConfiguration().getZrtpHash())));
 		if (retval != 0)
 			lError() << "ZRTP hash mismatch 0x" << hex << retval;
 	}

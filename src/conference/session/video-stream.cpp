@@ -316,9 +316,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		if (audioStream && audioStream->isEncrypted()) {
 			activateZrtp();
 			if (remoteStream.getChosenConfiguration().hasZrtpHash() == 1) {
-				uint8_t zrtphash[128];
-				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)zrtphash, strlen((const char *)(zrtphash)));
-				const_cast<SalStreamDescription &>(remoteStream).setZrtpHash(remoteStream.getChosenConfiguration().hasZrtpHash(), zrtphash);
+				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remoteStream.getChosenConfiguration().getZrtpHash())));
 				if (retval != 0)
 					lError() << "Video stream ZRTP hash mismatch 0x" << hex << retval;
 			}
