@@ -29,10 +29,10 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_bundle.h"
+#include "sal/sal_stream_description.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalStreamDescription;
 class SalStreamBundle;
 
 class LINPHONE_PUBLIC SalMediaDescription {
