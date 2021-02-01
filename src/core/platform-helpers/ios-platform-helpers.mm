@@ -115,6 +115,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
+	IosHandler *mHandler = NULL;
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
 	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
@@ -130,8 +131,7 @@ const string IosPlatformHelpers::Framework = "org.linphone.linphone";
 IosPlatformHelpers::IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext) : GenericPlatformHelpers(core) {
 	mUseAppDelgate = core->getCCore()->is_main_core && !linphone_config_get_int(core->getCCore()->config, "tester", "test_env", false);
 	if (mUseAppDelgate) {
-		mAppDelegate = [[IosAppDelegate alloc] init];
-		[mAppDelegate configure:core];
+		mAppDelegate = [[IosAppDelegate alloc] initWithCore:core];
 	}
 	ms_message("IosPlatformHelpers is fully initialised");
 }
@@ -141,14 +141,13 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
+	mHandler = [[IosHandler alloc] initWithCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
 		belr::GrammarLoader::get().addPath(cpimPath);
 	else
 		ms_error("IosPlatformHelpers did not find cpim grammar resource directory...");
-
-	// mSharedCoreHelpers->setupSharedCore(core->getCCore()->config);
 
 	string identityPath = getResourceDirPath(Framework, "identity_grammar");
 	if (!identityPath.empty())
@@ -163,18 +162,14 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	else
 		ms_message("IosPlatformHelpers did not find vcard grammar resource directory...");
 #endif
-    
-    [NSNotificationCenter.defaultCenter addObserver:mAppDelegate
-     selector:@selector(reloadDeviceOnRouteChangeCallback:)
-     name:AVAudioSessionRouteChangeNotification
-     object:nil];
-    
+
 	ms_message("IosPlatformHelpers is fully started");
 	mStart = true;
 }
 
 void IosPlatformHelpers::stop () {
 	mStart = false;
+	[mHandler dealloc];
 	ms_message("IosPlatformHelpers is fully stopped");
 }
 
@@ -297,19 +292,17 @@ void IosPlatformHelpers::onLinphoneCoreStart(bool monitoringEnabled) {
 		startNetworkMonitoring();
 	}
 
-	if (mUseAppDelgate) {
-		if (linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
-			if (mIterateTimer && mIterateTimer.valid) {
-				ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
-				return;
-			}
-			mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
-			// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
-			[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
-			ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
-		} else {
-			ms_warning("[IosPlatformHelpers] Auto core.iterate() isn't enabled, ensure you do it in your application!");
+	if (mUseAppDelgate && linphone_core_is_auto_iterate_enabled(getCore()->getCCore())) {
+		if (mIterateTimer && mIterateTimer.valid) {
+			ms_message("[IosPlatformHelpers] core.iterate() is already scheduled");
+			return;
 		}
+		mIterateTimer = [NSTimer timerWithTimeInterval:0.02 target:mAppDelegate selector:@selector(iterate) userInfo:nil repeats:YES];
+		// NSTimer runs only in the main thread correctly. Since there may not be a current thread loop.
+		[[NSRunLoop mainRunLoop] addTimer:mIterateTimer forMode:NSDefaultRunLoopMode];
+		ms_message("[IosPlatformHelpers] Call to core.iterate() scheduled every 20ms");
+	} else {
+		ms_warning("[IosPlatformHelpers] Auto core.iterate() isn't enabled, ensure you do it in your application!");
 	}
 }
 

@@ -20,10 +20,19 @@
 #include "ios-app-delegate.h"
 #import <AVFoundation/AVFoundation.h>
 
+@implementation IosObject
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
+	pcore = core;
+	return self;
+}
+
+@end
+
 @implementation IosAppDelegate
 
-- (id)init {
-	self = [super init];
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
+	self = [super initWithCore:core];
 	if (self != nil) {
 		[NSNotificationCenter.defaultCenter addObserver:self
 		selector:@selector(didEnterBackground:)
@@ -35,6 +44,7 @@
 			name:UIApplicationWillEnterForegroundNotification
 		  object:nil];
 	}
+
 	return self;
 }
 
@@ -61,6 +71,26 @@
 	linphone_core_iterate(pcore->getCCore());
 }
 
+@end
+
+@implementation IosHandler
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
+	self = [super initWithCore:core];
+	if (self != nil) {
+		[NSNotificationCenter.defaultCenter addObserver:self
+		selector:@selector(reloadDeviceOnRouteChangeCallback:)
+			name:AVAudioSessionRouteChangeNotification
+		  object:nil];
+	}
+
+	return self;
+}
+
+- (void)dealloc {
+	[super dealloc];
+	[NSNotificationCenter.defaultCenter removeObserver:self];
+}
 
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif
 {

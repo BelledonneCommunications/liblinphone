@@ -21,11 +21,36 @@
 #include "private.h"
 #import <UserNotifications/UserNotifications.h>
 
-@interface IosAppDelegate : NSObject {
+@interface IosObject : NSObject {
 	std::shared_ptr<LinphonePrivate::Core> pcore;
 }
 
-- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+
+@end
+
+/*
+ Used only by mais core.
+ IosAppDelegate is an object taking care of all application delegate's notifications and iteartion:
+ UIApplicationDidEnterBackgroundNotification
+ UIApplicationWillEnterForegroundNotification
+ iteration
+ Its lifecicle is the same as the one from linphonecore init to destroy.
+ */
+@interface IosAppDelegate : IosObject
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+
+@end
+
+/*
+ IosHandler is an object taking cahrge of all ios system's notifications:
+ AVAudioSessionRouteChangeNotification
+ Its lifecicle is the same as the one from core start to stop.
+ */
+@interface IosHandler : IosObject
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
 
 @end
