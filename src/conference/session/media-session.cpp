@@ -292,9 +292,7 @@ bool MediaSessionPrivate::failure () {
 			"Automatic CallSession resuming after failed transfer");
 	}
 	q->getCore()->getPrivate()->getToneManager()->stop(q->getSharedFromThis());
-
-	if (ei->reason != SalReasonNone)
-		q->getCore()->getPrivate()->getToneManager()->startErrorTone(q->getSharedFromThis(), linphone_reason_from_sal(ei->reason));
+	q->getCore()->getPrivate()->getToneManager()->startErrorTone(q->getSharedFromThis(), linphone_reason_from_sal(ei->reason));// Play an error tone if it is allowed
 
 	return false;
 }

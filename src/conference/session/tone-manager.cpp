@@ -289,8 +289,7 @@ LinphoneToneDescription *ToneManager::getToneFromId(LinphoneToneID id) {
 
 void ToneManager::setTone(LinphoneReason reason, LinphoneToneID id, const char *audiofile) {
 	LinphoneCore *lc = getCore()->getCCore();
-	LinphoneToneDescription *tone = getToneFromId(id);
-	if (!tone) tone = getToneFromReason(reason);
+	LinphoneToneDescription *tone = getToneFromReason(reason);
 
 	if (tone) {
 		lc->tones = bctbx_list_remove(lc->tones, tone);

@@ -1447,6 +1447,14 @@ static void sound_config_read(LinphoneCore *lc) {
 	linphone_core_get_audio_features(lc);
 
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonBusy, LinphoneToneBusy, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonGone, LinphoneToneCallEnd, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNoResponse, LinphoneToneCallEnd, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonDeclined, LinphoneToneCallEnd, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, LinphoneToneCallEnd, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonIOError, LinphoneToneCallLost, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNotAnswered, LinphoneToneCallLost, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonServerTimeout, LinphoneToneCallLost, NULL);
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonUnknown, LinphoneToneCallLost, NULL);
 }
 
 static int _linphone_core_tls_postcheck_callback(void *data, const bctbx_x509_certificate_t *peer_cert){
