@@ -75,7 +75,7 @@ public:
 	void iterateCalls (time_t currentRealTime, bool oneSecondElapsed) const;
 	void notifySoundcardUsage (bool used);
 	int removeCall (const std::shared_ptr<Call> &call);
-	void setCurrentCall (const std::shared_ptr<Call> &call) { currentCall = call; }
+	void setCurrentCall (const std::shared_ptr<Call> &call);
 	void setVideoWindowId (bool preview, void *id);
 
 	bool setOutputAudioDevice(AudioDevice *audioDevice);

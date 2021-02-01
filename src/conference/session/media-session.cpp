@@ -1816,10 +1816,8 @@ int MediaSessionPrivate::restartInvite () {
 }
 
 void MediaSessionPrivate::setTerminated () {
-	L_Q();
 	freeResources();
 	CallSessionPrivate::setTerminated();
-	q->getCore()->soundcardHintCheck();
 }
 
 LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextState, const string &stateInfo) {
