@@ -69,12 +69,6 @@ namespace Utils {
 
 	LINPHONE_PUBLIC bool iequals (const std::string &a, const std::string &b);
 
-	LINPHONE_PUBLIC std::vector<std::string> split (const std::string &str, const std::string &delimiter);
-
-	LINPHONE_PUBLIC inline std::vector<std::string> split (const std::string &str, char delimiter) {
-		return split(str, std::string(1, delimiter));
-	}
-
 	LINPHONE_PUBLIC std::string toString (int val);
 	LINPHONE_PUBLIC std::string toString (long val);
 	LINPHONE_PUBLIC std::string toString (long long val);
