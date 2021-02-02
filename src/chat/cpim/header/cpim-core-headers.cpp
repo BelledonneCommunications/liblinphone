@@ -20,6 +20,8 @@
 #include <iomanip>
 #include <sstream>
 
+#include "bctoolbox/utils.hh"
+
 #include "linphone/utils/utils.h"
 
 #include "logger/logger.h"
@@ -247,7 +249,7 @@ public:
 Cpim::RequireHeader::RequireHeader () : Header(*new RequireHeaderPrivate) {}
 
 Cpim::RequireHeader::RequireHeader (const string &headerNames) : RequireHeader() {
-	for (const string &header : Utils::split(headerNames, ",")) {
+	for (const string &header : bctoolbox::Utils::split(headerNames, ",")) {
 		addHeaderName(header);
 	}
 }
