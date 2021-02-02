@@ -31,13 +31,22 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalCallOp::SalCallOp (Sal *sal) : SalOp(sal) {
+SalCallOp::SalCallOp (Sal *sal, const bool capabilityNegotiation) : SalOp(sal) {
 	mType = Type::Call;
 	fillCallbacks();
+	enableCapabilityNegotiation(capabilityNegotiation);
 }
 
 SalCallOp::~SalCallOp () {
 
+}
+
+void SalCallOp::enableCapabilityNegotiation (const bool enable) {
+	capabilityNegotiation = enable;
+}
+
+bool SalCallOp::capabilityNegotiationEnabled () const {
+	return capabilityNegotiation;
 }
 
 int SalCallOp::setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc) {
