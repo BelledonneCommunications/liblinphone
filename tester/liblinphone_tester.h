@@ -42,6 +42,7 @@ extern jobject system_context;
 extern void *system_context;
 #endif
 
+extern test_suite_t account_creator_local_test_suite;
 extern test_suite_t account_creator_test_suite;
 extern test_suite_t call_test_suite;
 extern test_suite_t push_incoming_call_test_suite;

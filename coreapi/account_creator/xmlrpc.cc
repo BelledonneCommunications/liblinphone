@@ -760,7 +760,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone(
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_linphone(LinphoneAccountCreator *creator) {
-	//LinphoneXmlRpcRequest *request = NULL;
+	LinphoneXmlRpcRequest *request = NULL;
 	if (!creator->activation_code || !creator->username) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
@@ -769,7 +769,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
-		auto flexiAPIClient = new FlexiAPIClient(creator->core);
+		/*auto flexiAPIClient = new FlexiAPIClient(creator->core);
 
 		// Request it
 		flexiAPIClient
@@ -779,7 +779,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 			})
 			->error([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
 				return LinphoneAccountCreatorStatusRequestFailed;
-			});
+			});*/
 
 	fill_domain_and_algorithm_if_needed(creator);
 	if (creator->xmlrpc_session) {
@@ -789,7 +789,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 			_get_domain(creator),
 			creator->algorithm);
 
-		/*request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
+		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
 		linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
@@ -798,7 +798,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _activate_account_cb_custom);
 		linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
 		linphone_xml_rpc_request_unref(request);
-		return LinphoneAccountCreatorStatusRequestOk;*/
+		return LinphoneAccountCreatorStatusRequestOk;
 	}
 
 	return LinphoneAccountCreatorStatusRequestFailed;
