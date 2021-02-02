@@ -560,10 +560,10 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 		setParams(new CallSessionParams(*csp));
 	if (params) {
 		const auto & core = q->getCore()->getCCore();
-		const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+		const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
 		bool capabilityNegotiation = false;
 		// Set capability negotiation if the core supports it
-		if (coreAllowCapabilityNegotiations) {
+		if (coreSupportsCapabilityNegotiations) {
 			capabilityNegotiation = params->getPrivate()->capabilityNegotiationEnabled();
 		}
 		op->enableCapabilityNegotiation (capabilityNegotiation);
@@ -866,9 +866,9 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 		op->release();
 
 	const auto & core = q->getCore()->getCCore();
-	const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+	const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
 	bool enableCapabilityNegotiation = false;
-	if (coreAllowCapabilityNegotiations) {
+	if (coreSupportsCapabilityNegotiations) {
 		enableCapabilityNegotiation = q->getParams()->getPrivate()->capabilityNegotiationEnabled();
 	}
 	op = new SalCallOp(core->sal, enableCapabilityNegotiation);
@@ -1111,10 +1111,10 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
-		const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+		const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
 		bool capabilityNegotiation = false;
 		// Set capability negotiation if the core supports it
-		if (coreAllowCapabilityNegotiations) {
+		if (coreSupportsCapabilityNegotiations) {
 			capabilityNegotiation = getParams()->getPrivate()->capabilityNegotiationEnabled();
 		}
 		op->enableCapabilityNegotiation (capabilityNegotiation);

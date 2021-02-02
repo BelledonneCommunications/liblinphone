@@ -125,15 +125,13 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 static void call_from_enc_to_no_enc_wrapper(const LinphoneMediaEncryption encryption, bool_t enc_to_no_enc) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
-	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",0);
-	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
-	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",0);
+	linphone_core_set_support_capability_negotiation(marie->lc, 0);
+	linphone_core_set_support_capability_negotiation(pauline->lc, 0);
 
 	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 	bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(encryption);
-	linphone_config_set_string_list(marie_lp,"sip","supported_encryptions",cfg_enc);
+	linphone_core_set_supported_media_encryptions(marie->lc,cfg_enc);
 	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, encryption));
 	bctbx_list_free(cfg_enc);
 	if (linphone_core_media_encryption_supported(pauline->lc,encryption)) {
@@ -191,10 +189,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 static void call_with_encryption_wrapper(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LpConfig *marie_lp = linphone_core_get_config(marie->lc);
-	linphone_config_set_int(marie_lp,"sip","enable_capability_negotiations",enable_marie_capability_negotiations);
-	LpConfig *pauline_lp = linphone_core_get_config(pauline->lc);
-	linphone_config_set_int(pauline_lp,"sip","enable_capability_negotiations",enable_pauline_capability_negotiations);
+	linphone_core_set_support_capability_negotiation(marie->lc, enable_marie_capability_negotiations);
+	linphone_core_set_support_capability_negotiation(pauline->lc, enable_pauline_capability_negotiations);
 
 	const LinphoneMediaEncryption pauline_encryption = pauline_enc_params.encryption;
 	if (linphone_core_media_encryption_supported(pauline->lc,pauline_encryption)) {
@@ -203,7 +199,7 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 
 		if (pauline_enc_params.level == E_OPTIONAL) {
 			bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(pauline_encryption);
-			linphone_config_set_string_list(pauline_lp,"sip","supported_encryptions",cfg_enc);
+			linphone_core_set_supported_media_encryptions(pauline->lc,cfg_enc);
 			bctbx_list_free(cfg_enc);
 		}
 		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, pauline_encryption));
@@ -215,7 +211,7 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 
 		if (pauline_enc_params.level == E_OPTIONAL) {
 			bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(marie_encryption);
-			linphone_config_set_string_list(marie_lp,"sip","supported_encryptions",cfg_enc);
+			linphone_core_set_supported_media_encryptions(marie->lc,cfg_enc);
 			bctbx_list_free(cfg_enc);
 		}
 		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, marie_encryption));
