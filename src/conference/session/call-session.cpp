@@ -539,12 +539,7 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 		setParams(new CallSessionParams(*csp));
 	if (params) {
 		const auto & core = q->getCore()->getCCore();
-		const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
-		bool capabilityNegotiation = false;
-		// Set capability negotiation if the core supports it
-		if (coreSupportsCapabilityNegotiations) {
-			capabilityNegotiation = params->getPrivate()->capabilityNegotiationEnabled();
-		}
+		bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && q->getParams()->getPrivate()->capabilityNegotiationEnabled();
 		op->enableCapabilityNegotiation (capabilityNegotiation);
 		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 	}
@@ -844,11 +839,7 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 		op->release();
 
 	const auto & core = q->getCore()->getCCore();
-	const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
-	bool enableCapabilityNegotiation = false;
-	if (coreSupportsCapabilityNegotiations) {
-		enableCapabilityNegotiation = q->getParams()->getPrivate()->capabilityNegotiationEnabled();
-	}
+	bool enableCapabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && q->getParams()->getPrivate()->capabilityNegotiationEnabled();
 	op = new SalCallOp(core->sal, enableCapabilityNegotiation);
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
@@ -1089,12 +1080,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
-		const bool_t coreSupportsCapabilityNegotiations = linphone_core_is_capability_negotiation_supported(core);
-		bool capabilityNegotiation = false;
-		// Set capability negotiation if the core supports it
-		if (coreSupportsCapabilityNegotiations) {
-			capabilityNegotiation = getParams()->getPrivate()->capabilityNegotiationEnabled();
-		}
+		bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();
 		op->enableCapabilityNegotiation (capabilityNegotiation);
 		op->enableCnxIpTo0000IfSendOnly(
 			!!linphone_config_get_default_int(
