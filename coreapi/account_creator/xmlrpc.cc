@@ -24,6 +24,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 #include "dial-plan/dial-plan.h"
+#include "FlexiAPIClient.hh"
 
 
 #include "bctoolbox/crypto.h"
@@ -220,21 +221,6 @@ LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const
 	return creator;
 }
 
-static void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
-	if (creator->domain == NULL) {
-		const char* domain = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "domain", NULL);
-		if (domain) {
-			linphone_account_creator_set_domain(creator, domain);
-		}
-	}
-	if (creator->algorithm == NULL) {
-		const char* algorithm = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "algorithm", NULL);
-		if (algorithm) {
-			linphone_account_creator_set_algorithm(creator, algorithm);
-		}
-	}
-}
-
 LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
 	return _linphone_account_creator_new(core, xmlrpc_url);
 }
@@ -288,223 +274,6 @@ void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, 
 	if (old_cfg) {
 		linphone_proxy_config_unref(old_cfg);
 	}
-}
-
-LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username) {
-	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_min_length", -1);
-	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_max_length", -1);
-	bool_t use_phone_number = !!linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "use_phone_number", 0);
-	const char* regex = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "username_regex", 0);
-	if (!username) {
-		resetField(&creator->username);
-		return LinphoneAccountCreatorUsernameStatusOk;
-	} else if (min_length > 0 && strlen(username) < (size_t)min_length) {
-		return LinphoneAccountCreatorUsernameStatusTooShort;
-	} else if (max_length > 0 && strlen(username) > (size_t)max_length) {
-		return LinphoneAccountCreatorUsernameStatusTooLong;
-	} else if (use_phone_number && !linphone_proxy_config_is_phone_number(NULL, username)) {
-		return LinphoneAccountCreatorUsernameStatusInvalid;
-	} else if (regex && !bctbx_is_matching_regex(username, regex)) {
-		return LinphoneAccountCreatorUsernameStatusInvalidCharacters;
-	} else if (validate_uri(username, NULL, NULL) != 0) {
-		return LinphoneAccountCreatorUsernameStatusInvalid;
-	}
-
-	set_string(&creator->username, username, FALSE);
-	return LinphoneAccountCreatorUsernameStatusOk;
-}
-
-const char * linphone_account_creator_get_username(const LinphoneAccountCreator *creator) {
-	return creator->username;
-}
-
-LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_number(LinphoneAccountCreator *creator, const char *phone_number, const char *country_code) {
-	char *normalized_phone_number;
-	LinphoneAccountCreatorPhoneNumberStatusMask return_status = 0;
-	if (!phone_number || !country_code) {
-		if (!phone_number && !country_code) {
-			creator->phone_number = NULL;
-			creator->phone_country_code = NULL;
-			return (LinphoneAccountCreatorPhoneNumberStatusMask)LinphoneAccountCreatorPhoneNumberStatusOk;
-		} else {
-			return (LinphoneAccountCreatorPhoneNumberStatusMask)LinphoneAccountCreatorPhoneNumberStatusInvalid;
-		}
-	} else {
-		if (strlen(country_code) == 0 || strcmp(country_code, "+") == 0) return LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
-
-		if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
-		LinphoneProxyConfig *numCfg = creator->proxy_cfg;
-
-		creator->phone_country_code = ms_strdup(country_code[0] == '+' ? &country_code[1] : country_code);
-		linphone_proxy_config_set_dial_prefix(numCfg, creator->phone_country_code);
-		normalized_phone_number = linphone_proxy_config_normalize_phone_number(numCfg, phone_number);
-		if (!normalized_phone_number) {
-			return LinphoneAccountCreatorPhoneNumberStatusInvalid;
-		}
-
-		// if phone is valid, we lastly want to check that length is OK in case phone_nunber was normilized
-		if (strcmp(normalized_phone_number,phone_number) != 0 || phone_number[0] != '+') {
-			std::shared_ptr<DialPlan> plan = DialPlan::findByCcc(creator->phone_country_code);
-			int size = (int)strlen(phone_number);
-			if (plan->isGeneric()) {
-				return_status = LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode;
-			}
-			// DO NOT NOTIFY ABOUT PHONE NUMBER BEING TOO SHORT,
-			// OUR DIAL PLAN IMPLEMENTATION ISNT PRECISE ENOUGH TO GARANTY
-			// THE PHONE NUMBER IS INVALID
-			/*if (size < plan->getNationalNumberLength() - 1) {
-				return_status = LinphoneAccountCreatorPhoneNumberStatusTooShort;
-				goto end;
-			} else*/ if (size > plan->getNationalNumberLength() + 1) {
-				return_status = LinphoneAccountCreatorPhoneNumberStatusTooLong;
-				goto end;
-			} else if (return_status & LinphoneAccountCreatorPhoneNumberStatusInvalidCountryCode) {
-				goto end;
-			}
-		}
-	}
-	set_string(&creator->phone_number, normalized_phone_number, FALSE);
-	return_status = LinphoneAccountCreatorPhoneNumberStatusOk;
-end:
-	ms_free(normalized_phone_number);
-	return return_status;
-}
-
-const char * linphone_account_creator_get_phone_number(const LinphoneAccountCreator *creator) {
-	return creator->phone_number;
-}
-
-LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_password(LinphoneAccountCreator *creator, const char *password) {
-	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_min_length", -1);
-	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_max_length", -1);
-	if (!password) {
-		resetField(&creator->password);
-		return LinphoneAccountCreatorPasswordStatusTooShort;
-	}
-	if (min_length > 0 && strlen(password) < (size_t)min_length) {
-		return LinphoneAccountCreatorPasswordStatusTooShort;
-	} else if (max_length > 0 && strlen(password) > (size_t)max_length) {
-		return LinphoneAccountCreatorPasswordStatusTooLong;
-	}
-	set_string(&creator->password, password, FALSE);
-	return LinphoneAccountCreatorPasswordStatusOk;
-}
-
-const char * linphone_account_creator_get_password(const LinphoneAccountCreator *creator) {
-	return creator->password;
-}
-
-LinphoneAccountCreatorAlgoStatus linphone_account_creator_set_algorithm(LinphoneAccountCreator *creator, const char *algorithm) {
-	set_string(&creator->algorithm, algorithm, FALSE);
-	if(algorithm && strcmp(algorithm,"MD5") && strcmp(algorithm, "SHA-256")) {
-		return LinphoneAccountCreatorAlgoStatusNotSupported;
-	}
-	return LinphoneAccountCreatorAlgoStatusOk;
-}
-
-const char * linphone_account_creator_get_algorithm(const LinphoneAccountCreator *creator) {
-	return creator->algorithm;
-}
-
-LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_ha1(LinphoneAccountCreator *creator, const char *ha1){
-	set_string(&creator->ha1, ha1, FALSE);
-	return LinphoneAccountCreatorPasswordStatusOk;
-}
-
-const char * linphone_account_creator_get_ha1(const LinphoneAccountCreator *creator) {
-	return creator->ha1;
-}
-
-LinphoneAccountCreatorActivationCodeStatus linphone_account_creator_set_activation_code(LinphoneAccountCreator *creator, const char *activation_code){
-	set_string(&creator->activation_code, activation_code, FALSE);
-	return LinphoneAccountCreatorActivationCodeStatusOk;
-}
-
-const char * linphone_account_creator_get_activation_code(const LinphoneAccountCreator *creator) {
-	return creator->activation_code;
-}
-
-LinphoneAccountCreatorLanguageStatus linphone_account_creator_set_language(LinphoneAccountCreator *creator, const char *lang) {
-	set_string(&creator->language, lang, FALSE);
-	return LinphoneAccountCreatorLanguageStatusOk;
-}
-
-const char * linphone_account_creator_get_language(const LinphoneAccountCreator *creator) {
-	return creator->language;
-}
-
-LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_display_name(LinphoneAccountCreator *creator, const char *display_name) {
-	if (validate_uri(NULL, display_name, NULL) != 0) {
-		return LinphoneAccountCreatorUsernameStatusInvalid;
-	}
-	set_string(&creator->display_name, display_name, FALSE);
-	return LinphoneAccountCreatorUsernameStatusOk;
-}
-
-const char * linphone_account_creator_get_display_name(const LinphoneAccountCreator *creator) {
-	return creator->display_name;
-}
-
-LinphoneAccountCreatorEmailStatus linphone_account_creator_set_email(LinphoneAccountCreator *creator, const char *email) {
-	if (!email || !bctbx_is_matching_regex(email, "^.+@.+\\..*$")) {
-		return LinphoneAccountCreatorEmailStatusMalformed;
-	}
-	if (!bctbx_is_matching_regex(email, "^.+@.+\\.[A-Za-z]{2}[A-Za-z]*$")) {
-		return LinphoneAccountCreatorEmailStatusInvalidCharacters;
-	}
-	set_string(&creator->email, email, TRUE);
-	return LinphoneAccountCreatorEmailStatusOk;
-}
-
-const char * linphone_account_creator_get_email(const LinphoneAccountCreator *creator) {
-	return creator->email;
-}
-
-LinphoneAccountCreatorDomainStatus linphone_account_creator_set_domain(LinphoneAccountCreator *creator, const char *domain) {
-	if (domain && validate_uri(NULL, domain, NULL) != 0) {
-		return LinphoneAccountCreatorDomainInvalid;
-	}
-
-	set_string(&creator->domain, domain, TRUE);
-	return LinphoneAccountCreatorDomainOk;
- }
-
-const char * linphone_account_creator_get_domain(const LinphoneAccountCreator *creator) {
-	return creator->domain;
-}
-
-LinphoneAccountCreatorTransportStatus linphone_account_creator_set_transport(LinphoneAccountCreator *creator, LinphoneTransportType transport) {
-	if (!linphone_core_sip_transport_supported(creator->core, transport)) {
-		return LinphoneAccountCreatorTransportUnsupported;
-	}
-	creator->transport = transport;
-	return LinphoneAccountCreatorTransportOk;
-}
-
-LinphoneTransportType linphone_account_creator_get_transport(const LinphoneAccountCreator *creator) {
-	return creator->transport;
-}
-
-LinphoneAccountCreatorStatus linphone_account_creator_set_route(LinphoneAccountCreator *creator, const char *route) {
-	if (!creator->proxy_cfg) creator->proxy_cfg = linphone_core_create_proxy_config(creator->core);
-	if (!route || linphone_proxy_config_set_route(creator->proxy_cfg, route) != 0)
-		return LinphoneAccountCreatorStatusRequestFailed;
-
-	set_string(&creator->route, route, TRUE);
-	return LinphoneAccountCreatorStatusRequestOk;
-}
-
-const char * linphone_account_creator_get_route(const LinphoneAccountCreator *creator) {
-	return creator->route;
-}
-
-LinphoneAccountCreatorStatus linphone_account_creator_set_as_default(LinphoneAccountCreator *creator, bool_t set_as_default) {
-	creator->set_as_default = set_as_default;
-	return LinphoneAccountCreatorStatusRequestOk;
-}
-
-bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator *creator) {
-	return creator->set_as_default;
 }
 
 LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator) {
@@ -956,6 +725,7 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone(LinphoneAccountCreator *creator) {
 	LinphoneXmlRpcRequest *request = NULL;
+
 	if (!creator->phone_number || !creator->activation_code) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
@@ -990,7 +760,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone(
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_linphone(LinphoneAccountCreator *creator) {
-	LinphoneXmlRpcRequest *request = NULL;
+	//LinphoneXmlRpcRequest *request = NULL;
 	if (!creator->activation_code || !creator->username) {
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
@@ -998,6 +768,18 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		NOTIFY_IF_EXIST(Status, activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
+
+		auto flexiAPIClient = new FlexiAPIClient(creator->core);
+
+		// Request it
+		flexiAPIClient
+			->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)), creator->activation_code)
+			->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+				return LinphoneAccountCreatorStatusRequestOk;
+			})
+			->error([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+				return LinphoneAccountCreatorStatusRequestFailed;
+			});
 
 	fill_domain_and_algorithm_if_needed(creator);
 	if (creator->xmlrpc_session) {
@@ -1007,16 +789,16 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 			_get_domain(creator),
 			creator->algorithm);
 
-		request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
+		/*request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "activate_email_account");
 		linphone_xml_rpc_request_add_string_arg(request, creator->username);
 		linphone_xml_rpc_request_add_string_arg(request, creator->activation_code);
 		linphone_xml_rpc_request_add_string_arg(request, _get_domain(creator));
-        linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
+		linphone_xml_rpc_request_add_string_arg(request, creator->algorithm);
 		linphone_xml_rpc_request_set_user_data(request, creator);
 		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _activate_account_cb_custom);
 		linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
 		linphone_xml_rpc_request_unref(request);
-		return LinphoneAccountCreatorStatusRequestOk;
+		return LinphoneAccountCreatorStatusRequestOk;*/
 	}
 
 	return LinphoneAccountCreatorStatusRequestFailed;

@@ -7,9 +7,11 @@
 // TODO: From coreapi. Remove me later.
 #include "private.h"
 
+#include "bctoolbox/crypto.h"
+#include "bctoolbox/regex.h"
+
 using namespace LinphonePrivate;
 
-/************************** Start Misc **************************/
 const char *_get_domain(LinphoneAccountCreator *creator) {
 	if (creator->domain)
 		return creator->domain;
@@ -76,7 +78,7 @@ char* _get_identity(const LinphoneAccountCreator *creator) {
 		addr = linphone_proxy_config_normalize_sip_uri(proxy, creator->username ? creator->username : creator->phone_number);
 		if (addr == NULL || (creator->domain && strcmp(linphone_address_get_domain(addr), creator->domain) != 0)) {
 			if ((creator->username || creator->phone_number) && creator->domain) {
-                char *url = ms_strdup_printf("sip:%s", creator->domain);
+				char *url = ms_strdup_printf("sip:%s", creator->domain);
 				addr = linphone_address_new(url);
 				ms_free(url);
 
@@ -105,64 +107,17 @@ void resetField (char **field) {
 	}
 }
 
-LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator) {
-	LinphoneAuthInfo *info;
-	LinphoneProxyConfig *cfg = linphone_core_create_proxy_config(creator->core);
-	char *identity_str = _get_identity(creator);
-	LinphoneAddress *identity = linphone_address_new(identity_str);
-
-	ms_free(identity_str);
-	if (creator->display_name) {
-		linphone_address_set_display_name(identity, creator->display_name);
-	}
-	linphone_proxy_config_set_identity_address(cfg, identity);
-	if (creator->phone_country_code) {
-		linphone_proxy_config_set_dial_prefix(cfg, creator->phone_country_code);
-	} else if (creator->phone_number) {
-		int dial_prefix_number = DialPlan::lookupCccFromE164(creator->phone_number);
-		char buff[4];
-		snprintf(buff, sizeof(buff), "%d", dial_prefix_number);
-		linphone_proxy_config_set_dial_prefix(cfg, buff);
-	}
-	if (linphone_proxy_config_get_server_addr(cfg) == NULL && creator->domain != NULL) {
-		char *url = ms_strdup_printf("sip:%s", creator->domain);
-		LinphoneAddress *proxy_addr = linphone_address_new(url);
-		if (proxy_addr) {
-			linphone_address_set_transport(proxy_addr, creator->transport);
-			linphone_proxy_config_set_server_addr(cfg, linphone_address_as_string_uri_only(proxy_addr));
-			linphone_address_unref(proxy_addr);
-		} else {
-			linphone_proxy_config_set_server_addr(cfg, creator->domain);
+void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator) {
+	if (creator->domain == NULL) {
+		const char* domain = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "domain", NULL);
+		if (domain) {
+			linphone_account_creator_set_domain(creator, domain);
 		}
-		ms_free(url);
 	}
-
-	linphone_proxy_config_enable_register(cfg, TRUE);
-
-	info = linphone_auth_info_new_for_algorithm(linphone_address_get_username(identity), // username
-								NULL, //user id
-								creator->password, // passwd
-								creator->password ? NULL : creator->ha1,  // ha1
-								!creator->password && creator->ha1 ? linphone_address_get_domain(identity) : NULL,  // realm - assumed to be domain
-								linphone_address_get_domain(identity), // domain
-								creator->password ? NULL : creator->algorithm //if clear text password is given, allow its usage with all algorithms.
-	);
-	linphone_core_add_auth_info(creator->core, info);
-	linphone_address_unref(identity);
-
-	if (linphone_core_add_proxy_config(creator->core, cfg) != -1) {
-		if (creator->set_as_default) {
-			linphone_core_set_default_proxy_config(creator->core, cfg);
+	if (creator->algorithm == NULL) {
+		const char* algorithm = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "algorithm", NULL);
+		if (algorithm) {
+			linphone_account_creator_set_algorithm(creator, algorithm);
 		}
-		return cfg;
 	}
-
-	linphone_core_remove_auth_info(creator->core, info);
-	linphone_auth_info_unref(info);
-	return NULL;
 }
-
-LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator) {
-	return linphone_account_creator_create_proxy_config(creator);
-}
-/************************** End Misc **************************/
