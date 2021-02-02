@@ -29,9 +29,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
-unsigned int SalStreamDescription::actualConfigurationIndex{ 0 };
+bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type SalStreamDescription::actualConfigurationIndex{ 0 };
 
-bool SalConfigurationCmp::operator()(const unsigned int& lhs, const unsigned int& rhs) const { 
+bool SalConfigurationCmp::operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const { 
 	return (lhs < rhs) && (rhs != SalStreamDescription::actualConfigurationIndex);
 }
 
@@ -65,6 +65,15 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
+	fillStreamDescription(salMediaDesc, media_desc);
+}
+
+SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs) : SalStreamDescription(salMediaDesc, media_desc) {
+	// Create potential configurations
+	fillPotentialConfigurations(SDPMediaDescriptionCfgs);
+}
+
+void SalStreamDescription::fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -116,6 +125,42 @@ SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaD
 	}
 
 	createActualCfg(salMediaDesc, media_desc);
+}
+
+void SalStreamDescription::fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs) {
+
+	// Populate stream global parameters and actual configuration
+	fillStreamDescription(salMediaDesc, media_desc);
+
+	// Create potential configurations
+	fillPotentialConfigurations(SDPMediaDescriptionCfgs);
+
+}
+
+void SalStreamDescription::fillPotentialConfigurations(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs) {
+	// Iterate over the potential configuration
+	for (const auto & SDPMediaDescriptionCfgPair : SDPMediaDescriptionCfgs) {
+		// This is the configuration ondex
+		const auto & idx = SDPMediaDescriptionCfgPair.first;
+		// List of potential configuration associated with a given index
+		const auto & potentialConfigurationAttributes = SDPMediaDescriptionCfgPair.second;
+		const auto ret = cfgs.insert(std::make_pair(idx, createPotentialConfiguration(potentialConfigurationAttributes)));
+		const auto & success = ret.second;
+		if (success == false) {
+			const auto & it = ret.first;
+			lError() << "Failed to insert potential configuration " << it->first << " into the configuration map";
+		}
+	}
+}
+
+SalStreamDescription::cfg_map::mapped_type SalStreamDescription::createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & cfgAttributeList) {
+
+	for (const auto & attr : cfgAttributeList) {
+		lInfo() << "Delete media session attributes " << attr.delete_media_attributes << " delete session session attributes " << attr.delete_session_attributes;
+	}
+
+	return SalStreamDescription::cfg_map::mapped_type();
+
 }
 
 void SalStreamDescription::setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str) {
@@ -1011,15 +1056,15 @@ void SalStreamDescription::addIceRemoteCandidatesToSdp(const SalStreamConfigurat
 	if (buffer[0] != '\0') belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("remote-candidates",buffer));
 }
 
-const unsigned int & SalStreamDescription::getChosenConfigurationIndex() const {
+const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getChosenConfigurationIndex() const {
 	return cfgIndex;
 }
 
-const unsigned int & SalStreamDescription::getActualConfigurationIndex() const {
+const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getActualConfigurationIndex() const {
 	return SalStreamDescription::actualConfigurationIndex;
 }
 
-const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const unsigned int & index) const {
+const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const {
 	try {
 		const auto & cfg = cfgs.at(index);
 		return cfg;
@@ -1059,7 +1104,7 @@ void SalStreamDescription::addActualConfiguration(const SalStreamConfiguration &
 	addConfigurationAtIndex(getActualConfigurationIndex(), cfg);
 }
 
-void SalStreamDescription::addConfigurationAtIndex(const unsigned int & idx, const SalStreamConfiguration & cfg) {
+void SalStreamDescription::addConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg) {
 	cfgs[idx] = cfg;
 }
 

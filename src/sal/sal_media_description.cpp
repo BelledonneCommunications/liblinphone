@@ -74,6 +74,8 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	dir = SalStreamSendRecv;
 
+	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
+
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
 	}
@@ -155,10 +157,16 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		}
 	}
 
+	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
+	// Generally, at this point, vector streams should be empty
+	unsigned int currentStreamIdx = static_cast<unsigned int>(streams.size());
 	for ( belle_sip_list_t* media_desc_it=belle_sdp_session_description_get_media_descriptions ( sdp ); media_desc_it!=NULL; media_desc_it=media_desc_it->next ) {
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
-		SalStreamDescription stream(this, media_desc);
+
+		const auto & cfg =  potentialCfgGraph.getPcfgForStream(currentStreamIdx);
+		SalStreamDescription stream(this, media_desc, cfg);
 		streams.push_back(stream);
+		currentStreamIdx++;
 	}
 }
 
