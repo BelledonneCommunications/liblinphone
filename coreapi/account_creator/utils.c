@@ -100,7 +100,7 @@ char* _get_identity(const LinphoneAccountCreator *creator) {
 	return identity;
 }
 
-void resetField (char **field) {
+void reset_field (char **field) {
 	if (*field) {
 		bctbx_free(*field);
 		*field = nullptr;

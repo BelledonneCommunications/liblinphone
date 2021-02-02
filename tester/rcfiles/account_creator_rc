@@ -1,3 +1,7 @@
+[sip]
+default_proxy=0
+flexiapi_url=http://fs-test.linphone.org/flexiapi/api/
+
 [assistant]
 domain=sip.accounttest.org
 password_max_length=12
@@ -6,6 +10,16 @@ username_max_length=22
 username_min_length=3
 username_regex=^[A-Za-z0-9_.\-\ ]*$
 xmlrpc_url=https://sip2.linphone.org:446/wizard.php
+
+[proxy_0]
+realm=sip.accounttest.org
+reg_proxy=<sip:sip2.linphone.org:5072>
+reg_route=<sip:sip2.linphone.org:5072>
+reg_identity=sip:user@sip.accounttest.org
+reg_expires=3600
+reg_sendregister=1
+publish=0
+dial_escape_plus=0
 
 [proxy_default_values]
 reg_proxy=<sip:sip2.linphone.org:5072>
