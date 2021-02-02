@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <iterator>
 
+#include "bctoolbox/utils.hh"
 #include <mediastreamer2/mscommon.h>
 
 #ifdef HAVE_ADVANCED_IM
@@ -722,7 +723,7 @@ void Core::setSpecs (const std::string &pSpecs) {
 		setSpecsList(d->specs);
 	} else {
 		//Assume a list of coma-separated values
-		setSpecsList(Utils::toList(Utils::split(pSpecs, ",")));
+		setSpecsList(Utils::toList(bctoolbox::Utils::split(pSpecs, ",")));
 	}
 }
 

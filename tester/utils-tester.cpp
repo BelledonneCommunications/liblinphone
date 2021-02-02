@@ -19,6 +19,8 @@
 
 #include "linphone/utils/utils.h"
 
+#include "bctoolbox/utils.hh"
+
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
@@ -31,26 +33,26 @@ using namespace LinphonePrivate::Utils;
 
 static void split () {
 	string emptyString;
-	vector<string> result = Utils::split(emptyString, ",");
+	vector<string> result = bctoolbox::Utils::split(emptyString, ",");
 	BC_ASSERT_EQUAL(result.size(), 1, int, "%d");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "");
 	string contentDisposition("positive-delivery, negative-delivery, display");
-	result = Utils::split(contentDisposition, ", ");
+	result = bctoolbox::Utils::split(contentDisposition, ", ");
 	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), "negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), "display");
-	result = Utils::split(contentDisposition, ",");
+	result = bctoolbox::Utils::split(contentDisposition, ",");
 	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), " negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), " display");
-	result = Utils::split(contentDisposition, ',');
+	result = bctoolbox::Utils::split(contentDisposition, ',');
 	BC_ASSERT_EQUAL(result.size(), 3, int, "%d");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), "positive-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(1).c_str(), " negative-delivery");
 	BC_ASSERT_STRING_EQUAL(result.at(2).c_str(), " display");
-	result = Utils::split(contentDisposition, "|");
+	result = bctoolbox::Utils::split(contentDisposition, "|");
 	BC_ASSERT_EQUAL(result.size(), 1, int, "%d");
 	BC_ASSERT_STRING_EQUAL(result.at(0).c_str(), contentDisposition.c_str());
 }
