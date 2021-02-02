@@ -33,6 +33,13 @@ extern "C" {
 #endif
 
 /**
+ * Instantiates a new payload type with values from source.
+ * @param[in] source The #LinphonePayloadType object to be cloned. @notnil
+ * @return The newly created #LinphonePayloadType object. @notnil
+ */
+LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_clone(const LinphonePayloadType *orig);
+
+/**
  * Take a reference on a #LinphonePayloadType.
  * @param payload_type the #LinphonePayloadType object @notnil
  * @return the same #LinphonePayloadType object @notnil
