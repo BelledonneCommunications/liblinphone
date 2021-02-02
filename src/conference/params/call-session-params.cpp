@@ -52,6 +52,14 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 
 // -----------------------------------------------------------------------------
 
+bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
+	return capabilityNegotiation;
+}
+
+void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
+	capabilityNegotiation = enable;
+}
+
 SalCustomHeader * CallSessionParamsPrivate::getCustomHeaders () const {
 	return customHeaders;
 }
