@@ -28,6 +28,8 @@
 #include <vector>
 #include <map>
 
+#include "bctoolbox/utils.hh"
+
 #include "linphone/utils/enum-generator.h"
 #include "address/address.h"
 #include "conference/session/streams.h"
@@ -136,8 +138,7 @@ namespace Utils {
 	template<typename T, typename std::enable_if<!std::is_base_of<Address, T>::value>::type* = nullptr>
 
 	inline const T &getEmptyConstRefObject () {
-		static const T object{};
-		return object;
+		return bctoolbox::Utils::getEmptyConstRefObject<T>();
 	}
 
 	template<class Container>
