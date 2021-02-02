@@ -1500,8 +1500,8 @@ static void call_declined_base(bool_t use_timeout) {
 
 	// Make sure the error tone ends by calling linphone_core_stop
 	linphone_core_stop(pauline->lc);
-	// In case of LinphoneReasonDeclined no tone is played, so there is no tone to stop
-	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, use_timeout? 1 : 0, int, "%d");
+	// In case of LinphoneReasonDeclined a tone is played
+	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(pauline->lc)->number_of_stopTone, use_timeout? 1 : 1, int, "%d");
 	linphone_core_start(pauline->lc);
 
 	linphone_core_manager_destroy(marie);
