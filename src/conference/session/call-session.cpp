@@ -1303,8 +1303,9 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	char *from = linphone_address_as_string(d->log->from);
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (content)
+	if (content) {
 		d->op->setLocalBody(*content);
+	}
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
 	for (auto& content : d->params->getCustomContents()) {
@@ -1396,6 +1397,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (csp)
 		d->setParams(new CallSessionParams(*csp));
+
 	d->op->setLocalBody(content ? *content : Content());
 	LinphoneStatus result = d->startUpdate(subject);
 	if (result && (d->state != initialState)) {
