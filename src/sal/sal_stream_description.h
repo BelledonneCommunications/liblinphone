@@ -23,6 +23,8 @@
 #include <map>
 #include <vector>
 
+#include <belle-sip/potential_config_graph.hh>
+
 #include "linphone/utils/general.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
@@ -38,7 +40,7 @@ class IceService;
 class SalCallOp;
 
 struct SalConfigurationCmp {
-	bool operator()(const unsigned int& lhs, const unsigned int& rhs) const;
+	bool operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const;
 };
 
 class LINPHONE_PUBLIC SalStreamDescription {
@@ -50,10 +52,11 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:
 
-		static unsigned int actualConfigurationIndex;
+		static bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type actualConfigurationIndex;
 
 		SalStreamDescription();
 		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
@@ -71,15 +74,15 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		// Returned values:
 		// - 0: actual configuration
 		// - 1 to 2^31-1: configuration number as received in the SDP acfg or pcfg attribute
-		const unsigned int & getChosenConfigurationIndex() const;
-		const unsigned int & getActualConfigurationIndex() const;
+		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getChosenConfigurationIndex() const;
+		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getActualConfigurationIndex() const;
 
-		const SalStreamConfiguration & getConfigurationAtIndex(const unsigned int & index) const;
+		const SalStreamConfiguration & getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const;
 		const SalStreamConfiguration & getActualConfiguration() const;
 		const SalStreamConfiguration & getChosenConfiguration() const;
 
 		void addActualConfiguration(const SalStreamConfiguration & cfg);
-		void addConfigurationAtIndex(const unsigned int & idx, const SalStreamConfiguration & cfg);
+		void addConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg);
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 		bool hasAvpf() const;
@@ -125,10 +128,18 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	private:
 
-		unsigned int cfgIndex = 0;
+		bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
 
 		// Map of the available configurations
-		std::map<unsigned int, SalStreamConfiguration, SalConfigurationCmp> cfgs;
+		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
+		cfg_map cfgs;
+
+		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
+		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
+
+		// Potential configurations
+		void fillPotentialConfigurations(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
+		cfg_map::mapped_type createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & SDPMediaDescriptionCfgs);
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);
