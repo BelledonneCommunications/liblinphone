@@ -276,7 +276,7 @@ set(SOURCE_FILES_C
 	video_tester.c
 )
 if(ENABLE_LIME_X3DH)
-    list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
+	list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
 endif()
 
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
@@ -294,7 +294,7 @@ set(SOURCE_FILES_CXX
 	multipart-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
-	account-creator-flexiapi-tester.cpp
+	#account-creator-flexiapi-tester.cpp
 	flexiapiclient-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
@@ -440,14 +440,14 @@ if(NOT ANDROID)
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
 		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${SOCI_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
-                if(MSVC)
-                        if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-                                install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
-                                        DESTINATION ${CMAKE_INSTALL_BINDIR}
-                                        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-                                )
-                        endif()
-                endif()
+		if(MSVC)
+				if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+						install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
+								DESTINATION ${CMAKE_INSTALL_BINDIR}
+								PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+						)
+				endif()
+		endif()
 
 		install(TARGETS liblinphone_tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

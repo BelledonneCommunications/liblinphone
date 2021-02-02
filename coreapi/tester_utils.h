@@ -22,7 +22,7 @@
 
 #include <sqlite3.h>
 
-#include "account_creator_private.h"
+#include "account_creator/private.h"
 #include "linphone/core.h"
 #include "linphone/tunnel.h"
 #include "c-wrapper/internal/c-sal.h"

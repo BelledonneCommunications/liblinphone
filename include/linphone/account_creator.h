@@ -34,6 +34,7 @@ char* _get_identity(const LinphoneAccountCreator *creator);
 unsigned int validate_uri(const char* username, const char* domain, const char* display_name);
 const char* ha1_for_passwd(const char* username, const char* realm, const char* passwd, const char* algo);
 void resetField (char **field);
+void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
 LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
 LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator);
 
