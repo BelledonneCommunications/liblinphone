@@ -1167,14 +1167,15 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
 
-	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "rtcp_mux", 0);
+	const auto & core = q->getCore()->getCCore();
+	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
 	assignStreamsIndexes(localIsOfferer);
 
-	getParams()->getPrivate()->adaptToNetwork(q->getCore()->getCCore(), pingTime);
+	getParams()->getPrivate()->adaptToNetwork(core, pingTime);
 
 	string subject = q->getParams()->getSessionName();
 	if (!subject.empty()) {
@@ -1184,7 +1185,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	md->session_ver = (oldMd ? (oldMd->session_ver + 1) : (bctbx_random() & 0xfff));
 
 	md->accept_bundles = getParams()->rtpBundleEnabled() ||
-		linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "rtp", "accept_bundle", TRUE);
+		linphone_config_get_bool(linphone_core_get_config(core), "rtp", "accept_bundle", TRUE);
 
 	/* Re-check local ip address each time we make a new offer, because it may change in case of network reconnection */
 	{
@@ -1198,7 +1199,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	if (destProxy) {
 		addr = linphone_address_clone(linphone_proxy_config_get_identity_address(destProxy));
 	} else {
-		addr = linphone_address_new(linphone_core_get_identity(q->getCore()->getCCore()));
+		addr = linphone_address_new(linphone_core_get_identity(core));
 	}
 	if (linphone_address_get_username(addr)) {/* Might be null in case of identity without userinfo */
 		md->username = linphone_address_get_username(addr);
@@ -1210,7 +1211,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	if (bandwidth)
 		md->bandwidth = bandwidth;
 	else
-		md->bandwidth = linphone_core_get_download_bandwidth(q->getCore()->getCCore());
+		md->bandwidth = linphone_core_get_download_bandwidth(core);
 
 	SalCustomSdpAttribute *customSdpAttributes = getParams()->getPrivate()->getCustomSdpAttributes();
 	if (customSdpAttributes)
@@ -1226,6 +1227,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
+
+//	bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();
+//	bctbx_list_t * encs = (capabilityNegotiation) ? linphone_core_get_supported_media_encryptions(core) : NULL;
+
 	if (mainAudioStreamIndex != -1){
 		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
 		SalStreamConfiguration audioCfg;
@@ -1241,14 +1246,14 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			if (downPtime)
 				audioCfg.ptime = downPtime;
 			else
-				audioCfg.ptime = linphone_core_get_download_ptime(q->getCore()->getCCore());
+				audioCfg.ptime = linphone_core_get_download_ptime(core);
 			audioCfg.max_rate = pth.getMaxCodecSampleRate(l);
 			audioCfg.payloads = l;
 			audioCfg.rtcp_cname = getMe()->getAddress().asString();
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], audioCfg, "as");
 
 			if (getParams()->audioMulticastEnabled()) {
-				audioCfg.ttl = linphone_core_get_audio_multicast_ttl(q->getCore()->getCCore());
+				audioCfg.ttl = linphone_core_get_audio_multicast_ttl(core);
 				md->streams[audioStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
 			}
 
@@ -1279,7 +1284,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[videoStreamIndex], videoCfg, "vs");
 
 			if (getParams()->videoMulticastEnabled()) {
-				videoCfg.ttl = linphone_core_get_video_multicast_ttl(q->getCore()->getCCore());
+				videoCfg.ttl = linphone_core_get_video_multicast_ttl(core);
 				md->streams[videoStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
 			}
 			/* this is a feature for tests only: */
