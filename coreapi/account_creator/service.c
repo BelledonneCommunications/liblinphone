@@ -23,7 +23,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 // TODO: From coreapi. Remove me later.
-#include "private.h"
+#include "../private.h"
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneAccountCreatorService);
 
