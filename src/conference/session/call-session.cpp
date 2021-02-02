@@ -553,12 +553,22 @@ void CallSessionPrivate::init () {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::accept (const CallSessionParams *csp) {
+	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address */
 	setContactOp();
-	if (csp)
+	if (csp) 
 		setParams(new CallSessionParams(*csp));
-	if (params)
+	if (params) {
+		const auto & core = q->getCore()->getCCore();
+		const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+		bool capabilityNegotiation = false;
+		// Set capability negotiation if the core supports it
+		if (coreAllowCapabilityNegotiations) {
+			capabilityNegotiation = params->getPrivate()->capabilityNegotiationEnabled();
+		}
+		op->enableCapabilityNegotiation (capabilityNegotiation);
 		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
+	}
 
 	op->accept();
 	setState(CallSession::State::Connected, "Connected");
@@ -855,11 +865,17 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	if (op)
 		op->release();
 
-	op = new SalCallOp(q->getCore()->getCCore()->sal);
+	const auto & core = q->getCore()->getCCore();
+	const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+	bool enableCapabilityNegotiation = false;
+	if (coreAllowCapabilityNegotiations) {
+		enableCapabilityNegotiation = q->getParams()->getPrivate()->capabilityNegotiationEnabled();
+	}
+	op = new SalCallOp(core->sal, enableCapabilityNegotiation);
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
 		op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
-	linphone_configure_op(q->getCore()->getCCore(), op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
+	linphone_configure_op(core, op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
@@ -1078,9 +1094,11 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	d->setDestProxy(cfg);
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
+
+	const auto & core = getCore()->getCCore();
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->setDestProxy( linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr) );
+		d->setDestProxy( linphone_core_lookup_known_proxy(core, toAddr) );
 	}
 
 	if (d->log) {
@@ -1093,9 +1111,16 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
+		const bool coreAllowCapabilityNegotiations = linphone_config_get_int(linphone_core_get_config(core),"sip","enable_capability_negotiations",0);
+		bool capabilityNegotiation = false;
+		// Set capability negotiation if the core supports it
+		if (coreAllowCapabilityNegotiations) {
+			capabilityNegotiation = getParams()->getPrivate()->capabilityNegotiationEnabled();
+		}
+		op->enableCapabilityNegotiation (capabilityNegotiation);
 		op->enableCnxIpTo0000IfSendOnly(
 			!!linphone_config_get_default_int(
-				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
+				linphone_core_get_config(core), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
 		linphone_call_log_set_call_id(d->log, op->getCallId().c_str()); /* Must be known at that time */
