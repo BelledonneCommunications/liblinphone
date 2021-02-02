@@ -233,6 +233,7 @@ set(IOS_RESOURCES_FILES
 )
 
 set(SOURCE_FILES_C
+	account_creator_local_tester.c
 	account_creator_xmlrpc_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
