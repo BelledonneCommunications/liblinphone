@@ -80,7 +80,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 	bool_t use_phone_number = !!linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "use_phone_number", 0);
 	const char* regex = linphone_config_get_string(linphone_core_get_config(creator->core), "assistant", "username_regex", 0);
 	if (!username) {
-		resetField(&creator->username);
+		reset_field(&creator->username);
 		return LinphoneAccountCreatorUsernameStatusOk;
 	} else if (min_length > 0 && strlen(username) < (size_t)min_length) {
 		return LinphoneAccountCreatorUsernameStatusTooShort;
@@ -162,7 +162,7 @@ LinphoneAccountCreatorPasswordStatus linphone_account_creator_set_password(Linph
 	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_min_length", -1);
 	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "password_max_length", -1);
 	if (!password) {
-		resetField(&creator->password);
+		reset_field(&creator->password);
 		return LinphoneAccountCreatorPasswordStatusTooShort;
 	}
 	if (min_length > 0 && strlen(password) < (size_t)min_length) {
