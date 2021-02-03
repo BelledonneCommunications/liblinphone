@@ -74,7 +74,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	dir = SalStreamSendRecv;
 
-	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
+	potentialCfgGraph.processSessionDescription(sdp);
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
