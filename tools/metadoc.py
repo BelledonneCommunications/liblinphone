@@ -407,7 +407,7 @@ class ReferenceTranslationError(TranslationError):
 		return '{0} reference could not been translated'.format(self.args[0])
 
 
-class Translator:
+class Translator(object):
 	def __init__(self, langCode):
 		self.langCode = langCode
 		self.textWidth = 80
@@ -779,10 +779,22 @@ class SphinxTranslator(Translator):
 
 
 class SandCastleTranslator(Translator):
+	def __init__(self, langCode):
+	 	super(SandCastleTranslator, self).__init__(langCode)
+		self.isEndTagPlaced = False
+
+	def translate_description(self, description, tagAsBrief=False):
+		self.isEndTagPlaced = False
+	 	translatedDoc = super(SandCastleTranslator, self).translate_description(description, tagAsBrief)
+		if(not tagAsBrief):
+			if(not self.isEndTagPlaced):
+				translatedDoc['lines'].append({'line': '</para>'})
+				translatedDoc['lines'].append({'line': '</summary>'})
+				self.isEndTagPlaced = True		
+		return translatedDoc
+
 	def _tag_as_brief(self, lines):
-		if len(lines) > 0:
-			lines.insert(0, '<summary>')
-			lines.append('</summary>')
+		pass
 
 	def translate_function_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
@@ -791,3 +803,41 @@ class SandCastleTranslator(Translator):
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
 		return '<see cref="{0}" />'.format(refStr)
+	
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		if(not self.isEndTagPlaced):
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('<param name="{0}">{1}</param>\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
+	
+	def _translate_section(self, section):
+		text =''
+		if(not self.isEndTagPlaced):
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		if section.kind == 'return':
+			section.kind = '<returns>{0}</returns>'
+		elif section.kind == 'warning':
+			section.kind = '<remarks>Warning : {0}</remarks> '
+		elif section.kind == 'note':
+			section.kind = '<remarks>Note : {0}</remarks>'
+		elif section.kind == 'see':
+			section.kind = '<remarks>See : {0}</remarks>'
+		else:
+			section.kind = section.kind + " : {0}"
+			logging.warning('SandCastle doc translate section pointing on an unknown object ({0})'.format(section.kind))
+
+		text += section.kind.format(self._translate_paragraph(section.paragraph))
+
+		return text
