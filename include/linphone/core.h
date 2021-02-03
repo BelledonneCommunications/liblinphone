@@ -1055,6 +1055,13 @@ LINPHONE_PUBLIC const char *linphone_core_get_version(void);
 LINPHONE_PUBLIC const char *linphone_core_get_user_agent(LinphoneCore *core);
 
 /**
+ * Gets whether the Core is considering itself in background or not.
+ * The Core foreground/background state depends on the last call made to linphone_core_enter_background() or linphone_core_enter_foreground().
+ * @return TRUE if the Core is in background, FALSE otherwise.
+**/
+LINPHONE_PUBLIC bool_t linphone_core_is_in_background(const LinphoneCore *lc);
+
+/**
  * @}
 **/
 

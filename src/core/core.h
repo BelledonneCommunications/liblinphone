@@ -103,7 +103,7 @@ public:
 
 	void enterBackground ();
 	void enterForeground ();
-	bool isInBackground ();
+	bool isInBackground () const;
 
 	// ---------------------------------------------------------------------------
 	// C-Core.

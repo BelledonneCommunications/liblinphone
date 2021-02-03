@@ -228,3 +228,7 @@ VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
 const char *linphone_core_get_groupchat_version(void){
 	return "1.1"; //FIXME use CorePrivate::groupChatversion
 }
+
+bool_t linphone_core_is_in_background(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isInBackground();
+}

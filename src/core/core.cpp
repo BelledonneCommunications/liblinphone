@@ -528,7 +528,7 @@ void Core::enterForeground () {
 	d->notifyEnteringForeground();
 }
 
-bool Core::isInBackground () {
+bool Core::isInBackground () const {
 	L_D();
 	return d->isInBackground;
 }
