@@ -288,21 +288,37 @@ namespace Linphone
 #endregion
 
 #region Enums
+
 	{{#enums}}
 	{{#enum}}
-	{{#doc}}
+	/// <summary>
+	{{#briefDoc}}
 	{{#lines}}
 	/// {{{line}}}
 	{{/lines}}
-	{{/doc}}{{#isFlag}}[Flags]{{/isFlag}}
+	{{/briefDoc}}
+	{{#detailedDoc}}
+	/// <para>
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
+	{{#isFlag}}[Flags]{{/isFlag}}
 	public enum {{enumName}}
 	{
 		{{#values}}
-		{{#doc}}
+		/// <summary>
+		{{#briefDoc}}
 		{{#lines}}
 		/// {{{line}}}
 		{{/lines}}
-		{{/doc}}
+		{{/briefDoc}}
+		{{#detailedDoc}}
+		/// <para>
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/detailedDoc}}
 		{{name}} = {{{value}}},
 		{{/values}}
 	}
@@ -314,6 +330,18 @@ namespace Linphone
 #region Listeners
 	{{#interfaces}}
 	{{#interface}}
+	/// <summary>
+	{{#briefDoc}}
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/briefDoc}}
+	{{#detailedDoc}}
+	/// <para>
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{interfaceName}} : LinphoneObject
 	{
@@ -342,7 +370,20 @@ namespace Linphone
 		[UnmanagedFunctionPointer(CallingConvention.Cdecl)]
 		private delegate void {{name_private}}({{params_private}});
 
-		public delegate void {{name_public}}({{{params_public}}});
+		/// <summary>
+		{{#briefDoc}}
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/briefDoc}}
+		{{#detailedDoc}}
+		/// <para>
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/detailedDoc}}
+		{{#deprecated}}[Obsolete]
+    	{{/deprecated}}public delegate void {{name_public}}({{{params_public}}});
 		private {{name_private}} {{var_private}};
 		private {{name_public}} {{var_public}};
 
@@ -419,12 +460,18 @@ namespace Linphone
 #region Classes
 	{{#classes}}
 	{{#_class}}
-	{{#doc}}
+	/// <summary>
+	{{#briefDoc}}
 	{{#lines}}
 	/// {{{line}}}
 	{{/lines}}
-	{{/doc}}
-
+	{{/briefDoc}}
+	{{#detailedDoc}}
+	/// <para>
+	{{#lines}}
+	/// {{{line}}}
+	{{/lines}}
+	{{/detailedDoc}}
 	[StructLayout(LayoutKind.Sequential)]
 	public class {{className}} : LinphoneObject
 	{
@@ -554,11 +601,18 @@ namespace Linphone
 		{{/has_second_prototype}}
 
 		{{#has_property}}
-		{{#doc}}
+		/// <summary>
+		{{#briefDoc}}
 		{{#lines}}
 		/// {{{line}}}
 		{{/lines}}
-		{{/doc}}
+		{{/briefDoc}}
+		{{#detailedDoc}}
+		/// <para>
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/detailedDoc}}
 		{{property_static}}public {{{property_return}}} {{property_name}}
 		{
 		{{#has_getter}}
@@ -628,11 +682,18 @@ namespace Linphone
 		{{/has_property}}
 		{{#has_impl}}
 		{{#impl}}
-		{{#doc}}
+		/// <summary>
+		{{#briefDoc}}
 		{{#lines}}
 		/// {{{line}}}
 		{{/lines}}
-		{{/doc}}
+		{{/briefDoc}}
+		{{#detailedDoc}}
+		/// <para>
+		{{#lines}}
+		/// {{{line}}}
+		{{/lines}}
+		{{/detailedDoc}}
 		public {{static}}{{override}}{{{type}}} {{name}}({{{args}}})
 		{
 			{{#is_string}}
