@@ -185,6 +185,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
 
 		BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
+		linphone_call_params_unref(caller_params);
+		linphone_call_params_unref(callee_params);
 		end_call(callee, caller);
 
 	} else {
