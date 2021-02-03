@@ -407,7 +407,7 @@ class ReferenceTranslationError(TranslationError):
 		return '{0} reference could not been translated'.format(self.args[0])
 
 
-class Translator:
+class Translator(object):
 	def __init__(self, langCode):
 		self.langCode = langCode
 		self.textWidth = 80
@@ -501,19 +501,29 @@ class Translator:
 		lines = []
 		while len(line) > width:
 			cutIndex = line.rfind(' ', 0, width)
-			if cutIndex != -1:
+			if cutIndex >= 0:
 				if self.langCode == 'Java':
 					# Do not break a line in the middle of a { }
 					while (not line[0:cutIndex].count('{') == line[0:cutIndex].count('}')) and (not line[cutIndex:].count('{') == line[cutIndex:].count('}')):
 						cutIndex += 1
-				lines.append(line[0:cutIndex])
-				line = line[cutIndex+1:]
+				if self.langCode == 'CSharp':
+					# Do not break a line in the middle of a xml tag
+					while not line[0:cutIndex].count('<') == line[0:cutIndex].count('>'):
+						cutIndex += 1
+				if line[cutIndex] == ' ':
+					# Don't keep a whitespace at the start of the next line if you cut on one
+					lines.append(line[0:cutIndex])
+					line = line[cutIndex+1:]
+				else:
+					lines.append(line[0:cutIndex])
+					line = line[cutIndex:]
 			else:
 				# Don't break http links
-				cutIndex = len(line) if ('http://' or 'https://') in line else width
+				cutIndex = len(line) if 'http://' or 'https://' in line else width
 				lines.append(line[0:cutIndex])
 				line = line[cutIndex:]
-		lines.append(line)
+		if line:
+			lines.append(line)
 		
 		if indent:
 			lines = [line if line is lines[0] else '\t' + line for line in lines]
@@ -779,15 +789,83 @@ class SphinxTranslator(Translator):
 
 
 class SandCastleTranslator(Translator):
-	def _tag_as_brief(self, lines):
-		if len(lines) > 0:
-			lines.insert(0, '<summary>')
-			lines.append('</summary>')
+	def __init__(self, langCode):
+		super(SandCastleTranslator, self).__init__(langCode)
+		self.isEndTagPlaced = False
+
+	def translate_text(self, textpart):
+		text = super(SandCastleTranslator, self).translate_text(textpart)
+		replaceLambda = lambda s, d: s if not d else replaceLambda(s.replace(*d.popitem()), d)
+		# Dictionnary order matter, python > 3.6 needed ('&': '&amp;' MUST be last)
+		text = replaceLambda(text, {
+			'<': '&lt;',
+			'>': '&gt;',
+			"'": '&apos;',
+			'"': '&quot;',
+			'&': '&amp;'})
+		return text
+
+	def translate_description(self, description, tagAsBrief=False):
+		self.isEndTagPlaced = False
+		translatedDoc = super(SandCastleTranslator, self).translate_description(description, tagAsBrief)
+		if not tagAsBrief:
+			if not self.isEndTagPlaced:
+				translatedDoc['lines'].append({'line': '</para>'})
+				translatedDoc['lines'].append({'line': '</summary>'})
+				self.isEndTagPlaced = True		
+		return translatedDoc
 
 	def translate_function_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
-		return '<see cref="{0}()" />'.format(refStr)
+		subnResult = re.subn('(\.Get\(\))', '.Instance' , refStr)
+		if subnResult[1] > 0:
+			return '<see cref="{0}">{0}</see>'.format(subnResult[0])
+		subnResult = re.subn('(\.Get|\.Set)', '.' , subnResult[0])
+		if subnResult[1] > 0:
+			return '<see cref="{0}">{0}</see>'.format(subnResult[0])
+		return '<see cref="{0}()">{0}()</see>'.format(subnResult[0])
+		# In every cases we write the same value in the "see" tag value
+		# than in the cref value so that even if the cref is broken the
+		# text is displayed
 
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
-		return '<see cref="{0}" />'.format(refStr)
+		return '<see cref="{0}">{0}</see>'.format(refStr)
+	
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		if not self.isEndTagPlaced:
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('<param name="{0}">{1}</param>\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
+	
+	def _translate_section(self, section):
+		text =''
+		if not self.isEndTagPlaced:
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		if section.kind == 'return':
+			section.kind = '<returns>{0}</returns>'
+		elif section.kind == 'warning':
+			section.kind = '<remarks>Warning : {0}</remarks> '
+		elif section.kind == 'note':
+			section.kind = '<remarks>Note : {0}</remarks>'
+		elif section.kind == 'see':
+			section.kind = '<remarks>See : {0}</remarks>'
+		else:
+			section.kind = section.kind + " : {0}"
+			logging.warning('SandCastle doc translate section pointing on an unknown object ({0})'.format(section.kind))
+
+		text += section.kind.format(self._translate_paragraph(section.paragraph))
+
+		return text
