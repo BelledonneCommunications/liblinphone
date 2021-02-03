@@ -538,9 +538,7 @@ void CallSessionPrivate::accept (const CallSessionParams *csp) {
 	if (csp) 
 		setParams(new CallSessionParams(*csp));
 	if (params) {
-		const auto & core = q->getCore()->getCCore();
-		bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && q->getParams()->getPrivate()->capabilityNegotiationEnabled();
-		op->enableCapabilityNegotiation (capabilityNegotiation);
+		op->enableCapabilityNegotiation (q->isCapabilityNegotiationEnabled());
 		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
 	}
 
@@ -839,8 +837,7 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 		op->release();
 
 	const auto & core = q->getCore()->getCCore();
-	bool enableCapabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && q->getParams()->getPrivate()->capabilityNegotiationEnabled();
-	op = new SalCallOp(core->sal, enableCapabilityNegotiation);
+	op = new SalCallOp(core->sal, q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
 		op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
@@ -1080,8 +1077,7 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
-		bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();
-		op->enableCapabilityNegotiation (capabilityNegotiation);
+		op->enableCapabilityNegotiation (isCapabilityNegotiationEnabled());
 		op->enableCnxIpTo0000IfSendOnly(
 			!!linphone_config_get_default_int(
 				linphone_core_get_config(core), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
@@ -1172,6 +1168,11 @@ LinphoneStatus CallSession::deferUpdate () {
 	}
 	d->deferUpdate = true;
 	return 0;
+}
+
+bool CallSession::isCapabilityNegotiationEnabled() const {
+	const auto & core = getCore()->getCCore();
+	return linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();
 }
 
 bool CallSession::hasTransferPending () {
