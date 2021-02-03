@@ -100,6 +100,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 		bool pad;
 
+		bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph;
+
 	private:
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
