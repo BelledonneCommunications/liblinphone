@@ -93,6 +93,7 @@ public:
 	LinphoneStatus declineNotAnswered (LinphoneReason reason);
 	virtual LinphoneStatus deferUpdate ();
 	bool hasTransferPending ();
+	bool isCapabilityNegotiationEnabled() const;
 	virtual void initiateIncoming ();
 	virtual bool initiateOutgoing ();
 	virtual void iterate (time_t currentRealTime, bool oneSecondElapsed);

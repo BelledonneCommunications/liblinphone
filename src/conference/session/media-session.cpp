@@ -1211,8 +1211,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
-//	bool capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();
-//	bctbx_list_t * encs = (capabilityNegotiation) ? linphone_core_get_supported_media_encryptions(core) : NULL;
+//	bctbx_list_t * encs = (isCapabilityNegotiationEnabled()) ? linphone_core_get_supported_media_encryptions(core) : NULL;
 
 	if (mainAudioStreamIndex != -1){
 		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
