@@ -155,10 +155,11 @@ void SalStreamDescription::fillPotentialConfigurations(const bellesip::SDP::SDPP
 
 SalStreamDescription::cfg_map::mapped_type SalStreamDescription::createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & cfgAttributeList) {
 
-	for (const auto & attr : cfgAttributeList) {
-		lInfo() << "Delete media session attributes " << attr.delete_media_attributes << " delete session session attributes " << attr.delete_session_attributes;
-	}
+	lInfo() << "Delete media session attributes " << cfgAttributeList.delete_media_attributes << " delete session session attributes " << cfgAttributeList.delete_session_attributes;
+/*	for (const auto & attr : cfgAttributeList.acap) {
 
+	}
+*/
 	return SalStreamDescription::cfg_map::mapped_type();
 
 }
