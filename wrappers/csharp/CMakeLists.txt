@@ -38,3 +38,37 @@ add_custom_target(linphonecs ALL DEPENDS LinphoneWrapper.cs)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 )
+
+message(STATUS "#### JUST BEFORE ###")
+if(ENABLE_DOC OR ENABLE_CSHARP_WRAPPER)
+	message(STATUS "#### JUST BEFORE FIND ###")
+	find_program(
+        DOCFX_EXECUTABLE
+        NAMES docfx
+    )
+
+	message(STATUS "#### JUST BEFORE IF ###")
+	if(DOCFX_EXECUTABLE)
+		message(STATUS "#### JUST BEFORE SET ###")
+		set(CS_HTML_DIR "${CMAKE_CURRENT_BINARY_DIR}/cs")
+		
+		message(STATUS "#### JUST BEFORE FILE ###")
+		file(COPY "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs" 
+			DESTINATION  "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/src/")
+
+		message(STATUS "#### JUST BEFORE EXEC ###")
+		execute_process(
+			COMMAND ${DOCFX_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/docfx.json"
+		)
+
+		message(STATUS "#### JUST BEFORE INSTALL ###")
+		message(STATUS "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/_site    SOURCE")
+		message(STATUS "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}/cs   DEST")
+		install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/_site/"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}/cs")
+
+	else()
+		message(Warning "ENABLE_DOC or ENABLE_CSHARP_WRAPPER is ON and docfx wansn't found")
+	
+	endif()
+endif()
