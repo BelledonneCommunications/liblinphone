@@ -492,8 +492,8 @@ const SalSrtpCryptoAlgo & SalStreamDescription::getCryptoAtIndex(const size_t & 
 	try {
 		const auto & el = getChosenConfiguration().crypto.at(idx);
 		return el;
-	} catch (const std::out_of_range& e) {
-		lError() << "Exception thrown:" << e.what() << " - Unable to find element at index " << idx << " in the available crypto vector";
+	} catch (std::out_of_range&) {
+		lError() << "Unable to find element at index " << idx << " in the available crypto vector";
 		return Utils::getEmptyConstRefObject<SalSrtpCryptoAlgo>();
 	}
 }
