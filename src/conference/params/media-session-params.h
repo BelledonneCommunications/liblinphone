@@ -110,6 +110,7 @@ public:
 	bool mandatoryMediaEncryptionEnabled () const;
 	void setMediaEncryption (LinphoneMediaEncryption encryption);
 
+	SalMediaProto getMediaProto (const LinphoneMediaEncryption mediaEnc, const bool avpf) const;
 	SalMediaProto getMediaProto () const;
 	const char * getRtpProfile () const;
 
