@@ -19,6 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 #
 ############################################################################
+message(STATUS "Start of wrappers/csharp/CMakeLists.txt")
 
 add_custom_command(OUTPUT LinphoneWrapper.cs
 	COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_DATADIR}/linphonecs/"
@@ -38,3 +39,45 @@ add_custom_target(linphonecs ALL DEPENDS LinphoneWrapper.cs)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/LinphoneWrapper.cs"
         DESTINATION "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 )
+
+message(STATUS "Before if  - Generate C# wrapper html site")
+if(ENABLE_DOC AND ENABLE_CSHARP_WRAPPER)
+	message(CHECK_START "Generate C# wrapper html site")
+	find_program(
+        DOCFX_EXECUTABLE
+        NAMES docfx
+    )
+
+	if(DOCFX_EXECUTABLE)
+		file(
+			COPY "${CMAKE_INSTALL_DATADIR}/linphonecs/LinphoneWrapper.cs" 
+			DESTINATION  "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/src/"
+		)
+
+		execute_process(
+			COMMAND ${DOCFX_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/docfx.json"
+		)
+		
+		# Check git describe to see if we are on a release or not
+		set(LINPHONE_STATE "snapshots")
+		execute_process(COMMAND ${GIT_EXECUTABLE} describe OUTPUT_VARIABLE GIT_DESC)
+		if(NOT GIT_DESC MATCHES ".*(alpha|beta).*")
+			set(LINPHONE_STATE "releases")
+		endif()
+		# Replace @LINPHONE_STATE@ and @LINPHONE_VERSION@ in site main page
+		configure_file(
+			"${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/_site/index.html" 
+			"${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/_site/index.html"
+		)
+
+		install(
+			DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/docfx_project/_site/"
+			DESTINATION "${CMAKE_INSTALL_DATADIR}/doc/liblinphone-${LINPHONE_VERSION}/cs"
+		)
+
+		message(CHECK_PASS "generation and copy done")
+	else()
+		message(CHECK_FAIL "docfx wansn't found, no site generated")
+	
+	endif()
+endif()
