@@ -519,6 +519,18 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 	}
 
+	for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
+		char buffer[1024];
+		snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", acap->index, acap->name.c_str(), acap->value.c_str());
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",buffer));
+	}
+
+	for (const auto & tcap : potentialCfgGraph.getGlobalTcap()) {
+		char buffer[1024];
+		snprintf ( buffer, sizeof ( buffer )-1, "%d %s", tcap->index, tcap->value.c_str());
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",buffer));
+	}
+
 	for ( const auto & stream : streams) {
 		belle_sdp_session_description_add_media_description(session_desc, stream.toSdpMediaDescription(this, session_desc));
 	}
