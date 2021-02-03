@@ -86,6 +86,21 @@ LINPHONE_PUBLIC void linphone_call_params_enable_low_bandwidth(LinphoneCallParam
 LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_params, bool_t enabled);
 
 /**
+ * Indicates whether capability negotiations (RFC5939) is enabled.
+ * @param params the #LinphoneCallParams @notnil
+ * @return a boolean indicating the enablement of capability negotiations.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (LinphoneCallParams *params);
+
+/**
+ * Enable capability negotiations (RFC5939).
+ * @param call_params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to enable capability negotiations or not.
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled);
+
+/**
  * Enable video stream.
  * @param call_params #LinphoneCallParams object @notnil
  * @param enabled A boolean value telling whether to enable video or not.
