@@ -79,6 +79,14 @@ SalStreamDir get_video_dir_from_call_params (const LinphoneCallParams *params) {
 	return sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 }
 
+bool_t linphone_call_params_capability_negotiations_enabled (LinphoneCallParams *params) {
+	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->capabilityNegotiationEnabled();
+}
+
+void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enabled);
+}
+
 void linphone_call_params_set_custom_headers (LinphoneCallParams *params, const SalCustomHeader *ch) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setCustomHeaders(ch);
 }
