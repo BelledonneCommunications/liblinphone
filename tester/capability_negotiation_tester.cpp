@@ -176,9 +176,15 @@ static void zrtp_call_from_no_enc_to_enc(void) {
 	call_from_enc_to_no_enc_wrapper(LinphoneMediaEncryptionZRTP, FALSE);
 }
 
-static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
+static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const bool_t enable_caller_capability_negotiations, const bool_t enable_callee_capability_negotiations) {
 	if (linphone_core_media_encryption_supported(caller->lc,encryption)) {
-		BC_ASSERT_TRUE(call(caller, callee));
+
+		LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+		linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
+		LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+		linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
+
+		BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
 		end_call(callee, caller);
 
 	} else {
@@ -189,8 +195,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 static void call_with_encryption_wrapper(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	linphone_core_set_support_capability_negotiation(marie->lc, enable_marie_capability_negotiations);
-	linphone_core_set_support_capability_negotiation(pauline->lc, enable_pauline_capability_negotiations);
+	linphone_core_set_support_capability_negotiation(marie->lc, 1);
+	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
 
 	const LinphoneMediaEncryption pauline_encryption = pauline_enc_params.encryption;
 	if (linphone_core_media_encryption_supported(pauline->lc,pauline_encryption)) {
@@ -217,7 +223,7 @@ static void call_with_encryption_wrapper(const encryption_params marie_enc_param
 		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, marie_encryption));
 	}
 
-	call_with_encryption_base(marie, pauline, marie_encryption);
+	call_with_encryption_base(marie, pauline, marie_encryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -267,9 +273,9 @@ static void call_from_opt_enc_to_enc_wrapper(const LinphoneMediaEncryption encry
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_MANDATORY;
 	if (opt_enc_to_enc) {
-		call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+		call_with_encryption_wrapper(marie_enc_params, TRUE, pauline_enc_params, FALSE);
 	} else {
-		call_with_encryption_wrapper(pauline_enc_params, FALSE, marie_enc_params, FALSE);
+		call_with_encryption_wrapper(pauline_enc_params, FALSE, marie_enc_params, TRUE);
 	}
 }
 
@@ -306,9 +312,9 @@ static void call_from_opt_enc_to_none_wrapper(const LinphoneMediaEncryption encr
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_OPTIONAL;
 	if (opt_enc_to_none) {
-		call_with_encryption_wrapper(pauline_enc_params, FALSE, marie_enc_params, FALSE);
+		call_with_encryption_wrapper(pauline_enc_params, TRUE, marie_enc_params, FALSE);
 	} else {
-		call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+		call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, TRUE);
 	}
 }
 
