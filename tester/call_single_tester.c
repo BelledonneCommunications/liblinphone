@@ -2270,6 +2270,8 @@ static void call_paused_resumed_with_loss(void) {
 bool_t pause_call_1(LinphoneCoreManager* mgr_1,LinphoneCall* call_1,LinphoneCoreManager* mgr_2,LinphoneCall* call_2) {
 	stats initial_call_stat_1=mgr_1->stat;
 	stats initial_call_stat_2=mgr_2->stat;
+	BC_ASSERT_PTR_NOT_NULL(call_1);
+	if (!call_1) return FALSE;
 	linphone_call_pause(call_1);
 	BC_ASSERT_TRUE(wait_for(mgr_1->lc,mgr_2->lc,&mgr_1->stat.number_of_LinphoneCallPausing,initial_call_stat_1.number_of_LinphoneCallPausing+1));
 	BC_ASSERT_TRUE(wait_for(mgr_1->lc,mgr_2->lc,&mgr_1->stat.number_of_LinphoneCallPaused,initial_call_stat_1.number_of_LinphoneCallPaused+1));
