@@ -153,11 +153,11 @@ static void audio_mono_call_opus(void){
 }
 
 static void audio_call_loss_resilience(const char *codec_name, int clock_rate, int bitrate_override, int jitterBufferMs, bool_t stereo, std::pair<double,double> threshold ) {
+#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	LinphoneCoreManager *marie = nullptr, *pauline = nullptr;
 	char *recordPath = nullptr;
 	char *referenceFile = bc_tester_res("sounds/vrroom.wav");
 
-#if !defined(__arm__) && !defined(__arm64__) && !TARGET_IPHONE_SIMULATOR && !defined(__ANDROID__)
 	OrtpNetworkSimulatorParams simparams = { 0 };
 	PayloadType *mariePt, *paulinePt;
 	int sampleLength = 6000;
@@ -258,11 +258,12 @@ static void audio_call_loss_resilience(const char *codec_name, int clock_rate, i
 	}
 
 end:
-#endif
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 	bc_free(recordPath);
 	bc_free(referenceFile);
+#endif
 }
 
 static void audio_call_loss_resilience_opus(){
