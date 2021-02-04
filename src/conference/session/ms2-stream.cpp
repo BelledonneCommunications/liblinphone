@@ -187,7 +187,7 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 	// Do not add duplicates acaps
 	if (nameValueMatch == acaps.cend()) {
 		const auto & idx = potentialCfgGraph.getFreeACapIdx();
-		lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " at index " << idx;
+		lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " to stream " << streamIdx << " at index " << idx;
 		potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
 	}
 }
