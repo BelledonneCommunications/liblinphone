@@ -42,3 +42,5 @@ echocancellation=0 #to not overload cpu in case of VG
 
 stun_server=stun.linphone.org
 
+[tester]
+test_env=1
