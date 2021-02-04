@@ -172,6 +172,18 @@ string MS2Stream::getBindIp(){
 	}
 	return bindIp;
 }
+bool MS2Stream::encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap & caps, const LinphoneMediaEncryption encEnum) const {
+	const auto & it = std::find_if(caps.cbegin(), caps.cend(), [this, &encEnum] (const auto & cap) {
+		return (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
+	});
+	return (it != caps.end());
+}
+
+void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
+	const auto & idx = potentialCfgGraph.getFreeACapIdx();
+	lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " at index " << idx;
+	potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
+}
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
@@ -212,6 +224,46 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	}
 	/* In case we were offered multicast, we become multicast receiver. The local media description must reflect this. */
 	localDesc.multicast_role = mPortConfig.multicastRole;
+
+	// Capability negotiation (RFC5939)
+	auto & localMediaDesc = ctx.localMediaDescription;
+	const auto & streamIndex = ctx.streamIndex;
+	if (localMediaDesc) {
+		auto & potentialCfgGraph = localMediaDesc->potentialCfgGraph;
+		const auto & tcaps = potentialCfgGraph.getAllTcapForStream(static_cast<unsigned int>(streamIndex));
+
+		// acap for DTLS
+		const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
+		if (dtlsEncryptionFound) {
+			const std::string attrName("fingerprint");
+			addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, mDtlsFingerPrint);
+		}
+
+		// acap for ZRTP
+		const bool zrtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionZRTP);
+		if (zrtpEncryptionFound) {
+			if (mSessions.zrtp_context) {
+				const std::string attrName("zrtp-hash");
+				uint8_t zrtphash[128];
+				ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
+				addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, (const char *)zrtphash);
+			}
+		}
+
+/*
+		// acap for SRTP
+		const bool srtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionSRTP);
+		if (srtpEncryptionFound) {
+			if (mSessions.zrtp_context) {
+				const std::string attrName("zrtp-hash");
+				uint8_t zrtphash[128];
+				ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
+				addAcapToStream(potentialCfgGraph, streamIndex, attrName, zrtphash);
+			}
+		}
+*/
+	}
+
 	Stream::fillLocalMediaDescription(ctx);
 }
 
