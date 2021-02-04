@@ -547,10 +547,70 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",buffer));
 		}
 
+		// Iterate over configs of a stream
+		for (const auto & pcfgPair : potentialCfgGraph.getPcfgForStream(static_cast<unsigned int>(idx))) {
+			addPotentialConfigurationToSdp(media_desc, "pcfg", pcfgPair);
+		}
+		for (const auto & acfgPair : potentialCfgGraph.getAcfgForStream(static_cast<unsigned int>(idx))) {
+			addPotentialConfigurationToSdp(media_desc, "acfg", acfgPair);
+		}
 		belle_sdp_session_description_add_media_description(session_desc, media_desc);
 
 	}
 	return session_desc;
 }
 
+void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {
+	const auto & cfgIdx = cfg.first;
+	const auto & cfgAttr = cfg.second;
+
+	// Sets of optional configuration
+	const auto & cfgAcapSets = cfgAttr.acap;
+	std::string acapString;
+	// Iterate over all acaps sets. For every set, get the index of all its members
+	for (const auto & acapSet : cfgAcapSets) {
+		// Do not append | on first element
+		if (!acapString.empty()) {
+			acapString.append("|");
+		}
+		for (const auto & cfgAcap : acapSet) {
+			const auto & firstAcap = acapSet.front().cap.lock();
+			const auto & firstAcapIdx = firstAcap->index;
+			const auto & acap = cfgAcap.cap.lock();
+			const auto & acapIdx = acap->index;
+			if (acapIdx != firstAcapIdx) {
+				acapString.append(",");
+			}
+			if (acap) {
+				acapString.append(std::to_string(acapIdx));
+			}
+		}
+	}
+
+	std::string tcapString;
+	const auto & cfgTcaps = cfgAttr.tcap;
+	for (const auto & cfgTcap : cfgTcaps) {
+		// Do not append | on first element
+		if (!tcapString.empty()) {
+			tcapString.append("|");
+		}
+		const auto tcap = cfgTcap.cap.lock();
+		if (tcap) {
+			tcapString.append(std::to_string(tcap->index));
+		}
+	}
+
+	std::string deleteAttrs;
+	if (cfgAttr.delete_media_attributes && cfgAttr.delete_session_attributes) {
+		deleteAttrs = "-ms:";
+	} else if (cfgAttr.delete_session_attributes) {
+		deleteAttrs = "-s:";
+	} else if (cfgAttr.delete_media_attributes) {
+		deleteAttrs = "-m:";
+	}
+
+	char buffer[1024];
+	snprintf ( buffer, sizeof ( buffer )-1, "%d a=%s%s t=%s", cfgIdx, deleteAttrs.c_str(), acapString.c_str(), tcapString.c_str());
+	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
+}
 LINPHONE_END_NAMESPACE
