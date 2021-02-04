@@ -109,6 +109,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		bool isNullAddress(const std::string & addr) const;
 
+		void addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const;
 };
 
 LINPHONE_END_NAMESPACE

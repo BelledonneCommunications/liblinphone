@@ -1269,7 +1269,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			const char *enc = static_cast<const char *>(elem->data);
 			const LinphoneMediaEncryption encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
 			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(encEnum, getParams()->avpfEnabled())));
-			const auto & idx = potentialCfgGraph.getFreeTCapIdx();
+			const auto & idx = potentialCfgGraph.getFreeTcapIdx();
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			potentialCfgGraph.addGlobalTcap(idx, mediaProto);
