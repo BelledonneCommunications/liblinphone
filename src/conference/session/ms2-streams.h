@@ -114,6 +114,8 @@ private:
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
 	void updateIceInStats(LinphoneIceState state);
 	void updateIceInStats();
+	void addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue);
+	bool encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap & caps, const LinphoneMediaEncryption encEnum) const;
 	belle_sip_source_t *mTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
