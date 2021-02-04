@@ -533,19 +533,21 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 
 	//for ( const auto & stream : streams) {
 	for (std::size_t idx = 0; idx < streams.size(); idx++) {
-		belle_sdp_session_description_add_media_description(session_desc, streams.at(idx).toSdpMediaDescription(this, session_desc));
+		auto media_desc = streams.at(idx).toSdpMediaDescription(this, session_desc);
 
 		for (const auto & acap : potentialCfgGraph.getMediaAcapForStream(static_cast<unsigned int>(idx))) {
 			char buffer[1024];
 			snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", acap->index, acap->name.c_str(), acap->value.c_str());
-			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",buffer));
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",buffer));
 		}
 
 		for (const auto & tcap : potentialCfgGraph.getMediaTcapForStream(static_cast<unsigned int>(idx))) {
 			char buffer[1024];
 			snprintf ( buffer, sizeof ( buffer )-1, "%d %s", tcap->index, tcap->value.c_str());
-			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",buffer));
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",buffer));
 		}
+
+		belle_sdp_session_description_add_media_description(session_desc, media_desc);
 
 	}
 	return session_desc;
