@@ -165,38 +165,55 @@
 		std::string currentOutputDeviceInCore( (outputDevice == NULL) ? "" : linphone_audio_device_get_device_name(outputDevice) );
 		
 		// Make sure that the current device the core is using match the reality of the IOS audio route. If not, set it properly
-		if (deviceMatchCurrentInput(currentInputDeviceInCore) && deviceMatchCurrentOutput(currentOutputDeviceInCore) )
-			return;
+		bool inputRequiresUpdate = !deviceMatchCurrentInput(currentInputDeviceInCore);
+		bool outputRequiresUpdate = !deviceMatchCurrentOutput(currentOutputDeviceInCore);
 		
-		bctbx_list_t * deviceIt = linphone_core_get_audio_devices(pcore->getCCore());
-		bool inputUpdated = false, outputUpdated = false;
-		while ( deviceIt != NULL && !(inputUpdated && outputUpdated) ) {
+		bctbx_list_t * deviceIt = linphone_core_get_extended_audio_devices(pcore->getCCore());
+		LinphoneAudioDevice * pLastDeviceSet = NULL;
+		while ( deviceIt != NULL && (inputRequiresUpdate || outputRequiresUpdate) ) {
 			LinphoneAudioDevice * pDevice = (LinphoneAudioDevice *) deviceIt->data;
 			std::string deviceName(linphone_audio_device_get_device_name(pDevice));
 			
-			if (deviceMatchCurrentInput(deviceName) && deviceName != currentInputDeviceInCore && !inputUpdated) {
+			bool inputMatch = deviceMatchCurrentInput(deviceName);
+			if (inputRequiresUpdate && inputMatch) {
 				linphone_core_set_input_audio_device(pcore->getCCore(), pDevice);
-				inputUpdated = true;
-				
+				pLastDeviceSet = pDevice;
+				inputRequiresUpdate = false;
+			}
+			if (outputRequiresUpdate) {
 				// Special case : the LinphoneAudioDevice matching the IPhoneMicrophone and the IPhoneReceiver is the same.
 				// They are built using the AVAudioSession.availableInputs function, which is why the name will not match
 				// We make the assumption that if the output is the IPhone Receiver, then the input is always the IPhoneMicrophone,
 				// so also set the output here.
-				if (currentOutputIsReceiver) {
+				bool isReceiverSpecialCase = currentOutputIsReceiver && inputMatch;
+				
+				if (isReceiverSpecialCase || deviceMatchCurrentOutput(deviceName)) {
 					linphone_core_set_output_audio_device(pcore->getCCore(), pDevice);
-					outputUpdated = true;
+					pLastDeviceSet = pDevice;
+					outputRequiresUpdate = false;
 				}
 			}
-			if (deviceMatchCurrentOutput(deviceName) && deviceName != currentOutputDeviceInCore && !outputUpdated) {
-				linphone_core_set_output_audio_device(pcore->getCCore(), pDevice);
-				outputUpdated = true;
-			}
-			
 			deviceIt = deviceIt->next;
+		}
+		
+		if (inputRequiresUpdate) {
+			ms_warning("Current audio route input is '%s', but we could not find the matching device in the linphone devices list", currentInputPort.c_str());
+			if (!outputRequiresUpdate && pLastDeviceSet != NULL) {
+				ms_warning("Setting input device to match the current output device by default");
+				linphone_core_set_input_audio_device(pcore->getCCore(), pLastDeviceSet);
+			}
+		}
+		if (outputRequiresUpdate) {
+			ms_warning("Current audio route output is '%s', but we could not find the matching device in the linphone devices list", currentOutputPort.c_str());
+			if (!inputRequiresUpdate && pLastDeviceSet != NULL) {
+				ms_warning("Setting output device to match the current input device by default");
+				linphone_core_set_output_audio_device(pcore->getCCore(), pLastDeviceSet);
+			}
 		}
 		
 		// Notify the filter that the audio route changed
 		pcore->soundcardAudioRouteChanged();
+		
 	});
 }
 
