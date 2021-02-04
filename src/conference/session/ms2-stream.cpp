@@ -186,9 +186,75 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 	});
 	// Do not add duplicates acaps
 	if (nameValueMatch == acaps.cend()) {
-		const auto & idx = potentialCfgGraph.getFreeACapIdx();
+		const auto & idx = potentialCfgGraph.getFreeAcapIdx();
 		lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " to stream " << streamIdx << " at index " << idx;
 		potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
+	}
+}
+
+void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
+	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
+	const auto & encMatch = std::find_if(tcaps.cbegin(), tcaps.cend(), [this, &encEnum] (const auto & cap) {
+		return (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
+	});
+	std::list<int> tcapIdx;
+	if (encMatch != tcaps.cend()) {
+		tcapIdx.push_back((*encMatch)->index);
+	}
+
+	std::map<int, bool> acapIdx;
+	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
+	for (const auto & name : acapAttrNames) {
+		const auto nameMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&name] (const auto & cap) {
+			return (cap->name.compare(name) == 0);
+		});
+		if (nameMatch != acaps.cend()) {
+			acapIdx.insert(std::make_pair((*nameMatch)->index, true));
+		} else {
+			lError() << "Unable to find attribute " << name << " in the available attribute capabilities";
+		}
+	}
+
+	std::list<std::map<int, bool>> acapCfgs;
+	if (!acapIdx.empty()) {
+		acapCfgs.push_back(acapIdx);
+	}
+
+	const auto & pcfgs = potentialCfgGraph.getPcfgForStream(streamIdx);
+	const auto pcfgsFound = std::find_if(pcfgs.cbegin(), pcfgs.cend(), [&tcapIdx, &acapCfgs] (const auto & cfg) {
+		const auto & cfgAttr = cfg.second;
+
+		// Sets of optional configuration
+		const auto & cfgAcapSets = cfgAttr.acap;
+		std::list<std::map<int, bool>> acapSets;
+		// Iterate over all acaps sets. For every set, get the index of all its members
+		for (const auto & acapSet : cfgAcapSets) {
+			std::map<int, bool> cfgIdxs;
+			for (const auto & cfgAcap : acapSet) {
+				const auto & acap = cfgAcap.cap.lock();
+				const auto & acapIdx = acap->index;
+				if (acap) {
+					cfgIdxs.insert(std::make_pair(acapIdx, cfgAcap.mandatory));
+				}
+			}
+			acapSets.push_back(cfgIdxs);
+		}
+
+		std::list<int> tcaps;
+		const auto & cfgTcaps = cfgAttr.tcap;
+		for (const auto & cfgTcap : cfgTcaps) {
+			const auto tcap = cfgTcap.cap.lock();
+			if (tcap) {
+				tcaps.push_back(tcap->index);
+			}
+		}
+
+		return ((tcaps == tcapIdx) && (acapSets == acapCfgs) && !cfgAttr.delete_media_attributes && !cfgAttr.delete_session_attributes);
+	});
+
+	if (pcfgsFound == pcfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
+		const auto & idx = potentialCfgGraph.getFreePcfgIdx(streamIdx);
+		potentialCfgGraph.addPcfg(streamIdx, idx, acapCfgs, tcapIdx, false, false);
 	}
 }
 
@@ -232,69 +298,75 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	/* In case we were offered multicast, we become multicast receiver. The local media description must reflect this. */
 	localDesc.multicast_role = mPortConfig.multicastRole;
 
-	// Capability negotiation (RFC5939)
 	auto & localMediaDesc = ctx.localMediaDescription;
 	const auto & streamIndex = ctx.streamIndex;
 	if (localMediaDesc) {
 		auto & potentialCfgGraph = localMediaDesc->potentialCfgGraph;
 		const auto & tcaps = potentialCfgGraph.getAllTcapForStream(static_cast<unsigned int>(streamIndex));
 
-		// acap for DTLS
-		const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
-		if (dtlsEncryptionFound) {
-			const std::string attrName("fingerprint");
+		if (!tcaps.empty()) {
 
-			if (mDtlsFingerPrint.empty()) {
-				/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
-				/* This will parse the directory to find a matching fingerprint or generate it if not found */
-				/* returned string must be freed */
-				char *certificate = nullptr;
-				char *key = nullptr;
-				char *fingerprint = nullptr;
+			// Create acaps and pcfg for supported transport protocols using capability negotiation (RFC5939) attributes
+			// acap for DTLS
+			const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
+			if (dtlsEncryptionFound) {
+				const std::string attrName("fingerprint");
 
-				sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
-					linphone_core_get_user_certificates_path(getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
-				if (fingerprint) {
-					if (getMediaSessionPrivate().getDtlsFingerprint().empty()){
-						getMediaSessionPrivate().setDtlsFingerprint(fingerprint);
+				if (mDtlsFingerPrint.empty()) {
+					/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
+					/* This will parse the directory to find a matching fingerprint or generate it if not found */
+					/* returned string must be freed */
+					char *certificate = nullptr;
+					char *key = nullptr;
+					char *fingerprint = nullptr;
+
+					sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
+						linphone_core_get_user_certificates_path(getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
+					if (fingerprint) {
+						if (getMediaSessionPrivate().getDtlsFingerprint().empty()){
+							getMediaSessionPrivate().setDtlsFingerprint(fingerprint);
+						}
+						mDtlsFingerPrint = fingerprint;
+						ms_free(fingerprint);
 					}
-					mDtlsFingerPrint = fingerprint;
-					ms_free(fingerprint);
+					if (key) {
+						ms_free(key);
+					}
+					if (certificate) {
+						ms_free(certificate);
+					}
 				}
-				if (key) {
-					ms_free(key);
-				}
-				if (certificate) {
-					ms_free(certificate);
-				}
+
+				addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, mDtlsFingerPrint);
+				addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionDTLS, {attrName});
 			}
 
-			addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, mDtlsFingerPrint);
-		}
-
-		// acap for ZRTP
-		const bool zrtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionZRTP);
-		if (zrtpEncryptionFound) {
-			if (mSessions.zrtp_context) {
-				const std::string attrName("zrtp-hash");
-				uint8_t zrtphash[128];
-				ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-				addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, (const char *)zrtphash);
+			// acap for ZRTP
+			const bool zrtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionZRTP);
+			if (zrtpEncryptionFound) {
+				if (mSessions.zrtp_context) {
+					const std::string attrName("zrtp-hash");
+					uint8_t zrtphash[128];
+					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
+					addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, (const char *)zrtphash);
+					addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionZRTP, {attrName});
+				}
 			}
-		}
 
 /*
-		// acap for SRTP
-		const bool srtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionSRTP);
-		if (srtpEncryptionFound) {
-			if (mSessions.zrtp_context) {
-				const std::string attrName("zrtp-hash");
-				uint8_t zrtphash[128];
-				ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-				addAcapToStream(potentialCfgGraph, streamIndex, attrName, zrtphash);
+			// acap for SRTP
+			const bool srtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionSRTP);
+			if (srtpEncryptionFound) {
+				if (mSessions.zrtp_context) {
+					const std::string attrName("zrtp-hash");
+					uint8_t zrtphash[128];
+					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
+					addAcapToStream(potentialCfgGraph, streamIndex, attrName, zrtphash);
+					addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionSRTP, {attrName});
+				}
 			}
-		}
 */
+		}
 	}
 
 	Stream::fillLocalMediaDescription(ctx);
