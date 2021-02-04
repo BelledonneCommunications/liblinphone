@@ -1147,11 +1147,51 @@ SalMediaProto MediaSessionPrivate::getAudioProto(){
 	return ret;
 }
 
+void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const size_t & idx, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, std::list<OrtpPayloadType*> codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes) {
+	L_Q();
+	SalStreamConfiguration cfg;
+	cfg.proto = proto;
+	md->streams[idx].type = type;
+	if (enabled && !codecs.empty()) {
+		md->streams[idx].name = name;
+		cfg.dir = dir;
+		const auto & core = q->getCore()->getCCore();
+		bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
+		cfg.rtcp_mux = rtcpMux;
+		md->streams[idx].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
+
+		cfg.payloads = codecs;
+		cfg.rtcp_cname = getMe()->getAddress().asString();
+		if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[idx], cfg, mid);
+
+		if (multicastEnabled) {
+			cfg.ttl = ttl;
+			md->streams[idx].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
+		}
+
+	} else {
+		lInfo() << "Don't put stream of type " << sal_stream_type_to_string(type) << " on local offer for CallSession [" << q << "]";
+		cfg.dir = SalStreamInactive;
+		md->streams[idx].rtp_port = 0;
+		PayloadTypeHandler::clearPayloadList(codecs);
+	}
+	if (customSdpAttributes)
+		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
+
+	md->streams[idx].addActualConfiguration(cfg);
+/*
+	const auto & potentialCfgGraph = md->potentialCfgGraph;
+	if (q->isCapabilityNegotiationEnabled()) {
+		md->streams[idx].setTcaps(potentialCfgGraph.getAllTcapForStream(idx));
+		md->streams[idx].setAcaps(potentialCfgGraph.getAllAcapForStream(idx));
+	}
+*/
+}
+
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
 
 	const auto & core = q->getCore()->getCCore();
-	bool rtcpMux = !!linphone_config_get_int(linphone_core_get_config(core), "rtp", "rtcp_mux", 0);
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
@@ -1206,10 +1246,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 		md->streams.resize(static_cast<size_t>(freeStreamIndex));
 	}
 
-	std::list<OrtpPayloadType*> l;
+	std::list<OrtpPayloadType*> codecs;
 	// Declare here an empty list to give to the makeCodecsList if there is no valid already assigned payloads
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
+
+	std::map<LinphoneMediaEncryption, int> encryptionMap;
 
 	if (q->isCapabilityNegotiationEnabled()) {
 		bctbx_list_t * encs = linphone_core_get_supported_media_encryptions(core);
@@ -1220,6 +1262,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			const LinphoneMediaEncryption encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
 			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(encEnum, getParams()->avpfEnabled())));
 			const auto & idx = potentialCfgGraph.getFreeTCapIdx();
+			encryptionMap.insert(std::make_pair(encEnum, idx));
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			potentialCfgGraph.addGlobalTcap(idx, mediaProto);
@@ -1228,98 +1271,34 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 
 	if (mainAudioStreamIndex != -1){
 		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
-		SalStreamConfiguration audioCfg;
-		audioCfg.proto = getAudioProto(op ? op->getRemoteMediaDescription() : nullptr);
-		audioCfg.dir = getParams()->getPrivate()->getSalAudioDirection();
-		md->streams[audioStreamIndex].type = SalAudio;
-		l = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, (oldMd && (audioStreamIndex < oldMd->streams.size())) ? oldMd->streams[audioStreamIndex].already_assigned_payloads : emptyList);
-		if (getParams()->audioEnabled() && !l.empty()) {
-			md->streams[audioStreamIndex].name = "Audio";
-			audioCfg.rtcp_mux = rtcpMux;
-			md->streams[audioStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
-			int downPtime = getParams()->getPrivate()->getDownPtime();
-			if (downPtime)
-				audioCfg.ptime = downPtime;
-			else
-				audioCfg.ptime = linphone_core_get_download_ptime(core);
-			audioCfg.max_rate = pth.getMaxCodecSampleRate(l);
-			audioCfg.payloads = l;
-			audioCfg.rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[audioStreamIndex], audioCfg, "as");
 
-			if (getParams()->audioMulticastEnabled()) {
-				audioCfg.ttl = linphone_core_get_audio_multicast_ttl(core);
-				md->streams[audioStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
-			}
+		const auto audioCodecs = pth.makeCodecsList(SalAudio, getParams()->getAudioBandwidthLimit(), -1, (oldMd && (audioStreamIndex < oldMd->streams.size())) ? oldMd->streams[audioStreamIndex].already_assigned_payloads : emptyList);
 
-		} else {
-			lInfo() << "Don't put audio stream on local offer for CallSession [" << q << "]";
-			audioCfg.dir = SalStreamInactive;
-			PayloadTypeHandler::clearPayloadList(l);
-		}
-		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio);
-		if (customSdpAttributes)
-			audioCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
-		md->streams[audioStreamIndex].addActualConfiguration(audioCfg);
+		makeLocalStreamDecription(md, getParams()->audioEnabled(), "Audio", audioStreamIndex, SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->audioMulticastEnabled(), linphone_core_get_audio_multicast_ttl(core), getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
+
+		auto & actualCfg = md->streams[audioStreamIndex].cfgs[md->streams[audioStreamIndex].getActualConfigurationIndex()];
+		actualCfg.max_rate = pth.getMaxCodecSampleRate(audioCodecs);
+		int downPtime = getParams()->getPrivate()->getDownPtime();
+		if (downPtime)
+			actualCfg.ptime = downPtime;
+		else
+			actualCfg.ptime = linphone_core_get_download_ptime(core);
 	}
 	if (mainVideoStreamIndex != -1){
 		size_t videoStreamIndex = static_cast<size_t>(mainVideoStreamIndex);
-		SalStreamConfiguration videoCfg;
-		videoCfg.proto = getParams()->getMediaProto();
-		videoCfg.dir = getParams()->getPrivate()->getSalVideoDirection();
-		md->streams[videoStreamIndex].type = SalVideo;
-		l = pth.makeCodecsList(SalVideo, 0, -1,
+		const auto videoCodecs = pth.makeCodecsList(SalVideo, 0, -1,
 			(oldMd && (videoStreamIndex < oldMd->streams.size())) ? oldMd->streams[videoStreamIndex].already_assigned_payloads : emptyList);
-		if (getParams()->videoEnabled() && !l.empty()){
-			videoCfg.rtcp_mux = rtcpMux;
-			md->streams[videoStreamIndex].rtp_port = SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED;
-			md->streams[videoStreamIndex].name = "Video";
-			videoCfg.payloads = l;
-			videoCfg.rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[videoStreamIndex], videoCfg, "vs");
 
-			if (getParams()->videoMulticastEnabled()) {
-				videoCfg.ttl = linphone_core_get_video_multicast_ttl(core);
-				md->streams[videoStreamIndex].multicast_role = (direction == LinphoneCallOutgoing) ? SalMulticastSender : SalMulticastReceiver;
-			}
-			/* this is a feature for tests only: */
-			md->streams[videoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
-		} else {
-			lInfo() << "Don't put video stream on local offer for CallSession [" << q << "]";
-			videoCfg.dir = SalStreamInactive;
-			PayloadTypeHandler::clearPayloadList(l);
-		}
-		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo);
-		if (customSdpAttributes)
-			videoCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
-		md->streams[videoStreamIndex].addActualConfiguration(videoCfg);
+		makeLocalStreamDecription(md, getParams()->videoEnabled(), "Video", videoStreamIndex, SalVideo, getParams()->getMediaProto(), getParams()->getPrivate()->getSalVideoDirection(), videoCodecs, "vs", getParams()->videoMulticastEnabled(), linphone_core_get_video_multicast_ttl(core), getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+		md->streams[videoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 	}
 
 	if (mainTextStreamIndex != -1){
 		size_t textStreamIndex = static_cast<size_t>(mainTextStreamIndex);
-		l.clear();
-		SalStreamConfiguration textCfg;
-		textCfg.proto = getParams()->getMediaProto();
-		textCfg.dir = SalStreamSendRecv;
-		md->streams[textStreamIndex].type = SalText;
-		l = pth.makeCodecsList(SalText, 0, -1,
+		const auto textCodecs = pth.makeCodecsList(SalText, 0, -1,
 				(oldMd && (textStreamIndex < oldMd->streams.size())) ? oldMd->streams[textStreamIndex].already_assigned_payloads : emptyList);
-		if (getParams()->realtimeTextEnabled() && !l.empty()) {
-			textCfg.rtcp_mux = rtcpMux;
-			md->streams[textStreamIndex].rtp_port = getParams()->realtimeTextEnabled() ? SAL_STREAM_DESCRIPTION_PORT_TO_BE_DETERMINED : 0;
-			md->streams[textStreamIndex].name = "Text";
-			textCfg.payloads = l;
-			textCfg.rtcp_cname = getMe()->getAddress().asString();
-			if (getParams()->rtpBundleEnabled()) addStreamToBundle(md, md->streams[textStreamIndex], textCfg, "ts");
-		} else {
-			lInfo() << "Don't put text stream on local offer for CallSession [" << q << "]";
-			textCfg.dir = SalStreamInactive;
-			PayloadTypeHandler::clearPayloadList(l);
-		}
-		customSdpAttributes = getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText);
-		if (customSdpAttributes)
-			textCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
-		md->streams[textStreamIndex].addActualConfiguration(textCfg);
+
+		makeLocalStreamDecription(md, getParams()->realtimeTextEnabled(), "Text", textStreamIndex, SalText, getParams()->getMediaProto(), SalStreamSendRecv, textCodecs, "ts", false, 0, getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
 	}
 
 	setupEncryptionKeys(md);
