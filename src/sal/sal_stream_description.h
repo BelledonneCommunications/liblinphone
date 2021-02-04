@@ -133,6 +133,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		// Map of the available configurations
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
 		cfg_map cfgs;
+		bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
+		bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
 
 		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);

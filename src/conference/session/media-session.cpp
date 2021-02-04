@@ -1179,13 +1179,6 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(customSdpAttributes);
 
 	md->streams[idx].addActualConfiguration(cfg);
-/*
-	const auto & potentialCfgGraph = md->potentialCfgGraph;
-	if (q->isCapabilityNegotiationEnabled()) {
-		md->streams[idx].setTcaps(potentialCfgGraph.getAllTcapForStream(idx));
-		md->streams[idx].setAcaps(potentialCfgGraph.getAllAcapForStream(idx));
-	}
-*/
 }
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
@@ -1251,8 +1244,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
-	std::map<LinphoneMediaEncryption, int> encryptionMap;
-
 	if (q->isCapabilityNegotiationEnabled()) {
 		bctbx_list_t * encs = linphone_core_get_supported_media_encryptions(core);
 		auto & potentialCfgGraph = md->potentialCfgGraph;
@@ -1262,7 +1253,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			const LinphoneMediaEncryption encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
 			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(encEnum, getParams()->avpfEnabled())));
 			const auto & idx = potentialCfgGraph.getFreeTCapIdx();
-			encryptionMap.insert(std::make_pair(encEnum, idx));
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			potentialCfgGraph.addGlobalTcap(idx, mediaProto);
