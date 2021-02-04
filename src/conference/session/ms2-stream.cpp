@@ -180,9 +180,16 @@ bool MS2Stream::encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media
 }
 
 void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
-	const auto & idx = potentialCfgGraph.getFreeACapIdx();
-	lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " at index " << idx;
-	potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
+	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
+	const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &attrValue] (const auto & cap) {
+		return ((cap->name.compare(attrName) == 0) && (cap->value.compare(attrValue) == 0));
+	});
+	// Do not add duplicates acaps
+	if (nameValueMatch == acaps.cend()) {
+		const auto & idx = potentialCfgGraph.getFreeACapIdx();
+		lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " at index " << idx;
+		potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
+	}
 }
 
 void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
@@ -236,6 +243,32 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
 		if (dtlsEncryptionFound) {
 			const std::string attrName("fingerprint");
+
+			if (mDtlsFingerPrint.empty()) {
+				/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
+				/* This will parse the directory to find a matching fingerprint or generate it if not found */
+				/* returned string must be freed */
+				char *certificate = nullptr;
+				char *key = nullptr;
+				char *fingerprint = nullptr;
+
+				sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
+					linphone_core_get_user_certificates_path(getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
+				if (fingerprint) {
+					if (getMediaSessionPrivate().getDtlsFingerprint().empty()){
+						getMediaSessionPrivate().setDtlsFingerprint(fingerprint);
+					}
+					mDtlsFingerPrint = fingerprint;
+					ms_free(fingerprint);
+				}
+				if (key) {
+					ms_free(key);
+				}
+				if (certificate) {
+					ms_free(certificate);
+				}
+			}
+
 			addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, mDtlsFingerPrint);
 		}
 
