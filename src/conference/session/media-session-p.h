@@ -83,6 +83,8 @@ public:
 	IceService &getIceService() const { return streamsGroup->getIceService(); }
 	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
 
+	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const;
+
 	unsigned int getAudioStartCount () const;
 	unsigned int getVideoStartCount () const;
 	unsigned int getTextStartCount () const;
@@ -182,10 +184,9 @@ private:
 	void selectOutgoingIpVersion ();
 
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
-	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
+	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const;
 	void makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const size_t & idx, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, std::list<OrtpPayloadType*> codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes);
 	void makeLocalMediaDescription (bool localIsOfferer);
-	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupRtcpFb (std::shared_ptr<SalMediaDescription> & md);
