@@ -194,25 +194,21 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 
 void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
 	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
-	const auto & encMatch = std::find_if(tcaps.cbegin(), tcaps.cend(), [this, &encEnum] (const auto & cap) {
-		return (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
-	});
 	std::list<int> tcapIdx;
-	if (encMatch != tcaps.cend()) {
-		tcapIdx.push_back((*encMatch)->index);
-	}
+	std::for_each(tcaps.cbegin(), tcaps.cend(), [this,&tcapIdx, &encEnum] (const auto & cap) {
+		if (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0) {
+			tcapIdx.push_back(cap->index);
+		}
+	});
 
 	std::map<int, bool> acapIdx;
 	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
 	for (const auto & name : acapAttrNames) {
-		const auto nameMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&name] (const auto & cap) {
-			return (cap->name.compare(name) == 0);
+		std::for_each(acaps.cbegin(), acaps.cend(), [&acapIdx,&name] (const auto & cap) {
+			if (cap->name.compare(name) == 0) {;
+				acapIdx.insert(std::make_pair(cap->index, true));
+			}
 		});
-		if (nameMatch != acaps.cend()) {
-			acapIdx.insert(std::make_pair((*nameMatch)->index, true));
-		} else {
-			lError() << "Unable to find attribute " << name << " in the available attribute capabilities";
-		}
 	}
 
 	std::list<std::map<int, bool>> acapCfgs;
@@ -221,10 +217,11 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 	}
 
 	const auto & pcfgs = potentialCfgGraph.getPcfgForStream(streamIdx);
+	// Search if pcfg is already in the graph
 	const auto pcfgsFound = std::find_if(pcfgs.cbegin(), pcfgs.cend(), [&tcapIdx, &acapCfgs] (const auto & cfg) {
 		const auto & cfgAttr = cfg.second;
 
-		// Sets of optional configuration
+		// Get list of acap index mandatory flag pairs
 		const auto & cfgAcapSets = cfgAttr.acap;
 		std::list<std::map<int, bool>> acapSets;
 		// Iterate over all acaps sets. For every set, get the index of all its members
@@ -240,6 +237,7 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 			acapSets.push_back(cfgIdxs);
 		}
 
+		// Get list of tcap indexes
 		std::list<int> tcaps;
 		const auto & cfgTcaps = cfgAttr.tcap;
 		for (const auto & cfgTcap : cfgTcaps) {
@@ -254,7 +252,7 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 
 	if (pcfgsFound == pcfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
 		const auto & idx = potentialCfgGraph.getFreePcfgIdx(streamIdx);
-		potentialCfgGraph.addPcfg(streamIdx, static_cast<const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
+		potentialCfgGraph.addPcfg(streamIdx, static_cast<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
 	}
 }
 
@@ -353,19 +351,29 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 				}
 			}
 
-/*
 			// acap for SRTP
 			const bool srtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionSRTP);
 			if (srtpEncryptionFound) {
-				if (mSessions.zrtp_context) {
-					const std::string attrName("zrtp-hash");
-					uint8_t zrtphash[128];
-					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-					addAcapToStream(potentialCfgGraph, streamIndex, attrName, zrtphash);
-					addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionSRTP, {attrName});
+				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(getCCore());
+				const std::string attrName("crypto");
+				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+					SalSrtpCryptoAlgo crypto;
+					getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
+					MSCryptoSuiteNameParams desc;
+					if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
+						char attrValue[128];
+						if (desc.params) {
+							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
+						} else {
+							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
+						}
+						addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, attrValue);
+					} else {
+						lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
+					}
 				}
+				addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionSRTP, {attrName});
 			}
-*/
 		}
 	}
 
