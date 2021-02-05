@@ -591,6 +591,8 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 					std::shared_ptr<SalMediaDescription> result){
 	size_t i;
 
+//	bool supportCapabilityNegotiations = local_offer->hasCapabilityNegotiation();
+
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
 		SalStreamDescription & ls = local_offer->streams[i];
@@ -647,6 +649,8 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 					std::shared_ptr<SalMediaDescription> remote_offer,
 					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
+
+//	bool supportCapabilityNegotiations = local_capabilities->hasCapabilityNegotiation();
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */

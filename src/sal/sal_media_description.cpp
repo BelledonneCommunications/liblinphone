@@ -26,7 +26,12 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalMediaDescription::SalMediaDescription(){
+// Called by makeLocalMediaDescription to create the local media decription
+SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation){
+	pad = false;
+
+	capabilityNegotiationAllowed = capabilityNegotiation;
+
 	streams.clear();
 	bundles.clear();
 	custom_sdp_attributes = nullptr;
@@ -65,7 +70,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	haveLimeIk = other.haveLimeIk;
 }
 
-SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription() {
+SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
@@ -75,6 +80,9 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	dir = SalStreamSendRecv;
 
 	potentialCfgGraph.processSessionDescription(sdp);
+
+	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
+	capabilityNegotiationAllowed = !potentialCfgGraph.empty();
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
@@ -163,8 +171,13 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	for ( belle_sip_list_t* media_desc_it=belle_sdp_session_description_get_media_descriptions ( sdp ); media_desc_it!=NULL; media_desc_it=media_desc_it->next ) {
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
 
-		const auto & cfg =  potentialCfgGraph.getPcfgForStream(currentStreamIdx);
-		SalStreamDescription stream(this, media_desc, cfg);
+		SalStreamDescription stream;
+		if (capabilityNegotiationAllowed) {
+			const auto & cfg =  potentialCfgGraph.getPcfgForStream(currentStreamIdx);
+			stream.fillStreamDescription(this, media_desc, cfg);
+		} else {
+			stream.fillStreamDescription(this, media_desc);
+		}
 		streams.push_back(stream);
 		currentStreamIdx++;
 	}
@@ -373,6 +386,11 @@ bool SalMediaDescription::hasIpv6() const {
 		}
 	}
 	return true;
+}
+
+bool SalMediaDescription::hasCapabilityNegotiation() const {
+	return capabilityNegotiationAllowed;
+
 }
 
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
@@ -622,5 +640,6 @@ void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_descrip
 	char buffer[1024];
 	snprintf ( buffer, sizeof ( buffer )-1, "%d a=%s%s t=%s", cfgIdx, deleteAttrs.c_str(), acapString.c_str(), tcapString.c_str());
 	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
+	capabilityNegotiationAllowed = true;
 }
 LINPHONE_END_NAMESPACE
