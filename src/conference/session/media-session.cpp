@@ -1445,7 +1445,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
 					SalSrtpCryptoAlgo newCrypto;
 					setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
-					crypto.emplace(crypto.begin()+j,newCrypto);
+					crypto.emplace(std::next(crypto.begin(),static_cast<long>(j)),newCrypto);
 				}
 			}
 		}
