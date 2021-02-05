@@ -1202,7 +1202,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	L_Q();
 
 	const auto & core = q->getCore()->getCCore();
-	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>();
+	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(q->isCapabilityNegotiationEnabled());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
