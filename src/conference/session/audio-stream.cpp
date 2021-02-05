@@ -377,11 +377,9 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 	if (ok) {
-		VideoStream *vs = getPeerVideoStream();
-		if (vs) audio_stream_link_video(mStream, vs);
-
 		if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
+
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
@@ -389,6 +387,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
+		VideoStream *vs = getPeerVideoStream();
+		if (vs) audio_stream_link_video(mStream, vs);
 		if (err == 0)
 			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
 		mStartCount++;

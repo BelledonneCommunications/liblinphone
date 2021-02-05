@@ -292,10 +292,10 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			AudioStream *as = getPeerAudioStream();
-			if (as) audio_stream_link_video(as, mStream);
 			video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
+			AudioStream *as = getPeerAudioStream();
+			if (as) audio_stream_link_video(as, mStream);
 		}
 	}
 	mStartCount++;
