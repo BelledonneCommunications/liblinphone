@@ -1073,7 +1073,7 @@ void MediaSessionPrivate::forceStreamsDirAccordingToState (std::shared_ptr<SalMe
 	}
 }
 
-bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) {
+bool MediaSessionPrivate::generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const {
 	uint8_t *tmp = (uint8_t *)ms_malloc0(keyLength);
 	if (!sal_get_random_bytes(tmp, keyLength)) {
 		lError() << "Failed to generate random key";
@@ -1345,7 +1345,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 	if (op) op->setLocalMediaDescription(localDesc);
 }
 
-int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) {
+int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const {
 	crypto.tag = tag;
 	crypto.algo = suite;
 	size_t keylen = 0;
@@ -1441,11 +1441,11 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 				md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto = oldMd->streams[i].getChosenConfiguration().crypto;
 			} else {
 				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
+				auto crypto = md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto;
 				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-					if (j >= md->streams[i].getChosenConfiguration().crypto.size()) {
-						md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto.resize(j + 1);
-					}
-					setupEncryptionKey(md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto[j], suites[j], static_cast<unsigned int>(j) + 1);
+					SalSrtpCryptoAlgo newCrypto;
+					setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
+					crypto.emplace(crypto.begin()+j,newCrypto);
 				}
 			}
 		}
