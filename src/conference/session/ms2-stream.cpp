@@ -201,20 +201,20 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 		}
 	});
 
-	std::map<int, bool> acapIdx;
 	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
-	for (const auto & name : acapAttrNames) {
-		std::for_each(acaps.cbegin(), acaps.cend(), [&acapIdx,&name] (const auto & cap) {
+	std::list<std::map<int, bool>> acapCfgs;
+	std::for_each(acaps.cbegin(), acaps.cend(), [&acapCfgs,&acapAttrNames] (const auto & cap) {
+		std::map<int, bool> acapIdx;
+		for (const auto & name : acapAttrNames) {
 			if (cap->name.compare(name) == 0) {;
 				acapIdx.insert(std::make_pair(cap->index, true));
 			}
-		});
-	}
+		}
+		if (!acapIdx.empty()) {
+			acapCfgs.push_back(acapIdx);
+		}
+	});
 
-	std::list<std::map<int, bool>> acapCfgs;
-	if (!acapIdx.empty()) {
-		acapCfgs.push_back(acapIdx);
-	}
 
 	const auto & pcfgs = potentialCfgGraph.getPcfgForStream(streamIdx);
 	// Search if pcfg is already in the graph
@@ -297,10 +297,10 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	localDesc.multicast_role = mPortConfig.multicastRole;
 
 	auto & localMediaDesc = ctx.localMediaDescription;
-	const auto & streamIndex = ctx.streamIndex;
+	const auto & streamIndex = static_cast<unsigned int>(ctx.streamIndex);
 	if (localMediaDesc) {
 		auto & potentialCfgGraph = localMediaDesc->potentialCfgGraph;
-		const auto & tcaps = potentialCfgGraph.getAllTcapForStream(static_cast<unsigned int>(streamIndex));
+		const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIndex);
 
 		if (!tcaps.empty()) {
 
@@ -335,8 +335,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 					}
 				}
 
-				addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, mDtlsFingerPrint);
-				addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionDTLS, {attrName});
+				addAcapToStream(potentialCfgGraph, streamIndex, attrName, mDtlsFingerPrint);
+				addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {attrName});
 			}
 
 			// acap for ZRTP
@@ -346,8 +346,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 					const std::string attrName("zrtp-hash");
 					uint8_t zrtphash[128];
 					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-					addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, (const char *)zrtphash);
-					addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionZRTP, {attrName});
+					addAcapToStream(potentialCfgGraph, streamIndex, attrName, (const char *)zrtphash);
+					addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionZRTP, {attrName});
 				}
 			}
 
@@ -361,18 +361,25 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 					getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
 					MSCryptoSuiteNameParams desc;
 					if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
+						const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIndex);
+						const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
+							return ((cap->name.compare(attrName) == 0) && (cap->value.find(desc.name) != std::string::npos));
+						});
 						char attrValue[128];
 						if (desc.params) {
 							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
 						} else {
 							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
 						}
-						addAcapToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), attrName, attrValue);
+						// Do not add duplicates acaps
+						if (nameValueMatch == acaps.cend()) {
+							addAcapToStream(potentialCfgGraph, streamIndex, attrName, attrValue);
+						}
 					} else {
 						lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 					}
 				}
-				addPcfgForEncryptionToStream(potentialCfgGraph, static_cast<unsigned int>(streamIndex), LinphoneMediaEncryptionSRTP, {attrName});
+				addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
 			}
 		}
 	}
