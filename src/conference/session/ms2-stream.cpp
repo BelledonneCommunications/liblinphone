@@ -174,7 +174,7 @@ string MS2Stream::getBindIp(){
 }
 bool MS2Stream::encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap & caps, const LinphoneMediaEncryption encEnum) const {
 	const auto & it = std::find_if(caps.cbegin(), caps.cend(), [this, &encEnum] (const auto & cap) {
-		return (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
+		return (cap->value.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
 	});
 	return (it != caps.end());
 }
@@ -195,8 +195,8 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
 	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
 	std::list<int> tcapIdx;
-	std::for_each(tcaps.cbegin(), tcaps.cend(), [this,&tcapIdx, &encEnum] (const auto & cap) {
-		if (cap->value.compare(sal_media_proto_to_string(getMediaSessionPrivate().getParams()->getMediaProto(encEnum, getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0) {
+	std::for_each(tcaps.cbegin(), tcaps.cend(), [this, &tcapIdx, &encEnum] (const auto & cap) {
+		if (cap->value.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0) {
 			tcapIdx.push_back(cap->index);
 		}
 	});
