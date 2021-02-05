@@ -1432,12 +1432,12 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		if (md->streams[i].hasSrtp()) {
+			auto & crypto = md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto;
 			if (keepSrtpKeys && oldMd && (i < oldMd->streams.size()) && oldMd->streams[i].enabled() && oldMd->streams[i].hasSrtp()) {
 				lInfo() << "Keeping same crypto keys";
-				md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto = oldMd->streams[i].getChosenConfiguration().crypto;
+				crypto = oldMd->streams[i].getChosenConfiguration().crypto;
 			} else {
 				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
-				auto crypto = md->streams[i].cfgs[md->streams[i].getChosenConfigurationIndex()].crypto;
 				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
 					SalSrtpCryptoAlgo newCrypto;
 					setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
