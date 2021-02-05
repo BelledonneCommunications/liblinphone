@@ -38,7 +38,7 @@ class SalStreamBundle;
 class LINPHONE_PUBLIC SalMediaDescription {
 	public:
 
-		SalMediaDescription();
+		SalMediaDescription(const bool capabilityNegotiation);
 		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
@@ -70,6 +70,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasIpv6() const;
+		bool hasCapabilityNegotiation() const;
 
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
@@ -103,6 +104,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph;
 
 	private:
+		mutable bool capabilityNegotiationAllowed = false; /* Set to true if the stream allows capability negotiation */
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
 
