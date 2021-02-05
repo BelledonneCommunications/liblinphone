@@ -465,34 +465,16 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
 						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	SalStreamConfiguration resultCfg = result.getActualConfiguration();
-	const SalStreamConfiguration & localCfg = local_cap.getChosenConfiguration();
-	const SalStreamConfiguration & remoteCfg = remote_offer.getChosenConfiguration();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
-	resultCfg.proto=remote_offer.getProto();
+	result.name = local_cap.name;
 	result.type=local_cap.getType();
-	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(local_cap.getDirection(),remote_offer.getDirection());
-	
-	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
-		result.rtp_port=0;
-		return;
-	}
+
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
-		if (resultCfg.hasSrtp() == TRUE) {
-			ms_message("SAVP not supported for multicast address for remote stream [%p]",&remote_offer);
-			result.rtp_port=0;
-			return;
-		}
-		resultCfg.dir=remote_offer.getDirection();
 		result.rtp_addr=remote_offer.rtp_addr;
 		result.rtcp_addr=remote_offer.rtcp_addr;
 		result.rtp_port=remote_offer.rtp_port;
 		/*result.rtcp_port=remote_offer.rtcp_port;*/
 		result.rtcp_port=0; /* rtcp not supported yet*/
 		result.bandwidth=remote_offer.bandwidth;
-		resultCfg.ptime=remoteCfg.ptime;
-		resultCfg.maxptime=remoteCfg.maxptime;
-		resultCfg.ttl=remoteCfg.ttl;
 		result.multicast_role = SalMulticastReceiver;
 	} else {
 		result.rtp_addr=local_cap.rtp_addr;
@@ -500,6 +482,46 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		result.rtp_port=local_cap.rtp_port;
 		result.rtcp_port=local_cap.rtcp_port;
 		result.bandwidth=local_cap.bandwidth;
+	}
+
+	auto result = OfferAnswerEngine::initiateIncomingConfiguration(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+
+	auto resultCfg = result.first;
+	result.addActualConfiguration(resultCfg);
+
+	auto success = result.second;
+	if (!success) {
+		result.disable();
+	}
+}
+
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+
+	SalStreamConfiguration resultCfg = result.getActualConfiguration();
+	const SalStreamConfiguration & localCfg = local_cap.getConfigurationAtIndex(localCfgIdx);
+	const SalStreamConfiguration & remoteCfg = remote_offer.getConfigurationAtIndex(remoteCfgIdx);
+
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
+	resultCfg.proto=remote_offer.getProto();
+	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(local_cap.getDirection(),remote_offer.getDirection());
+
+	bool success = true;
+
+	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
+		success = false;
+		return std::make_pair<resultCfg, success>;
+	}
+	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
+		if (resultCfg.hasSrtp() == TRUE) {
+			ms_message("SAVP not supported for multicast address for remote stream [%p]",&remote_offer);
+			success = false;
+			return std::make_pair<resultCfg, success>;
+		}
+		resultCfg.dir=remote_offer.getDirection();
+		resultCfg.ptime=remoteCfg.ptime;
+		resultCfg.maxptime=remoteCfg.maxptime;
+		resultCfg.ttl=remoteCfg.ttl;
+	} else {
 		resultCfg.ptime=localCfg.ptime;
 		resultCfg.maxptime=localCfg.maxptime;
 	}
@@ -515,7 +537,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
 			resultCfg.bundle_only = TRUE;
-			result.rtp_port = 0;
+			success = false;
 		}
 		resultCfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
@@ -525,8 +547,8 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		resultCfg.crypto.clear();
 		SalSrtpCryptoAlgo crypto_result;
 		if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, TRUE)) {
-			result.disable();
 			ms_message("No matching crypto algo for remote stream's offer [%p]",&remote_offer);
+			return std::make_pair<resultCfg, false>;
 		}
 		if (resultCfg.crypto.empty()) {
 			resultCfg.crypto.resize(1);
@@ -549,7 +571,6 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	resultCfg.set_nortpproxy = localCfg.set_nortpproxy;
 	resultCfg.ice_candidates = localCfg.ice_candidates;
 	resultCfg.ice_remote_candidates = localCfg.ice_remote_candidates;
-	result.name = local_cap.name;
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
 
@@ -566,7 +587,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
-	result.addActualConfiguration(resultCfg);
+	return std::make_pair<resultCfg, success>;
 }
 
 bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto)
