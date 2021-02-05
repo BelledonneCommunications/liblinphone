@@ -254,7 +254,7 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 
 	if (pcfgsFound == pcfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
 		const auto & idx = potentialCfgGraph.getFreePcfgIdx(streamIdx);
-		potentialCfgGraph.addPcfg(streamIdx, idx, acapCfgs, tcapIdx, false, false);
+		potentialCfgGraph.addPcfg(streamIdx, static_cast<const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
 	}
 }
 
