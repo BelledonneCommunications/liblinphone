@@ -192,6 +192,7 @@ extern "C" {
 
 const char* sal_stream_type_to_string(SalStreamType type);
 const char* sal_media_proto_to_string(SalMediaProto type);
+SalMediaProto string_to_sal_media_proto(const char *type);
 const char* sal_stream_dir_to_string(SalStreamDir type);
 
 #ifdef __cplusplus
