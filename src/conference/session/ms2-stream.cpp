@@ -296,6 +296,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	/* In case we were offered multicast, we become multicast receiver. The local media description must reflect this. */
 	localDesc.multicast_role = mPortConfig.multicastRole;
 
+	fillPotentialCfgGraph(ctx);
+
+	Stream::fillLocalMediaDescription(ctx);
+}
+
+void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 	auto & localMediaDesc = ctx.localMediaDescription;
 	const auto & streamIndex = static_cast<unsigned int>(ctx.streamIndex);
 	if (localMediaDesc) {
@@ -381,10 +387,12 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 				}
 				addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
 			}
+
+			const auto & cfgs =  potentialCfgGraph.getPcfgForStream(streamIndex);
+			auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
+			localDesc.fillPotentialConfigurations(cfgs);
 		}
 	}
-
-	Stream::fillLocalMediaDescription(ctx);
 }
 
 void MS2Stream::refreshSockets(){
