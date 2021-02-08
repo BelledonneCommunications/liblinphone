@@ -2193,10 +2193,11 @@ MediaSession::MediaSession (const shared_ptr<Core> &core, std::shared_ptr<Partic
 	d->me = me;
 	d->listener = listener;
 
-	if (params)
+	if (params) {
 		d->setParams(new MediaSessionParams(*(reinterpret_cast<const MediaSessionParams *>(params))));
-	else
+	} else {
 		d->setParams(new MediaSessionParams());
+	}
 	d->setCurrentParams(new MediaSessionParams());
 	d->streamsGroup = makeUnique<StreamsGroup>(*this);
 	d->streamsGroup->getIceService().setListener(d);
