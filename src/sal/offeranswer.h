@@ -69,12 +69,12 @@ class OfferAnswerEngine {
 		static PayloadType * genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads);
 		static PayloadType * findPayloadTypeBestMatch(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response);
 
-		static void initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid);
-		static const std::pair<SalStreamConfiguration, bool> initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx);
+		static void initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bool allowCapabilityNegotiation);
+		static std::pair<SalStreamConfiguration, bool> initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx);
 
-		static void initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result);
+		static void initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result, const bool allowCapabilityNegotiation);
 
-		static const std::pair<SalStreamConfiguration, bool> initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx);
+		static std::pair<SalStreamConfiguration, bool> initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx);
 
 };
 

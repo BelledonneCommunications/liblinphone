@@ -325,7 +325,7 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
-void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result){
+void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result, const bool allowCapabilityNegotiation){
 	result.type=local_offer.getType();
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
@@ -373,7 +373,13 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.multicast_role = SalMulticastSender;
 	}
 
-	auto resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+	std::pair<SalStreamConfiguration, bool> resultCfgPair;
+
+	if (allowCapabilityNegotiation) {
+		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+	} else {
+		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+	}
 
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
@@ -396,7 +402,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 
 }
 
-const std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 	SalStreamConfiguration resultCfg = result.getActualConfiguration();
 	const SalStreamConfiguration & localCfg = local_offer.getConfigurationAtIndex(localCfgIdx);
 	const SalStreamConfiguration & remoteCfg = remote_answer.getConfigurationAtIndex(remoteCfgIdx);
@@ -486,7 +492,7 @@ const std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoin
 
 void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
-						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
+						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bool allowCapabilityNegotiation){
 	result.name = local_cap.name;
 	result.type=local_cap.getType();
 
@@ -506,7 +512,12 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		result.bandwidth=local_cap.bandwidth;
 	}
 
-	const auto resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+	std::pair<SalStreamConfiguration, bool> resultCfgPair;
+	if (allowCapabilityNegotiation) {
+		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+	} else {
+		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+	}
 
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
@@ -517,7 +528,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	}
 }
 
-const std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 
 	SalStreamConfiguration resultCfg = result.getActualConfiguration();
 	const SalStreamConfiguration & localCfg = local_cap.getConfigurationAtIndex(localCfgIdx);
@@ -639,7 +650,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 					std::shared_ptr<SalMediaDescription> result){
 	size_t i;
 
-//	bool supportCapabilityNegotiations = local_offer->hasCapabilityNegotiation();
+	const bool capabilityNegotiation = local_offer->hasCapabilityNegotiation();
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
@@ -654,7 +665,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 			if (i <= result->streams.size()) {
 				result->streams.resize((i + 1));
 			}
-			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i]);
+			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i], capabilityNegotiation);
 			SalStreamConfiguration cfg = result->streams[i].getActualConfiguration();
 			memcpy(&cfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(result->streams[i].getChosenConfiguration().rtcp_xr));
 			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
@@ -698,8 +709,6 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
 	size_t i;
 
-//	bool supportCapabilityNegotiations = local_capabilities->hasCapabilityNegotiation();
-
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
 		/* Copy the bundle offering to the result media description. */
 		result->bundles = remote_offer->bundles;
@@ -708,6 +717,8 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 	if (result->streams.size() < remote_offer->streams.size()) {
 		result->streams.resize(remote_offer->streams.size());
 	}
+
+	const bool capabilityNegotiation = local_capabilities->hasCapabilityNegotiation();
 
 	for(i=0;i<remote_offer->streams.size();++i){
 
@@ -733,7 +744,7 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid());
 				}
 			}
-			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
+			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
 			// Get an up to date actual configuration as it may have changed
 			cfg = resultStream.getActualConfiguration();
 			// Handle global RTCP FB attributes
