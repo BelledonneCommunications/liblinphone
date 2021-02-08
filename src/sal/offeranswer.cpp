@@ -650,7 +650,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 					std::shared_ptr<SalMediaDescription> result){
 	size_t i;
 
-	const bool capabilityNegotiation = local_offer->hasCapabilityNegotiation();
+	const bool capabilityNegotiation = result->hasCapabilityNegotiation();
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
@@ -718,7 +718,7 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		result->streams.resize(remote_offer->streams.size());
 	}
 
-	const bool capabilityNegotiation = local_capabilities->hasCapabilityNegotiation();
+	const bool capabilityNegotiation = result->hasCapabilityNegotiation();
 
 	for(i=0;i<remote_offer->streams.size();++i){
 

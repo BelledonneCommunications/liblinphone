@@ -68,6 +68,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
 
+	capabilityNegotiationAllowed = other.capabilityNegotiationAllowed;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
