@@ -404,6 +404,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.rtcp_port=remote_answer.rtcp_port;
 		result.bandwidth=remote_answer.bandwidth;
 	}else{
+		lInfo() << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
 		result.disable();
 	}
 
