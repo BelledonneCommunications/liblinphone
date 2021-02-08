@@ -187,11 +187,64 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
 		linphone_call_params_unref(caller_params);
 		linphone_call_params_unref(callee_params);
+
+		// Check encryption
+		LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
+		if (enable_callee_capability_negotiations && enable_caller_capability_negotiations) {
+			bctbx_list_t * callerEncs = linphone_core_get_supported_media_encryptions(caller->lc);
+			if (callerEncs) {
+				const char *enc = (const char *)bctbx_list_get_data(callerEncs);
+				expectedEncryption = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
+			} else {
+				expectedEncryption =  LinphoneMediaEncryptionNone;
+			}
+		} else {
+			expectedEncryption = linphone_core_get_media_encryption(caller->lc);
+		}
+
+		LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), expectedEncryption, int, "%i");
+		LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
 		end_call(callee, caller);
 
 	} else {
 		ms_warning ("not tested because srtp not available");
 	}
+}
+
+static void simple_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_support_capability_negotiation(marie->lc, 1);
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
+
+	const LinphoneMediaEncryption optionalEncryption =  LinphoneMediaEncryptionSRTP;
+
+	bctbx_list_t * encryption_list = NULL;
+	encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(optionalEncryption))));
+
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(pauline->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(pauline->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(pauline->lc,0);
+		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
+		linphone_core_set_supported_media_encryptions(pauline->lc,encryption_list);
+		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, optionalEncryption));
+	}
+
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(marie->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(marie->lc,0);
+		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
+		linphone_core_set_supported_media_encryptions(marie->lc,encryption_list);
+		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
+	}
+
+	call_with_encryption_base(marie, pauline, optionalEncryption, TRUE, TRUE);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_encryption_wrapper(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations) {
@@ -371,6 +424,7 @@ static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 }
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call with no encryption", call_with_no_encryption),
+	TEST_NO_TAG("Simple call with capability negotiations", simple_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
 	TEST_NO_TAG("SRTP call from endpoint with mandatory encryption to endpoint with none", srtp_call_from_enc_to_no_enc),
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with mandatory", srtp_call_from_no_enc_to_enc),
