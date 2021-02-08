@@ -203,9 +203,18 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		}
 
 		LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), expectedEncryption, int, "%i");
+		BC_ASSERT_PTR_NOT_NULL(callerCall);
+		if (callerCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), expectedEncryption, int, "%i");
+		}
 		LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
+		BC_ASSERT_PTR_NOT_NULL(calleeCall);
+		if (calleeCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
+		}
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
 		end_call(callee, caller);
 
 	} else {
