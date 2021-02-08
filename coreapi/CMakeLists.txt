@@ -94,7 +94,8 @@ set(LINPHONE_SOURCE_FILES_C
 set(LINPHONE_SOURCE_FILES_CXX
 	FlexiAPIClient.cc
 	account_creator/main.cc
-	account_creator/xmlrpc.cc
+	account_creator/connector_xmlrpc.cc
+	account_creator/connector_flexiapi.cc
 	conference.cc
 	tester_utils.cpp
 )

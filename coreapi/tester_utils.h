@@ -153,22 +153,6 @@ LINPHONE_PUBLIC void linphone_core_reset_tone_manager_stats(LinphoneCore *lc);
 LINPHONE_PUBLIC const char *linphone_core_get_tone_file(LinphoneCore *lc, LinphoneToneID id);
 
 /**
- * Send an XML-RPC request to delete a Linphone account.
- * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
- * @donotwrap Exists for tests purposes only
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(LinphoneAccountCreator *creator);
-
-/**
- * Send an XML-RPC request to get the confirmation key of a Linphone account.
- * @param[in] creator LinphoneAccountCreator object
- * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
- * @donotwrap Exists for tests purposes only
-**/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone(LinphoneAccountCreator *creator);
-
-/**
  * Send a request to delete an account on server.
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
