@@ -290,3 +290,188 @@ LinphoneAccountCreatorStatus linphone_account_creator_set_as_default(LinphoneAcc
 bool_t linphone_account_creator_get_set_as_default(const LinphoneAccountCreator *creator) {
 	return creator->set_as_default;
 }
+
+
+/************************** Start Account Creator data **************************/
+static void _linphone_account_creator_destroy(LinphoneAccountCreator *creator) {
+	/*this will drop all pending requests if any*/
+	if (creator->xmlrpc_session) linphone_xml_rpc_session_release(creator->xmlrpc_session);
+	if (creator->service != NULL ) {
+			if (linphone_account_creator_service_get_destructor_cb(creator->service) != NULL)
+				linphone_account_creator_service_get_destructor_cb(creator->service)(creator);
+			linphone_account_creator_service_unref(creator->service);
+	}
+
+	linphone_account_creator_cbs_unref(creator->cbs);
+	bctbx_list_free_with_data(creator->callbacks, (bctbx_list_free_func)linphone_account_creator_cbs_unref);
+	creator->callbacks = nullptr;
+
+	linphone_account_creator_reset(creator);
+}
+
+BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneAccountCreator);
+
+BELLE_SIP_INSTANCIATE_VPTR(LinphoneAccountCreator, belle_sip_object_t,
+	(belle_sip_object_destroy_t)_linphone_account_creator_destroy,
+	NULL, // clone
+	NULL, // marshal
+	FALSE
+);
+
+LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
+	LinphoneAccountCreator *creator;
+
+	creator = belle_sip_object_new(LinphoneAccountCreator);
+	creator->service = linphone_core_get_account_creator_service(core);
+	linphone_account_creator_service_ref(creator->service);
+	creator->cbs = linphone_account_creator_cbs_new();
+	creator->core = core;
+	creator->transport = LinphoneTransportTcp;
+	creator->xmlrpc_session = (xmlrpc_url) ? linphone_xml_rpc_session_new(core, xmlrpc_url) : NULL;
+
+	creator->set_as_default = TRUE;
+	creator->proxy_cfg = linphone_core_create_proxy_config(core);
+
+	if (creator->service != NULL && linphone_account_creator_service_get_constructor_cb(creator->service) != NULL)
+		linphone_account_creator_service_get_constructor_cb(creator->service)(creator);
+
+	return creator;
+}
+
+LinphoneAccountCreator * linphone_account_creator_new(LinphoneCore *core, const char *xmlrpc_url) {
+	return _linphone_account_creator_new(core, xmlrpc_url);
+}
+
+void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
+	reset_field(&creator->username);
+	reset_field(&creator->display_name);
+	reset_field(&creator->password);
+	reset_field(&creator->ha1);
+	reset_field(&creator->phone_number);
+	reset_field(&creator->phone_country_code);
+	reset_field(&creator->email);
+	reset_field(&creator->language);
+	reset_field(&creator->activation_code);
+	reset_field(&creator->domain);
+	reset_field(&creator->route);
+	reset_field(&creator->algorithm);
+
+	if (creator->proxy_cfg) {
+		linphone_proxy_config_unref(creator->proxy_cfg);
+		creator->proxy_cfg = nullptr;
+	}
+}
+
+LinphoneAccountCreator * linphone_core_create_account_creator(LinphoneCore *core, const char *xmlrpc_url) {
+	return _linphone_account_creator_new(core, xmlrpc_url);
+}
+
+LinphoneAccountCreator * linphone_account_creator_ref(LinphoneAccountCreator *creator) {
+	belle_sip_object_ref(creator);
+	return creator;
+}
+
+void linphone_account_creator_unref(LinphoneAccountCreator *creator) {
+	belle_sip_object_unref(creator);
+}
+
+void *linphone_account_creator_get_user_data(const LinphoneAccountCreator *creator) {
+	return creator->user_data;
+}
+
+void linphone_account_creator_set_user_data(LinphoneAccountCreator *creator, void *ud) {
+	creator->user_data = ud;
+}
+
+void linphone_account_creator_set_proxy_config(LinphoneAccountCreator *creator, LinphoneProxyConfig *cfg) {
+	LinphoneProxyConfig *old_cfg = creator->proxy_cfg;
+
+	creator->proxy_cfg = cfg ? linphone_proxy_config_ref(cfg) : NULL;
+
+	if (old_cfg) {
+		linphone_proxy_config_unref(old_cfg);
+	}
+}
+
+LinphoneAccountCreatorCbs * linphone_account_creator_get_callbacks(const LinphoneAccountCreator *creator) {
+	return creator->cbs;
+}
+
+void linphone_account_creator_add_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs) {
+	creator->callbacks = bctbx_list_append(creator->callbacks, linphone_account_creator_cbs_ref(cbs));
+}
+
+void linphone_account_creator_remove_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs) {
+	creator->callbacks = bctbx_list_remove(creator->callbacks, cbs);
+	linphone_account_creator_cbs_unref(cbs);
+}
+
+LinphoneAccountCreatorCbs *linphone_account_creator_get_current_callbacks(const LinphoneAccountCreator *creator) {
+	return creator->currentCbs;
+}
+
+void linphone_account_creator_set_current_callbacks(LinphoneAccountCreator *creator, LinphoneAccountCreatorCbs *cbs) {
+	creator->currentCbs = cbs;
+}
+
+const bctbx_list_t *linphone_account_creator_get_callbacks_list(const LinphoneAccountCreator *creator) {
+	return creator->callbacks;
+}
+
+LinphoneAccountCreatorService * linphone_account_creator_get_service(const LinphoneAccountCreator *creator) {
+	return creator->service;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist(LinphoneAccountCreator *creator) {
+	return creator->service->is_account_exist_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_create_account(LinphoneAccountCreator *creator) {
+	return creator->service->create_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_delete_account(LinphoneAccountCreator *creator) {
+	return creator->service->delete_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key(LinphoneAccountCreator *creator) {
+	return creator->service->confirmation_key_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated(LinphoneAccountCreator *creator) {
+	return creator->service->is_account_activated_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_activate_account(LinphoneAccountCreator *creator) {
+	return creator->service->activate_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_link_account(LinphoneAccountCreator *creator) {
+	return creator->service->link_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_activate_alias(LinphoneAccountCreator *creator) {
+	return creator->service->activate_alias_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_is_alias_used(LinphoneAccountCreator *creator) {
+	return creator->service->is_alias_used_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked(LinphoneAccountCreator *creator) {
+	return creator->service->is_account_linked_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_recover_account(LinphoneAccountCreator *creator) {
+	return creator->service->recover_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_update_account(LinphoneAccountCreator *creator) {
+	return creator->service->update_account_request_cb(creator);
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator) {
+	return creator->service->login_linphone_account_request_cb(creator);
+}
+
+/************************** End Account Creator data **************************/
