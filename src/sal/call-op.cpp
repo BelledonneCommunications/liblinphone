@@ -345,7 +345,7 @@ void SalCallOp::sdpProcess () {
 	if (!mRemoteMedia)
 		return;
 
-	mResult = std::make_shared<SalMediaDescription>(false);
+	mResult = std::make_shared<SalMediaDescription>(mLocalMedia->hasCapabilityNegotiation());
 	if (mSdpOffering) {
 		OfferAnswerEngine::initiateOutgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult);
 	} else {
