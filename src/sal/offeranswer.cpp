@@ -373,10 +373,22 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.multicast_role = SalMulticastSender;
 	}
 
-	std::pair<SalStreamConfiguration, bool> resultCfgPair;
+	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 
 	if (allowCapabilityNegotiation) {
-		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+		for (const auto & remoteCfg : remote_answer.getAllCfgs()) {
+			for (const auto & localCfg : local_offer.getAllCfgs()) {
+				const auto success = resultCfgPair.second;
+				if (!success) {
+					resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfg.first, remoteCfg.first);
+					const auto negotiationSuccess = resultCfgPair.second;
+					if (negotiationSuccess) {
+						remote_answer.cfgIndex = remoteCfg.first;
+						local_offer.cfgIndex = localCfg.first;
+					}
+				}
+			}
+		}
 	} else {
 		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
 	}
@@ -416,7 +428,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
-	resultCfg.proto=remote_answer.getProto();
+	resultCfg.proto=remoteCfg.getProto();
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 		if (localCfg.ptime > 0 && localCfg.ptime!=remoteCfg.ptime) {
@@ -436,9 +448,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 			return std::make_pair(resultCfg, success);
 		}
 		resultCfg.ttl=localCfg.ttl;
-		resultCfg.dir=local_offer.getDirection();
+		resultCfg.dir=localCfg.getDirection();
 	} else {
-		resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.getDirection(),remote_answer.getDirection());
+		resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(localCfg.getDirection(),remoteCfg.getDirection());
 	}
 
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
@@ -517,7 +529,7 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		for (const auto & remoteCfg : remote_offer.getAllCfgs()) {
 			for (const auto & localCfg : local_cap.getAllCfgs()) {
 				const auto success = resultCfgPair.second;
-				if (!success) { 
+				if (!success) {
 					resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfg.first, remoteCfg.first);
 					const auto negotiationSuccess = resultCfgPair.second;
 					if (negotiationSuccess) {
@@ -547,8 +559,8 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const SalStreamConfiguration & remoteCfg = remote_offer.getConfigurationAtIndex(remoteCfgIdx);
 
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
-	resultCfg.proto=remote_offer.getProto();
-	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(local_cap.getDirection(),remote_offer.getDirection());
+	resultCfg.proto=remoteCfg.getProto();
+	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
 
 	bool success = true;
 
@@ -562,7 +574,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			success = false;
 			return std::make_pair(resultCfg, success);
 		}
-		resultCfg.dir=remote_offer.getDirection();
+		resultCfg.dir=remoteCfg.getDirection();
 		resultCfg.ptime=remoteCfg.ptime;
 		resultCfg.maxptime=remoteCfg.maxptime;
 		resultCfg.ttl=remoteCfg.ttl;
