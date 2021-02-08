@@ -7484,7 +7484,7 @@ const char *linphone_media_encryption_to_string(LinphoneMediaEncryption menc){
 
 bool_t linphone_core_media_encryption_supported(const LinphoneCore *lc, LinphoneMediaEncryption menc){
 
-	bool_t menc_supported_by_core = linphone_core_is_media_encryption_supported(lc, menc);
+	bool_t menc_supported_by_core = linphone_core_is_media_encryption_supported(lc, menc) || (linphone_core_get_media_encryption(lc) == menc);
 	bool_t menc_supported_by_library = FALSE;
 	switch(menc){
 		case LinphoneMediaEncryptionSRTP:
@@ -7547,7 +7547,7 @@ LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *lc, LinphoneMedi
 	return ret;
 }
 
-LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *lc) {
+LinphoneMediaEncryption linphone_core_get_media_encryption(const LinphoneCore *lc) {
 	const char* menc = linphone_config_get_string(lc->config, "sip", "media_encryption", NULL);
 
 	if (menc == NULL)
