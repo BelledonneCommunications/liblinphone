@@ -90,14 +90,26 @@ void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm
 }
 
 LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const {
+	L_Q();
+
+	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
 	if (atLeastOneStreamStarted() && allStreamsEncrypted()) {
-		if (md->hasSrtp()) return LinphoneMediaEncryptionSRTP;
-		else if (md->hasDtls()) return LinphoneMediaEncryptionDTLS;
-		else if (md->hasZrtp()) return LinphoneMediaEncryptionZRTP;
-		else return LinphoneMediaEncryptionNone;
+		if (md->hasSrtp()) {
+			enc = LinphoneMediaEncryptionSRTP;
+		} else if (md->hasDtls()) {
+			enc = LinphoneMediaEncryptionDTLS;
+		} else if (md->hasZrtp()) {
+			enc = LinphoneMediaEncryptionZRTP;
+		} else {
+			enc = LinphoneMediaEncryptionNone;
+		}
+
+		if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), enc)) {
+			return enc;
+		}
 	}
 
-	// Do not change encryption if no stream is started or at least one is not encrypted
+	// Do not change encryption if no stream is started or at least one is not encrypted or chosen encryption is not supported
 	return getParams()->getMediaEncryption();
 }
 
