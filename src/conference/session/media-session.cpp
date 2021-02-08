@@ -89,6 +89,18 @@ void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm
 	msp->stunAuthRequestedCb(realm, nonce, username, password, ha1);
 }
 
+LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const {
+	if (atLeastOneStreamStarted() && allStreamsEncrypted()) {
+		if (md->hasSrtp()) return LinphoneMediaEncryptionSRTP;
+		else if (md->hasDtls()) return LinphoneMediaEncryptionDTLS;
+		else if (md->hasZrtp()) return LinphoneMediaEncryptionZRTP;
+		else return LinphoneMediaEncryptionNone;
+	}
+
+	// Do not change encryption if no stream is started or at least one is not encrypted
+	return getParams()->getMediaEncryption();
+}
+
 // -----------------------------------------------------------------------------
 
 void MediaSessionPrivate::accepted () {
@@ -158,6 +170,7 @@ void MediaSessionPrivate::accepted () {
 					nextState = CallSession::State::StreamsRunning;
 					nextStateMsg = "Streams running";
 				}
+
 				break;
 			case CallSession::State::EarlyUpdating:
 				nextState = prevState;
@@ -1627,6 +1640,11 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1) && !isInLocalConference) {
 		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
+	}
+
+	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
+	if (q->isCapabilityNegotiationEnabled()) {
+		getParams()->setMediaEncryption(getEncryptionFromMediaDescription(newMd));
 	}
 
 	updateFrozenPayloads(newMd);
