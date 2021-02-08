@@ -67,7 +67,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 
 	set_nortpproxy = other.set_nortpproxy;
 
-	haveLimeIk = other.haveLimeIk;
+	capabilityNegotiationAllowed = other.capabilityNegotiationAllowed;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
