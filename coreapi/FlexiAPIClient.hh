@@ -116,4 +116,5 @@ class FlexiAPIClient {
         void prepareRequest(string path, string type, JsonParams params);
         static void processResponse(void *ctx, const belle_http_response_event_t *event);
         static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
+        string urlEncode(const string &value);
 };

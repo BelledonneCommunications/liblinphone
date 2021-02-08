@@ -55,21 +55,21 @@ FlexiAPIClient* FlexiAPIClient::ping() {
 }
 
 FlexiAPIClient* FlexiAPIClient::accountInfo(string sip) {
-    prepareRequest(string("accounts/").append(sip).append("/info"));
+    prepareRequest(string("accounts/").append(urlEncode(sip)).append("/info"));
     return this;
 }
 
 FlexiAPIClient* FlexiAPIClient::accountActivateEmail(string sip, string code) {
     JsonParams params;
     params.push("code", code);
-    prepareRequest(string("accounts/").append(sip).append("/activate/email"), "POST", params);
+    prepareRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
     return this;
 }
 
 FlexiAPIClient* FlexiAPIClient::accountActivatePhone(string sip, string code) {
     JsonParams params;
     params.push("code", code);
-    prepareRequest(string("accounts/").append(sip).append("/activate/email"), "POST", params);
+    prepareRequest(string("accounts/").append(urlEncode(sip)).append("/activate/email"), "POST", params);
     return this;
 }
 
@@ -243,16 +243,21 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
 
     string uri = linphone_config_get_string(mCore->config, "sip", "flexiapi_url", NULL);
 
-    LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
-    char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
-
     req = belle_http_request_create(
         type.c_str(),
         belle_generic_uri_parse(uri.append(path).c_str()),
         belle_sip_header_content_type_create("application", "json"),
         belle_sip_header_accept_create("application", "json"),
-        belle_http_header_create("From", addr),
     NULL);
+
+    LinphoneProxyConfig *cfg = linphone_core_get_default_proxy_config(mCore);
+    if (cfg != nullptr) {
+        char *addr = linphone_address_as_string_uri_only(linphone_proxy_config_get_identity_address(cfg));
+        belle_sip_message_add_header(
+            BELLE_SIP_MESSAGE(req),
+            belle_http_header_create("From", addr)
+        );
+    }
 
     if (!params.empty()) {
         string body = params.json();
@@ -302,4 +307,27 @@ void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *eve
     const char *domain = belle_sip_auth_event_get_domain(event);
 
     linphone_core_fill_belle_sip_auth_event(cb->core, event, username, domain);
+}
+
+string FlexiAPIClient::urlEncode(const string &value) {
+    ostringstream escaped;
+    escaped.fill('0');
+    escaped << hex;
+
+    for (string::const_iterator i = value.begin(), n = value.end(); i != n; ++i) {
+        string::value_type c = (*i);
+
+        // Keep alphanumeric and other accepted characters intact
+        if (isalnum(c) || c == '-' || c == '_' || c == '.' || c == '~') {
+            escaped << c;
+            continue;
+        }
+
+        // Any other characters are percent-encoded
+        escaped << uppercase;
+        escaped << '%' << int((unsigned char) c);
+        escaped << nouppercase;
+    }
+
+    return escaped.str();
 }
