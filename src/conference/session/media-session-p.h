@@ -152,6 +152,8 @@ public:
 	IceSession *getIceSession()const;
 	
 	void setState (CallSession::State newState, const std::string &message) override;
+
+	LinphoneMediaEncryption getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const;
 private:
 	/* IceServiceListener methods:*/
 	virtual void onGatheringFinished(IceService &service) override;
