@@ -4193,7 +4193,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_set_media_encryption(LinphoneCore *
  * @return The #LinphoneMediaEncryption policy being used.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(LinphoneCore *core);
+LINPHONE_PUBLIC LinphoneMediaEncryption linphone_core_get_media_encryption(const LinphoneCore *core);
 
 /**
  * Check if the configured media encryption is mandatory or not.
