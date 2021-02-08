@@ -99,6 +99,7 @@ protected:
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
 private:
+	void fillPotentialCfgGraph(OfferAnswerContext & ctx);
 	void initRtpBundle(const OfferAnswerContext &params);
 	RtpBundle *createOrGetRtpBundle(const SalStreamDescription & sd);
 	void removeFromBundle();
