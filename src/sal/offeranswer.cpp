@@ -512,9 +512,21 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		result.bandwidth=local_cap.bandwidth;
 	}
 
-	std::pair<SalStreamConfiguration, bool> resultCfgPair;
+	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 	if (allowCapabilityNegotiation) {
-		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+		for (const auto & remoteCfg : remote_offer.getAllCfgs()) {
+			for (const auto & localCfg : local_cap.getAllCfgs()) {
+				const auto success = resultCfgPair.second;
+				if (!success) { 
+					resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfg.first, remoteCfg.first);
+					const auto negotiationSuccess = resultCfgPair.second;
+					if (negotiationSuccess) {
+						remote_offer.cfgIndex = remoteCfg.first;
+						local_cap.cfgIndex = localCfg.first;
+					}
+				}
+			}
+		}
 	} else {
 		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
 	}

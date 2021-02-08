@@ -38,6 +38,7 @@ class MediaSessionPrivate;
 class MS2Stream;
 class IceService;
 class SalCallOp;
+class OfferAnswerEngine;
 
 struct SalConfigurationCmp {
 	bool operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const;
@@ -49,8 +50,13 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	friend class IceService;
 	friend class SalCallOp;
 	friend class SalMediaDescription;
+	friend class OfferAnswerEngine;
 
 	public:
+
+		// Map of the available configurations
+		// TODO: handle multiple cfgs with same index
+		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
 
 		static bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type actualConfigurationIndex;
 
@@ -109,6 +115,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const int & getMaxRate() const;
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
 
+		const cfg_map getAllCfgs() const;
+
 		void setZrtpHash(const uint8_t enable, uint8_t* zrtphash = NULL);
 
 		const std::vector<SalSrtpCryptoAlgo> & getCryptos() const;
@@ -127,10 +135,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	private:
 
-		bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
+		mutable bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
 
-		// Map of the available configurations
-		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
 		cfg_map cfgs;
 		bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
 		bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
@@ -140,7 +146,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		// Potential configurations
 		void fillPotentialConfigurations(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
-		cfg_map::mapped_type createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & SDPMediaDescriptionCfgs);
+		std::list<cfg_map::mapped_type> createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & SDPMediaDescriptionCfgs);
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);

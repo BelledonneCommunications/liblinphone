@@ -123,6 +123,16 @@ const char* sal_media_proto_to_string(SalMediaProto type) {
 	}
 }
 
+SalMediaProto string_to_sal_media_proto(const char *type) {
+	if (strcmp(type, "RTP/AVP") == 0) return SalProtoRtpAvp;
+	else if (strcmp(type, "RTP/SAVP") == 0) return SalProtoRtpSavp;
+	else if (strcmp(type, "UDP/TLS/RTP/SAVP") == 0) return SalProtoUdpTlsRtpSavp;
+	else if (strcmp(type, "RTP/AVPF") == 0) return SalProtoRtpAvpf;
+	else if (strcmp(type, "RTP/SAVPF") == 0) return SalProtoRtpSavpf;
+	else if (strcmp(type, "UDP/TLS/RTP/SAVPF") == 0) return SalProtoUdpTlsRtpSavpf;
+	else return SalProtoOther;
+}
+
 const char* sal_stream_dir_to_string(SalStreamDir type) {
 	switch (type) {
 	case SalStreamSendRecv:return "sendrecv";
