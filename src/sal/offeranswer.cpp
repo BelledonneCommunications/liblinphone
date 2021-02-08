@@ -648,6 +648,19 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	return std::make_pair(resultCfg, success);
 }
 
+bool OfferAnswerEngine::areProtoInStreamCompatibles(const SalStreamDescription & localStream, const SalStreamDescription & otherStream) {
+
+	for (const auto & otherCfg : otherStream.getAllCfgs()) {
+		for (const auto & localCfg : localStream.getAllCfgs()) {
+			const auto compatible = OfferAnswerEngine::areProtoCompatibles(localCfg.second.getProto(), otherCfg.second.getProto());
+			if (compatible) {
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
 bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto)
 {
 	switch (localProto) {
@@ -680,7 +693,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 		ms_message("Processing for stream %zu",i);
 		SalStreamDescription & ls = local_offer->streams[i];
 		const SalStreamDescription & rs = remote_answer->streams[i];
-		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoCompatibles(ls.getProto(), rs.getProto()))
+		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
 			if (ls.getProto() != rs.getProto() && ls.hasAvpf()) {
 				ls.setProto(rs.getProto());
@@ -755,7 +768,7 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 
 		SalStreamConfiguration cfg = resultStream.getActualConfiguration();
 
-		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoCompatibles(ls.getProto(), rs.getProto()))
+		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
 			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
 				rs.setProto(ls.getProto());
