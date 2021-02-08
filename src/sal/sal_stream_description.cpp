@@ -32,7 +32,9 @@ LINPHONE_BEGIN_NAMESPACE
 bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type SalStreamDescription::actualConfigurationIndex{ 0 };
 
 bool SalConfigurationCmp::operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const { 
-	return (lhs < rhs) && (rhs != SalStreamDescription::actualConfigurationIndex);
+	// Compare the key minus 1 because 0 is the actual configuration hence it has the lowest priority.
+	// When iterating over the configuration map, it should be the last element taken into account
+	return ((lhs-1) < (rhs-1));
 }
 
 SalStreamDescription::SalStreamDescription(){
