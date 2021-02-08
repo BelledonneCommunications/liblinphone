@@ -61,6 +61,7 @@ class OfferAnswerEngine {
 	private:
 
 		static bool_t onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l);
+		static bool areProtoInStreamCompatibles(const SalStreamDescription & localStream, const SalStreamDescription & otherStream);
 		static bool areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto);
 		static SalStreamDir computeDirIncoming(SalStreamDir local, SalStreamDir offered);
 		static SalStreamDir computeDirOutgoing(SalStreamDir local, SalStreamDir answered);
