@@ -19,8 +19,10 @@
 
 #include "call-session-params-p.h"
 #include "call-session-params.h"
+#include "core/core-p.h"
 
 #include "linphone/proxy_config.h"
+#include "linphone/core.h"
 
 using namespace std;
 
@@ -111,7 +113,7 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
 	d->inConference = false;
-	d->capabilityNegotiation = false;
+	d->capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core->getCCore());
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
 	setProxyConfig(NULL);

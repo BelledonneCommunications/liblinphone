@@ -230,7 +230,7 @@ static void simple_call_with_capability_negotiations(void) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,0);
 		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
 		linphone_core_set_supported_media_encryptions(pauline->lc,encryption_list);
-		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, optionalEncryption));
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, optionalEncryption));
 	}
 
 	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,optionalEncryption));
@@ -238,7 +238,7 @@ static void simple_call_with_capability_negotiations(void) {
 		linphone_core_set_media_encryption_mandatory(marie->lc,0);
 		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 		linphone_core_set_supported_media_encryptions(marie->lc,encryption_list);
-		BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
 	}
 
 	call_with_encryption_base(marie, pauline, optionalEncryption, TRUE, TRUE);
