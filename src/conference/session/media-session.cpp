@@ -1293,7 +1293,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer) {
 			const auto & idx = potentialCfgGraph.getFreeTcapIdx();
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
-			potentialCfgGraph.addGlobalTcap(idx, mediaProto);
+			md->addTcap(idx, mediaProto);
 		}
 	}
 

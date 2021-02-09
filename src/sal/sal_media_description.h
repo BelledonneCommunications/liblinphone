@@ -83,6 +83,12 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const std::string & getAddress() const;
 		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
 
+		void addTcap(const unsigned int & idx, const std::string & value);
+		const std::string & getTcap(const unsigned int & idx) const;
+
+		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
+		const std::pair<std::string, std::string> & getAcap(const unsigned int & idx) const;
+
 		std::string name;
 		std::string addr;
 		std::string username;
@@ -104,6 +110,10 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph;
 
 	private:
+
+		std::map<unsigned int, std::pair<std::string, std::string>> acaps;
+		std::map<unsigned int, std::string> tcaps;
+
 		mutable bool capabilityNegotiationAllowed = false; /* Set to true if the stream allows capability negotiation */
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
