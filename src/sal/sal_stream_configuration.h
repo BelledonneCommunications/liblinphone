@@ -119,6 +119,12 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
 		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
 
+		void addToSdpMediaDescription(belle_sdp_media_description_t * media_desc) const;
+
+		void mergeAcaps(const std::list<std::list<unsigned int>> & acaps);
+		const std::list<std::list<unsigned int>> & getAcapIndexes() const;
+		const unsigned int & getTcapIndex() const;
+
 	private:
 		SalMediaProto proto = SalProtoRtpAvp;
 		std::string proto_other;
@@ -153,7 +159,10 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		SalDtlsRole dtls_role = SalDtlsRoleInvalid;
 		int ttl = 0; /*for multicast -1 to disable*/
 
-		std::string sdpString;
+		bool delete_media_attributes = false;
+		bool delete_session_attributes = false;
+		unsigned int tcapIndex = 0;
+		std::list<std::list<unsigned int>> acapIndexes;
 
 		static bool isRecvOnly(const PayloadType *p);
 		static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
