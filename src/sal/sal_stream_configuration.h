@@ -129,6 +129,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 
 
 	private:
+		unsigned int index = 0;
 		SalMediaProto proto = SalProtoRtpAvp;
 		std::string proto_other;
 		unsigned int rtp_ssrc = 0;
