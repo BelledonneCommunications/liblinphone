@@ -519,6 +519,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
 
 	resultCfg.tcapIndex = localCfg.tcapIndex;
+	resultCfg.index = localCfg.index;
 
 	return std::make_pair(resultCfg, success);
 }
@@ -682,6 +683,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
 	resultCfg.tcapIndex = localCfg.tcapIndex;
+	resultCfg.index = localCfg.index;
 	return std::make_pair(resultCfg, success);
 }
 
