@@ -192,7 +192,7 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 	}
 }
 
-void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
+void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
 	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
 	std::list<int> tcapIdx;
 	std::for_each(tcaps.cbegin(), tcaps.cend(), [this, &tcapIdx, &encEnum] (const auto & cap) {
@@ -216,9 +216,9 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 	});
 
 
-	const auto & pcfgs = potentialCfgGraph.getPcfgForStream(streamIdx);
-	// Search if pcfg is already in the graph
-	const auto pcfgsFound = std::find_if(pcfgs.cbegin(), pcfgs.cend(), [&tcapIdx, &acapCfgs] (const auto & cfg) {
+	const auto & cfgs = potentialCfgGraph.getCfgForStream(streamIdx);
+	// Search if cfg is already in the graph
+	const auto cfgsFound = std::find_if(cfgs.cbegin(), cfgs.cend(), [&tcapIdx, &acapCfgs] (const auto & cfg) {
 		const auto & cfgAttr = cfg.second;
 
 		// Get list of acap index mandatory flag pairs
@@ -250,9 +250,9 @@ void MS2Stream::addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph
 		return ((tcaps == tcapIdx) && (acapSets == acapCfgs) && !cfgAttr.delete_media_attributes && !cfgAttr.delete_session_attributes);
 	});
 
-	if (pcfgsFound == pcfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
-		const auto & idx = potentialCfgGraph.getFreePcfgIdx(streamIdx);
-		potentialCfgGraph.addPcfg(streamIdx, static_cast<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
+	if (cfgsFound == cfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
+		const auto & idx = potentialCfgGraph.getFreeCfgIdx(streamIdx);
+		potentialCfgGraph.addCfg(streamIdx, static_cast<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
 	}
 }
 
@@ -310,7 +310,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 
 		if (!tcaps.empty()) {
 
-			// Create acaps and pcfg for supported transport protocols using capability negotiation (RFC5939) attributes
+			// Create acaps and cfgs for supported transport protocols using capability negotiation (RFC5939) attributes
 			// acap for DTLS
 			const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
 			if (dtlsEncryptionFound) {
@@ -342,7 +342,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 				}
 
 				addAcapToStream(potentialCfgGraph, streamIndex, attrName, mDtlsFingerPrint);
-				addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {attrName});
+				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {attrName});
 			}
 
 			// acap for ZRTP
@@ -353,7 +353,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 					uint8_t zrtphash[128];
 					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
 					addAcapToStream(potentialCfgGraph, streamIndex, attrName, (const char *)zrtphash);
-					addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionZRTP, {attrName});
+					addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionZRTP, {attrName});
 				}
 			}
 
@@ -385,10 +385,10 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 					}
 				}
-				addPcfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
+				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
 			}
 
-			const auto & cfgs =  potentialCfgGraph.getPcfgForStream(streamIndex);
+			const auto & cfgs =  potentialCfgGraph.getCfgForStream(streamIndex);
 			auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
 			localDesc.fillPotentialConfigurations(cfgs);
 		}

@@ -116,7 +116,7 @@ private:
 	void updateIceInStats(LinphoneIceState state);
 	void updateIceInStats();
 	void addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue);
-	void addPcfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames);
+	void addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames);
 	bool encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap & caps, const LinphoneMediaEncryption encEnum) const;
 	belle_sip_source_t *mTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;

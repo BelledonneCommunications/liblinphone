@@ -111,6 +111,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const std::string getProtoAsString() const;
 		SalStreamDir getDirection() const;
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
+		const std::string getSdpString() const;
 
 		const std::string & getIceUfrag() const;
 		const std::string & getIcePwd() const;
@@ -151,6 +152,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		std::string dtls_fingerprint;
 		SalDtlsRole dtls_role = SalDtlsRoleInvalid;
 		int ttl = 0; /*for multicast -1 to disable*/
+
+		std::string sdpString;
 
 		static bool isRecvOnly(const PayloadType *p);
 		static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
