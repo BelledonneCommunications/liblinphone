@@ -532,7 +532,7 @@ class DoxygenTranslator(Translator):
 			lines[0] = '@brief ' + lines[0]
 
 	def translate_class_reference(self, ref, **kargs):
-		return '#' + Translator.translate_reference(self, ref)
+		return '@ref ' + Translator.translate_reference(self, ref)
 
 	def translate_function_reference(self, ref, **kargs):
 		return Translator.translate_reference(self, ref) + '()'
