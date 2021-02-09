@@ -869,7 +869,8 @@ LinphoneAddress * CallSessionPrivate::getFixedContact () const {
 	result = linphone_core_get_primary_contact_parsed(q->getCore()->getCCore());
 	if (result) {
 		/* Otherwise use supplied localip */
-		linphone_address_set_domain(result, nullptr /* localip */);
+		//linphone_address_set_domain(result, nullptr /* localip */);
+		linphone_address_set_domain(result, "127.0.0.1");
 		linphone_address_set_port(result, -1 /* linphone_core_get_sip_port(core) */);
 		lInfo() << "Contact has not been fixed, stack will do";
 	}

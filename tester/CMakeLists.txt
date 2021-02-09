@@ -239,7 +239,7 @@ set(SOURCE_FILES_C
 	eventapi_tester.c
 	external_domain_tester.c
 	flexisip_tester.c
-        group_chat_tester.c
+	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
 	group_chat_tester.c
@@ -258,7 +258,6 @@ set(SOURCE_FILES_C
 	setup_tester.c
 	shared_core_tester.c
 	stun_tester.c
-	tester.c
 	tunnel_tester.c
 	vcard_tester.c
 	video_quality_tester.c
@@ -268,6 +267,10 @@ set(SOURCE_FILES_C
 )
 if(ENABLE_LIME_X3DH)
     list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
+endif()
+
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
+	list(APPEND SOURCE_FILES_C tester.c)# it will be added on RUNTIME_COMPONENT_SOURCES
 endif()
 
 set(SOURCE_FILES_CXX
@@ -387,6 +390,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	set(RUNTIME_COMPONENT_SOURCES
 		liblinphone_tester_windows.cpp
 		liblinphone_tester_windows.h
+		tester.c
 	)
 	add_library(linphone_tester_runtime MODULE ${RUNTIME_COMPONENT_SOURCES})
 	target_compile_options(linphone_tester_runtime PRIVATE "/wd4996")
@@ -410,8 +414,8 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 	endif()
 endif()
 
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
-	if(NOT IOS)
+if(NOT ANDROID)
+	if(NOT IOS AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		add_executable(liblinphone_tester ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${SOURCE_FILES_OBJC})
 		set_target_properties(liblinphone_tester PROPERTIES LINK_FLAGS "${LINPHONE_LDFLAGS}")
 		set_target_properties(liblinphone_tester PROPERTIES LINKER_LANGUAGE CXX)

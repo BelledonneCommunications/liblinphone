@@ -28,6 +28,35 @@
 #include "tester_utils.h"
 #include "belle-sip/sipstack.h"
 
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#ifdef _WIN32
+#if defined(__MINGW32__) || !defined(WINAPI_FAMILY_PARTITION) || !defined(WINAPI_PARTITION_DESKTOP)
+#define LINPHONE_WINDOWS_DESKTOP 1
+#elif defined(WINAPI_FAMILY_PARTITION)
+//See bctoolbox/include/port.h for WINAPI_PARTITION checker
+#if defined(WINAPI_PARTITION_DESKTOP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_DESKTOP)
+#define LINPHONE_WINDOWS_DESKTOP 1
+#elif defined (WINAPI_PARTITION_PC_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PC_APP)
+#define LINPHONE_WINDOWS_DESKTOP 1
+#define LINPHONE_WINDOWS_UNIVERSAL 1
+#define LINPHONE_WINDOWS_UWP 1
+#elif defined(WINAPI_PARTITION_PHONE_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_PHONE_APP)
+#define LINPHONE_WINDOWS_PHONE 1
+#elif defined(WINAPI_PARTITION_APP) && WINAPI_FAMILY_PARTITION(WINAPI_PARTITION_APP)
+#define LINPHONE_WINDOWS_UNIVERSAL 1
+#endif
+#endif
+#endif
+#ifdef _MSC_VER
+#if (_MSC_VER >= 1900)
+#define LINPHONE_MSC_VER_GREATER_19
+#endif
+#endif
+
 #define SKIP_PULSEAUDIO 1
 
 #if _WIN32
@@ -254,7 +283,8 @@ bool_t wait_for_list_interval(bctbx_list_t* lcs,int* counter,int min, int max,in
 		for (iterator=lcs;iterator!=NULL;iterator=iterator->next) {
 			linphone_core_iterate((LinphoneCore*)(iterator->data));
 		}
-#ifdef LINPHONE_WINDOWS_DESKTOP
+		bc_tester_process_events();
+#if !defined(LINPHONE_WINDOWS_UWP) && defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0,1)){
@@ -278,7 +308,11 @@ bool_t wait_for_list(bctbx_list_t* lcs,int* counter,int value,int timeout_ms) {
 		for (iterator=lcs;iterator!=NULL;iterator=iterator->next) {
 			linphone_core_iterate((LinphoneCore*)(iterator->data));
 		}
-#ifdef LINPHONE_WINDOWS_DESKTOP
+#ifdef LINPHONE_WINDOWS_UWP
+		{
+			bc_tester_process_events();
+		}
+#elif defined(LINPHONE_WINDOWS_DESKTOP)
 		{
 			MSG msg;
 			while (PeekMessage(&msg, NULL, 0, 0,1)){
