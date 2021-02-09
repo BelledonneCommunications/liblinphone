@@ -167,14 +167,28 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
 	// Generally, at this point, vector streams should be empty
+
+	if (capabilityNegotiationAllowed) {
+		for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
+			acaps[acap->index] = std::make_pair(acap->name, acap->value);
+		}
+
+		for (const auto & tcap : potentialCfgGraph.getGlobalTcap()) {
+			tcaps[tcap->index] = tcap->value;
+		}
+	}
+
 	unsigned int currentStreamIdx = static_cast<unsigned int>(streams.size());
 	for ( belle_sip_list_t* media_desc_it=belle_sdp_session_description_get_media_descriptions ( sdp ); media_desc_it!=NULL; media_desc_it=media_desc_it->next ) {
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
 
 		SalStreamDescription stream;
 		if (capabilityNegotiationAllowed) {
-			const auto & cfg =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
-			stream.fillStreamDescription(this, media_desc, cfg);
+			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
+			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
+			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(currentStreamIdx);
+			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(currentStreamIdx);
+			stream.fillStreamDescription(this, media_desc, attrs);
 		} else {
 			stream.fillStreamDescription(this, media_desc);
 		}
@@ -547,41 +561,58 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 	}
 
-	for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
+	for (const auto & acap : acaps) {
+		const auto & idx = acap.first;
+		const auto & nameValuePair = acap.second;
+		const auto & name = nameValuePair.first;
+		const auto & value = nameValuePair.second;
 		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", acap->index, acap->name.c_str(), acap->value.c_str());
+		snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", idx, name.c_str(), value.c_str());
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",buffer));
 	}
 
-	for (const auto & tcap : potentialCfgGraph.getGlobalTcap()) {
+	for (const auto & tcap : tcaps) {
+		const auto & idx = tcap.first;
+		const auto & value = tcap.second;
 		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s", tcap->index, tcap->value.c_str());
+		snprintf ( buffer, sizeof ( buffer )-1, "%d %s", idx, value.c_str());
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",buffer));
 	}
 
 	//for ( const auto & stream : streams) {
 	for (std::size_t idx = 0; idx < streams.size(); idx++) {
 		auto media_desc = streams.at(idx).toSdpMediaDescription(this, session_desc);
-
-		for (const auto & acap : potentialCfgGraph.getMediaAcapForStream(static_cast<unsigned int>(idx))) {
-			char buffer[1024];
-			snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", acap->index, acap->name.c_str(), acap->value.c_str());
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",buffer));
-		}
-
-		for (const auto & tcap : potentialCfgGraph.getMediaTcapForStream(static_cast<unsigned int>(idx))) {
-			char buffer[1024];
-			snprintf ( buffer, sizeof ( buffer )-1, "%d %s", tcap->index, tcap->value.c_str());
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",buffer));
-		}
-
-		// Iterate over configs of a stream
-		for (const auto & pcfgPair : potentialCfgGraph.getCfgForStream(static_cast<unsigned int>(idx))) {
-			addPotentialConfigurationToSdp(media_desc, "pcfg", pcfgPair);
-		}
 		belle_sdp_session_description_add_media_description(session_desc, media_desc);
 	}
 	return session_desc;
+}
+
+void SalMediaDescription::addTcap(const unsigned int & idx, const std::string & value) {
+	tcaps[idx] = value;
+	potentialCfgGraph.addGlobalTcap(idx, value);
+}
+
+const std::string & SalMediaDescription::getTcap(const unsigned int & idx) const {
+	try {
+		return tcaps.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to find transport capability at index " << idx;
+		return Utils::getEmptyConstRefObject<std::string>();
+	}
+}
+
+void SalMediaDescription::addAcap(const unsigned int & idx, const std::string & name, const std::string & value) {
+	acaps[idx] = std::make_pair(name, value);
+	potentialCfgGraph.addGlobalAcap(idx, name, value);
+}
+
+const std::pair<std::string, std::string> & SalMediaDescription::getAcap(const unsigned int & idx) const {
+	try {
+		return acaps.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to find attribute capability at index " << idx;
+		return Utils::getEmptyConstRefObject<std::pair<std::string, std::string>>();
+	}
 }
 
 void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {

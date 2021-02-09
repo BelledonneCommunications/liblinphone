@@ -194,7 +194,7 @@ void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialC
 
 void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
 	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
-	std::list<int> tcapIdx;
+	std::list<unsigned int> tcapIdx;
 	std::for_each(tcaps.cbegin(), tcaps.cend(), [this, &tcapIdx, &encEnum] (const auto & cap) {
 		if (cap->value.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0) {
 			tcapIdx.push_back(cap->index);
@@ -202,9 +202,9 @@ void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph 
 	});
 
 	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
-	std::list<std::map<int, bool>> acapCfgs;
+	std::list<std::map<unsigned int, bool>> acapCfgs;
 	std::for_each(acaps.cbegin(), acaps.cend(), [&acapCfgs,&acapAttrNames] (const auto & cap) {
-		std::map<int, bool> acapIdx;
+		std::map<unsigned int, bool> acapIdx;
 		for (const auto & name : acapAttrNames) {
 			if (cap->name.compare(name) == 0) {;
 				acapIdx.insert(std::make_pair(cap->index, true));
@@ -223,10 +223,10 @@ void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph 
 
 		// Get list of acap index mandatory flag pairs
 		const auto & cfgAcapSets = cfgAttr.acap;
-		std::list<std::map<int, bool>> acapSets;
+		std::list<std::map<unsigned int, bool>> acapSets;
 		// Iterate over all acaps sets. For every set, get the index of all its members
 		for (const auto & acapSet : cfgAcapSets) {
-			std::map<int, bool> cfgIdxs;
+			std::map<unsigned int, bool> cfgIdxs;
 			for (const auto & cfgAcap : acapSet) {
 				const auto & acap = cfgAcap.cap.lock();
 				const auto & acapIdx = acap->index;
@@ -238,7 +238,7 @@ void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph 
 		}
 
 		// Get list of tcap indexes
-		std::list<int> tcaps;
+		std::list<unsigned int> tcaps;
 		const auto & cfgTcaps = cfgAttr.tcap;
 		for (const auto & cfgTcap : cfgTcaps) {
 			const auto tcap = cfgTcap.cap.lock();
@@ -388,9 +388,12 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
 			}
 
-			const auto & cfgs =  potentialCfgGraph.getCfgForStream(streamIndex);
+			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
+			attrs.cfgs =  potentialCfgGraph.getCfgForStream(streamIndex);
+			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(streamIndex);
+			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(streamIndex);
 			auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
-			localDesc.fillPotentialConfigurations(cfgs);
+			localDesc.fillPotentialConfigurations(attrs);
 		}
 	}
 }

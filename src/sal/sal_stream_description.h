@@ -54,6 +54,11 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:
 
+		struct raw_capability_negotiation_attrs_t {
+			bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
+			bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
+			bellesip::SDP::SDPPotentialCfgGraph::media_description_config cfgs;
+		};
 
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
@@ -63,7 +68,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		SalStreamDescription();
 		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
-		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
@@ -123,6 +128,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::vector<SalSrtpCryptoAlgo> & getCryptos() const;
 		const SalSrtpCryptoAlgo & getCryptoAtIndex(const size_t & idx) const;
 
+		void addTcap(const unsigned int & idx, const std::string & value);
+		const std::string & getTcap(const unsigned int & idx) const;
+
+		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
+		const std::pair<std::string, std::string> & getAcap(const unsigned int & idx) const;
+
 		std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 		SalStreamType type = SalAudio;
 		std::string typeother;
@@ -139,14 +150,14 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		mutable bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
 
 		cfg_map cfgs;
-		bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
-		bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
+		std::map<unsigned int, std::pair<std::string, std::string>> acaps;
+		std::map<unsigned int, std::string> tcaps;
 
 		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
-		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
+		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
 
 		// Potential configurations
-		void fillPotentialConfigurations(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & SDPMediaDescriptionCfgs);
+		void fillPotentialConfigurations(const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
 		std::list<cfg_map::mapped_type> createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & SDPMediaDescriptionCfgs);
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
