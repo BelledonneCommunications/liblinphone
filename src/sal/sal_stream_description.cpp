@@ -740,15 +740,10 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	if (actualCfg.hasSrtp()) {
 		/* add crypto lines */
 		for ( const auto & crypto : actualCfg.crypto ) {
-			MSCryptoSuiteNameParams desc;
-			if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
-				if (desc.params)
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
-				else
-					snprintf ( buffer, sizeof ( buffer )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
-
-				belle_sdp_media_description_add_attribute( media_desc,belle_sdp_attribute_create ("crypto", buffer));
-			}else break;
+			const auto value = SalStreamConfiguration::cryptoToSdpValue(crypto);
+			if (!value.empty()) {
+				belle_sdp_media_description_add_attribute( media_desc,belle_sdp_attribute_create ("crypto", value.c_str()));
+			}
 		}
 	}
 
