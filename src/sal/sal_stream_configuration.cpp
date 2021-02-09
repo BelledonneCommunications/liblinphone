@@ -368,7 +368,7 @@ const unsigned int & SalStreamConfiguration::getTcapIndex() const {
 	return tcapIndex;
 }
 
-const std::string SalStreamConfiguration::getSdpString() const {
+std::string SalStreamConfiguration::getSdpString() const {
 
 	std::string acapString;
 	// Iterate over all acaps sets. For every set, get the index of all its members
@@ -382,23 +382,54 @@ const std::string SalStreamConfiguration::getSdpString() const {
 			if (acapIdx != firstAcapIdx) {
 				acapString.append(",");
 			}
-			acapString.append(std::to_string(acapIdx));
+			if (acapIdx != 0) {
+				acapString.append(std::to_string(acapIdx));
+			}
 		}
 	}
 
-	const std::string tcapString = std::to_string(tcapIndex);
+	std::string tcapString;
+
+	if (tcapIndex != 0) {
+		tcapString = std::to_string(tcapIndex);
+	}
 
 	std::string deleteAttrs;
 	if (delete_media_attributes && delete_session_attributes) {
-		deleteAttrs = "-ms:";
+		deleteAttrs = "-ms";
 	} else if (delete_session_attributes) {
-		deleteAttrs = "-s:";
+		deleteAttrs = "-s";
 	} else if (delete_media_attributes) {
-		deleteAttrs = "-m:";
+		deleteAttrs = "-m";
 	}
 
-	const std::string sdpString = "a=" + deleteAttrs + acapString + " t=" + tcapString;
+	std::string sdpString;
+
+	if (!deleteAttrs.empty() && !acapString.empty()) {
+		sdpString += "a=" + deleteAttrs + ":" + acapString;
+	} else if (!deleteAttrs.empty()) {
+		sdpString += "a=" + deleteAttrs;
+	} else if (!acapString.empty()) {
+		sdpString += "a=" + acapString;
+	}
+
+	if (!tcapString.empty()) {
+		sdpString += " t=" + tcapString;
+	}
 	return sdpString;
 }
 
+std::string SalStreamConfiguration::cryptoToSdpValue(const SalSrtpCryptoAlgo & crypto) {
+	std::string sdpValue;
+	MSCryptoSuiteNameParams desc;
+	if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
+		sdpValue = std::to_string(crypto.tag) + " " + desc.name + " inline:"+ crypto.master_key;
+		if (desc.params) {
+			sdpValue += " ";
+			sdpValue += desc.params;
+		}
+	}
+
+	return sdpValue;
+}
 LINPHONE_END_NAMESPACE
