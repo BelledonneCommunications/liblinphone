@@ -1325,14 +1325,21 @@ void SalStreamDescription::addAcap(const unsigned int & idx, const std::string &
 	acaps[idx] = std::make_pair(name, value);
 }
 
-const std::pair<std::string, std::string> & SalStreamDescription::getAcap(const unsigned int & idx) const {
+const SalStreamDescription::acap_t & SalStreamDescription::getAcap(const unsigned int & idx) const {
 	try {
 		return acaps.at(idx);
 	} catch (std::out_of_range&) {
 		lError() << "Unable to find attribute capability at index " << idx;
-		return Utils::getEmptyConstRefObject<std::pair<std::string, std::string>>();
+		return Utils::getEmptyConstRefObject<SalStreamDescription::acap_t>();
 	}
 }
 
+const SalStreamDescription::acap_map_t & SalStreamDescription::getAcaps() const {
+	return acaps;
+}
+
+const SalStreamDescription::tcap_map_t & SalStreamDescription::getTcaps() const {
+	return tcaps;
+}
 
 LINPHONE_END_NAMESPACE

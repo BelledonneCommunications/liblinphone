@@ -84,10 +84,18 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
 
 		void addTcap(const unsigned int & idx, const std::string & value);
+		void addTcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & value);
 		const std::string & getTcap(const unsigned int & idx) const;
+		const SalStreamDescription::tcap_map_t & getTcaps() const;
+		const SalStreamDescription::tcap_map_t getAllTcapForStream(const int & idx) const;
+		unsigned int getFreeTcapIdx() const;
 
 		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
-		const std::pair<std::string, std::string> & getAcap(const unsigned int & idx) const;
+		void addAcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & name, const std::string & value);
+		const SalStreamDescription::acap_t & getAcap(const unsigned int & idx) const;
+		const SalStreamDescription::acap_map_t & getAcaps() const;
+		const SalStreamDescription::acap_map_t getAllAcapForStream(const int & idx) const;
+		unsigned int getFreeAcapIdx() const;
 
 		std::string name;
 		std::string addr;
@@ -111,8 +119,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 	private:
 
-		std::map<unsigned int, std::pair<std::string, std::string>> acaps;
-		std::map<unsigned int, std::string> tcaps;
+		SalStreamDescription::acap_map_t acaps;
+		SalStreamDescription::tcap_map_t tcaps;
 
 		mutable bool capabilityNegotiationAllowed = false; /* Set to true if the stream allows capability negotiation */
 		/*check for the presence of at least one stream with requested direction */
@@ -121,6 +129,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool isNullAddress(const std::string & addr) const;
 
 		void addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const;
+
+		unsigned int getFreeIdx(const std::list<unsigned int> & l) const;
 };
 
 LINPHONE_END_NAMESPACE
