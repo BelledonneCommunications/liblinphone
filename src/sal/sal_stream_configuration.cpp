@@ -81,6 +81,10 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & ot
 	dtls_fingerprint = other.dtls_fingerprint;
 	dtls_role = other.dtls_role;
 	ttl = other.ttl;
+	tcapIndex = other.tcapIndex;
+	acapIndexes = other.acapIndexes;
+	delete_media_attributes = other.delete_media_attributes;
+	delete_session_attributes = other.delete_session_attributes;
 }
 
 SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfiguration & other){
@@ -284,10 +288,6 @@ bool SalStreamConfiguration::hasLimeIk() const {
 	return false;
 }
 
-const std::string SalStreamConfiguration::getSdpString() const {
-	return sdpString;
-}
-
 const SalMediaProto & SalStreamConfiguration::getProto() const {
 	return proto;
 }
@@ -345,6 +345,60 @@ void SalStreamConfiguration::enableAvpfForStream() {
 	for (auto & pt : payloads) {
 		payload_type_set_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
 	}
+}
+
+void SalStreamConfiguration::mergeAcaps(const std::list<std::list<unsigned int>> & acaps) {
+	// Avoid adding duplicates
+	for (const auto & newIdxs : acaps) {
+		bool found = false;
+		for (const auto & idxs : acapIndexes) {
+			found |= ((idxs.size() == newIdxs.size()) && std::equal(idxs.begin(), idxs.end(), newIdxs.begin()));
+		}
+		if (!found) {
+			acapIndexes.push_back(newIdxs);
+		}
+	}
+}
+
+const std::list<std::list<unsigned int>> & SalStreamConfiguration::getAcapIndexes() const {
+	return acapIndexes;
+}
+
+const unsigned int & SalStreamConfiguration::getTcapIndex() const {
+	return tcapIndex;
+}
+
+const std::string SalStreamConfiguration::getSdpString() const {
+
+	std::string acapString;
+	// Iterate over all acaps sets. For every set, get the index of all its members
+	for (const auto & acapSet : acapIndexes) {
+		// Do not append | on first element
+		if (!acapString.empty()) {
+			acapString.append("|");
+		}
+		const auto & firstAcapIdx = acapSet.front();
+		for (const auto & acapIdx : acapSet) {
+			if (acapIdx != firstAcapIdx) {
+				acapString.append(",");
+			}
+			acapString.append(std::to_string(acapIdx));
+		}
+	}
+
+	const std::string tcapString = std::to_string(tcapIndex);
+
+	std::string deleteAttrs;
+	if (delete_media_attributes && delete_session_attributes) {
+		deleteAttrs = "-ms:";
+	} else if (delete_session_attributes) {
+		deleteAttrs = "-s:";
+	} else if (delete_media_attributes) {
+		deleteAttrs = "-m:";
+	}
+
+	const std::string sdpString = "a=" + deleteAttrs + acapString + " t=" + tcapString;
+	return sdpString;
 }
 
 LINPHONE_END_NAMESPACE
