@@ -498,7 +498,7 @@ void CallPrivate::onTmmbrReceived (const shared_ptr<CallSession> &session, int s
 
 void CallPrivate::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
 	L_Q();
-	linphone_call_notify_snapshot_taken(L_GET_C_BACK_PTR(q), file_path);
+	q->getCore()->doLater([q, file_path](){linphone_call_notify_snapshot_taken(L_GET_C_BACK_PTR(q), file_path);});
 }
 
 // =============================================================================
