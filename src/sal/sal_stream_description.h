@@ -158,7 +158,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		// Potential configurations
 		void fillPotentialConfigurations(const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
-		std::list<cfg_map::mapped_type> createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & SDPMediaDescriptionCfgs);
+		std::list<cfg_map::mapped_type> createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & SDPMediaDescriptionCfgPair);
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);

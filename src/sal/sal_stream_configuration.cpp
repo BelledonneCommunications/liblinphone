@@ -81,6 +81,7 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & ot
 	dtls_fingerprint = other.dtls_fingerprint;
 	dtls_role = other.dtls_role;
 	ttl = other.ttl;
+	index = other.index;
 	tcapIndex = other.tcapIndex;
 	acapIndexes = other.acapIndexes;
 	delete_media_attributes = other.delete_media_attributes;
@@ -125,6 +126,11 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	dtls_fingerprint = other.dtls_fingerprint;
 	dtls_role = other.dtls_role;
 	ttl = other.ttl;
+	index = other.index;
+	tcapIndex = other.tcapIndex;
+	acapIndexes = other.acapIndexes;
+	delete_media_attributes = other.delete_media_attributes;
+	delete_session_attributes = other.delete_session_attributes;
 
 	return *this;
 }
