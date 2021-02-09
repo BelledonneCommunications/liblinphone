@@ -5248,8 +5248,8 @@ static void video_filter_callback(void *userdata, struct _MSFilter *f, unsigned 
 		case MS_QRCODE_READER_QRCODE_FOUND: {
 			LinphoneCore *lc = (LinphoneCore *)userdata;
 			if (linphone_core_cbs_get_qrcode_found(linphone_core_get_current_callbacks(lc)) != NULL) {
-				L_GET_CPP_PTR_FROM_C_OBJECT(lc)->doLater([lc, arg]() {
-					char* result = ms_strdup((const char*)arg);
+				char* result = ms_strdup((const char*)arg);
+				L_GET_CPP_PTR_FROM_C_OBJECT(lc)->doLater([lc, result]() {
 					linphone_core_notify_qrcode_found(lc, result);
 					ms_free(result);
 				});
