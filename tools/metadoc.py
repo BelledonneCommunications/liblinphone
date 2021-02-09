@@ -444,7 +444,10 @@ class Translator:
 		else:
 			if namespace is None:
 				description = ref.find_root()
-				namespace = description.relatedObject.find_first_ancestor_by_type(abstractapi.Namespace, abstractapi.Class)
+				namespaceTypes = (abstractapi.Namespace, abstractapi.Class)
+				namespace = description.relatedObject
+				if type(namespace) not in namespaceTypes:
+					namespace = description.relatedObject.find_first_ancestor_by_type(*namespaceTypes)
 			if namespace is abstractapi.GlobalNs:
 				commonName = None
 			elif namespace.name == ref.relatedObject.name:
