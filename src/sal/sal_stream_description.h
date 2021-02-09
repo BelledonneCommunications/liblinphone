@@ -60,6 +60,10 @@ class LINPHONE_PUBLIC SalStreamDescription {
 			bellesip::SDP::SDPPotentialCfgGraph::media_description_config cfgs;
 		};
 
+		using acap_t = std::pair<std::string, std::string>;
+		using acap_map_t = std::map<unsigned int, acap_t>;
+		using tcap_map_t = std::map<unsigned int, std::string>;
+
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
@@ -132,7 +136,10 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::string & getTcap(const unsigned int & idx) const;
 
 		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
-		const std::pair<std::string, std::string> & getAcap(const unsigned int & idx) const;
+		const acap_t & getAcap(const unsigned int & idx) const;
+
+		const acap_map_t & getAcaps() const;
+		const tcap_map_t & getTcaps() const;
 
 		std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 		SalStreamType type = SalAudio;
@@ -150,8 +157,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		mutable bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
 
 		cfg_map cfgs;
-		std::map<unsigned int, std::pair<std::string, std::string>> acaps;
-		std::map<unsigned int, std::string> tcaps;
+		acap_map_t acaps;
+		tcap_map_t tcaps;
 
 		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
