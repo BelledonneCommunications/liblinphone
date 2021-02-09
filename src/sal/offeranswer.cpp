@@ -422,6 +422,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 
 	bool success = true;
 
+	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
+	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
+
 	if (remote_answer.enabled())
 		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,TRUE,FALSE);
 	else {
@@ -481,9 +484,23 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 			success = false;
 		}
 		crypto.emplace(crypto.begin(),crypto_result);
+		const auto resultCryptoAttrValue = SalStreamConfiguration::cryptoToSdpValue(crypto_result);
+		if (!resultCryptoAttrValue.empty()) {
+			const auto & cryptoAcapIt = std::find_if(local_offer.acaps.cbegin(), local_offer.acaps.cend(), [&resultCryptoAttrValue] (const auto & acapMapPair) {
+				const auto & acapPair = acapMapPair.second;
+				return (resultCryptoAttrValue.compare(acapPair.second) == 0);
+			});
+			if (cryptoAcapIt != local_offer.acaps.cend()) {
+				resultCfg.acapIndexes = {{cryptoAcapIt->first}};
+			}
+		}
 	}
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
+
+	if (resultCfg.hasZrtp() == TRUE) {
+		resultCfg.acapIndexes = localCfg.acapIndexes;
+	}
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((localCfg.dtls_role!=SalDtlsRoleInvalid) && (remoteCfg.dtls_role!=SalDtlsRoleInvalid)
@@ -494,11 +511,14 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		} else {
 			resultCfg.dtls_role = SalDtlsRoleIsClient;
 		}
+		resultCfg.acapIndexes = localCfg.acapIndexes;
 	} else {
 		resultCfg.dtls_fingerprint.clear();
 		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
+
+	resultCfg.tcapIndex = localCfg.tcapIndex;
 
 	return std::make_pair(resultCfg, success);
 }
@@ -565,6 +585,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 
 	bool success = true;
 
+	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
+	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
+
 	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
 		success = false;
 		return std::make_pair(resultCfg, success);
@@ -613,6 +636,16 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			resultCfg.crypto.resize(1);
 		}
 		resultCfg.crypto[0] = crypto_result;
+		const auto resultCryptoAttrValue = SalStreamConfiguration::cryptoToSdpValue(crypto_result);
+		if (!resultCryptoAttrValue.empty()) {
+			const auto & cryptoAcapIt = std::find_if(local_cap.acaps.cbegin(), local_cap.acaps.cend(), [&resultCryptoAttrValue] (const auto & acapMapPair) {
+				const auto & acapPair = acapMapPair.second;
+				return (resultCryptoAttrValue.compare(acapPair.second) == 0);
+			});
+			if (cryptoAcapIt != local_cap.acaps.cend()) {
+				resultCfg.acapIndexes = {{cryptoAcapIt->first}};
+			}
+		}
 	}
 
 	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
@@ -621,6 +654,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
 			strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
 			resultCfg.haveZrtpHash =  1;
+			resultCfg.acapIndexes = localCfg.acapIndexes;
 		}
 	}
 
@@ -641,11 +675,13 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		if (remoteCfg.dtls_role==SalDtlsRoleUnset) {
 			resultCfg.dtls_role = SalDtlsRoleIsClient;
 		}
+		resultCfg.acapIndexes = localCfg.acapIndexes;
 	} else {
 		resultCfg.dtls_fingerprint.clear();
 		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
+	resultCfg.tcapIndex = localCfg.tcapIndex;
 	return std::make_pair(resultCfg, success);
 }
 
