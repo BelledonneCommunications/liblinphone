@@ -54,6 +54,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	public:
 
+
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
