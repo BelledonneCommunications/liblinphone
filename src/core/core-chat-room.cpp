@@ -326,7 +326,7 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 				lError() << "Failed to find matching contact address with gruu for identity address [" << localAddr << "], client group chat room creation will fail!";
 			}
 		}
-		if (!params->isGroup()) {
+		if (!params->isGroup() && participants.size()>0) {
 			// Prevent multiple 1-1 conference based chat room with same local/remote addresses
 			chatRoom = q->findOneToOneChatRoom(localAddr, participants.front(), false, true, params->isEncrypted());
 			if (chatRoom != nullptr) {

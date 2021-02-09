@@ -393,8 +393,8 @@ void liblinphone_tester_add_suites() {
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
-#endif
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
+#endif
 	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
@@ -453,6 +453,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&shared_core_test_suite);
 	bc_tester_add_suite(&vfs_encryption_test_suite);
 	bc_tester_add_suite(&external_domain_test_suite);
+
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {
@@ -470,7 +471,11 @@ void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, v
 	bc_tester_set_logfile_func(logfile_arg_func);
 	bc_tester_init(ftester_printf, ORTP_MESSAGE, ORTP_ERROR, "rcfiles");
 	liblinphone_tester_add_suites();
+#ifdef LINPHONE_WINDOWS_UWP
+	bc_tester_set_max_parallel_suites(5); /* reduce hardware resources usage for UWP. May be change later */
+#else
 	bc_tester_set_max_parallel_suites(10); /* empiricly defined as sustainable for mac book pro with 4 hyperthreaded cores.*/
+#endif
 }
 
 int liblinphone_tester_set_log_file(const char *filename) {
