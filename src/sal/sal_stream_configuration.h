@@ -111,7 +111,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const std::string getProtoAsString() const;
 		SalStreamDir getDirection() const;
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
-		const std::string getSdpString() const;
+		std::string getSdpString() const;
 
 		const std::string & getIceUfrag() const;
 		const std::string & getIcePwd() const;
@@ -124,6 +124,9 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		void mergeAcaps(const std::list<std::list<unsigned int>> & acaps);
 		const std::list<std::list<unsigned int>> & getAcapIndexes() const;
 		const unsigned int & getTcapIndex() const;
+
+		static std::string cryptoToSdpValue(const SalSrtpCryptoAlgo & crypto);
+
 
 	private:
 		SalMediaProto proto = SalProtoRtpAvp;
