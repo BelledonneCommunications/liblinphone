@@ -153,9 +153,7 @@ void SalStreamDescription::fillPotentialConfigurations(const SalStreamDescriptio
 	for (const auto & SDPMediaDescriptionCfgPair : attrs.cfgs) {
 		// This is the configuration ondex
 		const auto & idx = SDPMediaDescriptionCfgPair.first;
-		// List of potential configuration associated with a given index
-		const auto & potentialConfigurationAttributes = SDPMediaDescriptionCfgPair.second;
-		const auto potentialCfgList = createPotentialConfiguration(potentialConfigurationAttributes);
+		const auto potentialCfgList = createPotentialConfiguration(SDPMediaDescriptionCfgPair);
 		for (const auto & cfg : potentialCfgList) {
 			auto ret = cfgs.insert(std::make_pair(idx, cfg));
 			const auto & success = ret.second;
@@ -177,9 +175,10 @@ void SalStreamDescription::fillPotentialConfigurations(const SalStreamDescriptio
 	}
 }
 
-std::list<SalStreamDescription::cfg_map::mapped_type> SalStreamDescription::createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::mapped_type & cfgAttributeList) {
+std::list<SalStreamDescription::cfg_map::mapped_type> SalStreamDescription::createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & SDPMediaDescriptionCfgPair) {
 
-	lInfo() << "Delete media session attributes " << cfgAttributeList.delete_media_attributes << " delete session session attributes " << cfgAttributeList.delete_session_attributes;
+	const auto & idx = SDPMediaDescriptionCfgPair.first;
+	const auto & cfgAttributeList = SDPMediaDescriptionCfgPair.second;
 
 	std::map<unsigned int, std::pair<SalMediaProto, std::string>> protoMap;
 	for (const auto & tAttr : cfgAttributeList.tcap) {
@@ -219,6 +218,7 @@ std::list<SalStreamDescription::cfg_map::mapped_type> SalStreamDescription::crea
 		const auto & protoIdx = protoEl.first;
 		const auto & protoPair = protoEl.second;
 		auto baseCfg = getActualConfiguration();
+		baseCfg.index = idx;
 		baseCfg.delete_media_attributes = cfgAttributeList.delete_media_attributes;
 		baseCfg.delete_session_attributes = cfgAttributeList.delete_session_attributes;
 		const auto proto = protoPair.first;
@@ -883,12 +883,22 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	}
 
 	for (const auto & cfgPair : cfgs) {
-		const auto & cfgIdx = cfgPair.first;
-		if (cfgIdx != getActualConfigurationIndex()) {
-			const auto & cfg = cfgPair.second;
-			const auto & cfgSdpString = cfg.getSdpString();
-			const auto attrValue = std::to_string(cfgIdx) + " " + cfgSdpString;
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("pcfg",attrValue.c_str()));
+		const auto & cfg = cfgPair.second;
+		const auto & cfgSdpString = cfg.getSdpString();
+		if (!cfgSdpString.empty()) {
+			const auto & cfgIdx = cfg.index;
+			// Add acfg or pcfg attributes if not the actual configuration or if the actual configuration refer to a potential configuration (member index is not the actual configuration index)
+			std::string attrName;
+			const auto & cfgKey = cfgPair.first;
+			if (cfgKey != getActualConfigurationIndex()) {
+				attrName = "pcfg";
+			} else if (cfgKey == getActualConfigurationIndex() && (cfgIdx != getActualConfigurationIndex())) {
+				attrName = "acfg";
+			}
+			if (!attrName.empty()) {
+				const auto attrValue = std::to_string(cfgIdx) + " " + cfgSdpString;
+				belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),attrValue.c_str()));
+			}
 		}
 	}
 
