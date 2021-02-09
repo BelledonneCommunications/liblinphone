@@ -173,7 +173,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 		SalStreamDescription stream;
 		if (capabilityNegotiationAllowed) {
-			const auto & cfg =  potentialCfgGraph.getPcfgForStream(currentStreamIdx);
+			const auto & cfg =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
 			stream.fillStreamDescription(this, media_desc, cfg);
 		} else {
 			stream.fillStreamDescription(this, media_desc);
@@ -576,14 +576,10 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 
 		// Iterate over configs of a stream
-		for (const auto & pcfgPair : potentialCfgGraph.getPcfgForStream(static_cast<unsigned int>(idx))) {
+		for (const auto & pcfgPair : potentialCfgGraph.getCfgForStream(static_cast<unsigned int>(idx))) {
 			addPotentialConfigurationToSdp(media_desc, "pcfg", pcfgPair);
 		}
-		for (const auto & acfgPair : potentialCfgGraph.getAcfgForStream(static_cast<unsigned int>(idx))) {
-			addPotentialConfigurationToSdp(media_desc, "acfg", acfgPair);
-		}
 		belle_sdp_session_description_add_media_description(session_desc, media_desc);
-
 	}
 	return session_desc;
 }
