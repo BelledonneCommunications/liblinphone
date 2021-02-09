@@ -322,7 +322,7 @@ void account_create_in_db(Account *account, LinphoneProxyConfig *cfg, const char
 	// activate account
 	linphone_account_creator_cbs_set_activate_account(creator_cbs, account_activated_cb);
 	if (linphone_account_creator_get_phone_number(creator))
-		linphone_account_creator_activate_account_linphone_xmlrpc(creator);
+		linphone_account_creator_activate_phone_account_linphone_xmlrpc(creator);
 	else
 		linphone_account_creator_activate_email_account_linphone_xmlrpc(creator);
 
