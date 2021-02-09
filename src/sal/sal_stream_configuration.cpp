@@ -284,6 +284,10 @@ bool SalStreamConfiguration::hasLimeIk() const {
 	return false;
 }
 
+const std::string SalStreamConfiguration::getSdpString() const {
+	return sdpString;
+}
+
 const SalMediaProto & SalStreamConfiguration::getProto() const {
 	return proto;
 }
