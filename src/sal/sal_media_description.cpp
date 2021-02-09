@@ -595,13 +595,106 @@ void SalMediaDescription::addAcap(const unsigned int & idx, const std::string & 
 	potentialCfgGraph.addGlobalAcap(idx, name, value);
 }
 
-const std::pair<std::string, std::string> & SalMediaDescription::getAcap(const unsigned int & idx) const {
+const SalStreamDescription::acap_t & SalMediaDescription::getAcap(const unsigned int & idx) const {
 	try {
 		return acaps.at(idx);
 	} catch (std::out_of_range&) {
 		lError() << "Unable to find attribute capability at index " << idx;
-		return Utils::getEmptyConstRefObject<std::pair<std::string, std::string>>();
+		return Utils::getEmptyConstRefObject<SalStreamDescription::acap_t>();
 	}
+}
+
+const SalStreamDescription::acap_map_t & SalMediaDescription::getAcaps() const {
+	return acaps;
+}
+
+const SalStreamDescription::tcap_map_t & SalMediaDescription::getTcaps() const {
+	return tcaps;
+}
+
+const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const int & idx) const {
+	SalStreamDescription::acap_map_t allAcaps;
+	const SalStreamDescription & stream = getStreamIdx(idx);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		allAcaps = stream.getAcaps();
+		auto globalAcaps = getAcaps();
+		allAcaps.insert(globalAcaps.begin(), globalAcaps.end());
+	}
+	return allAcaps;
+}
+const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const int & idx) const {
+	SalStreamDescription::tcap_map_t allTcaps;
+	const SalStreamDescription & stream = getStreamIdx(idx);
+	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		allTcaps = stream.getTcaps();
+		auto globalTcaps = getTcaps();
+		allTcaps.insert(globalTcaps.begin(), globalTcaps.end());
+	}
+	return allTcaps;
+}
+
+void SalMediaDescription::addTcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & value) {
+	if (streamIdx < streams.size()) {
+		streams[streamIdx].addTcap(idx, value);
+	}
+}
+
+void SalMediaDescription::addAcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & name, const std::string & value) {
+	if (streamIdx < streams.size()) {
+		streams[streamIdx].addAcap(idx, name, value);
+	}
+}
+
+unsigned int SalMediaDescription::getFreeTcapIdx() const {
+	std::list<unsigned int> tcapIndexes;
+	auto addToIndexList = [&tcapIndexes] (const auto & cap) {
+		tcapIndexes.push_back(cap.first);
+	};
+	const auto & globalTcaps = getTcaps();
+	std::for_each(globalTcaps.begin(), globalTcaps.end(), addToIndexList);
+	for (const auto & stream : streams) {
+		const auto & streamTcaps = stream.getTcaps();
+		std::for_each(streamTcaps.begin(), streamTcaps.end(), addToIndexList);
+	}
+
+	return getFreeIdx(tcapIndexes);
+}
+
+unsigned int SalMediaDescription::getFreeAcapIdx() const {
+	std::list<unsigned int> acapIndexes;
+	auto addToIndexList = [&acapIndexes] (const auto & cap) {
+		acapIndexes.push_back(cap.first);
+	};
+	const auto & globalAcaps = getAcaps();
+	std::for_each(globalAcaps.begin(), globalAcaps.end(), addToIndexList);
+	for (const auto & stream : streams) {
+		const auto & streamAcaps = stream.getAcaps();
+		std::for_each(streamAcaps.begin(), streamAcaps.end(), addToIndexList);
+	}
+
+	return getFreeIdx(acapIndexes);
+}
+
+unsigned int SalMediaDescription::getFreeIdx(const std::list<unsigned int> & l) const {
+	auto lCopy = l;
+	// Sort elements
+	lCopy.sort();
+	// Delete duplicates
+	lCopy.unique();
+	decltype(lCopy) lResult(lCopy.begin(), std::prev(lCopy.end(), 1));
+	// Compute the difference between consecutive elements - if any of them is not equal to 1, then a free index is found
+	std::transform (std::next(lCopy.begin(), 1), lCopy.end(), lResult.begin(), lResult.begin(), std::minus<int>());
+	const auto & gapIt = std::find_if_not(lResult.cbegin(), lResult.cend(), [] (const unsigned int & el) { return (el == 1);});
+	if (gapIt == lResult.cend()) {
+		// No gap found - then return max element + 1
+		return *std::max_element(l.cbegin(), l.cend()) + 1;
+	} else {
+		const auto elIdx = std::distance(lResult.cbegin(), gapIt);
+		const int startGap = *(std::next(l.begin(), elIdx));
+		return startGap + 1;
+	}
+
+	return 0;
 }
 
 void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {
