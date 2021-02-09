@@ -529,7 +529,7 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, status, resp)
 }
 
-LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
+LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
 	LinphoneXmlRpcRequest *request = NULL;
 
 	if (!creator->phone_number || !creator->activation_code) {
@@ -574,18 +574,6 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
-
-		/*auto flexiAPIClient = new FlexiAPIClient(creator->core);
-
-		// Request it
-		flexiAPIClient
-			->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)), creator->activation_code)
-			->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
-				return LinphoneAccountCreatorStatusRequestOk;
-			})
-			->error([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
-				return LinphoneAccountCreatorStatusRequestFailed;
-			});*/
 
 	fill_domain_and_algorithm_if_needed(creator);
 	if (creator->xmlrpc_session) {
