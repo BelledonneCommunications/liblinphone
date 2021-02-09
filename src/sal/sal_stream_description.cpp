@@ -685,7 +685,6 @@ void SalStreamDescription::setupRtcpXr(const OrtpRtcpXrConfiguration & rtcpXr) {
 belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(const SalMediaDescription * salMediaDesc, belle_sdp_session_description_t *session_desc) const {
 	belle_sdp_mime_parameter_t* mime_param;
 	belle_sdp_media_description_t* media_desc;
-	char buffer[1024];
 	const char* dirStr=NULL;
 	bool_t different_rtp_and_rtcp_addr;
 	bool_t stream_enabled = enabled();
@@ -799,12 +798,11 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
 		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
+			std::string rtcpAttrValue = std::to_string(rtcp_port);
 			if (different_rtp_and_rtcp_addr == TRUE) {
-				snprintf(buffer, sizeof(buffer), "%u IN IP4 %s", rtcp_port, rtcp_addr.c_str());
-			} else {
-				snprintf(buffer, sizeof(buffer), "%u",rtcp_port);
+				rtcpAttrValue += " IN IP4 " + rtcp_addr;
 			}
-			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("rtcp",buffer));
+			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("rtcp",rtcpAttrValue.c_str()));
 		}
 	}
 	if (actualCfg.set_nortpproxy == TRUE) {
@@ -869,17 +867,15 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		const auto & nameValuePair = acap.second;
 		const auto & name = nameValuePair.first;
 		const auto & value = nameValuePair.second;
-		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", idx, name.c_str(), value.c_str());
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",buffer));
+		std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
 	}
 
 	for (const auto & tcap : tcaps) {
 		const auto & idx = tcap.first;
 		const auto & value = tcap.second;
-		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s", idx, value.c_str());
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",buffer));
+		std::string tcapValue = std::to_string(idx) + " " + value;
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 	}
 
 	for (const auto & cfgPair : cfgs) {
@@ -1214,46 +1210,39 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 }
 
 void SalStreamDescription::addIceCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
-	char buffer[1024];
-	int nb;
-
 	for (const auto & candidate : cfg.ice_candidates) {
 		if ((candidate.addr.empty()) || (candidate.port == 0)) break;
-		nb = snprintf(buffer, sizeof(buffer), "%s %u UDP %u %s %d typ %s",
-			candidate.foundation.c_str(), candidate.componentID, candidate.priority, candidate.addr.c_str(), candidate.port, candidate.type.c_str());
-		if (nb < 0) {
+		std::string iceCandidateValue = candidate.foundation + " " + std::to_string(candidate.componentID) + " UDP " + std::to_string(candidate.priority) + " " + candidate.addr.c_str() + " " + std::to_string(candidate.port) + " typ " + candidate.type;
+		if (iceCandidateValue.size() > 1024) {
 			ms_error("Cannot add ICE candidate attribute!");
 			return;
 		}
 		if (!candidate.raddr.empty()) {
-			nb = snprintf(buffer + nb, sizeof(buffer) - static_cast<size_t>(nb), " raddr %s rport %d", candidate.raddr.c_str(), candidate.rport);
-			if (nb < 0) {
+			iceCandidateValue += " raddr " + candidate.raddr + " rport " + std::to_string(candidate.rport);
+			if (iceCandidateValue.size() > 1024) {
 				ms_error("Cannot add ICE candidate attribute!");
 				return;
 			}
 		}
-		belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("candidate",buffer));
+		belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("candidate",iceCandidateValue.c_str()));
 	}
 }
 
 void SalStreamDescription::addIceRemoteCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
-	char buffer[1024];
-	char *ptr = buffer;
-	int offset = 0;
+	std::string iceRemoteCandidateValue;
 
-	buffer[0] = '\0';
 	for (size_t i = 0; i < cfg.ice_remote_candidates.size(); i++) {
 		const auto & candidate = cfg.ice_remote_candidates[i];
 		if ((!candidate.addr.empty()) && (candidate.port != 0)) {
-			offset = snprintf(ptr, static_cast<size_t>(buffer + sizeof(buffer) - ptr), "%s%u %s %d", (i > 0) ? " " : "", static_cast<unsigned int>(i + 1), candidate.addr.c_str(), candidate.port);
-			if (offset < 0) {
+			iceRemoteCandidateValue += ((i > 0) ? " " : "") + std::to_string(static_cast<unsigned int>(i + 1)) + " " + candidate.addr + " " + std::to_string(candidate.port);
+			
+			if (iceRemoteCandidateValue.size() > 1024) {
 				ms_error("Cannot add ICE remote-candidates attribute!");
 				return;
 			}
-			ptr += offset;
 		}
 	}
-	if (buffer[0] != '\0') belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("remote-candidates",buffer));
+	if (!iceRemoteCandidateValue.empty()) belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("remote-candidates",iceRemoteCandidateValue.c_str()));
 }
 
 const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getChosenConfigurationIndex() const {

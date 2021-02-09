@@ -566,17 +566,16 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		const auto & nameValuePair = acap.second;
 		const auto & name = nameValuePair.first;
 		const auto & value = nameValuePair.second;
-		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s:%s", idx, name.c_str(), value.c_str());
-		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",buffer));
+
+		std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
 	}
 
 	for (const auto & tcap : tcaps) {
 		const auto & idx = tcap.first;
 		const auto & value = tcap.second;
-		char buffer[1024];
-		snprintf ( buffer, sizeof ( buffer )-1, "%d %s", idx, value.c_str());
-		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",buffer));
+		std::string tcapValue = std::to_string(idx) + " " + value;
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 	}
 
 	//for ( const auto & stream : streams) {
