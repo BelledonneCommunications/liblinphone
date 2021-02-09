@@ -161,6 +161,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_acc
  * @donotwrap Exists for tests purposes only
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to get the confirmation key of a Linphone account.
@@ -175,7 +176,8 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_confir
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_account_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to activate a Linphone account with email.
@@ -183,6 +185,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_a
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to test the validation of a Linphone account.
@@ -190,6 +193,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_e
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to test the existence a phone number with a Linphone account.
@@ -211,6 +215,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_link_phone
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to a Linphone account with the phone number.
@@ -233,6 +238,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to get the password & algorithm of an account using the confirmation key
