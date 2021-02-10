@@ -56,6 +56,7 @@ static void start_with_no_config(void){
 
 static void check_payload_type_numbers(LinphoneCall *call1, LinphoneCall *call2, int expected_number){
 	const LinphoneCallParams *params=linphone_call_get_current_params(call1);
+	if(!BC_ASSERT_PTR_NOT_NULL(params)) return;
 	const PayloadType *pt=linphone_call_params_get_used_audio_codec(params);
 	BC_ASSERT_PTR_NOT_NULL(pt);
 	if (pt){

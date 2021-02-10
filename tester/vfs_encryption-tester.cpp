@@ -491,6 +491,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 
 	// Get the file using the linphone content API
 	LinphoneChatMessage *msg = pauline->stat.last_received_chat_message;
+	if(!BC_ASSERT_PTR_NOT_NULL(msg)) goto end;
 	auto contents = linphone_chat_message_get_contents(msg);
 	BC_ASSERT_PTR_NOT_NULL(contents);
 	BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
@@ -509,10 +510,12 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 		std::remove(plainFilePath);
 		bctbx_free(plainFilePath);
 	}
-
+end:
 	// cleaning
-	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
-	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+	if(marieCr)
+		linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	if(paulineCr)
+		linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
 	remove(receivePaulineFilepath);
 	bc_free(sendFilepath);
 	bc_free(receivePaulineFilepath);
