@@ -134,8 +134,10 @@ void SalStreamDescription::fillStreamDescription(const SalMediaDescription * sal
 	// Populate stream global parameters and actual configuration
 	fillStreamDescription(salMediaDesc, media_desc);
 
-	// Create potential configurations
-	fillPotentialConfigurations(attrs);
+	if (salMediaDesc->hasCapabilityNegotiation()) {
+		// Create potential configurations
+		fillPotentialConfigurations(attrs);
+	}
 
 }
 
