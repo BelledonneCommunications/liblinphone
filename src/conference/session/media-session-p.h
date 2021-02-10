@@ -186,7 +186,7 @@ private:
 
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
 	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const;
-	void makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const size_t & idx, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, std::list<OrtpPayloadType*> codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes);
+	void makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const size_t & idx, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes);
 	void makeLocalMediaDescription (bool localIsOfferer, const bool addCapabilityNegotiationAttributes);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md);

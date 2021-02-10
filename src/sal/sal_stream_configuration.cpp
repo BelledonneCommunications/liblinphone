@@ -93,10 +93,7 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	proto_other = other.proto_other;
 	rtp_ssrc = other.rtp_ssrc;
 	rtcp_cname = other.rtcp_cname;
-	PayloadTypeHandler::clearPayloadList(payloads);
-	for (const auto & pt : other.payloads) {
-		payloads.push_back(payload_type_clone(pt));
-	}
+	replacePayloads(other.payloads);
 	ptime = other.ptime;
 	maxptime = other.maxptime;
 	dir = other.dir;
@@ -438,4 +435,12 @@ std::string SalStreamConfiguration::cryptoToSdpValue(const SalSrtpCryptoAlgo & c
 
 	return sdpValue;
 }
+
+void SalStreamConfiguration::replacePayloads(const std::list<PayloadType*> & newPayloads) {
+	PayloadTypeHandler::clearPayloadList(payloads);
+	for (const auto & pt : newPayloads) {
+		payloads.push_back(payload_type_clone(pt));
+	}
+}
+
 LINPHONE_END_NAMESPACE
