@@ -523,8 +523,45 @@ bool SalStreamDescription::operator!=(const SalStreamDescription & other) const 
 	return !(*this == other);
 }
 
+int SalStreamDescription::compareToChosenConfiguration(const SalStreamDescription & other) const {
+	int result = globalEqual(other);
+
+	result |= compareConfigurations(other, getChosenConfigurationIndex(), other.getChosenConfigurationIndex());
+
+	return result;
+}
+
+int SalStreamDescription::compareToActualConfiguration(const SalStreamDescription & other) const {
+	int result = globalEqual(other);
+
+	result |= compareConfigurations(other, getChosenConfigurationIndex(), other.getActualConfigurationIndex());
+
+	return result;
+}
+
+int SalStreamDescription::compareConfigurations(const SalStreamDescription & other, const SalStreamDescription::cfg_map::key_type & thisKey, const SalStreamDescription::cfg_map::key_type & otherKey) const {
+
+	const SalStreamConfiguration & thisCfg = getConfigurationAtIndex(thisKey);
+	const SalStreamConfiguration & otherCfg = other.getConfigurationAtIndex(otherKey);
+	int result = (thisCfg.equal(otherCfg));
+
+	return result;
+}
+
 int SalStreamDescription::equal(const SalStreamDescription & other) const {
-	int result = (getChosenConfiguration().equal(other.getChosenConfiguration()));
+	int result = globalEqual(other);
+
+	if (cfgs.size() != other.cfgs.size()) result |= SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
+
+	for(auto cfg1 = cfgs.cbegin(), cfg2 = other.cfgs.cbegin(); (cfg1 != cfgs.cend() && cfg2 != other.cfgs.cend()); ++cfg1, ++cfg2){
+		result |= cfg1->second.equal(cfg2->second);
+	}
+
+	return result;
+}
+
+int SalStreamDescription::globalEqual(const SalStreamDescription & other) const {
+	int result = SAL_MEDIA_DESCRIPTION_UNCHANGED;
 
 	if (type != other.type) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
@@ -542,6 +579,7 @@ int SalStreamDescription::equal(const SalStreamDescription & other) const {
 	if (rtcp_port != other.rtcp_port) result |= SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED;
 
 	if (multicast_role != other.multicast_role) result |= SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
+
 	return result;
 }
 
