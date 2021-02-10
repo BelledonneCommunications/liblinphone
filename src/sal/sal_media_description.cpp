@@ -633,7 +633,7 @@ const SalStreamDescription::tcap_map_t & SalMediaDescription::getTcaps() const {
 	return tcaps;
 }
 
-const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const int & idx) const {
+const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const unsigned int & idx) const {
 	SalStreamDescription::acap_map_t allAcaps;
 	const SalStreamDescription & stream = getStreamIdx(idx);
 	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) {
@@ -643,7 +643,7 @@ const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(
 	}
 	return allAcaps;
 }
-const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const int & idx) const {
+const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const unsigned int & idx) const {
 	SalStreamDescription::tcap_map_t allTcaps;
 	const SalStreamDescription & stream = getStreamIdx(idx);
 	if (stream == Utils::getEmptyConstRefObject<SalStreamDescription>()) {
@@ -711,7 +711,7 @@ unsigned int SalMediaDescription::getFreeIdx(const std::list<unsigned int> & l) 
 		return *std::max_element(l.cbegin(), l.cend()) + 1;
 	} else {
 		const auto elIdx = std::distance(lResult.cbegin(), gapIt);
-		const int startGap = *(std::next(l.begin(), elIdx));
+		const auto startGap = *(std::next(l.begin(), static_cast<int>(elIdx)));
 		return startGap + 1;
 	}
 
