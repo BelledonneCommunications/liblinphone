@@ -2155,7 +2155,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 			getParams()->enableVideoMulticast(false);
 		}
 	}
-	makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), q->isCapabilityNegotiationEnabled());
+	makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), false);
 	if (getParams()->videoEnabled() && !linphone_core_video_enabled(q->getCore()->getCCore())) {
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
