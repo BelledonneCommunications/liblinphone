@@ -119,6 +119,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
 		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
 
+		void replacePayloads(const std::list<PayloadType*> & newPayloads);
+
 		void addToSdpMediaDescription(belle_sdp_media_description_t * media_desc) const;
 
 		void mergeAcaps(const std::list<std::list<unsigned int>> & acaps);
