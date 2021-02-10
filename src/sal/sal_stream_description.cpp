@@ -250,9 +250,9 @@ std::list<SalStreamDescription::cfg_map::mapped_type> SalStreamDescription::crea
 						const auto & capIndex = capIndexValue.first;
 						cfgAcaps.push_back(capIndex);
 						const auto & capValue = capIndexValue.second;
-						int tag;
+						unsigned int tag;
 						char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
-						const auto nb = sscanf ( capValue.c_str(), "%d %256s inline:%128s %256s",
+						const auto nb = sscanf ( capValue.c_str(), "%u %256s inline:%128s %256s",
 									&tag,
 									name,
 									masterKey, parameters );
