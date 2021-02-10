@@ -89,14 +89,14 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		void addTcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & value);
 		const std::string & getTcap(const unsigned int & idx) const;
 		const SalStreamDescription::tcap_map_t & getTcaps() const;
-		const SalStreamDescription::tcap_map_t getAllTcapForStream(const int & idx) const;
+		const SalStreamDescription::tcap_map_t getAllTcapForStream(const unsigned int & idx) const;
 		unsigned int getFreeTcapIdx() const;
 
 		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
 		void addAcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & name, const std::string & value);
 		const SalStreamDescription::acap_t & getAcap(const unsigned int & idx) const;
 		const SalStreamDescription::acap_map_t & getAcaps() const;
-		const SalStreamDescription::acap_map_t getAllAcapForStream(const int & idx) const;
+		const SalStreamDescription::acap_map_t getAllAcapForStream(const unsigned int & idx) const;
 		unsigned int getFreeAcapIdx() const;
 
 		std::string name;
