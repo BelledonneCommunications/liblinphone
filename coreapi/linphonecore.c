@@ -7847,9 +7847,13 @@ bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore 
 		if (ms_zrtp_available() && !lc->zrtp_not_available_simulation) {
 			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
 		}
-		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+		encryption_list = bctbx_list_append(encryption_list, bctbx_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
 	} else {
-		encryption_list = supported_encryptions;
+		encryption_list = bctbx_list_copy_with_data(supported_encryptions, (bctbx_list_copy_func)bctbx_strdup);
+	}
+
+	if (supported_encryptions) {
+		bctbx_list_free_with_data(supported_encryptions, (bctbx_list_free_func)bctbx_free);
 	}
 	return encryption_list;
 }
@@ -7862,7 +7866,11 @@ bool_t linphone_core_is_media_encryption_supported(const LinphoneCore *lc, Linph
 
 	bctbx_list_t * encryption_list = linphone_core_get_supported_media_encryptions(lc);
 	bctbx_list_t *enc = bctbx_list_find_custom(encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(menc));
-	return (enc != NULL);
+	bool supported = (enc != NULL);
+	if (encryption_list) {
+		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
+	}
+	return supported;
 }
 
 void linphone_core_init_default_params(LinphoneCore*lc, LinphoneCallParams *params) {
