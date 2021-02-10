@@ -1294,6 +1294,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			md->addTcap(idx, mediaProto);
 		}
+
+		bctbx_list_free(encs);
 	}
 
 	if (mainAudioStreamIndex != -1){
