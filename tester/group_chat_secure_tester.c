@@ -2492,6 +2492,12 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_1(const int cu
 			if (marieOneToOneCr) {
 				int marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
 				BC_ASSERT_EQUAL(marie_messages, 1, int , "%d");
+
+				LinphoneChatMessage *exhume_answer_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "Nooooooooooooo !");
+				linphone_chat_message_send(exhume_answer_message);
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+				linphone_chat_message_unref(exhume_answer_message);
 			}
 		}
 
@@ -2601,6 +2607,12 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_2(const int cu
 			if (paulineOneToOneCr2) {
 				int pauline_messages = linphone_chat_room_get_history_size(paulineOneToOneCr2);
 				BC_ASSERT_EQUAL(pauline_messages, 2, int , "%d");
+
+				LinphoneChatMessage *exhume_answer_message = linphone_chat_room_create_message_from_utf8(paulineOneToOneCr2, "Your focus determines your reality.");
+				linphone_chat_message_send(exhume_answer_message);
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageSent, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageReceived, 2, 5000));
+				linphone_chat_message_unref(exhume_answer_message);
 			}
 		}
 
@@ -2849,6 +2861,12 @@ static void exhume_group_chat_lime_x3dh_one_to_one_chat_room_base_4(const int cu
 			if (marieOneToOneCr) {
 				int marie_messages = linphone_chat_room_get_history_size(marieOneToOneCr);
 				BC_ASSERT_EQUAL(marie_messages, 1, int , "%d");
+
+				LinphoneChatMessage *exhume_answer_message = linphone_chat_room_create_message_from_utf8(marieOneToOneCr, "In my experience there is no such thing as luck.");
+				linphone_chat_message_send(exhume_answer_message);
+				BC_ASSERT_TRUE(wait_for_list(coresList, &marie->stat.number_of_LinphoneMessageSent, 2, 5000));
+				BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneMessageReceived, 2, 5000));
+				linphone_chat_message_unref(exhume_answer_message);
 			}
 		}
 

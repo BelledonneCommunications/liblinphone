@@ -830,6 +830,11 @@ void ClientGroupChatRoomPrivate::onLocallyExhumedConference (const Address &remo
 	
 	q->setState(ConferenceInterface::State::Created);
 
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->unsubscribe(); // Required for next subscribe to be sent
+	q->getConference()->setLastNotify(0);
+	q->getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(q->getConference())->eventHandler.get());
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->subscribe(q->getConferenceId());
+
 	lInfo() << "Found " << pendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : pendingExhumeMessages) {
 		chatMessage->getPrivate()->setChatRoom(q->getSharedFromThis());
