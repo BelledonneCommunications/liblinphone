@@ -415,6 +415,24 @@ bool SalMediaDescription::operator!=(const SalMediaDescription & other) const {
 	return !(*this == other);
 }
 
+int SalMediaDescription::compareToActualConfiguration(const SalMediaDescription & otherMd) const {
+	int result = globalEqual(otherMd);
+	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
+		if (!stream1->enabled() && !stream2->enabled()) continue;
+		result |= stream1->compareToActualConfiguration(*stream2);
+	}
+	return result;
+}
+
+int SalMediaDescription::compareToChosenConfiguration(const SalMediaDescription & otherMd) const {
+	int result = globalEqual(otherMd);
+	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
+		if (!stream1->enabled() && !stream2->enabled()) continue;
+		result |= stream1->compareToChosenConfiguration(*stream2);
+	}
+	return result;
+}
+
 int SalMediaDescription::equal(const SalMediaDescription & otherMd) const {
 	int result = globalEqual(otherMd);
 	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
@@ -474,8 +492,12 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("FORCE_STREAM_RECONSTRUCTION ");
 		result &= ~SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED) {
+		out.append("STREAM_CONFIGURATION_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
+	}
 	if (result){
-		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::print_differences(), fix it");
+		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");
 	}
 	if (out.empty()) out = "NONE";
 	return out;
