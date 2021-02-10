@@ -76,6 +76,8 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool operator!=(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
 		int globalEqual(const SalMediaDescription & otherMd) const;
+		int compareToChosenConfiguration(const SalMediaDescription & otherMd) const;
+		int compareToActualConfiguration(const SalMediaDescription & otherMd) const;
 
 		static const std::string printDifferences(int result);
 
