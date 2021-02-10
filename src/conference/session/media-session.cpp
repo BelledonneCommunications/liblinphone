@@ -215,7 +215,7 @@ void MediaSessionPrivate::accepted () {
 				if (localDesc->hasCapabilityNegotiation()) {
 					// If no ICE session or checklist has completed, then send re-INVITE
 					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && getStreamsGroup().getIceService().hasCompletedCheckList())) {
-						if (*md != *localDesc) {
+						if (md->compareToActualConfiguration(*localDesc) != SAL_MEDIA_DESCRIPTION_UNCHANGED) {
 							MediaSessionParams newParams(*getParams());
 							q->update(&newParams);
 						}

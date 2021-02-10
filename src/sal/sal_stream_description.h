@@ -76,6 +76,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
+		int compareToChosenConfiguration(const SalStreamDescription & other) const;
+		int compareToActualConfiguration(const SalStreamDescription & other) const;
 		int equal(const SalStreamDescription & other) const;
 		bool operator==(const SalStreamDescription & other) const;
 		bool operator!=(const SalStreamDescription & other) const;
@@ -189,6 +191,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void sdpParseMediaCryptoParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) const;
 		void sdpParseMediaIceParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc);
 
+		int globalEqual(const SalStreamDescription & other) const;
+		int compareConfigurations(const SalStreamDescription & other, const SalStreamDescription::cfg_map::key_type & thisKey, const SalStreamDescription::cfg_map::key_type & otherKey) const;
 };
 
 LINPHONE_END_NAMESPACE
