@@ -198,6 +198,10 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			} else {
 				expectedEncryption =  LinphoneMediaEncryptionNone;
 			}
+
+			if (callerEncs) {
+				bctbx_list_free_with_data(callerEncs, (bctbx_list_free_func)bctbx_free);
+			}
 		} else {
 			expectedEncryption = linphone_core_get_media_encryption(caller->lc);
 		}
@@ -248,6 +252,10 @@ static void simple_call_with_capability_negotiations(void) {
 		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 		linphone_core_set_supported_media_encryptions(marie->lc,encryption_list);
 		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
+	}
+
+	if (encryption_list) {
+		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
 	}
 
 	call_with_encryption_base(marie, pauline, optionalEncryption, TRUE, TRUE);

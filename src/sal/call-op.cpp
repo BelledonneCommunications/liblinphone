@@ -435,6 +435,7 @@ void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				mRemoteBody = move(sdpBody);
+				belle_sip_object_unref(sdp);
 			} // If no SDP in response, what can we do?
 		}
 		// Process sdp in any case to reset result media description
