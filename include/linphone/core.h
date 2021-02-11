@@ -2431,6 +2431,26 @@ LINPHONE_PUBLIC const char *linphone_core_get_nat_address(const LinphoneCore *co
 LINPHONE_PUBLIC void linphone_core_set_nat_policy(LinphoneCore *core, LinphoneNatPolicy *policy);
 
 /**
+ * Artificially cause the relay path to be selected when ICE is used.
+ * This is mainly a function for test, for example to validate that the relay service (ever TURN or media-aware SIP proxy)
+ * is working as expected. Indeed, in many cases a path through host or server reflexive candidate will be found by ICE,
+ * which makes difficult to make sure that the relay service is working as expected.
+ * @param[in] lc #LinphoneCore object
+ * @param[in] enable boolean value
+ * @ingroup network_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *core, bool_t enable);
+
+/**
+ * Indicates whether the ICE relay path is forcibly selected.
+ * @param[in] lc #LinphoneCore object
+ * @return a boolean value indicating whether forced relay is enabled.
+ * @ingroup network_parameters
+ * @see linphone_core_enable_forced_ice_relay().
+ */
+LINPHONE_PUBLIC bool_t linphone_core_forced_ice_relay_enabled(const LinphoneCore *core);
+
+/**
  * Get The policy that is used to pass through NATs/firewalls.
  * It may be overridden by a NAT policy for a specific proxy config.
  * @param core #LinphoneCore object
