@@ -173,6 +173,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		static bool isRecvOnly(const PayloadType *p);
 		static bool isSamePayloadType(const PayloadType *p1, const PayloadType *p2);
 		static bool isSamePayloadList(const std::list<PayloadType*> & l1, const std::list<PayloadType*> & l2);
+		static std::string getSetupAttributeForDtlsRole(const SalDtlsRole & role);
+		static SalDtlsRole getDtlsRoleFromSetupAttribute(const std::string setupAtte);
 
 		bool isBundleOnly() const {
 			return bundle_only;

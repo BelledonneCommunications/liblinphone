@@ -292,8 +292,10 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 							const auto & capValue = capNameValue.second;
 							if (capName.compare("fingerprint") == 0) {
 								cfgAcaps.push_back(capIndex);
-								cfg.dtls_role = SalDtlsRoleUnset;
 								cfg.dtls_fingerprint = capValue;
+							} else if (capName.compare("setup") == 0) {
+								cfg.dtls_role = SalStreamConfiguration::getDtlsRoleFromSetupAttribute(capValue);
+								cfgAcaps.push_back(capIndex);
 							} else if (capName.compare("ssrc") == 0) {
 
 								unsigned int rtpSsrc;
@@ -835,26 +837,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	}
 
 	/* insert DTLS session attribute if needed */
-	if ((actualCfg.proto == SalProtoUdpTlsRtpSavpf) || (actualCfg.proto == SalProtoUdpTlsRtpSavp)) {
-		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",actualCfg.rtp_ssrc,L_STRING_TO_C(actualCfg.rtcp_cname));
-		if ((actualCfg.dtls_role != SalDtlsRoleInvalid) && (!actualCfg.dtls_fingerprint.empty())) {
-			switch(actualCfg.dtls_role) {
-				case SalDtlsRoleIsClient:
-					belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup","active"));
-					break;
-				case SalDtlsRoleIsServer:
-					belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup","passive"));
-					break;
-				case SalDtlsRoleUnset:
-				default:
-					belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup","actpass"));
-					break;
-			}
-			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("fingerprint",L_STRING_TO_C(actualCfg.dtls_fingerprint)));
-		}
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
-		ms_free(ssrc_attribute);
-	}
+	addDtlsAttributesToMediaDesc(actualCfg, media_desc);
 
 	/* insert zrtp-hash attribute if needed */
 	if (actualCfg.haveZrtpHash == 1) {
@@ -987,6 +970,21 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	}
 
 	return media_desc;
+}
+
+void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const {
+	if ((cfg.proto == SalProtoUdpTlsRtpSavpf) || (cfg.proto == SalProtoUdpTlsRtpSavp)) {
+		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",cfg.rtp_ssrc,L_STRING_TO_C(cfg.rtcp_cname));
+		if ((cfg.dtls_role != SalDtlsRoleInvalid) && (!cfg.dtls_fingerprint.empty())) {
+			const auto setupAttrValue = SalStreamConfiguration::getSetupAttributeForDtlsRole(cfg.dtls_role);
+			if (!setupAttrValue.empty()) {
+				belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("setup",setupAttrValue.c_str()));
+			}
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("fingerprint",L_STRING_TO_C(cfg.dtls_fingerprint)));
+		}
+		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("ssrc",ssrc_attribute));
+		ms_free(ssrc_attribute);
+	}
 }
 
 bool SalStreamDescription::sdpParseRtcpFbParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) {
