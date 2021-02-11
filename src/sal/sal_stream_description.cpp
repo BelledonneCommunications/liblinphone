@@ -67,15 +67,15 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
-	fillStreamDescription(salMediaDesc, media_desc);
+	fillStreamDescriptionFromSdp(salMediaDesc, media_desc);
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) : SalStreamDescription(salMediaDesc, media_desc) {
 	// Create potential configurations
-	fillPotentialConfigurations(attrs);
+	fillPotentialConfigurationsFromPotentialCfgGraph(attrs.cfgs);
 }
 
-void SalStreamDescription::fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -129,34 +129,232 @@ void SalStreamDescription::fillStreamDescription(const SalMediaDescription * sal
 	createActualCfg(salMediaDesc, media_desc);
 }
 
-void SalStreamDescription::fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
+void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
 
 	// Populate stream global parameters and actual configuration
-	fillStreamDescription(salMediaDesc, media_desc);
+	fillStreamDescriptionFromSdp(salMediaDesc, media_desc);
 
 	if (salMediaDesc->hasCapabilityNegotiation()) {
+
+		for (const auto & acap : attrs.acaps) {
+			acaps[acap->index] = std::make_pair(acap->name, acap->value);
+		}
+
+		for (const auto & tcap : attrs.tcaps) {
+			tcaps[tcap->index] = tcap->value;
+		}
+
 		// Create potential configurations
-		fillPotentialConfigurations(attrs);
+		fillPotentialConfigurationsFromPotentialCfgGraph(attrs.cfgs);
 	}
 
 }
 
-void SalStreamDescription::fillPotentialConfigurations(const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
-
-	for (const auto & acap : attrs.acaps) {
-		acaps[acap->index] = std::make_pair(acap->name, acap->value);
-	}
-
-	for (const auto & tcap : attrs.tcaps) {
-		tcaps[tcap->index] = tcap->value;
-	}
+void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs) {
 
 	// Iterate over the potential configuration
-	for (const auto & SDPMediaDescriptionCfgPair : attrs.cfgs) {
+	for (const auto & SDPMediaDescriptionCfgPair : sdpCfgs) {
 		// This is the configuration ondex
 		const auto & idx = SDPMediaDescriptionCfgPair.first;
-		const auto potentialCfgList = createPotentialConfiguration(SDPMediaDescriptionCfgPair);
-		for (const auto & cfg : potentialCfgList) {
+
+		const auto & cfgAttributeList = SDPMediaDescriptionCfgPair.second;
+
+		tcap_map_t protoMap;
+		for (const auto & tAttr : cfgAttributeList.tcap) {
+			const auto & cap = tAttr.cap.lock();
+			if (cap) {
+				protoMap[cap->index] = cap->value;
+			} else {
+				lError() << "Unable to retrieve transport capability from attribute list";
+			}
+		}
+
+		std::list<acap_map_t> attrList;
+		for (const auto & aAttrList : cfgAttributeList.acap) {
+			acap_map_t attrs;
+			for (const auto & aAttr : aAttrList) {
+				const auto & cap = aAttr.cap.lock();
+				if (cap) {
+					const auto & capIdx = cap->index;
+					const auto & capValue = cap->value;
+					const auto & capName = cap->name;
+					attrs.insert({capIdx, std::make_pair(capName, capValue)});
+				} else {
+					lError() << "Unable to retrieve transport capability from attribute list";
+				}
+			}
+			if (!attrs.empty()) {
+				attrList.push_back(attrs);
+			}
+		}
+
+		createPotentialConfiguration(idx, protoMap, attrList, cfgAttributeList.delete_session_attributes, cfgAttributeList.delete_media_attributes);
+	}
+}
+
+void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx, const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes) {
+
+	auto baseCfg = getActualConfiguration();
+	baseCfg.index = idx;
+	baseCfg.delete_media_attributes = delete_media_attributes;
+	baseCfg.delete_session_attributes = delete_session_attributes;
+
+	std::list<SalStreamDescription::cfg_map::mapped_type> cfgList;
+	if (protoMap.empty()) {
+		for (const auto & attrs : attrList) {
+			auto cfg = baseCfg;
+			std::list<unsigned int> cfgAcaps;
+			for (const auto & attr : attrs) {
+				const auto & capIndex = attr.first;
+				cfgAcaps.push_back(capIndex);
+			}
+			cfg.acapIndexes.push_back(cfgAcaps);
+			cfgList.push_back(cfg);
+		}
+	} else {
+		for (const auto & protoEl : protoMap) {
+			const auto & protoIdx = protoEl.first;
+			const auto & protoValue = protoEl.second;
+			const auto proto = string_to_sal_media_proto(protoValue.c_str());
+			baseCfg.tcapIndex = protoIdx;
+			baseCfg.proto = proto;
+			std::string protoString = (proto == SalProtoOther) ? protoValue : std::string();
+			std::transform(protoString.begin(), protoString.end(), protoString.begin(), ::toupper);
+			baseCfg.proto_other = protoString;
+			switch (proto) {
+				case SalProtoRtpAvpf:
+				case SalProtoRtpSavpf:
+				case SalProtoUdpTlsRtpSavpf:
+					baseCfg.enableAvpfForStream();
+					break;
+				default:
+					break;
+			}
+
+			for (const auto & attrs : attrList) {
+				switch (proto) {
+					case SalProtoRtpSavpf:
+					case SalProtoRtpSavp:
+					{
+						auto cfg = baseCfg;
+						for (const auto & attr : attrs) {
+							std::list<unsigned int> cfgAcaps;
+							const auto & capNameValue = attr.second;
+							const auto & capName = capNameValue.first;
+							// For SRTP, only crypto attributes are valid in configurations
+							if (capName.compare("crypto") == 0) {
+								const auto & capIndex = attr.first;
+								cfgAcaps.push_back(capIndex);
+								cfg.acapIndexes.push_back(cfgAcaps);
+								const auto & capValue = capNameValue.second;
+								unsigned int tag;
+								char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
+								const auto nb = sscanf ( capValue.c_str(), "%u %256s inline:%128s %256s",
+											&tag,
+											name,
+											masterKey, parameters );
+
+								if ( nb >= 3 ) {
+									MSCryptoSuiteNameParams np;
+									np.name=name;
+									np.params=parameters[0]!='\0' ? parameters : NULL;
+									const auto cs=ms_crypto_suite_build_from_name_params(&np);
+
+									if (cs==MS_CRYPTO_SUITE_INVALID){
+										ms_warning ( "Failed to parse crypto-algo: '%s'", name);
+									} else {
+										SalSrtpCryptoAlgo cryptoEl;
+										cryptoEl.tag = tag;
+										cryptoEl.master_key = masterKey;
+										// Erase all characters after | if it is found
+										size_t sep = cryptoEl.master_key.find("|");
+										if (sep != std::string::npos) cryptoEl.master_key.erase(cryptoEl.master_key.begin() + static_cast<long>(sep), cryptoEl.master_key.end());
+										cryptoEl.algo = cs;
+										cfg.crypto.push_back(cryptoEl);
+									}
+								} else {
+									lError() << "Unable to extract cryto infor,ations from crypto argument value " << capValue;
+								}
+							}
+						}
+						cfgList.push_back(cfg);
+					}
+						break;
+					case SalProtoUdpTlsRtpSavp:
+					case SalProtoUdpTlsRtpSavpf:
+					{
+						std::list<unsigned int> cfgAcaps;
+						auto cfg = baseCfg;
+						for (const auto & attr : attrs) {
+							const auto & capIndex = attr.first;
+							const auto & capNameValue = attr.second;
+							const auto & capName = capNameValue.first;
+							const auto & capValue = capNameValue.second;
+							if (capName.compare("fingerprint") == 0) {
+								cfgAcaps.push_back(capIndex);
+								cfg.dtls_role = SalDtlsRoleUnset;
+								cfg.dtls_fingerprint = capValue;
+							} else if (capName.compare("ssrc") == 0) {
+
+								unsigned int rtpSsrc;
+								char rtcpName[256]={0};
+								const auto nb = sscanf ( capValue.c_str(), "%u cname:%s", &rtpSsrc, rtcpName);
+								if (nb == 2) {
+									cfgAcaps.push_back(capIndex);
+									cfg.rtp_ssrc = rtpSsrc;
+									cfg.rtcp_cname = rtcpName;
+								} else {
+									lError() << "Unable to retrieve rtp ssrc and rtcp cname from atribute " << capValue;
+								}
+							}
+						}
+						cfg.acapIndexes.push_back(cfgAcaps);
+						cfgList.push_back(cfg);
+					}
+						break;
+					case SalProtoRtpAvpf:
+					case SalProtoRtpAvp:
+					{
+						for (const auto & attr : attrs) {
+							const auto & capNameValue = attr.second;
+							const auto & capName = capNameValue.first;
+							auto cfg = baseCfg;
+							std::list<unsigned int> cfgAcaps;
+							if (capName.compare("zrtp-hash") == 0) {
+								const auto & capIndex = attr.first;
+								cfgAcaps.push_back(capIndex);
+								cfg.haveZrtpHash = true;
+								const auto & capValue = capNameValue.second;
+								memcpy(cfg.zrtphash, (uint8_t *)capValue.c_str(), sizeof(cfg.zrtphash));
+							}
+							cfg.acapIndexes.push_back(cfgAcaps);
+							cfgList.push_back(cfg);
+						}
+					}
+						break;
+					default:
+					{
+						lInfo() << "Adding acaps to potential configuration with transport protocol " << proto;
+						auto cfg = baseCfg;
+						std::list<unsigned int> cfgAcaps;
+						for (const auto & attr : attrs) {
+							const auto & capIndex = attr.first;
+							cfgAcaps.push_back(capIndex);
+						}
+						cfg.acapIndexes.push_back(cfgAcaps);
+						cfgList.push_back(cfg);
+					}
+						break;
+				}
+			}
+		}
+	}
+
+	for (const auto & cfg : cfgList) {
+		const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg](const auto & currentCfg) {
+			return (currentCfg.second == cfg);
+		});
+		if (sameCfg == cfgs.cend()) {
 			auto ret = cfgs.insert(std::make_pair(idx, cfg));
 			const auto & success = ret.second;
 			if (success == false) {
@@ -175,156 +373,6 @@ void SalStreamDescription::fillPotentialConfigurations(const SalStreamDescriptio
 			}
 		}
 	}
-}
-
-std::list<SalStreamDescription::cfg_map::mapped_type> SalStreamDescription::createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & SDPMediaDescriptionCfgPair) {
-
-	const auto & idx = SDPMediaDescriptionCfgPair.first;
-	const auto & cfgAttributeList = SDPMediaDescriptionCfgPair.second;
-
-	std::map<unsigned int, std::pair<SalMediaProto, std::string>> protoMap;
-	for (const auto & tAttr : cfgAttributeList.tcap) {
-		const auto & cap = tAttr.cap.lock();
-		if (cap) {
-			const auto & protoValue = string_to_sal_media_proto(cap->value.c_str());
-
-			std::string protoString = (protoValue == SalProtoOther) ? cap->value : std::string();
-			std::transform(protoString.begin(), protoString.end(), protoString.begin(), ::toupper);
-			protoMap[cap->index] = std::make_pair(protoValue, protoString);
-		} else {
-			lError() << "Unable to retrieve transport capability from attribute list";
-		}
-	}
-
-	std::list<std::multimap<std::string, std::pair<unsigned int, std::string>>> attrList;
-	for (const auto & aAttrList : cfgAttributeList.acap) {
-		std::multimap<std::string, std::pair<unsigned int, std::string>> attrs;
-		for (const auto & aAttr : aAttrList) {
-			const auto & cap = aAttr.cap.lock();
-			if (cap) {
-				const auto & capIdx = cap->index;
-				const auto & capValue = cap->value;
-				const auto & capName = cap->name;
-				attrs.insert({capName, std::make_pair(capIdx, capValue)});
-			} else {
-				lError() << "Unable to retrieve transport capability from attribute list";
-			}
-		}
-		if (!attrs.empty()) {
-			attrList.push_back(attrs);
-		}
-	}
-
-	std::list<SalStreamDescription::cfg_map::mapped_type> cfgList;
-	for (const auto & protoEl : protoMap) {
-		const auto & protoIdx = protoEl.first;
-		const auto & protoPair = protoEl.second;
-		auto baseCfg = getActualConfiguration();
-		baseCfg.index = idx;
-		baseCfg.delete_media_attributes = cfgAttributeList.delete_media_attributes;
-		baseCfg.delete_session_attributes = cfgAttributeList.delete_session_attributes;
-		const auto proto = protoPair.first;
-		baseCfg.tcapIndex = protoIdx;
-		baseCfg.proto = proto;
-		baseCfg.proto_other = protoPair.second;
-		switch (proto) {
-			case SalProtoRtpAvpf:
-			case SalProtoRtpSavpf:
-			case SalProtoUdpTlsRtpSavpf:
-				baseCfg.enableAvpfForStream();
-				break;
-			default:
-				break;
-		}
-
-		for (const auto & attrs : attrList) {
-			switch (proto) {
-				case SalProtoRtpSavpf:
-				case SalProtoRtpSavp:
-				{
-					auto cfg = baseCfg;
-					std::list<unsigned int> cfgAcaps;
-					const auto cryptoAttrIts = attrs.equal_range("crypto");
-					for (auto it=cryptoAttrIts.first; it!=cryptoAttrIts.second; ++it) {
-						const auto & capIndexValue = it->second;
-						const auto & capIndex = capIndexValue.first;
-						cfgAcaps.push_back(capIndex);
-						const auto & capValue = capIndexValue.second;
-						unsigned int tag;
-						char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
-						const auto nb = sscanf ( capValue.c_str(), "%u %256s inline:%128s %256s",
-									&tag,
-									name,
-									masterKey, parameters );
-
-						if ( nb >= 3 ) {
-							MSCryptoSuiteNameParams np;
-							np.name=name;
-							np.params=parameters[0]!='\0' ? parameters : NULL;
-							const auto cs=ms_crypto_suite_build_from_name_params(&np);
-
-							if (cs==MS_CRYPTO_SUITE_INVALID){
-								ms_warning ( "Failed to parse crypto-algo: '%s'", name);
-							} else {
-								SalSrtpCryptoAlgo cryptoEl;
-								cryptoEl.tag = tag;
-								cryptoEl.master_key = masterKey;
-								// Erase all characters after | if it is found
-								size_t sep = cryptoEl.master_key.find("|");
-								if (sep != std::string::npos) cryptoEl.master_key.erase(cryptoEl.master_key.begin() + static_cast<long>(sep), cryptoEl.master_key.end());
-								cryptoEl.algo = cs;
-								cfg.crypto.push_back(cryptoEl);
-							}
-						} else {
-							lError() << "Unable to extract cryto infor,ations from crypto argument value " << capValue;
-						}
-					}
-					cfg.acapIndexes.push_back(cfgAcaps);
-					cfgList.push_back(cfg);
-				}
-					break;
-				case SalProtoUdpTlsRtpSavp:
-				case SalProtoUdpTlsRtpSavpf:
-				{
-					const auto fingerprintAttrIts = attrs.equal_range("fingerprint");
-					for (auto it=fingerprintAttrIts.first; it!=fingerprintAttrIts.second; ++it) {
-						const auto & capIndexValue = it->second;
-						auto cfg = baseCfg;
-						const auto & capIndex = capIndexValue.first;
-						std::list<unsigned int> cfgAcaps{capIndex};
-						cfg.acapIndexes.push_back(cfgAcaps);
-						const auto & capValue = capIndexValue.second;
-						cfg.dtls_role = SalDtlsRoleUnset;
-						cfg.dtls_fingerprint = capValue;
-						cfgList.push_back(cfg);
-					}
-				}
-					break;
-				case SalProtoRtpAvpf:
-				case SalProtoRtpAvp:
-				{
-					const auto zrtphashAttrIts = attrs.equal_range("zrtp-hash");
-					for (auto it=zrtphashAttrIts.first; it!=zrtphashAttrIts.second; ++it) {
-						const auto & capIndexValue = it->second;
-						auto cfg = baseCfg;
-						const auto & capIndex = capIndexValue.first;
-						std::list<unsigned int> cfgAcaps{capIndex};
-						cfg.acapIndexes.push_back(cfgAcaps);
-						const auto & capValue = capIndexValue.second;
-						cfg.haveZrtpHash = true;
-						memcpy(cfg.zrtphash, (uint8_t *)capValue.c_str(), sizeof(cfg.zrtphash));
-						cfgList.push_back(cfg);
-					}
-				}
-					break;
-				default:
-					lInfo() << "No acap added to potential configuration with transport protocol " << proto;
-					break;
-			}
-		}
-	}
-
-	return cfgList;
 
 }
 
@@ -1370,5 +1418,39 @@ const SalStreamDescription::acap_map_t & SalStreamDescription::getAcaps() const 
 const SalStreamDescription::tcap_map_t & SalStreamDescription::getTcaps() const {
 	return tcaps;
 }
+
+unsigned int SalStreamDescription::getFreeCfgIdx() const {
+	std::list<unsigned int> cfgIndexes;
+	auto addToIndexList = [&cfgIndexes] (const auto & cfg) {
+		cfgIndexes.push_back(cfg.first);
+	};
+	const auto & streamCfgs = getAllCfgs();
+	std::for_each(streamCfgs.begin(), streamCfgs.end(), addToIndexList);
+
+	return SalStreamDescription::getFreeIdx(cfgIndexes);
+}
+
+unsigned int SalStreamDescription::getFreeIdx(const std::list<unsigned int> & l) {
+	auto lCopy = l;
+	// Sort elements
+	lCopy.sort();
+	// Delete duplicates
+	lCopy.unique();
+	decltype(lCopy) lResult(lCopy.begin(), std::prev(lCopy.end(), 1));
+	// Compute the difference between consecutive elements - if any of them is not equal to 1, then a free index is found
+	std::transform (std::next(lCopy.begin(), 1), lCopy.end(), lResult.begin(), lResult.begin(), std::minus<int>());
+	const auto & gapIt = std::find_if_not(lResult.cbegin(), lResult.cend(), [] (const unsigned int & el) { return (el == 1);});
+	if (gapIt == lResult.cend()) {
+		// No gap found - then return max element + 1
+		return *std::max_element(l.cbegin(), l.cend()) + 1;
+	} else {
+		const auto elIdx = std::distance(lResult.cbegin(), gapIt);
+		const auto startGap = *(std::next(l.begin(), static_cast<int>(elIdx)));
+		return startGap + 1;
+	}
+
+	return 0;
+}
+
 
 LINPHONE_END_NAMESPACE
