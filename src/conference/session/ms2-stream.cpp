@@ -254,29 +254,11 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 			if (dtlsEncryptionFound) {
 				const std::string fingerprintAttrName("fingerprint");
 
-				if (mDtlsFingerPrint.empty()) {
-					/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
-					/* This will parse the directory to find a matching fingerprint or generate it if not found */
-					/* returned string must be freed */
-					char *certificate = nullptr;
-					char *key = nullptr;
-					char *fingerprint = nullptr;
-
-					sal_certificates_chain_parse_directory(&certificate, &key, &fingerprint,
-						linphone_core_get_user_certificates_path(getCCore()), "linphone-dtls-default-identity", SAL_CERTIFICATE_RAW_FORMAT_PEM, true, true);
-					if (fingerprint) {
-						if (getMediaSessionPrivate().getDtlsFingerprint().empty()){
-							getMediaSessionPrivate().setDtlsFingerprint(fingerprint);
-						}
-						mDtlsFingerPrint = fingerprint;
-						ms_free(fingerprint);
-					}
-					if (key) {
-						ms_free(key);
-					}
-					if (certificate) {
-						ms_free(certificate);
-					}
+				MediaStream *ms = getMediaStream();
+				if (!ms->sessions.dtls_context) {
+					initDtlsParams (ms);
+					// Copy newly created dtls context into mSessions
+					media_stream_reclaim_sessions(ms, &mSessions);
 				}
 				addAcapToStream(localMediaDesc, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
 
@@ -641,6 +623,12 @@ void MS2Stream::configureRtpSession(RtpSession *session){
 
 void MS2Stream::setupDtlsParams (MediaStream *ms) {
 	if (getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionDTLS) {
+		initDtlsParams (ms);
+	}
+}
+
+void MS2Stream::initDtlsParams (MediaStream *ms) {
+	if (ms) {
 		MSDtlsSrtpParams dtlsParams = { 0 };
 		
 		/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
