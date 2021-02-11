@@ -377,6 +377,10 @@ static void migration_test(void) {
 }
 
 static void file_transfer_test(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_file_transfer_") {
+	const bctbx_list_t * contents = NULL;
+	LinphoneContent * content = NULL;
+	LinphoneChatMessage *msg = NULL;
+	const LinphoneAddress *confAddr = NULL;
 	enable_encryption(encryptionModule);
 
 	// create a user Marie
@@ -428,6 +432,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	bctbx_free(local_filename);
 	local_filename = bctbx_strdup_printf("%s_pauline_receive_file_%s.dump", basename.data(), random_id);
 	auto receivePaulineFilepath = bc_tester_file(local_filename);
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
 	bctbx_free(local_filename);
 	if (createUsers == true) { // creating users, make sure we do not reuse local files
 		unlink(pauline_rc); // make sure we're not reusing a rc file
@@ -467,15 +472,17 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
 	const char *initialSubject = "Colleagues";
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
+	LinphoneChatRoom *paulineCr = NULL;
 	if(!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	confAddr = linphone_chat_room_get_conference_address(marieCr);
+	if(!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
-	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
 
 	if(!BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 	// send file
-	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
+	
 	_send_file(marieCr, sendFilepath, nullptr, false);
 
 	// check pauline got it
@@ -492,12 +499,12 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	BC_ASSERT_FALSE(is_encrypted(sendFilepath));
 
 	// Get the file using the linphone content API
-	LinphoneChatMessage *msg = pauline->stat.last_received_chat_message;
+	msg = pauline->stat.last_received_chat_message;
 	if(!BC_ASSERT_PTR_NOT_NULL(msg)) goto end;
-	auto contents = linphone_chat_message_get_contents(msg);
+	contents = linphone_chat_message_get_contents(msg);
 	BC_ASSERT_PTR_NOT_NULL(contents);
 	BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
-	auto content = (LinphoneContent *)bctbx_list_get_data(contents);
+	content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
 	BC_ASSERT_NSTRING_EQUAL(linphone_content_get_file_path(content), receivePaulineFilepath, strlen(receivePaulineFilepath)); // just to check we're on the correct path
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {

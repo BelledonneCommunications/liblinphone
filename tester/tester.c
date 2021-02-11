@@ -2693,6 +2693,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
 		}else { /* otherwise, final status shall stick to caller core parameter */
 			const LinphoneCallParams* call_param = linphone_call_get_current_params(callee_call);
+			if(!BC_ASSERT_PTR_NOT_NULL(call_param)) return FALSE;
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
 			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
@@ -2715,6 +2716,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 	if (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS ) {
 		LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
+		if(!BC_ASSERT_PTR_NOT_NULL(call)) return FALSE;
 		AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
 #ifdef VIDEO_ENABLED
 		VideoStream *vstream = (VideoStream *)linphone_call_get_stream(call, LinphoneStreamTypeVideo);
