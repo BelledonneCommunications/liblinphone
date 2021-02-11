@@ -4667,6 +4667,7 @@ LINPHONE_PUBLIC LinphoneImEncryptionEngine * linphone_core_get_im_encryption_eng
  * @param core #LinphoneCore object @notnil
  * @param content_type The content type to check @notnil
  * @return A boolean value telling whether the specified content type is supported or not.
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_content_type_supported(const LinphoneCore *core, const char *content_type);
 
@@ -4675,6 +4676,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_content_type_supported(const LinphoneCor
  * It is the application responsibility to handle it correctly afterwards.
  * @param core #LinphoneCore object @notnil
  * @param content_type The content type to add support for @notnil
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC void linphone_core_add_content_type_support(LinphoneCore *core, const char *content_type);
 
@@ -4683,6 +4685,7 @@ LINPHONE_PUBLIC void linphone_core_add_content_type_support(LinphoneCore *core, 
  * It is the application responsibility to handle it correctly afterwards.
  * @param core LinphoneCore object @notnil
  * @param content_type The content type to remove support for @notnil
+ * @ingroup chatroom
  */
 LINPHONE_PUBLIC void linphone_core_remove_content_type_support(LinphoneCore *core, const char *content_type);
 
