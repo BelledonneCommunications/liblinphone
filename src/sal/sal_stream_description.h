@@ -177,6 +177,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);
 
+		void addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const;
+
 		void setupRtcpFb(const bool nackEnabled, const bool tmmbrEnabled, const bool implicitRtcpFb);
 		void setupRtcpXr(const OrtpRtcpXrConfiguration & rtcpXr);
 		void setDirection(const SalStreamDir & newDir);
