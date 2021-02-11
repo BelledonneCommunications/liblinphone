@@ -80,7 +80,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	dir = SalStreamSendRecv;
 
-	potentialCfgGraph.processSessionDescription(sdp);
+	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
 
 	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
 	capabilityNegotiationAllowed = !potentialCfgGraph.empty();
@@ -599,7 +599,6 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 
 void SalMediaDescription::addTcap(const unsigned int & idx, const std::string & value) {
 	tcaps[idx] = value;
-	potentialCfgGraph.addGlobalTcap(idx, value);
 }
 
 const std::string & SalMediaDescription::getTcap(const unsigned int & idx) const {
@@ -613,7 +612,6 @@ const std::string & SalMediaDescription::getTcap(const unsigned int & idx) const
 
 void SalMediaDescription::addAcap(const unsigned int & idx, const std::string & name, const std::string & value) {
 	acaps[idx] = std::make_pair(name, value);
-	potentialCfgGraph.addGlobalAcap(idx, name, value);
 }
 
 const SalStreamDescription::acap_t & SalMediaDescription::getAcap(const unsigned int & idx) const {
