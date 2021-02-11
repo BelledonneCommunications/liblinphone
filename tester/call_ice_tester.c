@@ -112,6 +112,8 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	check_media_direction(marie, marie_call, lcs, LinphoneMediaDirectionSendRecv,LinphoneMediaDirectionInvalid);
 
 	wait_for_until(pauline->lc,marie->lc,NULL,0,3000);
+	marie_call = linphone_core_get_current_call(marie->lc);
+	if (!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;// Second test to ensire that marie is not lost in previous iterations
 	if (callee_has_ice){
 		stats1 = linphone_call_get_audio_stats(marie_call);
 		stats2 = linphone_call_get_audio_stats(pauline_call);

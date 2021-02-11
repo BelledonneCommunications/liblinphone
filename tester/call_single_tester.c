@@ -3385,6 +3385,7 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 	BC_ASSERT_PTR_NOT_NULL(call);
 	if  (call) {
 		const LinphoneCallParams *params;
+		call = linphone_call_ref(call);// Iterate can remove the call
 		wait_for_list(lcs,NULL,0,5000); /*on some device, it may take 3 to 4s to get audio from mic*/
 		params = linphone_call_get_current_params(call);
 #ifdef VIDEO_ENABLED
@@ -3449,6 +3450,7 @@ void check_media_direction(LinphoneCoreManager* mgr, LinphoneCall *call, bctbx_l
 					break;
 			}
 		}
+		linphone_call_unref(call);
 	}
 }
 
