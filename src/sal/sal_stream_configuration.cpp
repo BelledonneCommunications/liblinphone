@@ -443,4 +443,35 @@ void SalStreamConfiguration::replacePayloads(const std::list<PayloadType*> & new
 	}
 }
 
+std::string SalStreamConfiguration::getSetupAttributeForDtlsRole(const SalDtlsRole & role) {
+	std::string setupAttrValue;
+	switch(role) {
+		case SalDtlsRoleIsClient:
+			setupAttrValue = "active";
+			break;
+		case SalDtlsRoleIsServer:
+			setupAttrValue = "passive";
+			break;
+		case SalDtlsRoleInvalid:
+			break;
+		case SalDtlsRoleUnset:
+		default:
+			setupAttrValue = "actpass";
+			break;
+	}
+	return setupAttrValue;
+}
+
+SalDtlsRole SalStreamConfiguration::getDtlsRoleFromSetupAttribute(const std::string setupAttr) {
+	SalDtlsRole role = SalDtlsRoleInvalid;
+	if (setupAttr.compare("actpass") == 0) {
+		role = SalDtlsRoleUnset;
+	} else if (setupAttr.compare("active") == 0) {
+		role = SalDtlsRoleIsClient;
+	} else if (setupAttr.compare("passive") == 0) {
+		role = SalDtlsRoleIsServer;
+	}
+	return role;
+}
+
 LINPHONE_END_NAMESPACE
