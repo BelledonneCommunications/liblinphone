@@ -64,6 +64,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		using acap_map_t = std::map<unsigned int, acap_t>;
 		using tcap_map_t = std::map<unsigned int, std::string>;
 
+		static unsigned int getFreeIdx(const std::list<unsigned int> & l);
+
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
@@ -143,6 +145,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const acap_map_t & getAcaps() const;
 		const tcap_map_t & getTcaps() const;
 
+		unsigned int getFreeCfgIdx() const;
+
 		std::string name; /*unique name of stream, in order to ease offer/answer model algorithm*/
 		SalStreamType type = SalAudio;
 		std::string typeother;
@@ -162,12 +166,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		acap_map_t acaps;
 		tcap_map_t tcaps;
 
-		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
-		void fillStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
+		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
+		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
 
 		// Potential configurations
-		void fillPotentialConfigurations(const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
-		std::list<cfg_map::mapped_type> createPotentialConfiguration(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & SDPMediaDescriptionCfgPair);
+		void fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs);
+		void createPotentialConfiguration(const unsigned int & idx, const tcap_map_t & protoMap, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);
