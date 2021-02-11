@@ -314,7 +314,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 			// acap for DTLS
 			const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
 			if (dtlsEncryptionFound) {
-				const std::string attrName("fingerprint");
+				const std::string fingerprintAttrName("fingerprint");
 
 				if (mDtlsFingerPrint.empty()) {
 					/* TODO : search for a certificate with CNAME=sip uri(retrieved from variable me) or default : linphone-dtls-default-identity */
@@ -340,9 +340,14 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						ms_free(certificate);
 					}
 				}
+				addAcapToStream(potentialCfgGraph, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
 
-				addAcapToStream(potentialCfgGraph, streamIndex, attrName, mDtlsFingerPrint);
-				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {attrName});
+				const std::string ssrcAttrName("ssrc");
+				const auto rtpSsrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
+				const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
+				const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
+				addAcapToStream(potentialCfgGraph, streamIndex, ssrcAttrName, ssrcAttribute);
+				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {fingerprintAttrName, ssrcAttrName});
 			}
 
 			// acap for ZRTP
