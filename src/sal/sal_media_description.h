@@ -99,6 +99,10 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		const SalStreamDescription::acap_map_t getAllAcapForStream(const unsigned int & idx) const;
 		unsigned int getFreeAcapIdx() const;
 
+		const SalStreamDescription::cfg_map getCfgsForStream(const unsigned int & idx) const;
+		// Creates potential configuration based on stored tcap and acaps
+		void createPotentialConfigurationsForStream(const unsigned int & streamIdx, const bool delete_session_attributes, const bool delete_media_attributes);
+
 		std::string name;
 		std::string addr;
 		std::string username;
@@ -132,7 +136,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		void addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const;
 
-		unsigned int getFreeIdx(const std::list<unsigned int> & l) const;
 };
 
 LINPHONE_END_NAMESPACE
