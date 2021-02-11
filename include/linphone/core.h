@@ -3001,6 +3001,7 @@ LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, boo
 /**
  * Indicates whether the ICE relay path is forcibly selected.
  * @param[in] lc #LinphoneCore object
+ * @return a boolean value indicating whether forced relay is enabled.
  * @see linphone_core_enable_forced_ice_relay().
  */
 LINPHONE_PUBLIC bool_t linphone_core_forced_ice_relay_enabled(const LinphoneCore *lc);
