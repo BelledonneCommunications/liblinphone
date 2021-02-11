@@ -91,7 +91,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(c
 	L_Q();
 
 	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
-	if (atLeastOneStreamStarted() && allStreamsEncrypted()) {
+	if (atLeastOneStreamStarted() && (md->hasDtls() || allStreamsEncrypted())) {
 		if (md->hasSrtp()) {
 			enc = LinphoneMediaEncryptionSRTP;
 		} else if (md->hasDtls()) {
@@ -1659,7 +1659,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	if (q->isCapabilityNegotiationEnabled()) {
 		const auto & enc = getEncryptionFromMediaDescription(newMd);
 		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
-		getParams()->setMediaEncryption(enc);
+		getCurrentParams()->setMediaEncryption(enc);
 	}
 
 	updateFrozenPayloads(newMd);
