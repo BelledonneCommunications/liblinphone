@@ -226,14 +226,12 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 	}
 }
 
-static void simple_call_with_capability_negotiations(void) {
+static void simple_call_with_capability_negotiations(const LinphoneMediaEncryption optionalEncryption) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	linphone_core_set_support_capability_negotiation(marie->lc, 1);
 
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
-
-	const LinphoneMediaEncryption optionalEncryption =  LinphoneMediaEncryptionSRTP;
 
 	bctbx_list_t * encryption_list = NULL;
 	encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(optionalEncryption))));
@@ -262,6 +260,18 @@ static void simple_call_with_capability_negotiations(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
+
+static void simple_srtp_call_with_capability_negotiations(void) {
+	simple_call_with_capability_negotiations(LinphoneMediaEncryptionSRTP);
+}
+
+static void simple_zrtp_call_with_capability_negotiations(void) {
+	simple_call_with_capability_negotiations(LinphoneMediaEncryptionZRTP);
+}
+
+static void simple_dtls_call_with_capability_negotiations(void) {
+	simple_call_with_capability_negotiations(LinphoneMediaEncryptionDTLS);
 }
 
 static void call_with_encryption_wrapper(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations) {
@@ -441,7 +451,9 @@ static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 }
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call with no encryption", call_with_no_encryption),
-	TEST_NO_TAG("Simple call with capability negotiations", simple_call_with_capability_negotiations),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
+	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
+	TEST_NO_TAG("Simple DTLS call with capability negotiations", simple_dtls_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
 	TEST_NO_TAG("SRTP call from endpoint with mandatory encryption to endpoint with none", srtp_call_from_enc_to_no_enc),
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with mandatory", srtp_call_from_no_enc_to_enc),
