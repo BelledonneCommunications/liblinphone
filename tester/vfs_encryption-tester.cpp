@@ -380,6 +380,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	const bctbx_list_t * contents = NULL;
 	LinphoneContent * content = NULL;
 	LinphoneChatMessage *msg = NULL;
+	const LinphoneAddress *confAddr = NULL;
 	enable_encryption(encryptionModule);
 
 	// create a user Marie
@@ -473,7 +474,8 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, TRUE);
 	LinphoneChatRoom *paulineCr = NULL;
 	if(!BC_ASSERT_PTR_NOT_NULL(marieCr)) goto end;
-	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+	confAddr = linphone_chat_room_get_conference_address(marieCr);
+	if(!BC_ASSERT_PTR_NOT_NULL(confAddr)) goto end;
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
