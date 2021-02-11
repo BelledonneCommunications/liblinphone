@@ -378,7 +378,7 @@ static void migration_test(void) {
 
 static void file_transfer_test(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_file_transfer_") {
 	bctbx_list_t * contents = NULL;
-	LinphoneContent * content NULL;
+	LinphoneContent * content = NULL;
 	LinphoneChatMessage *msg = NULL;
 	enable_encryption(encryptionModule);
 
