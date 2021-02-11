@@ -172,87 +172,26 @@ string MS2Stream::getBindIp(){
 	}
 	return bindIp;
 }
-bool MS2Stream::encryptionFound(const bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap & caps, const LinphoneMediaEncryption encEnum) const {
+bool MS2Stream::encryptionFound(const SalStreamDescription::tcap_map_t & caps, const LinphoneMediaEncryption encEnum) const {
 	const auto & it = std::find_if(caps.cbegin(), caps.cend(), [this, &encEnum] (const auto & cap) {
-		return (cap->value.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
+		return (cap.second.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
 	});
 	return (it != caps.end());
 }
 
-void MS2Stream::addAcapToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
-	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
+void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
+	const auto & acaps = desc->getAllAcapForStream(streamIdx);
 	const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &attrValue] (const auto & cap) {
-		return ((cap->name.compare(attrName) == 0) && (cap->value.compare(attrValue) == 0));
+		const auto & nameValuePair = cap.second;
+		const auto & name = nameValuePair.first;
+		const auto & value = nameValuePair.second;
+		return ((name.compare(attrName) == 0) && (value.compare(attrValue) == 0));
 	});
 	// Do not add duplicates acaps
 	if (nameValueMatch == acaps.cend()) {
-		const auto & idx = potentialCfgGraph.getFreeAcapIdx();
+		const auto & idx = desc->getFreeAcapIdx();
 		lInfo() << "Adding attribute protocol " << attrName << " with value " << attrValue << " to stream " << streamIdx << " at index " << idx;
-		potentialCfgGraph.addAcapToStream(streamIdx, idx, attrName, attrValue);
-	}
-}
-
-void MS2Stream::addCfgForEncryptionToStream(bellesip::SDP::SDPPotentialCfgGraph & potentialCfgGraph, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const LinphoneMediaEncryption encEnum, const std::list<std::string> acapAttrNames) {
-	const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIdx);
-	std::list<unsigned int> tcapIdx;
-	std::for_each(tcaps.cbegin(), tcaps.cend(), [this, &tcapIdx, &encEnum] (const auto & cap) {
-		if (cap->value.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0) {
-			tcapIdx.push_back(cap->index);
-		}
-	});
-
-	const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIdx);
-	std::list<std::map<unsigned int, bool>> acapCfgs;
-	std::for_each(acaps.cbegin(), acaps.cend(), [&acapCfgs,&acapAttrNames] (const auto & cap) {
-		std::map<unsigned int, bool> acapIdx;
-		for (const auto & name : acapAttrNames) {
-			if (cap->name.compare(name) == 0) {;
-				acapIdx.insert(std::make_pair(cap->index, true));
-			}
-		}
-		if (!acapIdx.empty()) {
-			acapCfgs.push_back(acapIdx);
-		}
-	});
-
-
-	const auto & cfgs = potentialCfgGraph.getCfgForStream(streamIdx);
-	// Search if cfg is already in the graph
-	const auto cfgsFound = std::find_if(cfgs.cbegin(), cfgs.cend(), [&tcapIdx, &acapCfgs] (const auto & cfg) {
-		const auto & cfgAttr = cfg.second;
-
-		// Get list of acap index mandatory flag pairs
-		const auto & cfgAcapSets = cfgAttr.acap;
-		std::list<std::map<unsigned int, bool>> acapSets;
-		// Iterate over all acaps sets. For every set, get the index of all its members
-		for (const auto & acapSet : cfgAcapSets) {
-			std::map<unsigned int, bool> cfgIdxs;
-			for (const auto & cfgAcap : acapSet) {
-				const auto & acap = cfgAcap.cap.lock();
-				const auto & acapIdx = acap->index;
-				if (acap) {
-					cfgIdxs.insert(std::make_pair(acapIdx, cfgAcap.mandatory));
-				}
-			}
-			acapSets.push_back(cfgIdxs);
-		}
-
-		// Get list of tcap indexes
-		std::list<unsigned int> tcaps;
-		const auto & cfgTcaps = cfgAttr.tcap;
-		for (const auto & cfgTcap : cfgTcaps) {
-			const auto tcap = cfgTcap.cap.lock();
-			if (tcap) {
-				tcaps.push_back(tcap->index);
-			}
-		}
-
-		return ((tcaps == tcapIdx) && (acapSets == acapCfgs) && !cfgAttr.delete_media_attributes && !cfgAttr.delete_session_attributes);
-	});
-
-	if (cfgsFound == cfgs.cend() && ((!tcapIdx.empty()) || (!acapCfgs.empty()))) {
-		const auto & idx = potentialCfgGraph.getFreeCfgIdx(streamIdx);
-		potentialCfgGraph.addCfg(streamIdx, static_cast<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type>(idx), acapCfgs, tcapIdx, false, false);
+		desc->addAcapToStream(streamIdx, idx, attrName, attrValue);
 	}
 }
 
@@ -305,8 +244,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 	auto & localMediaDesc = ctx.localMediaDescription;
 	const auto & streamIndex = static_cast<unsigned int>(ctx.streamIndex);
 	if (localMediaDesc) {
-		auto & potentialCfgGraph = localMediaDesc->potentialCfgGraph;
-		const auto & tcaps = potentialCfgGraph.getAllTcapForStream(streamIndex);
+		const auto & tcaps = localMediaDesc->getAllTcapForStream(streamIndex);
 
 		if (!tcaps.empty()) {
 
@@ -340,14 +278,13 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						ms_free(certificate);
 					}
 				}
-				addAcapToStream(potentialCfgGraph, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
+				addAcapToStream(localMediaDesc, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
 
 				const std::string ssrcAttrName("ssrc");
 				const auto rtpSsrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 				const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
 				const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
-				addAcapToStream(potentialCfgGraph, streamIndex, ssrcAttrName, ssrcAttribute);
-				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionDTLS, {fingerprintAttrName, ssrcAttrName});
+				addAcapToStream(localMediaDesc, streamIndex, ssrcAttrName, ssrcAttribute);
 			}
 
 			// acap for ZRTP
@@ -357,8 +294,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 					const std::string attrName("zrtp-hash");
 					uint8_t zrtphash[128];
 					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-					addAcapToStream(potentialCfgGraph, streamIndex, attrName, (const char *)zrtphash);
-					addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionZRTP, {attrName});
+					addAcapToStream(localMediaDesc, streamIndex, attrName, (const char *)zrtphash);
 				}
 			}
 
@@ -372,9 +308,12 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 					getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
 					MSCryptoSuiteNameParams desc;
 					if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
-						const auto & acaps = potentialCfgGraph.getAllAcapForStream(streamIndex);
+						const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
 						const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
-							return ((cap->name.compare(attrName) == 0) && (cap->value.find(desc.name) != std::string::npos));
+							const auto & nameValuePair = cap.second;
+							const auto & name = nameValuePair.first;
+							const auto & value = nameValuePair.second;
+							return ((name.compare(attrName) == 0) && (value.find(desc.name) != std::string::npos));
 						});
 						char attrValue[128];
 						if (desc.params) {
@@ -384,21 +323,15 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						}
 						// Do not add duplicates acaps
 						if (nameValueMatch == acaps.cend()) {
-							addAcapToStream(potentialCfgGraph, streamIndex, attrName, attrValue);
+							addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
 						}
 					} else {
 						lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 					}
 				}
-				addCfgForEncryptionToStream(potentialCfgGraph, streamIndex, LinphoneMediaEncryptionSRTP, {attrName});
 			}
 
-			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
-			attrs.cfgs =  potentialCfgGraph.getCfgForStream(streamIndex);
-			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(streamIndex);
-			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(streamIndex);
-			auto & localDesc = const_cast<SalStreamDescription &>(ctx.getLocalStreamDescription());
-			localDesc.fillPotentialConfigurations(attrs);
+			localMediaDesc->createPotentialConfigurationsForStream(streamIndex, false, false);
 		}
 	}
 }
