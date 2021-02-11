@@ -377,6 +377,9 @@ static void migration_test(void) {
 }
 
 static void file_transfer_test(const uint16_t encryptionModule, const char *random_id, const bool createUsers, const std::string basename="evfs_file_transfer_") {
+	bctbx_list_t * contents = NULL;
+	LinphoneContent * content NULL;
+	LinphoneChatMessage *msg = NULL;
 	enable_encryption(encryptionModule);
 
 	// create a user Marie
@@ -428,6 +431,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	bctbx_free(local_filename);
 	local_filename = bctbx_strdup_printf("%s_pauline_receive_file_%s.dump", basename.data(), random_id);
 	auto receivePaulineFilepath = bc_tester_file(local_filename);
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
 	bctbx_free(local_filename);
 	if (createUsers == true) { // creating users, make sure we do not reuse local files
 		unlink(pauline_rc); // make sure we're not reusing a rc file
@@ -475,7 +479,7 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 
 	if(!BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 	// send file
-	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_vp8.mkv");
+	
 	_send_file(marieCr, sendFilepath, nullptr, false);
 
 	// check pauline got it
@@ -492,12 +496,12 @@ static void file_transfer_test(const uint16_t encryptionModule, const char *rand
 	BC_ASSERT_FALSE(is_encrypted(sendFilepath));
 
 	// Get the file using the linphone content API
-	LinphoneChatMessage *msg = pauline->stat.last_received_chat_message;
+	msg = pauline->stat.last_received_chat_message;
 	if(!BC_ASSERT_PTR_NOT_NULL(msg)) goto end;
-	auto contents = linphone_chat_message_get_contents(msg);
+	contents = linphone_chat_message_get_contents(msg);
 	BC_ASSERT_PTR_NOT_NULL(contents);
 	BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
-	auto content = (LinphoneContent *)bctbx_list_get_data(contents);
+	content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
 	BC_ASSERT_NSTRING_EQUAL(linphone_content_get_file_path(content), receivePaulineFilepath, strlen(receivePaulineFilepath)); // just to check we're on the correct path
 	if (encryptionModule == LINPHONE_VFS_ENCRYPTION_PLAIN) {
