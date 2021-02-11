@@ -110,6 +110,7 @@ private:
 	void configureRtpSession(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
 	void setupDtlsParams(MediaStream *ms);
+	void initDtlsParams(MediaStream *ms);
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
@@ -291,6 +292,7 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual ~MS2RTTStream();
+
 private:
 	void realTimeTextCharacterReceived(MSFilter *f, unsigned int id, void *arg);
 	static void sRealTimeTextCharacterReceived(void *userData, MSFilter *f, unsigned int id, void *arg);
