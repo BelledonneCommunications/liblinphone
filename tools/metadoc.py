@@ -409,12 +409,13 @@ class ReferenceTranslationError(TranslationError):
 		return '{0} reference could not been translated'.format(self.args[0])
 
 
-class Translator:
+class Translator(object):
 	def __init__(self, langCode):
 		self.langCode = langCode
 		self.textWidth = 80
 		self.nameTranslator = metaname.Translator.get(langCode)
 		self.langTranslator = abstractapi.Translator.get(langCode)
+		self.refNameTranslator = self.nameTranslator
 		self.displaySelfParam = True if langCode == 'C' else False
 	
 	def translate_description(self, description, tagAsBrief=False):
@@ -456,7 +457,7 @@ class Translator:
 				commonName = namespace.name
 			else:
 				commonName = metaname.Name.find_common_parent(ref.relatedObject.name, namespace.name)
-		return ref.relatedObject.name.translate(self.nameTranslator, recursive=True, topAncestor=commonName)
+		return ref.relatedObject.name.translate(self.refNameTranslator, recursive=True, topAncestor=commonName)
 	
 	def translate_keyword(self, keyword):
 		return keyword.keyword.translate(self.langTranslator)
@@ -535,10 +536,10 @@ class DoxygenTranslator(Translator):
 			lines[0] = '@brief ' + lines[0]
 
 	def translate_class_reference(self, ref, **kargs):
-		return '@ref ' + Translator.translate_reference(self, ref)
+		return '@ref ' + super(DoxygenTranslator, self).translate_reference(ref)
 
 	def translate_function_reference(self, ref, **kargs):
-		return Translator.translate_reference(self, ref) + '()'
+		return super(DoxygenTranslator, self).translate_reference(ref) + '()'
 	
 	def _translate_section(self, section):
 		return '@{0} {1}'.format(
@@ -556,20 +557,22 @@ class DoxygenTranslator(Translator):
 		return text
 
 
-class JavaDocTranslator(DoxygenTranslator):
-	def __init__(self):
-		DoxygenTranslator.__init__(self, 'Java')
+class JavaDocTranslator(Translator):
+	class ReferenceTranslator(metaname.JavaTranslator):
+		def __init__(self):
+			super(JavaDocTranslator.ReferenceTranslator, self).__init__()
+			self.classMemberSep = '#'
 
-	def _tag_as_brief(self, lines):
-		pass
+
+	def __init__(self):
+		super(JavaDocTranslator, self).__init__('Java')
+		self.refNameTranslator = JavaDocTranslator.ReferenceTranslator()
 
 	def translate_class_reference(self, ref, **kargs):
-		return '{@link ' + Translator.translate_reference(self, ref) + '}'
+		return '{@link ' + super(JavaDocTranslator, self).translate_reference(ref) + '}'
 
 	def translate_function_reference(self, ref, **kargs):
-		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
-		methodName = ref.relatedObject.name.translate(self.nameTranslator)
-		return '{@link ' + className + '#' + methodName + '}'
+		return '{@link ' + super(JavaDocTranslator, self).translate_reference(ref) + '}'
 	
 	def _translate_section(self, section):
 		if section.kind == 'see':
@@ -594,12 +597,15 @@ class JavaDocTranslator(DoxygenTranslator):
 		return text
 
 
-class SwiftDocTranslator(JavaDocTranslator):
+class SwiftDocTranslator(Translator):
 	def __init__(self):
-		DoxygenTranslator.__init__(self, 'Swift')
+		super(JavaDocTranslator, self).__init__('Swift')
 
 	def translate_class_reference(self, ref, **kargs):
-		return '`{0}`'.format(Translator.translate_reference(self, ref))
+		return '`{0}`'.format(super(JavaDocTranslator, self).translate_reference(ref))
+
+	def translate_function_reference(self, ref, **kargs):
+		return super(JavaDocTranslator, self).translate_reference(ref) + '()'
 
 	def _translate_section(self, section):
 		if section.kind == 'return':
