@@ -1283,13 +1283,12 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 	if (addCapabilityNegotiationAttributes) {
 		bctbx_list_t * encs = linphone_core_get_supported_media_encryptions(core);
-		auto & potentialCfgGraph = md->potentialCfgGraph;
 
 		for (decltype(encs) elem = encs; elem != NULL; elem = bctbx_list_next(elem)) {
 			const char *enc = static_cast<const char *>(elem->data);
 			const LinphoneMediaEncryption encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
 			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(encEnum, getParams()->avpfEnabled())));
-			const auto & idx = potentialCfgGraph.getFreeTcapIdx();
+			const auto & idx = md->getFreeTcapIdx();
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			md->addTcap(idx, mediaProto);
