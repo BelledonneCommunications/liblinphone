@@ -267,6 +267,11 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 				const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
 				const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
 				addAcapToStream(localMediaDesc, streamIndex, ssrcAttrName, ssrcAttribute);
+
+				const std::string setupAttrName("setup");
+				/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
+				const std::string setupAttribute = "actpass";
+				addAcapToStream(localMediaDesc, streamIndex, setupAttrName, setupAttribute);
 			}
 
 			// acap for ZRTP
