@@ -122,8 +122,6 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 		bool haveLimeIk = false; /**< flag for lime Ik presence */
 
-		bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph;
-
 	private:
 
 		SalStreamDescription::acap_map_t acaps;
