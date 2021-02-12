@@ -368,6 +368,7 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	linphone_core_set_session_expires_value(pauline->lc, 8);
 
 	LinphoneCall* out_call = linphone_core_invite_address(marie->lc, pauline->identity);
+	linphone_call_ref(out_call);
 
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallIncomingReceived, 1));
 
@@ -440,6 +441,7 @@ static void session_timer_interval_ok_refresher_none_uas(void)
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallReleased, 1));
 	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneCallReleased, 1));
 
+	linphone_call_unref(out_call);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }

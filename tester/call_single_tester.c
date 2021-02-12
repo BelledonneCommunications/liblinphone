@@ -2067,7 +2067,7 @@ static void call_callee_with_custom_header_or_sdp_attributes(void) {
 void call_paused_resumed_base(bool_t multicast, bool_t with_losses) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneCall* call_pauline;
+	LinphoneCall* call_pauline = NULL;
 	RtpSession *rtp_session;
 	const rtp_stats_t * stats;
 	bool_t call_ok;
@@ -2079,6 +2079,7 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses) {
 	if (!call_ok) goto end;
 
 	call_pauline = linphone_core_get_current_call(pauline->lc);
+	linphone_call_ref(call_pauline);
 
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 3000);
 
@@ -2133,6 +2134,8 @@ void call_paused_resumed_base(bool_t multicast, bool_t with_losses) {
 
 	end_call(pauline, marie);
 end:
+	if(call_pauline)
+		linphone_call_unref(call_pauline);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
