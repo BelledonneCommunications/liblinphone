@@ -211,9 +211,13 @@ void MediaSessionPrivate::accepted () {
 				if (localDesc->hasCapabilityNegotiation()) {
 					// If no ICE session or checklist has completed, then send re-INVITE
 					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && getStreamsGroup().getIceService().hasCompletedCheckList())) {
-						if (md->compareToActualConfiguration(*localDesc) != SAL_MEDIA_DESCRIPTION_UNCHANGED) {
+						const auto diff = md->compareToActualConfiguration(*localDesc);
+						if ((diff & ~SAL_MEDIA_DESCRIPTION_NETWORK_CHANGED) != SAL_MEDIA_DESCRIPTION_UNCHANGED) {
+							lInfo() << "Sending a reINVITE because the actual configuraton was not chosen in the capability negotiation procedure. Detected differences " << SalMediaDescription::printDifferences(diff);
 							MediaSessionParams newParams(*getParams());
 							q->update(&newParams);
+						} else {
+							lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
 						}
 					}
 				}
