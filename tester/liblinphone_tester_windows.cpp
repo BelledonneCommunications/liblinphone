@@ -137,13 +137,13 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 	bc_tester_set_resource_dir_prefix(writable_dir);
 
 	if (!ui) {
-		char *xmlFile = bc_tester_file("LibLinphoneWindows10.xml");
+		char *xmlFile = bc_tester_file("LibLinphoneWindows10");
 		char *args[] = { "--xml-file", xmlFile };
-		bc_tester_parse_args(2, args, 0);
+		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it
 
 		char *logFile = bc_tester_file("LibLinphoneWindows10.log");
-		liblinphone_tester_set_log_file(logFile);
-		free(logFile);
+		char *logArgs[] = { "--log-file", logFile };
+		bc_tester_parse_args(2, logArgs, 0);//logFile memory is passed to tester. Do not free it
 	}
 
 	_args = (char**)malloc(sizeof(char**)*(parameters->Length+1));
