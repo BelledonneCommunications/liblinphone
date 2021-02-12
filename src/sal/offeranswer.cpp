@@ -425,14 +425,20 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
-	if (remote_answer.enabled())
+	if (remote_answer.enabled()) {
 		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,TRUE,FALSE);
-	else {
+	} else {
 		ms_message("Local stream description [%p] rejected by peer",&local_offer);
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
-	resultCfg.proto=remoteCfg.getProto();
+	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		resultCfg.proto=remoteCfg.getProto();
+	} else {
+		ms_message("%s -  the transport protocol %s of local stream configuration at index %0d is not compatible with the transport protocol %s of the remote stream configuration at index %0d", __func__, sal_media_proto_to_string(localCfg.getProto()), localCfgIdx,  sal_media_proto_to_string(remoteCfg.getProto()), remoteCfgIdx);
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
 		if (localCfg.ptime > 0 && localCfg.ptime!=remoteCfg.ptime) {
@@ -580,11 +586,17 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const SalStreamConfiguration & localCfg = local_cap.getConfigurationAtIndex(localCfgIdx);
 	const SalStreamConfiguration & remoteCfg = remote_offer.getConfigurationAtIndex(remoteCfgIdx);
 
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
-	resultCfg.proto=remoteCfg.getProto();
-	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
-
 	bool success = true;
+
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
+	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		resultCfg.proto=remoteCfg.getProto();
+	} else {
+		ms_message("%s -  the transport protocol %s of local stream configuration at index %0d is not compatible with the transport protocol %s of the remote stream configuration at index %0d", __func__, sal_media_proto_to_string(localCfg.getProto()), localCfgIdx,  sal_media_proto_to_string(remoteCfg.getProto()), remoteCfgIdx);
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
 
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
