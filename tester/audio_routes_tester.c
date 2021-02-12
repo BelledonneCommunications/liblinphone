@@ -1426,6 +1426,7 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	}
 
 	if(!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+	linphone_call_ref(pauline_call);
 
 	// wait a bit before changing device
 	wait_for_list(lcs,NULL,0,2000);
@@ -1469,7 +1470,8 @@ static void simple_conference_with_audio_device_change_during_pause_base(bool_t 
 	terminate_conference(participants, pauline, conf, NULL);
 
 end:
-
+	if(pauline_call)
+		linphone_call_unref(pauline_call);
 	linphone_conference_unref(conf);
 
 	// After call, unref the sound card

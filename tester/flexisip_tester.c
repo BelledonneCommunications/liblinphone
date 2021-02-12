@@ -506,6 +506,7 @@ static void call_forking_with_push_notification_single(void){
 	bctbx_list_t* lcs;
 	LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
+	LinphoneCall *pauline_call=NULL;
 	int dummy=0;
 
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
@@ -543,13 +544,16 @@ static void call_forking_with_push_notification_single(void){
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,1,5000));
 
 		liblinphone_tester_check_rtcp(pauline,marie);
+		pauline_call = linphone_core_get_current_call(pauline->lc);
+		if( !BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
 
-		linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
+		linphone_call_terminate(pauline_call);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased,1,5000));
 	}
+end:
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 	bctbx_list_free(lcs);
