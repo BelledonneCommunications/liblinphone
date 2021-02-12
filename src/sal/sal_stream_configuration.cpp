@@ -214,6 +214,9 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 	if (dtls_role != other.dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 	if (dtls_fingerprint.compare(other.dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
+	if (haveZrtpHash != other.haveZrtpHash) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	if (haveZrtpHash && other.haveZrtpHash && (strcmp((const char *)zrtphash, (const char *)other.zrtphash) != 0)) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+
 	return result;
 }
 
