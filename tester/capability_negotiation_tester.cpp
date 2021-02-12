@@ -177,53 +177,49 @@ static void zrtp_call_from_no_enc_to_enc(void) {
 }
 
 static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const bool_t enable_caller_capability_negotiations, const bool_t enable_callee_capability_negotiations) {
-	if (linphone_core_media_encryption_supported(caller->lc,encryption)) {
 
-		LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
-		linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
-		LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
-		linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
+	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
 
-		BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
-		linphone_call_params_unref(caller_params);
-		linphone_call_params_unref(callee_params);
+	BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
+	linphone_call_params_unref(caller_params);
+	linphone_call_params_unref(callee_params);
 
-		// Check encryption
-		LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
-		if (enable_callee_capability_negotiations && enable_caller_capability_negotiations) {
-			bctbx_list_t * callerEncs = linphone_core_get_supported_media_encryptions(caller->lc);
-			if (callerEncs) {
-				const char *enc = (const char *)bctbx_list_get_data(callerEncs);
-				expectedEncryption = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
-			} else {
-				expectedEncryption =  LinphoneMediaEncryptionNone;
-			}
-
-			if (callerEncs) {
-				bctbx_list_free_with_data(callerEncs, (bctbx_list_free_func)bctbx_free);
-			}
+	// Check encryption
+	LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
+	if (enable_callee_capability_negotiations && enable_caller_capability_negotiations && (linphone_core_media_encryption_supported(caller->lc,encryption)) && (linphone_core_media_encryption_supported(callee->lc,encryption))) {
+		bctbx_list_t * callerEncs = linphone_core_get_supported_media_encryptions(caller->lc);
+		if (callerEncs) {
+			const char *enc = (const char *)bctbx_list_get_data(callerEncs);
+			expectedEncryption = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
 		} else {
-			expectedEncryption = linphone_core_get_media_encryption(caller->lc);
+			expectedEncryption =  LinphoneMediaEncryptionNone;
 		}
 
-		liblinphone_tester_check_rtcp(caller, callee);
-
-		LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
-		BC_ASSERT_PTR_NOT_NULL(callerCall);
-		if (callerCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), expectedEncryption, int, "%i");
+		if (callerEncs) {
+			bctbx_list_free_with_data(callerEncs, (bctbx_list_free_func)bctbx_free);
 		}
-		LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
-		BC_ASSERT_PTR_NOT_NULL(calleeCall);
-		if (calleeCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
-		}
-
-		end_call(callee, caller);
-
 	} else {
-		ms_warning ("not tested because srtp not available");
+		expectedEncryption = linphone_core_get_media_encryption(caller->lc);
 	}
+
+	liblinphone_tester_check_rtcp(caller, callee);
+
+	LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(callerCall);
+	if (callerCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall)), expectedEncryption, int, "%i");
+	}
+	LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(calleeCall);
+	if (calleeCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall)), expectedEncryption, int, "%i");
+	}
+
+	end_call(callee, caller);
+
 }
 
 static void call_with_capability_negotiation_failure(void) {
@@ -261,7 +257,7 @@ static void call_with_capability_negotiation_failure(void) {
 		}
 	}
 
-	call_with_encryption_base(marie, pauline, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	call_with_encryption_base(marie, pauline, marieOptionalEncryption, TRUE, TRUE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
