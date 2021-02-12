@@ -504,8 +504,14 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
 
-	if (resultCfg.hasZrtp() == TRUE) {
-		resultCfg.acapIndexes = localCfg.acapIndexes;
+	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
+	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
+	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
+		if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+			strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
+			resultCfg.haveZrtpHash =  1;
+			resultCfg.acapIndexes = localCfg.acapIndexes;
+		}
 	}
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
