@@ -1673,7 +1673,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	if (q->isCapabilityNegotiationEnabled()) {
 		const auto & enc = getEncryptionFromMediaDescription(newMd);
 		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
-		getCurrentParams()->setMediaEncryption(enc);
+		getParams()->setMediaEncryption(enc);
 	}
 
 	updateFrozenPayloads(newMd);
