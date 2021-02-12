@@ -93,7 +93,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(c
 	L_Q();
 
 	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
-	if (atLeastOneStreamStarted() && (md->hasDtls() || allStreamsEncrypted())) {
+	if (atLeastOneStreamStarted()) {
 		if (md->hasSrtp()) {
 			enc = LinphoneMediaEncryptionSRTP;
 		} else if (md->hasDtls()) {
