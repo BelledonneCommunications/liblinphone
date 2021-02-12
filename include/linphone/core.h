@@ -2995,6 +2995,7 @@ LINPHONE_PUBLIC void linphone_core_set_nat_policy(LinphoneCore *lc, LinphoneNatP
  * which makes difficult to make sure that the relay service is working as expected.
  * @param[in] lc #LinphoneCore object
  * @param[in] enable boolean value
+ * @ingroup network_parameters
  */
 LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, bool_t enable);
 
@@ -3003,6 +3004,7 @@ LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, boo
  * @param[in] lc #LinphoneCore object
  * @return a boolean value indicating whether forced relay is enabled.
  * @see linphone_core_enable_forced_ice_relay().
+ * @ingroup network_parameters
  */
 LINPHONE_PUBLIC bool_t linphone_core_forced_ice_relay_enabled(const LinphoneCore *lc);
 
