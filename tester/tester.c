@@ -2689,18 +2689,25 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			|| (linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionDTLS) /*also take care of caller policy*/ )
 			wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1);
 
+		BC_ASSERT_PTR_NOT_NULL(callee_call);
+
+		const LinphoneCallParams* call_param = NULL;
 		/* when caller is encryptionNone but callee is ZRTP, we expect ZRTP to take place */
 		if ((linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionNone)
 			&& (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP)
 			&& linphone_core_media_encryption_supported(caller_mgr->lc, LinphoneMediaEncryptionZRTP)) {
-			const LinphoneCallParams* call_param = linphone_call_get_current_params(callee_call);
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+			if (callee_call) {
+				call_param = linphone_call_get_current_params(callee_call);
+				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+			}
 			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
 		}else { /* otherwise, final status shall stick to caller core parameter */
-			const LinphoneCallParams* call_param = linphone_call_get_current_params(callee_call);
-			if(!BC_ASSERT_PTR_NOT_NULL(call_param)) return FALSE;
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+			if (callee_call) {
+				call_param = linphone_call_get_current_params(callee_call);
+				if(!BC_ASSERT_PTR_NOT_NULL(call_param)) return FALSE;
+				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+			}
 			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
 
