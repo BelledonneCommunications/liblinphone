@@ -327,7 +327,7 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 								cfgAcaps.push_back(capIndex);
 								cfg.haveZrtpHash = true;
 								const auto & capValue = capNameValue.second;
-								strncpy((char *)cfg.zrtphash, capValue.c_str(), sizeof(cfg.zrtphash));
+								strncpy((char *)cfg.zrtphash, capValue.c_str(), capValue.size());
 							}
 							cfg.acapIndexes.push_back(cfgAcaps);
 							cfgList.push_back(cfg);
