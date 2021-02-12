@@ -203,7 +203,10 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 	}
 
 	if (!isSamePayloadList(payloads, other.payloads)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-	if (ptime != other.ptime) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	// Codec changed of either ptim eis valid (i.e. greater than 0) and the other is not
+	if (((ptime>0) ^ (other.ptime>0))) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
+	// If both ptimes are valid, check that their valid is the same
+	if ((ptime>0) && (other.ptime>0) && (ptime != other.ptime)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	if (dir != other.dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 
 	/* ICE */
