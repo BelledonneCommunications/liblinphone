@@ -506,7 +506,7 @@ static void call_forking_with_push_notification_single(void){
 	bctbx_list_t* lcs;
 	LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
-	LinphoneCall *pauline_call=NULL, *marie_call=NULL;
+	LinphoneCall *pauline_call=NULL;
 	int dummy=0;
 
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
