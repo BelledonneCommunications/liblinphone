@@ -99,8 +99,8 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	/*check if video stream is still offered even if disabled*/
-	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
-	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,sdp_200_ack);
 

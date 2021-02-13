@@ -135,12 +135,7 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 	wwritable_dir = dataPath->Data();
 	wcstombs(writable_dir, wwritable_dir, sizeof(writable_dir));
 	bc_tester_set_resource_dir_prefix(writable_dir);
-	bool_t haveLogFile = FALSE;
-	if (!ui) {
-		char *xmlFile = bc_tester_file("LibLinphoneWindows10");
-		char *args[] = { "--xml-file", xmlFile };
-		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it
-	}
+	bool_t haveLogFile = FALSE, haveXmlFile = FALSE;
 
 	_args = (char**)malloc(sizeof(char**)*(parameters->Length+1));
 	int countArgs = 0;
@@ -150,8 +145,10 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 			int length = wcstombs(NULL, parameter.c_str(), 256)+1;
 			_args[countArgs] = (char*)malloc(sizeof(char)*length);
 			wcstombs(_args[countArgs++], parameter.c_str(), length);
-			if( parameter == L"--log_file")
+			if( parameter == L"--log-file")
 				haveLogFile = TRUE;
+			else if(parameter == L"--xml-file")
+				haveXmlFile = TRUE;
 		}
 	}
 	_args[countArgs] = NULL;
@@ -162,6 +159,11 @@ void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParame
 		char *logFile = bc_tester_file("LibLinphoneWindows10.log");
 		char *logArgs[] = { "--log-file", logFile };
 		bc_tester_parse_args(2, logArgs, 0);//logFile memory is passed to tester. Do not free it
+	}
+	if(!haveXmlFile){
+		char *xmlFile = bc_tester_file("LibLinphoneWindows10");
+		char *args[] = { "--xml-file", xmlFile };
+		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it
 	}
 	bc_tester_set_process_events_func(processEvents);
 }
