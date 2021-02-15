@@ -85,6 +85,8 @@ private:
 	belle_http_request_listener_t *httpListener = nullptr;
 	belle_http_provider_t *provider  = nullptr;
 
+	size_t lastNotifiedPercentage = 0;
+
 	BackgroundTask bgTask;
 };
 
