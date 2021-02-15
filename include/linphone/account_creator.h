@@ -134,6 +134,13 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_update_acc
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(LinphoneAccountCreator *creator);
 
 /**
+ * Send a request to generate a validation account and send it credentials back through a push notification
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @return #LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_get_validation_account(LinphoneAccountCreator *creator);
+
+/**
  * Acquire a reference to the LinphoneAccountCreator.
  * @param creator #LinphoneAccountCreator object. @notnil
  * @return The same #LinphoneAccountCreator object. @notnil
@@ -561,6 +568,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param cb The login linphone account request to be used.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_login_linphone_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the get validation account request.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @return The get validation account request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_validation_account(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @param cb The get validation account request to be used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_get_validation_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /************************** End Account Creator Cbs **************************/
 

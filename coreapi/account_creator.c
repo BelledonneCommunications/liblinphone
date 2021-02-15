@@ -330,6 +330,14 @@ void linphone_account_creator_cbs_set_login_linphone_account(LinphoneAccountCrea
 	cbs->login_linphone_account_response_cb = cb;
 }
 
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_get_validation_account(const LinphoneAccountCreatorCbs *cbs) {
+	return cbs->get_validation_account_response_cb;
+}
+
+void linphone_account_creator_cbs_set_get_validation_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
+	cbs->get_validation_account_response_cb = cb;
+}
+
 /************************** End Account Creator Cbs **************************/
 
 /************************** Start Account Creator data **************************/
@@ -405,6 +413,9 @@ void linphone_account_creator_reset(LinphoneAccountCreator *creator) {
 	resetField(&creator->phone_number);
 	resetField(&creator->phone_country_code);
 	resetField(&creator->email);
+	resetField(&creator->pnProvider);
+	resetField(&creator->pnParam);
+	resetField(&creator->pnPrid);
 	resetField(&creator->language);
 	resetField(&creator->activation_code);
 	resetField(&creator->domain);
@@ -757,6 +768,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account(Lin
 	return creator->service->login_linphone_account_request_cb(creator);
 }
 
+LinphoneAccountCreatorStatus linphone_account_creator_get_validation_account(LinphoneAccountCreator *creator) {
+	return creator->service->get_validation_account_request_cb(creator);
+}
+
 /************************** End Account Creator data **************************/
 
 /************************** Start Account Creator Linphone **************************/
@@ -976,7 +991,56 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone(Li
 }
 
 /****************** END OF CREATE ACCOUNT SECTION *****************************/
+/****************** START OF GET VALIDATION ACCOUNT SECTION ****************/
 
+static void _get_validation_account_cb_custom(LinphoneXmlRpcRequest *request) {
+	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
+	LinphoneAccountCreatorStatus status = LinphoneAccountCreatorStatusRequestFailed;
+
+	const char* resp = linphone_xml_rpc_request_get_string_response(request);
+	
+	 if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
+		status = (strcmp(resp, "OK") == 0) ? LinphoneAccountCreatorStatusValidationAccountCreated
+		: LinphoneAccountCreatorStatusValidationAccountNotCreated;
+	}
+	
+	if (creator->cbs->get_validation_account_response_cb != NULL) {
+		creator->cbs->get_validation_account_response_cb(creator, status, resp);
+	}
+	NOTIFY_IF_EXIST(Status, get_validation_account, creator, status, resp)
+}
+
+static LinphoneAccountCreatorStatus linphone_account_creator_get_validation_account_linphone(LinphoneAccountCreator *creator) {
+	LinphoneXmlRpcRequest *request;
+	
+	if (!creator->pnProvider || !creator->pnParam || creator->pnPrid) {
+		if (creator->cbs->is_account_exist_response_cb != NULL) {
+			creator->cbs->is_account_exist_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
+		}
+		NOTIFY_IF_EXIST(Status, is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		return LinphoneAccountCreatorStatusMissingArguments;
+	}
+	ms_debug("Account creator: get_validation_account (pn-provider=%s, pn-param=%s, pn-prid=%s", creator->pnProvider, creator->pnParam, creator->pnPrid);
+	request = linphone_xml_rpc_request_new(LinphoneXmlRpcArgString, "get_validation_account");
+	
+	linphone_xml_rpc_request_add_string_arg(request, creator->pnProvider);
+	linphone_xml_rpc_request_add_string_arg(request, creator->pnParam);
+	linphone_xml_rpc_request_add_string_arg(request, creator->pnPrid);
+	
+	fill_domain_and_algorithm_if_needed(creator);
+	
+	if (creator->xmlrpc_session) {
+		linphone_xml_rpc_request_set_user_data(request, creator);
+		linphone_xml_rpc_request_cbs_set_response(linphone_xml_rpc_request_get_callbacks(request), _get_validation_account_cb_custom);
+		linphone_xml_rpc_session_send_request(creator->xmlrpc_session, request);
+		linphone_xml_rpc_request_unref(request);
+		return LinphoneAccountCreatorStatusRequestOk;
+	}
+	
+	return LinphoneAccountCreatorStatusRequestFailed;
+}
+
+/****************** END OF GET VALIDATION ACCOUNT SECTION *******************/
 /****************** START OF VALIDATE ACCOUNT SECTION *************************/
 
 static void _login_account_confirmation_key_cb_custom(LinphoneXmlRpcRequest *request) {
