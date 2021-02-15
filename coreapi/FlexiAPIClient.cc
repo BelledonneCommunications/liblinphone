@@ -111,7 +111,7 @@ FlexiAPIClient* FlexiAPIClient::accountPasswordChange(string algorithm, string p
     return this;
 }
 
-FlexiAPIClient* FlexiAPIClient::emailChange(string email) {
+FlexiAPIClient* FlexiAPIClient::accountEmailChangeRequest(string email) {
     JsonParams params;
     params.push("email", email);
     prepareRequest("accounts/email/request", "POST", params);
@@ -125,6 +125,20 @@ FlexiAPIClient* FlexiAPIClient::accountDevices() {
 
 FlexiAPIClient* FlexiAPIClient::accountDevice(string uuid) {
     prepareRequest(string("accounts/me/devices/").append(uuid));
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountPhoneChangeRequest(string phone) {
+    JsonParams params;
+    params.push("phone", phone);
+    prepareRequest("accounts/me/phone/request", "POST", params);
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountPhoneChange(string code) {
+    JsonParams params;
+    params.push("code", code);
+    prepareRequest("accounts/me/phone", "POST", params);
     return this;
 }
 

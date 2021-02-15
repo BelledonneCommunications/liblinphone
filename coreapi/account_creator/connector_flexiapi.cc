@@ -160,8 +160,56 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linph
 	return LinphoneAccountCreatorStatusRequestOk;
 }
 
+LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_account_linphone_flexiapi(LinphoneAccountCreator *creator) {
+	LinphoneXmlRpcRequest *request = NULL;
+	if (!creator->phone_number || !creator->username) {
+		if (creator->cbs->link_account_response_cb != NULL) {
+			creator->cbs->link_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
+		}
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, link_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		return LinphoneAccountCreatorStatusMissingArguments;
+	}
+
+	fill_domain_and_algorithm_if_needed(creator);
+
+	auto flexiAPIClient = new FlexiAPIClient(creator->core);
+
+	flexiAPIClient->accountPhoneChangeRequest(creator->phone_number)
+		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			return LinphoneAccountCreatorStatusRequestOk;
+		})
+		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			flexi_api_error_default_handler(creator, response);
+			return LinphoneAccountCreatorStatusRequestFailed;
+		});
+
+	return LinphoneAccountCreatorStatusRequestFailed;
+}
+
 LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link_linphone_flexiapi(LinphoneAccountCreator *creator) {
-	return linphone_account_creator_activate_phone_account_linphone_flexiapi(creator);
+	LinphoneXmlRpcRequest *request = NULL;
+	if (!creator->phone_number || !creator->username || !creator->activation_code || (!creator->password && !creator->ha1) || !_get_domain(creator)) {
+		if (creator->cbs->activate_alias_response_cb != NULL) {
+			creator->cbs->activate_alias_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
+		}
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		return LinphoneAccountCreatorStatusMissingArguments;
+	}
+
+	fill_domain_and_algorithm_if_needed(creator);
+
+	auto flexiAPIClient = new FlexiAPIClient(creator->core);
+
+	flexiAPIClient->accountPhoneChange(creator->activation_code)
+		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			return LinphoneAccountCreatorStatusRequestOk;
+		})
+		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			flexi_api_error_default_handler(creator, response);
+			return LinphoneAccountCreatorStatusRequestFailed;
+		});
+
+	return LinphoneAccountCreatorStatusRequestFailed;
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_linphone_flexiapi(LinphoneAccountCreator *creator) {
@@ -220,4 +268,33 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_f
 		});
 
 	return LinphoneAccountCreatorStatusRequestOk;
+}
+
+LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone_flexiapi(LinphoneAccountCreator *creator) {
+	if (!creator->username || !_get_domain(creator)) {
+		if (creator->cbs->is_account_linked_response_cb != NULL) {
+			creator->cbs->is_account_linked_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
+		}
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_linked, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		return LinphoneAccountCreatorStatusMissingArguments;
+	}
+
+	fill_domain_and_algorithm_if_needed(creator);
+
+	auto flexiAPIClient = new FlexiAPIClient(creator->core);
+
+	flexiAPIClient->me()
+		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			if (!response.json()["phone"].empty()) {
+				return LinphoneAccountCreatorStatusAccountLinked;
+			}
+
+			return LinphoneAccountCreatorStatusAccountNotLinked;
+		})
+		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+			flexi_api_error_default_handler(creator, response);
+			return LinphoneAccountCreatorStatusRequestFailed;
+		});
+
+	return LinphoneAccountCreatorStatusRequestFailed;
 }

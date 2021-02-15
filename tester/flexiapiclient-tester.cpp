@@ -108,7 +108,7 @@ static void flexiapiChangeEmail() {
 	string resolvedDomain;
 
 	flexiAPIClient
-		->emailChange("changed@test.com")
+		->accountEmailChangeRequest("changed@test.com")
 		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			fetched = 1;
@@ -222,7 +222,7 @@ static void flexiapiChangePassword() {
 	delete flexiAPIClient;
 }
 
-test_t account_creator_flexiapi_tests[] = {
+test_t flexiapiclient_tests[] = {
 	TEST_NO_TAG("Ping", flexiapiPing),
 	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
 	TEST_NO_TAG("Accounts", flexiapiAccounts),
@@ -232,5 +232,5 @@ test_t account_creator_flexiapi_tests[] = {
 
 test_suite_t flexiapiclient_suite = {
 	"FlexiAPI Client", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(account_creator_flexiapi_tests) / sizeof(account_creator_flexiapi_tests[0]), account_creator_flexiapi_tests
+	sizeof(flexiapiclient_tests) / sizeof(flexiapiclient_tests[0]), flexiapiclient_tests
 };

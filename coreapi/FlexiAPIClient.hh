@@ -80,13 +80,15 @@ class FlexiAPIClient {
         FlexiAPIClient* accountActivatePhone(string sip, string code);
 
         // Authenticated endpoints
-        FlexiAPIClient* emailChange(string email);
         FlexiAPIClient* me();
         FlexiAPIClient* accountDelete();
         FlexiAPIClient* accountPasswordChange(string algorithm, string password);
         FlexiAPIClient* accountPasswordChange(string algorithm, string password, string oldPassword);
         FlexiAPIClient* accountDevices();
         FlexiAPIClient* accountDevice(string uuid);
+        FlexiAPIClient* accountEmailChangeRequest(string email);
+        FlexiAPIClient* accountPhoneChangeRequest(string phone);
+        FlexiAPIClient* accountPhoneChange(string code);
 
         // Admin endpoints
         FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm);
