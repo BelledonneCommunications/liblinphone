@@ -32,7 +32,7 @@ using namespace Json;
 static void flexiapiPing() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
 	const char *resolvedContent;
 	int code = 0;
@@ -52,13 +52,12 @@ static void flexiapiPing() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
-	delete flexiAPIClient;
 }
 
 static void flexiapiAccounts() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("marie_rc");
 
-	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -95,20 +94,19 @@ static void flexiapiAccounts() {
 	BC_ASSERT_STRING_EQUAL(resolvedDomain.c_str(), "sip.example.org");
 
 	linphone_core_manager_destroy(marie);
-	delete flexiAPIClient;
 }
 
 static void flexiapiChangeEmail() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
-	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
 	string resolvedDomain;
 
 	flexiAPIClient
-		->emailChange("changed@test.com")
+		->accountEmailChangeRequest("changed@test.com")
 		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
 			code = response.code;
 			fetched = 1;
@@ -118,7 +116,6 @@ static void flexiapiChangeEmail() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
-	delete flexiAPIClient;
 }
 
 /**
@@ -128,7 +125,7 @@ static void flexiapiChangeEmail() {
 static void flexiapiCreateAccount() {
 	LinphoneCoreManager *marie = linphone_core_manager_new("pauline_rc");
 
-	auto flexiAPIClient = new FlexiAPIClient(marie->lc);
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -184,7 +181,6 @@ static void flexiapiCreateAccount() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);
-	delete flexiAPIClient;
 }
 
 static void flexiapiChangePassword() {
@@ -202,7 +198,7 @@ static void flexiapiChangePassword() {
 	const char* password = linphone_auth_info_get_password(authInfo);
 	BC_ASSERT_PTR_NOT_NULL(password);
 
-	auto flexiAPIClient = new FlexiAPIClient(pauline->lc);
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(pauline->lc);
 
 	int code = 0;
 	int fetched = 0;
@@ -219,10 +215,9 @@ static void flexiapiChangePassword() {
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(pauline);
-	delete flexiAPIClient;
 }
 
-test_t account_creator_flexiapi_tests[] = {
+test_t flexiapiclient_tests[] = {
 	TEST_NO_TAG("Ping", flexiapiPing),
 	TEST_NO_TAG("Create Account", flexiapiCreateAccount),
 	TEST_NO_TAG("Accounts", flexiapiAccounts),
@@ -232,5 +227,5 @@ test_t account_creator_flexiapi_tests[] = {
 
 test_suite_t flexiapiclient_suite = {
 	"FlexiAPI Client", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
-	sizeof(account_creator_flexiapi_tests) / sizeof(account_creator_flexiapi_tests[0]), account_creator_flexiapi_tests
+	sizeof(flexiapiclient_tests) / sizeof(flexiapiclient_tests[0]), flexiapiclient_tests
 };
