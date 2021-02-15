@@ -111,7 +111,7 @@ FlexiAPIClient* FlexiAPIClient::accountPasswordChange(string algorithm, string p
     return this;
 }
 
-FlexiAPIClient* FlexiAPIClient::emailChange(string email) {
+FlexiAPIClient* FlexiAPIClient::accountEmailChangeRequest(string email) {
     JsonParams params;
     params.push("email", email);
     prepareRequest("accounts/email/request", "POST", params);
@@ -125,6 +125,20 @@ FlexiAPIClient* FlexiAPIClient::accountDevices() {
 
 FlexiAPIClient* FlexiAPIClient::accountDevice(string uuid) {
     prepareRequest(string("accounts/me/devices/").append(uuid));
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountPhoneChangeRequest(string phone) {
+    JsonParams params;
+    params.push("phone", phone);
+    prepareRequest("accounts/me/phone/request", "POST", params);
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountPhoneChange(string code) {
+    JsonParams params;
+    params.push("code", code);
+    prepareRequest("accounts/me/phone", "POST", params);
     return this;
 }
 
@@ -237,6 +251,7 @@ void FlexiAPIClient::prepareRequest(string path, string type) {
 }
 
 void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params) {
+    mRequestCallbacks.mSelf = shared_from_this();
     belle_http_request_listener_callbacks_t internalCallbacks = {};
     belle_http_request_listener_t *listener;
     belle_http_request_t *req;
@@ -257,6 +272,8 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
             BELLE_SIP_MESSAGE(req),
             belle_http_header_create("From", addr)
         );
+
+        ms_free(addr);
     }
 
     if (!params.empty()) {
@@ -279,34 +296,49 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
     belle_sip_object_data_set(BELLE_SIP_OBJECT(req), "listener", listener, belle_sip_object_unref);
 }
 
-void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) {
-    auto cb = (Callbacks *)ctx;
-    FlexiAPIClient::Response response;
+void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_t *event) noexcept {
+    auto cb = static_cast<Callbacks*>(ctx);
 
-    if (event->response){
-        int code = belle_http_response_get_status_code(event->response);
-        response.code = code;
+    try {
+        FlexiAPIClient::Response response;
 
-        if (code >= 200 && code < 300) {
-            belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
-            const char *content = belle_sip_object_to_string(body);
+        if (event->response){
+            int code = belle_http_response_get_status_code(event->response);
+            response.code = code;
 
-            response.body = content;
-            if (cb->success) {
-                cb->success(response);
+            if (code >= 200 && code < 300) {
+                belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
+                char *content = belle_sip_object_to_string(body);
+
+                response.body = content;
+                if (cb->success) {
+                    cb->success(response);
+                }
+                ms_free(content);
+            } else if(cb->error) {
+                cb->error(response);
             }
-        } else if(cb->error) {
-            cb->error(response);
         }
+
+    } catch(const std::exception& e) {
+        lError() << e.what();
     }
+
+    cb->mSelf = nullptr;
 }
 
-void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) {
-    auto cb = (Callbacks *)ctx;
-    const char *username = belle_sip_auth_event_get_username(event);
-    const char *domain = belle_sip_auth_event_get_domain(event);
+void FlexiAPIClient::processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept {
+    auto cb = static_cast<Callbacks*>(ctx);
 
-    linphone_core_fill_belle_sip_auth_event(cb->core, event, username, domain);
+    try {
+        const char *username = belle_sip_auth_event_get_username(event);
+        const char *domain = belle_sip_auth_event_get_domain(event);
+
+        linphone_core_fill_belle_sip_auth_event(cb->core, event, username, domain);
+    } catch(const std::exception& e) {
+        lError() << e.what();
+    }
+
 }
 
 string FlexiAPIClient::urlEncode(const string &value) {

@@ -423,3 +423,20 @@ void linphone_core_manager_check_accounts(LinphoneCoreManager *m){
 	}
 	if (!liblinphonetester_show_account_manager_logs) linphone_core_set_log_level_mask(logmask);
 }
+
+LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) ms_new0(LinphoneAccountCreatorStats, 1);
+	return stats;
+}
+
+void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done++;
+	BC_ASSERT_TRUE(stats->cb_done);
+}
+
+void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
+	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
+	stats->cb_done = 0;
+	BC_ASSERT_FALSE(stats->cb_done);
+}
