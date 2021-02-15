@@ -109,6 +109,11 @@ void FileTransferChatMessageModifier::fileTransferOnProgress (
 	if (!message)
 		return;
 
+	size_t percentage = offset * 100 / total;
+	if (percentage <= lastNotifiedPercentage) {
+		return;
+	}
+
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
@@ -120,6 +125,7 @@ void FileTransferChatMessageModifier::fileTransferOnProgress (
 		linphone_core_notify_file_transfer_progress_indication(message->getCore()->getCCore(), msg, content, offset, total);
 	}
 	_linphone_chat_message_notify_file_transfer_progress_indication(msg, content, offset, total);
+	lastNotifiedPercentage = percentage;
 }
 
 static int _chat_message_on_send_body (
@@ -519,6 +525,8 @@ int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
 	if (currentFileContentToTransfer->getFilePath().empty() && !message->getPrivate()->getFileTransferFilepath().empty()) {
 		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
 	}
+
+	lastNotifiedPercentage = 0;
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };
 	cbs.process_response = _chat_message_process_response_from_post_file;
@@ -1092,6 +1100,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
 	}
 
+	lastNotifiedPercentage = 0;
 	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };

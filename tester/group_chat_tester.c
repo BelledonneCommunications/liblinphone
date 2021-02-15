@@ -3304,7 +3304,7 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 	char *sendFilepath2 = NULL;
 	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
 	char *receiveChloeFilepath = bc_tester_file("receive_file_chloe.dump");
-	const char *text = "Hello Group !";
+	//const char *text = "Hello Group !";
 
 	if (two_files) {
 		sendFilepath2 = bc_tester_res("sounds/ahbahouaismaisbon.wav");
@@ -3340,7 +3340,7 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 
 	// Sending file
 	if (with_text) {
-		_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, text, use_buffer);
+		_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, "", use_buffer);
 	} else {
 		_send_file(marieCr, sendFilepath, sendFilepath2, use_buffer);
 	}
@@ -3349,8 +3349,8 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 
 	// Check that chat rooms have received the file
 	if (with_text) {
-		_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, text, use_buffer);
-		_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, text, use_buffer);
+		_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, "", use_buffer);
+		_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, "", use_buffer);
 	} else {
 		_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, use_buffer);
 		_receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, use_buffer);
