@@ -79,7 +79,7 @@ LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom 
 	return msg;
 }
 
-LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_room, bool_t use_alt_file_transfer_progress_indication_cb) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
@@ -103,7 +103,11 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 	linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	if (use_alt_file_transfer_progress_indication_cb) {
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
+	} else {
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	}
 	BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
 	linphone_chat_message_add_callbacks(msg, cbs);
 	linphone_chat_message_cbs_unref(cbs);
@@ -111,6 +115,10 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	linphone_content_unref(content);
 	bc_free(send_filepath);
 	return msg;
+}
+
+LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+	return _create_message_from_sintel_trailer_with_cb(chat_room, FALSE);
 }
 
 LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
@@ -1345,8 +1353,8 @@ static void file_transfer_2_messages_simultaneously(void) {
 
 		/* create a chatroom on pauline's side */
 		pauline_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-		msg = create_message_from_sintel_trailer(pauline_room);
-		msg2 = create_message_from_sintel_trailer(pauline_room);
+		msg = _create_message_from_sintel_trailer(pauline_room, FALSE);
+		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE);
 
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 0, unsigned int, "%u");
 		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {
@@ -1390,7 +1398,7 @@ static void file_transfer_2_messages_simultaneously(void) {
 					cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 					linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
 					linphone_chat_message_add_callbacks(recvMsg2, cbs);
 					linphone_chat_message_cbs_unref(cbs);
 					linphone_chat_message_download_file(recvMsg2);

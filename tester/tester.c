@@ -2636,6 +2636,36 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
+	if (progress == 0) {
+		counters->number_of_LinphoneFileTransfer = 0;
+	}
+	counters->number_of_LinphoneFileTransfer++;
+
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
+	bctbx_message(
+		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
+		progress,
+		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
+		linphone_content_get_type(content),
+		linphone_content_get_subtype(content),
+		linphone_chat_message_is_outgoing(msg) ? "to" : "from",
+		address
+	);
+	counters->progress_of_LinphoneFileTransfer = progress;
+	if (progress == 100) {
+		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
+		BC_ASSERT_LOWER(counters->number_of_LinphoneFileTransfer, 100, int, "%d");
+	}
+	free(address);
+}
+void file_transfer_progress_indication_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
+	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
+	int progress = (int)((offset * 100)/total);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
 		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",

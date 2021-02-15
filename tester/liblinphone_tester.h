@@ -245,6 +245,7 @@ typedef struct _stats {
 	int number_of_LinphoneIsComposingActiveReceived;
 	int number_of_LinphoneIsComposingIdleReceived;
 	int progress_of_LinphoneFileTransfer;
+	int number_of_LinphoneFileTransfer;
 
 	int number_of_LinphoneChatRoomConferenceJoined;
 	int number_of_LinphoneChatRoomEphemeralTimerStarted;
@@ -466,6 +467,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 
 LinphoneBuffer * tester_memory_file_transfer_send(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t size);
 void file_transfer_progress_indication(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
+void file_transfer_progress_indication_2(LinphoneChatMessage *message, LinphoneContent* content, size_t offset, size_t total);
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room);
 void info_message_received(LinphoneCore *lc, LinphoneCall *call, const LinphoneInfoMessage *msg);
 void new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url);
