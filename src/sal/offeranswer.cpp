@@ -385,12 +385,18 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 					if (negotiationSuccess) {
 						remote_answer.cfgIndex = remoteCfg.first;
 						local_offer.cfgIndex = localCfg.first;
+						lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+						break;
 					}
+
 				}
+			}
+			if (resultCfgPair.second) {
+				break;
 			}
 		}
 	} else {
-		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getChosenConfigurationIndex());
 	}
 
 	const auto & resultCfg = resultCfgPair.first;
@@ -569,12 +575,17 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 					if (negotiationSuccess) {
 						remote_offer.cfgIndex = remoteCfg.first;
 						local_cap.cfgIndex = localCfg.first;
+						lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
+						break;
 					}
 				}
 			}
+			if (resultCfgPair.second) {
+				break;
+			}
 		}
 	} else {
-		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getActualConfigurationIndex());
+		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getChosenConfigurationIndex());
 	}
 
 	const auto & resultCfg = resultCfgPair.first;
