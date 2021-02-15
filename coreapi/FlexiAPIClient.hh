@@ -29,7 +29,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-class FlexiAPIClient {
+class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
     public:
         class Response {
             public:
@@ -69,6 +69,7 @@ class FlexiAPIClient {
                 function<void (Response)> success;
                 function<void (Response)> error;
                 LinphoneCore *core;
+                shared_ptr<FlexiAPIClient> mSelf;
         };
 
         FlexiAPIClient(LinphoneCore *lc);
@@ -80,13 +81,15 @@ class FlexiAPIClient {
         FlexiAPIClient* accountActivatePhone(string sip, string code);
 
         // Authenticated endpoints
-        FlexiAPIClient* emailChange(string email);
         FlexiAPIClient* me();
         FlexiAPIClient* accountDelete();
         FlexiAPIClient* accountPasswordChange(string algorithm, string password);
         FlexiAPIClient* accountPasswordChange(string algorithm, string password, string oldPassword);
         FlexiAPIClient* accountDevices();
         FlexiAPIClient* accountDevice(string uuid);
+        FlexiAPIClient* accountEmailChangeRequest(string email);
+        FlexiAPIClient* accountPhoneChangeRequest(string phone);
+        FlexiAPIClient* accountPhoneChange(string code);
 
         // Admin endpoints
         FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm);
@@ -114,7 +117,7 @@ class FlexiAPIClient {
         void prepareRequest(string path);
         void prepareRequest(string path, string type);
         void prepareRequest(string path, string type, JsonParams params);
-        static void processResponse(void *ctx, const belle_http_response_event_t *event);
-        static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event);
+        static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
+        static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
         string urlEncode(const string &value);
 };
