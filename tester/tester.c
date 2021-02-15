@@ -2691,26 +2691,32 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
-		const LinphoneCallParams* call_param = NULL;
-		/* when caller is encryptionNone but callee is ZRTP, we expect ZRTP to take place */
-		if ((linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionNone)
-			&& (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP)
-			&& linphone_core_media_encryption_supported(caller_mgr->lc, LinphoneMediaEncryptionZRTP)) {
-			if (callee_call) {
-				call_param = linphone_call_get_current_params(callee_call);
-				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
-			}
-			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param), LinphoneMediaEncryptionZRTP, int, "%d");
-		}else { /* otherwise, final status shall stick to caller core parameter */
-			if (callee_call) {
-				call_param = linphone_call_get_current_params(callee_call);
-				if(!BC_ASSERT_PTR_NOT_NULL(call_param)) return FALSE;
-				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
-			}
-			call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+		const LinphoneCallParams* caller_call_local_param = linphone_call_get_params(linphone_core_get_current_call(caller_mgr->lc));
+		bool_t caller_capability_enabled = linphone_call_params_capability_negotiations_enabled(caller_call_local_param) && linphone_core_is_capability_negotiation_supported(caller_mgr->lc);
+		const LinphoneCallParams* callee_call_local_param = linphone_call_get_params(callee_call);
+		bool_t callee_capability_enabled = linphone_call_params_capability_negotiations_enabled(callee_call_local_param) && linphone_core_is_capability_negotiation_supported(callee_mgr->lc);
+		const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
+		if(!BC_ASSERT_PTR_NOT_NULL(caller_call_param)) return FALSE;
+		const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(callee_call);
+		if(!BC_ASSERT_PTR_NOT_NULL(callee_call_param)) return FALSE;
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(caller_call_param),linphone_call_params_get_media_encryption(callee_call_param), int, "%d");
+		// Do not check encryption agaisy core encryption if capability negotiation is enabled
+		if (!caller_capability_enabled || !callee_capability_enabled) {
+			/* when caller is encryptionNone but callee is ZRTP, we expect ZRTP to take place */
+			if ((linphone_core_get_media_encryption(caller_mgr->lc) == LinphoneMediaEncryptionNone)
+				&& (linphone_core_get_media_encryption(callee_mgr->lc) == LinphoneMediaEncryptionZRTP)
+				&& linphone_core_media_encryption_supported(caller_mgr->lc, LinphoneMediaEncryptionZRTP)) {
+				if (callee_call) {
+					BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(callee_call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+				}
+				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(caller_call_param), LinphoneMediaEncryptionZRTP, int, "%d");
+			}else { /* otherwise, final status shall stick to caller core parameter */
+				if (callee_call) {
+					BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(callee_call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
+				}
+				BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(caller_call_param),linphone_core_get_media_encryption(caller_mgr->lc), int, "%d");
 
+			}
 		}
 	}
 	/*wait ice re-invite*/
