@@ -30,6 +30,7 @@ This changelog file was started on October 2019. Previous changes were more or l
 - linphone_core_interpret_url() will unescape characters first if possible if only a username is given as input parameter.
 - linphone_chat_message_cancel_file_transfer() no longer deletes the file for outgoing messages.
 - magic search result created from filter now applies the international prefix of the default proxy config if possible.
+- file transfer progress callback will be at most notified 101 times.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.

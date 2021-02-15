@@ -2636,6 +2636,11 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
+	if (progress == 0) {
+		counters->number_of_LinphoneFileTransfer = 0;
+	}
+	counters->number_of_LinphoneFileTransfer++;
+
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
 		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
@@ -2649,6 +2654,7 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	counters->progress_of_LinphoneFileTransfer = progress;
 	if (progress == 100) {
 		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
+		BC_ASSERT_LOWER(counters->number_of_LinphoneFileTransfer, 101, int, "%d");
 	}
 	free(address);
 }
