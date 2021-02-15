@@ -30,7 +30,7 @@ enum encryption_level {
 };
 
 struct encryption_params {
-	LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
+	LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone; // Desired encryption
 	encryption_level level = E_DISABLED;
 	std::list<LinphoneMediaEncryption> preferences;
 };
@@ -52,7 +52,7 @@ static void set_encryption_preference(std::list<LinphoneMediaEncryption> & prefe
 
 }
 
-static void set_encryption_preference_except(std::list<LinphoneMediaEncryption> & preferences, const LinphoneMediaEncryption encryption) {
+static void set_encryption_preference_with_priority(std::list<LinphoneMediaEncryption> & preferences, const LinphoneMediaEncryption encryption) {
 	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
 		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
 		if (candidateEncryption != encryption) {
@@ -64,6 +64,7 @@ static void set_encryption_preference_except(std::list<LinphoneMediaEncryption> 
 			}
 		}
 	}
+	preferences.push_front(encryption);
 }
 
 static bctbx_list_t * create_confg_encryption_preference_list_except(const LinphoneMediaEncryption encryption) {
@@ -72,6 +73,14 @@ static bctbx_list_t * create_confg_encryption_preference_list_except(const Linph
 		if (static_cast<LinphoneMediaEncryption>(idx) != encryption) {
 			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(idx))));
 		}
+	}
+	return encryption_list;
+}
+
+static bctbx_list_t * create_confg_encryption_preference_list_from_param_preferences(const std::list<LinphoneMediaEncryption> & preferences) {
+	bctbx_list_t * encryption_list = NULL;
+	for (const auto & enc : preferences) {
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(enc)));
 	}
 	return encryption_list;
 }
@@ -330,8 +339,7 @@ static LinphoneCoreManager * create_core_mgr_with_capabiliy_negotiation_setup(co
 			linphone_core_set_media_encryption(mgr->lc,encryption);
 			BC_ASSERT_EQUAL(linphone_core_get_media_encryption(mgr->lc), encryption, int, "%i");
 		} if (enc_params.level == E_OPTIONAL) {
-			bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(encryption);
-			cfg_enc = bctbx_list_prepend(cfg_enc, ms_strdup(linphone_media_encryption_to_string(encryption)));
+			bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_from_param_preferences(enc_params.preferences);
 			linphone_core_set_supported_media_encryptions(mgr->lc,cfg_enc);
 			BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(mgr->lc, encryption));
 			bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
@@ -396,7 +404,7 @@ static void zrtp_call_with_mandatory_encryption(void) {
 
 static void call_from_opt_enc_to_enc_wrapper(const LinphoneMediaEncryption encryption, bool_t opt_enc_to_enc) {
 	encryption_params optional_enc_mgr_params;
-	optional_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	optional_enc_mgr_params.encryption = encryption;
 	optional_enc_mgr_params.level = E_OPTIONAL;
 	set_encryption_preference(optional_enc_mgr_params.preferences, TRUE);
 
@@ -440,8 +448,9 @@ static void call_from_opt_enc_to_none_wrapper(const LinphoneMediaEncryption encr
 	no_enc_mgr_params.level = E_DISABLED;
 
 	encryption_params enc_mgr_params;
-	enc_mgr_params.encryption = encryption;
+	enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	enc_mgr_params.level = E_OPTIONAL;
+	set_encryption_preference_with_priority(enc_mgr_params.preferences, encryption);
 	if (opt_enc_to_none) {
 		call_with_encryption_wrapper(enc_mgr_params, TRUE, no_enc_mgr_params, FALSE);
 	} else {
@@ -477,12 +486,12 @@ static void call_with_optional_encryption_on_both_sides_wrapper(const LinphoneMe
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
 	marie_enc_params.level = E_OPTIONAL;
-	set_encryption_preference_except(marie_enc_params.preferences, encryption);
+	set_encryption_preference_with_priority(marie_enc_params.preferences, encryption);
 
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_OPTIONAL;
-	set_encryption_preference_except(pauline_enc_params.preferences, encryption);
+	set_encryption_preference_with_priority(pauline_enc_params.preferences, encryption);
 
 	call_with_encryption_wrapper(marie_enc_params, FALSE, pauline_enc_params, FALSE);
 }
