@@ -2900,71 +2900,83 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 	}
 }
 
+void linphone_core_configuring (LinphoneCore *lc) {
+	// Previous state must be "start up"
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
+
+	//to give a chance to change uuid before starting
+	const char* uuid=linphone_config_get_string(lc->config,"misc","uuid",NULL);
+	if (!uuid){
+		string uuid = lc->sal->createUuid();
+		linphone_config_set_string(lc->config,"misc","uuid",uuid.c_str());
+	}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
+		lc->sal->setUuid(uuid);
+
+	if (!lc->sal->getRootCa().empty()) {
+		belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
+		belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
+	}
+
+	bool autoNetworkStateMonitoringEnabled = !!lc->auto_net_state_mon;
+	if (!autoNetworkStateMonitoringEnabled) {
+		bctbx_warning("Automatic network state monitoring is disabled by configuration (auto_net_state_mon=0). This is not recommended.");
+		bctbx_warning("In this mode, apps must use linphone_core_set_network_reachable() and linphone_core_set_dns_servers() to notify the LinphoneCore of network availability and provide the DNS server list.");
+	}
+	getPlatformHelpers(lc)->onLinphoneCoreStart(autoNetworkStateMonitoringEnabled);
+
+	linphone_core_set_state(lc, LinphoneGlobalConfiguring, "Configuring");
+}
+
+static LinphoneStatus linphone_core_on (LinphoneCore *lc) {
+	// Previous state must be "configuring"
+	const char *remote_provisioning_uri = linphone_core_get_provisioning_uri(lc);
+	if (remote_provisioning_uri) {
+		if (linphone_remote_provisioning_download_and_apply(lc, remote_provisioning_uri) == -1)
+			linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "Bad URI");
+	} else {
+		linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
+	}
+	/* There should not be further actions below this line.
+	 * Indeed, linphone_configuring_terminated() shall perform the actions that comes after configuration.
+	 * It may be called directly, as above, or asynchronously after the remote provisioning is completed.
+	 * */
+	return 0;
+}
+
 LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 	try {
-		//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
-		if (lc->state == LinphoneGlobalShutdown) {
-			_linphone_core_stop_async_end(lc);
+		switch (lc->state) {
+			case LinphoneGlobalShutdown:
+				bctbx_warning("Core was shutdown, forcing to off");
+				_linphone_core_stop_async_end(lc);
+
+			case LinphoneGlobalOff:
+				bctbx_warning("Core was stopped, before starting it again we need to init it");
+				linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
+
+				// Decrement refs to avoid leaking
+				linphone_config_unref(lc->config);
+				linphone_core_deactivate_log_serialization_if_needed();
+				bctbx_uninit_logger();
+
+			case LinphoneGlobalReady:
+				if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
+					bctbx_warning("Core [%p] can't start", lc);
+					return -1;
+				}
+
+				linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
+
+			case LinphoneGlobalStartup:
+				linphone_core_configuring(lc);
+
+			case LinphoneGlobalConfiguring:
+				return linphone_core_on(lc);
+
+			case LinphoneGlobalOn:
+				bctbx_warning("Core is already started, skipping...");
+				return -1;
 		}
-		if (lc->state == LinphoneGlobalOn) {
-			bctbx_warning("Core is already started, skipping...");
-			return -1;
-		} else if (lc->state == LinphoneGlobalShutdown) {
-			bctbx_error("Can't start a Core that is stopping, wait for Off state");
-			return -1;
-		} else if (lc->state == LinphoneGlobalOff) {
-			bctbx_warning("Core was stopped, before starting it again we need to init it");
-			linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
-
-			// Decrement refs to avoid leaking
-			linphone_config_unref(lc->config);
-			linphone_core_deactivate_log_serialization_if_needed();
-			bctbx_uninit_logger();
-		}
-
-		if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
-			bctbx_warning("Core [%p] can't start", lc);
-			return -1;
-		}
-
-		linphone_core_set_state(lc, LinphoneGlobalStartup, "Starting up");
-
-		L_GET_PRIVATE_FROM_C_OBJECT(lc)->init();
-
-		//to give a chance to change uuid before starting
-		const char* uuid=linphone_config_get_string(lc->config,"misc","uuid",NULL);
-		if (!uuid){
-			string uuid = lc->sal->createUuid();
-			linphone_config_set_string(lc->config,"misc","uuid",uuid.c_str());
-		}else if (strcmp(uuid,"0")!=0) /*to allow to disable sip.instance*/
-			lc->sal->setUuid(uuid);
-
-		if (!lc->sal->getRootCa().empty()) {
-			belle_tls_crypto_config_set_root_ca(lc->http_crypto_config, lc->sal->getRootCa().c_str());
-			belle_http_provider_set_tls_crypto_config(lc->http_provider, lc->http_crypto_config);
-		}
-
-		bool autoNetworkStateMonitoringEnabled = !!lc->auto_net_state_mon;
-		if (!autoNetworkStateMonitoringEnabled) {
-			bctbx_warning("Automatic network state monitoring is disabled by configuration (auto_net_state_mon=0). This is not recommended.");
-			bctbx_warning("In this mode, apps must use linphone_core_set_network_reachable() and linphone_core_set_dns_servers() to notify the LinphoneCore of network availability and provide the DNS server list.");
-		}
-		getPlatformHelpers(lc)->onLinphoneCoreStart(autoNetworkStateMonitoringEnabled);
-
-		linphone_core_set_state(lc, LinphoneGlobalConfiguring, "Configuring");
-
-		const char *remote_provisioning_uri = linphone_core_get_provisioning_uri(lc);
-		if (remote_provisioning_uri) {
-			if (linphone_remote_provisioning_download_and_apply(lc, remote_provisioning_uri) == -1)
-				linphone_configuring_terminated(lc, LinphoneConfiguringFailed, "Bad URI");
-		} else {
-			linphone_configuring_terminated(lc, LinphoneConfiguringSkipped, NULL);
-		}
-		/* There should not be further actions below this line.
-		 * Indeed, linphone_configuring_terminated() shall perform the actions that comes after configuration.
-		 * It may be called directly, as above, or asynchronously after the remote provisioning is completed.
-		 * */
-		return 0;
 	} catch (const CorePrivate::DatabaseConnectionFailure &e) {
 		bctbx_error("%s", e.what());
 		return -2;
