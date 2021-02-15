@@ -79,7 +79,7 @@ SalStreamDir get_video_dir_from_call_params (const LinphoneCallParams *params) {
 	return sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 }
 
-bool_t linphone_call_params_capability_negotiations_enabled (LinphoneCallParams *params) {
+bool_t linphone_call_params_capability_negotiations_enabled (const LinphoneCallParams *params) {
 	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->capabilityNegotiationEnabled();
 }
 
