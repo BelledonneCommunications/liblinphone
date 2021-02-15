@@ -412,9 +412,9 @@ static void call_from_opt_enc_to_enc_wrapper(const LinphoneMediaEncryption encry
 	mandatory_enc_mgr_params.encryption = encryption;
 	mandatory_enc_mgr_params.level = E_MANDATORY;
 	if (opt_enc_to_enc) {
-		call_with_encryption_wrapper(optional_enc_mgr_params, TRUE, mandatory_enc_mgr_params, FALSE);
+		call_with_encryption_wrapper(optional_enc_mgr_params, TRUE, mandatory_enc_mgr_params, TRUE);
 	} else {
-		call_with_encryption_wrapper(mandatory_enc_mgr_params, FALSE, optional_enc_mgr_params, TRUE);
+		call_with_encryption_wrapper(mandatory_enc_mgr_params, TRUE, optional_enc_mgr_params, TRUE);
 	}
 }
 

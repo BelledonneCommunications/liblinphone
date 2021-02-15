@@ -91,7 +91,7 @@ LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_
  * @return a boolean indicating the enablement of capability negotiations.
  * @ingroup media_parameters
  */
-LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (LinphoneCallParams *params);
+LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (const LinphoneCallParams *params);
 
 /**
  * Enable capability negotiations (RFC5939).
