@@ -208,6 +208,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_phone_n
  * @return LinphoneAccountCreatorStatusRequestOk if the request has been sent, LinphoneAccountCreatorStatusRequestFailed otherwise
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_account_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_account_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to activate the link of a phone number with a Linphone account.
@@ -230,6 +231,7 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_recover_ph
  * @return if this account is linked with a phone number
 **/
 LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone_xmlrpc(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone_flexiapi(LinphoneAccountCreator *creator);
 
 /**
  * Send an XML-RPC request to ask if an account is linked with a phone number

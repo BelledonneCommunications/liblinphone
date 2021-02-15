@@ -22,7 +22,6 @@
 #include <ctype.h>
 
 static const char XMLRPC_URL[] = "http://subscribe.example.org:8082/flexisip-account-manager/xmlrpc.php";
-
 static const int TIMEOUT_REQUEST = 10000;
 
 /////////// INIT //////////////
@@ -32,7 +31,7 @@ static void init_linphone_account_creator_service(LinphoneCore *lc) {
 	linphone_account_creator_service_set_constructor_cb(service, NULL);
 	linphone_account_creator_service_set_destructor_cb(service, NULL);
 	linphone_account_creator_service_set_create_account_cb(service, linphone_account_creator_create_account_linphone_xmlrpc);
-	linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_linphone_flexiapi);
+	linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_linphone_xmlrpc);
 	linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_linphone_xmlrpc);
 	linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_linphone_xmlrpc);
 	linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_linphone_xmlrpc);
@@ -52,27 +51,6 @@ static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, 
 }
 
 /////////// SERVER TESTS ///////////
-
-typedef struct _LinphoneAccountCreatorStats {
-	int cb_done;
-} LinphoneAccountCreatorStats;
-
-static LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) ms_new0(LinphoneAccountCreatorStats, 1);
-	return stats;
-}
-
-static void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
-	stats->cb_done++;
-	BC_ASSERT_TRUE(stats->cb_done);
-}
-
-static void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
-	stats->cb_done = 0;
-	BC_ASSERT_FALSE(stats->cb_done);
-}
 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
@@ -1500,8 +1478,8 @@ test_t account_creator_tests[] = {
 		"Server"),
 };
 
-test_suite_t account_creator_test_suite = {
-	"Account creator",
+test_suite_t account_creator_xmlrpc_test_suite = {
+	"Account creator XMLRPC",
 	NULL,
 	NULL,
 	liblinphone_tester_before_each,
