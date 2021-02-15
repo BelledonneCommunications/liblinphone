@@ -243,33 +243,40 @@ bool MediaSessionPrivate::failure () {
 			break;
 		case SalReasonUnsupportedContent: /* This is for compatibility: linphone sent 415 because of SDP offer answer failure */
 		case SalReasonNotAcceptable:
-			lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
-			if ((state == CallSession::State::OutgoingInit) || (state == CallSession::State::OutgoingProgress)
-				|| (state == CallSession::State::OutgoingRinging) /* Push notification case */ || (state == CallSession::State::OutgoingEarlyMedia)) {
-				for (int i = 0; i < localDesc->nb_streams; i++) {
-					if (!sal_stream_description_enabled(&localDesc->streams[i]))
-						continue;
-					if (getParams()->getMediaEncryption() == LinphoneMediaEncryptionSRTP) {
-						if (getParams()->avpfEnabled()) {
+			if ((state == CallSession::State::OutgoingInit) 
+				|| (state == CallSession::State::OutgoingProgress)
+				|| (state == CallSession::State::OutgoingRinging) /* Push notification case */ 
+				|| (state == CallSession::State::OutgoingEarlyMedia)) {
+				bool mediaEncrptionSrtp = getParams()->getMediaEncryption() == LinphoneMediaEncryptionSRTP;
+				bool avpfEnabled = getParams()->avpfEnabled();
+				if (mediaEncrptionSrtp || avpfEnabled) {
+					lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
+
+					for (int i = 0; i < localDesc->nb_streams; i++) {
+						if (!sal_stream_description_enabled(&localDesc->streams[i]))
+							continue;
+						if (mediaEncrptionSrtp) {
+							if (avpfEnabled) {
+								if (i == 0)
+									lInfo() << "Retrying CallSession [" << q << "] with SAVP";
+								getParams()->enableAvpf(false);
+								restartInvite();
+								return true;
+							} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
+								if (i == 0)
+									lInfo() << "Retrying CallSession [" << q << "] with AVP";
+								getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+								memset(localDesc->streams[i].crypto, 0, sizeof(localDesc->streams[i].crypto));
+								restartInvite();
+								return true;
+							}
+						} else if (avpfEnabled) {
 							if (i == 0)
-								lInfo() << "Retrying CallSession [" << q << "] with SAVP";
+								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->enableAvpf(false);
 							restartInvite();
 							return true;
-						} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
-							if (i == 0)
-								lInfo() << "Retrying CallSession [" << q << "] with AVP";
-							getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-							memset(localDesc->streams[i].crypto, 0, sizeof(localDesc->streams[i].crypto));
-							restartInvite();
-							return true;
 						}
-					} else if (getParams()->avpfEnabled()) {
-						if (i == 0)
-							lInfo() << "Retrying CallSession [" << q << "] with AVP";
-						getParams()->enableAvpf(false);
-						restartInvite();
-						return true;
 					}
 				}
 			}
