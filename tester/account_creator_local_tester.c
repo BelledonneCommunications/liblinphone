@@ -327,27 +327,6 @@ static void local_phone_number_ok(void) {
 
 /////////// SERVER TESTS ///////////
 
-typedef struct _LinphoneAccountCreatorStats {
-	int cb_done;
-} LinphoneAccountCreatorStats;
-
-static LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) ms_new0(LinphoneAccountCreatorStats, 1);
-	return stats;
-}
-
-static void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
-	stats->cb_done++;
-	BC_ASSERT_TRUE(stats->cb_done);
-}
-
-static void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
-	LinphoneAccountCreatorStats *stats = (LinphoneAccountCreatorStats*) linphone_account_creator_cbs_get_user_data(cbs);
-	stats->cb_done = 0;
-	BC_ASSERT_FALSE(stats->cb_done);
-}
-
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(

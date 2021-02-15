@@ -43,7 +43,8 @@ extern void *system_context;
 #endif
 
 extern test_suite_t account_creator_local_test_suite;
-extern test_suite_t account_creator_test_suite;
+extern test_suite_t account_creator_flexiapi_test_suite;
+extern test_suite_t account_creator_xmlrpc_test_suite;
 extern test_suite_t call_test_suite;
 extern test_suite_t push_incoming_call_test_suite;
 
@@ -630,6 +631,14 @@ extern MSSndCardDesc dummy3_test_snd_card_desc;
 void set_lime_curve(const int curveId, LinphoneCoreManager *manager);
 void set_lime_curve_list(const int curveId, bctbx_list_t *managerList);
 void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_t tls_auth_server, bool_t required);
+
+typedef struct _LinphoneAccountCreatorStats {
+	int cb_done;
+} LinphoneAccountCreatorStats;
+
+LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) ;
+void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs);
+void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 
 #ifdef __cplusplus
 };

@@ -112,6 +112,7 @@ set(DB_FILES
 
 set(RC_FILES
 	rcfiles/account_creator_rc
+	rcfiles/account_creator_flexiapi_rc
 	rcfiles/assistant_create.rc
 	rcfiles/carddav_rc
 	rcfiles/claire_rc
@@ -231,6 +232,7 @@ set(IOS_RESOURCES_FILES
 set(SOURCE_FILES_C
 	account_creator_local_tester.c
 	account_creator_xmlrpc_tester.c
+	account_creator_flexiapi_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
