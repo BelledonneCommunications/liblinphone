@@ -1237,9 +1237,9 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool addCapabilityNegotiationAttributes) {
 	L_Q();
-
 	const auto & core = q->getCore()->getCCore();
-	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(addCapabilityNegotiationAttributes);
+	const bool enableCapabilityNegotiations = addCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
+	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(enableCapabilityNegotiations);
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
