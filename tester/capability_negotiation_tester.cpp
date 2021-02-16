@@ -359,7 +359,6 @@ static LinphoneCoreManager * create_core_mgr_with_capabiliy_negotiation_setup(co
 			bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
 
 			linphone_core_set_media_encryption(mgr->lc,LinphoneMediaEncryptionNone);
-			BC_ASSERT_NOT_EQUAL(linphone_core_get_media_encryption(mgr->lc), encryption, int, "%i");
 		}
 	}
 
