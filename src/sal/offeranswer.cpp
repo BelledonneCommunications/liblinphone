@@ -325,7 +325,10 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
-void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, SalStreamDescription & result, const bool allowCapabilityNegotiation){
+SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const bool allowCapabilityNegotiation){
+
+	SalStreamDescription result;
+
 	result.type=local_offer.getType();
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
@@ -344,7 +347,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,L_STRING_TO_C(local_offer.rtp_addr)
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		if (local_offer.rtp_port!=remote_answer.rtp_port) {
 			ms_message("Remote answered rtp port [%i] does not match offered [%i] for local stream description [%p]"
@@ -352,7 +355,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,local_offer.rtp_port
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		if (local_offer.getDirection()!=remote_answer.getDirection()) {
 			ms_message("Remote answered dir [%s] does not match offered [%s] for local stream description [%p]"
@@ -360,7 +363,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,sal_stream_dir_to_string(local_offer.getDirection())
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		if (local_offer.bandwidth!=remote_answer.bandwidth) {
 			ms_message("Remote answered bandwidth [%i] does not match offered [%i] for local stream description [%p]"
@@ -368,7 +371,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,local_offer.bandwidth
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		result.multicast_role = SalMulticastSender;
 	}
@@ -378,7 +381,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 	if (allowCapabilityNegotiation) {
 		const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
 		const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
-		auto localCfgIdx = -1;
+		unsigned int localCfgIdx = 0;
 		// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
 		// If not, the actual configuration from the local offer has been selected
 		if (answerUnparsedCfgs.empty()) {
@@ -449,6 +452,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 		result.disable();
 	}
 
+	return result;
 }
 
 std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
@@ -568,9 +572,10 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	return std::make_pair(resultCfg, success);
 }
 
-void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
+SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
-						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bool allowCapabilityNegotiation){
+						bool_t one_matching_codec, const char *bundle_owner_mid, const bool allowCapabilityNegotiation){
+	SalStreamDescription result;
 	result.name = local_cap.name;
 	result.type=local_cap.getType();
 
@@ -621,6 +626,8 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 	if (!success) {
 		result.disable();
 	}
+
+	return result;
 }
 
 std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
@@ -790,18 +797,16 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 				ls.setProto(rs.getProto());
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
-			if (i <= result->streams.size()) {
-				result->streams.resize((i + 1));
-			}
-			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i], capabilityNegotiation);
-			SalStreamConfiguration cfg = result->streams[i].getActualConfiguration();
-			memcpy(&cfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(result->streams[i].getChosenConfiguration().rtcp_xr));
+			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
+			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
+			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
 			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
-				cfg.rtcp_xr.enabled = FALSE;
+				actualCfg.rtcp_xr.enabled = FALSE;
 			}
-			cfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
-			cfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
-			result->streams[i].addActualConfiguration(cfg);
+			actualCfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			actualCfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+			stream.addActualConfiguration(actualCfg);
+			result->streams.push_back(stream);
 		}
 		else ms_warning("No matching stream for %zu",i);
 	}
@@ -844,12 +849,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		result->bundles = remote_offer->bundles;
 	}
 
-	if (result->streams.size() < remote_offer->streams.size()) {
-		result->streams.resize(remote_offer->streams.size());
-	}
-
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
-
 	for(i=0;i<remote_offer->streams.size();++i){
 
 		if (i >= local_capabilities->streams.size()) {
@@ -857,9 +857,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 		}
 		const SalStreamDescription & ls = local_capabilities->streams[i];
 		SalStreamDescription & rs = remote_offer->streams[i];
-		SalStreamDescription & resultStream = result->streams[i];
-
-		SalStreamConfiguration cfg = resultStream.getActualConfiguration();
+		SalStreamDescription stream;
+		SalStreamConfiguration actualCfg;
 
 		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
@@ -874,40 +873,41 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid());
 				}
 			}
-			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
+			stream = OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
 			// Get an up to date actual configuration as it may have changed
-			cfg = resultStream.getActualConfiguration();
+			actualCfg = stream.getActualConfiguration();
 			// Handle global RTCP FB attributes
-			cfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
-			cfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+			actualCfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
-			memset(&cfg.rtcp_xr, 0, sizeof(cfg.rtcp_xr));
+			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
 			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
 				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
 				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
-					memcpy(&cfg.rtcp_xr, rtcp_xr_conf, sizeof(cfg.rtcp_xr));
+					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
 				} else {
-					cfg.rtcp_xr.enabled = TRUE;
+					actualCfg.rtcp_xr.enabled = TRUE;
 				}
 			}
 		}else {
 			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
-			cfg.dir=SalStreamInactive;
-			resultStream.rtp_port=0;
-			resultStream.type=rs.getType();
-			cfg.proto=rs.getProto();
+			actualCfg.dir=SalStreamInactive;
+			stream.rtp_port=0;
+			stream.type=rs.getType();
+			actualCfg.proto=rs.getProto();
 			if (rs.getType()==SalOther){
-				resultStream.typeother = rs.typeother;
+				stream.typeother = rs.typeother;
 			}
 			if (rs.getProto()==SalProtoOther){
-				cfg.proto_other = rs.getChosenConfiguration().proto_other;
+				actualCfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		cfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
-		resultStream.addActualConfiguration(cfg);
+		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
+		stream.addActualConfiguration(actualCfg);
+		result->streams.push_back(stream);
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
