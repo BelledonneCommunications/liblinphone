@@ -178,6 +178,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		SalStreamDescription stream;
 		if (capabilityNegotiationSupported) {
 			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
+			attrs.unparsed_cfgs =  potentialCfgGraph.getUnparsedCfgForStream(currentStreamIdx);
 			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
 			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(currentStreamIdx);
 			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(currentStreamIdx);
