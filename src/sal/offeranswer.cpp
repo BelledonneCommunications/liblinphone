@@ -691,14 +691,17 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	const bool isLocalActualCfg = (local_cap.getActualConfigurationIndex() == localCfgIdx);
 	const bool isRemoteActualCfg = (remote_offer.getActualConfigurationIndex() == remoteCfgIdx);
 
+	// If local or remote configuration is not the actual one, ensure that both have zrtp hashes
+	if ((!isLocalActualCfg || !isRemoteActualCfg) && (localCfg.haveZrtpHash != remoteCfg.haveZrtpHash))  {
+		lInfo() <<  __func__ << "No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
 	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
 		if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
 			strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
 			resultCfg.haveZrtpHash =  1;
-		} else if (!isLocalActualCfg || !isRemoteActualCfg) {
-			lInfo() <<  __func__ << "No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\") and local configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\")";
-			success = false;
-			return std::make_pair(resultCfg, success);
 		}
 	}
 
