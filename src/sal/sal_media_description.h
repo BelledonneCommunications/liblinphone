@@ -70,7 +70,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasIpv6() const;
-		bool hasCapabilityNegotiation() const;
+		bool supportCapabilityNegotiation() const;
 
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
@@ -126,7 +126,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		SalStreamDescription::acap_map_t acaps;
 		SalStreamDescription::tcap_map_t tcaps;
 
-		mutable bool capabilityNegotiationAllowed = false; /* Set to true if the stream allows capability negotiation */
+		mutable bool capabilityNegotiationSupported = false; /* Set to true if the stream allows capability negotiation */
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
 

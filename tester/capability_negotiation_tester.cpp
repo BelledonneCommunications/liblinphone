@@ -37,7 +37,7 @@ struct encryption_params {
 
 static void set_encryption_preference(std::list<LinphoneMediaEncryption> & preferences, const bool_t encryption_preferred) {
 
-	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
+	for (int idx = 0; idx <= LinphoneMediaEncryptionDTLS; idx++) {
 		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
 		if (candidateEncryption != LinphoneMediaEncryptionNone) {
 			preferences.push_back(candidateEncryption);
@@ -53,7 +53,7 @@ static void set_encryption_preference(std::list<LinphoneMediaEncryption> & prefe
 }
 
 static void set_encryption_preference_with_priority(std::list<LinphoneMediaEncryption> & preferences, const LinphoneMediaEncryption encryption) {
-	for (int idx = 0; idx < LinphoneMediaEncryptionDTLS; idx++) {
+	for (int idx = 0; idx <= LinphoneMediaEncryptionDTLS; idx++) {
 		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
 		if (candidateEncryption != encryption) {
 			if (candidateEncryption == LinphoneMediaEncryptionNone) {
