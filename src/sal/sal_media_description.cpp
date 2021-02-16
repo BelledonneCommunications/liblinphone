@@ -30,7 +30,7 @@ LINPHONE_BEGIN_NAMESPACE
 SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation){
 	pad = false;
 
-	capabilityNegotiationAllowed = capabilityNegotiation;
+	capabilityNegotiationSupported = capabilityNegotiation;
 
 	streams.clear();
 	bundles.clear();
@@ -67,7 +67,7 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 
 	set_nortpproxy = other.set_nortpproxy;
 
-	capabilityNegotiationAllowed = other.capabilityNegotiationAllowed;
+	capabilityNegotiationSupported = other.capabilityNegotiationSupported;
 }
 
 SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
@@ -82,7 +82,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
 
 	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
-	capabilityNegotiationAllowed = !potentialCfgGraph.empty();
+	capabilityNegotiationSupported = !potentialCfgGraph.empty();
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
@@ -168,7 +168,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
 	// Generally, at this point, vector streams should be empty
 
-	if (capabilityNegotiationAllowed) {
+	if (capabilityNegotiationSupported) {
 		for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
 		}
@@ -183,7 +183,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
 
 		SalStreamDescription stream;
-		if (capabilityNegotiationAllowed) {
+		if (capabilityNegotiationSupported) {
 			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
 			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
 			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(currentStreamIdx);
@@ -402,8 +402,8 @@ bool SalMediaDescription::hasIpv6() const {
 	return true;
 }
 
-bool SalMediaDescription::hasCapabilityNegotiation() const {
-	return capabilityNegotiationAllowed;
+bool SalMediaDescription::supportCapabilityNegotiation() const {
+	return capabilityNegotiationSupported;
 
 }
 
@@ -792,6 +792,6 @@ void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_descrip
 	char buffer[1024];
 	snprintf ( buffer, sizeof ( buffer )-1, "%d a=%s%s t=%s", cfgIdx, deleteAttrs.c_str(), acapString.c_str(), tcapString.c_str());
 	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
-	capabilityNegotiationAllowed = true;
+	capabilityNegotiationSupported = true;
 }
 LINPHONE_END_NAMESPACE
