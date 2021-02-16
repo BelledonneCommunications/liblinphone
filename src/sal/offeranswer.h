@@ -45,18 +45,16 @@ class OfferAnswerEngine {
 		 * Returns a media description to run the streams with, based on a local offer
 		 * and the returned response (remote).
 		**/
-		static int  initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
-							const std::shared_ptr<SalMediaDescription> remote_answer,
-							std::shared_ptr<SalMediaDescription> result);
+		static std::shared_ptr<SalMediaDescription> initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+							const std::shared_ptr<SalMediaDescription> remote_answer);
 
 		/**
 		 * Returns a media description to run the streams with, based on the local capabilities and
 		 * and the received offer.
 		 * The returned media description is an answer and should be sent to the offerer.
 		**/
-		static int initiateIncoming(MSFactory* factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
-							std::shared_ptr<SalMediaDescription> remote_offer,
-							std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec);
+		static std::shared_ptr<SalMediaDescription> initiateIncoming(MSFactory* factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+							std::shared_ptr<SalMediaDescription> remote_offer, bool_t one_matching_codec);
 
 	private:
 
