@@ -55,6 +55,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	public:
 
 		struct raw_capability_negotiation_attrs_t {
+			bellesip::SDP::SDPPotentialCfgGraph::session_description_unparsed_config::mapped_type unparsed_cfgs;
 			bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
 			bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
 			bellesip::SDP::SDPPotentialCfgGraph::media_description_config cfgs;
@@ -166,6 +167,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		cfg_map cfgs;
 		acap_map_t acaps;
 		tcap_map_t tcaps;
+		std::map<unsigned int, std::string> unparsed_cfgs;
 
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);

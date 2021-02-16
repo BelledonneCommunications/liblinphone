@@ -56,8 +56,13 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	rtcp_addr = other.rtcp_addr;
 	rtp_port = other.rtp_port;
 	rtcp_port = other.rtcp_port;
+	acaps = other.acaps;
+	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
 		cfgs.insert(cfg);
+	}
+	for (const auto & cfg : other.unparsed_cfgs) {
+		unparsed_cfgs.insert(cfg);
 	}
 	for (const auto & pt : other.already_assigned_payloads) {
 		already_assigned_payloads.push_back(payload_type_clone(pt));
@@ -144,6 +149,9 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 			tcaps[tcap->index] = tcap->value;
 		}
 
+		for (const auto & cfg : attrs.unparsed_cfgs) {
+			unparsed_cfgs.insert(cfg);
+		}
 		// Create potential configurations
 		fillPotentialConfigurationsFromPotentialCfgGraph(attrs.cfgs);
 	}
@@ -552,8 +560,13 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	rtcp_addr = other.rtcp_addr;
 	rtp_port = other.rtp_port;
 	rtcp_port = other.rtcp_port;
+	acaps = other.acaps;
+	tcaps = other.tcaps;
 	for (const auto & cfg : other.cfgs) {
 		cfgs.insert(cfg);
+	}
+	for (const auto & cfg : other.unparsed_cfgs) {
+		unparsed_cfgs.insert(cfg);
 	}
 	PayloadTypeHandler::clearPayloadList(already_assigned_payloads);
 	for (const auto & pt : other.already_assigned_payloads) {
