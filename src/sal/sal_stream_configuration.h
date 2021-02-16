@@ -160,7 +160,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		bool rtcp_mux = false;
 		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */
 		uint8_t haveLimeIk = 0; /**< flag for lime Ik presence */
-		uint8_t zrtphash[128];
+		uint8_t zrtphash[128] = {0};
 		std::string dtls_fingerprint;
 		SalDtlsRole dtls_role = SalDtlsRoleInvalid;
 		int ttl = 0; /*for multicast -1 to disable*/
