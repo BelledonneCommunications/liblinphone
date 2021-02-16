@@ -208,7 +208,7 @@ void MediaSessionPrivate::accepted () {
 			if ((prevState  == CallSession::State::Connected) && (nextState == CallSession::State::StreamsRunning)) {
 				// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 				// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-				if (localDesc->hasCapabilityNegotiation()) {
+				if (localDesc->supportCapabilityNegotiation()) {
 					// If no ICE session or checklist has completed, then send re-INVITE
 					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && getStreamsGroup().getIceService().hasCompletedCheckList())) {
 						const auto diff = md->compareToActualConfiguration(*localDesc);
@@ -1235,11 +1235,10 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	md->streams[idx].addActualConfiguration(cfg);
 }
 
-void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool addCapabilityNegotiationAttributes) {
+void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes) {
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
-	const bool enableCapabilityNegotiations = addCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
-	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(enableCapabilityNegotiations);
+	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes);
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;
@@ -1298,6 +1297,8 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
+	// Do not add capability negotiation attributes if encryption is mandatory
+	const bool addCapabilityNegotiationAttributes = supportsCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
 	if (addCapabilityNegotiationAttributes) {
 		bctbx_list_t * encs = linphone_core_get_supported_media_encryptions(core);
 
