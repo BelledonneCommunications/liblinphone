@@ -526,16 +526,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 			success = false;
 		}
 		crypto.emplace(crypto.begin(),crypto_result);
-		const auto resultCryptoAttrValue = SalStreamConfiguration::cryptoToSdpValue(crypto_result);
-		if (!resultCryptoAttrValue.empty()) {
-			const auto & cryptoAcapIt = std::find_if(local_offer.acaps.cbegin(), local_offer.acaps.cend(), [&resultCryptoAttrValue] (const auto & acapMapPair) {
-				const auto & acapPair = acapMapPair.second;
-				return (resultCryptoAttrValue.compare(acapPair.second) == 0);
-			});
-			if (cryptoAcapIt != local_offer.acaps.cend()) {
-				resultCfg.acapIndexes = {{cryptoAcapIt->first}};
-			}
-		}
 	}
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
@@ -549,7 +539,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
 			strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
 			resultCfg.haveZrtpHash =  1;
-			resultCfg.acapIndexes = localCfg.acapIndexes;
 		} else if (!isLocalActualCfg || !isRemoteActualCfg) {
 			lInfo() <<  __func__ << "No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\") and local configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\")";
 			success = false;
@@ -566,15 +555,15 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		} else {
 			resultCfg.dtls_role = SalDtlsRoleIsClient;
 		}
-		resultCfg.acapIndexes = localCfg.acapIndexes;
 	} else {
 		resultCfg.dtls_fingerprint.clear();
 		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
 	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
 
-	resultCfg.tcapIndex = localCfg.tcapIndex;
-	resultCfg.index = localCfg.index;
+	resultCfg.acapIndexes = remoteCfg.acapIndexes;
+	resultCfg.tcapIndex = remoteCfg.tcapIndex;
+	resultCfg.index = remoteCfg.index;
 
 	return std::make_pair(resultCfg, success);
 }
