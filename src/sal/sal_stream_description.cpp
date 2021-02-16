@@ -134,7 +134,7 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	// Populate stream global parameters and actual configuration
 	fillStreamDescriptionFromSdp(salMediaDesc, media_desc);
 
-	if (salMediaDesc->hasCapabilityNegotiation()) {
+	if (salMediaDesc->supportCapabilityNegotiation()) {
 
 		for (const auto & acap : attrs.acaps) {
 			acaps[acap->index] = std::make_pair(acap->name, acap->value);
