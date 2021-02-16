@@ -378,10 +378,10 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 
 	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 
+	const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
+	unsigned int localCfgIdx = local_offer.getActualConfigurationIndex();
 	if (allowCapabilityNegotiation) {
 		const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
-		const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
-		unsigned int localCfgIdx = 0;
 		// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
 		// If not, the actual configuration from the local offer has been selected
 		if (answerUnparsedCfgs.empty()) {
@@ -394,42 +394,16 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 			for (const auto & cfg : answerUnparsedCfgs) {
 				const auto success = resultCfgPair.second;
 				localCfgIdx = cfg.first;
-				if (!success) {
+				if (success) {
+					break;
+				} else {
 					resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
-					const auto negotiationSuccess = resultCfgPair.second;
-					if (negotiationSuccess) {
-						remote_answer.cfgIndex = remoteCfgIdx;
-						local_offer.cfgIndex = localCfgIdx;
-						lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
-						break;
-					}
-
 				}
 			}
 		}
-/*
-		for (const auto & remoteCfg : remote_answer.getAllCfgs()) {
-			for (const auto & localCfg : local_offer.getAllCfgs()) {
-				const auto success = resultCfgPair.second;
-				if (!success) {
-					resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfg.first, remoteCfg.first);
-					const auto negotiationSuccess = resultCfgPair.second;
-					if (negotiationSuccess) {
-						remote_answer.cfgIndex = remoteCfg.first;
-						local_offer.cfgIndex = localCfg.first;
-						lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
-						break;
-					}
-
-				}
-			}
-			if (resultCfgPair.second) {
-				break;
-			}
-		}
-*/
 	} else {
-		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remote_answer.getActualConfigurationIndex());
+		localCfgIdx = local_offer.getActualConfigurationIndex();
+		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
 	}
 
 	const auto & resultCfg = resultCfgPair.first;
@@ -448,7 +422,11 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 	}
 
 	const auto success = resultCfgPair.second;
-	if (!success) {
+	if (success) {
+		remote_answer.cfgIndex = remoteCfgIdx;
+		local_offer.cfgIndex = localCfgIdx;
+		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+	} else {
 		result.disable();
 	}
 
@@ -595,20 +573,20 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		result.bandwidth=local_cap.bandwidth;
 	}
 
+	unsigned int remoteCfgIdx = remote_offer.getActualConfigurationIndex();
+	unsigned int localCfgIdx = local_cap.getActualConfigurationIndex();
 	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 	if (allowCapabilityNegotiation) {
 		for (const auto & remoteCfg : remote_offer.getAllCfgs()) {
 			for (const auto & localCfg : local_cap.getAllCfgs()) {
 				const auto success = resultCfgPair.second;
-				if (!success) {
-					resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfg.first, remoteCfg.first);
-					const auto negotiationSuccess = resultCfgPair.second;
-					if (negotiationSuccess) {
-						remote_offer.cfgIndex = remoteCfg.first;
-						local_cap.cfgIndex = localCfg.first;
-						lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
-						break;
-					}
+				if (success) {
+					break;
+				} else {
+					localCfgIdx = localCfg.first;
+					remoteCfgIdx = remoteCfg.first;
+					resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
+
 				}
 			}
 			if (resultCfgPair.second) {
@@ -616,14 +594,20 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 			}
 		}
 	} else {
-		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, local_cap.getActualConfigurationIndex(), remote_offer.getChosenConfigurationIndex());
+		localCfgIdx = local_cap.getActualConfigurationIndex();
+		remoteCfgIdx = remote_offer.getActualConfigurationIndex();
+		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
 	}
 
 	const auto & resultCfg = resultCfgPair.first;
 	result.addActualConfiguration(resultCfg);
 
 	const auto success = resultCfgPair.second;
-	if (!success) {
+	if (success) {
+		remote_offer.cfgIndex = remoteCfgIdx;
+		local_cap.cfgIndex = localCfgIdx;
+		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
+	} else {
 		result.disable();
 	}
 
