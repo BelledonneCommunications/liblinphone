@@ -773,11 +773,11 @@ bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaPr
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
-					const std::shared_ptr<SalMediaDescription> remote_answer,
-					std::shared_ptr<SalMediaDescription> result){
+std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+					const std::shared_ptr<SalMediaDescription> remote_answer){
 	size_t i;
 
+	auto result = std::make_shared<SalMediaDescription>(local_offer->supportCapabilityNegotiation());
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 
 	for(i=0;i<local_offer->streams.size();++i){
@@ -824,7 +824,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
 	}
 
-	return 0;
+	return result;
 }
 
 /**
@@ -832,9 +832,11 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
 					std::shared_ptr<SalMediaDescription> remote_offer,
-					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
+					bool_t one_matching_codec){
+
+	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation());
 	size_t i;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
@@ -930,7 +932,7 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		}
 	}
 
-	return 0;
+	return result;
 }
 
 LINPHONE_END_NAMESPACE
