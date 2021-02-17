@@ -150,7 +150,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 	bctbx_list_t *lcs = NULL;
 	IceCheckList *cl1 = NULL, *cl2 = NULL;
 
-	marie = linphone_core_manager_create("marie_rc");
+	marie = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "marie_sips_rc" : "marie_rc");
 	lcs = bctbx_list_append(lcs, marie->lc);
 	pauline = linphone_core_manager_create(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	lcs = bctbx_list_append(lcs, pauline->lc);
@@ -162,6 +162,9 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 		linphone_core_enable_ipv6(marie->lc, FALSE);
 		linphone_core_enable_ipv6(pauline->lc, FALSE);
 	}
+	
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed_with_dtls", 1);
 
 	configure_nat_policy(marie->lc, caller_turn_enabled, turn_tcp, turn_tls);
 	configure_nat_policy(pauline->lc, callee_turn_enabled, turn_tcp, turn_tls);
@@ -320,6 +323,10 @@ static void relayed_ice_turn_tls_to_ice_with_srtp(void){
 	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, TRUE, LinphoneMediaEncryptionSRTP);
 }
 
+static void relayed_ice_turn_to_ice_with_dtls_srtp(void){
+	ice_turn_call_base(FALSE, TRUE, TRUE, FALSE, TRUE, FALSE, FALSE, FALSE, LinphoneMediaEncryptionDTLS);
+}
+
 
 test_t stun_tests[] = {
 	TEST_ONE_TAG("Basic Stun test (Ping/public IP)", linphone_stun_test_grab_ip, "STUN"),
@@ -339,7 +346,8 @@ test_t stun_tests[] = {
 	TEST_TWO_TAGS("Relayed ICE+TURN to ICE+STUN call", relayed_ice_turn_to_ice_stun_call, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN call with SRTP", relayed_ice_turn_call_with_srtp, "ICE", "TURN"),
 	TEST_TWO_TAGS("Relayed ICE+TURN TLS call with SRTP", relayed_ice_turn_tls_with_srtp, "ICE", "TURN"),
-	TEST_TWO_TAGS("Relayed ICE+TURN TLS call to ICE with SRTP", relayed_ice_turn_tls_to_ice_with_srtp, "ICE", "TURN")
+	TEST_TWO_TAGS("Relayed ICE+TURN TLS call to ICE with SRTP", relayed_ice_turn_tls_to_ice_with_srtp, "ICE", "TURN"),
+	TEST_TWO_TAGS("Relayed ICE+TURN call to ICE with DTLS-SRTP", relayed_ice_turn_to_ice_with_dtls_srtp, "ICE", "TURN")
 };
 
 test_suite_t stun_test_suite = {"Stun", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
