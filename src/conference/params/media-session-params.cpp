@@ -66,6 +66,7 @@ void MediaSessionParamsPrivate::clone (const MediaSessionParamsPrivate *src) {
 	downPtime = src->downPtime;
 	upPtime = src->upPtime;
 	updateCallWhenIceCompleted = src->updateCallWhenIceCompleted;
+	updateCallWhenIceCompletedWithDTLS = src->updateCallWhenIceCompletedWithDTLS;
 	if (src->customSdpAttributes)
 		customSdpAttributes = sal_custom_sdp_attribute_clone(src->customSdpAttributes);
 	for (unsigned int i = 0; i < (unsigned int)LinphoneStreamTypeUnknown; i++) {
@@ -202,6 +203,7 @@ void MediaSessionParamsPrivate::setCustomSdpMediaAttributes (LinphoneStreamType 
 
 bool MediaSessionParamsPrivate::getUpdateCallWhenIceCompleted() const{
 	if (encryption == LinphoneMediaEncryptionDTLS){
+		lInfo() << "DTLS used, reINVITE requested: " << updateCallWhenIceCompletedWithDTLS;
 		return updateCallWhenIceCompletedWithDTLS;
 	}
 	return updateCallWhenIceCompleted;
