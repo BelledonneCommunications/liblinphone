@@ -197,9 +197,15 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 		}
 	}
 
-	if (crypto.size() != other.crypto.size()) {
+	const auto thisCryptoSize = crypto.size();
+	const auto otherCryptoSize = other.crypto.size();
+	if (thisCryptoSize != otherCryptoSize) {
 		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
 		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	}
+
+	if (((thisCryptoSize > 0) && (otherCryptoSize == 0)) || ((thisCryptoSize == 0) && (otherCryptoSize > 0))) {
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
 	}
 
 	if (!isSamePayloadList(payloads, other.payloads)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
@@ -215,9 +221,15 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 
 	/*DTLS*/
 	if (dtls_role != other.dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+
+	if (((dtls_role == SalDtlsRoleInvalid) && (other.dtls_role != SalDtlsRoleInvalid)) || ((dtls_role != SalDtlsRoleInvalid) && (other.dtls_role == SalDtlsRoleInvalid))) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
 	if (dtls_fingerprint.compare(other.dtls_fingerprint) != 0) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
-	if (haveZrtpHash != other.haveZrtpHash) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+	/*ZRTP*/
+	if (haveZrtpHash != other.haveZrtpHash) {
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
+		result |= SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
+	}
 	if (haveZrtpHash && other.haveZrtpHash && (strcmp((const char *)zrtphash, (const char *)other.zrtphash) != 0)) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
 
 	return result;
