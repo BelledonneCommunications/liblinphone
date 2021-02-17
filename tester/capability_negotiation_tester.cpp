@@ -403,6 +403,10 @@ static void call_with_potential_configuration_same_as_actual_configuration_base 
 	linphone_core_manager_destroy(pauline);
 }
 
+static void unencrypted_call_with_potential_configuration_same_as_actual_configuration(void) {
+	call_with_potential_configuration_same_as_actual_configuration_base(LinphoneMediaEncryptionNone);
+}
+
 static void srtp_call_with_potential_configuration_same_as_actual_configuration(void) {
 	call_with_potential_configuration_same_as_actual_configuration_base(LinphoneMediaEncryptionSRTP);
 }
@@ -650,6 +654,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
 	TEST_NO_TAG("Simple DTLS call with capability negotiations", simple_dtls_call_with_capability_negotiations),
+	TEST_NO_TAG("Unencrypted call with potential configuration same as actual one", unencrypted_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("SRTP call with potential configuration same as actual one", srtp_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("DTLS call with potential configuration same as actual one", dtls_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
