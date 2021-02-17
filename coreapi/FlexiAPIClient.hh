@@ -34,7 +34,7 @@ class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
         class Response {
             public:
                 int code = 0;
-                const char* body = "";
+                string body = "";
 
                 Json::Value json() {
                     Json::Reader reader;

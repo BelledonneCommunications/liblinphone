@@ -309,12 +309,12 @@ void FlexiAPIClient::processResponse(void *ctx, const belle_http_response_event_
             if (code >= 200 && code < 300) {
                 belle_sip_body_handler_t *body = belle_sip_message_get_body_handler(BELLE_SIP_MESSAGE(event->response));
                 char *content = belle_sip_object_to_string(body);
-
                 response.body = content;
+                ms_free(content);
+
                 if (cb->success) {
                     cb->success(response);
                 }
-                ms_free(content);
             } else if(cb->error) {
                 cb->error(response);
             }

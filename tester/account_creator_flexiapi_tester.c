@@ -169,6 +169,37 @@ static void server_account_delete(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void server_account_activate_email(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
+	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusMissingArguments);
+
+	linphone_account_creator_set_username(creator, "pauline");
+    // Too short code
+	linphone_account_creator_set_activation_code(creator, "123456789");
+	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
+    //
+	linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_activate_email_account_linphone_flexiapi(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+	linphone_core_manager_destroy(marie);
+}
+
 test_t account_creator_flexiapi_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Account exists",
@@ -185,6 +216,14 @@ test_t account_creator_flexiapi_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Account delete",
 		server_account_delete,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Account delete",
+		server_account_delete,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Account activate email",
+		server_account_activate_email,
 		"Server"),
 };
 

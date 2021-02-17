@@ -34,13 +34,13 @@
 static void flexi_api_error_default_handler(LinphoneAccountCreator *creator, FlexiAPIClient::Response response) {
 	if (response.code == 404) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusAccountNotExist,
-										response.body)
+										response.body.c_str())
 	} else if (response.code == 422) {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments,
-										response.body)
+										response.body.c_str())
 	} else {
 		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusUnexpectedError,
-										response.body)
+										response.body.c_str())
 	}
 }
 
@@ -58,12 +58,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_linphone_
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountInfo(string(creator->username).append("@").append(_get_domain(creator)))
-		->then([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusAccountExist,
-											response.body);
+											response.body.c_str());
 			return LinphoneAccountCreatorStatusRequestOk;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -87,12 +87,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_fl
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountDelete()
-		->then([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusRequestOk,
-											response.body);
+											response.body.c_str());
 			return LinphoneAccountCreatorStatusRequestOk;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -118,10 +118,12 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 	flexiAPIClient
 		->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)),
 							   creator->activation_code)
-		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([creator](FlexiAPIClient::Response response) {
+			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
+											response.body.c_str());
 			return LinphoneAccountCreatorStatusAccountActivated;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -144,14 +146,18 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linph
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountInfo(string(creator->username).append("@").append(_get_domain(creator)))
-		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([creator](FlexiAPIClient::Response response) {
 			if (response.json()["activated"].asBool()) {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
+											response.body.c_str());
 				return LinphoneAccountCreatorStatusAccountActivated;
 			}
 
+			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusAccountNotActivated,
+											response.body.c_str());
 			return LinphoneAccountCreatorStatusAccountNotActivated;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -174,10 +180,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_acc
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPhoneChangeRequest(creator->phone_number)
-		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([](FlexiAPIClient::Response response) {
 			return LinphoneAccountCreatorStatusRequestOk;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -257,10 +263,10 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_f
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->accountPasswordChange(creator->algorithm, creator->password, new_pwd)
-		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([](FlexiAPIClient::Response response) {
 			return LinphoneAccountCreatorStatusRequestOk;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
@@ -282,14 +288,14 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
 
 	flexiAPIClient->me()
-		->then([](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->then([](FlexiAPIClient::Response response) {
 			if (!response.json()["phone"].empty()) {
 				return LinphoneAccountCreatorStatusAccountLinked;
 			}
 
 			return LinphoneAccountCreatorStatusAccountNotLinked;
 		})
-		->error([creator](FlexiAPIClient::Response response) -> LinphoneAccountCreatorStatus {
+		->error([creator](FlexiAPIClient::Response response) {
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});
