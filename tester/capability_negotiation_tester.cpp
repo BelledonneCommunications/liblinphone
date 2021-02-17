@@ -91,57 +91,53 @@ static bctbx_list_t * create_confg_encryption_preference_list_from_param_prefere
 	return encryption_list;
 }
 
-static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption) {
-	if (linphone_core_media_encryption_supported(callee->lc,encryption)) {
+static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
 
-		const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
-		int initLogsSize = (int)bctbx_list_size(initLogs);
-		stats initial_callee=callee->stat;
+	const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
+	int initLogsSize = (int)bctbx_list_size(initLogs);
+	stats initial_callee=callee->stat;
 
-		LinphoneCall *caller_call=linphone_core_invite_address(caller->lc,callee->identity);
-		BC_ASSERT_PTR_NOT_NULL(caller_call);
-		if (caller_call) {
-			BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
-		}
-		//test ios simulator needs more time, 3s plus for connectng the network
-		BC_ASSERT_FALSE(wait_for_until(callee->lc
-					,caller->lc
-					,&callee->stat.number_of_LinphoneCallIncomingReceived
-					,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000));
-
-		BC_ASSERT_PTR_NULL(linphone_core_get_current_call(callee->lc));
-		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,1, int, "%d");
-		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallReleased,1, int, "%d");
-		// actually callee does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
-		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallIncomingReceived,0, int, "%d");
-
-		const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
-		BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize+1), int, "%i");
-		// Forward logs pointer to the element desired
-		for (int i = 0; i < initLogsSize; i++) logs=logs->next;
-		if (logs){
-			const LinphoneErrorInfo *ei;
-			LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
-			BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
-			ei = linphone_call_log_get_error_info(cl);
-			BC_ASSERT_PTR_NOT_NULL(ei);
-			if (ei){
-				BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
-			}
-		}
-
-		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
-		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
-	} else {
-		ms_warning ("not tested because srtp not available");
+	LinphoneCall *caller_call=linphone_core_invite_address(caller->lc,callee->identity);
+	BC_ASSERT_PTR_NOT_NULL(caller_call);
+	if (caller_call) {
+		BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
 	}
+	//test ios simulator needs more time, 3s plus for connectng the network
+	BC_ASSERT_FALSE(wait_for_until(callee->lc
+				,caller->lc
+				,&callee->stat.number_of_LinphoneCallIncomingReceived
+				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000));
+
+	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(callee->lc));
+	BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,1, int, "%d");
+	BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallReleased,1, int, "%d");
+	// actually callee does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
+	BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallIncomingReceived,0, int, "%d");
+
+	const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
+	BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize+1), int, "%i");
+	// Forward logs pointer to the element desired
+	for (int i = 0; i < initLogsSize; i++) logs=logs->next;
+	if (logs){
+		const LinphoneErrorInfo *ei;
+		LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
+		BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
+		ei = linphone_call_log_get_error_info(cl);
+		BC_ASSERT_PTR_NOT_NULL(ei);
+		if (ei){
+			BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+		}
+	}
+
+	BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
 }
 
 static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption mandatory_encryption, const LinphoneMediaEncryption non_mandatory_encryption, bool_t mandatory_to_non_mandatory) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	linphone_core_set_support_capability_negotiation(marie->lc, 0);
-	linphone_core_set_support_capability_negotiation(pauline->lc, 0);
+	linphone_core_set_support_capability_negotiation(marie->lc, 1);
+	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
 
 	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
 	linphone_core_set_media_encryption(marie->lc,non_mandatory_encryption);
@@ -157,10 +153,10 @@ static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption ma
 
 	if (mandatory_to_non_mandatory) {
 		ms_message("Core with mandatory encryption calls core with non mandatory encryption");
-		call_with_encryption_negotiation_failure_base(pauline, marie, mandatory_encryption);
+		call_with_encryption_negotiation_failure_base(pauline, marie);
 	} else {
 		ms_message("Core with non mandatory encryption calls core with mandatory encryption");
-		call_with_encryption_negotiation_failure_base(marie, pauline, mandatory_encryption);
+		call_with_encryption_negotiation_failure_base(marie, pauline);
 	}
 
 	linphone_core_manager_destroy(marie);
