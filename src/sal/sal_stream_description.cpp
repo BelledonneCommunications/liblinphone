@@ -1113,7 +1113,7 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration 
 			}
 		}
 	}
-	ms_message("Found: %u valid crypto lines", static_cast<unsigned int>(cfg.crypto.size()) );
+	ms_message("Found: %0zu valid crypto lines", cfg.crypto.size());
 }
 
 void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) {
