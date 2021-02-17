@@ -40,8 +40,8 @@ static void flexiapiPing() {
 
 	flexiAPIClient
 		->ping()
-		->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) -> void {
-			resolvedContent = response.body;
+		->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) {
+			resolvedContent = response.body.c_str();
 			code = response.code;
 			fetched = 1;
 		});
@@ -66,7 +66,7 @@ static void flexiapiAccounts() {
 	// Unauthenticated
 	flexiAPIClient
 		->me()
-		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 		});
@@ -83,7 +83,7 @@ static void flexiapiAccounts() {
 	// Authenticated
 	flexiAPIClient
 		->me()
-		->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched, &resolvedDomain](FlexiAPIClient::Response response) {
 			code = response.code;
 			resolvedDomain = response.json()["domain"].asString();
 			fetched = 1;
@@ -107,7 +107,7 @@ static void flexiapiChangeEmail() {
 
 	flexiAPIClient
 		->accountEmailChangeRequest("changed@test.com")
-		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 		});
@@ -130,14 +130,16 @@ static void flexiapiCreateAccount() {
 	int code = 0;
 	int fetched = 0;
 	int id = 0;
-	string username = string("test_").append(sal_get_random_token(6));
+	char* token = sal_get_random_token(6);
+	string username = string("test_").append(token);
+	ms_free(token);
 	string resolvedDomain;
 	bool activated = true;
 
 	// Create the account
 	flexiAPIClient
 		->adminAccountCreate(username, "test", "MD5", activated)
-		->then([&code, &fetched, &id](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched, &id](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 			id = response.json()["id"].asInt();
@@ -154,7 +156,7 @@ static void flexiapiCreateAccount() {
 	// Request it
 	flexiAPIClient
 		->adminAccount(id)
-		->then([&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched, &resolvedUsername, &resolvedActivated](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 			resolvedUsername = response.json()["username"].asString();
@@ -172,7 +174,7 @@ static void flexiapiCreateAccount() {
 	// Destroy it
 	flexiAPIClient
 		->adminAccountDelete(id)
-		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 		});
@@ -206,7 +208,7 @@ static void flexiapiChangePassword() {
 
 	flexiAPIClient
 		->accountPasswordChange("MD5", "new_password", password)
-		->then([&code, &fetched](FlexiAPIClient::Response response) -> void {
+		->then([&code, &fetched](FlexiAPIClient::Response response) {
 			code = response.code;
 			fetched = 1;
 		});
@@ -214,6 +216,7 @@ static void flexiapiChangePassword() {
 	wait_for_until(pauline->lc, NULL, &fetched, 1, 3000);
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
+	linphone_address_unref(identityAddress);
 	linphone_core_manager_destroy(pauline);
 }
 
