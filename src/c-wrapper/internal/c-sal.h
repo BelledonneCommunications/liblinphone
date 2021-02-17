@@ -127,6 +127,7 @@ typedef enum {
 #define SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION	(1<<6) /* use force graph reconstruction*/
 #define SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED			(1<<7)
 #define SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED			(1<<8)
+#define SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED			(1<<9)
 
 #ifdef __cplusplus
 extern "C" {
