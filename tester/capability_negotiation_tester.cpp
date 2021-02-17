@@ -52,7 +52,7 @@ static std::list<LinphoneMediaEncryption> set_encryption_preference(const bool_t
 	return preferences;
 }
 
-static std::list<LinphoneMediaEncryption> set_encryption_preference_with_priority(const LinphoneMediaEncryption encryption) {
+static std::list<LinphoneMediaEncryption> set_encryption_preference_with_priority(const LinphoneMediaEncryption encryption, const bool append) {
 	std::list<LinphoneMediaEncryption> preferences;
 	for (int idx = 0; idx <= LinphoneMediaEncryptionDTLS; idx++) {
 		LinphoneMediaEncryption candidateEncryption = static_cast<LinphoneMediaEncryption>(idx);
@@ -65,7 +65,11 @@ static std::list<LinphoneMediaEncryption> set_encryption_preference_with_priorit
 			}
 		}
 	}
-	preferences.push_front(encryption);
+	if (append) {
+		preferences.push_back(encryption);
+	} else {
+		preferences.push_front(encryption);
+	}
 	return preferences;
 }
 
@@ -479,7 +483,7 @@ static void call_from_opt_enc_to_none_wrapper(const LinphoneMediaEncryption encr
 	encryption_params enc_mgr_params;
 	enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	enc_mgr_params.level = E_OPTIONAL;
-	enc_mgr_params.preferences = set_encryption_preference_with_priority(encryption);
+	enc_mgr_params.preferences = set_encryption_preference_with_priority(encryption, false);
 	if (opt_enc_to_none) {
 		call_with_encryption_wrapper(enc_mgr_params, TRUE, no_enc_mgr_params, FALSE);
 	} else {
@@ -515,12 +519,12 @@ static void call_with_optional_encryption_on_both_sides_wrapper(const LinphoneMe
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
 	marie_enc_params.level = E_OPTIONAL;
-	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption);
+	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption, false);
 
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_OPTIONAL;
-	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption);
+	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
 
 	call_with_encryption_wrapper(marie_enc_params, TRUE, pauline_enc_params, TRUE);
 }
