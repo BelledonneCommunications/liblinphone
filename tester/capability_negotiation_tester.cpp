@@ -518,7 +518,7 @@ static void call_with_no_encryption(void) {
 	call_with_encryption_test_base(marie_enc_params, FALSE, pauline_enc_params, FALSE);
 }
 
-static void call_with_mandatory_encryption_base(const LinphoneMediaEncryption encryption) {
+static void call_with_mandatory_encryption_base(const LinphoneMediaEncryption encryption, const bool_t caller_capability_negotiation, const bool_t callee_capability_negotiation) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
 	marie_enc_params.level = E_MANDATORY;
@@ -526,19 +526,55 @@ static void call_with_mandatory_encryption_base(const LinphoneMediaEncryption en
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_MANDATORY;
-	call_with_encryption_test_base(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	call_with_encryption_test_base(marie_enc_params, caller_capability_negotiation, pauline_enc_params, callee_capability_negotiation);
 }
 
 static void srtp_call_with_mandatory_encryption(void) {
-	call_with_mandatory_encryption_base(LinphoneMediaEncryptionSRTP);
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionSRTP, FALSE, FALSE);
 }
 
 static void dtls_call_with_mandatory_encryption(void) {
-	call_with_mandatory_encryption_base(LinphoneMediaEncryptionDTLS);
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionDTLS, FALSE, FALSE);
 }
 
 static void zrtp_call_with_mandatory_encryption(void) {
-	call_with_mandatory_encryption_base(LinphoneMediaEncryptionZRTP);
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionZRTP, FALSE, FALSE);
+}
+
+static void srtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionSRTP, TRUE, TRUE);
+}
+
+static void dtls_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionDTLS, TRUE, TRUE);
+}
+
+static void zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionZRTP, TRUE, TRUE);
+}
+
+static void srtp_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionSRTP, TRUE, FALSE);
+}
+
+static void dtls_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionDTLS, TRUE, FALSE);
+}
+
+static void zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionZRTP, TRUE, FALSE);
+}
+
+static void srtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionSRTP, FALSE, TRUE);
+}
+
+static void dtls_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionDTLS, FALSE, TRUE);
+}
+
+static void zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side(void) {
+	call_with_mandatory_encryption_base(LinphoneMediaEncryptionZRTP, FALSE, TRUE);
 }
 
 static void call_from_opt_enc_to_enc_base(const LinphoneMediaEncryption encryption, bool_t opt_enc_to_enc) {
@@ -659,6 +695,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("DTLS call with potential configuration same as actual one", dtls_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("SRTP call with mandatory encryption", srtp_call_with_mandatory_encryption),
+	TEST_NO_TAG("SRTP call with mandatory encryption and capability negotiation on both sides", srtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides),
+	TEST_NO_TAG("SRTP call with mandatory encryption and capability negotiation on callee side", srtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side),
+	TEST_NO_TAG("SRTP call with mandatory encryption and capability negotiation on caller side", srtp_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side),
 	TEST_NO_TAG("SRTP call from endpoint with mandatory encryption to endpoint with none", srtp_call_from_enc_to_no_enc),
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with mandatory", srtp_call_from_no_enc_to_enc),
 	TEST_NO_TAG("SRTP call from endpoint with optional encryption to endpoint with mandatory", srtp_call_from_opt_enc_to_enc),
@@ -667,6 +706,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with optional", srtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("SRTP call with optional encryption on both sides", srtp_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("DTLS call with mandatory encryption", dtls_call_with_mandatory_encryption),
+	TEST_NO_TAG("DTLS call with mandatory encryption and capability negotiation on both sides", dtls_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides),
+	TEST_NO_TAG("DTLS call with mandatory encryption and capability negotiation on callee side", dtls_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side),
+	TEST_NO_TAG("DTLS call with mandatory encryption and capability negotiation on caller side", dtls_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side),
 	TEST_NO_TAG("DTLS call from endpoint with mandatory encryption to endpoint with none", dtls_call_from_enc_to_no_enc),
 	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with mandatory", dtls_call_from_no_enc_to_enc),
 	TEST_NO_TAG("DTLS call from endpoint with optional encryption to endpoint with mandatory", dtls_call_from_opt_enc_to_enc),
@@ -675,6 +717,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with optional", dtls_call_from_no_enc_to_opt),
 	TEST_NO_TAG("DTLS call with optional encryption on both sides", dtls_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("ZRTP call with mandatory encryption", zrtp_call_with_mandatory_encryption),
+	TEST_NO_TAG("ZRTP call with mandatory encryption and capability negotiation on both sides", zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_both_sides),
+	TEST_NO_TAG("ZRTP call with mandatory encryption and capability negotiation on callee side", zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_callee_side),
+	TEST_NO_TAG("ZRTP call with mandatory encryption and capability negotiation on caller side", zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_caller_side),
 	TEST_NO_TAG("ZRTP call from endpoint with mandatory encryption to endpoint with DTLS", zrtp_call_from_enc_to_dtls_enc),
 	TEST_NO_TAG("ZRTP call from endpoint with DTLS encryption to endpoint with mandatory", zrtp_call_from_dtls_enc_to_enc),
 	TEST_NO_TAG("ZRTP call from endpoint with optional encryption to endpoint with mandatory", zrtp_call_from_opt_enc_to_enc),
