@@ -398,6 +398,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 
 	linphone_config_unref(config);
+	if (filepath) bctbx_free(filepath);
 	return lc;
 }
 
@@ -2934,7 +2935,10 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-			&& linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
+			&& ( linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS 
+				|| (linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)
+				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)) )
+			) {
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
 
