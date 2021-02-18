@@ -75,6 +75,7 @@ class OfferAnswerEngine {
 
 		static std::pair<SalStreamConfiguration, bool> initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx);
 
+		static bool fillZrtpAttributes(const SalStreamDescription & localStream, const unsigned int & localCfgIdx, const SalStreamDescription & remoteStream, const unsigned int & remoteCfgIdx, SalStreamConfiguration & resultCfg);
 };
 
 LINPHONE_END_NAMESPACE
