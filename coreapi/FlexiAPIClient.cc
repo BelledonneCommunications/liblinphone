@@ -31,7 +31,7 @@
 
 #include "private.h"
 
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <functional>
 
 using namespace LinphonePrivate;
