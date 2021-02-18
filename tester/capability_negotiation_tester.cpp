@@ -210,6 +210,11 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 	} else {
 		BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
 
+		LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
+		BC_ASSERT_PTR_NOT_NULL(callerCall);
+		LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
+		BC_ASSERT_PTR_NOT_NULL(calleeCall);
+
 		// Find expected call encryption as well as if a reinvite following capability negotiation is required
 		LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
 		bool potentialConfigurationChosen = false;
@@ -219,12 +224,14 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			potentialConfigurationChosen = false;
 		} else if (callee_enc_mandatory) {
 			expectedEncryption = callee_encryption;
+
+			
 			// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
 			potentialConfigurationChosen = (enable_callee_capability_negotiations && enable_caller_capability_negotiations && linphone_core_is_media_encryption_supported(caller->lc,expectedEncryption));
-		} else if (enable_callee_capability_negotiations && enable_caller_capability_negotiations && (linphone_core_media_encryption_supported(caller->lc,encryption)) && (linphone_core_media_encryption_supported(callee->lc,encryption))) {
+		} else if (enable_callee_capability_negotiations && enable_caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
 			expectedEncryption = encryption;
 			// reINVITE is always sent
-			potentialConfigurationChosen = linphone_core_is_media_encryption_supported(caller->lc,encryption) && (linphone_core_get_media_encryption(caller->lc) != encryption);
+			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption) && (linphone_core_get_media_encryption(caller->lc) != encryption);
 		} else {
 			expectedEncryption = linphone_core_get_media_encryption(caller->lc);
 			// reINVITE is not sent because either parts of the call doesn't support capability negotiations
@@ -237,13 +244,9 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%i");
 		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%i");
 
-		LinphoneCall *callerCall = linphone_core_get_current_call(caller->lc);
-		BC_ASSERT_PTR_NOT_NULL(callerCall);
 		if (callerCall) {
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall)), expectedEncryption, int, "%i");
 		}
-		LinphoneCall *calleeCall = linphone_core_get_current_call(callee->lc);
-		BC_ASSERT_PTR_NOT_NULL(calleeCall);
 		if (calleeCall) {
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall)), expectedEncryption, int, "%i");
 		}
