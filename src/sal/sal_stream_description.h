@@ -26,6 +26,7 @@
 #include <belle-sip/potential_config_graph.hh>
 
 #include "linphone/utils/general.h"
+#include "linphone/types.h"
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_configuration.h"
@@ -119,6 +120,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const std::string & getRtpAddress() const;
 		const int & getRtpPort() const;
 		const std::list<PayloadType*> & getPayloads() const;
+		const std::list<LinphoneMediaEncryption> & getSupportedEncryptions() const;
 		bool isBundleOnly() const;
 
 		const SalStreamType & getType() const;
@@ -167,6 +169,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		acap_map_t acaps;
 		tcap_map_t tcaps;
 		std::map<unsigned int, std::string> unparsed_cfgs;
+		std::list<LinphoneMediaEncryption> supportedEncryption;
 
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
@@ -187,6 +190,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void setDtls(const SalDtlsRole role, const std::string & fingerprint = std::string());
 		void setPtime(const int & ptime = -1, const int & maxptime = -1);
 		void setCrypto(const size_t & idx, const SalSrtpCryptoAlgo & newCrypto);
+		void setSupportedEncryptions(const std::list<LinphoneMediaEncryption> & encryptionList);
 
 		void addIceRemoteCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const;
 		void addIceCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const;
