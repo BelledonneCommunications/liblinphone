@@ -23,7 +23,7 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include <functional>
 
 using namespace LinphonePrivate;
@@ -66,8 +66,8 @@ class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
 
         class Callbacks {
             public:
-                function<void (Response)> success;
-                function<void (Response)> error;
+                function<void (const Response&)> success;
+                function<void (const Response&)> error;
                 LinphoneCore *core;
                 shared_ptr<FlexiAPIClient> mSelf;
         };
