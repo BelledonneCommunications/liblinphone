@@ -119,11 +119,17 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		->accountActivateEmail(string(creator->username).append("@").append(_get_domain(creator)),
 							   creator->activation_code)
 		->then([creator](FlexiAPIClient::Response response) {
+			if (creator->cbs->activate_account_response_cb != NULL) {
+				creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed, response.body.c_str());
+			}
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusAccountActivated,
 											response.body.c_str());
 			return LinphoneAccountCreatorStatusAccountActivated;
 		})
 		->error([creator](FlexiAPIClient::Response response) {
+			if (creator->cbs->activate_account_response_cb != NULL) {
+				creator->cbs->activate_account_response_cb(creator, LinphoneAccountCreatorStatusRequestFailed, response.body.c_str());
+			}
 			flexi_api_error_default_handler(creator, response);
 			return LinphoneAccountCreatorStatusRequestFailed;
 		});

@@ -163,6 +163,7 @@ if (ENABLE_SHARED)
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
 	target_include_directories(linphone-coreapi PRIVATE ${LINPHONE_INCLUDE_DIRS})
+	target_link_libraries(linphone-coreapi PRIVATE jsoncpp_lib)
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
