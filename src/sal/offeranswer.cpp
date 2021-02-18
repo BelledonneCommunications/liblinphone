@@ -378,54 +378,58 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 
 	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 
-	const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
-	unsigned int localCfgIdx = local_offer.getActualConfigurationIndex();
-	if (allowCapabilityNegotiation) {
-		const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
-		// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
-		// If not, the actual configuration from the local offer has been selected
-		if (answerUnparsedCfgs.empty()) {
-			localCfgIdx = local_offer.getActualConfigurationIndex();
-			resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remoteCfgIdx);
-		} else {
-			if (answerUnparsedCfgs.size() > 1) {
-				lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead";
-			}
-			for (const auto & cfg : answerUnparsedCfgs) {
-				const auto success = resultCfgPair.second;
-				localCfgIdx = cfg.first;
-				if (success) {
-					break;
-				} else {
-					resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+	if (remote_answer.enabled()) {
+		const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
+		unsigned int localCfgIdx = local_offer.getActualConfigurationIndex();
+		if (allowCapabilityNegotiation) {
+			const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
+			// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
+			// If not, the actual configuration from the local offer has been selected
+			if (answerUnparsedCfgs.empty()) {
+				localCfgIdx = local_offer.getActualConfigurationIndex();
+				resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remoteCfgIdx);
+			} else {
+				if (answerUnparsedCfgs.size() > 1) {
+					lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead";
+				}
+				for (const auto & cfg : answerUnparsedCfgs) {
+					const auto success = resultCfgPair.second;
+					localCfgIdx = cfg.first;
+					if (success) {
+						break;
+					} else {
+						resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+					}
 				}
 			}
+		} else {
+			localCfgIdx = local_offer.getActualConfigurationIndex();
+			resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
 		}
-	} else {
-		localCfgIdx = local_offer.getActualConfigurationIndex();
-		resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
-	}
 
-	const auto & resultCfg = resultCfgPair.first;
-	result.addActualConfiguration(resultCfg);
+		const auto & resultCfg = resultCfgPair.first;
+		result.addActualConfiguration(resultCfg);
 
-	// finalize stream settings based on result configuration
-	if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
-		result.rtp_addr=remote_answer.rtp_addr;
-		result.rtcp_addr=remote_answer.rtcp_addr;
-		result.rtp_port=remote_answer.rtp_port;
-		result.rtcp_port=remote_answer.rtcp_port;
-		result.bandwidth=remote_answer.bandwidth;
-	}else{
-		lInfo() <<  __func__ << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
-		result.disable();
-	}
+		// finalize stream settings based on result configuration
+		if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
+			result.rtp_addr=remote_answer.rtp_addr;
+			result.rtcp_addr=remote_answer.rtcp_addr;
+			result.rtp_port=remote_answer.rtp_port;
+			result.rtcp_port=remote_answer.rtcp_port;
+			result.bandwidth=remote_answer.bandwidth;
+		}else{
+			lInfo() <<  __func__ << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
+			result.disable();
+		}
 
-	const auto success = resultCfgPair.second;
-	if (success) {
-		remote_answer.cfgIndex = remoteCfgIdx;
-		local_offer.cfgIndex = localCfgIdx;
-		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+		const auto success = resultCfgPair.second;
+		if (success) {
+			remote_answer.cfgIndex = remoteCfgIdx;
+			local_offer.cfgIndex = localCfgIdx;
+			lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+		} else {
+			result.disable();
+		}
 	} else {
 		result.disable();
 	}
@@ -443,13 +447,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
-	if (remote_answer.enabled()) {
-		resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,TRUE,FALSE);
-	} else {
-		ms_message("Local stream description [%p] rejected by peer",&local_offer);
-		success = false;
-		return std::make_pair(resultCfg, success);
-	}
+	const auto & availableEncs = local_offer.getSupportedEncryptions();
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,TRUE,FALSE);
+
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
@@ -499,15 +499,23 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	}else{
 		success = false;
 	}
+
 	if (resultCfg.hasSrtp() == TRUE) {
-		auto & crypto = resultCfg.crypto;
-		/* verify crypto algo */
-		crypto.clear();
-		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, FALSE)) {
+		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
+		if (srtpFound == availableEncs.cend()) {
+			ms_message("Found matching payloads but SRTP is not supported");
 			success = false;
+			return std::make_pair(resultCfg, success);
+		} else {
+			auto & crypto = resultCfg.crypto;
+			/* verify crypto algo */
+			crypto.clear();
+			SalSrtpCryptoAlgo crypto_result;
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, FALSE)) {
+				success = false;
+			}
+			crypto.emplace(crypto.begin(),crypto_result);
 		}
-		crypto.emplace(crypto.begin(),crypto_result);
 	}
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
@@ -520,11 +528,18 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
 	if ((localCfg.dtls_role!=SalDtlsRoleInvalid) && (remoteCfg.dtls_role!=SalDtlsRoleInvalid)
 			&&(!localCfg.dtls_fingerprint.empty()) && (!remoteCfg.dtls_fingerprint.empty())) {
-		resultCfg.dtls_fingerprint = remoteCfg.dtls_fingerprint;
-		if (remoteCfg.dtls_role==SalDtlsRoleIsClient) {
-			resultCfg.dtls_role = SalDtlsRoleIsServer;
+		const auto dtlsFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionDTLS);
+		if (dtlsFound == availableEncs.cend()) {
+			lInfo() << "DTLS is not supported even tough negotiation succeded";
+			success = false;
+			return std::make_pair(resultCfg, success);
 		} else {
-			resultCfg.dtls_role = SalDtlsRoleIsClient;
+			resultCfg.dtls_fingerprint = remoteCfg.dtls_fingerprint;
+			if (remoteCfg.dtls_role==SalDtlsRoleIsClient) {
+				resultCfg.dtls_role = SalDtlsRoleIsServer;
+			} else {
+				resultCfg.dtls_role = SalDtlsRoleIsClient;
+			}
 		}
 	} else {
 		resultCfg.dtls_fingerprint.clear();
@@ -611,6 +626,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 
 	bool success = true;
 
+	const auto & availableEncs = local_cap.getSupportedEncryptions();
 	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
@@ -660,18 +676,25 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	}
 
 	if (resultCfg.hasSrtp() == TRUE) {
-		/* select crypto algo */
-		resultCfg.crypto.clear();
-		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, TRUE)) {
-			lInfo() <<  __func__ << "No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
+		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
+		if (srtpFound == availableEncs.cend()) {
+			ms_message("Found matching payloads but SRTP is not supported");
 			success = false;
 			return std::make_pair(resultCfg, success);
+		} else {
+			/* select crypto algo */
+			resultCfg.crypto.clear();
+			SalSrtpCryptoAlgo crypto_result;
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, TRUE)) {
+				lInfo() <<  __func__ << "No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
+				success = false;
+				return std::make_pair(resultCfg, success);
+			}
+			if (resultCfg.crypto.empty()) {
+				resultCfg.crypto.resize(1);
+			}
+			resultCfg.crypto[0] = crypto_result;
 		}
-		if (resultCfg.crypto.empty()) {
-			resultCfg.crypto.resize(1);
-		}
-		resultCfg.crypto[0] = crypto_result;
 	}
 
 	if (!OfferAnswerEngine::fillZrtpAttributes(local_cap, localCfgIdx, remote_offer, remoteCfgIdx, resultCfg)) {
@@ -692,9 +715,16 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
 	if (((localCfg.dtls_role!=SalDtlsRoleInvalid)) && (remoteCfg.dtls_role!=SalDtlsRoleInvalid)
 			&& (!localCfg.dtls_fingerprint.empty()) && (!remoteCfg.dtls_fingerprint.empty())) {
-		resultCfg.dtls_fingerprint = localCfg.dtls_fingerprint;
-		if (remoteCfg.dtls_role==SalDtlsRoleUnset) {
-			resultCfg.dtls_role = SalDtlsRoleIsClient;
+		const auto dtlsFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionDTLS);
+		if (dtlsFound == availableEncs.cend()) {
+			lInfo() << "DTLS is not supported even tough negotiation succeded";
+			success = false;
+			return std::make_pair(resultCfg, success);
+		} else {
+			resultCfg.dtls_fingerprint = localCfg.dtls_fingerprint;
+			if (remoteCfg.dtls_role==SalDtlsRoleUnset) {
+				resultCfg.dtls_role = SalDtlsRoleIsClient;
+			}
 		}
 	} else {
 		resultCfg.dtls_fingerprint.clear();
