@@ -95,10 +95,34 @@ LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (con
 
 /**
  * Enable capability negotiations (RFC5939).
- * @param call_params #LinphoneCallParams object @notnil
+ * @param params #LinphoneCallParams object @notnil
  * @param enabled A boolean value telling whether to enable capability negotiations or not.
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled);
+
+/**
+ * Returns the encryption is supported
+ * @param params the #LinphoneCallParams @notnil
+ * @param encryption The #LinphoneMediaEncryption to check whether is supported
+ * @return a boolean indicating whether the encryption is supported
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption);
+
+/**
+ * Returns the list of supported encryptions in the call
+ * @param params the #LinphoneCallParams @notnil
+ * @return a \bctbx_list{char *} with the list of encryptions supported in a given call
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_supported_encryptions (const LinphoneCallParams *params);
+
+/**
+ * Sets the list of supported encryptions
+ * @param params #LinphoneCallParams object @notnil
+ * @param encs \bctbx_list{char *} with the list of encryptions supported in a given call
+**/
+LINPHONE_PUBLIC void linphone_call_params_set_supported_encryptions (LinphoneCallParams *params, bctbx_list_t* encs);
 
 /**
  * Enable video stream.

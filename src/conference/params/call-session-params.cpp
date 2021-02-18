@@ -38,6 +38,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
 	capabilityNegotiation = src->capabilityNegotiation;
+	supportedEncryptions = src->supportedEncryptions;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
@@ -62,6 +63,15 @@ bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
 void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
 	capabilityNegotiation = enable;
 }
+
+const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedEncryptions() const {
+	return supportedEncryptions;
+}
+
+void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encs) {
+	supportedEncryptions = encs;
+}
+
 
 SalCustomHeader * CallSessionParamsPrivate::getCustomHeaders () const {
 	return customHeaders;
@@ -114,6 +124,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	L_D();
 	d->inConference = false;
 	d->capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core->getCCore());
+	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
 	setProxyConfig(NULL);
