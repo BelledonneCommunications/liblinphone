@@ -1286,23 +1286,16 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
+	const auto encList = getParams()->getPrivate()->getSupportedEncryptions();
 	// Do not add capability negotiation attributes if encryption is mandatory
 	const bool addCapabilityNegotiationAttributes = supportsCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
 	if (addCapabilityNegotiationAttributes) {
-		bctbx_list_t * encs = linphone_core_get_supported_media_encryptions(core);
-
-		for (decltype(encs) elem = encs; elem != NULL; elem = bctbx_list_next(elem)) {
-			const char *enc = static_cast<const char *>(elem->data);
-			const LinphoneMediaEncryption encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc));
-			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(encEnum, getParams()->avpfEnabled())));
+		for (const auto & enc : encList) {
+			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(enc, getParams()->avpfEnabled())));
 			const auto & idx = md->getFreeTcapIdx();
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
 			md->addTcap(idx, mediaProto);
-		}
-
-		if (encs) {
-			bctbx_list_free_with_data(encs, (bctbx_list_free_func)bctbx_free);
 		}
 	}
 
@@ -1315,7 +1308,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		auto & actualCfg = md->streams[audioStreamIndex].cfgs[md->streams[audioStreamIndex].getActualConfigurationIndex()];
 
-		const auto encList = getParams()->getPrivate()->getSupportedEncryptions();
 		md->streams[audioStreamIndex].setSupportedEncryptions(encList);
 		actualCfg.max_rate = pth.getMaxCodecSampleRate(audioCodecs);
 		int downPtime = getParams()->getPrivate()->getDownPtime();
@@ -1333,7 +1325,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		makeLocalStreamDecription(md, getParams()->videoEnabled(), "Video", videoStreamIndex, SalVideo, getParams()->getMediaProto(), getParams()->getPrivate()->getSalVideoDirection(), videoCodecs, "vs", getParams()->videoMulticastEnabled(), linphone_core_get_video_multicast_ttl(core), getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
 
-		const auto encList = getParams()->getPrivate()->getSupportedEncryptions();
 		md->streams[videoStreamIndex].setSupportedEncryptions(encList);
 
 		md->streams[videoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
@@ -1347,7 +1338,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		makeLocalStreamDecription(md, getParams()->realtimeTextEnabled(), "Text", textStreamIndex, SalText, getParams()->getMediaProto(), SalStreamSendRecv, textCodecs, "ts", false, 0, getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
 
-		const auto encList = getParams()->getPrivate()->getSupportedEncryptions();
 		md->streams[mainTextStreamIndex].setSupportedEncryptions(encList);
 
 		PayloadTypeHandler::clearPayloadList(textCodecs);
