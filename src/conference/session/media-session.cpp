@@ -1314,6 +1314,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		makeLocalStreamDecription(md, getParams()->audioEnabled(), "Audio", audioStreamIndex, SalAudio, getAudioProto(op ? op->getRemoteMediaDescription() : nullptr), getParams()->getPrivate()->getSalAudioDirection(), audioCodecs, "as", getParams()->audioMulticastEnabled(), linphone_core_get_audio_multicast_ttl(core), getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeAudio));
 
 		auto & actualCfg = md->streams[audioStreamIndex].cfgs[md->streams[audioStreamIndex].getActualConfigurationIndex()];
+
+		const auto encList = q->getCore()->getSupportedMediaEncryptions();
+		md->streams[audioStreamIndex].setSupportedEncryptions(encList);
 		actualCfg.max_rate = pth.getMaxCodecSampleRate(audioCodecs);
 		int downPtime = getParams()->getPrivate()->getDownPtime();
 		if (downPtime)
@@ -1329,6 +1332,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			(oldMd && (videoStreamIndex < oldMd->streams.size())) ? oldMd->streams[videoStreamIndex].already_assigned_payloads : emptyList);
 
 		makeLocalStreamDecription(md, getParams()->videoEnabled(), "Video", videoStreamIndex, SalVideo, getParams()->getMediaProto(), getParams()->getPrivate()->getSalVideoDirection(), videoCodecs, "vs", getParams()->videoMulticastEnabled(), linphone_core_get_video_multicast_ttl(core), getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeVideo));
+
+		const auto encList = q->getCore()->getSupportedMediaEncryptions();
+		md->streams[videoStreamIndex].setSupportedEncryptions(encList);
+
 		md->streams[videoStreamIndex].bandwidth = getParams()->getPrivate()->videoDownloadBandwidth;
 		PayloadTypeHandler::clearPayloadList(videoCodecs);
 	}
@@ -1339,6 +1346,10 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 				(oldMd && (textStreamIndex < oldMd->streams.size())) ? oldMd->streams[textStreamIndex].already_assigned_payloads : emptyList);
 
 		makeLocalStreamDecription(md, getParams()->realtimeTextEnabled(), "Text", textStreamIndex, SalText, getParams()->getMediaProto(), SalStreamSendRecv, textCodecs, "ts", false, 0, getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
+
+		const auto encList = q->getCore()->getSupportedMediaEncryptions();
+		md->streams[mainTextStreamIndex].setSupportedEncryptions(encList);
+
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
