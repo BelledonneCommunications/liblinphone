@@ -771,6 +771,10 @@ void SalStreamDescription::setCrypto(const size_t & idx, const SalSrtpCryptoAlgo
 	cfgs[getChosenConfigurationIndex()].crypto[idx] = newCrypto;
 }
 
+void SalStreamDescription::setSupportedEncryptions(const std::list<LinphoneMediaEncryption> & encryptionList) {
+	supportedEncryption = encryptionList;
+}
+
 void SalStreamDescription::setupRtcpFb(const bool nackEnabled, const bool tmmbrEnabled, const bool implicitRtcpFb) {
 	for (auto & cfg : cfgs) {
 		cfg.second.rtcp_fb.generic_nack_enabled = nackEnabled;
@@ -1342,6 +1346,10 @@ void SalStreamDescription::addIceRemoteCandidatesToSdp(const SalStreamConfigurat
 		}
 	}
 	if (!iceRemoteCandidateValue.empty()) belle_sdp_media_description_add_attribute(md,belle_sdp_attribute_create("remote-candidates",iceRemoteCandidateValue.c_str()));
+}
+
+const std::list<LinphoneMediaEncryption> & SalStreamDescription::getSupportedEncryptions() const {
+	return supportedEncryption;
 }
 
 const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getChosenConfigurationIndex() const {
