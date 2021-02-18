@@ -133,18 +133,18 @@ static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* c
 	BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
 }
 
-static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption mandatory_encryption, const LinphoneMediaEncryption non_mandatory_encryption, bool_t mandatory_to_non_mandatory) {
+static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption mandatory_encryption, const LinphoneMediaEncryption non_mandatory_encryption, const bool_t enable_mandatory_enc_mgr_capability_negotiations, const bool_t enable_non_mandatory_enc_mgr_capability_negotiations, bool_t mandatory_to_non_mandatory) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	linphone_core_set_support_capability_negotiation(marie->lc, 1);
-	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
-
+	linphone_core_set_support_capability_negotiation(marie->lc, enable_non_mandatory_enc_mgr_capability_negotiations);
 	linphone_core_set_media_encryption_mandatory(marie->lc,FALSE);
 	linphone_core_set_media_encryption(marie->lc,non_mandatory_encryption);
 	bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_except(mandatory_encryption);
 	linphone_core_set_supported_media_encryptions(marie->lc,cfg_enc);
 	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(marie->lc, mandatory_encryption));
 	bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_support_capability_negotiation(pauline->lc, enable_mandatory_enc_mgr_capability_negotiations);
 	if (linphone_core_media_encryption_supported(pauline->lc,mandatory_encryption)) {
 		linphone_core_set_media_encryption_mandatory(pauline->lc,TRUE);
 		linphone_core_set_media_encryption(pauline->lc,mandatory_encryption);
@@ -163,35 +163,35 @@ static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption ma
 	linphone_core_manager_destroy(pauline);
 }
 
-static void call_from_enc_to_no_enc_base(const LinphoneMediaEncryption encryption, bool_t mandatory_to_non_mandatory) {
-	call_from_enc_to_different_enc_base(encryption, LinphoneMediaEncryptionNone, mandatory_to_non_mandatory);
+static void call_from_enc_to_no_enc_base(const LinphoneMediaEncryption encryption, const bool_t enable_mandatory_enc_mgr_capability_negotiations, const bool_t enable_non_mandatory_enc_mgr_capability_negotiations, bool_t mandatory_to_non_mandatory) {
+	call_from_enc_to_different_enc_base(encryption, LinphoneMediaEncryptionNone, enable_mandatory_enc_mgr_capability_negotiations, enable_non_mandatory_enc_mgr_capability_negotiations, mandatory_to_non_mandatory);
 }
 
-static void call_from_enc_to_dtls_enc_base(const LinphoneMediaEncryption encryption, bool_t mandatory_to_non_mandatory) {
-	call_from_enc_to_different_enc_base(encryption, LinphoneMediaEncryptionDTLS, mandatory_to_non_mandatory);
+static void call_from_enc_to_dtls_enc_base(const LinphoneMediaEncryption encryption, const bool_t enable_mandatory_enc_mgr_capability_negotiations, const bool_t enable_non_mandatory_enc_mgr_capability_negotiations, bool_t mandatory_to_non_mandatory) {
+	call_from_enc_to_different_enc_base(encryption, LinphoneMediaEncryptionDTLS, enable_mandatory_enc_mgr_capability_negotiations, enable_non_mandatory_enc_mgr_capability_negotiations, mandatory_to_non_mandatory);
 }
 static void srtp_call_from_enc_to_no_enc(void) {
-	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionSRTP, TRUE);
+	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionSRTP, TRUE, TRUE, TRUE);
 }
 
 static void dtls_call_from_enc_to_no_enc(void) {
-	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionDTLS, TRUE);
+	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionDTLS, TRUE, TRUE, TRUE);
 }
 
 static void zrtp_call_from_enc_to_dtls_enc(void) {
-	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, TRUE);
+	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, TRUE, TRUE, TRUE);
 }
 
 static void srtp_call_from_no_enc_to_enc(void) {
-	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionSRTP, FALSE);
+	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionSRTP, TRUE, TRUE, FALSE);
 }
 
 static void dtls_call_from_no_enc_to_enc(void) {
-	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionDTLS, FALSE);
+	call_from_enc_to_no_enc_base(LinphoneMediaEncryptionDTLS, TRUE, TRUE, FALSE);
 }
 
 static void zrtp_call_from_dtls_enc_to_enc(void) {
-	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, FALSE);
+	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, TRUE, TRUE, FALSE);
 }
 
 static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const bool_t enable_caller_capability_negotiations, const bool_t enable_callee_capability_negotiations) {
