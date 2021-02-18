@@ -45,6 +45,8 @@ public:
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
 	void enableCapabilityNegotiation (const bool enable);
+	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
+	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encs);
 	bool capabilityNegotiationEnabled () const;
 
 	SalCustomHeader * getCustomHeaders () const;
@@ -63,6 +65,7 @@ public:
 
 private:
 	bool capabilityNegotiation = false;
+	std::list<LinphoneMediaEncryption> supportedEncryptions;
 	bool inConference = false;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */
