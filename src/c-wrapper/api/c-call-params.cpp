@@ -87,6 +87,31 @@ void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *pa
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enabled);
 }
 
+bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption) {
+	const auto encEnumList = L_GET_PRIVATE_FROM_C_OBJECT(params)->getSupportedEncryptions();
+	const auto foundIt = std::find(encEnumList.cbegin(), encEnumList.cend(), encryption);
+	return (foundIt != encEnumList.cend());
+}
+
+bctbx_list_t* linphone_call_params_get_supported_encryptions (const LinphoneCallParams *params) {
+	const auto encEnumList = L_GET_PRIVATE_FROM_C_OBJECT(params)->getSupportedEncryptions();
+	bctbx_list_t * encryption_list = NULL;
+	for (const auto & enc : encEnumList) {
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(enc)));
+	}
+	return encryption_list;
+}
+
+void linphone_call_params_set_supported_encryptions (LinphoneCallParams *params, bctbx_list_t* encs) {
+	std::list<LinphoneMediaEncryption> encEnumList;
+	for(bctbx_list_t * enc = encs;enc!=NULL;enc=enc->next){
+		const char *encString = static_cast<const char *>(bctbx_list_get_data(enc));
+		encEnumList.push_back(static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(encString)));
+	}
+
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->setSupportedEncryptions(encEnumList);
+}
+
 void linphone_call_params_set_custom_headers (LinphoneCallParams *params, const SalCustomHeader *ch) {
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->setCustomHeaders(ch);
 }
