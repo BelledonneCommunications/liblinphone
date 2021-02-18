@@ -512,20 +512,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
 
-	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
-	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
-	const bool isLocalActualCfg = (local_offer.getActualConfigurationIndex() == localCfgIdx);
-	const bool isRemoteActualCfg = (remote_answer.getActualConfigurationIndex() == remoteCfgIdx);
-
-	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
-		if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
-			strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
-			resultCfg.haveZrtpHash =  1;
-		} else if (!isLocalActualCfg || !isRemoteActualCfg) {
-			lInfo() <<  __func__ << "No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\") and local configuration " << remoteCfgIdx << " (hash \"" << (char*)resultCfg.zrtphash << "\")";
-			success = false;
-			return std::make_pair(resultCfg, success);
-		}
+	if (!OfferAnswerEngine::fillZrtpAttributes(local_offer, localCfgIdx, remote_answer, remoteCfgIdx, resultCfg)) {
+		success = false;
+		return std::make_pair(resultCfg, success);
 	}
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
@@ -685,31 +674,9 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		resultCfg.crypto[0] = crypto_result;
 	}
 
-	const bool isLocalActualCfg = (local_cap.getActualConfigurationIndex() == localCfgIdx);
-	const bool isRemoteActualCfg = (remote_offer.getActualConfigurationIndex() == remoteCfgIdx);
-
-	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
-	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
-	// If local or remote configuration is not the actual one, ensure that both have zrtp hashes
-	if ((!isLocalActualCfg || !isRemoteActualCfg) && (localCfg.haveZrtpHash != remoteCfg.haveZrtpHash))  {
-		lInfo() <<  __func__ << "No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+	if (!OfferAnswerEngine::fillZrtpAttributes(local_cap, localCfgIdx, remote_offer, remoteCfgIdx, resultCfg)) {
 		success = false;
 		return std::make_pair(resultCfg, success);
-	}
-
-	const auto & availableEncs = local_cap.getSupportedEncryptions();
-	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
-		const auto zrtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionZRTP);
-		if (zrtpFound == availableEncs.cend()) {
-			lInfo() <<  __func__ << " ZRTP encryption is not supported by the local configuration - ZRTP attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
-			success = false;
-			return std::make_pair(resultCfg, success);
-		} else {
-			if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
-				strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
-				resultCfg.haveZrtpHash =  1;
-			}
-		}
 	}
 
 	resultCfg.ice_pwd = localCfg.ice_pwd;
@@ -927,6 +894,38 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 	}
 
 	return result;
+}
+
+bool OfferAnswerEngine::fillZrtpAttributes(const SalStreamDescription & localStream, const unsigned int & localCfgIdx, const SalStreamDescription & remoteStream, const unsigned int & remoteCfgIdx, SalStreamConfiguration & resultCfg) {
+
+	const SalStreamConfiguration & localCfg = localStream.getConfigurationAtIndex(localCfgIdx);
+	const SalStreamConfiguration & remoteCfg = remoteStream.getConfigurationAtIndex(remoteCfgIdx);
+
+	const bool isLocalActualCfg = (localStream.getActualConfigurationIndex() == localCfgIdx);
+	const bool isRemoteActualCfg = (remoteStream.getActualConfigurationIndex() == remoteCfgIdx);
+
+	if ((!isLocalActualCfg || !isRemoteActualCfg) && (localCfg.haveZrtpHash != remoteCfg.haveZrtpHash))  {
+		lInfo() <<  __func__ << " No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+		return false;
+	}
+	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
+	// haveZrtpHash is set in localStream when ZRTP is active on our side.
+	// If local or remote configuration is not the actual one, ensure that both have zrtp hashes
+	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
+		const auto & availableEncs = localStream.getSupportedEncryptions();
+		const auto zrtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionZRTP);
+		if (zrtpFound == availableEncs.cend()) {
+			lInfo() <<  __func__ << " ZRTP encryption is not supported by the local configuration - ZRTP attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+			return false;
+		} else {
+			if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+				strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
+				resultCfg.haveZrtpHash =  1;
+			}
+		}
+	}
+
+	return true;
 }
 
 LINPHONE_END_NAMESPACE
