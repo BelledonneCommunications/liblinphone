@@ -680,9 +680,9 @@ static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 }
 
 test_t capability_negotiation_tests[] = {
-	TEST_NO_TAG("call with no encryption", call_with_no_encryption),
-	TEST_NO_TAG("call with capability negotiation failure", call_with_capability_negotiation_failure),
-	TEST_NO_TAG("call with capability negotiation failure and multiple potential configurations", call_with_capability_negotiation_failure_multiple_potential_configurations),
+	TEST_NO_TAG("Call with no encryption", call_with_no_encryption),
+	TEST_NO_TAG("Call with capability negotiation failure", call_with_capability_negotiation_failure),
+	TEST_NO_TAG("Call with capability negotiation failure and multiple potential configurations", call_with_capability_negotiation_failure_multiple_potential_configurations),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
 	TEST_NO_TAG("Simple DTLS call with capability negotiations", simple_dtls_call_with_capability_negotiations),
