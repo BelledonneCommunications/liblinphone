@@ -6847,6 +6847,8 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	linphone_core_stop_dtmf_stream(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+
+	L_GET_PRIVATE_FROM_C_OBJECT(lc)->setShutDownStartTime(ms_get_cur_time_ms());
 }
 
 /**

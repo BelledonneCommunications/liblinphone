@@ -173,6 +173,7 @@ public:
 	void pushReceivedBackgroundTaskEnded ();
 	
 	static const Utils::Version groupChatProtocolVersion;
+	void setShutDownStartTime (uint64_t startTime);
 private:
 	bool isInBackground = false;
 	static int ephemeralMessageTimerExpired (void *data, unsigned int revents);
@@ -201,6 +202,7 @@ private:
 	unsigned long pushReceivedBackgroundTaskId;
 
 	std::list<AudioDevice *> audioDevices;
+	uint64_t shutDownStartTime;
 	L_DECLARE_PUBLIC(Core);
 };
 

@@ -66,6 +66,8 @@
 #define LINPHONE_CALL_HISTORY_DB "call-history.db"
 #define LINPHONE_ZRTP_SECRETS_DB "zrtp-secrets.db"
 
+#define MAX_SHUT_DOWN_TO_OFF_TIME 10000 // 10 seconds
+
 // =============================================================================
 
 using namespace std;
@@ -161,6 +163,10 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
+void CorePrivate::setShutDownStartTime (uint64_t startTime) {
+	shutDownStartTime = startTime;
+}
+
 // Called by linphone_core_iterate() to check that aynchronous tasks are done.
 // It is used to give a chance to end asynchronous tasks during core stop
 // or to make sure that asynchronous tasks are finished during an aynchronous core stop.
@@ -177,6 +183,12 @@ bool CorePrivate::isShutdownDone() {
 		if (list->event) {
 			return false;
 		}
+	}
+
+	if (ms_get_cur_time_ms() - shutDownStartTime > MAX_SHUT_DOWN_TO_OFF_TIME) {
+		// Sometimes (bad network for example), backgrounds for chat message (imdn, delivery ...) take too much time.
+		// In this case, forece linphonecore to off after MAX_SHUT_DOWN_TO_OFF_TIME.
+		return true;
 	}
 
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
