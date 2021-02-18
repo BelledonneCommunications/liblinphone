@@ -5023,6 +5023,7 @@ LINPHONE_PUBLIC void linphone_core_set_call_error_tone(LinphoneCore *lc, Linphon
  * @param lc the core
  * @param id the tone id
  * @param audiofile a wav file to be played.
+ * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *audiofile);
 
