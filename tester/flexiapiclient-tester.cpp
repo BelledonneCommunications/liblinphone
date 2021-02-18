@@ -25,7 +25,7 @@
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
 
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 
 using namespace Json;
 
@@ -34,21 +34,21 @@ static void flexiapiPing() {
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(marie->lc);
 
-	const char *resolvedContent;
+	string resolvedContent;
 	int code = 0;
 	int fetched = 0;
 
 	flexiAPIClient
 		->ping()
 		->then([&resolvedContent, &code, &fetched](FlexiAPIClient::Response response) {
-			resolvedContent = response.body.c_str();
+			resolvedContent = response.body;
 			code = response.code;
 			fetched = 1;
 		});
 
 	wait_for_until(marie->lc, NULL, &fetched, 1, 2000);
 
-	BC_ASSERT_STRING_EQUAL(resolvedContent, "pong");
+	BC_ASSERT_STRING_EQUAL(resolvedContent.c_str(), "pong");
 	BC_ASSERT_EQUAL(code, 200, int, "%d");
 
 	linphone_core_manager_destroy(marie);

@@ -70,10 +70,10 @@ struct _LinphoneAccountCreatorCbs {
 	LinphoneAccountCreatorCbsStatusCb create_account_response_cb; /**< Response of create_account request */
 	LinphoneAccountCreatorCbsStatusCb delete_account_response_cb; /**< Response of delete_account request */
 	LinphoneAccountCreatorCbsStatusCb is_account_exist_response_cb; /**< Response of is_account_exist request */
+	LinphoneAccountCreatorCbsStatusCb confirmation_key_response_cb; /**< Response of get_confirmation_key request */
 
 	LinphoneAccountCreatorCbsStatusCb activate_account_response_cb; /**< Response of activate_account request */
 	LinphoneAccountCreatorCbsStatusCb is_account_activated_response_cb; /**< Response of is_account_activated request */
-	LinphoneAccountCreatorCbsStatusCb confirmation_key_response_cb; /**< Response of get_confirmation_key request */
 
 	LinphoneAccountCreatorCbsStatusCb link_account_response_cb; /**< Response of link_account request */
 	LinphoneAccountCreatorCbsStatusCb activate_alias_response_cb; /**< Response of activation alias */
@@ -82,7 +82,6 @@ struct _LinphoneAccountCreatorCbs {
 
 	LinphoneAccountCreatorCbsStatusCb recover_account_response_cb; /**< Response of recover_account request */
 	LinphoneAccountCreatorCbsStatusCb update_account_response_cb; /**< Response of update_account request */
-
 	LinphoneAccountCreatorCbsStatusCb login_linphone_account_response_cb; /** < Response of login_linphone_account request */
 };
 
