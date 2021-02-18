@@ -1192,6 +1192,23 @@ LinphoneStatus CallSession::deferUpdate () {
 	return 0;
 }
 
+const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() const {
+	const auto callParamEncList = getParams()->getPrivate()->getSupportedEncryptions();
+	const auto coreEncList = getCore()->getSupportedMediaEncryptions();
+
+	std::list<LinphoneMediaEncryption> resultEncList;
+
+	// Result supprot encryptions are those that are common between call params and core
+	for (const auto & encryption : callParamEncList) {
+		const auto foundIt = std::find(coreEncList.cbegin(), coreEncList.cend(), encryption);
+		if (foundIt != coreEncList.cend()) {
+			resultEncList.push_back(encryption);
+		}
+	}
+
+	return resultEncList;
+}
+
 bool CallSession::isCapabilityNegotiationEnabled() const {
 	const auto & core = getCore()->getCCore();
 	return linphone_core_is_capability_negotiation_supported(core) && getParams()->getPrivate()->capabilityNegotiationEnabled();

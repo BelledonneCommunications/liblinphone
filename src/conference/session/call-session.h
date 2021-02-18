@@ -99,6 +99,7 @@ public:
 	virtual LinphoneStatus deferUpdate ();
 	bool hasTransferPending ();
 	bool isCapabilityNegotiationEnabled() const;
+	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 	virtual void initiateIncoming ();
 	virtual bool initiateOutgoing ();
 	virtual void iterate (time_t currentRealTime, bool oneSecondElapsed);
