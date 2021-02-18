@@ -185,7 +185,7 @@ static void server_account_activate_email(void) {
 	linphone_account_creator_set_activation_code(creator, "123456789");
 	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
     //
-	linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
+	//linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
 		linphone_account_creator_activate_email_account_linphone_flexiapi(creator),
