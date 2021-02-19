@@ -161,6 +161,25 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
+void Core::onStopAsyncBackgroundTaskStarted() {
+	L_D();
+	d->stopAsyncEndEnabled = false;
+
+	function<void()> stopAsyncEnd = [d]() {
+		_linphone_core_stop_async_end(d->getCCore());
+	};
+	function<void()> enableStopAsyncEnd = [d]() {
+		d->stopAsyncEndEnabled = true;
+	};
+
+	d->bgTask.start(getSharedFromThis(), stopAsyncEnd, enableStopAsyncEnd, linphone_config_get_int(linphone_core_get_config(getCCore()), "misc", "max_stop_async_time", 10));
+}
+
+void Core::onStopAsyncBackgroundTaskStopped() {
+	L_D();
+	d->bgTask.stop();
+}
+
 // Called by linphone_core_iterate() to check that aynchronous tasks are done.
 // It is used to give a chance to end asynchronous tasks during core stop
 // or to make sure that asynchronous tasks are finished during an aynchronous core stop.
@@ -177,6 +196,13 @@ bool CorePrivate::isShutdownDone() {
 		if (list->event) {
 			return false;
 		}
+	}
+
+
+	// Sometimes (bad network for example), backgrounds for chat message (imdn, delivery ...) take too much time.
+	// In this case, forece linphonecore to off. Using "stop core async end" background task to do this.
+	if (stopAsyncEndEnabled) {
+		return true;
 	}
 
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {

@@ -470,6 +470,49 @@ static void two_shared_executor_cores_get_message_and_chat_room(void) {
 #endif
 }
 
+static void stop_async_core_when_belle_sip_task_failed(void) {
+#if TARGET_OS_IPHONE
+	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
+		ms_warning("Test skipped, database storage is not available");
+		return;
+	}
+
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create2("pauline_tcp_rc", NULL);
+	// simulate bad net work to trash the message without generating error
+	linphone_config_set_bool(linphone_core_get_config(pauline->lc), "net", "bad_net", 1);
+	linphone_core_manager_start(pauline, TRUE);
+
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+	linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+	
+
+	LinphoneChatRoom* chat_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
+	LinphoneChatMessage* msg = linphone_chat_room_create_message_from_utf8(chat_room,"Bli bli bli \n blu");
+	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneMessageSent, 0, int, "%d");
+
+	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+	linphone_chat_message_send(msg);
+	char *message_id = ms_strdup(linphone_chat_message_get_message_id(msg));
+	BC_ASSERT_STRING_NOT_EQUAL(message_id, "");
+
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+	
+	linphone_core_stop_async(pauline->lc);
+
+	BC_ASSERT_TRUE(wait_for(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneMessageDelivered,0));
+
+	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneGlobalOff, pauline->stat.number_of_LinphoneGlobalOff+1, 30000));
+
+	ms_free(message_id);
+	linphone_chat_message_unref(msg);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+#endif
+}
+
 test_t shared_core_tests[] = {
 	TEST_NO_TAG("Executor Shared Core can't start because Main Shared Core runs", shared_main_core_prevent_executor_core_start),
 	TEST_NO_TAG("Executor Shared Core stopped by Main Shared Core", shared_main_core_stops_executor_core),
@@ -478,7 +521,8 @@ test_t shared_core_tests[] = {
 	TEST_NO_TAG("Executor Shared Core get message from callId with user defaults on two threads", shared_executor_core_get_message_with_user_defaults_multi_thread),
 	TEST_NO_TAG("Two Executor Shared Cores get messages", two_shared_executor_cores_get_messages),
 	TEST_NO_TAG("Executor Shared Core get new chat room from invite", shared_executor_core_get_chat_room),
-	TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room", two_shared_executor_cores_get_message_and_chat_room)
+	TEST_NO_TAG("Two Executor Shared Cores get one msg and one chat room", two_shared_executor_cores_get_message_and_chat_room),
+	TEST_NO_TAG("stop async core when belle sip task failed", stop_async_core_when_belle_sip_task_failed)
 };
 
 void shared_core_tester_before_each(void) {

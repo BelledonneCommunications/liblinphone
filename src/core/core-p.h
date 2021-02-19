@@ -201,6 +201,8 @@ private:
 	unsigned long pushReceivedBackgroundTaskId;
 
 	std::list<AudioDevice *> audioDevices;
+	bool stopAsyncEndEnabled = false;
+	ExtraBackgroundTask bgTask {"Stop core async end"};
 	L_DECLARE_PUBLIC(Core);
 };
 
