@@ -767,7 +767,7 @@ static void call_with_maxptime(void) {
 	disable_all_audio_codecs_except_one(pauline->lc, "PCMA", 8000);
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_add_custom_sdp_media_attribute(marie_params,LinphoneStreamTypeAudio, "maxptime","40");
-	LinphoneCallParams *pauline_params = linphone_core_create_call_params(marie->lc, NULL);
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_add_custom_sdp_media_attribute(pauline_params,LinphoneStreamTypeAudio, "maxptime","40");
 
 	linphone_core_set_upload_ptime(pauline->lc, 100);
