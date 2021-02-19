@@ -727,7 +727,7 @@ unsigned int SalMediaDescription::getFreeTcapIdx() const {
 		std::for_each(streamTcaps.begin(), streamTcaps.end(), addToIndexList);
 	}
 
-	return SalStreamDescription::getFreeIdx(tcapIndexes);
+	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(tcapIndexes);
 }
 
 unsigned int SalMediaDescription::getFreeAcapIdx() const {
@@ -742,7 +742,7 @@ unsigned int SalMediaDescription::getFreeAcapIdx() const {
 		std::for_each(streamAcaps.begin(), streamAcaps.end(), addToIndexList);
 	}
 
-	return SalStreamDescription::getFreeIdx(acapIndexes);
+	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(acapIndexes);
 }
 
 void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {
