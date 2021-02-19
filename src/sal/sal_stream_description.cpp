@@ -1450,28 +1450,43 @@ unsigned int SalStreamDescription::getFreeCfgIdx() const {
 }
 
 unsigned int SalStreamDescription::getFreeIdx(const std::list<unsigned int> & l) {
-	auto lCopy = l;
-	// Sort elements
-	lCopy.sort();
-	// Delete duplicates
-	lCopy.unique();
-for (const auto & e : lCopy) lInfo() << __func__ << " idx " << e;
-	decltype(lCopy) lResult(lCopy.begin(), std::prev(lCopy.end(), 1));
-	// Compute the difference between consecutive elements - if any of them is not equal to 1, then a free index is found
-	std::transform (std::next(lCopy.begin(), 1), lCopy.end(), lResult.begin(), lResult.begin(), std::minus<int>());
-	const auto & gapIt = std::find_if_not(lResult.cbegin(), lResult.cend(), [] (const unsigned int & el) { return (el == 1);});
-	if (gapIt == lResult.cend()) {
-		// No gap found - then return max element + 1
-lInfo() << __func__ << " no gap found return " << (*std::max_element(l.cbegin(), l.cend()) + 1);
-		return *std::max_element(l.cbegin(), l.cend()) + 1;
+	unsigned int freeIdx = 0;
+	if (l.empty()) {
+lInfo() << __func__ << " empty list - return 1";
+		// If list is empty, then the first valid index is 1
+		freeIdx = 1;
 	} else {
-		const auto elIdx = std::distance(lResult.cbegin(), gapIt);
-		const auto startGap = *(std::next(l.begin(), static_cast<int>(elIdx)));
-lInfo() << __func__ << " gap found at " << startGap << " return " << (startGap + 1);
-		return startGap + 1;
+		auto lCopy = l;
+		// Sort elements
+		lCopy.sort();
+		// Delete duplicates
+		lCopy.unique();
+for (const auto & e : lCopy) lInfo() << __func__ << " idx " << e;
+		decltype(lCopy) lResult(lCopy.begin(), std::prev(lCopy.end(), 1));
+		// Compute the difference between consecutive elements - if any of them is not equal to 1, then a free index is found
+		std::transform (std::next(lCopy.begin(), 1), lCopy.end(), lResult.begin(), lResult.begin(), std::minus<int>());
+		const auto & gapIt = std::find_if_not(lResult.cbegin(), lResult.cend(), [] (const unsigned int & el) { return (el == 1);});
+		if (gapIt == lResult.cend()) {
+			const auto listMinEl = *std::min_element(l.cbegin(), l.cend());
+			if (listMinEl > 1) {
+				// If smaller element in the list is greater than 1, we can fill low index capabilities
+				freeIdx = (listMinEl - 1);
+lInfo() << __func__ << " no gap found return min " << freeIdx;
+			} else {
+			// No gap found - then return max element + 1
+				freeIdx = *std::max_element(l.cbegin(), l.cend()) + 1;
+lInfo() << __func__ << " no gap found return max " << freeIdx;
+			}
+		} else {
+			const auto elIdx = std::distance(lResult.cbegin(), gapIt);
+			const auto startGap = *(std::next(l.begin(), static_cast<int>(elIdx)));
+			freeIdx = startGap + 1;
+lInfo() << __func__ << " gap found at " << startGap << " return " << freeIdx;
+		}
 	}
 
-	return 0;
+lInfo() << __func__ << " return " << freeIdx;
+	return freeIdx;
 }
 
 
