@@ -85,4 +85,22 @@ void BackgroundTask::handleTimeout () {
 	stop();
 }
 
+void ExtraBackgroundTask::start (const shared_ptr<Core> &core, const std::function<void ()> &extraFunc, const std::function<void ()> &extraSalFunc, int maxDurationSeconds) {
+	sExtraFunc = extraFunc;
+	sExtraSalFunc = extraSalFunc;
+	BackgroundTask::start(core, maxDurationSeconds);
+}
+
+void ExtraBackgroundTask::handleTimeout() {
+	BackgroundTask::handleTimeout();
+
+	sExtraFunc();
+}
+
+void ExtraBackgroundTask::handleSalTimeout() {
+	BackgroundTask::handleSalTimeout();
+
+	sExtraSalFunc();
+}
+
 LINPHONE_END_NAMESPACE

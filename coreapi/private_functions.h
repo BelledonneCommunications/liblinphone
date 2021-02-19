@@ -133,6 +133,7 @@ LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall
 LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
 LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
+void _linphone_core_stop_async_end(LinphoneCore *lc);
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
