@@ -471,6 +471,7 @@ static void two_shared_executor_cores_get_message_and_chat_room(void) {
 }
 
 static void stop_async_core_when_belle_sip_task_failed(void) {
+#if TARGET_OS_IPHONE
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
@@ -509,6 +510,7 @@ static void stop_async_core_when_belle_sip_task_failed(void) {
 	linphone_chat_message_unref(msg);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+#endif
 }
 
 test_t shared_core_tests[] = {

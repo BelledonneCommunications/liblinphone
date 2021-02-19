@@ -6860,7 +6860,9 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	linphone_core_stop_dtmf_stream(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+#if TARGET_OS_IPHONE
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStarted();
+#endif
 }
 
 /**
@@ -6869,7 +6871,9 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * and change the state to "Off"
  */
 void _linphone_core_stop_async_end(LinphoneCore *lc) {
+#if TARGET_OS_IPHONE
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStopped();
+#endif
 
 	// Call uninit here because there may be the need to access DB while unregistering
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
