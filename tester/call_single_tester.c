@@ -1611,10 +1611,14 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
 	if (callee_with_ice){
-		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+		LinphoneNatPolicy *pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, pol);
 	}
 	if (caller_with_ice){
-		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+		LinphoneNatPolicy *pol = linphone_core_get_nat_policy(pauline->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_core_set_nat_policy(pauline->lc, pol);
 	}
 
 	if (random_ports){
@@ -3871,7 +3875,9 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 	lcs = bctbx_list_append(lcs,marie->lc);
 	lcs = bctbx_list_append(lcs,pauline->lc);
 	if (use_ice){
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
+		LinphoneNatPolicy *pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, pol);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
@@ -4889,8 +4895,14 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 	if (with_ice){
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
-		linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+		LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(marie_pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, marie_pol);
+
+		LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+		linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+		linphone_core_set_nat_policy(pauline->lc, pauline_pol);
 	}
 	if (!with_ice_reinvite) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);
