@@ -154,7 +154,6 @@ static void set_media_network_reachable(LinphoneCore* lc,bool_t isReachable);
 static void linphone_core_run_hooks(LinphoneCore *lc);
 static void linphone_core_zrtp_cache_close(LinphoneCore *lc);
 void linphone_core_zrtp_cache_db_init(LinphoneCore *lc, const char *fileName);
-static void _linphone_core_stop_async_end(LinphoneCore *lc);
 static LinphoneStatus _linphone_core_set_sip_transports(LinphoneCore *lc, const LinphoneSipTransports * tr_config, bool_t applyIt);
 bool_t linphone_core_sound_resources_need_locking(LinphoneCore *lc, const LinphoneCallParams *params);
 
@@ -2902,24 +2901,33 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 
 LinphoneStatus linphone_core_start (LinphoneCore *lc) {
 	try {
-		//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
-		if (lc->state == LinphoneGlobalShutdown) {
-			_linphone_core_stop_async_end(lc);
-		}
-		if (lc->state == LinphoneGlobalOn) {
-			bctbx_warning("Core is already started, skipping...");
-			return -1;
-		} else if (lc->state == LinphoneGlobalShutdown) {
-			bctbx_error("Can't start a Core that is stopping, wait for Off state");
-			return -1;
-		} else if (lc->state == LinphoneGlobalOff) {
-			bctbx_warning("Core was stopped, before starting it again we need to init it");
-			linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
+		switch (lc->state) {
+			case LinphoneGlobalShutdown:
+				//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
+				bctbx_warning("Core was shutDown, forcing to off");
+				_linphone_core_stop_async_end(lc);
 
-			// Decrement refs to avoid leaking
-			linphone_config_unref(lc->config);
-			linphone_core_deactivate_log_serialization_if_needed();
-			bctbx_uninit_logger();
+			case LinphoneGlobalOff:
+				bctbx_warning("Core was Off, before starting it again we need to init it");
+				linphone_core_init(lc, NULL, lc->config, lc->data, NULL, FALSE);
+
+				// Decrement refs to avoid leaking
+				linphone_config_unref(lc->config);
+				linphone_core_deactivate_log_serialization_if_needed();
+				bctbx_uninit_logger();
+				break;
+
+			case LinphoneGlobalReady:
+				break;
+			case LinphoneGlobalStartup:
+				bctbx_warning("Core was startUp, skipping... (wait for On state)");
+				return -1;
+			case LinphoneGlobalConfiguring:
+				bctbx_warning("Core was Configuring, skipping... (wait for On state)");
+				return -1;
+			case LinphoneGlobalOn:
+				bctbx_warning("Core was On, skipping... ");
+				return -1;
 		}
 
 		if (!getPlatformHelpers(lc)->getSharedCoreHelpers()->canCoreStart()) {
@@ -6847,6 +6855,7 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
 	linphone_core_stop_dtmf_stream(lc);
 
 	linphone_core_set_state(lc, LinphoneGlobalShutdown, "Shutdown");
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStarted();
 }
 
 /**
@@ -6854,7 +6863,9 @@ static void _linphone_core_stop_async_start(LinphoneCore *lc) {
  * After we made sure all asynchronous tasks are finished, this function is called to clean the objects
  * and change the state to "Off"
  */
-static void _linphone_core_stop_async_end(LinphoneCore *lc) {
+void _linphone_core_stop_async_end(LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->onStopAsyncBackgroundTaskStopped();
+
 	// Call uninit here because there may be the need to access DB while unregistering
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);

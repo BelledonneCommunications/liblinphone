@@ -2085,6 +2085,10 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 			message_external_body_url=NULL;
 		}
 	}
+	
+	if (linphone_config_get_bool(linphone_core_get_config(lc), "net", "bad_net", 0)) {
+		sal_set_send_error(linphone_core_get_sal(lc), 1500);
+	}
 }
 
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {

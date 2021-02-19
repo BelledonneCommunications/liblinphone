@@ -50,16 +50,32 @@ public:
 
 protected:
 	virtual void handleTimeout ();
+	virtual void handleSalTimeout();
 
 private:
 	static int sHandleSalTimeout(void *data, unsigned int events);
 	static void sHandleTimeout(void *data);
-	void handleSalTimeout();
 
 	belle_sip_source_t *mTimeout = nullptr;
 	Sal *mSal = nullptr;
 	std::string mName;
 	unsigned long mId = 0;
+};
+
+class ExtraBackgroundTask: public BackgroundTask {
+public:
+	ExtraBackgroundTask (const std::string &name) : BackgroundTask(name)  {}
+	~ExtraBackgroundTask () = default;
+	
+	void start (const std::shared_ptr<Core> &core, const std::function<void ()> &extraFunc, const std::function<void ()> &extraSalFunc, int maxDurationSeconds = 15 * 60);
+
+protected:
+	void handleTimeout() override;
+	void handleSalTimeout() override;
+
+private:
+	std::function<void()> sExtraFunc;
+	std::function<void()> sExtraSalFunc;
 };
 
 LINPHONE_END_NAMESPACE
