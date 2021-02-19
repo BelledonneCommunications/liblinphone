@@ -4268,6 +4268,7 @@ LINPHONE_PUBLIC void linphone_core_set_call_error_tone(LinphoneCore *core, Linph
  * @param core the core @notnil
  * @param tone_id the #LinphoneToneId
  * @param audiofile a wav file to be played. @notnil
+ * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_core_set_tone(LinphoneCore *core, LinphoneToneID tone_id, const char *audiofile);
 
