@@ -2900,13 +2900,13 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 }
 
 LinphoneStatus linphone_core_start (LinphoneCore *lc) {
-	if (lc->state == LinphoneGlobalShutdown) {
-		//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
-		bctbx_warning("Core was shutDown, forcing to off");
-		_linphone_core_stop_async_end(lc);
-	}
-
 	try {
+		if (lc->state == LinphoneGlobalShutdown) {
+			//Force change of status to LinphoneGlobalOff, otherwise restarting it will fail
+			bctbx_warning("Core was shutDown, forcing to off");
+			_linphone_core_stop_async_end(lc);
+		}
+
 		switch (lc->state) {
 			case LinphoneGlobalShutdown:
 				bctbx_error("Can't start a Core that is shutdown, wait for Off state");
