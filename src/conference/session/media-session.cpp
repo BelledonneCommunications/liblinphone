@@ -1309,7 +1309,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	std::list<OrtpPayloadType*> emptyList;
 	emptyList.clear();
 
-	const auto encList = getParams()->getPrivate()->getSupportedEncryptions();
+	const auto encList = q->getSupportedEncryptions();
 	// Do not add capability negotiation attributes if encryption is mandatory
 	const bool addCapabilityNegotiationAttributes = supportsCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
 	if (addCapabilityNegotiationAttributes) {

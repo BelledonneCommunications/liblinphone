@@ -225,7 +225,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		} else if (callee_enc_mandatory) {
 			expectedEncryption = callee_encryption;
 
-			
 			// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
 			potentialConfigurationChosen = (enable_callee_capability_negotiations && enable_caller_capability_negotiations && linphone_core_is_media_encryption_supported(caller->lc,expectedEncryption));
 		} else if (enable_callee_capability_negotiations && enable_caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
@@ -407,9 +406,11 @@ static void call_with_capability_negotiation_disable_core_level(void) {
 	linphone_core_set_media_encryption_mandatory(pauline->lc,0);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
 	linphone_core_set_supported_media_encryptions(pauline->lc,cfg_enc);
-	bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
 
-	call_with_encryption_base(marie, pauline, LinphoneMediaEncryptionNone, TRUE, TRUE);
+	const char * chosenMediaEnc = static_cast<const char *>(bctbx_list_get_data(cfg_enc));
+
+	call_with_encryption_base(marie, pauline, static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(chosenMediaEnc)), TRUE, TRUE);
+	bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -810,7 +811,7 @@ static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 	call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionZRTP);
 }
 
-static void ice_call_with_optional_encryption_on_both_sides_base(const LinphoneMediaEncryption encryption) {
+static void ice_call_with_optional_encryption(const LinphoneMediaEncryption encryption, const bool_t caller_with_ice, const bool_t callee_with_ice) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
 	marie_enc_params.level = E_OPTIONAL;
@@ -821,19 +822,43 @@ static void ice_call_with_optional_encryption_on_both_sides_base(const LinphoneM
 	pauline_enc_params.level = E_OPTIONAL;
 	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
 
-	call_with_encryption_test_base(marie_enc_params, TRUE, TRUE, pauline_enc_params, TRUE, TRUE);
+	call_with_encryption_test_base(marie_enc_params, TRUE, caller_with_ice, pauline_enc_params, TRUE, callee_with_ice);
 }
 
 static void srtp_ice_call_with_optional_encryption_on_both_sides_side(void) {
-	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionSRTP);
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionSRTP, TRUE, TRUE);
 }
 
 static void dtls_ice_call_with_optional_encryption_on_both_sides_side(void) {
-	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionDTLS);
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionDTLS, TRUE, TRUE);
 }
 
 static void zrtp_ice_call_with_optional_encryption_on_both_sides_side(void) {
-	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionZRTP);
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionZRTP, TRUE, TRUE);
+}
+
+static void srtp_call_with_optional_encryption_caller_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionSRTP, TRUE, FALSE);
+}
+
+static void dtls_call_with_optional_encryption_caller_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionDTLS, TRUE, FALSE);
+}
+
+static void zrtp_call_with_optional_encryption_caller_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionZRTP, TRUE, FALSE);
+}
+
+static void srtp_call_with_optional_encryption_callee_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionSRTP, FALSE, TRUE);
+}
+
+static void dtls_call_with_optional_encryption_callee_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionDTLS, FALSE, TRUE);
+}
+
+static void zrtp_call_with_optional_encryption_callee_with_ice(void) {
+	ice_call_with_optional_encryption(LinphoneMediaEncryptionZRTP, FALSE, TRUE);
 }
 
 test_t capability_negotiation_tests[] = {
@@ -857,6 +882,8 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call from endpoint with optional encryption to endpoint with none", srtp_call_from_opt_enc_to_none),
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with optional", srtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("SRTP call with optional encryption on both sides", srtp_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("SRTP call with optional encryption (caller with ICE)", srtp_call_with_optional_encryption_caller_with_ice),
+	TEST_NO_TAG("SRTP call with optional encryption (callee with ICE)", srtp_call_with_optional_encryption_callee_with_ice),
 	TEST_NO_TAG("SRTP ICE call with optional encryption on both sides", srtp_ice_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("Simple DTLS call with capability negotiations", simple_dtls_call_with_capability_negotiations),
 	TEST_NO_TAG("DTLS call with potential configuration same as actual one", dtls_call_with_potential_configuration_same_as_actual_configuration),
@@ -872,6 +899,8 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with optional", dtls_call_from_no_enc_to_opt),
 	TEST_NO_TAG("DTLS call with optional encryption on both sides", dtls_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("DTLS ICE call with optional encryption on both sides", dtls_ice_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("DTLS call with optional encryption (caller with ICE)", dtls_call_with_optional_encryption_caller_with_ice),
+	TEST_NO_TAG("DTLS call with optional encryption (callee with ICE)", dtls_call_with_optional_encryption_callee_with_ice),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("ZRTP call with mandatory encryption", zrtp_call_with_mandatory_encryption),
@@ -885,7 +914,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("ZRTP call from endpoint with optional encryption to endpoint with none", zrtp_call_from_opt_enc_to_none),
 	TEST_NO_TAG("ZRTP call from endpoint with no encryption to endpoint with optional", zrtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("ZRTP call with optional encryption on both sides", zrtp_call_with_optional_encryption_on_both_sides_side),
-	TEST_NO_TAG("ZRTP ICE call with optional encryption on both sides", zrtp_ice_call_with_optional_encryption_on_both_sides_side)
+	TEST_NO_TAG("ZRTP ICE call with optional encryption on both sides", zrtp_ice_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("ZRTP call with optional encryption (caller with ICE)", zrtp_call_with_optional_encryption_caller_with_ice),
+	TEST_NO_TAG("ZRTP call with optional encryption (callee with ICE)", zrtp_call_with_optional_encryption_callee_with_ice)
 };
 
 test_suite_t capability_negotiation_test_suite = {"Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
