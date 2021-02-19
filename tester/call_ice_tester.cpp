@@ -96,8 +96,15 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
-	if (callee_has_ice) linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
+	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
+
+	if (callee_has_ice) {
+		LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+		linphone_nat_policy_enable_ice(marie_pol, TRUE);
+		linphone_core_set_nat_policy(marie->lc, marie_pol);
+	}
 
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
 
@@ -162,8 +169,14 @@ static void audio_call_with_ice_no_matching_audio_codecs(void) {
 
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
-	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
-	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+	linphone_nat_policy_enable_ice(marie_pol, TRUE);
+	linphone_core_set_nat_policy(marie->lc, marie_pol);
+
+	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
 
 	linphone_core_manager_wait_for_stun_resolution(marie);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
@@ -246,8 +259,15 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
-	linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
-	linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+	linphone_nat_policy_enable_ice(marie_pol, TRUE);
+	linphone_core_set_nat_policy(marie->lc, marie_pol);
+
+	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
+
 	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
 	linphone_core_get_local_ip(marie->lc, AF_INET6, NULL, localip6);
 	
@@ -370,9 +390,13 @@ static void call_with_ice_no_sdp(void){
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
 
-	linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+	linphone_nat_policy_enable_ice(marie_pol, TRUE);
+	linphone_core_set_nat_policy(marie->lc, marie_pol);
 
-	linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
 
 	BC_ASSERT_TRUE(call(pauline,marie));
 
