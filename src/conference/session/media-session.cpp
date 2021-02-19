@@ -210,7 +210,11 @@ void MediaSessionPrivate::accepted () {
 				// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
 				if (localDesc->supportCapabilityNegotiation()) {
 					// If no ICE session or checklist has completed, then send re-INVITE
-					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && getStreamsGroup().getIceService().hasCompletedCheckList())) {
+					// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
+					// - no ICE session is found in th stream group
+					// - an ICE sesson is found and its checklist has already completed
+					// - an ICE sesson is found and ICE reINVITE is not sent upon completition if the checklist (This case is the default one for DTLS SRTP negotiation as it was observed that webRTC gateway did not correctly support SIP ICE reINVITEs)
+					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && (!getParams()->getPrivate()->getUpdateCallWhenIceCompleted() || getStreamsGroup().getIceService().hasCompletedCheckList()))) {
 						// Compare the chosen final configuration with the actual configuration in the local decription
 						const auto diff = md->compareToActualConfiguration(*localDesc);
 						const bool potentialConfigurationChosen = (diff & SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED);
@@ -221,6 +225,8 @@ void MediaSessionPrivate::accepted () {
 						} else {
 							lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
 						}
+					} else {
+						lInfo() << "Capability negotiation and ICE are both enabled hence wait for the end of ICE checklist completion to send a reINVITE";
 					}
 				}
 			}
