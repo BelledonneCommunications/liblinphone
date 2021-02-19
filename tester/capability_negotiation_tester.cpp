@@ -238,9 +238,20 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			potentialConfigurationChosen = false;
 		}
 
+		LinphoneNatPolicy *caller_nat_policy = linphone_core_get_nat_policy(caller->lc);
+		const bool_t caller_ice_enabled = linphone_nat_policy_ice_enabled(caller_nat_policy);
+		LinphoneNatPolicy *callee_nat_policy = linphone_core_get_nat_policy(callee->lc);
+		const bool_t callee_ice_enabled = linphone_nat_policy_ice_enabled(callee_nat_policy);
+		const int expectedStreamsRunning = 1 + ((potentialConfigurationChosen || (callee_ice_enabled && caller_ice_enabled)) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
+
+		check_nb_media_starts(AUDIO_START, caller, callee, 1, 1);
 		liblinphone_tester_check_rtcp(caller, callee);
 
-		const int expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
+		// Check that no reINVITE is sent while checking streams
 		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%i");
 		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%i");
 
@@ -578,9 +589,14 @@ static void simple_dtls_call_with_capability_negotiations(void) {
 	simple_call_with_capability_negotiations(LinphoneMediaEncryptionDTLS);
 }
 
-static LinphoneCoreManager * create_core_mgr_with_capabiliy_negotiation_setup(const char * rc_file, const encryption_params enc_params, const bool_t enable_capability_negotiations) {
+static LinphoneCoreManager * create_core_mgr_with_capabiliy_negotiation_setup(const char * rc_file, const encryption_params enc_params, const bool_t enable_capability_negotiations, const bool_t enable_ice) {
 	LinphoneCoreManager* mgr = linphone_core_manager_new(rc_file);
 	linphone_core_set_support_capability_negotiation(mgr->lc, enable_capability_negotiations);
+	if (enable_ice){
+		LinphoneNatPolicy *pol = linphone_core_get_nat_policy(mgr->lc);
+		linphone_nat_policy_enable_ice(pol, TRUE);
+		linphone_core_set_nat_policy(mgr->lc, pol);
+	}
 
 	const LinphoneMediaEncryption encryption = enc_params.encryption;
 	if (linphone_core_media_encryption_supported(mgr->lc,encryption)) {
@@ -602,10 +618,10 @@ static LinphoneCoreManager * create_core_mgr_with_capabiliy_negotiation_setup(co
 	return mgr;
 }
 
-static void call_with_encryption_test_base(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations) {
+static void call_with_encryption_test_base(const encryption_params marie_enc_params, const bool_t enable_marie_capability_negotiations, const bool_t enable_marie_ice, const encryption_params pauline_enc_params, const bool_t enable_pauline_capability_negotiations, const bool_t enable_pauline_ice) {
 
-	LinphoneCoreManager * marie = create_core_mgr_with_capabiliy_negotiation_setup("marie_rc", marie_enc_params, enable_marie_capability_negotiations);
-	LinphoneCoreManager * pauline = create_core_mgr_with_capabiliy_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_params, enable_pauline_capability_negotiations);
+	LinphoneCoreManager * marie = create_core_mgr_with_capabiliy_negotiation_setup("marie_rc", marie_enc_params, enable_marie_capability_negotiations, enable_marie_ice);
+	LinphoneCoreManager * pauline = create_core_mgr_with_capabiliy_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_params, enable_pauline_capability_negotiations, enable_pauline_ice);
 
 	LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionNone;
 	if ((enable_marie_capability_negotiations == TRUE) && (enable_pauline_capability_negotiations == TRUE)) {
@@ -626,7 +642,7 @@ static void call_with_no_encryption(void) {
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = LinphoneMediaEncryptionNone;
 	pauline_enc_params.level = E_DISABLED;
-	call_with_encryption_test_base(marie_enc_params, FALSE, pauline_enc_params, FALSE);
+	call_with_encryption_test_base(marie_enc_params, FALSE, FALSE, pauline_enc_params, FALSE, FALSE);
 }
 
 static void call_with_mandatory_encryption_base(const LinphoneMediaEncryption encryption, const bool_t caller_capability_negotiation, const bool_t callee_capability_negotiation) {
@@ -637,7 +653,7 @@ static void call_with_mandatory_encryption_base(const LinphoneMediaEncryption en
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_MANDATORY;
-	call_with_encryption_test_base(marie_enc_params, caller_capability_negotiation, pauline_enc_params, callee_capability_negotiation);
+	call_with_encryption_test_base(marie_enc_params, caller_capability_negotiation, FALSE, pauline_enc_params, callee_capability_negotiation, FALSE);
 }
 
 static void srtp_call_with_mandatory_encryption(void) {
@@ -698,9 +714,9 @@ static void call_from_opt_enc_to_enc_base(const LinphoneMediaEncryption encrypti
 	mandatory_enc_mgr_params.encryption = encryption;
 	mandatory_enc_mgr_params.level = E_MANDATORY;
 	if (opt_enc_to_enc) {
-		call_with_encryption_test_base(optional_enc_mgr_params, TRUE, mandatory_enc_mgr_params, TRUE);
+		call_with_encryption_test_base(optional_enc_mgr_params, TRUE, FALSE, mandatory_enc_mgr_params, TRUE, FALSE);
 	} else {
-		call_with_encryption_test_base(mandatory_enc_mgr_params, TRUE, optional_enc_mgr_params, TRUE);
+		call_with_encryption_test_base(mandatory_enc_mgr_params, TRUE, FALSE, optional_enc_mgr_params, TRUE, FALSE);
 	}
 }
 
@@ -738,9 +754,9 @@ static void call_from_opt_enc_to_none_base(const LinphoneMediaEncryption encrypt
 	enc_mgr_params.level = E_OPTIONAL;
 	enc_mgr_params.preferences = set_encryption_preference_with_priority(encryption, false);
 	if (opt_enc_to_none) {
-		call_with_encryption_test_base(enc_mgr_params, TRUE, no_enc_mgr_params, FALSE);
+		call_with_encryption_test_base(enc_mgr_params, TRUE, FALSE, no_enc_mgr_params, FALSE, FALSE);
 	} else {
-		call_with_encryption_test_base(no_enc_mgr_params, FALSE, enc_mgr_params, TRUE);
+		call_with_encryption_test_base(no_enc_mgr_params, FALSE, FALSE, enc_mgr_params, TRUE, FALSE);
 	}
 }
 
@@ -779,7 +795,7 @@ static void call_with_optional_encryption_on_both_sides_base(const LinphoneMedia
 	pauline_enc_params.level = E_OPTIONAL;
 	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
 
-	call_with_encryption_test_base(marie_enc_params, TRUE, pauline_enc_params, TRUE);
+	call_with_encryption_test_base(marie_enc_params, TRUE, FALSE, pauline_enc_params, TRUE, FALSE);
 }
 
 static void srtp_call_with_optional_encryption_on_both_sides_side(void) {
@@ -792,6 +808,32 @@ static void dtls_call_with_optional_encryption_on_both_sides_side(void) {
 
 static void zrtp_call_with_optional_encryption_on_both_sides_side(void) {
 	call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionZRTP);
+}
+
+static void ice_call_with_optional_encryption_on_both_sides_base(const LinphoneMediaEncryption encryption) {
+	encryption_params marie_enc_params;
+	marie_enc_params.encryption = encryption;
+	marie_enc_params.level = E_OPTIONAL;
+	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption, false);
+
+	encryption_params pauline_enc_params;
+	pauline_enc_params.encryption = encryption;
+	pauline_enc_params.level = E_OPTIONAL;
+	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
+
+	call_with_encryption_test_base(marie_enc_params, TRUE, TRUE, pauline_enc_params, TRUE, TRUE);
+}
+
+static void srtp_ice_call_with_optional_encryption_on_both_sides_side(void) {
+	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionSRTP);
+}
+
+static void dtls_ice_call_with_optional_encryption_on_both_sides_side(void) {
+	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionDTLS);
+}
+
+static void zrtp_ice_call_with_optional_encryption_on_both_sides_side(void) {
+	ice_call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionZRTP);
 }
 
 test_t capability_negotiation_tests[] = {
@@ -815,6 +857,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP call from endpoint with optional encryption to endpoint with none", srtp_call_from_opt_enc_to_none),
 	TEST_NO_TAG("SRTP call from endpoint with no encryption to endpoint with optional", srtp_call_from_no_enc_to_opt),
 	TEST_NO_TAG("SRTP call with optional encryption on both sides", srtp_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("SRTP ICE call with optional encryption on both sides", srtp_ice_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("Simple DTLS call with capability negotiations", simple_dtls_call_with_capability_negotiations),
 	TEST_NO_TAG("DTLS call with potential configuration same as actual one", dtls_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("DTLS call with mandatory encryption", dtls_call_with_mandatory_encryption),
@@ -828,6 +871,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("DTLS call from endpoint with optional encryption to endpoint with none", dtls_call_from_opt_enc_to_none),
 	TEST_NO_TAG("DTLS call from endpoint with no encryption to endpoint with optional", dtls_call_from_no_enc_to_opt),
 	TEST_NO_TAG("DTLS call with optional encryption on both sides", dtls_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("DTLS ICE call with optional encryption on both sides", dtls_ice_call_with_optional_encryption_on_both_sides_side),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("ZRTP call with mandatory encryption", zrtp_call_with_mandatory_encryption),
@@ -840,7 +884,8 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("ZRTP call from endpoint with mandatory encryption to endpoint with optional", zrtp_call_from_enc_to_opt_enc),
 	TEST_NO_TAG("ZRTP call from endpoint with optional encryption to endpoint with none", zrtp_call_from_opt_enc_to_none),
 	TEST_NO_TAG("ZRTP call from endpoint with no encryption to endpoint with optional", zrtp_call_from_no_enc_to_opt),
-	TEST_NO_TAG("ZRTP call with optional encryption on both sides", zrtp_call_with_optional_encryption_on_both_sides_side)
+	TEST_NO_TAG("ZRTP call with optional encryption on both sides", zrtp_call_with_optional_encryption_on_both_sides_side),
+	TEST_NO_TAG("ZRTP ICE call with optional encryption on both sides", zrtp_ice_call_with_optional_encryption_on_both_sides_side)
 };
 
 test_suite_t capability_negotiation_test_suite = {"Capability Negotiation", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
