@@ -1338,7 +1338,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 
 		makeLocalStreamDecription(md, getParams()->realtimeTextEnabled(), "Text", textStreamIndex, SalText, getParams()->getMediaProto(), SalStreamSendRecv, textCodecs, "ts", false, 0, getParams()->getPrivate()->getCustomSdpMediaAttributes(LinphoneStreamTypeText));
 
-		md->streams[mainTextStreamIndex].setSupportedEncryptions(encList);
+		md->streams[textStreamIndex].setSupportedEncryptions(encList);
 
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
