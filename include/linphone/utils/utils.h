@@ -166,7 +166,7 @@ namespace Utils {
 	}
 
 	template<class T>
-	std::list<T> bctbxListToList (const bctbx_list_t* l) {
+	std::list<T> bctbxListToList (bctbx_list_t* l) {
 		std::list<T> cppList;
 		for(bctbx_list_t *elem = l;elem!=NULL;elem=elem->next){
 			T data = static_cast<T>(bctbx_list_get_data(elem));
