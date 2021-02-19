@@ -66,8 +66,6 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		using acap_map_t = std::map<unsigned int, acap_t>;
 		using tcap_map_t = std::map<unsigned int, std::string>;
 
-		static unsigned int getFreeIdx(const std::list<unsigned int> & l);
-
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
