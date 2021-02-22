@@ -88,9 +88,7 @@ void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *pa
 }
 
 bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption) {
-	const auto encEnumList = L_GET_PRIVATE_FROM_C_OBJECT(params)->getSupportedEncryptions();
-	const auto foundIt = std::find(encEnumList.cbegin(), encEnumList.cend(), encryption);
-	return (foundIt != encEnumList.cend());
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->isMediaEncryptionSupported(encryption);
 }
 
 bctbx_list_t* linphone_call_params_get_supported_encryptions (const LinphoneCallParams *params) {
