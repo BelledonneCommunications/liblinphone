@@ -51,7 +51,7 @@ static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, 
 
 ////// USERNAME //////
 static void local_username_too_short(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -66,7 +66,7 @@ static void local_username_too_short(void) {
 }
 
 static void local_username_too_long(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -80,7 +80,7 @@ static void local_username_too_long(void) {
 }
 
 static void local_username_invalid_character(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -94,7 +94,7 @@ static void local_username_invalid_character(void) {
 }
 
 static void local_username_ok(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -120,7 +120,7 @@ static void local_username_ok(void) {
 ////// PASSWORD //////
 
 static void local_password_too_short(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -134,7 +134,7 @@ static void local_password_too_short(void) {
 }
 
 static void local_password_too_long(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -148,7 +148,7 @@ static void local_password_too_long(void) {
 }
 
 static void local_password_ok(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -166,7 +166,7 @@ static void local_password_ok(void) {
 ////// EMAIL //////
 
 static void local_email_malformed(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -204,7 +204,7 @@ static void local_email_malformed(void) {
 }
 
 static void local_email_invalid_character(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -218,7 +218,7 @@ static void local_email_invalid_character(void) {
 }
 
 static void local_email_ok(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -249,7 +249,7 @@ static void local_email_ok(void) {
 ////// PHONE NUMBER //////
 
 /*static void local_phone_number_too_short(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -263,7 +263,7 @@ static void local_email_ok(void) {
 }*/
 
 static void local_phone_number_too_long(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -277,7 +277,7 @@ static void local_phone_number_too_long(void) {
 }
 
 static void local_phone_number_invalid(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -291,7 +291,7 @@ static void local_phone_number_invalid(void) {
 }
 
 static void local_country_code_invalid(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(
@@ -311,7 +311,7 @@ static void local_country_code_invalid(void) {
 }
 
 static void local_phone_number_ok(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_rc", 0);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_rc", FALSE);
 	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 
 	BC_ASSERT_EQUAL(

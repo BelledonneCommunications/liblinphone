@@ -25,11 +25,11 @@
 #include "linphone/account_creator_service.h"
 #include "linphone/account_creator.h"
 
-#define NOTIFY_IF_EXIST_ACCOUNT_CREATOR(cbName, functionName, ...) \
+#define NOTIFY_IF_EXIST_ACCOUNT_CREATOR(functionName, ...) \
 	bctbx_list_t *callbacksCopy = bctbx_list_copy(linphone_account_creator_get_callbacks_list(creator)); \
 	for (bctbx_list_t *it = callbacksCopy; it; it = bctbx_list_next(it)) { \
 		linphone_account_creator_set_current_callbacks(creator, reinterpret_cast<LinphoneAccountCreatorCbs *>(bctbx_list_get_data(it))); \
-		LinphoneAccountCreatorCbs ## cbName ## Cb cb = linphone_account_creator_cbs_get_ ## functionName (linphone_account_creator_get_current_callbacks(creator)); \
+		LinphoneAccountCreatorCbsStatusCb cb = linphone_account_creator_cbs_get_ ## functionName (linphone_account_creator_get_current_callbacks(creator)); \
 		if (cb) \
 			cb(__VA_ARGS__); \
 	} \
@@ -94,9 +94,12 @@ struct _LinphoneAccountCreator {
 
 	/* AccountCreator */
 	LinphoneAccountCreatorService *service; /**< Account creator service */
+
 	LinphoneAccountCreatorCbs *cbs; /**< Account creator cbs, deprecated, use a list of Cbs instead */
+
 	bctbx_list_t *callbacks;
-	LinphoneAccountCreatorCbs *currentCbs;
+	LinphoneAccountCreatorCbs *currentCbs; /** Used during the callbacks list iteration */
+
 	LinphoneXmlRpcSession *xmlrpc_session; /**< XML-RPC session */
 	LinphoneProxyConfig *proxy_cfg; /**< Default proxy config */
 
@@ -117,6 +120,11 @@ struct _LinphoneAccountCreator {
 	char *domain; /**< Domain */
 	char *algorithm; /**< Digest authentication algorithm */
 	LinphoneTransportType transport; /**< Transport used */
+
+	/* Push Notification */
+	char *pn_provider;
+	char *pn_param;
+	char *pn_prid;
 
 	bool_t set_as_default; /**< Set proxy config as the default one */
 

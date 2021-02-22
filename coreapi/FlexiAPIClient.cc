@@ -54,6 +54,25 @@ FlexiAPIClient* FlexiAPIClient::ping() {
     return this;
 }
 
+FlexiAPIClient* FlexiAPIClient::sendToken(string pnProvider, string pnParam, string pnPrid) {
+    JsonParams params;
+    params.push("pn_provider", pnProvider);
+    params.push("pn_pnparam", pnParam);
+    params.push("pn_prid", pnPrid);
+    prepareRequest("tokens", "POST", params);
+    return this;
+}
+
+FlexiAPIClient* FlexiAPIClient::accountCreate(string username, string password, string algorithm, string token) {
+    JsonParams params;
+    params.push("username", username);
+    params.push("password", password);
+    params.push("algorithm", algorithm);
+    params.push("token", token);
+    prepareRequest("tokens", "POST", params);
+    return this;
+}
+
 FlexiAPIClient* FlexiAPIClient::accountInfo(string sip) {
     prepareRequest(string("accounts/").append(urlEncode(sip)).append("/info"));
     return this;

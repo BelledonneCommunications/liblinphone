@@ -76,6 +76,8 @@ class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
 
         // Public endpoinds
         FlexiAPIClient* ping();
+        FlexiAPIClient* sendToken(string pnProvider, string pnParam, string pnPrid);
+        FlexiAPIClient* accountCreate(string username, string password, string algorithm, string token);
         FlexiAPIClient* accountInfo(string sip);
         FlexiAPIClient* accountActivateEmail(string sip, string code);
         FlexiAPIClient* accountActivatePhone(string sip, string code);
