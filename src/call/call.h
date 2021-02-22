@@ -281,6 +281,7 @@ public:
 	
 
 	bool canSoundResourcesBeFreed () const;
+	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
 
 private:
 	std::shared_ptr<Participant> mParticipant;
