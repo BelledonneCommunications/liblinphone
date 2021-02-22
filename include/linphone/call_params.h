@@ -21,10 +21,8 @@
 #ifndef __LINPHONE_CALL_PARAMS_H__
 #define __LINPHONE_CALL_PARAMS_H__
 
-
 #include "linphone/types.h"
 #include "linphone/payload_type.h"
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -359,7 +357,7 @@ int linphone_call_params_get_audio_bandwidth_limit(const LinphoneCallParams *par
 bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_has_avpf_enabled_been_set(const LinphoneCallParams *params);
-bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
+LINPHONE_PUBLIC bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
 void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
 uint16_t linphone_call_params_get_avpf_rr_interval(const LinphoneCallParams *params);
 void linphone_call_params_set_avpf_rr_interval(LinphoneCallParams *params, uint16_t value);
