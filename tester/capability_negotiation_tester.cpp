@@ -256,7 +256,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
 
-		check_nb_media_starts(AUDIO_START, caller, callee, 1, 1);
 		liblinphone_tester_check_rtcp(caller, callee);
 
 		// Check that no reINVITE is sent while checking streams
