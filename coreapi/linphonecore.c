@@ -2470,11 +2470,15 @@ static void linphone_core_internal_notify_received(LinphoneCore *lc, LinphoneEve
 #ifdef HAVE_ADVANCED_IM
 		const LinphoneAddress *resource = linphone_event_get_resource(lev);
 		char *resourceAddrStr = linphone_address_as_string_uri_only(resource);
-		const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(linphone_core_get_default_proxy_config(lc));
-		if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
-			bctbx_free(resourceAddrStr);
-			L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
-			return;
+		const bctbx_list_t * elem;
+		for (elem=linphone_core_get_proxy_config_list(lc);elem!=NULL;elem=elem->next) {
+			LinphoneProxyConfig *proxy = (LinphoneProxyConfig*) elem->data;
+			const char *factoryUri = linphone_proxy_config_get_conference_factory_uri(proxy);
+			if (factoryUri && (strcmp(resourceAddrStr, factoryUri) == 0)) {
+				bctbx_free(resourceAddrStr);
+				L_GET_PRIVATE_FROM_C_OBJECT(lc)->remoteListEventHandler->notifyReceived(L_GET_CPP_PTR_FROM_C_OBJECT(body));
+				return;
+			}
 		}
 		bctbx_free(resourceAddrStr);
 
