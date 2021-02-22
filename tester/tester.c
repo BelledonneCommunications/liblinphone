@@ -2534,8 +2534,8 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	stats initial_caller=caller_mgr->stat;
 	stats initial_callee=callee_mgr->stat;
 	bool_t result=FALSE;
-	LinphoneCallParams *caller_params = caller_test_params->base;
-	LinphoneCallParams *callee_params = callee_test_params->base;
+	const LinphoneCallParams *caller_params = caller_test_params->base;
+	const LinphoneCallParams *callee_params = callee_test_params->base;
 	bool_t did_receive_call;
 	LinphoneCall *callee_call=NULL;
 	LinphoneCall *caller_call=NULL;
@@ -2579,7 +2579,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			ms_usleep(20000);
 	}
 
-
 	BC_ASSERT_TRUE((caller_mgr->stat.number_of_LinphoneCallOutgoingRinging==initial_caller.number_of_LinphoneCallOutgoingRinging+1)
 							||(caller_mgr->stat.number_of_LinphoneCallOutgoingEarlyMedia==initial_caller.number_of_LinphoneCallOutgoingEarlyMedia+1));
 
@@ -2612,18 +2611,55 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	}
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_startRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
 
+	// Local call parameters are available after moving to OutgoingRinging
+	if (!caller_params && caller_call){
+		caller_params = linphone_call_get_params(caller_call);
+	}
+
+	bctbx_list_t* callee_supported_encs = NULL;
 
 	if (callee_params){
 		linphone_call_accept_with_params(callee_call,callee_params);
+		callee_supported_encs = linphone_call_params_get_supported_encryptions (callee_params);
+
 	}else if (build_callee_params){
 		LinphoneCallParams *default_params=linphone_core_create_call_params(callee_mgr->lc,callee_call);
 		ms_message("Created default call params with video=%i", linphone_call_params_video_enabled(default_params));
+		callee_supported_encs = linphone_call_params_get_supported_encryptions (default_params);
 		linphone_call_accept_with_params(callee_call,default_params);
 		linphone_call_params_unref(default_params);
 	}else if (callee_call) {
+		callee_supported_encs = linphone_call_params_get_supported_encryptions (linphone_call_get_params(callee_call));
 		linphone_call_accept(callee_call);
 	} else {
-		linphone_call_accept(linphone_core_get_current_call(callee_mgr->lc));
+		LinphoneCall * caller_mgr_current_call = linphone_core_get_current_call(callee_mgr->lc);
+		callee_supported_encs = linphone_call_params_get_supported_encryptions (linphone_call_get_params(caller_mgr_current_call));
+		linphone_call_accept(caller_mgr_current_call);
+	}
+
+	bool_t encCheckResult = FALSE;
+
+	for(bctbx_list_t * enc = callee_supported_encs;enc!=NULL;enc=enc->next){
+		const char *encString = (const char *)bctbx_list_get_data(enc);
+		encCheckResult |= linphone_call_params_is_media_encryption_supported (caller_params, (LinphoneMediaEncryption)string_to_linphone_media_encryption(encString));
+	}
+	if (callee_supported_encs) {
+		bctbx_list_free_with_data(callee_supported_encs, (bctbx_list_free_func)bctbx_free);
+	}
+
+	if (!encCheckResult) {
+		bool_t caller_cap_neg = !!linphone_call_params_capability_negotiations_enabled(caller_params);
+		bool_t callee_cap_neg = !!linphone_call_params_capability_negotiations_enabled(callee_params);
+		if (callee_cap_neg && caller_cap_neg) {
+			LinphoneMediaEncryption caller_default_enc = linphone_call_params_get_media_encryption(caller_params);
+			LinphoneMediaEncryption callee_default_enc = linphone_call_params_get_media_encryption(callee_params);
+			if (caller_default_enc != callee_default_enc) {
+				BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallError,(initial_caller.number_of_LinphoneCallError+1)));
+				BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallReleased,(initial_caller.number_of_LinphoneCallReleased+1)));
+				BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallReleased,(initial_callee.number_of_LinphoneCallReleased+1)));
+				return FALSE;
+			}
+		}
 	}
 
 	BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallConnected,initial_callee.number_of_LinphoneCallConnected+1));
