@@ -107,6 +107,14 @@ void linphone_account_creator_cbs_set_activate_account(LinphoneAccountCreatorCbs
 	cbs->activate_account_response_cb = cb;
 }
 
+LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_send_token(const LinphoneAccountCreatorCbs *cbs) {
+	return cbs->send_token_cb;
+}
+
+void linphone_account_creator_cbs_set_send_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb) {
+	cbs->send_token_cb = cb;
+}
+
 LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_is_account_activated(const LinphoneAccountCreatorCbs *cbs) {
 	return cbs->is_account_activated_response_cb;
 }
@@ -212,7 +220,7 @@ static void _is_account_exist_response_cb(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->is_account_exist_response_cb != NULL) {
 		creator->cbs->is_account_exist_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -221,7 +229,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_exist_linphone_
 		if (creator->cbs->is_account_exist_response_cb != NULL) {
 			creator->cbs->is_account_exist_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_exist, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -266,7 +274,7 @@ static void _create_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->create_account_response_cb != NULL) {
 		creator->cbs->create_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, create_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, status, resp)
 }
 
 static LinphoneXmlRpcRequest * _create_account_with_phone_custom(LinphoneAccountCreator *creator) {
@@ -325,7 +333,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_linphone_xm
 		if (creator->cbs->create_account_response_cb != NULL) {
 			creator->cbs->create_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, create_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		if (identity) ms_free(identity);
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
@@ -360,7 +368,7 @@ static void _delete_linphone_account_response_cb(LinphoneXmlRpcRequest *request)
 	if (creator->cbs->delete_account_response_cb != NULL) {
 		creator->cbs->delete_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, delete_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -368,7 +376,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_delete_account_linphone_xm
 		if (creator->cbs->delete_account_response_cb != NULL) {
 			creator->cbs->delete_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, delete_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(delete_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -465,7 +473,7 @@ static void _login_account_confirmation_key_cb_custom(LinphoneXmlRpcRequest *req
 	if (creator->cbs->login_linphone_account_response_cb != NULL) {
 		creator->cbs->login_linphone_account_response_cb(creator, status, content);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, login_linphone_account, creator, status, content)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator, status, content)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -474,7 +482,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_login_linphone_account_lin
 		if (creator->cbs->login_linphone_account_response_cb != NULL) {
 			creator->cbs->login_linphone_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, login_linphone_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(login_linphone_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -526,7 +534,7 @@ static void _activate_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->activate_account_response_cb != NULL) {
 		creator->cbs->activate_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -536,7 +544,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_account_lin
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -571,7 +579,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_email_account_lin
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -621,7 +629,7 @@ static void get_linphone_confirmation_key_response_cb(LinphoneXmlRpcRequest *req
 	if (creator->cbs->confirmation_key_response_cb != NULL) {
 		creator->cbs->confirmation_key_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, confirmation_key, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(confirmation_key, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -629,7 +637,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_get_confirmation_key_linph
 		if (creator->cbs->confirmation_key_response_cb != NULL) {
 			creator->cbs->confirmation_key_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, confirmation_key, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(confirmation_key, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -666,7 +674,7 @@ static void _is_account_activated_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->is_account_activated_response_cb != NULL) {
 		creator->cbs->is_account_activated_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_activated, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_activated, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -676,7 +684,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_activated_linph
 		if (creator->cbs->is_account_activated_response_cb != NULL) {
 			creator->cbs->is_account_activated_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_activated, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_activated, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -720,7 +728,7 @@ static void _is_phone_number_used_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->is_alias_used_response_cb != NULL) {
 		creator->cbs->is_alias_used_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_alias_used, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_alias_used, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_phone_number_used_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -730,7 +738,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_phone_number_used_linph
 		if (creator->cbs->is_alias_used_response_cb != NULL) {
 			creator->cbs->is_alias_used_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_alias_used, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_alias_used, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -773,7 +781,7 @@ static void _link_phone_number_with_account_cb_custom(LinphoneXmlRpcRequest *req
 	if (creator->cbs->link_account_response_cb != NULL) {
 		creator->cbs->link_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, link_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -782,7 +790,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_link_phone_number_with_acc
 		if (creator->cbs->link_account_response_cb != NULL) {
 			creator->cbs->link_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, link_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(link_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -823,7 +831,7 @@ static void _get_phone_number_for_account_cb_custom(LinphoneXmlRpcRequest *reque
 	if (creator->cbs->is_account_linked_response_cb != NULL) {
 		creator->cbs->is_account_linked_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_linked, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -832,7 +840,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_is_account_linked_linphone
 		if (creator->cbs->is_account_linked_response_cb != NULL) {
 			creator->cbs->is_account_linked_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, is_account_linked, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(is_account_linked, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -869,7 +877,7 @@ static void _activate_phone_number_link_cb_custom(LinphoneXmlRpcRequest *request
 	if (creator->cbs->activate_alias_response_cb != NULL) {
 		creator->cbs->activate_alias_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_alias, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -878,7 +886,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_activate_phone_number_link
 		if (creator->cbs->activate_alias_response_cb != NULL) {
 			creator->cbs->activate_alias_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(activate_alias, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -930,7 +938,7 @@ static void _recover_phone_account_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->recover_account_response_cb != NULL) {
 		creator->cbs->recover_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, recover_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_recover_phone_account_linphone_xmlrpc(LinphoneAccountCreator *creator) {
@@ -939,7 +947,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_recover_phone_account_linp
 		if (creator->cbs->recover_account_response_cb != NULL) {
 			creator->cbs->recover_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, recover_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(recover_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 
@@ -986,7 +994,7 @@ static void _password_updated_cb_custom(LinphoneXmlRpcRequest *request) {
 	if (creator->cbs->update_account_response_cb != NULL) {
 		creator->cbs->update_account_response_cb(creator, status, resp);
 	}
-	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, update_account, creator, status, resp)
+	NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, status, resp)
 }
 
 LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_xmlrpc(LinphoneAccountCreator *creator){
@@ -1002,7 +1010,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_update_password_linphone_x
 		if (creator->cbs->update_account_response_cb != NULL) {
 			creator->cbs->update_account_response_cb(creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters");
 		}
-		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(Status, update_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
+		NOTIFY_IF_EXIST_ACCOUNT_CREATOR(update_account, creator, LinphoneAccountCreatorStatusMissingArguments, "Missing required parameters")
 		return LinphoneAccountCreatorStatusMissingArguments;
 	}
 	bctbx_free(identity);
