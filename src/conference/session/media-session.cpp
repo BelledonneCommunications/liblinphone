@@ -1681,10 +1681,11 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
 	}
 
+	const auto & enc = getEncryptionFromMediaDescription(newMd);
 	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
 	if (q->isCapabilityNegotiationEnabled()) {
-		const auto & enc = getEncryptionFromMediaDescription(newMd);
 		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
+		// Change local parameters following results fo negotiation. This will allow method 
 		getParams()->setMediaEncryption(enc);
 	}
 
