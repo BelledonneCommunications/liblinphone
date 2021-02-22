@@ -1595,7 +1595,7 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 			{
 				MediaSessionParams newParams(*getParams());
 				newParams.getPrivate()->setInternalCallUpdate(true);
-				q->update(&newParams);
+				q->update(&newParams, q->isCapabilityNegotiationEnabled());
 			}
 			break;
 			default:
