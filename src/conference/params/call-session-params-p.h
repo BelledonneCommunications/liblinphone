@@ -45,8 +45,9 @@ public:
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
 	void enableCapabilityNegotiation (const bool enable);
+	bool isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const;
 	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
-	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encs);
+	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions);
 	bool capabilityNegotiationEnabled () const;
 
 	SalCustomHeader * getCustomHeaders () const;

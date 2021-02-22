@@ -91,46 +91,55 @@ static bctbx_list_t * create_confg_encryption_preference_list_from_param_prefere
 	return encryption_list;
 }
 
-static void call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
+static bool_t call_with_params_and_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneCallParams * caller_params, LinphoneCallParams * callee_params, bool_t expSdpSuccess) {
 
 	const bctbx_list_t *initLogs = linphone_core_get_call_logs(callee->lc);
 	int initLogsSize = (int)bctbx_list_size(initLogs);
 	stats initial_callee=callee->stat;
+	stats initial_caller=callee->stat;
 
-	LinphoneCall *caller_call=linphone_core_invite_address(caller->lc,callee->identity);
-	BC_ASSERT_PTR_NOT_NULL(caller_call);
-	if (caller_call) {
-		BC_ASSERT_PTR_NULL(linphone_call_get_remote_params(caller_call)); /*assert that remote params are NULL when no response is received yet*/
-	}
-	//test ios simulator needs more time, 3s plus for connectng the network
-	BC_ASSERT_FALSE(wait_for_until(callee->lc
-				,caller->lc
-				,&callee->stat.number_of_LinphoneCallIncomingReceived
-				,initial_callee.number_of_LinphoneCallIncomingReceived+1, 12000));
+	LinphoneCallTestParams caller_test_params = {0}, callee_test_params =  {0};
+	caller_test_params.base = (LinphoneCallParams*)caller_params;
+	callee_test_params.base = (LinphoneCallParams*)callee_params;
+	callee_test_params.sdp_simulate_error = !expSdpSuccess;
 
-	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(callee->lc));
-	BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,1, int, "%d");
-	BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallReleased,1, int, "%d");
-	// actually callee does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
-	BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallIncomingReceived,0, int, "%d");
+	bool_t ret = call_with_params2(caller, callee, &caller_test_params, &callee_test_params, FALSE);
 
-	const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
-	BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize+1), int, "%i");
-	// Forward logs pointer to the element desired
-	for (int i = 0; i < initLogsSize; i++) logs=logs->next;
-	if (logs){
-		const LinphoneErrorInfo *ei;
-		LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
-		BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
-		ei = linphone_call_log_get_error_info(cl);
-		BC_ASSERT_PTR_NOT_NULL(ei);
-		if (ei){
-			BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+	LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
+	if (!expSdpSuccess) {
+		BC_ASSERT_PTR_NULL(callee_call);
+		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallError,(initial_caller.number_of_LinphoneCallError + 1), int, "%d");
+		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallReleased,(initial_caller.number_of_LinphoneCallReleased + 1), int, "%d");
+		// actually callee does not receive error because it replies to the INVITE with a 488 Not Acceptable Here
+		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallIncomingReceived, (initial_callee.number_of_LinphoneCallIncomingReceived), int, "%d");
+
+		const bctbx_list_t *logs = linphone_core_get_call_logs(callee->lc);
+		BC_ASSERT_EQUAL((int)bctbx_list_size(logs), (initLogsSize+1), int, "%i");
+		// Forward logs pointer to the element desired
+		for (int i = 0; i < initLogsSize; i++) logs=logs->next;
+		if (logs){
+			const LinphoneErrorInfo *ei;
+			LinphoneCallLog *cl = (LinphoneCallLog*)logs->data;
+			BC_ASSERT_TRUE(linphone_call_log_get_start_date(cl) != 0);
+			ei = linphone_call_log_get_error_info(cl);
+			BC_ASSERT_PTR_NOT_NULL(ei);
+			if (ei){
+				BC_ASSERT_EQUAL(linphone_error_info_get_reason(ei), LinphoneReasonNotAcceptable, int, "%d");
+			}
 		}
+
+		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
+		BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
+
+		return FALSE;
+
 	}
 
-	BC_ASSERT_EQUAL(linphone_core_get_calls_nb(caller->lc), 0, int, "%d");
-	BC_ASSERT_EQUAL(linphone_core_get_calls_nb(callee->lc), 0, int, "%d");
+	return ret;
+}
+
+static bool_t call_with_encryption_negotiation_failure_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, bool_t expSdpSuccess) {
+	return call_with_params_and_encryption_negotiation_failure_base(caller, callee, NULL, NULL, expSdpSuccess);
 }
 
 static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption mandatory_encryption, const LinphoneMediaEncryption non_mandatory_encryption, const bool_t enable_mandatory_enc_mgr_capability_negotiations, const bool_t enable_non_mandatory_enc_mgr_capability_negotiations, bool_t mandatory_to_non_mandatory) {
@@ -153,10 +162,10 @@ static void call_from_enc_to_different_enc_base(const LinphoneMediaEncryption ma
 
 	if (mandatory_to_non_mandatory) {
 		ms_message("Core with mandatory encryption calls core with non mandatory encryption");
-		call_with_encryption_negotiation_failure_base(pauline, marie);
+		BC_ASSERT_FALSE(call_with_encryption_negotiation_failure_base(pauline, marie, FALSE));
 	} else {
 		ms_message("Core with non mandatory encryption calls core with mandatory encryption");
-		call_with_encryption_negotiation_failure_base(marie, pauline);
+		BC_ASSERT_FALSE(call_with_encryption_negotiation_failure_base(marie, pauline, FALSE));
 	}
 
 	linphone_core_manager_destroy(marie);
@@ -417,6 +426,97 @@ static void call_with_capability_negotiation_disable_core_level(void) {
 
 }
 
+static void call_with_incompatible_encs_in_call_params(void) {
+	const LinphoneMediaEncryption defaultEncryption = LinphoneMediaEncryptionNone;
+	const LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionDTLS; // Desired encryption
+	const LinphoneMediaEncryption paulineEncryption = LinphoneMediaEncryptionSRTP; // Desired encryption
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_support_capability_negotiation(marie->lc, 1);
+	linphone_core_set_media_encryption_mandatory(marie->lc,0);
+	linphone_core_set_media_encryption(marie->lc,defaultEncryption);
+	bctbx_list_t * marie_cfg_enc = NULL;
+	if ((paulineEncryption != LinphoneMediaEncryptionZRTP) && (marieEncryption != LinphoneMediaEncryptionZRTP)) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionDTLS) && (marieEncryption != LinphoneMediaEncryptionDTLS)) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionSRTP) && (marieEncryption != LinphoneMediaEncryptionSRTP)) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionNone) && (marieEncryption != LinphoneMediaEncryptionNone)) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	}
+	linphone_core_set_supported_media_encryptions(marie->lc,marie_cfg_enc);
+	bctbx_list_free_with_data(marie_cfg_enc, (bctbx_list_free_func)bctbx_free);
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
+	linphone_core_set_media_encryption_mandatory(pauline->lc,0);
+	linphone_core_set_media_encryption(pauline->lc,defaultEncryption);
+	bctbx_list_t * pauline_cfg_enc = NULL;
+	if ((paulineEncryption != LinphoneMediaEncryptionSRTP) && (marieEncryption != LinphoneMediaEncryptionSRTP)) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionZRTP) && (marieEncryption != LinphoneMediaEncryptionZRTP)) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionNone) && (marieEncryption != LinphoneMediaEncryptionNone)) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	}
+	if ((paulineEncryption != LinphoneMediaEncryptionDTLS) && (marieEncryption != LinphoneMediaEncryptionDTLS)) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	}
+	linphone_core_set_supported_media_encryptions(pauline->lc,pauline_cfg_enc);
+	bctbx_list_free_with_data(pauline_cfg_enc, (bctbx_list_free_func)bctbx_free);
+
+	bctbx_list_t * marie_call_enc = NULL;
+	marie_call_enc = bctbx_list_append(marie_call_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(marieEncryption))));
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (marie_params, 1);
+	linphone_call_params_set_supported_encryptions (marie_params, marie_call_enc);
+	bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
+
+	bctbx_list_t * pauline_call_enc = NULL;
+	pauline_call_enc = bctbx_list_append(pauline_call_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(paulineEncryption))));
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (pauline_params, 1);
+	linphone_call_params_set_supported_encryptions (pauline_params, pauline_call_enc);
+	bctbx_list_free_with_data(pauline_call_enc, (bctbx_list_free_func)bctbx_free);
+
+	// Check requirements for this test:
+	// - encryption of Marie and Pauline should be different
+	// - Marie and Pauline encryption list in the call params must be equal to 1
+	BC_ASSERT_NOT_EQUAL(paulineEncryption, marieEncryption, int, "%i");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_call_params_get_supported_encryptions(pauline_params)), 1, int, "%d");
+	BC_ASSERT_EQUAL(bctbx_list_size(linphone_call_params_get_supported_encryptions(marie_params)), 1, int, "%d");
+
+	BC_ASSERT_TRUE(call_with_params_and_encryption_negotiation_failure_base(marie, pauline, marie_params, pauline_params, TRUE));
+
+	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marieCall);
+	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(paulineCall);
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(marieCall)), defaultEncryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(paulineCall)), defaultEncryption, int, "%i");
+	}
+
+	end_call(pauline, marie);
+
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 static void call_with_different_encryptions_in_call_params(void) {
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionDTLS; // Desired encryption
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -424,10 +524,18 @@ static void call_with_different_encryptions_in_call_params(void) {
 	linphone_core_set_media_encryption_mandatory(marie->lc,0);
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
 	bctbx_list_t * marie_cfg_enc = NULL;
-	marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
-	marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
-	marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
-	marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryption))));
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	}
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		marie_cfg_enc = bctbx_list_append(marie_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	}
 	linphone_core_set_supported_media_encryptions(marie->lc,marie_cfg_enc);
 	bctbx_list_free_with_data(marie_cfg_enc, (bctbx_list_free_func)bctbx_free);
 
@@ -436,10 +544,18 @@ static void call_with_different_encryptions_in_call_params(void) {
 	linphone_core_set_media_encryption_mandatory(pauline->lc,0);
 	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
 	bctbx_list_t * pauline_cfg_enc = NULL;
-	pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
-	pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryption))));
-	pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
-	pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	}
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		pauline_cfg_enc = bctbx_list_append(pauline_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	}
 	linphone_core_set_supported_media_encryptions(pauline->lc,pauline_cfg_enc);
 	bctbx_list_free_with_data(pauline_cfg_enc, (bctbx_list_free_func)bctbx_free);
 
@@ -482,7 +598,6 @@ static void call_with_different_encryptions_in_call_params(void) {
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
-
 
 }
 
@@ -868,6 +983,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with capability negotiation disabled at call level", call_with_capability_negotiation_disable_call_level),
 	TEST_NO_TAG("Call with capability negotiation disabled at core level", call_with_capability_negotiation_disable_core_level),
 	TEST_NO_TAG("Call with different encryptions in call params", call_with_different_encryptions_in_call_params),
+	TEST_NO_TAG("Call with incompatible encryptions in call params", call_with_incompatible_encs_in_call_params),
 	TEST_NO_TAG("Unencrypted call with potential configuration same as actual one", unencrypted_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP call with potential configuration same as actual one", srtp_call_with_potential_configuration_same_as_actual_configuration),

@@ -90,8 +90,6 @@ void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm
 }
 
 LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const {
-	L_Q();
-
 	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
 	if (atLeastOneStreamStarted()) {
 		if (md->hasSrtp()) {
@@ -104,7 +102,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(c
 			enc = LinphoneMediaEncryptionNone;
 		}
 
-		if (linphone_core_media_encryption_supported(q->getCore()->getCCore(), enc)) {
+		if (getParams()->getPrivate()->isMediaEncryptionSupported(enc)) {
 			return enc;
 		}
 	}
