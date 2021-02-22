@@ -24,7 +24,7 @@
 
 
 static LinphoneCoreManager* presence_linphone_core_manager_new_with_rc_name(char* username, char * rc_name) {
-	LinphoneCoreManager* mgr= linphone_core_manager_new2( rc_name, FALSE);
+	LinphoneCoreManager* mgr= linphone_core_manager_new_with_proxies_check( rc_name, FALSE);
 	LinphoneSipTransports tr = {0};
 	tr.udp_port = -1; /*random port*/
 	linphone_core_set_sip_transports(mgr->lc, &tr);

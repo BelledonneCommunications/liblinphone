@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2019 Belledonne Communications SARL.
+ * Copyright (c) 2010-2021 Belledonne Communications SARL.
  *
  * This file is part of Liblinphone.
  *
@@ -23,101 +23,105 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-#include <json/json.h>
 #include <functional>
+#include <json/json.h>
 
 using namespace LinphonePrivate;
 using namespace std;
 
 class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
-    public:
-        class Response {
-            public:
-                int code = 0;
-                string body = "";
+  public:
+	class Response {
+	  public:
+		int code = 0;
+		string body = "";
 
-                Json::Value json() {
-                    Json::Reader reader;
-                    Json::Value obj;
-                    reader.parse(body, obj);
-                    return obj;
-                };
-        };
+		Json::Value json() {
+			Json::Reader reader;
+			Json::Value obj;
+			reader.parse(body, obj);
+			return obj;
+		};
+	};
 
-        class JsonParams {
-            public:
-                Json::Value jsonParameters;
+	class JsonParams {
+	  public:
+		Json::Value jsonParameters;
 
-                void push(string key, string value) {
-                    jsonParameters[key] = value;
-                };
+		void push(string key, string value) {
+			jsonParameters[key] = value;
+		};
 
-                bool empty() {
-                    return jsonParameters.empty();
-                };
+		bool empty() {
+			return jsonParameters.empty();
+		};
 
-                string json() {
-                    Json::StreamWriterBuilder builder;
-                    builder["indentation"] = "";
+		string json() {
+			Json::StreamWriterBuilder builder;
+			builder["indentation"] = "";
 
-                    return string(Json::writeString(builder, jsonParameters));
-                };
-        };
+			return string(Json::writeString(builder, jsonParameters));
+		};
+	};
 
-        class Callbacks {
-            public:
-                function<void (const Response&)> success;
-                function<void (const Response&)> error;
-                LinphoneCore *core;
-                shared_ptr<FlexiAPIClient> mSelf;
-        };
+	class Callbacks {
+	  public:
+		function<void(const Response &)> success;
+		function<void(const Response &)> error;
+		LinphoneCore *core;
+		shared_ptr<FlexiAPIClient> mSelf;
+	};
 
-        FlexiAPIClient(LinphoneCore *lc);
+	FlexiAPIClient(LinphoneCore *lc);
 
-        // Public endpoinds
-        FlexiAPIClient* ping();
-        FlexiAPIClient* accountInfo(string sip);
-        FlexiAPIClient* accountActivateEmail(string sip, string code);
-        FlexiAPIClient* accountActivatePhone(string sip, string code);
+	// Public endpoinds
+	FlexiAPIClient *ping();
+	FlexiAPIClient *sendToken(string pnProvider, string pnParam, string pnPrid);
+	FlexiAPIClient *accountCreate(string username, string password, string algorithm, string token);
+	FlexiAPIClient *accountCreate(string username, string domain, string password, string algorithm, string token);
+	FlexiAPIClient *accountInfo(string sip);
+	FlexiAPIClient *accountActivateEmail(string sip, string code);
+	FlexiAPIClient *accountActivatePhone(string sip, string code);
 
-        // Authenticated endpoints
-        FlexiAPIClient* me();
-        FlexiAPIClient* accountDelete();
-        FlexiAPIClient* accountPasswordChange(string algorithm, string password);
-        FlexiAPIClient* accountPasswordChange(string algorithm, string password, string oldPassword);
-        FlexiAPIClient* accountDevices();
-        FlexiAPIClient* accountDevice(string uuid);
-        FlexiAPIClient* accountEmailChangeRequest(string email);
-        FlexiAPIClient* accountPhoneChangeRequest(string phone);
-        FlexiAPIClient* accountPhoneChange(string code);
+	// Authenticated endpoints
+	FlexiAPIClient *me();
+	FlexiAPIClient *accountDelete();
+	FlexiAPIClient *accountPasswordChange(string algorithm, string password);
+	FlexiAPIClient *accountPasswordChange(string algorithm, string password, string oldPassword);
+	FlexiAPIClient *accountDevices();
+	FlexiAPIClient *accountDevice(string uuid);
+	FlexiAPIClient *accountEmailChangeRequest(string email);
+	FlexiAPIClient *accountPhoneChangeRequest(string phone);
+	FlexiAPIClient *accountPhoneChange(string code);
 
-        // Admin endpoints
-        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm);
-        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, string domain);
-        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, bool activated);
-        FlexiAPIClient* adminAccountCreate(string username, string password, string algorithm, string domain, bool activated);
-        FlexiAPIClient* adminAccounts();
-        FlexiAPIClient* adminAccount(int id);
-        FlexiAPIClient* adminAccountDelete(int id);
-        FlexiAPIClient* adminAccountActivate(int id);
-        FlexiAPIClient* adminAccountDeactivate(int id);
+	// Admin endpoints
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm);
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain);
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, bool activated);
+	FlexiAPIClient *adminAccountCreate(string username, string password, string algorithm, string domain,
+									   bool activated);
+	FlexiAPIClient *adminAccounts();
+	FlexiAPIClient *adminAccount(int id);
+	FlexiAPIClient *adminAccountDelete(int id);
+	FlexiAPIClient *adminAccountActivate(int id);
+	FlexiAPIClient *adminAccountDeactivate(int id);
 
-        // Authentication
-        FlexiAPIClient* setApiKey(const char* key);
+	// Authentication
+	FlexiAPIClient *setApiKey(const char *key);
 
-        // Callbacks handlers
-        FlexiAPIClient* then(function<void (Response)> success);
-        FlexiAPIClient* error(function<void (Response)> error);
+	// Callbacks handlers
+	FlexiAPIClient *then(function<void(Response)> success);
+	FlexiAPIClient *error(function<void(Response)> error);
 
-    private:
-        LinphoneCore *mCore;
-        Callbacks mRequestCallbacks;
-        const char* apiKey;
+  private:
+	LinphoneCore *mCore;
+	Callbacks mRequestCallbacks;
+	const char *mApiKey;
 
-        void prepareRequest(string path);
-        void prepareRequest(string path, string type);
-        void prepareRequest(string path, string type, JsonParams params);
-        static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
-        static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
-        string urlEncode(const string &value);
+	void prepareRequest(string path);
+	void prepareRequest(string path, string type);
+	void prepareRequest(string path, string type, JsonParams params);
+	static void processResponse(void *ctx, const belle_http_response_event_t *event) noexcept;
+	static void processAuthRequested(void *ctx, belle_sip_auth_event_t *event) noexcept;
+	string urlEncode(const string &value);
 };

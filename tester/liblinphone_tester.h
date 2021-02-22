@@ -428,7 +428,7 @@ LinphoneCoreManager* linphone_core_manager_create2(const char* rc_file, const ch
 LinphoneCoreManager* linphone_core_manager_create(const char* rc_file);
 LinphoneCoreManager* linphone_core_manager_new4(const char* rc_file, int check_for_proxies, const char* phone_aliasconst, const char* contact_params, int expires);
 LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t check_for_proxies, const char* phone_alias);
-LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies);
+LinphoneCoreManager* linphone_core_manager_new_with_proxies_check(const char* rc_file, bool_t check_for_proxies);
 LinphoneCoreManager* linphone_core_manager_new(const char* rc_file);
 LinphoneCoreManager* linphone_core_manager_create_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db);
 LinphoneCoreManager* linphone_core_manager_new_local(const char* rc_factory, const char* rc_local, const char *linphone_db, const char *lime_db, const char *call_logs_db, const char *zrtp_secrets_db);
