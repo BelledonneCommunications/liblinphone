@@ -1465,12 +1465,12 @@ LinphoneCoreManager* linphone_core_manager_new3(const char* rc_file, bool_t chec
 	return manager;
 }
 
-LinphoneCoreManager* linphone_core_manager_new2(const char* rc_file, bool_t check_for_proxies) {
+LinphoneCoreManager* linphone_core_manager_new_with_proxies_check(const char* rc_file, bool_t check_for_proxies) {
 	return linphone_core_manager_new3(rc_file, check_for_proxies, NULL);
 }
 
 LinphoneCoreManager *linphone_core_manager_new(const char *rc_file) {
-	return linphone_core_manager_new2(rc_file, TRUE);
+	return linphone_core_manager_new_with_proxies_check(rc_file, TRUE);
 }
 
 void linphone_core_start_process_remote_notification (LinphoneCoreManager *mgr, const char *callid) {
@@ -2959,7 +2959,7 @@ void setup_mgr_for_conference(LinphoneCoreManager *mgr) {
 }
 
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new2(rc_file, check_for_proxies);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check(rc_file, check_for_proxies);
 
 	setup_mgr_for_conference(mgr);
 
