@@ -102,6 +102,22 @@ const char * linphone_account_creator_get_username(const LinphoneAccountCreator 
 	return creator->username;
 }
 
+void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, const char* pn_provider) {
+	set_string(&creator->pn_provider, pn_provider, FALSE);
+}
+
+void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char* pn_param) {
+	set_string(&creator->pn_param, pn_param, FALSE);
+}
+
+void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char* pn_prid) {
+	set_string(&creator->pn_prid, pn_prid, FALSE);
+}
+
+void linphone_account_creator_set_token(LinphoneAccountCreator *creator, const char* token) {
+	set_string(&creator->pn_prid, token, FALSE);
+}
+
 LinphoneAccountCreatorPhoneNumberStatusMask linphone_account_creator_set_phone_number(LinphoneAccountCreator *creator, const char *phone_number, const char *country_code) {
 	char *normalized_phone_number;
 	LinphoneAccountCreatorPhoneNumberStatusMask return_status = 0;

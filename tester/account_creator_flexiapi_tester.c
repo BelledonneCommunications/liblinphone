@@ -21,7 +21,6 @@
 #include "tester_utils.h"
 #include <ctype.h>
 
-static const char XMLRPC_URL[] = ""; // Never used but required ¯\_(ツ)_/¯
 static const int TIMEOUT_REQUEST = 3000;
 
 static void init_linphone_account_creator_service(LinphoneCore *lc) {
@@ -29,15 +28,15 @@ static void init_linphone_account_creator_service(LinphoneCore *lc) {
 	linphone_account_creator_service_set_constructor_cb(service, NULL);
 	linphone_account_creator_service_set_destructor_cb(service, NULL);
 	//linphone_account_creator_service_set_create_account_cb(service, linphone_account_creator_create_account_linphone_xmlrpc);
-	linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_linphone_flexiapi);
-	linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_linphone_flexiapi);
-	linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_linphone_flexiapi);
-	linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_linphone_flexiapi);
-	linphone_account_creator_service_set_activate_alias_cb(service, linphone_account_creator_activate_phone_number_link_linphone_flexiapi);
+	linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_flexiapi);
+	linphone_account_creator_service_set_activate_account_cb(service, linphone_account_creator_activate_phone_account_flexiapi);
+	linphone_account_creator_service_set_is_account_activated_cb(service, linphone_account_creator_is_account_activated_flexiapi);
+	linphone_account_creator_service_set_link_account_cb(service, linphone_account_creator_link_phone_number_with_account_flexiapi);
+	linphone_account_creator_service_set_activate_alias_cb(service, linphone_account_creator_activate_phone_number_link_flexiapi);
 	//linphone_account_creator_service_set_is_alias_used_cb(service, linphone_account_creator_is_phone_number_used_linphone_xmlrpc);
-	linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_linphone_flexiapi);
+	linphone_account_creator_service_set_is_account_linked_cb(service, linphone_account_creator_is_account_linked_flexiapi);
 	//linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone_xmlrpc);
-	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_linphone_flexiapi);
+	linphone_account_creator_service_set_update_account_cb(service, linphone_account_creator_update_password_flexiapi);
 	//linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone_xmlrpc);
 	linphone_core_set_account_creator_service(lc, service);
 }
@@ -49,7 +48,8 @@ static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, 
 }
 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
+
 	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
 		linphone_account_creator_get_service(creator));
 	BC_ASSERT_EQUAL(
@@ -61,10 +61,12 @@ static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountC
 }
 
 static void server_account_exist(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -84,13 +86,16 @@ static void server_account_exist(void) {
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
 }
 
 static void server_account_linked(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -110,13 +115,16 @@ static void server_account_linked(void) {
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
 }
 
 static void server_account_activated(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -126,7 +134,7 @@ static void server_account_activated(void) {
 	linphone_account_creator_cbs_set_is_account_activated(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
-		linphone_account_creator_is_account_activated_linphone_flexiapi(creator),
+		linphone_account_creator_is_account_activated_flexiapi(creator),
 		LinphoneAccountCreatorStatusRequestOk,
 		LinphoneAccountCreatorStatus,
 		"%i");
@@ -136,13 +144,16 @@ static void server_account_activated(void) {
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
 }
 
 static void server_account_delete(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -157,7 +168,7 @@ static void server_account_delete(void) {
 	linphone_account_creator_cbs_set_delete_account(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
-		linphone_account_creator_delete_account_linphone_flexiapi(creator),
+		linphone_account_creator_delete_account_flexiapi(creator),
 		LinphoneAccountCreatorStatusRequestOk,
 		LinphoneAccountCreatorStatus,
 		"%i");
@@ -167,13 +178,16 @@ static void server_account_delete(void) {
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
 }
 
 static void server_account_activate_email(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("account_creator_flexiapi_rc", 0);
-	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
 	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
 
 	linphone_account_creator_cbs_set_user_data(cbs, stats);
 	linphone_account_creator_service_set_user_data(
@@ -184,11 +198,9 @@ static void server_account_activate_email(void) {
     // Too short code
 	linphone_account_creator_set_activation_code(creator, "123456789");
 	linphone_account_creator_cbs_set_activate_account(cbs, account_creator_cb);
-    //
-	//linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
-		linphone_account_creator_activate_email_account_linphone_flexiapi(creator),
+		linphone_account_creator_activate_email_account_flexiapi(creator),
 		LinphoneAccountCreatorStatusRequestOk,
 		LinphoneAccountCreatorStatus,
 		"%i");
@@ -198,6 +210,72 @@ static void server_account_activate_email(void) {
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
 	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
+}
+
+static void server_account_send_token(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusUnexpectedError);
+
+	linphone_account_creator_set_pn_param(creator, "123456789");
+	linphone_account_creator_set_pn_provider(creator, "123456789");
+	linphone_account_creator_set_pn_prid(creator, "123456789");
+	linphone_account_creator_cbs_set_send_token(cbs, account_creator_cb);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_send_token_flexiapi(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
+}
+
+static void server_account_create_account_with_token(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("account_creator_flexiapi_rc", FALSE);
+	LinphoneAccountCreator *creator = _linphone_account_creator_new(marie->lc, "");
+	LinphoneAccountCreatorStats *stats = new_linphone_account_creator_stats();
+
+	LinphoneAccountCreatorCbs *cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
+	linphone_account_creator_add_callbacks(creator, cbs);
+
+	linphone_account_creator_cbs_set_user_data(cbs, stats);
+	linphone_account_creator_service_set_user_data(
+		linphone_account_creator_get_service(creator),
+		(void*)LinphoneAccountCreatorStatusUnexpectedError);
+
+	linphone_account_creator_set_username(creator, "hop");
+	linphone_account_creator_set_password(creator, "1234");
+	linphone_account_creator_set_algorithm(creator, "MD5");
+	linphone_account_creator_set_token(creator, "123456789");
+	linphone_account_creator_cbs_set_create_account(cbs, account_creator_cb);
+
+	BC_ASSERT_EQUAL(
+		linphone_account_creator_create_account_with_token(creator),
+		LinphoneAccountCreatorStatusRequestOk,
+		LinphoneAccountCreatorStatus,
+		"%i");
+
+	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
+	ms_free(stats);
+	linphone_account_creator_unref(creator);
+	linphone_core_manager_destroy(marie);
+	linphone_account_creator_cbs_unref(cbs);
 }
 
 test_t account_creator_flexiapi_tests[] = {
@@ -224,6 +302,14 @@ test_t account_creator_flexiapi_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Account activate email",
 		server_account_activate_email,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Account send token",
+		server_account_send_token,
+		"Server"),
+	TEST_ONE_TAG(
+		"Server - Account create with token",
+		server_account_create_account_with_token,
 		"Server"),
 };
 
