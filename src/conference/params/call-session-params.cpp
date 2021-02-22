@@ -123,7 +123,7 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
 	d->inConference = false;
-	d->capabilityNegotiation = linphone_core_is_capability_negotiation_supported(core->getCCore());
+	d->capabilityNegotiation = !!linphone_core_is_capability_negotiation_supported(core->getCCore());
 	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;

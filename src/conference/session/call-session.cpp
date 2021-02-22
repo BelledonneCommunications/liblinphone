@@ -1193,11 +1193,17 @@ LinphoneStatus CallSession::deferUpdate () {
 }
 
 const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() const {
-	return getParams()->getPrivate()->getSupportedEncryptions();
+	if (getParams()) {
+		return getParams()->getPrivate()->getSupportedEncryptions();
+	}
+	return getCore()->getSupportedMediaEncryptions();
 }
 
 bool CallSession::isCapabilityNegotiationEnabled() const {
-	return getParams()->getPrivate()->capabilityNegotiationEnabled();
+	if (getParams()) {
+		return getParams()->getPrivate()->capabilityNegotiationEnabled();
+	}
+	return !!linphone_core_is_capability_negotiation_supported(getCore()->getCCore());
 }
 
 bool CallSession::hasTransferPending () {
