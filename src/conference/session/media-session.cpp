@@ -205,7 +205,7 @@ void MediaSessionPrivate::accepted () {
 			setState(nextState, nextStateMsg);
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-			if (localDesc->supportCapabilityNegotiation()) {
+			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning)) {
 				// If no ICE session or checklist has completed, then send re-INVITE
 				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
 				// - no ICE session is found in th stream group
@@ -218,7 +218,7 @@ void MediaSessionPrivate::accepted () {
 					if (potentialConfigurationChosen) {
 						lInfo() << "Sending a reINVITE because the actual configuraton was not chosen in the capability negotiation procedure. Detected differences " << SalMediaDescription::printDifferences(diff);
 						MediaSessionParams newParams(*getParams());
-						q->update(&newParams);
+						q->update(&newParams, true);
 					} else {
 						lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
 					}
@@ -2703,10 +2703,10 @@ LinphoneStatus MediaSession::updateFromConference (const MediaSessionParams *msp
 	updateContactAddress (contactAddress);
 	d->op->setContactAddress(contactAddress.getInternalAddress());
 
-	return update(msp, subject);
+	return update(msp, false, subject);
 }
 
-LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string &subject) {
+LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool isCapabilityNegotiationUpdate, const string &subject) {
 	L_D();
 	CallSession::State nextState;
 	CallSession::State initialState = d->state;
@@ -2719,8 +2719,12 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const string
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
+		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled();
+		if (isCapabilityNegotiationUpdate) {
+			addCapabilityNegotiationAttributesToLocalMd = false;
+		}
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
-			d->makeLocalMediaDescription(true, false);
+			d->makeLocalMediaDescription(true, addCapabilityNegotiationAttributesToLocalMd);
 
 		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
 			L_D();
