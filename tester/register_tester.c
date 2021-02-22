@@ -366,14 +366,14 @@ static void simple_authenticated_register_with_SHA256_from_clear_text_password(v
 	char route[256];
 	const char *ha1;
 	const char *cfg_ha1;
-	
+
 	sprintf(route,"sip:%s",test_route);
 	linphone_core_add_auth_info(lcm->lc,info); /*add authentication info to LinphoneCore*/
 	linphone_auth_info_unref(info);
 	counters = &lcm->stat;
 	register_with_refresh_base_for_algo(lcm->lc, FALSE, auth_domain, route, pure_sha256_user);
 	BC_ASSERT_EQUAL(counters->number_of_auth_info_requested,0, int, "%d");
-	
+
 	/* Assert that the ha1 was correctly computed, and stored in configuration. */
 	new_info = linphone_core_find_auth_info(lcm->lc, NULL, pure_sha256_user, NULL);
 	BC_ASSERT_PTR_NULL(linphone_auth_info_get_password(new_info));
@@ -636,7 +636,7 @@ static void authenticated_register_with_wrong_credentials_without_403(void) {
 }
 static LinphoneCoreManager* configure_lcm(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *lcm=linphone_core_manager_new2( "multi_account_rc", FALSE);
+		LinphoneCoreManager *lcm=linphone_core_manager_new_with_proxies_check( "multi_account_rc", FALSE);
 		stats *counters=&lcm->stat;
 		BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&counters->number_of_LinphoneRegistrationOk,(int)bctbx_list_size(linphone_core_get_proxy_config_list(lcm->lc))));
 		BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,0, int, "%d");
@@ -931,7 +931,7 @@ static void io_recv_error_late_recovery(void){
 		stats* counters ;
 		int number_of_udp_proxy=0;
 		bctbx_list_t* lcs;
-		lcm=linphone_core_manager_new2( "multi_account_rc",FALSE); /*to make sure iterates are not call yet*/
+		lcm=linphone_core_manager_new_with_proxies_check( "multi_account_rc",FALSE); /*to make sure iterates are not call yet*/
 		lc=lcm->lc;
 		sal_set_refresher_retry_after(linphone_core_get_sal(lc),1000);
 		counters=&lcm->stat;
@@ -1003,7 +1003,7 @@ static void tls_certificate_failure(void){
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/agent.pem"); /*bad root ca*/
 
-		lcm=linphone_core_manager_new2("pauline_rc",FALSE);
+		lcm=linphone_core_manager_new_with_proxies_check("pauline_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lcm->lc,rootcapath);
 		linphone_core_set_network_reachable(lc,TRUE);
@@ -1027,25 +1027,25 @@ static void tls_certificate_subject_check(void){
 		LinphoneCoreManager* lcm;
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
-		lcm=linphone_core_manager_new2("pauline_alt_rc",FALSE);
+		lcm=linphone_core_manager_new_with_proxies_check("pauline_alt_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc, rootcapath);
 		/*let's search for a subject that is not in the certificate, it should fail*/
 		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "cotcotcot.org");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lcm->lc,lcm->lc,&lcm->stat.number_of_LinphoneRegistrationFailed,1));
-	
+
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
 		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "altname.linphone.org");
 		linphone_core_refresh_registers(lcm->lc);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,1));
 		linphone_core_set_network_reachable(lc,FALSE);
-		
+
 		/*let's search for a subject (in subjectAltNames and CN) that exist in the certificate, it should pass*/
 		linphone_config_set_string(linphone_core_get_config(lc), "sip", "tls_certificate_subject_regexp", "Jehan Monnier");
 		linphone_core_set_network_reachable(lc,TRUE);
 		BC_ASSERT_TRUE(wait_for(lc,lc,&lcm->stat.number_of_LinphoneRegistrationOk,2));
-		
+
 		BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationFailed,1, int, "%d");
 		linphone_core_manager_destroy(lcm);
 		bc_free(rootcapath);
@@ -1078,7 +1078,7 @@ static void tls_certificate_data(void) {
 		char *rootcapath = bc_tester_res("certificates/cn/agent.pem"); /*bad root ca*/
 		char *data = read_file(rootcapath);
 
-		lcm = linphone_core_manager_new2("pauline_rc",FALSE);
+		lcm = linphone_core_manager_new_with_proxies_check("pauline_rc",FALSE);
 		lc = lcm->lc;
 		linphone_core_set_root_ca_data(lcm->lc, data);
 		linphone_core_set_network_reachable(lc, TRUE);
@@ -1109,7 +1109,7 @@ static void tls_with_non_tls_server(void){
 		char tmp[256];
 		LinphoneCore *lc;
 
-		lcm=linphone_core_manager_new2( "marie_rc", 0);
+		lcm=linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 		lc=lcm->lc;
 		sal_set_transport_timeout(linphone_core_get_sal(lc),3000);
 		proxy_cfg = linphone_core_get_default_proxy_config(lc);
@@ -1131,7 +1131,7 @@ static void tls_alt_name_register(void){
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
 
-		lcm=linphone_core_manager_new2("pauline_alt_rc",FALSE);
+		lcm=linphone_core_manager_new_with_proxies_check("pauline_alt_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc,rootcapath);
 		linphone_core_refresh_registers(lc);
@@ -1148,7 +1148,7 @@ static void tls_wildcard_register(void){
 		LinphoneCore *lc;
 		char *rootcapath = bc_tester_res("certificates/cn/cafile.pem");
 
-		lcm=linphone_core_manager_new2("pauline_wild_rc",FALSE);
+		lcm=linphone_core_manager_new_with_proxies_check("pauline_wild_rc",FALSE);
 		lc=lcm->lc;
 		linphone_core_set_root_ca(lc,rootcapath);
 		linphone_core_refresh_registers(lc);
@@ -1194,7 +1194,7 @@ static void tls_auth_global_client_cert(void) {
 
 static void tls_auth_global_client_cert_api(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *pauline = linphone_core_manager_new2("pauline_tls_client_rc", FALSE);
+		LinphoneCoreManager *pauline = linphone_core_manager_new_with_proxies_check("pauline_tls_client_rc", FALSE);
 		char *cert_path = bc_tester_res("certificates/client/cert.pem");
 		char *key_path = bc_tester_res("certificates/client/key.pem");
 		char *cert = read_file(cert_path);
@@ -1213,7 +1213,7 @@ static void tls_auth_global_client_cert_api(void) {
 
 static void tls_auth_global_client_cert_api_path(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *pauline = linphone_core_manager_new2("pauline_tls_client_rc", FALSE);
+		LinphoneCoreManager *pauline = linphone_core_manager_new_with_proxies_check("pauline_tls_client_rc", FALSE);
 		char *cert = bc_tester_res("certificates/client/cert.pem");
 		char *key = bc_tester_res("certificates/client/key.pem");
 		LinphoneCore *lc = pauline->lc;
@@ -1228,7 +1228,7 @@ static void tls_auth_global_client_cert_api_path(void) {
 
 static void tls_auth_info_client_cert_api(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *pauline = linphone_core_manager_new2("pauline_tls_client_rc", FALSE);
+		LinphoneCoreManager *pauline = linphone_core_manager_new_with_proxies_check("pauline_tls_client_rc", FALSE);
 		char *cert_path = bc_tester_res("certificates/client/cert.pem");
 		char *key_path = bc_tester_res("certificates/client/key.pem");
 		char *cert = read_file(cert_path);
@@ -1248,7 +1248,7 @@ static void tls_auth_info_client_cert_api(void) {
 
 static void tls_auth_info_client_cert_api_path(void) {
 	if (transport_supported(LinphoneTransportTls)) {
-		LinphoneCoreManager *pauline = linphone_core_manager_new2("pauline_tls_client_rc", FALSE);
+		LinphoneCoreManager *pauline = linphone_core_manager_new_with_proxies_check("pauline_tls_client_rc", FALSE);
 		char *cert = bc_tester_res("certificates/client/cert.pem");
 		char *key = bc_tester_res("certificates/client/key.pem");
 		LinphoneCore *lc = pauline->lc;
@@ -1456,19 +1456,19 @@ static void update_contact_private_ip_address(void) {
 
 static void register_with_specific_client_port(void){
 #ifdef __linux__
-	
-	LinphoneCoreManager *lcm1 = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
-	
+
+	LinphoneCoreManager *lcm1 = linphone_core_manager_new_with_proxies_check("pauline_tcp_rc", FALSE);
+
 	sal_set_client_bind_port(linphone_core_get_sal(lcm1->lc), 12088);
 	linphone_core_manager_start(lcm1, TRUE);
 	linphone_core_manager_destroy(lcm1);
-	
+
 	/*create a another one to make sure that port is reusable*/
-	lcm1 = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
-	
+	lcm1 = linphone_core_manager_new_with_proxies_check("pauline_tcp_rc", FALSE);
+
 	sal_set_client_bind_port(linphone_core_get_sal(lcm1->lc), 12088);
 	linphone_core_manager_start(lcm1, TRUE);
-	
+
 	linphone_core_manager_destroy(lcm1);
 #else
 	ms_message("Test skipped, can only run on Linux");
@@ -1476,8 +1476,8 @@ static void register_with_specific_client_port(void){
 }
 
 static void unreliable_channels_cleanup(void){
-	LinphoneCoreManager *lcm = linphone_core_manager_new2("pauline_tcp_rc", TRUE);
-	
+	LinphoneCoreManager *lcm = linphone_core_manager_new_with_proxies_check("pauline_tcp_rc", TRUE);
+
 	BC_ASSERT_EQUAL(lcm->stat.number_of_LinphoneRegistrationOk, 1, int, "%i");
 	/* wait 4 seconds */
 	wait_for_until(lcm->lc, lcm->lc, NULL, 0, 4000);
@@ -1485,7 +1485,7 @@ static void unreliable_channels_cleanup(void){
 	linphone_core_ensure_registered(lcm->lc);
 	/* this should result in a new register to be done */
 	BC_ASSERT_TRUE(wait_for_until(lcm->lc, lcm->lc, &lcm->stat.number_of_LinphoneRegistrationOk, 2, 8000));
-	linphone_core_manager_destroy(lcm);	
+	linphone_core_manager_destroy(lcm);
 }
 
 

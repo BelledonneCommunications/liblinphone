@@ -506,8 +506,8 @@ static void call_forking_declined_localy(void){
 
 static void call_forking_with_push_notification_single(void){
 	bctbx_list_t* lcs;
-	LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
 	int dummy=0;
 
 	linphone_core_set_user_agent(marie->lc,"Natted Linphone",NULL);
@@ -563,8 +563,8 @@ static void call_forking_with_push_notification_single(void){
 **/
 static void call_forking_with_push_notification_double_contact(void){
 	bctbx_list_t* lcs;
-	LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc",FALSE);
 	int dummy=0;
 
 
@@ -908,12 +908,12 @@ static void _call_with_ipv6(bool_t caller_with_ipv6, bool_t callee_with_ipv6) {
 		return;
 	}
 
-	marie = linphone_core_manager_new2( "marie_rc", FALSE);
+	marie = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
 	linphone_core_remove_supported_tag(marie->lc,"gruu"); // With gruu, we have no access to the "public IP from contact
 	linphone_core_enable_ipv6(marie->lc, caller_with_ipv6);
 	linphone_core_manager_start(marie, TRUE);
 
-	pauline = linphone_core_manager_new2( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
+	pauline = linphone_core_manager_new_with_proxies_check( transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc", FALSE);
 	linphone_core_remove_supported_tag(pauline->lc,"gruu"); // With gruu, we have no access to the "public IP from contact
 	linphone_core_enable_ipv6(pauline->lc, callee_with_ipv6);
 	linphone_core_manager_start(pauline, TRUE);
@@ -966,8 +966,8 @@ static void file_transfer_message_rcs_to_external_body_client(void) {
 		FILE *file_to_send = NULL;
 		size_t file_size;
 		char *send_filepath = bc_tester_res("images/nowebcamCIF.jpg");
-		LinphoneCoreManager* marie = linphone_core_manager_new2( "marie_rc", FALSE);
-		LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_rc", FALSE);
+		LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
+		LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_rc", FALSE);
 		// This is done to prevent register to be sent before the custom header is set
 		linphone_core_set_network_reachable(marie->lc, FALSE);
 		linphone_core_set_network_reachable(pauline->lc, FALSE);
@@ -1534,7 +1534,7 @@ end:
 }
 
 static void register_without_regid(void) {
-	LinphoneCoreManager *marie = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager *marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	linphone_core_manager_start(marie,TRUE);
 	LinphoneProxyConfig *cfg=linphone_core_get_default_proxy_config(marie->lc);
 	if(cfg) {
