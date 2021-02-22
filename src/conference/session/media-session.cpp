@@ -203,29 +203,27 @@ void MediaSessionPrivate::accepted () {
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
 			setState(nextState, nextStateMsg);
-			if ((prevState  == CallSession::State::Connected) && (nextState == CallSession::State::StreamsRunning)) {
-				// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
-				// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-				if (localDesc->supportCapabilityNegotiation()) {
-					// If no ICE session or checklist has completed, then send re-INVITE
-					// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
-					// - no ICE session is found in th stream group
-					// - an ICE sesson is found and its checklist has already completed
-					// - an ICE sesson is found and ICE reINVITE is not sent upon completition if the checklist (This case is the default one for DTLS SRTP negotiation as it was observed that webRTC gateway did not correctly support SIP ICE reINVITEs)
-					 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && (!getParams()->getPrivate()->getUpdateCallWhenIceCompleted() || getStreamsGroup().getIceService().hasCompletedCheckList()))) {
-						// Compare the chosen final configuration with the actual configuration in the local decription
-						const auto diff = md->compareToActualConfiguration(*localDesc);
-						const bool potentialConfigurationChosen = (diff & SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED);
-						if (potentialConfigurationChosen) {
-							lInfo() << "Sending a reINVITE because the actual configuraton was not chosen in the capability negotiation procedure. Detected differences " << SalMediaDescription::printDifferences(diff);
-							MediaSessionParams newParams(*getParams());
-							q->update(&newParams);
-						} else {
-							lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
-						}
+			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
+			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
+			if (localDesc->supportCapabilityNegotiation()) {
+				// If no ICE session or checklist has completed, then send re-INVITE
+				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
+				// - no ICE session is found in th stream group
+				// - an ICE sesson is found and its checklist has already completed
+				// - an ICE sesson is found and ICE reINVITE is not sent upon completition if the checklist (This case is the default one for DTLS SRTP negotiation as it was observed that webRTC gateway did not correctly support SIP ICE reINVITEs)
+				 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && (!getParams()->getPrivate()->getUpdateCallWhenIceCompleted() || getStreamsGroup().getIceService().hasCompletedCheckList()))) {
+					// Compare the chosen final configuration with the actual configuration in the local decription
+					const auto diff = md->compareToActualConfiguration(*localDesc);
+					const bool potentialConfigurationChosen = (diff & SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED);
+					if (potentialConfigurationChosen) {
+						lInfo() << "Sending a reINVITE because the actual configuraton was not chosen in the capability negotiation procedure. Detected differences " << SalMediaDescription::printDifferences(diff);
+						MediaSessionParams newParams(*getParams());
+						q->update(&newParams);
 					} else {
-						lInfo() << "Capability negotiation and ICE are both enabled hence wait for the end of ICE checklist completion to send a reINVITE";
+						lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
 					}
+				} else {
+					lInfo() << "Capability negotiation and ICE are both enabled hence wait for the end of ICE checklist completion to send a reINVITE";
 				}
 			}
 		}
@@ -2114,6 +2112,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, CallSession::State nextState, const string &stateInfo) {
 	L_Q();
 	const std::shared_ptr<SalMediaDescription> & desc = op->getRemoteMediaDescription();
+	const bool isRemoteDescNull = (desc == nullptr);
 
 	bool keepSdpVersion = !!linphone_config_get_int(
 		linphone_core_get_config(q->getCore()->getCCore()),
@@ -2122,7 +2121,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		(op->getSal()->getSessionTimersExpire() > 0)
 	);
 
-	if (keepSdpVersion && (desc->session_id == remoteSessionId) && (desc->session_ver == remoteSessionVer)) {
+	if (keepSdpVersion && desc && (desc->session_id == remoteSessionId) && (desc->session_ver == remoteSessionVer)) {
 		/* Remote has sent an INVITE with the same SDP as before, so send a 200 OK with the same SDP as before. */
 		lInfo() << "SDP version has not changed, send same SDP as before or sessionTimersExpire=" << op->getSal()->getSessionTimersExpire();
 		op->accept();
@@ -2139,16 +2138,15 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 			getParams()->enableVideoMulticast(false);
 		}
 	}
-	makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), false);
 	if (getParams()->videoEnabled() && !linphone_core_video_enabled(q->getCore()->getCCore())) {
 		lWarning() << "Requested video but video support is globally disabled. Refusing video";
 		getParams()->enableVideo(false);
 	}
 	updateRemoteSessionIdAndVer();
-	makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), false);
+	makeLocalMediaDescription(!isRemoteDescNull, (desc ? desc->supportCapabilityNegotiation() : q->isCapabilityNegotiationEnabled()));
 
-	auto acceptCompletionTask = [this, nextState, stateInfo](){
-		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
+		updateLocalMediaDescriptionFromIce(isRemoteDescNull);
 		startAcceptUpdate(nextState, stateInfo);
 	};
 	
