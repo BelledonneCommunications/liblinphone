@@ -784,11 +784,17 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 		if (marie->stat.last_received_chat_message) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-			linphone_chat_room_mark_as_read(marie_room);
+
+			// We shoudln't get displayed IMDN until file has been downloaded & chat message has been markes as read
+			if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+				BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+			}
+
 			if (auto_download == -1 || (auto_download > 0 && auto_download < file_transfer_size)) {
-				// We shoudln't get displayed IMDN until file has been downloaded
+				linphone_chat_room_mark_as_read(marie_room);
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					// Chat message has been markes as read but not downloaded yet, so no IMDN should be received yet
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 				}
 
 				LinphoneChatMessage *recv_msg;
@@ -834,7 +840,7 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-						BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 					}
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
@@ -855,19 +861,24 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					}
 
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-						BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+						BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 					}
 				}
 			} else {
-				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
-				}
 				contents = linphone_chat_message_get_contents(msg);
 				BC_ASSERT_PTR_NOT_NULL(contents);
 				BC_ASSERT_EQUAL(1, bctbx_list_size(contents), int, "%d");
 				content = (LinphoneContent *)bctbx_list_get_data(contents);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
+
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+				}
+				linphone_chat_room_mark_as_read(marie_room);
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+				}
 			}
 		}
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");

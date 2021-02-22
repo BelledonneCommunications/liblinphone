@@ -214,9 +214,9 @@ void ChatMessagePrivate::setState (ChatMessage::State newState) {
 		linphone_chat_message_cbs_get_msg_state_changed(cbs)(msg, (LinphoneChatMessageState)state);
 	_linphone_chat_message_notify_msg_state_changed(msg, (LinphoneChatMessageState)state);
 
-	// 3. Specific case, change to displayed once all file transfers haven been downloaded.
+	// 3. Specific case, change to displayed once all file transfers haven been downloaded, and only if chat message has been marked as read.
 	if (state == ChatMessage::State::FileTransferDone && direction == ChatMessage::Direction::Incoming) {
-		if (!hasFileTransferContent()) {
+		if (!hasFileTransferContent() && isMarkedAsRead()) {
 			setState(ChatMessage::State::Displayed);
 			return;
 		}
