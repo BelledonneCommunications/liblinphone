@@ -64,12 +64,18 @@ void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
 	capabilityNegotiation = enable;
 }
 
+bool CallSessionParamsPrivate::isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const {
+	const auto encEnumList = getSupportedEncryptions();
+	const auto foundIt = std::find(encEnumList.cbegin(), encEnumList.cend(), encryption);
+	return (foundIt != encEnumList.cend());
+}
+
 const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedEncryptions() const {
 	return supportedEncryptions;
 }
 
-void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encs) {
-	supportedEncryptions = encs;
+void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions) {
+	supportedEncryptions = encryptions;
 }
 
 

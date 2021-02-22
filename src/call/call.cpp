@@ -1276,6 +1276,10 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	return nullptr;
 }
 
+const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {
+	return getActiveSession()->getSupportedEncryptions();
+}
+
 // -----------------------------------------------------------------------------
 
 LinphoneConference *Call::getConference () const{
