@@ -114,7 +114,7 @@ static LinphoneCoreManager* setup(LinphoneLogCollectionState log_collection_stat
 	collect_init();
 	linphone_core_enable_log_collection(log_collection_state);
 
-	marie = linphone_core_manager_new2("marie_rc", 0);
+	marie = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	// wait a few seconds to generate some traffic
 	while (--timeout){
 		// Generate some logs - error logs because we must ensure that
@@ -307,7 +307,7 @@ static void upload_wrong_url(void) {
 	linphone_core_set_log_collection_upload_server_url(marie->lc,"text");
 	linphone_core_upload_log_collection(marie->lc);
 	BC_ASSERT_TRUE(wait_for_until(marie->lc,marie->lc,&marie->stat.number_of_LinphoneCoreLogCollectionUploadStateNotDelivered, 1, 10000));
-	
+
 	collect_cleanup(marie);
 }
 
