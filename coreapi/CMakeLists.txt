@@ -91,6 +91,9 @@ set(LINPHONE_SOURCE_FILES_C
 	xmlrpc.c
 	vtables.c
 )
+if(ENABLE_LDAP)
+	add_definitions(-DBUILD_LDAP)
+endif()
 set(LINPHONE_SOURCE_FILES_CXX
 	conference.cc
 	tester_utils.cpp
@@ -159,7 +162,7 @@ if (ENABLE_SHARED)
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
         add_dependencies(linphone-coreapi linphonej)
-    endif()
+	endif()
 endif ()
 
 
