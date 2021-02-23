@@ -22,6 +22,7 @@
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
 #include "tester_utils.h"
+#include "shared_tester_functions.h"
 
 enum encryption_level {
 	E_DISABLED,
@@ -305,6 +306,9 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			potentialConfigurationChosen = false;
 		}
 
+		unsigned int nb_audio_starts = 1;
+		unsigned int nb_video_starts = 0;
+
 		LinphoneNatPolicy *caller_nat_policy = linphone_core_get_nat_policy(caller->lc);
 		const bool_t caller_ice_enabled = linphone_nat_policy_ice_enabled(caller_nat_policy);
 		LinphoneNatPolicy *callee_nat_policy = linphone_core_get_nat_policy(callee->lc);
@@ -314,6 +318,11 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		/*wait for reINVITEs to complete*/
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,expectedStreamsRunning));
+
+		if (callee_ice_enabled && caller_ice_enabled) {
+			BC_ASSERT_TRUE(check_ice(caller, callee, LinphoneIceStateHostConnection));
+			BC_ASSERT_TRUE(check_ice(callee, caller, LinphoneIceStateHostConnection));
+		}
 
 		liblinphone_tester_check_rtcp(caller, callee);
 
@@ -328,6 +337,9 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall)), expectedEncryption, int, "%i");
 		}
 
+		BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, callee, caller, nb_audio_starts, nb_audio_starts));
+		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, callee, caller, nb_video_starts, nb_video_starts));
+
 		LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
@@ -335,6 +347,7 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		BC_ASSERT_PTR_NOT_NULL(caller_call);
 
 		if (enable_video) {
+			nb_video_starts++;
 			stats caller_stat = caller->stat; 
 			stats callee_stat = callee->stat; 
 			LinphoneCallParams * params = linphone_core_create_call_params(callee->lc, callee_call);
@@ -366,6 +379,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 		}
 
+		BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, callee, caller, nb_audio_starts, nb_audio_starts));
+		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, callee, caller, nb_video_starts, nb_video_starts));
 		end_call(callee, caller);
 
 	}
