@@ -195,15 +195,6 @@ bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, Linph
 			linphone_call_stats_unref(stats2);
 	}
 
-	/*make sure encryption mode are preserved*/
-	if (c1) {
-		const LinphoneCallParams* call_param = linphone_call_get_current_params(c1);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(caller->lc), int, "%d");
-	}
-	if (c2) {
-		const LinphoneCallParams* call_param = linphone_call_get_current_params(c2);
-		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(call_param),linphone_core_get_media_encryption(callee->lc), int, "%d");
-	}
 	linphone_call_unref(c1);
 	linphone_call_unref(c2);
 	if (audio_enabled) global_success = global_success && audio_success;
