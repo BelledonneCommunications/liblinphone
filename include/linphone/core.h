@@ -3743,6 +3743,12 @@ LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_calls(LinphoneCore *core);
 **/
 LINPHONE_PUBLIC LinphoneCall *linphone_core_get_call_by_callid(const LinphoneCore *core, const char *call_id);
 
+/**
+ * Returns the global state of core.
+ * @param core #LinphoneCore object @notnil
+ * @return a #LinphoneGlobalState enum. @notnil
+ * @ingroup misc
+**/
 LINPHONE_PUBLIC LinphoneGlobalState linphone_core_get_global_state(const LinphoneCore *core);
 
 /**

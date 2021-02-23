@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_message_new(bool_t is_using_user_defaults, const char *call_id, bool_t is_text,
+LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_message_new(const char *call_id, bool_t is_text,
 									   const char *text_content, const char *subject, const char *from_addr,
 									   const char *local_addr, const char *peer_addr);
 
@@ -51,13 +51,6 @@ LINPHONE_PUBLIC LinphonePushNotificationMessage *linphone_push_notification_mess
  * @param message the #LinphonePushNotificationMessage object @notnil
  */
 LINPHONE_PUBLIC void linphone_push_notification_message_unref(LinphonePushNotificationMessage *message);
-
-/**
- * is #LinphonePushNotificationMessage build from UserDefaults data or from a #LinphoneChatMessage
- * @param message The #LinphonePushNotificationMessage object @notnil
- * @return The is_using_user_defaults.
- */
-LINPHONE_PUBLIC bool_t linphone_push_notification_message_is_using_user_defaults(const LinphonePushNotificationMessage *message);
 
 /**
  * Gets the call id.
