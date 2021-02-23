@@ -18,27 +18,28 @@
 #
 ############################################################################
 #
-# - Find the OpenLDAP include file and library
+# - Find the Cyrus SASL include file and library
 #
-#  OPENLDAP_FOUND - system has OpenLDAP
-#  OPENLDAP_INCLUDE_DIRS - the OpenLDAP include directory
-#  OPENLDAP_LIBRARIES - The libraries needed to use OpenLDAP
+#  SASL_FOUND - system has OpenLDAP
+#  SASL_INCLUDE_DIRS - the OpenLDAP include directory
+#  SASL_LIBRARIES - The libraries needed to use OpenLDAP
 
-find_path(OPENLDAP_INCLUDE_DIRS
-	NAMES ldap.h
-	PATH_SUFFIXES include/openldap
+find_path(SASL_INCLUDE_DIRS
+	NAMES sasl/sasl.h
+	HINTS "${CMAKE_INSTALL_PREFIX}"
+	PATH_SUFFIXES include
 )
 
-find_library(OPENLDAP_LIBRARIES
-	NAMES ldap
+find_library(SASL_LIBRARIES
+	NAMES sasl2
 	HINTS "${CMAKE_INSTALL_PREFIX}"
 	PATH_SUFFIXES lib
 )
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(OpenLDAP
+find_package_handle_standard_args(SASL
 	DEFAULT_MSG
-	OPENLDAP_INCLUDE_DIRS OPENLDAP_LIBRARIES
+	SASL_INCLUDE_DIRS SASL_LIBRARIES
 )
 
-mark_as_advanced(OPENLDAP_INCLUDE_DIRS OPENLDAP_LIBRARIES)
+mark_as_advanced(SASL_INCLUDE_DIRS SASL_LIBRARIES)
