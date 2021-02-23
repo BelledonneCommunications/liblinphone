@@ -760,11 +760,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 
 	LinphoneVideoActivationPolicy * pol = linphone_factory_create_video_activation_policy(linphone_factory_get());
 	linphone_video_activation_policy_set_automatically_accept(pol, TRUE);
-	linphone_core_set_video_activation_policy(pauline->lc, pol);
 	linphone_core_set_video_activation_policy(marie->lc, pol);
-	linphone_core_set_video_activation_policy(laure->lc, pol);
-	linphone_core_set_video_activation_policy(chloe->lc, pol);
-	linphone_video_activation_policy_unref(pol);
 
 	linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -777,10 +773,13 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		linphone_core_set_video_device(c, liblinphone_tester_mire_id);
 		linphone_core_enable_video_capture(c, TRUE);
 		linphone_core_enable_video_display(c, TRUE);
+
+		linphone_core_set_video_activation_policy(c, pol);
 	}
 
 	bctbx_list_t* lcs = NULL;
 	lcs=bctbx_list_append(lcs,marie->lc);
+	linphone_video_activation_policy_unref(pol);
 
 	initiate_calls(participants, marie);
 
@@ -826,6 +825,12 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 				const LinphoneCallParams *old_params = linphone_call_get_params(call_to_update);
 				LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
 				linphone_call_params_enable_video (new_params, TRUE);
+				LinphoneCallLog *clog = linphone_call_get_call_log(call_to_update);
+				char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+				char* from=linphone_address_as_string(linphone_call_log_get_from_address(clog));
+				ms_message("Adding video to call from %s to %s", from, to);
+				ms_free(to);
+				ms_free(from);
 				linphone_call_update(call_to_update, new_params);
 				linphone_call_params_unref (new_params);
 			}

@@ -47,7 +47,7 @@ extern void libmsopenh264_init(MSFactory *factory);
 static void linphone_call_next_video_frame_decoded_cb(LinphoneCall *call) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(call);
 	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from_address(clog));
 	stats* counters;
 	LinphoneCore* lc = linphone_call_get_core(call);
 	ms_message("call from [%s] to [%s] receive iFrame",from,to);
