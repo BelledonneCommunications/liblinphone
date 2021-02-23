@@ -2694,7 +2694,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		for(bctbx_list_t * enc = caller_supported_encs;enc!=NULL;enc=enc->next){
 			const char *enc_string = (const char *)bctbx_list_get_data(enc);
 			matched_enc = (LinphoneMediaEncryption)string_to_linphone_media_encryption(enc_string);
-			enc_check_result |= linphone_call_params_is_media_encryption_supported (callee_params, matched_enc);
+			enc_check_result |= (linphone_call_params_is_media_encryption_supported (callee_params, matched_enc) || (callee_local_enc == matched_enc));
 			if (enc_check_result) {
 				break;
 			}
