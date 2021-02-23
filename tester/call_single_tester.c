@@ -2767,8 +2767,17 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 			belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
 		}
 
-		linphone_core_set_firewall_policy(marie->lc,policy);
-		linphone_core_set_firewall_policy(pauline->lc,policy);
+		if (policy == LinphonePolicyUseIce) {
+			LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
+			linphone_nat_policy_enable_ice(marie_pol, TRUE);
+			linphone_nat_policy_enable_stun(marie_pol, TRUE);
+			linphone_core_set_nat_policy(marie->lc,marie_pol);
+
+			LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
+			linphone_nat_policy_enable_ice(pauline_pol, TRUE);
+			linphone_nat_policy_enable_stun(pauline_pol, TRUE);
+			linphone_core_set_nat_policy(pauline->lc,pauline_pol);
+		}
 
 		BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 		if (!call_ok) goto end;
