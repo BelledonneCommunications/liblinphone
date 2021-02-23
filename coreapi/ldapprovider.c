@@ -26,7 +26,7 @@
 
 #ifdef BUILD_LDAP
 #include <ldap.h>
-#include <sasl/sasl.h>
+//#include <sasl/sasl.h>
 
 
 #define MAX_RUNNING_REQUESTS 10
@@ -99,7 +99,7 @@ LinphoneLDAPContactSearch* linphone_ldap_contact_search_create(LinphoneLDAPConta
 
 	search->ld = cp->ld;
 
-	search->filter = ms_malloc(FILTER_MAX_SIZE);
+	search->filter = (char*)ms_malloc(FILTER_MAX_SIZE);
 	snprintf(search->filter, FILTER_MAX_SIZE-1, cp->filter, predicate);
 	search->filter[FILTER_MAX_SIZE-1] = 0;
 
@@ -141,7 +141,7 @@ static inline LinphoneLDAPContactSearch* linphone_ldap_contact_provider_request_
 static unsigned int linphone_ldap_contact_provider_cancel_search(LinphoneContactProvider* obj, LinphoneContactSearch *req);
 static void linphone_ldap_contact_provider_conf_destroy(LinphoneLDAPContactProvider* obj );
 static bool_t linphone_ldap_contact_provider_iterate(void *data);
-static int linphone_ldap_contact_provider_bind_interact(LDAP *ld, unsigned flags, void *defaults, void *sasl_interact);
+//static int linphone_ldap_contact_provider_bind_interact(LDAP *ld, unsigned flags, void *defaults, void *sasl_interact);
 static int linphone_ldap_contact_provider_perform_search( LinphoneLDAPContactProvider* obj, LinphoneLDAPContactSearch* req);
 
 static void linphone_ldap_contact_provider_destroy_request_cb(void *req)
@@ -206,7 +206,7 @@ static void linphone_ldap_contact_provider_handle_search_result( LinphoneLDAPCon
 
 				while( values && *it && (*it)->bv_val && (*it)->bv_len )
 				{
-					contact_complete = linphone_ldap_contact_provider_complete_contact(obj, &ldap_data, attr, (*it)->bv_val);
+					contact_complete = (linphone_ldap_contact_provider_complete_contact(obj, &ldap_data, attr, (*it)->bv_val) == 1);
 					if( contact_complete ) break;
 
 					it++;
@@ -316,7 +316,7 @@ static bool_t linphone_ldap_contact_provider_iterate(void *data)
 		unsigned int i;
 
 		for( i=0; i<obj->req_count; i++){
-			LinphoneLDAPContactSearch* search = (LinphoneLDAPContactSearch*)bctbx_list_nth_data( obj->requests, i );
+			LinphoneLDAPContactSearch* search = (LinphoneLDAPContactSearch*)bctbx_list_nth_data( obj->requests, (int)i );
 			if( search && search->msgid == 0){
 				int ret;
 				ms_message("Found pending search %p (for %s), launching...", search, search->filter);
@@ -344,7 +344,7 @@ static void linphone_ldap_contact_provider_conf_destroy(LinphoneLDAPContactProvi
 	}
 }
 
-static char* required_config_keys[] = {
+static const char* required_config_keys[] = {
 	// connection
 	"server",
 	"use_tls",
@@ -371,13 +371,13 @@ static char* required_config_keys[] = {
 
 static bool_t linphone_ldap_contact_provider_valid_config(const LinphoneDictionary* dict)
 {
-	char** config_name = required_config_keys;
+	const char** config_name = required_config_keys;
 
 	bool_t valid = TRUE;
 	bool_t has_key;
 
 	while(*config_name ){
-		has_key = linphone_dictionary_haskey(dict, *config_name);
+		has_key = (linphone_dictionary_haskey(dict, *config_name)!=0);
 		if( !has_key ) ms_error("Missing LDAP config value for '%s'", *config_name);
 		valid &= has_key;
 		config_name++;
@@ -434,7 +434,7 @@ static void linphone_ldap_contact_provider_loadconfig(LinphoneLDAPContactProvide
 	}
 
 	// 1 more for the first attr without ',', the other for the null-finished list
-	obj->attributes = ms_malloc0((attr_count+2) * sizeof(char*));
+	obj->attributes = (char**)ms_malloc0((attr_count+2) * sizeof(char*));
 
 	attr = strtok_r( attributes_list, ",", &saveptr );
 	while( attr != NULL ){
@@ -446,7 +446,7 @@ static void linphone_ldap_contact_provider_loadconfig(LinphoneLDAPContactProvide
 
 	ms_free(attributes_list);
 }
-
+/*
 static int linphone_ldap_contact_provider_bind_interact(LDAP *ld,
 														unsigned flags,
 														void *defaults,
@@ -490,7 +490,7 @@ static int linphone_ldap_contact_provider_bind_interact(LDAP *ld,
 	}
 	return LDAP_SUCCESS;
 }
-
+*/
 static void* ldap_bind_thread_func( void*arg)
 {
 	LinphoneLDAPContactProvider* obj = linphone_ldap_contact_provider_ref(arg);
@@ -520,8 +520,16 @@ static void* ldap_bind_thread_func( void*arg)
 										   auth_mechanism,
 										   NULL,NULL,
 										   LDAP_SASL_QUIET,
-										   linphone_ldap_contact_provider_bind_interact,
+										   NULL,
 										   obj);
+		/*
+		ret = ldap_sasl_interactive_bind_s(obj->ld,
+										   obj->bind_dn,
+										   auth_mechanism,
+										   NULL,NULL,
+										   LDAP_SASL_QUIET,
+										   lutil_sasl_interact,//linphone_ldap_contact_provider_bind_interact,
+										   obj);*/
 	}
 
 	if( ret == LDAP_SUCCESS ) {
@@ -548,7 +556,7 @@ static int linphone_ldap_contact_provider_bind( LinphoneLDAPContactProvider* obj
 
 unsigned int linphone_ldap_contact_provider_get_max_result(const LinphoneLDAPContactProvider* obj)
 {
-	return obj->max_results;
+	return (unsigned int)obj->max_results;
 }
 
 static void linphone_ldap_contact_provider_config_dump_cb(const char*key, void* value, void* userdata)
@@ -625,7 +633,7 @@ static inline LinphoneLDAPContactSearch* linphone_ldap_contact_provider_request_
 	dummy.msgid = msgid;
 
 	list_entry = bctbx_list_find_custom(obj->requests, linphone_ldap_request_entry_compare_weak, &dummy);
-	if( list_entry ) return list_entry->data;
+	if( list_entry ) return (LinphoneLDAPContactSearch*)list_entry->data;
 	else return NULL;
 }
 
@@ -633,7 +641,7 @@ static unsigned int linphone_ldap_contact_provider_cancel_search(LinphoneContact
 {
 	LinphoneLDAPContactSearch*  ldap_req = LINPHONE_LDAP_CONTACT_SEARCH(req);
 	LinphoneLDAPContactProvider* ldap_cp = LINPHONE_LDAP_CONTACT_PROVIDER(obj);
-	int ret = 1;
+	unsigned int ret = 1;
 
 	bctbx_list_t* list_entry = bctbx_list_find_custom(ldap_cp->requests, linphone_ldap_request_entry_compare_strong, req);
 	if( list_entry ) {
