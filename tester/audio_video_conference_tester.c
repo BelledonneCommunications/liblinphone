@@ -1577,11 +1577,11 @@ static void _simple_conference_from_scratch(bool_t with_video){
 		linphone_core_set_video_activation_policy(marie->lc, pol);
 		linphone_core_set_video_activation_policy(laure->lc, pol);
 		linphone_video_activation_policy_unref(pol);
-		
+
 		linphone_core_set_video_device(pauline->lc, liblinphone_tester_mire_id);
 		linphone_core_set_video_device(marie->lc, liblinphone_tester_mire_id);
 		linphone_core_set_video_device(laure->lc, liblinphone_tester_mire_id);
-		
+
 		linphone_core_enable_video_capture(pauline->lc, TRUE);
 		linphone_core_enable_video_display(pauline->lc, TRUE);
 		linphone_core_enable_video_capture(marie->lc, TRUE);
