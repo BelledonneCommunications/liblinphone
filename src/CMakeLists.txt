@@ -104,7 +104,13 @@ if(BELCARD_FOUND)
 	list(APPEND INTERFACE_LIBS belcard)
 	list(APPEND LINK_LIBS belcard)
 endif()
-
+if(WIN32 AND ENABLE_LDAP)
+	list(APPEND LINK_LIBS "Wldap32")
+endif()
+if(OPENLDAP_FOUND AND SASL_FOUND)
+	list(APPEND LINK_LIBS ${OPENLDAP_LIBRARIES})
+	list(APPEND LINK_LIBS ${SASL_LIBRARIES})
+endif()
 #define log domain for this part of code
 add_definitions(-DBCTBX_LOG_DOMAIN="liblinphone")
 
