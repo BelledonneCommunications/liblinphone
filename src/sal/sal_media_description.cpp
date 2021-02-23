@@ -517,7 +517,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
-	char *escaped_username = belle_sip_uri_to_escaped_username(username.c_str());
+	char *escaped_username = belle_sip_uri_to_escaped_username(L_STRING_TO_C(username));
 
 	if ( addr.find(':' ) != std::string::npos ) {
 		inet6=1;
@@ -530,7 +530,9 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 									  ,"IN"
 									  , inet6 ? "IP6" :"IP4"
 									  ,L_STRING_TO_C(addr) );
-	bctbx_free(escaped_username);
+	if (escaped_username) {
+		bctbx_free(escaped_username);
+	}
 
 	belle_sdp_session_description_set_origin ( session_desc,origin );
 
