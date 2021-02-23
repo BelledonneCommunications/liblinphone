@@ -488,12 +488,12 @@ static void mandatory_enc_call_from_optional_enc_core(void) {
 
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_mandatory_media_encryption(marie_params, TRUE);
-	BC_ASSERT_FALSE(linphone_call_params_mandatory_media_encryption_enabled(marie_params));
+	BC_ASSERT_TRUE(linphone_call_params_mandatory_media_encryption_enabled(marie_params));
 	linphone_call_params_set_media_encryption(marie_params, LinphoneMediaEncryptionSRTP);
 
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_mandatory_media_encryption(pauline_params, TRUE);
-	BC_ASSERT_FALSE(linphone_call_params_mandatory_media_encryption_enabled(pauline_params));
+	BC_ASSERT_TRUE(linphone_call_params_mandatory_media_encryption_enabled(pauline_params));
 	linphone_call_params_set_media_encryption(pauline_params, LinphoneMediaEncryptionSRTP);
 
 	if (BC_ASSERT_TRUE(call_with_params(pauline,marie,pauline_params,marie_params))) {
