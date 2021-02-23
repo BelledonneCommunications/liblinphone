@@ -1774,6 +1774,8 @@ static void eject_from_4_participants_conference(void) {
 
 	wait_for_list(lcs ,NULL, 0, 2000);
 
+	end_call(marie, pauline);
+
 	terminate_conference(new_participants, marie, NULL, NULL);
 	bctbx_list_free(new_participants);
 
