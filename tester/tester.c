@@ -2872,7 +2872,6 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 	if (linphone_core_get_calls_nb(callee_mgr->lc) == 1)
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call_remote_address(callee_mgr->lc)); /*only relevant if one call, otherwise, not always set*/
 	callee_call=linphone_core_get_call_by_remote_address2(callee_mgr->lc,caller_mgr->identity);
-	BC_ASSERT_PTR_NOT_NULL(callee_call);
 
 	if(!linphone_core_get_current_call(caller_mgr->lc) || (!callee_call && !linphone_core_get_current_call(callee_mgr->lc)) /*for privacy case*/) {
 		return 0;
@@ -2882,6 +2881,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		if (linphone_call_params_get_privacy(linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc))) == LinphonePrivacyNone) {
 			/*don't check in case of p asserted id*/
+			BC_ASSERT_PTR_NOT_NULL(callee_call);
 			if (!linphone_config_get_int(linphone_core_get_config(callee_mgr->lc),"sip","call_logs_use_asserted_id_instead_of_from",0))
 				BC_ASSERT_TRUE(linphone_address_weak_equal(callee_from,linphone_call_get_remote_address(callee_call)));
 		} else {
@@ -2921,9 +2921,9 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		callee_params = linphone_call_get_params(callee_call);
 		linphone_call_accept(callee_call);
 	} else {
-		LinphoneCall * caller_mgr_current_call = linphone_core_get_current_call(callee_mgr->lc);
-		callee_params = linphone_call_get_params(caller_mgr_current_call);
-		linphone_call_accept(caller_mgr_current_call);
+		LinphoneCall * callee_mgr_current_call = linphone_core_get_current_call(callee_mgr->lc);
+		callee_params = linphone_call_get_params(callee_mgr_current_call);
+		linphone_call_accept(callee_mgr_current_call);
 	}
 
 	bool_t callee_capability_enabled = linphone_call_params_capability_negotiations_enabled(callee_params);
@@ -2991,7 +2991,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 	const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
 	const LinphoneMediaEncryption caller_enc = linphone_call_params_get_media_encryption(caller_call_param);
-	const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(callee_call);
+	const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(linphone_core_get_current_call(callee_mgr->lc));
 	const LinphoneMediaEncryption callee_enc = linphone_call_params_get_media_encryption(callee_call_param);
 
 	// Ensure that encryption on both sides is the same
