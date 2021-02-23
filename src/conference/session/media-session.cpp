@@ -1669,7 +1669,7 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
 	if (q->isCapabilityNegotiationEnabled()) {
 		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
-		// Change local parameters following results fo negotiation. This will allow method 
+		// Change local parameters following results for negotiation. This will allow method 
 		getParams()->setMediaEncryption(enc);
 	}
 
