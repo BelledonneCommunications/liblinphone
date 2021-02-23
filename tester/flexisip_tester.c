@@ -426,6 +426,8 @@ static void call_forking_cancelled(void){
 	/*pauline finally cancels the call*/
 	linphone_call_terminate(linphone_core_get_current_call(pauline->lc));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallEnd,1,5000));
+	// Wait for call to be released
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallReleased,1,5000));
 
 	/*all devices should stop ringing*/
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd,1,5000));
