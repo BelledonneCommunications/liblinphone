@@ -91,6 +91,9 @@ set(LINPHONE_SOURCE_FILES_C
 	xmlrpc.c
 	vtables.c
 )
+if(ENABLE_OPENLDAP)
+	add_definitions(-DBUILD_LDAP)
+endif()
 set(LINPHONE_SOURCE_FILES_CXX
 	conference.cc
 	tester_utils.cpp
