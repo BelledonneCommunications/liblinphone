@@ -31,13 +31,22 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalCallOp::SalCallOp (Sal *sal) : SalOp(sal) {
+SalCallOp::SalCallOp (Sal *sal, const bool capabilityNegotiation) : SalOp(sal) {
 	mType = Type::Call;
 	fillCallbacks();
+	enableCapabilityNegotiation(capabilityNegotiation);
 }
 
 SalCallOp::~SalCallOp () {
 
+}
+
+void SalCallOp::enableCapabilityNegotiation (const bool enable) {
+	capabilityNegotiation = enable;
+}
+
+bool SalCallOp::capabilityNegotiationEnabled () const {
+	return capabilityNegotiation;
 }
 
 int SalCallOp::setLocalMediaDescription (std::shared_ptr<SalMediaDescription> desc) {
@@ -336,18 +345,17 @@ void SalCallOp::sdpProcess () {
 	if (!mRemoteMedia)
 		return;
 
-	mResult = std::make_shared<SalMediaDescription>();
 	if (mSdpOffering) {
-		OfferAnswerEngine::initiateOutgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult);
+		mResult = OfferAnswerEngine::initiateOutgoing(mRoot->mFactory, mLocalMedia, mRemoteMedia);
 	} else {
 		if (mSdpAnswer)
 			belle_sip_object_unref(mSdpAnswer);
-		OfferAnswerEngine::initiateIncoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mResult, mRoot->mOneMatchingCodec);
+		mResult = OfferAnswerEngine::initiateIncoming(mRoot->mFactory, mLocalMedia, mRemoteMedia, mRoot->mOneMatchingCodec);
 		// For backward compatibility purpose
 		if (mCnxIpTo0000IfSendOnlyEnabled && mResult->hasDir(SalStreamSendOnly)) {
 			mResult->addr = setAddrTo0000(mResult->addr);
 			for (auto & stream : mResult->streams) {
-				if (stream.dir == SalStreamSendOnly) {
+				if (stream.getDirection() == SalStreamSendOnly) {
 					stream.rtp_addr = setAddrTo0000(stream.rtp_addr);
 					stream.rtcp_addr = setAddrTo0000(stream.rtcp_addr);
 				}
@@ -364,18 +372,17 @@ void SalCallOp::sdpProcess () {
 			// Copy back parameters from remote description that we need in our result description
 			if (mResult->streams[i].rtp_port != 0) { // If the stream was accepted
 				mResult->streams[i].rtp_addr = mRemoteMedia->streams[i].rtp_addr;
-				mResult->streams[i].ptime = mRemoteMedia->streams[i].ptime;
-				mResult->streams[i].maxptime = mRemoteMedia->streams[i].maxptime;
+				mResult->streams[i].setPtime(mRemoteMedia->streams[i].getChosenConfiguration().ptime, mRemoteMedia->streams[i].getChosenConfiguration().maxptime);
 				mResult->streams[i].bandwidth = mRemoteMedia->streams[i].bandwidth;
 				mResult->streams[i].rtp_port = mRemoteMedia->streams[i].rtp_port;
 				mResult->streams[i].rtcp_addr = mRemoteMedia->streams[i].rtcp_addr;
 				mResult->streams[i].rtcp_port = mRemoteMedia->streams[i].rtcp_port;
 				if (mResult->streams[i].hasSrtp()) {
-					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].crypto, static_cast<unsigned char>(mResult->streams[i].crypto[0].tag));
+					int cryptoIdx = Sal::findCryptoIndexFromTag(mRemoteMedia->streams[i].getCryptos(), static_cast<unsigned char>(mResult->streams[i].getCryptoAtIndex(0).tag));
 					if (cryptoIdx >= 0)
-						mResult->streams[i].crypto[0] = mRemoteMedia->streams[i].crypto[(size_t)cryptoIdx];
+						mResult->streams[i].setCrypto(0, mRemoteMedia->streams[i].getCryptoAtIndex(static_cast<size_t>(cryptoIdx)));
 					else
-						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].crypto_local_tag << "from resulting description [" << mResult << "]";
+						lError() << "Failed to find crypto algo with tag: " << mResult->streams[i].getChosenConfiguration().crypto_local_tag << "from resulting description [" << mResult << "]";
 				}
 			}
 		}
@@ -427,6 +434,7 @@ void SalCallOp::handleBodyFromResponse (belle_sip_response_t *response) {
 
 				mRemoteMedia = std::make_shared<SalMediaDescription>(sdp);
 				mRemoteBody = move(sdpBody);
+				belle_sip_object_unref(sdp);
 			} // If no SDP in response, what can we do?
 		}
 		// Process sdp in any case to reset result media description

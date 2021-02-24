@@ -126,6 +126,8 @@ typedef enum {
 #define SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED		(1<<5) /* use to notify when switching from multicast to unicast*/
 #define SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION	(1<<6) /* use force graph reconstruction*/
 #define SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED			(1<<7)
+#define SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED			(1<<8)
+#define SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED			(1<<9)
 
 #ifdef __cplusplus
 extern "C" {
@@ -192,6 +194,7 @@ extern "C" {
 
 const char* sal_stream_type_to_string(SalStreamType type);
 const char* sal_media_proto_to_string(SalMediaProto type);
+SalMediaProto string_to_sal_media_proto(const char *type);
 const char* sal_stream_dir_to_string(SalStreamDir type);
 
 #ifdef __cplusplus
