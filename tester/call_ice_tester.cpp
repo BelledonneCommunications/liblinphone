@@ -96,14 +96,12 @@ static void _early_media_call_with_ice(bool_t callee_has_ice) {
 	lcs = bctbx_list_append(lcs, marie->lc);
 	lcs = bctbx_list_append(lcs, pauline->lc);
 
-	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
-	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
-	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
+	enable_stun_in_core(pauline, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	if (callee_has_ice) {
-		LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
-		linphone_nat_policy_enable_ice(marie_pol, TRUE);
-		linphone_core_set_nat_policy(marie->lc, marie_pol);
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
 	}
 
 	pauline_call = linphone_core_invite_address(pauline->lc, marie->identity);
@@ -168,14 +166,8 @@ static void audio_call_with_ice_no_matching_audio_codecs(void) {
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMU", 8000, 1), FALSE); /* Disable PCMU */
 	linphone_core_enable_payload_type(marie->lc, linphone_core_find_payload_type(marie->lc, "PCMA", 8000, 1), TRUE); /* Enable PCMA */
 
-	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
-	linphone_nat_policy_enable_ice(marie_pol, TRUE);
-	linphone_core_set_nat_policy(marie->lc, marie_pol);
-
-	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
-	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
-	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
-
+	enable_stun_in_core(marie, TRUE);
+	enable_stun_in_core(pauline, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
@@ -258,13 +250,11 @@ static void _call_with_ice_with_default_candidate_not_stun(bool_t with_ipv6_pref
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "net", "dont_default_to_stun_candidates", 1);
 	linphone_config_set_int(linphone_core_get_config(marie->lc), "rtp", "prefer_ipv6", (int)with_ipv6_prefered);
 
-	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
-	linphone_nat_policy_enable_ice(marie_pol, TRUE);
-	linphone_core_set_nat_policy(marie->lc, marie_pol);
+	enable_stun_in_core(marie, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
-	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
-	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
+	enable_stun_in_core(pauline, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	linphone_core_get_local_ip(marie->lc, AF_INET, NULL, localip);
 	linphone_core_get_local_ip(marie->lc, AF_INET6, NULL, localip6);
@@ -388,13 +378,11 @@ static void call_with_ice_no_sdp(void){
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
 
-	LinphoneNatPolicy *marie_pol = linphone_core_get_nat_policy(marie->lc);
-	linphone_nat_policy_enable_ice(marie_pol, TRUE);
-	linphone_core_set_nat_policy(marie->lc, marie_pol);
+	enable_stun_in_core(marie, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(marie);
 
-	LinphoneNatPolicy *pauline_pol = linphone_core_get_nat_policy(pauline->lc);
-	linphone_nat_policy_enable_ice(pauline_pol, TRUE);
-	linphone_core_set_nat_policy(pauline->lc, pauline_pol);
+	enable_stun_in_core(pauline, TRUE);
+	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	BC_ASSERT_TRUE(call(pauline,marie));
 
@@ -424,7 +412,6 @@ static void not_ice_to_ice(void){
 static void ice_added_by_reinvite(void){
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	LinphoneNatPolicy *pol;
 	LinphoneCallParams *params;
 	LinphoneCall *c;
 	LinphoneProxyConfig *cfg;
@@ -438,17 +425,10 @@ static void ice_added_by_reinvite(void){
 	liblinphone_tester_check_rtcp(marie,pauline);
 
 	/*enable ICE on both ends*/
-	pol = linphone_core_get_nat_policy(marie->lc);
-	linphone_nat_policy_enable_ice(pol, TRUE);
-	linphone_nat_policy_enable_stun(pol, TRUE);
-	linphone_core_set_nat_policy(marie->lc, pol);
-
-	pol = linphone_core_get_nat_policy(pauline->lc);
-	linphone_nat_policy_enable_ice(pol, TRUE);
-	linphone_nat_policy_enable_stun(pol, TRUE);
-	linphone_core_set_nat_policy(pauline->lc, pol);
-
+	enable_stun_in_core(marie, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(marie);
+
+	enable_stun_in_core(pauline, TRUE);
 	linphone_core_manager_wait_for_stun_resolution(pauline);
 
 	c = linphone_core_get_current_call(marie->lc);
