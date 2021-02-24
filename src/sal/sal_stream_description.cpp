@@ -943,6 +943,50 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		}
 	}
 
+	if (salMediaDesc->supportCapabilityNegotiation()) {
+		for (const auto & acap : acaps) {
+			const auto & idx = acap.first;
+			const auto & nameValuePair = acap.second;
+			const auto & name = nameValuePair.first;
+			const auto & value = nameValuePair.second;
+			std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
+		}
+
+		for (const auto & tcap : tcaps) {
+			const auto & idx = tcap.first;
+			const auto & value = tcap.second;
+			std::string tcapValue = std::to_string(idx) + " " + value;
+			belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+		}
+
+		for (const auto & cfgPair : cfgs) {
+			const auto & cfg = cfgPair.second;
+			const auto & cfgSdpString = cfg.getSdpString();
+			if (!cfgSdpString.empty()) {
+				const auto & cfgIdx = cfg.index;
+				// Add acfg or pcfg attributes if not the actual configuration or if the actual configuration refer to a potential configuration (member index is not the actual configuration index)
+				std::string attrName;
+				const auto & cfgKey = cfgPair.first;
+				if (cfgKey != getActualConfigurationIndex()) {
+					attrName = "pcfg";
+				} else if (cfgKey == getActualConfigurationIndex() && (cfgIdx != getActualConfigurationIndex())) {
+					attrName = "acfg";
+				}
+				if (!attrName.empty()) {
+					const auto attrValue = std::to_string(cfgIdx) + " " + cfgSdpString;
+					belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),attrValue.c_str()));
+				}
+			}
+		}
+
+	}
+
+	return media_desc;
+}
+
+void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const {
+
 	/*
 	 * rfc5576
 	 * 4.1.  The "ssrc" Media Attribute
@@ -950,46 +994,6 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	 * source being described, interpreted as a 32-bit unsigned integer in
 	 * network byte order and represented in decimal.*/
 
-	for (const auto & acap : acaps) {
-		const auto & idx = acap.first;
-		const auto & nameValuePair = acap.second;
-		const auto & name = nameValuePair.first;
-		const auto & value = nameValuePair.second;
-		std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
-	}
-
-	for (const auto & tcap : tcaps) {
-		const auto & idx = tcap.first;
-		const auto & value = tcap.second;
-		std::string tcapValue = std::to_string(idx) + " " + value;
-		belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
-	}
-
-	for (const auto & cfgPair : cfgs) {
-		const auto & cfg = cfgPair.second;
-		const auto & cfgSdpString = cfg.getSdpString();
-		if (!cfgSdpString.empty()) {
-			const auto & cfgIdx = cfg.index;
-			// Add acfg or pcfg attributes if not the actual configuration or if the actual configuration refer to a potential configuration (member index is not the actual configuration index)
-			std::string attrName;
-			const auto & cfgKey = cfgPair.first;
-			if (cfgKey != getActualConfigurationIndex()) {
-				attrName = "pcfg";
-			} else if (cfgKey == getActualConfigurationIndex() && (cfgIdx != getActualConfigurationIndex())) {
-				attrName = "acfg";
-			}
-			if (!attrName.empty()) {
-				const auto attrValue = std::to_string(cfgIdx) + " " + cfgSdpString;
-				belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),attrValue.c_str()));
-			}
-		}
-	}
-
-	return media_desc;
-}
-
-void SalStreamDescription::addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const {
 	if ((cfg.proto == SalProtoUdpTlsRtpSavpf) || (cfg.proto == SalProtoUdpTlsRtpSavp)) {
 		char* ssrc_attribute = ms_strdup_printf("%u cname:%s",cfg.rtp_ssrc,L_STRING_TO_C(cfg.rtcp_cname));
 		if ((cfg.dtls_role != SalDtlsRoleInvalid) && (!cfg.dtls_fingerprint.empty())) {
