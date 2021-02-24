@@ -282,6 +282,8 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 					uint8_t zrtphash[128];
 					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
 					addAcapToStream(localMediaDesc, streamIndex, attrName, (const char *)zrtphash);
+				} else {
+					lInfo() << "Unable to find zrtp session for stream " << streamIndex;
 				}
 			}
 
