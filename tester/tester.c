@@ -2838,13 +2838,15 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(caller_mgr->lc)->number_of_stopRingbackTone, caller_mgr->stat.number_of_LinphoneCallOutgoingRinging, int, "%d");
 
 		if ((matched_enc == LinphoneMediaEncryptionDTLS) || (matched_enc == LinphoneMediaEncryptionZRTP)) {
-			wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_caller.number_of_LinphoneCallEncryptedOn+1);
-			wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1);
+			BC_ASSERT_TRUE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_caller.number_of_LinphoneCallEncryptedOn+1,10000));
+			BC_ASSERT_TRUE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallEncryptedOn,initial_callee.number_of_LinphoneCallEncryptedOn+1,10000));
 		}
 
-		const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(linphone_core_get_current_call(caller_mgr->lc));
+		caller_call = linphone_core_get_current_call(caller_mgr->lc);
+		const LinphoneCallParams* caller_call_param = linphone_call_get_current_params(caller_call);
 		const LinphoneMediaEncryption caller_enc = linphone_call_params_get_media_encryption(caller_call_param);
-		const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(linphone_core_get_current_call(callee_mgr->lc));
+		callee_call = linphone_core_get_current_call(callee_mgr->lc);
+		const LinphoneCallParams* callee_call_param = linphone_call_get_current_params(callee_call);
 		const LinphoneMediaEncryption callee_enc = linphone_call_params_get_media_encryption(callee_call_param);
 
 		// Ensure that encryption on both sides is the same
@@ -2852,24 +2854,39 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		BC_ASSERT_EQUAL(callee_enc,matched_enc, int, "%d");
 		BC_ASSERT_EQUAL(caller_enc,callee_enc, int, "%d");
 
+		if (matched_enc == LinphoneMediaEncryptionZRTP) {
+			const char * callee_token = linphone_call_get_authentication_token(callee_call);
+			const char * caller_token = linphone_call_get_authentication_token(caller_call);
+			BC_ASSERT_PTR_NOT_NULL(callee_token);
+			BC_ASSERT_PTR_NOT_NULL(caller_token);
+			if (caller_token && callee_token){
+				BC_ASSERT_STRING_EQUAL(callee_token, caller_token);
+				BC_ASSERT_TRUE(strlen(callee_token)>0);
+				BC_ASSERT_TRUE(strlen(caller_token)>0);
+			}
+		}
+
+		LinphoneNatPolicy * caller_policy = linphone_core_get_nat_policy(caller_mgr->lc);
+		LinphoneNatPolicy * callee_policy = linphone_core_get_nat_policy(callee_mgr->lc);
 		/*wait ice and/or capability negotiation re-invite*/
 		// If caller sets mandatory encryption, potential configurations are not added to the SDP as there is no choice to be made
-		if (!caller_mand_enc && caller_capability_enabled && callee_capability_enabled && (caller_local_enc != caller_enc)) {
+		if (!caller_mand_enc && caller_capability_enabled && callee_capability_enabled && (caller_local_enc != matched_enc)) {
 			// Capability negotiation re-invite
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
-		} else if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce
-				&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
+		} else if (linphone_nat_policy_ice_enabled(caller_policy)
+				&& linphone_nat_policy_ice_enabled(callee_policy)
 				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 				&& caller_enc != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
-		} else if (linphone_core_get_firewall_policy(caller_mgr->lc) == LinphonePolicyUseIce) {
+		} else if (linphone_nat_policy_ice_enabled(caller_policy)) {
 			/* check no ice re-invite received*/
 			BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2,2000));
 			BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2,2000));
 		}
+
 		if (caller_enc == LinphoneMediaEncryptionDTLS ) {
 			LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);
 			AudioStream *astream = (AudioStream *)linphone_call_get_stream(call, LinphoneStreamTypeAudio);
@@ -3472,4 +3489,38 @@ void set_lime_curve_list_tls(const int curveId, bctbx_list_t *managerList, bool_
 
 void set_lime_curve_list(const int curveId, bctbx_list_t *managerList) {
 	set_lime_curve_list_tls (curveId, managerList, FALSE, FALSE);
+}
+
+void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice) {
+	LinphoneCore * lc = mgr->lc;
+	LinphoneNatPolicy *nat_policy = linphone_core_get_nat_policy(lc);
+	char *stun_server = NULL;
+	char *stun_server_username = NULL;
+
+	if (nat_policy != NULL) {
+		nat_policy = linphone_nat_policy_ref(nat_policy);
+		stun_server = ms_strdup(linphone_nat_policy_get_stun_server(nat_policy));
+		stun_server_username = ms_strdup(linphone_nat_policy_get_stun_server_username(nat_policy));
+		linphone_nat_policy_clear(nat_policy);
+	} else {
+		nat_policy = linphone_core_create_nat_policy(lc);
+		stun_server = ms_strdup(linphone_core_get_stun_server(lc));
+	}
+
+	linphone_nat_policy_enable_stun(nat_policy, TRUE);
+
+	if (enable_ice) {
+		linphone_nat_policy_enable_stun(nat_policy, TRUE);
+	}
+
+	if (stun_server_username != NULL) {
+		linphone_nat_policy_set_stun_server_username(nat_policy, stun_server_username);
+		ms_free(stun_server_username);
+	}
+	if (stun_server != NULL) {
+		linphone_nat_policy_set_stun_server(nat_policy, stun_server);
+		ms_free(stun_server);
+	}
+	linphone_core_set_nat_policy(lc, nat_policy);
+	linphone_nat_policy_unref(nat_policy);
 }
