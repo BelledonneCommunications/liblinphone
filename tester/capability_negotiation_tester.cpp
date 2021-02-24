@@ -95,11 +95,6 @@ static bctbx_list_t * create_confg_encryption_preference_list_from_param_prefere
 static LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(const char * rc_file, const encryption_params enc_params, const bool_t enable_capability_negotiations, const bool_t enable_ice, const bool_t enable_video) {
 	LinphoneCoreManager* mgr = linphone_core_manager_new(rc_file);
 	linphone_core_set_support_capability_negotiation(mgr->lc, enable_capability_negotiations);
-	if (enable_ice){
-		LinphoneNatPolicy *pol = linphone_core_get_nat_policy(mgr->lc);
-		linphone_nat_policy_enable_ice(pol, TRUE);
-		linphone_core_set_nat_policy(mgr->lc, pol);
-	}
 
 	const LinphoneMediaEncryption encryption = enc_params.encryption;
 	if (linphone_core_media_encryption_supported(mgr->lc,encryption)) {
@@ -118,6 +113,7 @@ static LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(c
 		}
 	}
 
+#ifdef VIDEO_ENABLED
 	if (enable_video) {
 		// important: VP8 has really poor performances with the mire camera, at least
 		// on iOS - so when ever h264 is available, let's use it instead
@@ -136,6 +132,12 @@ static LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(c
 
 		linphone_core_enable_video_capture(mgr->lc, TRUE);
 		linphone_core_enable_video_display(mgr->lc, TRUE);
+	}
+#endif // VIDEO_ENABLED
+
+	if (enable_ice){
+		enable_stun_in_core(mgr, enable_ice);
+		linphone_core_manager_wait_for_stun_resolution(mgr);
 	}
 
 	return mgr;
@@ -346,7 +348,15 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		LinphoneCall * caller_call = linphone_core_get_current_call(caller->lc);
 		BC_ASSERT_PTR_NOT_NULL(caller_call);
 
-		if (enable_video) {
+		if (!enable_video) {
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
+			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
+
+			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
+			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
+		}
+#ifdef VIDEO_ENABLED
+		else {
 			nb_video_starts++;
 			stats caller_stat = caller->stat; 
 			stats callee_stat = callee->stat; 
@@ -409,13 +419,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 
 			liblinphone_tester_check_rtcp(caller, callee);
-		} else {
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(callee_call)));
-			BC_ASSERT_FALSE(linphone_call_params_video_enabled(linphone_call_get_current_params(caller_call)));
-
-			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
-			BC_ASSERT_FALSE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 		}
+#endif // VIDEO_ENABLED
 
 		BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, callee, caller, nb_audio_starts, nb_audio_starts));
 		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, callee, caller, nb_video_starts, nb_video_starts));
@@ -1534,10 +1539,10 @@ test_t capability_negotiation_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP call from endpoint with mandatory encryption to endpoint with optional", dtls_srtp_call_from_enc_to_opt_enc, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call from endpoint with optional encryption to endpoint with none", dtls_srtp_call_with_optional_encryption_on_caller, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call from endpoint with no encryption to endpoint with optional", dtls_srtp_call_with_optional_encryption_on_callee, "DTLS"),
-	TEST_ONE_TAG("DTLS SRTP ICE call with optional encryption on caller", dtls_srtp_ice_call_with_optional_encryption_on_caller, "ICE"),
-	TEST_ONE_TAG("DTLS SRTP ICE call with optional encryption on callee", dtls_srtp_ice_call_with_optional_encryption_on_callee, "ICE"),
 	TEST_ONE_TAG("DTLS SRTP call with optional encryption on both sides", dtls_srtp_call_with_optional_encryption_on_both_sides, "DTLS"),
-	TEST_ONE_TAG("DTLS ICE call with optional encryption on both sides", dtls_srtp_ice_call_with_optional_encryption_on_both_sides, "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on caller", dtls_srtp_ice_call_with_optional_encryption_on_caller, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on callee", dtls_srtp_ice_call_with_optional_encryption_on_callee, "ICE", "DTLS"),
+	TEST_TWO_TAGS("DTLS SRTP ICE call with optional encryption on both sides", dtls_srtp_ice_call_with_optional_encryption_on_both_sides, "ICE", "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with optional encryption (caller with ICE)", dtls_srtp_call_with_optional_encryption_caller_with_ice, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with optional encryption (callee with ICE)", dtls_srtp_call_with_optional_encryption_callee_with_ice, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on caller", dtls_srtp_video_call_with_optional_encryption_on_caller, "DTLS"),
