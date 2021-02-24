@@ -316,7 +316,7 @@ static bool_t linphone_ldap_contact_provider_iterate(void *data)
 		unsigned int i;
 
 		for( i=0; i<obj->req_count; i++){
-			LinphoneLDAPContactSearch* search = (LinphoneLDAPContactSearch*)bctbx_list_nth_data( obj->requests, i );
+			LinphoneLDAPContactSearch* search = (LinphoneLDAPContactSearch*)bctbx_list_nth_data( obj->requests, (int)i );
 			if( search && search->msgid == 0){
 				int ret;
 				ms_message("Found pending search %p (for %s), launching...", search, search->filter);
@@ -556,7 +556,7 @@ static int linphone_ldap_contact_provider_bind( LinphoneLDAPContactProvider* obj
 
 unsigned int linphone_ldap_contact_provider_get_max_result(const LinphoneLDAPContactProvider* obj)
 {
-	return obj->max_results;
+	return (unsigned int)obj->max_results;
 }
 
 static void linphone_ldap_contact_provider_config_dump_cb(const char*key, void* value, void* userdata)
@@ -641,7 +641,7 @@ static unsigned int linphone_ldap_contact_provider_cancel_search(LinphoneContact
 {
 	LinphoneLDAPContactSearch*  ldap_req = LINPHONE_LDAP_CONTACT_SEARCH(req);
 	LinphoneLDAPContactProvider* ldap_cp = LINPHONE_LDAP_CONTACT_PROVIDER(obj);
-	int ret = 1;
+	unsigned int ret = 1;
 
 	bctbx_list_t* list_entry = bctbx_list_find_custom(ldap_cp->requests, linphone_ldap_request_entry_compare_strong, req);
 	if( list_entry ) {
