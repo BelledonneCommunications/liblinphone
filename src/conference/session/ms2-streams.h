@@ -99,6 +99,7 @@ protected:
 	bool mMuted = false; /* to handle special cases where we want the audio to be muted - not related with linphone_core_enable_mic().*/
 	bool mDtlsStarted = false;
 private:
+	void fillPotentialCfgGraph(OfferAnswerContext & ctx);
 	void initRtpBundle(const OfferAnswerContext &params);
 	RtpBundle *createOrGetRtpBundle(const SalStreamDescription & sd);
 	void removeFromBundle();
@@ -109,11 +110,14 @@ private:
 	void configureRtpSession(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
 	void setupDtlsParams(MediaStream *ms);
+	void initDtlsParams(MediaStream *ms);
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
 	void configureRtpSessionForRtcpXr(const OfferAnswerContext &params);
 	void configureAdaptiveRateControl(const OfferAnswerContext &params);
 	void updateIceInStats(LinphoneIceState state);
 	void updateIceInStats();
+	void addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue);
+	bool encryptionFound(const SalStreamDescription::tcap_map_t & caps, const LinphoneMediaEncryption encEnum) const;
 	belle_sip_source_t *mTimer = nullptr;
 	IceCheckList *mIceCheckList = nullptr;
 	RtpBundle *mRtpBundle = nullptr;
@@ -287,6 +291,7 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual ~MS2RTTStream();
+
 private:
 	void realTimeTextCharacterReceived(MSFilter *f, unsigned int id, void *arg);
 	static void sRealTimeTextCharacterReceived(void *userData, MSFilter *f, unsigned int id, void *arg);

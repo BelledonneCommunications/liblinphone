@@ -260,6 +260,7 @@ public:
 	void destroyTimer(belle_sip_source_t *timer);
 
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
+	const std::list<LinphoneMediaEncryption> getSupportedMediaEncryptions() const;
 private:
 	Core ();
 

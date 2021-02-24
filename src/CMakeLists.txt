@@ -239,6 +239,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	sal/sal.h
 	sal/sal_stream_bundle.h
 	sal/sal_stream_description.h
+	sal/sal_stream_configuration.h
 	sal/sal_media_description.h
 	sal/offeranswer.h
 	search/magic-search-p.h
@@ -415,6 +416,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/sal.cpp
 	sal/sal_stream_bundle.cpp
 	sal/sal_stream_description.cpp
+	sal/sal_stream_configuration.cpp
 	sal/sal_media_description.cpp
 	sal/offeranswer.cpp
 	search/magic-search.cpp
