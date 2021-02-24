@@ -705,7 +705,7 @@ void SalMediaDescription::createPotentialConfigurationsForStream(const unsigned 
 				const auto cfgIdx = stream.getFreeCfgIdx();
 				stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
 			} else {
-				for (const auto & protoPair : tcaps) {
+				for (const auto & protoPair : allStreamTcaps) {
 					const SalStreamDescription::tcap_map_t proto{{protoPair}};
 					const auto cfgIdx = stream.getFreeCfgIdx();
 					stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
