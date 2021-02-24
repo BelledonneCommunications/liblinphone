@@ -1301,6 +1301,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	}
 
 	encList.push_back(getParams()->getMediaEncryption());
+	// Delete duplicates
 	encList.unique();
 
 	if (mainAudioStreamIndex != -1){
