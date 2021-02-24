@@ -91,20 +91,18 @@ void MediaSessionPrivate::stunAuthRequestedCb (void *userData, const char *realm
 
 LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const {
 	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
-	if (atLeastOneStreamStarted()) {
-		if (md->hasSrtp()) {
-			enc = LinphoneMediaEncryptionSRTP;
-		} else if (md->hasDtls()) {
-			enc = LinphoneMediaEncryptionDTLS;
-		} else if (md->hasZrtp()) {
-			enc = LinphoneMediaEncryptionZRTP;
-		} else {
-			enc = LinphoneMediaEncryptionNone;
-		}
+	if (md->hasSrtp()) {
+		enc = LinphoneMediaEncryptionSRTP;
+	} else if (md->hasDtls()) {
+		enc = LinphoneMediaEncryptionDTLS;
+	} else if (md->hasZrtp()) {
+		enc = LinphoneMediaEncryptionZRTP;
+	} else {
+		enc = LinphoneMediaEncryptionNone;
+	}
 
-		if (getParams()->getPrivate()->isMediaEncryptionSupported(enc)) {
-			return enc;
-		}
+	if (getParams()->getPrivate()->isMediaEncryptionSupported(enc)) {
+		return enc;
 	}
 
 	// Do not change encryption if no stream is started or at least one is not encrypted or chosen encryption is not supported
@@ -222,6 +220,7 @@ void MediaSessionPrivate::accepted () {
 					if (potentialConfigurationChosen) {
 						lInfo() << "Sending a reINVITE because the actual configuraton was not chosen in the capability negotiation procedure. Detected differences " << SalMediaDescription::printDifferences(diff);
 						MediaSessionParams newParams(*getParams());
+						newParams.getPrivate()->setInternalCallUpdate(true);
 						q->update(&newParams, true);
 					} else {
 						lInfo() << "Using actual configuration after capability negotiation procedure, hence no need to send a reINVITE";
@@ -1674,6 +1673,14 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	std::shared_ptr<SalMediaDescription> oldMd = resultDesc;
 	resultDesc = newMd;
 
+	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
+	if (q->isCapabilityNegotiationEnabled()) {
+		const auto & enc = getEncryptionFromMediaDescription(newMd);
+		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
+		// Change local parameters following results for negotiation. This will allow method to correctly create parameters for the reINVITE
+		getParams()->setMediaEncryption(enc);
+	}
+
 	OfferAnswerContext ctx;
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op->getRemoteMediaDescription();
@@ -1684,14 +1691,6 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	if ((state == CallSession::State::Pausing) && pausedByApp && (q->getCore()->getCallCount() == 1) && !isInLocalConference) {
 		q->getCore()->getPrivate()->getToneManager()->startNamedTone(q->getSharedFromThis(), LinphoneToneCallOnHold);
-	}
-
-	const auto & enc = getEncryptionFromMediaDescription(newMd);
-	// Capability negotiation may have changed the encryption of the streams hence call params must be updated
-	if (q->isCapabilityNegotiationEnabled()) {
-		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
-		// Change local parameters following results for negotiation. This will allow method 
-		getParams()->setMediaEncryption(enc);
 	}
 
 	updateFrozenPayloads(newMd);
