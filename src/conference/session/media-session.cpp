@@ -485,7 +485,7 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 			params->initDefault(q->getCore(), LinphoneCallOutgoing);
 		}
 
-		makeLocalMediaDescription((rmd == nullptr), false);
+		makeLocalMediaDescription((rmd == nullptr), q->isCapabilityNegotiationEnabled());
 	}
 	// Fix local parameter after creating new local media description
 	fixCallParams(rmd, true);
@@ -2130,7 +2130,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		getParams()->enableVideo(false);
 	}
 	updateRemoteSessionIdAndVer();
-	makeLocalMediaDescription(!isRemoteDescNull, (desc ? desc->supportCapabilityNegotiation() : q->isCapabilityNegotiationEnabled()));
+	makeLocalMediaDescription(!isRemoteDescNull, q->isCapabilityNegotiationEnabled());
 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
 		updateLocalMediaDescriptionFromIce(isRemoteDescNull);
@@ -2704,10 +2704,8 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
-		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled();
-		if (isCapabilityNegotiationUpdate) {
-			addCapabilityNegotiationAttributesToLocalMd = false;
-		}
+		// Add capability negotiation attributes if caapbility negotiation is enabled and it is not a reINVITE following conclusion of the capability negotiation procedure
+		bool addCapabilityNegotiationAttributesToLocalMd = isCapabilityNegotiationEnabled() && !isCapabilityNegotiationUpdate;
 		if (!d->getParams()->getPrivate()->getNoUserConsent())
 			d->makeLocalMediaDescription(true, addCapabilityNegotiationAttributesToLocalMd);
 
