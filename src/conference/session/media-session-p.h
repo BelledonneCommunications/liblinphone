@@ -132,6 +132,7 @@ public:
 	void setCurrentOutputAudioDevice(AudioDevice * audioDevice) {
 		if (currentOutputAudioDevice) {
 			currentOutputAudioDevice->unref();
+			currentOutputAudioDevice = nullptr;
 		}
 		currentOutputAudioDevice = audioDevice;
 		if (currentOutputAudioDevice) {
