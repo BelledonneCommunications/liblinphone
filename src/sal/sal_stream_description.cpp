@@ -336,9 +336,9 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 								cfg.haveZrtpHash = true;
 								const auto & capValue = capNameValue.second;
 								strncpy((char *)cfg.zrtphash, capValue.c_str(), capValue.size());
+								cfg.acapIndexes.push_back(cfgAcaps);
+								cfgList.push_back(cfg);
 							}
-							cfg.acapIndexes.push_back(cfgAcaps);
-							cfgList.push_back(cfg);
 						}
 					}
 						break;
@@ -361,8 +361,9 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 	}
 
 	for (const auto & cfg : cfgList) {
-		const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg](const auto & currentCfg) {
-			return (currentCfg.second == cfg);
+		const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg, this](const auto & currentCfg) {
+			// Only potential configurations should be parsed - it is allowed to add a potential configuration identical to the actual one
+			return ((currentCfg.first != getActualConfigurationIndex()) && (currentCfg.second == cfg));
 		});
 		if (sameCfg == cfgs.cend()) {
 			auto ret = cfgs.insert(std::make_pair(idx, cfg));
