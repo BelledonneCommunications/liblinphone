@@ -46,6 +46,17 @@ LINPHONE_BEGIN_NAMESPACE
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
 	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	// Activate Zrtp in case if put in the offer as a potential configuration
+	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
+		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
+		if (audioStream){
+			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
+			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+			// Since the zrtp session is now initialized, make sure it is retained for future use.
+		} else {
+			lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
+		}
+	}
 	initializeSessions(&mStream->ms);
 }
 
