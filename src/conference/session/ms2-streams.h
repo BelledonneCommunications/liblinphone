@@ -59,6 +59,8 @@ public:
 	virtual void iceStateChanged() override;
 	virtual void connectToMixer(StreamMixer *mixer) override;
 	virtual void disconnectFromMixer()override;
+
+	virtual void initZrtp() = 0;
 	
 	/* RtpInterface */
 	virtual bool avpfEnabled() const override;
@@ -146,6 +148,7 @@ public:
 	virtual void sessionConfirmed(const OfferAnswerContext &ctx) override;
 	virtual void stop() override;
 	virtual void finish() override;
+	virtual void initZrtp() override;
 	
 	/* AudioControlInterface */
 	virtual void enableMic(bool value) override;
@@ -199,6 +202,7 @@ private:
 	MSSndCard *mCurrentCaptureCard = nullptr;
 	MSSndCard *mCurrentPlaybackCard = nullptr;
 	belle_sip_source_t *mMediaLostCheckTimer = nullptr;
+	bool isOfferer = false;
 	bool mMicMuted = false;
 	bool mSpeakerMuted = false;
 	bool mRecordActive = false;
@@ -251,6 +255,7 @@ public:
 	virtual void stop() override;
 	virtual void finish() override;
 	virtual void tryEarlyMediaForking(const OfferAnswerContext &ctx) override;
+	virtual void initZrtp() override;
 	
 	virtual MediaStream *getMediaStream()const override;
 	virtual VideoStream *getVideoStream()const override;
@@ -290,6 +295,7 @@ public:
 	virtual void render(const OfferAnswerContext &ctx, CallSession::State targetState) override;
 	virtual void stop() override;
 	virtual void finish() override;
+	virtual void initZrtp() override;
 	virtual ~MS2RTTStream();
 
 private:
