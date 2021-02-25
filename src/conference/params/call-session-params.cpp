@@ -19,8 +19,10 @@
 
 #include "call-session-params-p.h"
 #include "call-session-params.h"
+#include "core/core-p.h"
 
 #include "linphone/proxy_config.h"
+#include "linphone/core.h"
 
 using namespace std;
 
@@ -35,6 +37,8 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	conferenceId = src->conferenceId;
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
+	capabilityNegotiation = src->capabilityNegotiation;
+	supportedEncryptions = src->supportedEncryptions;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
@@ -51,6 +55,29 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 }
 
 // -----------------------------------------------------------------------------
+
+bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
+	return capabilityNegotiation;
+}
+
+void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
+	capabilityNegotiation = enable;
+}
+
+bool CallSessionParamsPrivate::isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const {
+	const auto encEnumList = getSupportedEncryptions();
+	const auto foundIt = std::find(encEnumList.cbegin(), encEnumList.cend(), encryption);
+	return (foundIt != encEnumList.cend());
+}
+
+const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedEncryptions() const {
+	return supportedEncryptions;
+}
+
+void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions) {
+	supportedEncryptions = encryptions;
+}
+
 
 SalCustomHeader * CallSessionParamsPrivate::getCustomHeaders () const {
 	return customHeaders;
@@ -102,6 +129,8 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
 	d->inConference = false;
+	d->capabilityNegotiation = !!linphone_core_is_capability_negotiation_supported(core->getCCore());
+	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
 	setProxyConfig(NULL);
