@@ -213,7 +213,7 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 	
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
+	if (getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP)) {
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
 		uint8_t zrtphash[128];
@@ -254,8 +254,9 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 			if (dtlsEncryptionFound) {
 				const std::string fingerprintAttrName("fingerprint");
 
-				MediaStream *ms = getMediaStream();
-				if (!ms->sessions.dtls_context) {
+				// Create DTLS context if not found
+				if (!mSessions.dtls_context) {
+					MediaStream *ms = getMediaStream();
 					initDtlsParams (ms);
 					// Copy newly created dtls context into mSessions
 					media_stream_reclaim_sessions(ms, &mSessions);
@@ -277,6 +278,22 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 			// acap for ZRTP
 			const bool zrtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionZRTP);
 			if (zrtpEncryptionFound) {
+				// Create ZRTP context if not found
+				if (!mSessions.zrtp_context) {
+					MediaStream *ms = getMediaStream();
+					Stream *stream = getGroup().lookupMainStream(getType());
+					if (getType() == SalVideo) {
+
+						MS2VideoStream *msv = dynamic_cast<MS2VideoStream*>(stream);
+						msv->initZrtp();
+					} else if (getType() == SalAudio) {
+						MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
+						msa->initZrtp();
+					}
+					// Copy newly created dtls context into mSessions
+					media_stream_reclaim_sessions(ms, &mSessions);
+				}
+
 				if (mSessions.zrtp_context) {
 					const std::string attrName("zrtp-hash");
 					uint8_t zrtphash[128];
