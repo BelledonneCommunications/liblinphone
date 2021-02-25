@@ -180,6 +180,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 			return bundle_only;
 		}
 		void enableAvpfForStream();
+		void disableAvpfForStream();
 
 };
 
