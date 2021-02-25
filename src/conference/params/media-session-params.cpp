@@ -525,16 +525,7 @@ void MediaSessionParams::setMediaEncryption (LinphoneMediaEncryption encryption)
 // -----------------------------------------------------------------------------
 
 SalMediaProto MediaSessionParams::getMediaProto () const {
-	return getMediaProto(getMediaEncryption(), avpfEnabled());
-}
-
-SalMediaProto MediaSessionParams::getMediaProto (const LinphoneMediaEncryption mediaEnc, const bool avpf) const {
-	if ((mediaEnc == LinphoneMediaEncryptionSRTP) && avpf) return SalProtoRtpSavpf;
-	if (mediaEnc == LinphoneMediaEncryptionSRTP) return SalProtoRtpSavp;
-	if ((mediaEnc == LinphoneMediaEncryptionDTLS) && avpf) return SalProtoUdpTlsRtpSavpf;
-	if (mediaEnc == LinphoneMediaEncryptionDTLS) return SalProtoUdpTlsRtpSavp;
-	if (avpf) return SalProtoRtpAvpf;
-	return SalProtoRtpAvp;
+	return encryption_to_media_protocol(getMediaEncryption(), (avpfEnabled() ? TRUE : FALSE));
 }
 
 const char * MediaSessionParams::getRtpProfile () const {

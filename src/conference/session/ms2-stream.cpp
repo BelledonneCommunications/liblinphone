@@ -172,9 +172,10 @@ string MS2Stream::getBindIp(){
 	}
 	return bindIp;
 }
+
 bool MS2Stream::encryptionFound(const SalStreamDescription::tcap_map_t & caps, const LinphoneMediaEncryption encEnum) const {
 	const auto & it = std::find_if(caps.cbegin(), caps.cend(), [this, &encEnum] (const auto & cap) {
-		return (cap.second.compare(sal_media_proto_to_string(this->getMediaSessionPrivate().getParams()->getMediaProto(encEnum, this->getMediaSessionPrivate().getParams()->avpfEnabled()))) == 0);
+		return (cap.second.compare(sal_media_proto_to_string(encryption_to_media_protocol(encEnum, (this->getMediaSessionPrivate().getParams()->avpfEnabled() ? TRUE : FALSE)))) == 0);
 	});
 	return (it != caps.end());
 }
@@ -247,96 +248,100 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 		const auto & tcaps = localMediaDesc->getAllTcapForStream(streamIndex);
 
 		if (!tcaps.empty()) {
+			const auto & stream = localMediaDesc->getStreamIdx(streamIndex);
+			const auto & supportedEncs = stream.getSupportedEncryptionsInPotentialCfgs();
 
-			// Create acaps and cfgs for supported transport protocols using capability negotiation (RFC5939) attributes
-			// acap for DTLS
-			const bool dtlsEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionDTLS);
-			if (dtlsEncryptionFound) {
-				const std::string fingerprintAttrName("fingerprint");
+			for (const auto & enc : supportedEncs) {
 
-				// Create DTLS context if not found
-				if (!mSessions.dtls_context) {
-					MediaStream *ms = getMediaStream();
-					initDtlsParams (ms);
-					// Copy newly created dtls context into mSessions
-					media_stream_reclaim_sessions(ms, &mSessions);
-				}
-				addAcapToStream(localMediaDesc, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
+				// Create acaps and cfgs for supported transport protocols using capability negotiation (RFC5939) attributes
+				const bool found = encryptionFound(tcaps, enc);
 
-				const std::string ssrcAttrName("ssrc");
-				const auto rtpSsrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
-				const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
-				const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
-				addAcapToStream(localMediaDesc, streamIndex, ssrcAttrName, ssrcAttribute);
+				if (found) {
+					if (enc == LinphoneMediaEncryptionDTLS) {
+						// acap for DTLS
+						const std::string fingerprintAttrName("fingerprint");
 
-				const std::string setupAttrName("setup");
-				/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
-				const std::string setupAttribute = "actpass";
-				addAcapToStream(localMediaDesc, streamIndex, setupAttrName, setupAttribute);
-			}
+						// Create DTLS context if not found
+						if (!mSessions.dtls_context) {
+							MediaStream *ms = getMediaStream();
+							initDtlsParams (ms);
+							// Copy newly created dtls context into mSessions
+							media_stream_reclaim_sessions(ms, &mSessions);
+						}
+						addAcapToStream(localMediaDesc, streamIndex, fingerprintAttrName, mDtlsFingerPrint);
 
-			// acap for ZRTP
-			const bool zrtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionZRTP);
-			if (zrtpEncryptionFound) {
-				// Create ZRTP context if not found
-				if (!mSessions.zrtp_context) {
-					MediaStream *ms = getMediaStream();
-					Stream *stream = getGroup().lookupMainStream(getType());
-					if (getType() == SalVideo) {
+						const std::string ssrcAttrName("ssrc");
+						const auto rtpSsrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
+						const auto rtcpCname = getMediaSessionPrivate().getMe()->getAddress().asString();
+						const std::string ssrcAttribute = std::to_string(rtpSsrc) + " cname:" + rtcpCname;
+						addAcapToStream(localMediaDesc, streamIndex, ssrcAttrName, ssrcAttribute);
 
-						MS2VideoStream *msv = dynamic_cast<MS2VideoStream*>(stream);
-						msv->initZrtp();
-					} else if (getType() == SalAudio) {
-						MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
-						msa->initZrtp();
-					}
-					// Copy newly created dtls context into mSessions
-					media_stream_reclaim_sessions(ms, &mSessions);
-				}
+						const std::string setupAttrName("setup");
+						/* If we are offering, SDP will have actpass setup attribute when role is unset, if we are responding the result mediadescription will be set to SalDtlsRoleIsClient */
+						const std::string setupAttribute = "actpass";
+						addAcapToStream(localMediaDesc, streamIndex, setupAttrName, setupAttribute);
+					} else if (enc == LinphoneMediaEncryptionZRTP) {
+						// acap for ZRTP
+						// Create ZRTP context if not found
+						if (!mSessions.zrtp_context) {
+							MediaStream *ms = getMediaStream();
+							Stream *stream = getGroup().lookupMainStream(getType());
+							if (getType() == SalVideo) {
 
-				if (mSessions.zrtp_context) {
-					const std::string attrName("zrtp-hash");
-					uint8_t zrtphash[128];
-					ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
-					addAcapToStream(localMediaDesc, streamIndex, attrName, (const char *)zrtphash);
-				} else {
-					lInfo() << "Unable to find zrtp session for stream " << streamIndex;
-				}
-			}
+								MS2VideoStream *msv = dynamic_cast<MS2VideoStream*>(stream);
+								msv->initZrtp();
+							} else if (getType() == SalAudio) {
+								MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
+								msa->initZrtp();
+							}
+							// Copy newly created dtls context into mSessions
+							media_stream_reclaim_sessions(ms, &mSessions);
+						}
 
-			// acap for SRTP
-			const bool srtpEncryptionFound = encryptionFound(tcaps, LinphoneMediaEncryptionSRTP);
-			if (srtpEncryptionFound) {
-				const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(getCCore());
-				const std::string attrName("crypto");
-				for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-					SalSrtpCryptoAlgo crypto;
-					getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
-					MSCryptoSuiteNameParams desc;
-					if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
-						const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
-						const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
-							const auto & nameValuePair = cap.second;
-							const auto & name = nameValuePair.first;
-							const auto & value = nameValuePair.second;
-							return ((name.compare(attrName) == 0) && (value.find(desc.name) != std::string::npos));
-						});
-						char attrValue[128];
-						if (desc.params) {
-							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
+						if (mSessions.zrtp_context) {
+							const std::string attrName("zrtp-hash");
+							uint8_t zrtphash[128];
+							ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
+							addAcapToStream(localMediaDesc, streamIndex, attrName, (const char *)zrtphash);
 						} else {
-							snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
+							lInfo() << "Unable to find zrtp session for stream " << streamIndex;
 						}
-						// Do not add duplicates acaps
-						if (nameValueMatch == acaps.cend()) {
-							addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
+					} else if (enc == LinphoneMediaEncryptionSRTP) {
+						// acap for SRTP
+						const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(getCCore());
+						const std::string attrName("crypto");
+						for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+							SalSrtpCryptoAlgo crypto;
+							getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
+							MSCryptoSuiteNameParams desc;
+							if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
+								const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
+								const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
+									const auto & nameValuePair = cap.second;
+									const auto & name = nameValuePair.first;
+									const auto & value = nameValuePair.second;
+									return ((name.compare(attrName) == 0) && (value.find(desc.name) != std::string::npos));
+								});
+								char attrValue[128];
+								if (desc.params) {
+									snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
+								} else {
+									snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
+								}
+								// Do not add duplicates acaps
+								if (nameValueMatch == acaps.cend()) {
+									addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
+								}
+							} else {
+								lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
+							}
 						}
-					} else {
-						lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
+					} else if (enc == LinphoneMediaEncryptionNone) {
+						lInfo() << "No acap to add to stream description for encryption " << linphone_media_encryption_to_string(enc);
 					}
 				}
-			}
 
+			}
 			localMediaDesc->createPotentialConfigurationsForStream(streamIndex, false, false);
 		}
 	}

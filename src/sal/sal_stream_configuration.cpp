@@ -368,6 +368,12 @@ void SalStreamConfiguration::enableAvpfForStream() {
 	}
 }
 
+void SalStreamConfiguration::disableAvpfForStream() {
+	for (auto & pt : payloads) {
+		payload_type_unset_flag(pt, PAYLOAD_TYPE_RTCP_FEEDBACK_ENABLED);
+	}
+}
+
 void SalStreamConfiguration::mergeAcaps(const std::list<std::list<unsigned int>> & acaps) {
 	// Avoid adding duplicates
 	for (const auto & newIdxs : acaps) {
