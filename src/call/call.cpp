@@ -657,8 +657,13 @@ void Call::onTmmbrReceived (const shared_ptr<CallSession> &session, int streamIn
 	linphone_call_notify_tmmbr_received(this->toC(), streamIndex, tmmbr);
 }
 
+
 void Call::onSnapshotTaken(const shared_ptr<CallSession> &session, const char *file_path) {
-	linphone_call_notify_snapshot_taken(this->toC(), file_path);
+	char* file = ms_strdup((const char*)file_path);
+	getCore()->doLater([this, file](){
+		linphone_call_notify_snapshot_taken(this->toC(), file);
+		ms_free(file);
+	});
 }
 
 // =============================================================================
