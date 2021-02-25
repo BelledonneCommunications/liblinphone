@@ -127,6 +127,9 @@ void MS2RTTStream::handleEvent(const OrtpEvent *ev){
 }
 
 
+void MS2RTTStream::initZrtp() {
+
+}
 
 
 LINPHONE_END_NAMESPACE

@@ -46,17 +46,6 @@ LINPHONE_BEGIN_NAMESPACE
 MS2VideoStream::MS2VideoStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params), MS2VideoControl(sg.getCore()) {
 	string bindIp = getBindIp();
 	mStream = video_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
-	// Activate Zrtp in case if put in the offer as a potential configuration
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
-		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
-		if (audioStream){
-			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
-			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
-			// Since the zrtp session is now initialized, make sure it is retained for future use.
-		} else {
-			lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
-		}
-	}
 	initializeSessions(&mStream->ms);
 }
 
@@ -141,17 +130,30 @@ MSWebCam *MS2VideoStream::getVideoDevice()const{
 	
 }
 
+void MS2VideoStream::initZrtp() {
+	Stream *audioStream = getGroup().lookupMainStream(SalAudio);
+	if (audioStream){
+		MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
+		video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+	} else {
+		lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
+	}
+
+}
+
 void MS2VideoStream::activateZrtp(){
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
-		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
-		if (audioStream){
-			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
-			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+
+		if (!mSessions.zrtp_context) {
+			initZrtp();
+		}
+
+		if (mSessions.zrtp_context) {
 			// Since the zrtp session is now initialized, make sure it is retained for future use.
 			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
 			video_stream_start_zrtp(mStream);
 		}else{
-			lError() << "Error while enabling zrtp on video stream: the audio stream isn't known. This is unsupported.";
+			lError() << "Error while enabling zrtp on video stream: ZRTP context is NULL";
 		}
 	}
 }
