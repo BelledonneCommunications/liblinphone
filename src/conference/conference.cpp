@@ -182,6 +182,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 		}
 	}
 
+	lInfo() << "Unable to find participant in conference " << this << " with address " << addr.asString();
 	return nullptr;
 }
 
@@ -191,6 +192,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 		if (participant->getSession() == session)
 			return participant;
 	}
+	lInfo() << "Unable to find participant in conference " << this << " with call session " << session;
 
 	return nullptr;
 }
@@ -203,6 +205,8 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 				return device;
 		}
 	}
+
+	lInfo() << "Unable to find participant device in conference " << this << " with call session " << session;
 
 	return nullptr;
 }

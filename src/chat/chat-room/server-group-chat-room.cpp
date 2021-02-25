@@ -1263,6 +1263,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const shared_ptr<c
 		if (device || (participant->getSession() == session))
 			return participant;
 	}
+	lInfo() << "Unable to find participant in server group chat room " << this << " with call session " << session;
 	return nullptr;
 }
 
@@ -1273,6 +1274,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddr
 		if (participant->getAddress() == searchedAddr)
 			return participant;
 	}
+	lInfo() << "Unable to find participant in server group chat room " << this << " with address " << participantAddress.asString();
 	return nullptr;
 }
 
