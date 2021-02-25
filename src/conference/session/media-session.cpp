@@ -1301,11 +1301,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	emptyList.clear();
 
 	auto encList = q->getSupportedEncryptions();
+	// Delete duplicates
+	encList.unique();
 	// Do not add capability negotiation attributes if encryption is mandatory
 	const bool addCapabilityNegotiationAttributes = supportsCapabilityNegotiationAttributes && !linphone_core_is_media_encryption_mandatory(core);
 	if (addCapabilityNegotiationAttributes) {
 		for (const auto & enc : encList) {
-			const std::string mediaProto(sal_media_proto_to_string(getParams()->getMediaProto(enc, getParams()->avpfEnabled())));
+			const std::string mediaProto(sal_media_proto_to_string(encryption_to_media_protocol(enc, (getParams()->avpfEnabled() ? TRUE : FALSE))));
 			const auto & idx = md->getFreeTcapIdx();
 
 			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
@@ -1314,8 +1316,6 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	}
 
 	encList.push_back(getParams()->getMediaEncryption());
-	// Delete duplicates
-	encList.unique();
 
 	if (mainAudioStreamIndex != -1){
 		size_t audioStreamIndex = static_cast<size_t>(mainAudioStreamIndex);
