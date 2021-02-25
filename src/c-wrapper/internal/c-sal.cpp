@@ -133,6 +133,22 @@ SalMediaProto string_to_sal_media_proto(const char *type) {
 	else return SalProtoOther;
 }
 
+SalMediaProto encryption_to_media_protocol (const LinphoneMediaEncryption media_enc, const bool_t avpf) {
+	if ((media_enc == LinphoneMediaEncryptionSRTP) && avpf) return SalProtoRtpSavpf;
+	if (media_enc == LinphoneMediaEncryptionSRTP) return SalProtoRtpSavp;
+	if ((media_enc == LinphoneMediaEncryptionDTLS) && avpf) return SalProtoUdpTlsRtpSavpf;
+	if (media_enc == LinphoneMediaEncryptionDTLS) return SalProtoUdpTlsRtpSavp;
+	if (avpf) return SalProtoRtpAvpf;
+	return SalProtoRtpAvp;
+}
+
+LinphoneMediaEncryption media_protocol_to_encryption (const SalMediaProto proto, const bool_t haveZrtpHash) {
+	if ((proto == SalProtoRtpSavpf) || (proto == SalProtoRtpSavp)) return LinphoneMediaEncryptionSRTP;
+	if ((proto == SalProtoUdpTlsRtpSavpf) || (proto == SalProtoUdpTlsRtpSavp)) return LinphoneMediaEncryptionDTLS;
+	if (haveZrtpHash) return LinphoneMediaEncryptionZRTP;
+	return LinphoneMediaEncryptionNone;
+}
+
 const char* sal_stream_dir_to_string(SalStreamDir type) {
 	switch (type) {
 	case SalStreamSendRecv:return "sendrecv";
