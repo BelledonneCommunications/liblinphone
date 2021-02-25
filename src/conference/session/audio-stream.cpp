@@ -48,39 +48,44 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = mPortConfig.multicastIp.empty() ? getBindIp() : mPortConfig.multicastIp;
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	isOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
 	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
-		LinphoneCallLog *log = getMediaSession().getLog();
-		const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
-		const LinphoneAddress *selfAddr = linphone_call_log_get_local_address(log);
-		char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
-													, linphone_address_get_username(peerAddr)
-													, linphone_address_get_domain(peerAddr));
-		char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
-													, linphone_address_get_username(selfAddr)
-													, linphone_address_get_domain(selfAddr));
-
-		MSZrtpParams zrtpParams;
-		zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());
-
-		memset(&zrtpParams, 0, sizeof(MSZrtpParams));
-		/* media encryption of current params will be set later when zrtp is activated */
-		zrtpParams.zidCacheDB = zrtpCacheInfo.db;
-		zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
-		zrtpParams.peerUri = peerUri;
-		zrtpParams.selfUri = selfUri;
-		/* Get key lifespan from config file, default is 0:forever valid */
-		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-		setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
-		audio_stream_enable_zrtp(mStream, &zrtpParams);
-		if (peerUri)
-			ms_free(peerUri);
-		if (selfUri)
-			ms_free(selfUri);
+		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
+}
+
+void MS2AudioStream::initZrtp() {
+	LinphoneCallLog *log = getMediaSession().getLog();
+	const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
+	const LinphoneAddress *selfAddr = linphone_call_log_get_local_address(log);
+	char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
+												, linphone_address_get_username(peerAddr)
+												, linphone_address_get_domain(peerAddr));
+	char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
+												, linphone_address_get_username(selfAddr)
+												, linphone_address_get_domain(selfAddr));
+
+	MSZrtpParams zrtpParams;
+	zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());
+
+	memset(&zrtpParams, 0, sizeof(MSZrtpParams));
+	/* media encryption of current params will be set later when zrtp is activated */
+	zrtpParams.zidCacheDB = zrtpCacheInfo.db;
+	zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
+	zrtpParams.peerUri = peerUri;
+	zrtpParams.selfUri = selfUri;
+	/* Get key lifespan from config file, default is 0:forever valid */
+	zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
+	setZrtpCryptoTypesParameters(&zrtpParams, isOfferer);
+	audio_stream_enable_zrtp(mStream, &zrtpParams);
+	if (peerUri)
+		ms_free(peerUri);
+	if (selfUri)
+		ms_free(selfUri);
 }
 
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
