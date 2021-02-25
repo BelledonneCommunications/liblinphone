@@ -35,6 +35,7 @@
 #include "belle-sip/belle-sip.h"
 #include "bctoolbox/map.h"
 #include "bctoolbox/crypto.h"
+#include "linphone/types.h"
 
 #ifndef LINPHONE_PUBLIC
 #if defined(_MSC_VER)
@@ -196,6 +197,8 @@ extern "C" {
 const char* sal_stream_type_to_string(SalStreamType type);
 const char* sal_media_proto_to_string(SalMediaProto type);
 SalMediaProto string_to_sal_media_proto(const char *type);
+SalMediaProto encryption_to_media_protocol (const LinphoneMediaEncryption media_enc, const bool_t avpf);
+LinphoneMediaEncryption media_protocol_to_encryption (const SalMediaProto proto, const bool_t haveZrtpHash);
 const char* sal_stream_dir_to_string(SalStreamDir type);
 
 #ifdef __cplusplus

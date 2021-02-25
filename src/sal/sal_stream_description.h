@@ -71,6 +71,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
 
 		static bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type actualConfigurationIndex;
+		static const tcap_map_t::value_type & encryptionToTcap(const tcap_map_t & caps, const LinphoneMediaEncryption encEnum, const bool avpf);
 
 		SalStreamDescription();
 		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
@@ -119,6 +120,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const int & getRtpPort() const;
 		const std::list<PayloadType*> & getPayloads() const;
 		const std::list<LinphoneMediaEncryption> & getSupportedEncryptions() const;
+		const std::list<LinphoneMediaEncryption> getSupportedEncryptionsInPotentialCfgs() const;
 		bool isBundleOnly() const;
 
 		const SalStreamType & getType() const;
@@ -171,6 +173,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
+		void addSupportedEncryptionFromSdp(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList);
 
 		// Potential configurations
 		void fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs);
@@ -203,6 +206,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		int globalEqual(const SalStreamDescription & other) const;
 		int compareConfigurations(const SalStreamDescription & other, const SalStreamDescription::cfg_map::key_type & thisKey, const SalStreamDescription::cfg_map::key_type & otherKey) const;
+
 };
 
 LINPHONE_END_NAMESPACE
