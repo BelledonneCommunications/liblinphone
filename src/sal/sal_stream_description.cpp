@@ -1428,7 +1428,7 @@ const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(con
 		const auto & cfg = cfgs.at(index);
 		return cfg;
 	} catch (std::out_of_range&) {
-		lError() << "Unable to configuration at index " << index << " in the available configuration map";
+		lError() << "Unable to find configuration at index " << index << " in the available configuration map";
 		return Utils::getEmptyConstRefObject<SalStreamConfiguration>();
 	}
 }
