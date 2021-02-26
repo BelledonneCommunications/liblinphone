@@ -308,9 +308,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			potentialConfigurationChosen = false;
 		}
 
-		unsigned int nb_audio_starts = 1;
-		unsigned int nb_video_starts = 0;
-
 		LinphoneNatPolicy *caller_nat_policy = linphone_core_get_nat_policy(caller->lc);
 		const bool_t caller_ice_enabled = linphone_nat_policy_ice_enabled(caller_nat_policy);
 		LinphoneNatPolicy *callee_nat_policy = linphone_core_get_nat_policy(callee->lc);
@@ -339,9 +336,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
 		}
 
-		BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, callee, caller, nb_audio_starts, nb_audio_starts));
-		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, callee, caller, nb_video_starts, nb_video_starts));
-
 		LinphoneCall * callee_call = linphone_core_get_current_call(callee->lc);
 		BC_ASSERT_PTR_NOT_NULL(callee_call);
 
@@ -357,7 +351,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		}
 #ifdef VIDEO_ENABLED
 		else {
-			nb_video_starts++;
 			stats caller_stat = caller->stat; 
 			stats callee_stat = callee->stat; 
 			LinphoneCallParams * params = linphone_core_create_call_params(callee->lc, callee_call);
@@ -421,9 +414,6 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			liblinphone_tester_check_rtcp(caller, callee);
 		}
 #endif // VIDEO_ENABLED
-
-		BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, callee, caller, nb_audio_starts, nb_audio_starts));
-		BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, callee, caller, nb_video_starts, nb_video_starts));
 
 		// Check that encryption has not changed after sending update
 		if (callerCall) {
