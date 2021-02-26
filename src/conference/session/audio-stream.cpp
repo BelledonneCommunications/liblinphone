@@ -52,7 +52,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
 	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
+	if (getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP)) {
 		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
