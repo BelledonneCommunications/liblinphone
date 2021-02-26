@@ -272,6 +272,7 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
