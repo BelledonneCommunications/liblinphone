@@ -21,6 +21,7 @@
 
 #include <belr/abnf.h>
 #include <belr/grammarbuilder.h>
+#include "bctoolbox/utils.hh"
 
 #include "linphone/utils/utils.h"
 
@@ -108,7 +109,7 @@ namespace Cpim {
 		shared_ptr<GenericHeader> genericHeader = make_shared<GenericHeader>();
 		genericHeader->setName(mName);
 
-		for (const auto &parameter : Utils::split(mParameters, ';')) {
+		for (const auto &parameter : bctoolbox::Utils::split(mParameters, ';')) {
 			size_t equalIndex = parameter.find('=');
 			if (equalIndex != string::npos)
 				genericHeader->addParameter(parameter.substr(0, equalIndex), parameter.substr(equalIndex + 1));

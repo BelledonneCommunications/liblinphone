@@ -319,6 +319,7 @@ int ConferenceAddress::compareUriParams (const bctbx_map_t* otherUriParamMap) co
 			diff = -1;
 		}
 
+		bctbx_iterator_cchar_delete(otherIt);
 		thisIt = bctbx_iterator_cchar_get_next(thisIt);
 	}
 

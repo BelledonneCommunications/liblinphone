@@ -1597,10 +1597,12 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
 	if (callee_with_ice){
-		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
 	}
 	if (caller_with_ice){
-		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+		enable_stun_in_core(pauline, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 
 	if (random_ports){
@@ -2740,8 +2742,10 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 			belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
 		}
 
-		linphone_core_set_firewall_policy(marie->lc,policy);
-		linphone_core_set_firewall_policy(pauline->lc,policy);
+		if (policy == LinphonePolicyUseIce) {
+			enable_stun_in_core(marie, TRUE);
+			enable_stun_in_core(pauline, TRUE);
+		}
 
 		BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 		if (!call_ok) goto end;
@@ -3846,7 +3850,8 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 	lcs = bctbx_list_append(lcs,marie->lc);
 	lcs = bctbx_list_append(lcs,pauline->lc);
 	if (use_ice){
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
@@ -4864,8 +4869,12 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 	if (with_ice){
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
-		linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
+
+		enable_stun_in_core(pauline, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 	if (!with_ice_reinvite) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);
