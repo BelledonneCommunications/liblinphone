@@ -132,6 +132,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const int & getMaxRate() const;
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
 
+		const std::string & getIceUfrag() const;
+		const std::string & getIcePwd() const;
+		bool getIceMismatch() const;
+		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
+		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
+
 		const cfg_map getAllCfgs() const;
 
 		void setZrtpHash(const uint8_t enable, uint8_t* zrtphash = NULL);
@@ -164,6 +170,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	private:
 
 		mutable bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
+
+		std::vector<SalIceCandidate> ice_candidates;
+		std::vector<SalIceRemoteCandidate> ice_remote_candidates;
+		std::string ice_ufrag;
+		std::string ice_pwd;
+		bool ice_mismatch = false;
 
 		cfg_map cfgs;
 		acap_map_t acaps;
