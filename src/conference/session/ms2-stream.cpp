@@ -288,8 +288,10 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 							Stream *stream = getGroup().lookupMainStream(getType());
 							if (getType() == SalVideo) {
 
+#ifdef VIDEO_ENABLED
 								MS2VideoStream *msv = dynamic_cast<MS2VideoStream*>(stream);
 								msv->initZrtp();
+#endif // VIDEO_ENABLED
 							} else if (getType() == SalAudio) {
 								MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
 								msa->initZrtp();
