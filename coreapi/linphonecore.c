@@ -5276,7 +5276,7 @@ LinphoneStatus linphone_core_take_preview_snapshot(LinphoneCore *lc, const char 
 			lc->previewstream->ms.factory = lc->factory;
 			linphone_core_enable_video_preview(lc, TRUE);
 
-			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, TRUE);
+			ms_filter_add_notify_callback(lc->previewstream->local_jpegwriter, video_filter_callback, lc, FALSE);
 			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
 		} else {
 			ms_filter_call_method(lc->previewstream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void*)file);
@@ -5322,7 +5322,7 @@ static void toggle_video_preview(LinphoneCore *lc, bool_t val){
 			}
 			video_preview_start(lc->previewstream, lc->video_conf.device);
 			if (video_preview_qrcode_enabled(lc->previewstream)) {
-				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, TRUE);
+				ms_filter_add_notify_callback(lc->previewstream->qrcode, video_filter_callback, lc, FALSE);
 			}
 			video_stream_set_event_callback(lc->previewstream, video_stream_callback, lc);
 		}
