@@ -40,6 +40,11 @@ bool IceService::isActive() const{
 	return mIceSession != nullptr;
 }
 
+bool IceService::isRunning() const{
+	if (!isActive()) return false; // No running because it is not active
+	return ice_session_state(mIceSession) == IS_Running;
+}
+
 bool IceService::hasCompleted() const{
 	if (!isActive()) return true; // Completed because nothing to do.
 	return ice_session_state(mIceSession) == IS_Completed;
@@ -497,6 +502,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 
 		stream.ice_mismatch = ice_check_list_is_mismatch(cl);
 		if ((ice_check_list_state(cl) == ICL_Running) || (ice_check_list_state(cl) == ICL_Completed)) {
+			stream.ice_candidates.clear();
 			for (int j = 0; j < (int)bctbx_list_size(cl->local_candidates); j++) {
 				IceCandidate *iceCandidate = reinterpret_cast<IceCandidate *>(bctbx_list_nth_data(cl->local_candidates, j));
 				std::string defaultAddr = std::string();
@@ -535,7 +541,7 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 			}
 		}
 		if ((ice_check_list_state(cl) == ICL_Completed) && (ice_session_role(mIceSession) == IR_Controlling)) {
-			std::vector<SalIceRemoteCandidate> ice_remote_candidates;
+			stream.ice_remote_candidates.clear();
 			if (ice_check_list_selected_valid_remote_candidate(cl, &rtpCandidate, &rtcpCandidate)) {
 				SalIceRemoteCandidate rtp_remote_candidate;
 				rtp_remote_candidate.addr = L_C_TO_STRING(rtpCandidate->taddr.ip);
