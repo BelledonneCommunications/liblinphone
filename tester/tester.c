@@ -3370,7 +3370,7 @@ void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice) {
 	linphone_nat_policy_enable_stun(nat_policy, TRUE);
 
 	if (enable_ice) {
-		linphone_nat_policy_enable_stun(nat_policy, TRUE);
+		linphone_nat_policy_enable_ice(nat_policy, TRUE);
 	}
 
 	if (stun_server_username != NULL) {
