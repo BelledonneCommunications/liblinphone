@@ -2783,7 +2783,9 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 
 		if (policy == LinphonePolicyUseIce) {
 			enable_stun_in_core(marie, TRUE);
+			linphone_core_manager_wait_for_stun_resolution(marie);
 			enable_stun_in_core(pauline, TRUE);
+			linphone_core_manager_wait_for_stun_resolution(pauline);
 		}
 
 		BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
