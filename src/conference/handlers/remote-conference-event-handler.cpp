@@ -150,7 +150,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			} else {
 				conf->participants.remove(participant);
 
-				if (!isFullState) {
+				if (!isFullState && participant) {
 					conf->notifyParticipantRemoved(
 						creationTime,
 						isFullState,
@@ -227,7 +227,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 					shared_ptr<ParticipantDevice> device = participant->findDevice(gruu);
 					participant->removeDevice(gruu);
 
-					if (!isFullState) {
+					if (!isFullState && device && participant) {
 						conf->notifyParticipantDeviceRemoved(
 							creationTime,
 							isFullState,

@@ -89,6 +89,7 @@ shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gr
 		if (device->getAddress() == gruu)
 			return device;
 	}
+	lInfo() << "Unable to find device with address " << gruu.asString();
 	return nullptr;
 }
 
