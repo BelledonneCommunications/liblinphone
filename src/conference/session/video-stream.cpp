@@ -470,7 +470,7 @@ int MS2VideoStream::takePreviewSnapshot (const string& file) {
 	if (mStream && mStream->local_jpegwriter) {
 		ms_filter_clear_notify_callback(mStream->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(mStream->local_jpegwriter, sSnapshotTakenCb, this, TRUE);
+		ms_filter_add_notify_callback(mStream->local_jpegwriter, sSnapshotTakenCb, this, FALSE);
 		return ms_filter_call_method(mStream->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take local snapshot: no currently running video stream on this call";
@@ -481,7 +481,7 @@ int MS2VideoStream::takeVideoSnapshot (const string& file) {
 	if (mStream && mStream->jpegwriter) {
 		ms_filter_clear_notify_callback(mStream->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(mStream->jpegwriter, sSnapshotTakenCb, this, TRUE);
+		ms_filter_add_notify_callback(mStream->jpegwriter, sSnapshotTakenCb, this, FALSE);
 		return ms_filter_call_method(mStream->jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take snapshot: no currently running video stream on this call";
