@@ -292,7 +292,6 @@ bool StreamsGroup::allStreamsEncrypted () const {
 	return activeStreamsCount > 0;
 }
 
-
 void StreamsGroup::propagateEncryptionChanged () {
 	getMediaSessionPrivate().propagateEncryptionChanged();
 }
