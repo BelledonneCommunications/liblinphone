@@ -375,6 +375,15 @@ void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *msg, cons
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
 }
 
+void linphone_chat_message_add_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
+	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+	LinphonePrivate::Content *cppContent = new LinphonePrivate::Content();
+	cppContent->setContentType(content->getContentType());
+	cppContent->setBody(content->getBody());
+	cppContent->setUserData(content->getUserData());
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(cppContent);
+}
+
 void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneContent *content) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->removeContent(L_GET_CPP_PTR_FROM_C_OBJECT(content));
 }
