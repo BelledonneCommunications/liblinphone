@@ -579,6 +579,13 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 
 	unsigned int remoteCfgIdx = remote_offer.getActualConfigurationIndex();
 	unsigned int localCfgIdx = local_cap.getActualConfigurationIndex();
+
+	result.ice_pwd = local_cap.ice_pwd;
+	result.ice_ufrag = local_cap.ice_ufrag;
+	result.ice_mismatch = local_cap.ice_mismatch;
+	result.ice_candidates = local_cap.ice_candidates;
+	result.ice_remote_candidates = local_cap.ice_remote_candidates;
+
 	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
 	if (allowCapabilityNegotiation) {
 		for (const auto & remoteCfg : remote_offer.getAllCfgs()) {
@@ -702,12 +709,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		return std::make_pair(resultCfg, success);
 	}
 
-	resultCfg.ice_pwd = localCfg.ice_pwd;
-	resultCfg.ice_ufrag = localCfg.ice_ufrag;
-	resultCfg.ice_mismatch = localCfg.ice_mismatch;
 	resultCfg.set_nortpproxy = localCfg.set_nortpproxy;
-	resultCfg.ice_candidates = localCfg.ice_candidates;
-	resultCfg.ice_remote_candidates = localCfg.ice_remote_candidates;
 	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
 	resultCfg.rtcp_cname=localCfg.rtcp_cname;
 

@@ -113,12 +113,6 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		SalCustomSdpAttribute * getCustomSdpAttributes() const;
 		std::string getSdpString() const;
 
-		const std::string & getIceUfrag() const;
-		const std::string & getIcePwd() const;
-		bool getIceMismatch() const;
-		const SalIceCandidate & getIceCandidateAtIndex(const std::size_t & idx) const;
-		const SalIceRemoteCandidate & getIceRemoteCandidateAtIndex(const std::size_t & idx) const;
-
 		void replacePayloads(const std::list<PayloadType*> & newPayloads);
 
 		void addToSdpMediaDescription(belle_sdp_media_description_t * media_desc) const;
@@ -149,13 +143,8 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		OrtpRtcpFbConfiguration rtcp_fb;
 		OrtpRtcpXrConfiguration rtcp_xr;
 		SalCustomSdpAttribute *custom_sdp_attributes = nullptr;
-		std::vector<SalIceCandidate> ice_candidates;
-		std::vector<SalIceRemoteCandidate> ice_remote_candidates;
-		std::string ice_ufrag;
-		std::string ice_pwd;
 		std::string mid; /* Media line identifier for RTP bundle mode */
 		int mid_rtp_ext_header_id = 0; /* Identifier for the MID field in the RTP extension header */
-		bool ice_mismatch = false;
 		bool set_nortpproxy = false; /*Formely set by ICE to indicate to the proxy that it has nothing to do*/
 		bool rtcp_mux = false;
 		uint8_t haveZrtpHash = 0; /**< flag for zrtp hash presence */

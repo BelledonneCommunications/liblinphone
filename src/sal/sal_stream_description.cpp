@@ -42,6 +42,9 @@ SalStreamDescription::SalStreamDescription(){
 	cfgIndex = SalStreamDescription::actualConfigurationIndex;
 	cfgs.clear();
 	already_assigned_payloads.clear();
+
+	ice_candidates.clear();
+	ice_remote_candidates.clear();
 }
 
 SalStreamDescription::~SalStreamDescription(){
@@ -69,6 +72,13 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 	}
 	bandwidth = other.bandwidth;
 	multicast_role = other.multicast_role;
+
+	ice_candidates = other.ice_candidates;
+	ice_remote_candidates = other.ice_remote_candidates;
+	ice_ufrag = other.ice_ufrag;
+	ice_pwd = other.ice_pwd;
+	ice_mismatch = other.ice_mismatch;
+
 }
 
 SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
@@ -614,6 +624,12 @@ SalStreamDescription &SalStreamDescription::operator=(const SalStreamDescription
 	bandwidth = other.bandwidth;
 	multicast_role = other.multicast_role;
 
+	ice_candidates = other.ice_candidates;
+	ice_remote_candidates = other.ice_remote_candidates;
+	ice_ufrag = other.ice_ufrag;
+	ice_pwd = other.ice_pwd;
+	ice_mismatch = other.ice_mismatch;
+
 	return *this;
 }
 
@@ -658,6 +674,10 @@ int SalStreamDescription::equal(const SalStreamDescription & other) const {
 	for(auto cfg1 = cfgs.cbegin(), cfg2 = other.cfgs.cbegin(); (cfg1 != cfgs.cend() && cfg2 != other.cfgs.cend()); ++cfg1, ++cfg2){
 		result |= cfg1->second.equal(cfg2->second);
 	}
+
+	/* ICE */
+	if (ice_ufrag.compare(other.ice_ufrag) != 0 && !other.ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
+	if (ice_pwd.compare(other.ice_pwd) != 0 && !other.ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
 	return result;
 }
@@ -935,14 +955,14 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	if (actualCfg.set_nortpproxy == TRUE) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("nortpproxy","yes"));
 	}
-	if (actualCfg.ice_mismatch == TRUE) {
+	if (ice_mismatch == TRUE) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-mismatch",NULL));
 	} else {
 		if (rtp_port != 0) {
-			if (!actualCfg.ice_pwd.empty())
-				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",L_STRING_TO_C(actualCfg.ice_pwd)));
-			if (!actualCfg.ice_ufrag.empty())
-				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-ufrag",L_STRING_TO_C(actualCfg.ice_ufrag)));
+			if (!ice_pwd.empty())
+				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-pwd",L_STRING_TO_C(ice_pwd)));
+			if (!ice_ufrag.empty())
+				belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-ufrag",L_STRING_TO_C(ice_ufrag)));
 			addIceCandidatesToSdp(actualCfg, media_desc);
 			addIceRemoteCandidatesToSdp(actualCfg, media_desc);
 		}
@@ -1190,7 +1210,7 @@ void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & c
 			candidate.foundation = foundation;
 			candidate.type = type;
 			if (strcasecmp("udp",proto)==0 && ((nb == 7) || (nb == 9))) {
-				cfg.ice_candidates.push_back(candidate);
+				ice_candidates.push_back(candidate);
 			} else {
 				ms_error("ice: Failed parsing a=candidate SDP attribute");
 			}
@@ -1207,11 +1227,11 @@ void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & c
 					remote_candidate.addr = candidate.addr;
 					remote_candidate.port = candidate.port;
 					const unsigned int candidateIdx = componentID - 1;
-					const unsigned int noCandidates = (unsigned int)cfg.ice_remote_candidates.size();
+					const unsigned int noCandidates = (unsigned int)ice_remote_candidates.size();
 					if (candidateIdx >= noCandidates) {
-						cfg.ice_remote_candidates.resize(componentID);
+						ice_remote_candidates.resize(componentID);
 					}
-					cfg.ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)candidateIdx] = remote_candidate;
+					ice_remote_candidates[(std::vector<SalIceRemoteCandidate>::size_type)candidateIdx] = remote_candidate;
 				}
 				ptr += offset;
 				if (ptr < endptr) {
@@ -1219,11 +1239,11 @@ void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & c
 				} else break;
 			}
 		} else if ((keywordcmp("ice-ufrag", att_name) == 0) && (value != NULL)) {
-			cfg.ice_ufrag = L_C_TO_STRING(value);
+			ice_ufrag = L_C_TO_STRING(value);
 		} else if ((keywordcmp("ice-pwd", att_name) == 0) && (value != NULL)) {
-			cfg.ice_pwd = L_C_TO_STRING(value);
+			ice_pwd = L_C_TO_STRING(value);
 		} else if (keywordcmp("ice-mismatch", att_name) == 0) {
-			cfg.ice_mismatch = TRUE;
+			ice_mismatch = TRUE;
 		}
 	}
 }
@@ -1356,7 +1376,7 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 }
 
 void SalStreamDescription::addIceCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
-	for (const auto & candidate : cfg.ice_candidates) {
+	for (const auto & candidate : ice_candidates) {
 		if ((candidate.addr.empty()) || (candidate.port == 0)) break;
 		std::string iceCandidateValue = candidate.foundation + " " + std::to_string(candidate.componentID) + " UDP " + std::to_string(candidate.priority) + " " + candidate.addr.c_str() + " " + std::to_string(candidate.port) + " typ " + candidate.type;
 		if (iceCandidateValue.size() > 1024) {
@@ -1377,8 +1397,8 @@ void SalStreamDescription::addIceCandidatesToSdp(const SalStreamConfiguration & 
 void SalStreamDescription::addIceRemoteCandidatesToSdp(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *md) const {
 	std::string iceRemoteCandidateValue;
 
-	for (size_t i = 0; i < cfg.ice_remote_candidates.size(); i++) {
-		const auto & candidate = cfg.ice_remote_candidates[i];
+	for (size_t i = 0; i < ice_remote_candidates.size(); i++) {
+		const auto & candidate = ice_remote_candidates[i];
 		if ((!candidate.addr.empty()) && (candidate.port != 0)) {
 			iceRemoteCandidateValue += ((i > 0) ? " " : "") + std::to_string(static_cast<unsigned int>(i + 1)) + " " + candidate.addr + " " + std::to_string(candidate.port);
 			
@@ -1490,6 +1510,36 @@ unsigned int SalStreamDescription::getFreeCfgIdx() const {
 	std::for_each(streamCfgs.begin(), streamCfgs.end(), addToIndexList);
 
 	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(cfgIndexes);
+}
+
+bool SalStreamDescription::getIceMismatch() const {
+	return ice_mismatch;
+}
+
+const std::string & SalStreamDescription::getIceUfrag() const {
+	return ice_ufrag;
+}
+
+const std::string & SalStreamDescription::getIcePwd() const {
+	return ice_pwd;
+}
+
+const SalIceCandidate & SalStreamDescription::getIceCandidateAtIndex(const std::size_t & idx) const {
+	try {
+		return ice_candidates.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to Ice Candidate at index " << idx;
+		return Utils::getEmptyConstRefObject<SalIceCandidate>();
+	}
+}
+
+const SalIceRemoteCandidate & SalStreamDescription::getIceRemoteCandidateAtIndex(const std::size_t & idx) const {
+	try {
+		return ice_remote_candidates.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to Ice Remote Candidate at index " << idx;
+		return Utils::getEmptyConstRefObject<SalIceRemoteCandidate>();
+	}
 }
 
 LINPHONE_END_NAMESPACE
