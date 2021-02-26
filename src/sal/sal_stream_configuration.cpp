@@ -35,8 +35,6 @@ SalStreamConfiguration::SalStreamConfiguration(){
 
 	payloads.clear();
 	crypto.clear();
-	ice_candidates.clear();
-	ice_remote_candidates.clear();
 
 }
 
@@ -66,13 +64,8 @@ SalStreamConfiguration::SalStreamConfiguration(const SalStreamConfiguration & ot
 	rtcp_fb = other.rtcp_fb;
 	rtcp_xr = other.rtcp_xr;
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
-	ice_candidates = other.ice_candidates;
-	ice_remote_candidates = other.ice_remote_candidates;
-	ice_ufrag = other.ice_ufrag;
-	ice_pwd = other.ice_pwd;
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
-	ice_mismatch = other.ice_mismatch;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
 	haveZrtpHash = other.haveZrtpHash;
@@ -108,13 +101,8 @@ SalStreamConfiguration &SalStreamConfiguration::operator=(const SalStreamConfigu
 	rtcp_xr = other.rtcp_xr;
 	sal_custom_sdp_attribute_free(custom_sdp_attributes);
 	custom_sdp_attributes = sal_custom_sdp_attribute_clone(other.custom_sdp_attributes);
-	ice_candidates = other.ice_candidates;
-	ice_remote_candidates = other.ice_remote_candidates;
-	ice_ufrag = other.ice_ufrag;
-	ice_pwd = other.ice_pwd;
 	mid = other.mid;
 	mid_rtp_ext_header_id = other.mid_rtp_ext_header_id;
-	ice_mismatch = other.ice_mismatch;
 	set_nortpproxy = other.set_nortpproxy;
 	rtcp_mux = other.rtcp_mux;
 	haveZrtpHash = other.haveZrtpHash;
@@ -214,10 +202,6 @@ int SalStreamConfiguration::equal(const SalStreamConfiguration & other) const {
 	// If both ptimes are valid, check that their valid is the same
 	if ((ptime>0) && (other.ptime>0) && (ptime != other.ptime)) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
 	if (dir != other.dir) result |= SAL_MEDIA_DESCRIPTION_CODEC_CHANGED;
-
-	/* ICE */
-	if (ice_ufrag.compare(other.ice_ufrag) != 0 && !other.ice_ufrag.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
-	if (ice_pwd.compare(other.ice_pwd) != 0 && !other.ice_pwd.empty()) result |= SAL_MEDIA_DESCRIPTION_ICE_RESTART_DETECTED;
 
 	/*DTLS*/
 	if (dtls_role != other.dtls_role) result |= SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED;
@@ -332,26 +316,6 @@ const int & SalStreamConfiguration::getMaxRate() const {
 
 const std::string & SalStreamConfiguration::getMid() const {
 	return mid;
-}
-
-bool SalStreamConfiguration::getIceMismatch() const {
-	return ice_mismatch;
-}
-
-const std::string & SalStreamConfiguration::getIceUfrag() const {
-	return ice_ufrag;
-}
-
-const std::string & SalStreamConfiguration::getIcePwd() const {
-	return ice_pwd;
-}
-
-const SalIceCandidate & SalStreamConfiguration::getIceCandidateAtIndex(const std::size_t & idx) const {
-	return ice_candidates.at(idx);
-}
-
-const SalIceRemoteCandidate & SalStreamConfiguration::getIceRemoteCandidateAtIndex(const std::size_t & idx) const {
-	return ice_remote_candidates.at(idx);
 }
 
 const int & SalStreamConfiguration::getMidRtpExtHeaderId() const {
