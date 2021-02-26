@@ -415,7 +415,6 @@ public:
 	void clearStreams();
 	float getCurrentQuality();
 	float getAverageQuality();
-	const std::string &getAuthToken()const{ return mAuthToken; };
 	void setAuthTokenVerified(bool value);
 	size_t getActiveStreamsCount() const;
 	size_t size()const{ return mStreams.size(); }

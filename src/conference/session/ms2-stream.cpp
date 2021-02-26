@@ -294,7 +294,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 								MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(stream);
 								msa->initZrtp();
 							}
-							// Copy newly created dtls context into mSessions
+							// Copy newly created zrtp context into mSessions
 							media_stream_reclaim_sessions(ms, &mSessions);
 						}
 
