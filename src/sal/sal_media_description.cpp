@@ -26,8 +26,11 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-SalMediaDescription::SalMediaDescription(){
+// Called by makeLocalMediaDescription to create the local media decription
+SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation){
 	pad = false;
+
+	capabilityNegotiationSupported = capabilityNegotiation;
 
 	streams.clear();
 	bundles.clear();
@@ -65,9 +68,10 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	pad = other.pad;
 	set_nortpproxy = other.set_nortpproxy;
 
+	capabilityNegotiationSupported = other.capabilityNegotiationSupported;
 }
 
-SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription() {
+SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
@@ -75,6 +79,11 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	SalDtlsRole session_role=SalDtlsRoleInvalid;
 
 	dir = SalStreamSendRecv;
+
+	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
+
+	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
+	capabilityNegotiationSupported = !potentialCfgGraph.empty();
 
 	if ( ( cnx=belle_sdp_session_description_get_connection ( sdp ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		addr = belle_sdp_connection_get_address ( cnx );
@@ -116,9 +125,10 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	value=belle_sdp_session_description_get_attribute_value(sdp,"fingerprint");
 	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
 	for (auto & stream : streams) {
+		std::string fingerprint;
 		if (value)
-			stream.dtls_fingerprint = L_C_TO_STRING(value);
-		stream.dtls_role=session_role; /*set or reset value*/
+			fingerprint = L_C_TO_STRING(value);
+		stream.setDtls(session_role, fingerprint);
 	}
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
@@ -148,10 +158,36 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		}
 	}
 
+	// Initialize currentStreamIdx to the size of vector streams as streams build from SDP media descriptions are appended.
+	// Generally, at this point, vector streams should be empty
+
+	if (capabilityNegotiationSupported) {
+		for (const auto & acap : potentialCfgGraph.getGlobalAcap()) {
+			acaps[acap->index] = std::make_pair(acap->name, acap->value);
+		}
+
+		for (const auto & tcap : potentialCfgGraph.getGlobalTcap()) {
+			tcaps[tcap->index] = tcap->value;
+		}
+	}
+
+	unsigned int currentStreamIdx = static_cast<unsigned int>(streams.size());
 	for ( belle_sip_list_t* media_desc_it=belle_sdp_session_description_get_media_descriptions ( sdp ); media_desc_it!=NULL; media_desc_it=media_desc_it->next ) {
 		belle_sdp_media_description_t* media_desc=BELLE_SDP_MEDIA_DESCRIPTION ( media_desc_it->data );
-		SalStreamDescription stream(this, media_desc);
+
+		SalStreamDescription stream;
+		if (capabilityNegotiationSupported) {
+			SalStreamDescription::raw_capability_negotiation_attrs_t attrs;
+			attrs.unparsed_cfgs =  potentialCfgGraph.getUnparsedCfgForStream(currentStreamIdx);
+			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
+			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(currentStreamIdx);
+			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(currentStreamIdx);
+			stream.fillStreamDescriptionFromSdp(this, media_desc, attrs);
+		} else {
+			stream.fillStreamDescriptionFromSdp(this, media_desc);
+		}
 		streams.push_back(stream);
+		currentStreamIdx++;
 	}
 }
 
@@ -198,7 +234,7 @@ int SalMediaDescription::lookupMid(const std::string mid) const {
 	size_t index;
 	for (index = 0 ; index < streams.size(); ++index){
 		const auto & sd = streams[index];
-		if (sd.mid.compare(mid) == 0){
+		if (sd.getChosenConfiguration().getMid().compare(mid) == 0){
 			return static_cast<int>(index);
 		}
 	}
@@ -218,24 +254,24 @@ const SalStreamBundle & SalMediaDescription::getBundleFromMid(const std::string 
 int SalMediaDescription::getIndexOfTransportOwner(const SalStreamDescription & sd) const {
 	std::string master_mid;
 	int index;
-	if (sd.mid.empty() == true) return -1; /* not part of any bundle */
+	if (sd.getChosenConfiguration().getMid().empty() == true) return -1; /* not part of any bundle */
 	/* lookup the mid in the bundle descriptions */
-	const auto &bundle = getBundleFromMid(sd.mid);
+	const auto &bundle = getBundleFromMid(sd.getChosenConfiguration().getMid());
 	if (bundle == Utils::getEmptyConstRefObject<SalStreamBundle>()) {
-		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.mid));
+		ms_warning("Orphan stream with mid '%s'", L_STRING_TO_C(sd.getChosenConfiguration().getMid()));
 		return -1;
 	}
 	master_mid = bundle.getMidOfTransportOwner();
 	index = lookupMid(master_mid);
 	if (index == -1){
-		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.mid), L_STRING_TO_C(master_mid));
+		ms_error("Stream with mid '%s' has no transport owner (mid '%s') !", L_STRING_TO_C(sd.getChosenConfiguration().getMid()), L_STRING_TO_C(master_mid));
 	}
 	return index;
 }
 
 const SalStreamDescription & SalMediaDescription::findStream(SalMediaProto proto, SalStreamType type) const {
 	const auto & streamIt = std::find_if(streams.cbegin(), streams.cend(), [&type, &proto] (const auto & stream) { 
-		return (stream.enabled() && (stream.proto==proto) && (stream.getType()==type));
+		return (stream.enabled() && (stream.getProto()==proto) && (stream.getType()==type));
 	});
 	if (streamIt != streams.end()) {
 		return *streamIt;
@@ -286,7 +322,7 @@ bool SalMediaDescription::isEmpty() const {
 void SalMediaDescription::setDir(SalStreamDir stream_dir){
 	for(auto & stream : streams){
 		if (!stream.enabled()) continue;
-		stream.dir=stream_dir;
+		stream.setDirection(stream_dir);
 	}
 }
 
@@ -356,12 +392,35 @@ bool SalMediaDescription::hasIpv6() const {
 	return true;
 }
 
+bool SalMediaDescription::supportCapabilityNegotiation() const {
+	return capabilityNegotiationSupported;
+
+}
+
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
 	return (equal(other) == SAL_MEDIA_DESCRIPTION_UNCHANGED);
 }
 
 bool SalMediaDescription::operator!=(const SalMediaDescription & other) const {
 	return !(*this == other);
+}
+
+int SalMediaDescription::compareToActualConfiguration(const SalMediaDescription & otherMd) const {
+	int result = globalEqual(otherMd);
+	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
+		if (!stream1->enabled() && !stream2->enabled()) continue;
+		result |= stream1->compareToActualConfiguration(*stream2);
+	}
+	return result;
+}
+
+int SalMediaDescription::compareToChosenConfiguration(const SalMediaDescription & otherMd) const {
+	int result = globalEqual(otherMd);
+	for(auto stream1 = streams.cbegin(), stream2 = otherMd.streams.cbegin(); (stream1 != streams.cend() && stream2 != otherMd.streams.cend()); ++stream1, ++stream2){
+		if (!stream1->enabled() && !stream2->enabled()) continue;
+		result |= stream1->compareToChosenConfiguration(*stream2);
+	}
+	return result;
 }
 
 int SalMediaDescription::equal(const SalMediaDescription & otherMd) const {
@@ -411,20 +470,28 @@ const std::string SalMediaDescription::printDifferences(int result) {
 		out.append("NETWORK_XXXCAST_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_NETWORK_XXXCAST_CHANGED;
 	}
-	if (result & SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED){
-		out.append("STREAMS_CHANGED ");
-		result &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+	if (result & SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED) {
+		out.append("CRYPTO_TYPE_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED;
 	}
 	if (result & SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED){
 		out.append("CRYPTO_POLICY_CHANGED ");
 		result &= ~SAL_MEDIA_DESCRIPTION_CRYPTO_POLICY_CHANGED;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED){
+		out.append("STREAMS_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_STREAMS_CHANGED;
+	}
 	if (result & SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION){
 		out.append("FORCE_STREAM_RECONSTRUCTION ");
 		result &= ~SAL_MEDIA_DESCRIPTION_FORCE_STREAM_RECONSTRUCTION;
 	}
+	if (result & SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED) {
+		out.append("STREAM_CONFIGURATION_CHANGED ");
+		result &= ~SAL_MEDIA_DESCRIPTION_CONFIGURATION_CHANGED;
+	}
 	if (result){
-		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::print_differences(), fix it");
+		ms_fatal("There are unhandled result bitmasks in SalMediaDescription::printDifferences(), fix it");
 	}
 	if (out.empty()) out = "NONE";
 	return out;
@@ -450,7 +517,10 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 	belle_sdp_session_description_t* session_desc=belle_sdp_session_description_new();
 	bool_t inet6;
 	belle_sdp_origin_t* origin;
-	char *escaped_username = belle_sip_uri_to_escaped_username(username.c_str());
+	char *escaped_username = NULL;
+	if (!username.empty()) {
+		escaped_username = belle_sip_uri_to_escaped_username(L_STRING_TO_C(username));
+	}
 
 	if ( addr.find(':' ) != std::string::npos ) {
 		inet6=1;
@@ -463,7 +533,9 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 									  ,"IN"
 									  , inet6 ? "IP6" :"IP4"
 									  ,L_STRING_TO_C(addr) );
-	bctbx_free(escaped_username);
+	if (escaped_username) {
+		bctbx_free(escaped_username);
+	}
 
 	belle_sdp_session_description_set_origin ( session_desc,origin );
 
@@ -510,10 +582,215 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 	}
 
-	for ( const auto & stream : streams) {
-		belle_sdp_session_description_add_media_description(session_desc, stream.toSdpMediaDescription(this, session_desc));
+	for (const auto & acap : acaps) {
+		const auto & idx = acap.first;
+		const auto & nameValuePair = acap.second;
+		const auto & name = nameValuePair.first;
+		const auto & value = nameValuePair.second;
+
+		std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
+	}
+
+	for (const auto & tcap : tcaps) {
+		const auto & idx = tcap.first;
+		const auto & value = tcap.second;
+		std::string tcapValue = std::to_string(idx) + " " + value;
+		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+	}
+
+	//for ( const auto & stream : streams) {
+	for (std::size_t idx = 0; idx < streams.size(); idx++) {
+		auto media_desc = streams.at(idx).toSdpMediaDescription(this, session_desc);
+		belle_sdp_session_description_add_media_description(session_desc, media_desc);
 	}
 	return session_desc;
 }
 
+void SalMediaDescription::addTcap(const unsigned int & idx, const std::string & value) {
+	tcaps[idx] = value;
+}
+
+const std::string & SalMediaDescription::getTcap(const unsigned int & idx) const {
+	try {
+		return tcaps.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to find transport capability at index " << idx;
+		return Utils::getEmptyConstRefObject<std::string>();
+	}
+}
+
+void SalMediaDescription::addAcap(const unsigned int & idx, const std::string & name, const std::string & value) {
+	acaps[idx] = std::make_pair(name, value);
+}
+
+const SalStreamDescription::acap_t & SalMediaDescription::getAcap(const unsigned int & idx) const {
+	try {
+		return acaps.at(idx);
+	} catch (std::out_of_range&) {
+		lError() << "Unable to find attribute capability at index " << idx;
+		return Utils::getEmptyConstRefObject<SalStreamDescription::acap_t>();
+	}
+}
+
+const SalStreamDescription::acap_map_t & SalMediaDescription::getAcaps() const {
+	return acaps;
+}
+
+const SalStreamDescription::tcap_map_t & SalMediaDescription::getTcaps() const {
+	return tcaps;
+}
+const SalStreamDescription::cfg_map SalMediaDescription::getCfgsForStream(const unsigned int & idx) const {
+	SalStreamDescription::cfg_map cfgs;
+	const SalStreamDescription & stream = getStreamIdx(idx);
+	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		cfgs = stream.getAllCfgs();
+	}
+	return cfgs;
+}
+
+const SalStreamDescription::acap_map_t SalMediaDescription::getAllAcapForStream(const unsigned int & idx) const {
+	SalStreamDescription::acap_map_t allAcaps;
+	const SalStreamDescription & stream = getStreamIdx(idx);
+	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		allAcaps = stream.getAcaps();
+		auto globalAcaps = getAcaps();
+		allAcaps.insert(globalAcaps.begin(), globalAcaps.end());
+	}
+	return allAcaps;
+}
+const SalStreamDescription::tcap_map_t SalMediaDescription::getAllTcapForStream(const unsigned int & idx) const {
+	SalStreamDescription::tcap_map_t allTcaps;
+	const SalStreamDescription & stream = getStreamIdx(idx);
+	if (stream != Utils::getEmptyConstRefObject<SalStreamDescription>()) {
+		allTcaps = stream.getTcaps();
+		auto globalTcaps = getTcaps();
+		allTcaps.insert(globalTcaps.begin(), globalTcaps.end());
+	}
+	return allTcaps;
+}
+
+void SalMediaDescription::addTcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & value) {
+	if (streamIdx < streams.size()) {
+		streams[streamIdx].addTcap(idx, value);
+	}
+}
+
+void SalMediaDescription::addAcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & name, const std::string & value) {
+	if (streamIdx < streams.size()) {
+		streams[streamIdx].addAcap(idx, name, value);
+	}
+}
+
+void SalMediaDescription::createPotentialConfigurationsForStream(const unsigned int & streamIdx, const bool delete_session_attributes, const bool delete_media_attributes) {
+
+	try {
+		SalStreamDescription & stream = streams.at(streamIdx);
+		const auto allStreamAcaps = getAllAcapForStream(streamIdx);
+		const auto allStreamTcaps = getAllTcapForStream(streamIdx);
+		if (!allStreamAcaps.empty() || !allStreamTcaps.empty()) {
+			if (allStreamTcaps.empty()) {
+				const SalStreamDescription::tcap_map_t proto;
+				const auto cfgIdx = stream.getFreeCfgIdx();
+				stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+			} else {
+				for (const auto & protoPair : allStreamTcaps) {
+					const SalStreamDescription::tcap_map_t proto{{protoPair}};
+					const auto cfgIdx = stream.getFreeCfgIdx();
+					stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+				}
+			}
+		} else {
+			lInfo() << "Unable to create potential configuration for stream " << streamIdx << " because it doesn't have acap and tcap attributes";
+		}
+	} catch (std::out_of_range&) {
+		lError() << "Unable to create potential configuration for stream " << streamIdx << " because it doesn't exists";
+	}
+}
+
+
+unsigned int SalMediaDescription::getFreeTcapIdx() const {
+	std::list<unsigned int> tcapIndexes;
+	auto addToIndexList = [&tcapIndexes] (const auto & cap) {
+		tcapIndexes.push_back(cap.first);
+	};
+	const auto & globalTcaps = getTcaps();
+	std::for_each(globalTcaps.begin(), globalTcaps.end(), addToIndexList);
+	for (const auto & stream : streams) {
+		const auto & streamTcaps = stream.getTcaps();
+		std::for_each(streamTcaps.begin(), streamTcaps.end(), addToIndexList);
+	}
+
+	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(tcapIndexes);
+}
+
+unsigned int SalMediaDescription::getFreeAcapIdx() const {
+	std::list<unsigned int> acapIndexes;
+	auto addToIndexList = [&acapIndexes] (const auto & cap) {
+		acapIndexes.push_back(cap.first);
+	};
+	const auto & globalAcaps = getAcaps();
+	std::for_each(globalAcaps.begin(), globalAcaps.end(), addToIndexList);
+	for (const auto & stream : streams) {
+		const auto & streamAcaps = stream.getAcaps();
+		std::for_each(streamAcaps.begin(), streamAcaps.end(), addToIndexList);
+	}
+
+	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(acapIndexes);
+}
+
+void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {
+	const auto & cfgIdx = cfg.first;
+	const auto & cfgAttr = cfg.second;
+
+	// Sets of optional configuration
+	const auto & cfgAcapSets = cfgAttr.acap;
+	std::string acapString;
+	// Iterate over all acaps sets. For every set, get the index of all its members
+	for (const auto & acapSet : cfgAcapSets) {
+		// Do not append | on first element
+		if (!acapString.empty()) {
+			acapString.append("|");
+		}
+		for (const auto & cfgAcap : acapSet) {
+			const auto & firstAcap = acapSet.front().cap.lock();
+			const auto & firstAcapIdx = firstAcap->index;
+			const auto & acap = cfgAcap.cap.lock();
+			const auto & acapIdx = acap->index;
+			if (acapIdx != firstAcapIdx) {
+				acapString.append(",");
+			}
+			if (acap) {
+				acapString.append(std::to_string(acapIdx));
+			}
+		}
+	}
+
+	std::string tcapString;
+	const auto & cfgTcaps = cfgAttr.tcap;
+	for (const auto & cfgTcap : cfgTcaps) {
+		// Do not append | on first element
+		if (!tcapString.empty()) {
+			tcapString.append("|");
+		}
+		const auto tcap = cfgTcap.cap.lock();
+		if (tcap) {
+			tcapString.append(std::to_string(tcap->index));
+		}
+	}
+
+	std::string deleteAttrs;
+	if (cfgAttr.delete_media_attributes && cfgAttr.delete_session_attributes) {
+		deleteAttrs = "-ms:";
+	} else if (cfgAttr.delete_session_attributes) {
+		deleteAttrs = "-s:";
+	} else if (cfgAttr.delete_media_attributes) {
+		deleteAttrs = "-m:";
+	}
+
+	char buffer[1024];
+	snprintf ( buffer, sizeof ( buffer )-1, "%d a=%s%s t=%s", cfgIdx, deleteAttrs.c_str(), acapString.c_str(), tcapString.c_str());
+	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
+	capabilityNegotiationSupported = true;
+}
 LINPHONE_END_NAMESPACE
