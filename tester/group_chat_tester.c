@@ -3293,7 +3293,7 @@ static void group_chat_donot_room_migrate_from_basic_chat_room (void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bool_t two_files, bool_t use_buffer) {
+static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bool_t two_files, bool_t use_buffer, bool_t empty_text) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *chloe = linphone_core_manager_create("chloe_rc");
@@ -3305,6 +3305,7 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
 	char *receiveChloeFilepath = bc_tester_file("receive_file_chloe.dump");
 	const char *text = "Hello Group !";
+	const char *empty_string = "";
 
 	if (two_files) {
 		sendFilepath2 = bc_tester_res("sounds/ahbahouaismaisbon.wav");
@@ -3340,7 +3341,11 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 
 	// Sending file
 	if (with_text) {
-		_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, text, use_buffer);
+		if (empty_text) {
+			_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, empty_string, use_buffer);
+		} else {
+			_send_file_plus_text(marieCr, sendFilepath, sendFilepath2, text, use_buffer);
+		}
 	} else {
 		_send_file(marieCr, sendFilepath, sendFilepath2, use_buffer);
 	}
@@ -3349,8 +3354,13 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 
 	// Check that chat rooms have received the file
 	if (with_text) {
-		_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, text, use_buffer);
-		_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, text, use_buffer);
+		if (empty_text) {
+			_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, empty_string, use_buffer);
+			_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, empty_string, use_buffer);
+		} else {
+			_receive_file_plus_text(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, text, use_buffer);
+			_receive_file_plus_text(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, text, use_buffer);
+		}
 	} else {
 		_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, sendFilepath2, use_buffer);
 		_receive_file(coresList, chloe, &initialChloeStats, receiveChloeFilepath, sendFilepath, sendFilepath2, use_buffer);
@@ -3375,19 +3385,23 @@ static void group_chat_room_send_file_with_or_without_text (bool_t with_text, bo
 }
 
 static void group_chat_room_send_file (void) {
-	group_chat_room_send_file_with_or_without_text(FALSE, FALSE, FALSE);
+	group_chat_room_send_file_with_or_without_text(FALSE, FALSE, FALSE, FALSE);
 }
 
 static void group_chat_room_send_file_2 (void) {
-	group_chat_room_send_file_with_or_without_text(FALSE, FALSE, TRUE);
+	group_chat_room_send_file_with_or_without_text(FALSE, FALSE, TRUE, FALSE);
 }
 
 static void group_chat_room_send_file_plus_text (void) {
-	group_chat_room_send_file_with_or_without_text(TRUE, FALSE, FALSE);
+	group_chat_room_send_file_with_or_without_text(TRUE, FALSE, FALSE, FALSE);
+}
+
+static void group_chat_room_send_file_plus_empty_text (void) {
+	group_chat_room_send_file_with_or_without_text(TRUE, FALSE, FALSE, TRUE);
 }
 
 static void group_chat_room_send_two_files_plus_text (void) {
-	group_chat_room_send_file_with_or_without_text(TRUE, TRUE, FALSE);
+	group_chat_room_send_file_with_or_without_text(TRUE, TRUE, FALSE, FALSE);
 }
 
 static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDeviceForSender) {
@@ -6651,6 +6665,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Send file", group_chat_room_send_file),
 	TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2),
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
+	TEST_NO_TAG("Send file + empty text", group_chat_room_send_file_plus_empty_text),
 	TEST_NO_TAG("Send 2 files + text", group_chat_room_send_two_files_plus_text),
 	TEST_NO_TAG("Unique one-to-one chatroom", group_chat_room_unique_one_to_one_chat_room),
 	TEST_NO_TAG("Unique one-to-one chatroom with dual sender device", group_chat_room_unique_one_to_one_chat_room_dual_sender_device),
