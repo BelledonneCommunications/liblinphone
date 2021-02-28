@@ -21,6 +21,7 @@
 
 #include "address/address.h"
 #include "bctoolbox/crypto.h"
+#include "bctoolbox/parser.h"
 #include "c-wrapper/c-wrapper.h"
 #include "chat/chat-message/chat-message-p.h"
 #include "chat/encryption/encryption-engine.h"
@@ -37,7 +38,7 @@
 using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
-
+const char * FileTransferChatMessageModifier::filenameNoEscapingChars = " !$'()*+,-.:;=@[]_";// Don't escape these characters as they can be used for filename header
 FileTransferChatMessageModifier::FileTransferChatMessageModifier (belle_http_provider_t *prov) : provider(prov) {
 	bgTask.setName("File transfer upload");
 }
@@ -255,7 +256,13 @@ belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_h
 
 				imee->generateFileTransferKey(message->getChatRoom(), message, currentFileTransferContent);
 			} else {
-				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
+				char * filename;
+				bctbx_noescape_rules_t encodeSpecials = {0};
+				bctbx_noescape_rules_add_alfanums(encodeSpecials);
+				bctbx_noescape_rules_add_list(encodeSpecials, filenameNoEscapingChars);
+				filename = bctbx_escape(currentFileContentToTransfer->getFileName().c_str(), encodeSpecials );
+				first_part_header = "form-data; name=\"File\"; filename=\"" +std::string(filename) + "\"";
+				bctbx_free(filename);
 			}
 
 			// create a user body handler to take care of the file and add the content disposition and content-type headers
@@ -385,7 +392,13 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 										// we found a the file-name node, update its content with the real filename
 										if (!xmlStrcmp(fileInfoNodeChildren->name, (const xmlChar *)"file-name")) {
 											// update node content
-											xmlNodeSetContent(fileInfoNodeChildren, (const xmlChar *)(currentFileContentToTransfer->getFileName().c_str()));
+											char * filename;
+											bctbx_noescape_rules_t encodeSpecials = {0};
+											bctbx_noescape_rules_add_alfanums(encodeSpecials);
+											bctbx_noescape_rules_add_list(encodeSpecials, filenameNoEscapingChars);
+											filename = bctbx_escape(currentFileContentToTransfer->getFileName().c_str(), encodeSpecials );
+											xmlNodeSetContent(fileInfoNodeChildren, (const xmlChar *)(filename));
+											bctbx_free(filename);
 											break;
 										}
 										fileInfoNodeChildren = fileInfoNodeChildren->next;
@@ -615,9 +628,11 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 							xmlFree(fileSizeString);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
-							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileName((char *)filename);
-							xmlFree(filename);
+							xmlChar *encodedFilename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							char * filename = bctbx_unescaped_string((char *)encodedFilename);
+							fileTransferContent->setFileName(filename);
+							bctbx_free(filename);
+							xmlFree(encodedFilename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
 							fileUrl = xmlGetProp(cur, (const xmlChar *)"url");
@@ -730,10 +745,11 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 						}
 
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
-							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileContent->setFileName((char *)filename);
-
-							xmlFree(filename);
+							xmlChar *encodedFilename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
+							char * filename = bctbx_unescaped_string((char *)encodedFilename);
+							fileTransferContent->setFileName(filename);
+							bctbx_free(filename);
+							xmlFree(encodedFilename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"content-type")) {
 							xmlChar *content_type = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
@@ -781,7 +797,7 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 		}
 	}
 	xmlFreeDoc(xmlMessageBody);
-
+	fileContent->setFileName(fileTransferContent->getFileName()); // Copy file name from file transfer content to file content for file body handler
 	fileContent->setFilePath(fileTransferContent->getFilePath()); // Copy file path from file transfer content to file content for file body handler
 	// Link the FileContent to the FileTransferContent
 	fileTransferContent->setFileContent(fileContent);
