@@ -31,24 +31,17 @@ extern "C" {
 /* LinphoneLDAPContactSearch */
 
 LinphoneLDAPContactSearch * linphone_ldap_contact_search_create(LinphoneLDAPContactProvider *ld, const char *predicate, ContactSearchCallback cb, void *cb_data);
-
 LINPHONE_PUBLIC unsigned int linphone_ldap_contact_search_result_count(LinphoneLDAPContactSearch *obj);
-
 LINPHONE_PUBLIC LinphoneLDAPContactSearch * linphone_ldap_contact_search_cast(void *obj);
 
 
 /* LinphoneLDAPContactProvider */
 
 LINPHONE_PUBLIC LinphoneLDAPContactProvider * linphone_ldap_contact_provider_create(LinphoneCore *lc, const LinphoneDictionary *config);
-
 LINPHONE_PUBLIC unsigned int linphone_ldap_contact_provider_get_max_result(const LinphoneLDAPContactProvider *obj);
-
 LINPHONE_PUBLIC LinphoneLDAPContactProvider * linphone_ldap_contact_provider_ref(void *obj);
-
-void linphone_ldap_contact_provider_unref(void *obj);
-
+LINPHONE_PUBLIC void linphone_ldap_contact_provider_unref(void *obj);
 LinphoneLDAPContactProvider * linphone_ldap_contact_provider_cast(void *obj);
-
 LINPHONE_PUBLIC int linphone_ldap_contact_provider_available(void);
 
 #ifdef __cplusplus
