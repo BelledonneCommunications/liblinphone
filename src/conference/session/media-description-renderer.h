@@ -39,6 +39,7 @@ public:
 	std::shared_ptr<SalMediaDescription> remoteMediaDescription = nullptr;
 	std::shared_ptr<SalMediaDescription> resultMediaDescription = nullptr;
 	bool localIsOfferer = false;
+	bool addIceCandidates = true;
 	
 	mutable int localStreamDescriptionChanges = 0;
 	mutable int resultStreamDescriptionChanges = 0;
