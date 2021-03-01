@@ -243,6 +243,9 @@ private:
 	SalMediaProto getAudioProto();
 	SalMediaProto getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md);
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
+	void queueIceGatheringTask(const std::function<void()> &lambda);
+	void runIceGatheringTasks();
+
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
 private:
@@ -260,7 +263,8 @@ private:
 	LinphoneNatPolicy *natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
 
-	std::queue<std::function<void()>> iceDeferedTasks;
+	std::queue<std::function<void()>> iceDeferedGatheringTasks;
+	std::queue<std::function<void()>> iceDeferedCompletionTasks;
 
 	// The address family to prefer for RTP path, guessed from signaling path.
 	int af;
