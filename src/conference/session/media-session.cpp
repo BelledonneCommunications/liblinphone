@@ -1374,8 +1374,9 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	ctx.remoteMediaDescription = localIsOfferer ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
 	ctx.localIsOfferer = localIsOfferer;
 	bool addIceCandidates = true;
-	// If internal update (due to capability negotiations for example), ICE parameters should not always be added
-	if (getParams()->getPrivate()->getInternalCallUpdate() && op && op->getRemoteMediaDescription()) {
+	// If internal update (due to capability negotiations for example) or it is answerer, ICE parameters should not always be added
+	// If this media session is the answerer, ICE can only be enabled if offerer puts attributes in its SDP
+	if ((!localIsOfferer || getParams()->getPrivate()->getInternalCallUpdate()) && op && op->getRemoteMediaDescription()) {
 		// If remote description doesn't have ICE parameters, then it is not needed to restart ICE upon update
 		addIceCandidates = op->getRemoteMediaDescription()->hasIceParams();
 	}
@@ -2164,10 +2165,16 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 		getParams()->enableVideo(false);
 	}
 	updateRemoteSessionIdAndVer();
-	makeLocalMediaDescription(!isRemoteDescNull, q->isCapabilityNegotiationEnabled());
+	makeLocalMediaDescription(isRemoteDescNull, q->isCapabilityNegotiationEnabled());
 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
-		updateLocalMediaDescriptionFromIce(isRemoteDescNull, true);
+		bool addIceCandidates = true;
+		// If internal update (due to capability negotiations for example), ICE parameters should not always be added
+		if (getParams()->getPrivate()->getInternalCallUpdate() && op && op->getRemoteMediaDescription()) {
+			// If remote description doesn't have ICE parameters, then it is not needed to restart ICE upon update
+			addIceCandidates = op->getRemoteMediaDescription()->hasIceParams();
+		}
+		updateLocalMediaDescriptionFromIce(isRemoteDescNull, addIceCandidates);
 		startAcceptUpdate(nextState, stateInfo);
 	};
 	
