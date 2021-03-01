@@ -111,6 +111,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		bool hasIpv6() const;
 		bool hasImplicitAvpf() const;
 
+		bool hasIceParams() const;
+		bool hasIceCandidates() const;
+
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 		bool hasSrtp() const;
 		bool hasDtls() const;

@@ -63,6 +63,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		int getNbActiveStreams() const;
 
+		bool hasIceParams() const;
 		bool hasDir(const SalStreamDir & stream_dir) const;
 		bool hasAvpf() const;
 		bool hasImplicitAvpf() const;

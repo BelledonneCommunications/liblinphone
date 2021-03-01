@@ -1548,4 +1548,12 @@ const SalIceRemoteCandidate & SalStreamDescription::getIceRemoteCandidateAtIndex
 	}
 }
 
+bool SalStreamDescription::hasIceCandidates() const {
+	return (!ice_candidates.empty());
+}
+
+bool SalStreamDescription::hasIceParams() const {
+	// Return true if ice pwd and ufrag as well as candidates are defined
+	return (!ice_ufrag.empty() && !ice_pwd.empty() && hasIceCandidates());
+}
 LINPHONE_END_NAMESPACE
