@@ -169,6 +169,20 @@ private:
 	) const;
 
 	/**
+	 * Get all addresses from LDAP Server
+	 * @param[in] filter word we search
+	 * @param[in] withDomain domain which we want to search only
+	 * @param[in] currentList current list where we will check if address already exist
+	 * @return all address from chat rooms participants which match in a SearchResult list
+	 * @private
+	 **/
+	std::list<SearchResult> getAddressFromLDAPServer(
+		const std::string &filter,
+		const std::string &withDomain,
+		const std::list<SearchResult> &currentList
+	) const;
+
+	/**
 	 * Get all friends as SearchResult
 	 * @param[in] withDomain domain which we want to search only
 	 * @return all friends in a SearchResult list
