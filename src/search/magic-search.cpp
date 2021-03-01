@@ -26,8 +26,12 @@
 #include "linphone/utils/utils.h"
 #include "linphone/core.h"
 #include "linphone/types.h"
+#include "linphone/dictionary.h"
 #include "logger/logger.h"
 #include "private.h"
+
+#include "linphone/ldapprovider.h"
+
 
 using namespace std;
 
@@ -287,6 +291,97 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 	return resultList;
 }
 
+class CbData{
+public:
+	CbData(){
+		mEnd = FALSE;
+		mFriends = NULL;
+	}
+	~CbData(){
+		if(mFriends )
+			bctbx_list_free( mFriends );
+	}
+	bctbx_list_t* mFriends;
+	bool_t mEnd;
+	
+};
+
+void* clone_friend( void* entry )
+{
+	return linphone_friend_ref((LinphoneFriend*)entry);
+}
+
+void LDAPCallback( LinphoneContactSearch* id, bctbx_list_t* friends, void* data ){
+	CbData * cbData = (CbData*)data;
+
+	cbData->mFriends = bctbx_list_copy_with_data(friends, clone_friend);
+	cbData->mEnd = TRUE;
+}
+
+list<SearchResult> MagicSearch::getAddressFromLDAPServer (
+	const string &filter,
+	const string &withDomain,
+	const list<SearchResult> &currentList
+) const {
+	list<SearchResult> resultList;
+	LinphoneDictionary * config = linphone_dictionary_new();
+	CbData data;
+	const char * predicate = "*";
+	void * cb_data = &data;
+
+	linphone_dictionary_set_int(config, "use_tls",			0);
+	linphone_dictionary_set_int(config, "timeout",			10);
+	linphone_dictionary_set_int(config, "deref_aliases",	0);
+	linphone_dictionary_set_int(config, "max_results",		50);
+	linphone_dictionary_set_string(config, "auth_method",	"ANONYMOUS");
+	linphone_dictionary_set_string(config, "username",		"uid=tesla,dc=example,dc=com");
+	linphone_dictionary_set_string(config, "password",		"password");
+	linphone_dictionary_set_string(config, "bind_dn",		"uid=tesla,dc=example,dc=com");
+	linphone_dictionary_set_string(config, "base_object",    "dc=example,dc=com");
+	linphone_dictionary_set_string(config, "server",         "ldap.forumsys.com");//"ldap://localhost");
+	linphone_dictionary_set_string(config, "filter",         "(uid=%s)");
+	linphone_dictionary_set_string(config, "name_attribute", "sn");
+	linphone_dictionary_set_string(config, "sip_attribute",  "telephoneNumber");
+	linphone_dictionary_set_string(config, "sasl_authname",  "");
+	linphone_dictionary_set_string(config, "sasl_realm",  "");
+	linphone_dictionary_set_string(config, "attributes","telephoneNumber,givenName,sn,mobile,homePhone");
+
+	linphone_dictionary_set_string(config, "sip_scheme",  "sip");
+	linphone_dictionary_set_string(config, "sip_domain",  "linphone.org");
+
+	LinphoneLDAPContactProvider * provider = linphone_ldap_contact_provider_ref(linphone_ldap_contact_provider_create(this->getCore()->getCCore(), config));
+
+	//LinphoneContactSearch * search = linphone_contact_search_ref(
+	linphone_contact_provider_begin_search(linphone_contact_provider_cast((void*)provider) , predicate, LDAPCallback, cb_data);
+
+	while(!data.mEnd){
+		linphone_core_iterate(this->getCore()->getCCore());
+	}
+
+	// For all call log or when we reach the search limit
+	for (const bctbx_list_t *f = data.mFriends ; f != nullptr ; f = bctbx_list_next(f)) {
+		LinphoneFriend *friendItem = reinterpret_cast<LinphoneFriend*>(f->data);
+		const LinphoneAddress *addr = linphone_friend_get_address(friendItem);
+		if (addr) {
+			if (filter.empty()) {
+				if (findAddress(currentList, addr)) continue;
+				resultList.push_back(SearchResult(0, addr, "", nullptr));
+			} else {
+				unsigned int weight = searchInAddress(addr, filter, withDomain);
+				if (weight > getMinWeight()) {
+					if (findAddress(currentList, addr)) continue;
+					resultList.push_back(SearchResult(weight, addr, "", nullptr));
+				}
+			}
+		}
+	}
+
+	//linphone_contact_search_unref(search);
+	linphone_ldap_contact_provider_unref((void*)provider);
+
+	return resultList;
+}
+
 list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const string &withDomain) const {
 	list<SearchResult> clResults, crResults;
 	list<SearchResult> *resultList = new list<SearchResult>();
@@ -305,6 +400,8 @@ list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const str
 	addResultsToResultsList(clResults, *resultList);
 	crResults = getAddressFromGroupChatRoomParticipants(filter, withDomain, *resultList);
 	addResultsToResultsList(crResults, *resultList);
+	clResults = getAddressFromLDAPServer(filter, withDomain, *resultList);
+	addResultsToResultsList(clResults, *resultList);
 
 	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr) {
 		string name1 = getDisplayNameFromSearchResult(lsr);
