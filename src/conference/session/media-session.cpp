@@ -135,7 +135,7 @@ void MediaSessionPrivate::accepted () {
 						" the ICE gathering will only contain local candidates.";
 				}
 				getStreamsGroup().finishPrepare();
-				updateLocalMediaDescriptionFromIce(localIsOfferer);
+				updateLocalMediaDescriptionFromIce(localIsOfferer, true);
 			}
 		break;
 		default:
@@ -1373,6 +1373,13 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = localIsOfferer ? nullptr : ( op ? op->getRemoteMediaDescription() : nullptr);
 	ctx.localIsOfferer = localIsOfferer;
+	bool addIceCandidates = true;
+	// If internal update (due to capability negotiations for example), ICE parameters should not always be added
+	if (getParams()->getPrivate()->getInternalCallUpdate() && op && op->getRemoteMediaDescription()) {
+		// If remote description doesn't have ICE parameters, then it is not needed to restart ICE upon update
+		addIceCandidates = op->getRemoteMediaDescription()->hasIceParams();
+	}
+	ctx.addIceCandidates = addIceCandidates;
 	/* Now instanciate the streams according to the media description. */
 	getStreamsGroup().createStreams(ctx);
 	if (mainAudioStreamIndex != -1) getStreamsGroup().setStreamMain(static_cast<size_t>(mainAudioStreamIndex));
@@ -1381,7 +1388,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 	/* Get the transport addresses filled in to the media description. */
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 
-	updateLocalMediaDescriptionFromIce(localIsOfferer);
+	updateLocalMediaDescriptionFromIce(localIsOfferer, addIceCandidates);
 	if (oldMd) {
 		transferAlreadyAssignedPayloadTypes(oldMd, md);
 		localDescChanged = md->equal(*oldMd);
@@ -1516,12 +1523,13 @@ void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (std::shared_ptr<S
 	}
 }
 
-void MediaSessionPrivate::updateLocalMediaDescriptionFromIce (bool localIsOfferer) {
+void MediaSessionPrivate::updateLocalMediaDescriptionFromIce (bool localIsOfferer, bool addIceCandidates) {
 	OfferAnswerContext ctx;
 
 	ctx.localMediaDescription = localDesc;
 	ctx.remoteMediaDescription = op ? op->getRemoteMediaDescription() : nullptr;
 	ctx.localIsOfferer = localIsOfferer;
+	ctx.addIceCandidates = addIceCandidates;
 	getStreamsGroup().fillLocalMediaDescription(ctx);
 	if (op) op->setLocalMediaDescription(localDesc);
 }
@@ -2112,7 +2120,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	updateRemoteSessionIdAndVer();
 
 	auto acceptCompletionTask = [this](){
-		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr);
+		updateLocalMediaDescriptionFromIce(op->getRemoteMediaDescription() == nullptr, true);
 		startAccept();
 	};
 	if (getStreamsGroup().prepare()){
@@ -2159,7 +2167,7 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	makeLocalMediaDescription(!isRemoteDescNull, q->isCapabilityNegotiationEnabled());
 
 	auto acceptCompletionTask = [this, nextState, stateInfo, isRemoteDescNull](){
-		updateLocalMediaDescriptionFromIce(isRemoteDescNull);
+		updateLocalMediaDescriptionFromIce(isRemoteDescNull, true);
 		startAcceptUpdate(nextState, stateInfo);
 	};
 	
@@ -2450,12 +2458,12 @@ void MediaSession::initiateIncoming () {
 					/* There is risk that the call can be terminated before this task is executed, for example if offer/answer fails.*/
 					if (d->state != State::Idle) return;
 					d->deferIncomingNotification = false;
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer, true);
 					d->startIncomingNotification();
 				};
 				d->queueIceGatheringTask(incomingNotificationTask);
 			}else{
-				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer, true);
 			}
 		}
 	}
@@ -2475,11 +2483,11 @@ bool MediaSession::initiateOutgoing () {
 				 * If ICE gathering is done, we can update the local media description immediately.
 				 * Otherwise, we'll get the ORTP_EVENT_ICE_GATHERING_FINISHED event later.
 				 */
-				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer, true);
 			}else{
 				d->queueIceGatheringTask([this]() {
 					L_D();
-					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer, true);
 					startInvite(nullptr, "");
 				});
 			}
@@ -2746,7 +2754,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 
 		auto updateCompletionTask = [this, subject, initialState]() -> LinphoneStatus{
 			L_D();
-			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
+			d->updateLocalMediaDescriptionFromIce(d->localIsOfferer, true);
 			LinphoneStatus res = d->startUpdate(subject);
 			if (res && (d->state != initialState)) {
 				/* Restore initial state */
