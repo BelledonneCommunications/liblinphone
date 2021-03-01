@@ -27,6 +27,18 @@ extern "C" {
 #endif
 
 /**
+ * Utils
+ */
+const char *_get_domain(LinphoneAccountCreator *creator);
+char* _get_identity(const LinphoneAccountCreator *creator);
+unsigned int validate_uri(const char* username, const char* domain, const char* display_name);
+const char* ha1_for_passwd(const char* username, const char* realm, const char* passwd, const char* algo);
+void reset_field (char **field);
+void fill_domain_and_algorithm_if_needed(LinphoneAccountCreator *creator);
+LinphoneProxyConfig * linphone_account_creator_create_proxy_config(const LinphoneAccountCreator *creator);
+LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCreator *creator);
+
+/**
  * @addtogroup account_creator
  * @{
  */
@@ -181,6 +193,38 @@ LINPHONE_PUBLIC LinphoneAccountCreatorUsernameStatus linphone_account_creator_se
  * @return The username of the #LinphoneAccountCreator. @maybenil
 **/
 LINPHONE_PUBLIC const char * linphone_account_creator_get_username(const LinphoneAccountCreator *creator);
+
+/**
+ * Set the pn_provider.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pn_provider The pn_provider to set @notnil
+ * @return void
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_provider(LinphoneAccountCreator *creator, const char* pn_provider);
+
+/**
+ * Set the pn_param.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pn_param The pn_param to set @notnil
+ * @return void
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_param(LinphoneAccountCreator *creator, const char* pn_param);
+
+/**
+ * Set the pn_prid.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param pn_prid The pn_prid to set @notnil
+ * @return void
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_pn_prid(LinphoneAccountCreator *creator, const char* pn_prid);
+
+/**
+ * Set the token.
+ * @param creator #LinphoneAccountCreator object @notnil
+ * @param token The pn_prid to set @notnil
+ * @return void
+**/
+LINPHONE_PUBLIC void linphone_account_creator_set_token(LinphoneAccountCreator *creator, const char* token);
 
 /**
  * Set the phone number normalized.
@@ -449,6 +493,20 @@ LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_g
  * @param cb The activate account request to be used.
 **/
 LINPHONE_PUBLIC void linphone_account_creator_cbs_set_activate_account(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
+
+/**
+ * Get the activate account request.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @return The current activate account request.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorCbsStatusCb linphone_account_creator_cbs_get_send_token(const LinphoneAccountCreatorCbs *cbs);
+
+/**
+ * Assign a user pointer to a #LinphoneAccountCreatorCbs object.
+ * @param cbs #LinphoneAccountCreatorCbs object. @notnil
+ * @param cb The send token request used.
+**/
+LINPHONE_PUBLIC void linphone_account_creator_cbs_set_send_token(LinphoneAccountCreatorCbs *cbs, LinphoneAccountCreatorCbsStatusCb cb);
 
 /**
  * Get the is account activated request.
