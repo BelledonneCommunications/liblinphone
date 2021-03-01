@@ -113,13 +113,15 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		ice_session_choose_default_candidates(mIceSession);
 		mGatheringFinished = false;
 	}
-	updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
+	if (ctx.addIceCandidates) {
+		updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
+	}
 }
 
 void IceService::createStreams(const OfferAnswerContext &params){
 	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled, getMediaSessionPrivate().getAf() == AF_INET6);
 	
-	if (!mIceSession) return;
+	if (!mIceSession || !params.addIceCandidates) return;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
