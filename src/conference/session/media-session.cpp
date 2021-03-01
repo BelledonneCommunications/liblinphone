@@ -2614,7 +2614,7 @@ void MediaSession::sendVfuRequest () {
 }
 
 void MediaSession::startIncomingNotification (bool notifyRinging) {
-	L_D();
+/*	L_D();
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md) {
@@ -2627,6 +2627,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 			return;
 		}
 	}
+*/
 
 	CallSession::startIncomingNotification(notifyRinging);
 }
