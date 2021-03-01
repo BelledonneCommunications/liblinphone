@@ -143,7 +143,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 		if (remoteContact) {
 			// If device is not found, then add it
-			if (p->findDevice(*remoteContact) == nullptr) {
+			if (p->findDevice(*remoteContact, false) == nullptr) {
 				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				_linphone_call_set_conf_ref(call->toC(), toC());
