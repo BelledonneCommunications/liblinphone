@@ -341,6 +341,19 @@ int SalMediaDescription::getNbActiveStreams() const {
 	return nb;
 }
 
+bool SalMediaDescription::hasIceParams() const {
+	bool foundIceMediaDescParams = (!ice_ufrag.empty() && !ice_pwd.empty());
+	bool foundIceCandidates = true;
+	bool foundIceStreamDescParams = true;
+	for(const auto & stream : streams){
+		if (!stream.enabled()) continue;
+		foundIceCandidates &= stream.hasIceCandidates();
+		foundIceStreamDescParams &= stream.hasIceParams();
+	}
+	// Return true if ice pwd and ufrag is in media description and each stream has candidates or if each stream defines ice pwd and ufrag as well as candidates
+	return (foundIceStreamDescParams || (foundIceMediaDescParams && foundIceCandidates));
+}
+
 bool SalMediaDescription::hasAvpf() const {
 	if (streams.empty()) return false;
 	for(const auto & stream : streams){
