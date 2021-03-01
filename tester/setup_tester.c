@@ -338,7 +338,7 @@ static void linphone_lpconfig_from_file_zerolen_value(void){
 }
 
 void linphone_lpconfig_invalid_friend(void) {
-	LinphoneCoreManager* mgr = linphone_core_manager_new2("invalid_friends_rc",FALSE);
+	LinphoneCoreManager* mgr = linphone_core_manager_new_with_proxies_check("invalid_friends_rc",FALSE);
 	LinphoneFriendList *friendList = linphone_core_get_default_friend_list(mgr->lc);
 	const bctbx_list_t *friends = linphone_friend_list_get_friends(friendList);
 	BC_ASSERT_EQUAL(bctbx_list_size(friends), 3, int, "%d");
@@ -346,7 +346,7 @@ void linphone_lpconfig_invalid_friend(void) {
 }
 
 void linphone_lpconfig_invalid_friend_remote_provisioning(void) {
-	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
+	LinphoneCoreManager* mgr = linphone_core_manager_new_with_proxies_check("empty_rc",FALSE);
 
 	const char* zero_xml_file = "invalid_friends_xml";
 	char* xml_path = ms_strdup_printf("%s/rcfiles/%s", bc_tester_get_resource_dir_prefix(), zero_xml_file);
@@ -364,7 +364,7 @@ static void linphone_lpconfig_from_xml_zerolen_value(void){
 	char* xml_path = ms_strdup_printf("%s/rcfiles/%s", bc_tester_get_resource_dir_prefix(), zero_xml_file);
 	LpConfig* conf;
 
-	LinphoneCoreManager* mgr = linphone_core_manager_new2("empty_rc",FALSE);
+	LinphoneCoreManager* mgr = linphone_core_manager_new_with_proxies_check("empty_rc",FALSE);
 
 	/* BUG
 	 * This test makes a provisionning by xml outside of the Configuring state of the LinphoneCore.
@@ -469,7 +469,7 @@ static void chat_room_test(void) {
 static void devices_reload_test(void) {
 	char *devid1;
 	char *devid2;
-	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 
 	devid1 = ms_strdup(linphone_core_get_capture_device(mgr->lc));
 	linphone_core_reload_sound_devices(mgr->lc);
@@ -495,7 +495,7 @@ static void devices_reload_test(void) {
 }
 
 static void codec_usability_test(void) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	PayloadType *pt = linphone_core_find_payload_type(mgr->lc, "PCMU", 8000, -1);
 
 	BC_ASSERT_PTR_NOT_NULL(pt);
@@ -524,7 +524,7 @@ end:
  * - with a config that references only VP8, H264 must be added in second position.
 **/
 static void codec_setup(void){
-	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	PayloadType *vp8, *h264;
 	const bctbx_list_t *codecs;
 	if ((vp8 = linphone_core_find_payload_type(mgr->lc, "VP8", 90000, -1)) == NULL ||
@@ -540,7 +540,7 @@ static void codec_setup(void){
 	BC_ASSERT_TRUE(codecs->next->data == h264);
 	linphone_core_manager_destroy(mgr);
 
-	mgr = linphone_core_manager_new2("marie_h264_rc", FALSE);
+	mgr = linphone_core_manager_new_with_proxies_check("marie_h264_rc", FALSE);
 	vp8 = linphone_core_find_payload_type(mgr->lc, "VP8", 90000, -1);
 	h264 = linphone_core_find_payload_type(mgr->lc, "H264", 90000, -1);
 	codecs = linphone_core_get_video_codecs(mgr->lc);
@@ -551,7 +551,7 @@ static void codec_setup(void){
 	BC_ASSERT_TRUE(codecs->next->data == h264);
 	linphone_core_manager_destroy(mgr);
 
-	mgr = linphone_core_manager_new2("marie_rc", FALSE);
+	mgr = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	vp8 = linphone_core_find_payload_type(mgr->lc, "VP8", 90000, -1);
 	h264 = linphone_core_find_payload_type(mgr->lc, "H264", 90000, -1);
 	codecs = linphone_core_get_video_codecs(mgr->lc);
@@ -565,7 +565,7 @@ static void codec_setup(void){
 }
 
 static void custom_tones_setup(void){
-	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	const char *tone;
 
 	linphone_core_set_tone(mgr->lc, LinphoneToneCallOnHold, "callonhold.wav");
@@ -584,7 +584,7 @@ static void custom_tones_setup(void){
 }
 
 static void lime_x3dh_setup(void) {
-	LinphoneCoreManager *mgr = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager *mgr = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	char* xml_path = bc_tester_res("rcfiles/lime_x3dh_xml_rc");
 
 	if (linphone_core_lime_x3dh_available(mgr->lc)) {
@@ -600,7 +600,7 @@ static void lime_x3dh_setup(void) {
 static void search_friend_in_alphabetical_order(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	const char *name1SipUri = {"sip:toto@sip.example.org"};
@@ -706,7 +706,7 @@ static void search_friend_in_alphabetical_order(void) {
 static void search_friend_without_filter(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
@@ -729,7 +729,7 @@ static void search_friend_without_filter(void) {
 static void search_friend_with_domain_without_filter(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *chloeName = "chloe zaya";
 	const char *chloeSipUri = "sip:ch@sip.test.org";
@@ -780,7 +780,7 @@ static void search_friend_with_domain_without_filter(void) {
 static void search_friend_all_domains(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
@@ -806,7 +806,7 @@ static void search_friend_all_domains(void) {
 static void search_friend_one_domain(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
@@ -831,7 +831,7 @@ static void search_friend_one_domain(void) {
 static void search_friend_research_estate(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
@@ -870,7 +870,7 @@ static void search_friend_research_estate(void) {
 static void search_friend_research_estate_reset(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 
 	_create_friends_from_tab(manager->lc, lfl, sFriends, sSizeFriend);
@@ -911,7 +911,7 @@ static void search_friend_research_estate_reset(void) {
 static void search_friend_with_phone_number(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
 	LinphoneVcard *stephanieVcard = linphone_factory_create_vcard(linphone_factory_get());
@@ -1000,7 +1000,7 @@ static void search_friend_with_phone_number(void) {
 }
 
 static void search_friend_with_phone_number_2(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("chloe_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("chloe_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *stephanieFriend = linphone_core_create_friend(manager->lc);
 	LinphoneFriend *laureFriend = linphone_core_create_friend(manager->lc);
@@ -1187,7 +1187,7 @@ static void search_friend_with_presence(void) {
 static void search_friend_in_call_log(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *chloeSipUri = {"sip:chloe@sip.example.org"};
 	const char *benjaminSipUri = {"sip:benjamin@sip.example.org"};
@@ -1250,7 +1250,7 @@ static void search_friend_in_call_log(void) {
 static void search_friend_in_call_log_already_exist(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *ronanSipUri = {"sip:ronan@sip.example.org"};
 	const char *chloeName = "chloe zaya";
@@ -1346,7 +1346,7 @@ static void search_friend_last_item_is_filter(void) {
 static void search_friend_with_name(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *stephanie1SipUri = {"sip:toto@sip.example.org"};
 	const char *stephanie2SipUri = {"sip:stephanie@sip.example.org"};
@@ -1408,7 +1408,7 @@ static void search_friend_with_name(void) {
 static void search_friend_with_name_with_uppercase(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *stephanie1SipUri = {"sip:toto@sip.example.org"};
 	const char *stephanie2SipUri = {"sip:stephanie@sip.example.org"};
@@ -1461,7 +1461,7 @@ static void search_friend_with_name_with_uppercase(void) {
 static void search_friend_with_multiple_sip_address(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *stephanieSipUri1 = {"sip:toto@sip.example.org"};
 	const char *stephanieSipUri2 = {"sip:stephanie@sip.example.org"};
@@ -1512,7 +1512,7 @@ static void search_friend_with_multiple_sip_address(void) {
 static void search_friend_with_same_address(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	const char *stephanieSipUri = {"sip:stephanie@sip.example.org"};
 	LinphoneFriend *stephanieFriend1 = linphone_core_create_friend(manager->lc);
@@ -1589,10 +1589,10 @@ static void search_friend_large_database(void) {
 	char *roDbPath = bc_tester_res("db/friends.db");
 	char *dbPath = bc_tester_file("search_friend_large_database.db");
 	char *searchedFriend = "6295103032641994169";
-	
+
 	liblinphone_tester_copy_file(roDbPath, dbPath);
-	
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	linphone_core_set_friends_database_path(manager->lc, dbPath);
 
 	LinphoneMagicSearch *magicSearch = linphone_magic_search_new(manager->lc);
@@ -1625,7 +1625,7 @@ static void search_friend_get_capabilities(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
 	bctbx_list_t *copy = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("marie_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("marie_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriend *no_one_fr;
 	LinphoneFriend *group_chat_fr;
@@ -1761,7 +1761,7 @@ static void search_friend_chat_room_remote(void) {
 static void search_friend_non_default_list(void) {
 	LinphoneMagicSearch *magicSearch = NULL;
 	bctbx_list_t *resultList = NULL;
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	LinphoneFriendList *lfl = linphone_core_get_default_friend_list(manager->lc);
 	LinphoneFriendList *otherFl = linphone_core_create_friend_list(manager->lc);
 
@@ -1808,7 +1808,7 @@ static void search_friend_non_default_list(void) {
 	const char *name5SipUri = {"sip:gal@sip.example.org"};
 	const char *name4 = {"gauthier wei"};
 	const char *name5 = {"gal tcho"};
-	
+
 	LinphoneFriend *friend4 = linphone_core_create_friend(manager->lc);
 	LinphoneFriend *friend5 = linphone_core_create_friend(manager->lc);
 
@@ -1869,7 +1869,7 @@ static void search_friend_non_default_list(void) {
 /*the webrtc AEC implementation is brought to mediastreamer2 by a plugin.
  * We finally check here that if the plugin is correctly loaded and the right choice of echo canceller implementation is made*/
 static void echo_canceller_check(void){
-	LinphoneCoreManager* manager = linphone_core_manager_new2("empty_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("empty_rc", FALSE);
 	MSFactory *factory = linphone_core_get_ms_factory(manager->lc);
 	const char *expected_filter = "MSSpeexEC";
 	AudioStream *as = audio_stream_new2(factory, NULL, 43000, 43001);
@@ -1901,7 +1901,7 @@ extern LinphoneFriend * linphone_friend_new_from_config_file(LinphoneCore *lc, i
 extern int linphone_friend_get_rc_index(const LinphoneFriend *lf);
 
 static void delete_friend_from_rc(void) {
-	LinphoneCoreManager* manager = linphone_core_manager_new2("friends_rc", FALSE);
+	LinphoneCoreManager* manager = linphone_core_manager_new_with_proxies_check("friends_rc", FALSE);
 	LinphoneCore *core = manager->lc;
 	LinphoneConfig *config = linphone_core_get_config(core);
 	LinphoneFriendList *friend_list = linphone_core_get_default_friend_list(core);
@@ -2009,7 +2009,7 @@ static void audio_devices(void) {
 	// We are not in call so there is no current input audio device
 	BC_ASSERT_PTR_NULL(linphone_core_get_input_audio_device(core));
 	BC_ASSERT_PTR_NULL(linphone_core_get_output_audio_device(core));
-	
+
 	// Check that devices list is empty as the current one type is UNKNOWN
 	audio_devices = linphone_core_get_audio_devices(core);
 	audio_devices_count = bctbx_list_size(audio_devices);
@@ -2039,7 +2039,7 @@ static void audio_devices(void) {
 	BC_ASSERT_TRUE(linphone_audio_device_has_capability(audio_device, LinphoneAudioDeviceCapabilityPlay));
 	BC_ASSERT_TRUE(linphone_audio_device_has_capability(audio_device, LinphoneAudioDeviceCapabilityRecord));
 	BC_ASSERT_STRING_EQUAL(linphone_audio_device_get_device_name(audio_device), DUMMY_TEST_SOUNDCARD);
-	
+
 	// Check that device is in the audio devices list
 	audio_devices = linphone_core_get_audio_devices(core);
 	audio_devices_count = bctbx_list_size(audio_devices);
@@ -2087,7 +2087,7 @@ static void audio_devices(void) {
 	audio_devices_count = bctbx_list_size(audio_devices);
 	BC_ASSERT_EQUAL(audio_devices_count, sound_devices_count + 2, int, "%d");
 	bctbx_list_free_with_data(audio_devices, (void (*)(void *))linphone_audio_device_unref);
-	
+
 	// Check that device is not in the simple audio devices list as we already have a bluetooth audio device
 	audio_devices = linphone_core_get_audio_devices(core);
 	audio_devices_count = bctbx_list_size(audio_devices);
