@@ -405,7 +405,10 @@ std::string SalStreamConfiguration::getSdpString() const {
 	}
 
 	if (!tcapString.empty()) {
-		sdpString += " t=" + tcapString;
+		if (!sdpString.empty()) {
+			sdpString += " ";
+		}
+		sdpString += "t=" + tcapString;
 	}
 	return sdpString;
 }
