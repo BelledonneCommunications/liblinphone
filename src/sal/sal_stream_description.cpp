@@ -1423,6 +1423,11 @@ const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & 
 	return SalStreamDescription::actualConfigurationIndex;
 }
 
+bool SalStreamDescription::hasConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const {
+	const auto & elCount = cfgs.count(index);
+	return (elCount != 0);
+}
+
 const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const {
 	try {
 		const auto & cfg = cfgs.at(index);
@@ -1432,6 +1437,7 @@ const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(con
 		return Utils::getEmptyConstRefObject<SalStreamConfiguration>();
 	}
 }
+
 const SalStreamConfiguration & SalStreamDescription::getActualConfiguration() const {
 	return getConfigurationAtIndex(getActualConfigurationIndex());
 }
