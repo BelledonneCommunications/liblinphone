@@ -795,6 +795,516 @@ static void dtls_srtp_call_with_video_and_capability_negotiation(void) {
 	call_with_video_and_capability_negotiation_base(encryption);
 }
 
+static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const bool_t callee_cap_neg) {
+	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
+	std::list<LinphoneMediaEncryption> marie_enc_list;
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionDTLS);
+	}
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionSRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionNone);
+	}
+
+	encryption_params marie_enc_mgr_params;
+	marie_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	marie_enc_mgr_params.level = E_OPTIONAL;
+	marie_enc_mgr_params.preferences = marie_enc_list;
+
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, caller_cap_neg, FALSE, TRUE);
+
+	std::list<LinphoneMediaEncryption> pauline_enc_list;
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionSRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionZRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionNone);
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionDTLS);
+	}
+
+	encryption_params pauline_enc_mgr_params;
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	pauline_enc_mgr_params.level = E_OPTIONAL;
+	pauline_enc_mgr_params.preferences = pauline_enc_list;
+
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, callee_cap_neg, FALSE, TRUE);
+
+	bctbx_list_t * marie_call_enc = NULL;
+	marie_call_enc = bctbx_list_append(marie_call_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryption))));
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (marie_params, caller_cap_neg);
+	linphone_call_params_set_supported_encryptions (marie_params, marie_call_enc);
+
+	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
+	if (caller_cap_neg && callee_cap_neg) {
+		marieEncryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marieEncryption = encryption;
+	}
+	linphone_call_params_set_media_encryption (marie_params, marieEncryption);
+
+	bctbx_list_t * pauline_call_enc = NULL;
+	pauline_call_enc = bctbx_list_append(pauline_call_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (pauline_params, callee_cap_neg);
+	linphone_call_params_set_media_encryption (pauline_params, encryption);
+	linphone_call_params_set_supported_encryptions (pauline_params, pauline_call_enc);
+
+	// Different scenarios:
+	// ==================== OFFERER =====================
+	// If offerer and answerer supports capability negotiations:
+	// - actual configuration: DTLS
+	// - potential configuration: SRTP
+	// If offerer only supports capability negotiations:
+	// - actual configuration: SRTP
+	// - potential configuration: SRTP
+	// If offerer doesn't support capability negotiations:
+	// - actual configuration: SRTP
+	// ==================== ANSWERER =====================
+	// If answerer supports capability negotiations:
+	// - actual configuration: SRTP
+	// - potential configuration: ZRTP
+	// If answerer doesn't support capability negotiations:
+	// - actual configuration: SRTP
+	// ==================== RESULT =====================
+	// Result: encryption SRTP is chosen
+	BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params));
+
+	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marieCall);
+	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(paulineCall);
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	LinphoneNatPolicy *marie_nat_policy = linphone_core_get_nat_policy(marie->lc);
+	const bool_t marie_ice_enabled = linphone_nat_policy_ice_enabled(marie_nat_policy);
+	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
+	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
+
+	bool sendReInvite = ((caller_cap_neg && callee_cap_neg) || (marie_ice_enabled && pauline_ice_enabled));
+
+	const int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%d");
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
+	}
+
+	// Pauline send an empty SDP for the update
+	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
+
+	stats marie_stat = marie->stat; 
+	stats pauline_stat = pauline->stat; 
+	LinphoneCallParams * params0 = linphone_core_create_call_params(pauline->lc, paulineCall);
+	linphone_call_params_set_media_encryption (params0, encryption);
+	BC_ASSERT_TRUE(linphone_core_sdp_200_ack_enabled(pauline->lc));
+	linphone_call_update(paulineCall, params0);
+	linphone_call_params_unref(params0);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	/*wait for reINVITEs to complete*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+	linphone_core_enable_sdp_200_ack(pauline->lc,FALSE);
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+	marie_stat = marie->stat; 
+	pauline_stat = pauline->stat; 
+	LinphoneCallParams * params1 = linphone_core_create_call_params(pauline->lc, paulineCall);
+	linphone_call_params_set_media_encryption (params1, encryption);
+	linphone_call_params_enable_video(params1, TRUE);
+	BC_ASSERT_FALSE(linphone_core_sdp_200_ack_enabled(pauline->lc));
+	linphone_call_update(paulineCall, params1);
+	linphone_call_params_unref(params1);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	/*wait for reINVITEs to complete*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+	if (pauline_ice_enabled && marie_ice_enabled) {
+		BC_ASSERT_TRUE(check_ice(marie, pauline, LinphoneIceStateHostConnection));
+		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
+	}
+
+	liblinphone_tester_set_next_video_frame_decoded_cb(marieCall);
+	liblinphone_tester_set_next_video_frame_decoded_cb(paulineCall);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,(pauline_stat.number_of_IframeDecoded+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_IframeDecoded,(marie_stat.number_of_IframeDecoded+1)));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marieCall)));
+
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marieCall)));
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+	// Pauline send an empty SDP for the update
+	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+
+	marie_stat = marie->stat; 
+	pauline_stat = pauline->stat; 
+	LinphoneCallParams * params2 = linphone_core_create_call_params(marie->lc, marieCall);
+	linphone_call_params_set_media_encryption (params2, marieEncryption);
+	BC_ASSERT_TRUE(linphone_core_sdp_200_ack_enabled(marie->lc));
+	linphone_call_update(marieCall, params2);
+	linphone_call_params_unref(params2);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdating,(marie_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,(pauline_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	/*wait for reINVITEs to complete*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+	linphone_core_enable_sdp_200_ack(marie->lc,FALSE);
+
+	liblinphone_tester_set_next_video_frame_decoded_cb(marieCall);
+	liblinphone_tester_set_next_video_frame_decoded_cb(paulineCall);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,(pauline_stat.number_of_IframeDecoded+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_IframeDecoded,(marie_stat.number_of_IframeDecoded+1)));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marieCall)));
+
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marieCall)));
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+	bctbx_list_free_with_data(pauline_call_enc, (bctbx_list_free_func)bctbx_free);
+	bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
+
+	end_call(pauline, marie);
+
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_no_sdp_on_update_cap_neg_caller (void) {
+	call_with_no_sdp_on_update_base (TRUE, FALSE);
+}
+
+static void call_with_no_sdp_on_update_cap_neg_callee (void) {
+	call_with_no_sdp_on_update_base (FALSE, TRUE);
+}
+
+/*static void call_with_no_sdp_on_update_cap_neg_both_sides (void) {
+	call_with_no_sdp_on_update_base (TRUE, TRUE);
+}*/
+
+static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const bool_t callee_cap_neg) {
+	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
+	LinphoneMediaEncryption expectedEncryption = encryption; // Expected encryption
+
+	std::list<LinphoneMediaEncryption> marie_enc_list;
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionDTLS);
+	}
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionSRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		marie_enc_list.push_back(LinphoneMediaEncryptionNone);
+	}
+
+	encryption_params marie_enc_mgr_params;
+	marie_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	marie_enc_mgr_params.level = E_OPTIONAL;
+	marie_enc_mgr_params.preferences = marie_enc_list;
+
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, caller_cap_neg, FALSE, TRUE);
+
+	std::list<LinphoneMediaEncryption> pauline_enc_list;
+	if (encryption != LinphoneMediaEncryptionSRTP) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionSRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionZRTP) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionZRTP);
+	}
+	if (encryption != LinphoneMediaEncryptionNone) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionNone);
+	}
+	if (encryption != LinphoneMediaEncryptionDTLS) {
+		pauline_enc_list.push_back(LinphoneMediaEncryptionDTLS);
+	}
+
+	encryption_params pauline_enc_mgr_params;
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	pauline_enc_mgr_params.level = E_OPTIONAL;
+	pauline_enc_mgr_params.preferences = pauline_enc_list;
+
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, callee_cap_neg, FALSE, TRUE);
+
+	bctbx_list_t * marie_call_enc = NULL;
+	marie_call_enc = bctbx_list_append(marie_call_enc, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryption))));
+	marie_call_enc = bctbx_list_append(marie_call_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (marie_params, caller_cap_neg);
+	linphone_call_params_set_supported_encryptions (marie_params, marie_call_enc);
+	bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
+
+	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
+	if (caller_cap_neg && callee_cap_neg) {
+		marieEncryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marieEncryption = encryption;
+	}
+	linphone_call_params_set_media_encryption (marie_params, marieEncryption);
+
+	bctbx_list_t * pauline_call_enc = NULL;
+	pauline_call_enc = bctbx_list_append(pauline_call_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (pauline_params, callee_cap_neg);
+	linphone_call_params_set_media_encryption (pauline_params, encryption);
+	linphone_call_params_set_supported_encryptions (pauline_params, pauline_call_enc);
+	bctbx_list_free_with_data(pauline_call_enc, (bctbx_list_free_func)bctbx_free);
+
+	// Different scenarios:
+	// ==================== OFFERER =====================
+	// If offerer and answerer supports capability negotiations:
+	// - actual configuration: DTLS
+	// - potential configuration: SRTP and DTLS
+	// If offerer only supports capability negotiations:
+	// - actual configuration: SRTP
+	// - potential configuration: SRTP and DTLS
+	// If offerer doesn't support capability negotiations:
+	// - actual configuration: SRTP
+	// ==================== ANSWERER =====================
+	// If answerer supports capability negotiations:
+	// - actual configuration: SRTP
+	// - potential configuration: ZRTP
+	// If answerer doesn't support capability negotiations:
+	// - actual configuration: SRTP
+	// ==================== RESULT =====================
+	// Result: encryption SRTP is chosen
+	BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params));
+
+	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marieCall);
+	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(paulineCall);
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	LinphoneNatPolicy *marie_nat_policy = linphone_core_get_nat_policy(marie->lc);
+	const bool_t marie_ice_enabled = linphone_nat_policy_ice_enabled(marie_nat_policy);
+	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
+	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
+
+	bool sendReInvite = ((caller_cap_neg && callee_cap_neg) || (marie_ice_enabled && pauline_ice_enabled));
+
+	const int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%d");
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), expectedEncryption, int, "%i");
+	}
+
+	// If capability negotiation is enabled on both sides, DTLS is chosen
+	// Callee:
+	// Optional encryptions: DTLS and ZRTP
+	// Default: SRTP
+	// Caller:
+	// Optional encryptions: SRTP and DTLS
+	// Default: SRTP if capability negotiation is disabled, DTLS otherwise
+	stats marie_stat = marie->stat; 
+	stats pauline_stat = pauline->stat; 
+	LinphoneCallParams * params0 = linphone_core_create_call_params(pauline->lc, paulineCall);
+	linphone_call_params_set_media_encryption (params0, encryption);
+	linphone_call_params_enable_video(params0, TRUE);
+	bctbx_list_t * pauline_call_enc0 = NULL;
+	if (caller_cap_neg && callee_cap_neg) {
+		expectedEncryption = LinphoneMediaEncryptionDTLS;
+	}
+	pauline_call_enc0 = bctbx_list_append(pauline_call_enc0, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	pauline_call_enc0 = bctbx_list_append(pauline_call_enc0, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	linphone_call_params_set_supported_encryptions (params0, pauline_call_enc0);
+	bctbx_list_free_with_data(pauline_call_enc0, (bctbx_list_free_func)bctbx_free);
+	linphone_call_update(paulineCall, params0);
+	linphone_call_params_unref(params0);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	/*wait for reINVITEs to complete*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+	if (pauline_ice_enabled && marie_ice_enabled) {
+		BC_ASSERT_TRUE(check_ice(marie, pauline, LinphoneIceStateHostConnection));
+		BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
+	}
+
+	liblinphone_tester_set_next_video_frame_decoded_cb(marieCall);
+	liblinphone_tester_set_next_video_frame_decoded_cb(paulineCall);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,(pauline_stat.number_of_IframeDecoded+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_IframeDecoded,(marie_stat.number_of_IframeDecoded+1)));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marieCall)));
+
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marieCall)));
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), expectedEncryption, int, "%i");
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+	// If capability negotiation is enabled on both sides, DTLS is chosen
+	// Callee:
+	// Optional encryptions: DTLS and ZRTP
+	// Default: SRTP
+	// Caller:
+	// Optional encryptions: ZRTP and DTLS
+	// Default: SRTP if capability negotiation is disabled, DTLS otherwise
+	marie_stat = marie->stat; 
+	pauline_stat = pauline->stat; 
+	LinphoneCallParams * params1 = linphone_core_create_call_params(marie->lc, marieCall);
+	linphone_call_params_set_media_encryption (params1, marieEncryption);
+	bctbx_list_t * marie_call_enc1 = NULL;
+	if (caller_cap_neg && callee_cap_neg) {
+		expectedEncryption = LinphoneMediaEncryptionZRTP;
+	}
+	marie_call_enc1 = bctbx_list_append(marie_call_enc1, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	marie_call_enc1 = bctbx_list_append(marie_call_enc1, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	linphone_call_params_set_supported_encryptions (params1, marie_call_enc1);
+	bctbx_list_free_with_data(marie_call_enc1, (bctbx_list_free_func)bctbx_free);
+	linphone_call_update(marieCall, params1);
+	linphone_call_params_unref(params1);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdating,(marie_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,(pauline_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	/*wait for reINVITEs to complete*/
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+	liblinphone_tester_set_next_video_frame_decoded_cb(marieCall);
+	liblinphone_tester_set_next_video_frame_decoded_cb(paulineCall);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,(pauline_stat.number_of_IframeDecoded+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_IframeDecoded,(marie_stat.number_of_IframeDecoded+1)));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marieCall)));
+
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(paulineCall)));
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marieCall)));
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marieCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
+	}
+	if (paulineCall) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), expectedEncryption, int, "%i");
+	}
+
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+
+	end_call(pauline, marie);
+
+	linphone_call_params_unref(marie_params);
+	linphone_call_params_unref(pauline_params);
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_changes_enc_on_update_cap_neg_caller (void) {
+	call_changes_enc_on_update_base (TRUE, FALSE);
+}
+
+static void call_changes_enc_on_update_cap_neg_callee (void) {
+	call_changes_enc_on_update_base (FALSE, TRUE);
+}
+
+static void call_changes_enc_on_update_cap_neg_both_sides (void) {
+	call_changes_enc_on_update_base (TRUE, TRUE);
+}
+
 static void call_with_update_and_incompatible_encs_in_call_params_base (const bool_t enable_ice) {
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
 	std::list<LinphoneMediaEncryption> marie_enc_list;
@@ -1521,6 +2031,12 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with capability negotiation disabled at core level", call_with_capability_negotiation_disable_core_level),
 	TEST_NO_TAG("Call with incompatible encryptions in call params", call_with_incompatible_encs_in_call_params),
 	TEST_NO_TAG("Call with update and incompatible encryptions in call params", call_with_update_and_incompatible_encs_in_call_params),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
+	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
+//	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides", call_with_no_sdp_on_update_cap_neg_both_sides),
+	TEST_NO_TAG("Call changes encryption with update and capability negotiations on caller", call_changes_enc_on_update_cap_neg_caller),
+	TEST_NO_TAG("Call changes encryption with update and capability negotiations on callee", call_changes_enc_on_update_cap_neg_callee),
+	TEST_NO_TAG("Call changes encryption with update and capability negotiations on both sides", call_changes_enc_on_update_cap_neg_both_sides),
 	TEST_NO_TAG("ICE call with update and incompatible encryptions in call params", ice_call_with_update_and_incompatible_encs_in_call_params),
 	TEST_NO_TAG("Unencrypted call with potential configuration same as actual one", unencrypted_call_with_potential_configuration_same_as_actual_configuration),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
