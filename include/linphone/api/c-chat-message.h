@@ -383,6 +383,13 @@ LINPHONE_PUBLIC void linphone_chat_message_add_file_content (LinphoneChatMessage
 LINPHONE_PUBLIC void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *message, const char *text);
 
 /**
+ * Adds a content to the ChatMessage.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @param content the #LinphoneContent object to add. @notnil
+ */
+LINPHONE_PUBLIC void linphone_chat_message_add_content (LinphoneChatMessage *message, LinphoneContent *content);
+
+/**
  * Removes a content from the ChatMessage.
  * @param message #LinphoneChatMessage object. @notnil
  * @param content the #LinphoneContent object to remove. @notnil
