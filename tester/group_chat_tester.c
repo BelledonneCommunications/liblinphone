@@ -3390,6 +3390,81 @@ static void group_chat_room_send_two_files_plus_text (void) {
 	group_chat_room_send_file_with_or_without_text(TRUE, TRUE, FALSE);
 }
 
+static void group_chat_room_send_multipart_custom_content_types(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference_with_groupchat_version(coresManagerList, "1.0");
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	// Add our custom content types
+	linphone_core_add_content_type_support(marie->lc, "application/vnd.3gpp.mcptt-info+xml");
+	linphone_core_add_content_type_support(marie->lc, "application/vnd.3gpp.mcptt-location-info+xml");
+	linphone_core_add_content_type_support(pauline->lc, "application/vnd.3gpp.mcptt-info+xml");
+	linphone_core_add_content_type_support(pauline->lc, "application/vnd.3gpp.mcptt-location-info+xml");
+
+	const char *data1 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><mcpttinfo xmlns=\"urn:3gpp:ns:mcpttInfo:1.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><mcptt-Params><mcptt-request-uri type=\"Normal\"><mcpttURI>sip:test@sip.example.org</mcpttURI></mcptt-request-uri></mcptt-Params></mcpttinfo>";
+	const char *data2 = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><location-info xmlns=\"urn:3gpp:ns:mcpttILocationInfo:1.0\"><Configuration><NonEmergencyLocationInformation><ServingEcgi/><NeighbouringEcgi/><MbmsSaId/><MbsfnArea/><GeographicalCoordinate/><minimumIntervalLength>10</minimumIntervalLength></NonEmergencyLocationInformation><TriggeringCriteria><CellChange><AnyCellChange TriggerId=\"AnyCellChange\"/></CellChange><TrackingAreaChange><AnyTrackingAreaChange TriggerId=\"AnyTrackingAreaChange\"/></TrackingAreaChange><PlmnChange><AnyPlmnChange TriggerId=\"AnyPlmnChange\"/></PlmnChange><PeriodicReport TriggerId=\"Periodic\">20</PeriodicReport><GeographicalAreaChange><AnyAreaChange TriggerId=\"177db491c22\"></AnyAreaChange></GeographicalAreaChange></TriggeringCriteria></Configuration></location-info>";
+
+	LinphoneChatMessage *msg;
+	msg = linphone_chat_room_create_empty_message(marieCr);
+
+	LinphoneContent *content = linphone_factory_create_content(linphone_factory_get());
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "vnd.3gpp.mcptt-info+xml");
+	linphone_content_set_utf8_text(content, data1);
+	linphone_chat_message_add_content(msg, content);
+	linphone_content_unref(content);
+
+	content = linphone_factory_create_content(linphone_factory_get());
+	linphone_content_set_type(content, "application");
+	linphone_content_set_subtype(content, "vnd.3gpp.mcptt-location-info+xml");
+	linphone_content_set_utf8_text(content, data2);
+	linphone_chat_message_add_content(msg, content);
+	linphone_content_unref(content);
+
+	linphone_chat_message_send(msg);
+	BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageReceived, 1));
+	linphone_chat_message_unref(msg);
+
+	if (pauline->stat.last_received_chat_message) {
+		const bctbx_list_t* contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
+		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+
+		LinphoneContent *content1 = bctbx_list_get_data(contents);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content1), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content1), "vnd.3gpp.mcptt-info+xml");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content1), data1);
+
+		LinphoneContent *content2 = bctbx_list_nth_data(contents, 1);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content2), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content2), "vnd.3gpp.mcptt-location-info+xml");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_utf8_text(content2), data2);
+	}
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void group_chat_room_unique_one_to_one_chat_room_base(bool_t secondDeviceForSender) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *marie2 = NULL;
@@ -6652,6 +6727,7 @@ test_t group_chat_tests[] = {
 	TEST_NO_TAG("Send file using buffer", group_chat_room_send_file_2),
 	TEST_NO_TAG("Send file + text", group_chat_room_send_file_plus_text),
 	TEST_NO_TAG("Send 2 files + text", group_chat_room_send_two_files_plus_text),
+	TEST_NO_TAG("Send multipart message with custom content types", group_chat_room_send_multipart_custom_content_types),
 	TEST_NO_TAG("Unique one-to-one chatroom", group_chat_room_unique_one_to_one_chat_room),
 	TEST_NO_TAG("Unique one-to-one chatroom with dual sender device", group_chat_room_unique_one_to_one_chat_room_dual_sender_device),
 	TEST_NO_TAG("Unique one-to-one chatroom recreated from message", group_chat_room_unique_one_to_one_chat_room_recreated_from_message),
