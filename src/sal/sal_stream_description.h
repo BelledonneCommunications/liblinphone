@@ -98,6 +98,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getChosenConfigurationIndex() const;
 		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getActualConfigurationIndex() const;
 
+		bool hasConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const;
 		const SalStreamConfiguration & getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const;
 		const SalStreamConfiguration & getActualConfiguration() const;
 		const SalStreamConfiguration & getChosenConfiguration() const;
