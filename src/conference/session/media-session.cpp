@@ -1554,15 +1554,24 @@ void MediaSessionPrivate::freeResources () {
 	getStreamsGroup().finish();
 }
 
-
 void MediaSessionPrivate::queueIceCompletionTask(const std::function<void()> &lambda){
-	iceDeferedTasks.push(lambda);
+	iceDeferedCompletionTasks.push(lambda);
 }
 
 void MediaSessionPrivate::runIceCompletionTasks(){
-	while(!iceDeferedTasks.empty()){
-		iceDeferedTasks.front()();
-		iceDeferedTasks.pop();
+	while(!iceDeferedCompletionTasks.empty()){
+		iceDeferedCompletionTasks.front()();
+		iceDeferedCompletionTasks.pop();
+	}
+}
+void MediaSessionPrivate::queueIceGatheringTask(const std::function<void()> &lambda){
+	iceDeferedGatheringTasks.push(lambda);
+}
+
+void MediaSessionPrivate::runIceGatheringTasks(){
+	while(!iceDeferedGatheringTasks.empty()){
+		iceDeferedGatheringTasks.front()();
+		iceDeferedGatheringTasks.pop();
 	}
 }
 
@@ -1570,7 +1579,7 @@ void MediaSessionPrivate::runIceCompletionTasks(){
  * IceServiceListener implementation
  */
 void MediaSessionPrivate::onGatheringFinished(IceService &service){
-	runIceCompletionTasks();
+	runIceGatheringTasks();
 }
 
 void MediaSessionPrivate::onIceCompleted(IceService &service){
@@ -1593,6 +1602,7 @@ void MediaSessionPrivate::onIceCompleted(IceService &service){
 			break;
 		}
 	}
+	runIceCompletionTasks();
 	startDtlsOnAllStreams();
 }
 
@@ -2091,7 +2101,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 		startAccept();
 	};
 	if (getStreamsGroup().prepare()){
-		queueIceCompletionTask(acceptCompletionTask);
+		queueIceGatheringTask(acceptCompletionTask);
 		return; /* Deferred until completion of ICE gathering */
 	}
 	acceptCompletionTask();
@@ -2140,8 +2150,15 @@ LinphoneStatus MediaSessionPrivate::acceptUpdate (const CallSessionParams *csp, 
 	
 	if (getStreamsGroup().prepare()){
 		lInfo() << "Acceptance of incoming reINVITE is deferred to ICE gathering completion.";
-		queueIceCompletionTask(acceptCompletionTask);
+		queueIceGatheringTask(acceptCompletionTask);
 		return 0; /* Deferred until completion of ICE gathering */
+	} else if (getStreamsGroup().getIceService().isRunning()) {
+		// ICE negotiations are ongoing hence the update cannot be accepted immediately
+		if (!getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
+			lInfo() << "acceptance of incoming reINVITE is deferred to ICE completion completion.";
+			queueIceCompletionTask(acceptCompletionTask);
+		}
+		return 0;
 	}
 	acceptCompletionTask();
 	return 0;
@@ -2419,7 +2436,7 @@ void MediaSession::initiateIncoming () {
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					d->startIncomingNotification();
 				};
-				d->queueIceCompletionTask(incomingNotificationTask);
+				d->queueIceGatheringTask(incomingNotificationTask);
 			}else{
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 			}
@@ -2443,7 +2460,7 @@ bool MediaSession::initiateOutgoing () {
 				 */
 				d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 			}else{
-				d->queueIceCompletionTask([this]() {
+				d->queueIceGatheringTask([this]() {
 					L_D();
 					d->updateLocalMediaDescriptionFromIce(d->localIsOfferer);
 					startInvite(nullptr, "");
@@ -2723,7 +2740,14 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 		
 		if (d->getStreamsGroup().prepare()) {
 			lInfo() << "Defer CallSession update to gather ICE candidates";
-			d->queueIceCompletionTask(updateCompletionTask);
+			d->queueIceGatheringTask(updateCompletionTask);
+			return 0;
+		} else if (getStreamsGroup().getIceService().isRunning()) {
+			// ICE negotiations are ongoing hence the update cannot be send right now
+			if (!d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
+				lInfo() << "Defer CallSession update to complete ICE negotiations";
+				d->queueIceCompletionTask(updateCompletionTask);
+			}
 			return 0;
 		}
 		result = updateCompletionTask();
