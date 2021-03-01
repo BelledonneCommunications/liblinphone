@@ -736,7 +736,7 @@ void ServerGroupChatRoomPrivate::determineProtocolVersion(){
 
 void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const shared_ptr<ParticipantDeviceIdentity> &deviceInfo) {
 	L_Q();
-	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo->getAddress());
+	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo->getAddress(), false);
 
 	if (device) {
 		// Nothing to do, but set the name and capabilities because they are not known for the initiator device.
