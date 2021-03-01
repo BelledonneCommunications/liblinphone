@@ -196,7 +196,7 @@ private:
 	void setupZrtpHash (std::shared_ptr<SalMediaDescription> & md);
 	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> & md);
 	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md);
-	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
+	void updateLocalMediaDescriptionFromIce(bool localIsOfferer, bool addIceCandidates);
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
