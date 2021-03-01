@@ -627,7 +627,10 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 
 std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 
-	SalStreamConfiguration resultCfg = result.getActualConfiguration();
+	SalStreamConfiguration resultCfg;
+	if (result.hasConfigurationAtIndex(result.getActualConfigurationIndex())) {
+		resultCfg = result.getActualConfiguration();
+	}
 	const SalStreamConfiguration & localCfg = local_cap.getConfigurationAtIndex(localCfgIdx);
 	const SalStreamConfiguration & remoteCfg = remote_offer.getConfigurationAtIndex(remoteCfgIdx);
 
@@ -638,7 +641,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
-		lInfo() << __func__ << " -  the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		lInfo() << __func__ << " -  the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
 		success = false;
 		return std::make_pair(resultCfg, success);
 	}
