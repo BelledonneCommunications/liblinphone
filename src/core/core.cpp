@@ -342,6 +342,7 @@ void CorePrivate::notifyEnteringBackground () {
 	if (isInBackground)
 		return;
 
+	ms_message("Core [%p] notify enter background", q);
 	isInBackground = true;
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)

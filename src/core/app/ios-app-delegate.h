@@ -40,6 +40,7 @@
 @interface IosAppDelegate : IosObject
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core;
 
 @end
 

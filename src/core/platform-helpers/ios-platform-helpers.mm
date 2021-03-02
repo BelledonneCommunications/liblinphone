@@ -142,6 +142,9 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
 	mHandler = [[IosHandler alloc] initWithCore:core];
+	if (mUseAppDelgate) {
+		[mAppDelegate configure:core];
+	}
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
