@@ -780,7 +780,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 					const std::shared_ptr<SalMediaDescription> remote_answer){
 	size_t i;
 
-	auto result = std::make_shared<SalMediaDescription>(local_offer->supportCapabilityNegotiation());
+	auto result = std::make_shared<SalMediaDescription>(local_offer->supportCapabilityNegotiation(), local_offer->tcapLinesMerged());
 	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 
 	for(i=0;i<local_offer->streams.size();++i){
@@ -837,7 +837,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 					std::shared_ptr<SalMediaDescription> remote_offer,
 					bool_t one_matching_codec){
 
-	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation());
+	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
 	size_t i;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){

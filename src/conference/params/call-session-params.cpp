@@ -38,6 +38,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
 	capabilityNegotiation = src->capabilityNegotiation;
+	mergeTcapLines = src->mergeTcapLines;
 	supportedEncryptions = src->supportedEncryptions;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
@@ -62,6 +63,14 @@ bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
 
 void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
 	capabilityNegotiation = enable;
+}
+
+bool CallSessionParamsPrivate::tcapLinesMerged() const {
+	return mergeTcapLines;
+}
+
+void CallSessionParamsPrivate::enableTcapLineMerging (const bool enable) {
+	mergeTcapLines = enable;
 }
 
 bool CallSessionParamsPrivate::isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const {
@@ -130,6 +139,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	L_D();
 	d->inConference = false;
 	d->capabilityNegotiation = !!linphone_core_is_capability_negotiation_supported(core->getCCore());
+	d->mergeTcapLines = !!linphone_core_tcap_lines_merged(core->getCCore());
 	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
