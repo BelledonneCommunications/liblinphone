@@ -18,6 +18,7 @@
  */
 #include <list>
 #include <string>
+#include <algorithm>
 
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
@@ -100,16 +101,18 @@ static LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(c
 	if (linphone_core_media_encryption_supported(mgr->lc,encryption)) {
 		linphone_core_set_media_encryption_mandatory(mgr->lc,(enc_params.level == E_MANDATORY));
 
-		if (enc_params.level == E_MANDATORY) {
+		if ((enc_params.level == E_MANDATORY) || (enc_params.level == E_OPTIONAL)) {
 			linphone_core_set_media_encryption(mgr->lc,encryption);
 			BC_ASSERT_EQUAL(linphone_core_get_media_encryption(mgr->lc), encryption, int, "%i");
-		} if (enc_params.level == E_OPTIONAL) {
+		} else {
+			linphone_core_set_media_encryption(mgr->lc,LinphoneMediaEncryptionNone);
+			BC_ASSERT_EQUAL(linphone_core_get_media_encryption(mgr->lc), LinphoneMediaEncryptionNone, int, "%i");
+		}
+
+		if (!enc_params.preferences.empty()) {
 			bctbx_list_t * cfg_enc = create_confg_encryption_preference_list_from_param_preferences(enc_params.preferences);
 			linphone_core_set_supported_media_encryptions(mgr->lc,cfg_enc);
-			BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(mgr->lc, encryption));
 			bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
-
-			linphone_core_set_media_encryption(mgr->lc,LinphoneMediaEncryptionNone);
 		}
 	}
 
@@ -295,11 +298,11 @@ static void encrypted_call_with_params_base(LinphoneCoreManager* caller, Linphon
 			expectedEncryption = callee_encryption;
 
 			// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
-			potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
+			potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(caller_params,expectedEncryption) && (linphone_call_params_get_media_encryption(caller_params) != expectedEncryption));
 		} else if (callee_capability_negotiations && caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
 			expectedEncryption = encryption;
 			// reINVITE is always sent
-			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption);
+			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (caller_params, encryption) && (linphone_call_params_get_media_encryption(caller_params) != encryption);
 		} else {
 			expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall));
 			// reINVITE is not sent because either parts of the call doesn't support capability negotiations
@@ -877,6 +880,14 @@ static void call_with_tcap_line_merge_on_both_sides(void) {
 
 static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const bool_t callee_cap_neg) {
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
+
+	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
+	if (caller_cap_neg && callee_cap_neg) {
+		marieEncryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marieEncryption = encryption;
+	}
+
 	std::list<LinphoneMediaEncryption> marie_enc_list;
 	if (encryption != LinphoneMediaEncryptionZRTP) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
@@ -913,7 +924,12 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	// Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
+	if (callee_cap_neg && caller_cap_neg) {
+		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	} else {
+		pauline_enc_mgr_params.encryption = marieEncryption;
+	}
 	pauline_enc_mgr_params.level = E_OPTIONAL;
 	pauline_enc_mgr_params.preferences = pauline_enc_list;
 
@@ -926,12 +942,6 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	linphone_call_params_enable_capability_negotiations (marie_params, caller_cap_neg);
 	linphone_call_params_set_supported_encryptions (marie_params, marie_call_enc);
 
-	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
-	if (caller_cap_neg && callee_cap_neg) {
-		marieEncryption = LinphoneMediaEncryptionDTLS;
-	} else {
-		marieEncryption = encryption;
-	}
 	linphone_call_params_set_media_encryption (marie_params, marieEncryption);
 
 	bctbx_list_t * pauline_call_enc = NULL;
@@ -1137,6 +1147,13 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
 	LinphoneMediaEncryption expectedEncryption = encryption; // Expected encryption
 
+	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
+	if (caller_cap_neg && callee_cap_neg) {
+		marieEncryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marieEncryption = encryption;
+	}
+
 	std::list<LinphoneMediaEncryption> marie_enc_list;
 	if (encryption != LinphoneMediaEncryptionZRTP) {
 		marie_enc_list.push_back(LinphoneMediaEncryptionZRTP);
@@ -1173,7 +1190,12 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	// Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
+	if (callee_cap_neg && caller_cap_neg) {
+		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	} else {
+		pauline_enc_mgr_params.encryption = marieEncryption;
+	}
 	pauline_enc_mgr_params.level = E_OPTIONAL;
 	pauline_enc_mgr_params.preferences = pauline_enc_list;
 
@@ -1188,12 +1210,6 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	linphone_call_params_set_supported_encryptions (marie_params, marie_call_enc);
 	bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
 
-	LinphoneMediaEncryption marieEncryption = LinphoneMediaEncryptionNone;
-	if (caller_cap_neg && callee_cap_neg) {
-		marieEncryption = LinphoneMediaEncryptionDTLS;
-	} else {
-		marieEncryption = encryption;
-	}
 	linphone_call_params_set_media_encryption (marie_params, marieEncryption);
 
 	bctbx_list_t * pauline_call_enc = NULL;
@@ -1756,8 +1772,20 @@ static void call_with_encryption_test_base(const encryption_params marie_enc_par
 
 	LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionNone;
 	if ((enable_marie_capability_negotiations == TRUE) && (enable_pauline_capability_negotiations == TRUE)) {
+		for (const auto & enc : marie_enc_params.preferences) {
+			if (std::find(pauline_enc_params.preferences.cbegin(), pauline_enc_params.preferences.cend(), enc) != pauline_enc_params.preferences.cend()) {
+				expectedEncryption = enc;
+printf("%s - found enc %s\n", __func__, linphone_media_encryption_to_string(enc));
+				break;
+			}
+		}
+	} else if (enable_marie_capability_negotiations == TRUE) {
+		expectedEncryption = pauline_enc_params.encryption;
+	} else {
 		expectedEncryption = marie_enc_params.encryption;
 	}
+
+printf("%s - result found enc %s\n", __func__, linphone_media_encryption_to_string(expectedEncryption));
 
 	encrypted_call_base(marie, pauline, expectedEncryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations, enable_video);
 
@@ -1837,7 +1865,12 @@ static void zrtp_call_with_mandatory_encryption_and_capability_negotiation_on_ca
 
 static void call_from_opt_enc_to_enc_base(const LinphoneMediaEncryption encryption, bool_t opt_enc_to_enc) {
 	encryption_params optional_enc_mgr_params;
-	optional_enc_mgr_params.encryption = encryption;
+	// Avoid setting the actual configuration with the same encryption as the desired one
+	if (encryption == LinphoneMediaEncryptionSRTP) {
+		optional_enc_mgr_params.encryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		optional_enc_mgr_params.encryption = LinphoneMediaEncryptionSRTP;
+	}
 	optional_enc_mgr_params.level = E_OPTIONAL;
 	optional_enc_mgr_params.preferences = set_encryption_preference(TRUE);
 
@@ -1942,10 +1975,22 @@ static void zrtp_video_call_with_optional_encryption_on_callee(void) {
 static void call_with_optional_encryption_on_both_sides_base(const LinphoneMediaEncryption encryption, const bool_t enable_video) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
+	// Avoid setting the actual configuration with the same encryption as the desired one
+	if (encryption == LinphoneMediaEncryptionSRTP) {
+		marie_enc_params.encryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marie_enc_params.encryption = LinphoneMediaEncryptionSRTP;
+	}
 	marie_enc_params.level = E_OPTIONAL;
 	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption, false);
 
 	encryption_params pauline_enc_params;
+	// Avoid setting the actual configuration with the same encryption as the desired one
+	if (encryption == LinphoneMediaEncryptionZRTP) {
+		pauline_enc_params.encryption = LinphoneMediaEncryptionZRTP;
+	} else {
+		pauline_enc_params.encryption = LinphoneMediaEncryptionDTLS;
+	}
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_OPTIONAL;
 	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
@@ -1980,11 +2025,23 @@ static void zrtp_video_call_with_optional_encryption_on_both_sides(void) {
 static void ice_call_with_optional_encryption(const LinphoneMediaEncryption encryption, const bool_t caller_with_ice, const bool_t callee_with_ice, const bool_t enable_video) {
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = encryption;
+	// Avoid setting the actual configuration with the same encryption as the desired one
+	if (encryption == LinphoneMediaEncryptionSRTP) {
+		marie_enc_params.encryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		marie_enc_params.encryption = LinphoneMediaEncryptionSRTP;
+	}
 	marie_enc_params.level = E_OPTIONAL;
 	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption, false);
 
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = encryption;
+	// Avoid setting the actual configuration with the same encryption as the desired one
+	if (encryption == LinphoneMediaEncryptionZRTP) {
+		pauline_enc_params.encryption = LinphoneMediaEncryptionDTLS;
+	} else {
+		pauline_enc_params.encryption = LinphoneMediaEncryptionZRTP;
+	}
 	pauline_enc_params.level = E_OPTIONAL;
 	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
 
