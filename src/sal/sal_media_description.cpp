@@ -638,9 +638,8 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 	}
 
-	//for ( const auto & stream : streams) {
-	for (std::size_t idx = 0; idx < streams.size(); idx++) {
-		auto media_desc = streams.at(idx).toSdpMediaDescription(this, session_desc);
+	for ( const auto & stream : streams) {
+		auto media_desc = stream.toSdpMediaDescription(this, session_desc);
 		belle_sdp_session_description_add_media_description(session_desc, media_desc);
 	}
 	return session_desc;
