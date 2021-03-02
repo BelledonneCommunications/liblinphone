@@ -27,10 +27,11 @@
 LINPHONE_BEGIN_NAMESPACE
 
 // Called by makeLocalMediaDescription to create the local media decription
-SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation){
+SalMediaDescription::SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps){
 	pad = false;
 
 	capabilityNegotiationSupported = capabilityNegotiation;
+	mergeTcapLines = mergeTcaps;
 
 	streams.clear();
 	bundles.clear();
@@ -69,9 +70,10 @@ SalMediaDescription::SalMediaDescription(const SalMediaDescription & other) {
 	set_nortpproxy = other.set_nortpproxy;
 
 	capabilityNegotiationSupported = other.capabilityNegotiationSupported;
+	mergeTcapLines = other.mergeTcapLines;
 }
 
-SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false) {
+SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) : SalMediaDescription(false, false) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
@@ -407,7 +409,10 @@ bool SalMediaDescription::hasIpv6() const {
 
 bool SalMediaDescription::supportCapabilityNegotiation() const {
 	return capabilityNegotiationSupported;
+}
 
+bool SalMediaDescription::tcapLinesMerged() const {
+	return mergeTcapLines;
 }
 
 bool SalMediaDescription::operator==(const SalMediaDescription & other) const {
@@ -605,10 +610,31 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
 	}
 
+	std::string tcapValue;
+	SalStreamDescription::tcap_map_t::key_type prevIdx = 0;
 	for (const auto & tcap : tcaps) {
 		const auto & idx = tcap.first;
 		const auto & value = tcap.second;
-		std::string tcapValue = std::to_string(idx) + " " + value;
+		if (mergeTcapLines) {
+			if (tcapValue.empty()) {
+				tcapValue = std::to_string(idx) + " " + value;
+				prevIdx = idx;
+			} else {
+				if (idx == (prevIdx + 1)) {
+					tcapValue += " " + value;
+				} else {
+					belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+					tcapValue = std::to_string(idx) + " " + value;
+				}
+				prevIdx = idx;
+			}
+		} else {
+			tcapValue = std::to_string(idx) + " " + value;
+			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+		}
+	}
+
+	if (mergeTcapLines && !tcapValue.empty()) {
 		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 	}
 
@@ -806,4 +832,5 @@ void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_descrip
 	belle_sdp_media_description_add_attribute(media_desc, belle_sdp_attribute_create(attrName.c_str(),buffer));
 	capabilityNegotiationSupported = true;
 }
+
 LINPHONE_END_NAMESPACE
