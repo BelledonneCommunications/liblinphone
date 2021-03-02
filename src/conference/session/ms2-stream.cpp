@@ -213,15 +213,19 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	}
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
-	
-	if (getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP)) {
+
+	// Add ZRTP attributes if:
+	// - chosen configuration is the actual one, then look at default encryption
+	// - chosen configuration is the a potential one, then look at list of supported encryptions
+	const bool addZrtpAttributes = (localDesc.getChosenConfigurationIndex() == localDesc.getActualConfigurationIndex()) ? (getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) : (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP));
+	if (addZrtpAttributes) {
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
 		uint8_t zrtphash[128];
 		if (mSessions.zrtp_context) {
 			ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
 			/* Turn on the flag to use it if ZRTP is set */
-			enableZrtpHash = (getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP);
+			enableZrtpHash = addZrtpAttributes;
 		}
 
 		localDesc.setZrtpHash(enableZrtpHash, zrtphash);
