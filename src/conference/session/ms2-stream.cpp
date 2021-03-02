@@ -316,30 +316,39 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						// acap for SRTP
 						const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(getCCore());
 						const std::string attrName("crypto");
-						for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-							SalSrtpCryptoAlgo crypto;
-							getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
-							MSCryptoSuiteNameParams desc;
-							if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
-								const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
-								const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
-									const auto & nameValuePair = cap.second;
-									const auto & name = nameValuePair.first;
-									const auto & value = nameValuePair.second;
-									return ((name.compare(attrName) == 0) && (value.find(desc.name) != std::string::npos));
-								});
-								char attrValue[128];
-								if (desc.params) {
-									snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
+						// Copy acap crypto attributes
+						const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
+						const auto & cryptoCap = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName] (const auto & cap) {
+							const auto & nameValuePair = cap.second;
+							const auto & name = nameValuePair.first;
+							return (name.compare(attrName) == 0);
+						});
+						// If no crypto attribute is found, generate it
+						if (cryptoCap == acaps.cend()) {
+							for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+								SalSrtpCryptoAlgo crypto;
+								getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
+								MSCryptoSuiteNameParams desc;
+								if (ms_crypto_suite_to_name_params(crypto.algo,&desc)==0){
+									const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &desc] (const auto & cap) {
+										const auto & nameValuePair = cap.second;
+										const auto & name = nameValuePair.first;
+										const auto & value = nameValuePair.second;
+										return ((name.compare(attrName) == 0) && (value.find(desc.name) != std::string::npos));
+									});
+									char attrValue[128];
+									if (desc.params) {
+										snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s %s", crypto.tag, desc.name, crypto.master_key.c_str(),desc.params);
+									} else {
+										snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
+									}
+									// Do not add duplicates acaps
+									if (nameValueMatch == acaps.cend()) {
+										addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
+									}
 								} else {
-									snprintf ( attrValue, sizeof ( attrValue )-1, "%d %s inline:%s", crypto.tag, desc.name, crypto.master_key.c_str() );
+									lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 								}
-								// Do not add duplicates acaps
-								if (nameValueMatch == acaps.cend()) {
-									addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
-								}
-							} else {
-								lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 							}
 						}
 					} else if (enc == LinphoneMediaEncryptionNone) {
