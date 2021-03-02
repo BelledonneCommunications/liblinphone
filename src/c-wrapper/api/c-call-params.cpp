@@ -87,6 +87,14 @@ void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *pa
 	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enabled);
 }
 
+bool_t linphone_call_params_tcap_lines_merged (const LinphoneCallParams *params) {
+	return L_GET_PRIVATE_FROM_C_OBJECT(params)->tcapLinesMerged();
+}
+
+void linphone_call_params_enable_tcap_line_merging (LinphoneCallParams *params, bool_t enabled) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableTcapLineMerging(!!enabled);
+}
+
 bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->isMediaEncryptionSupported(encryption);
 }

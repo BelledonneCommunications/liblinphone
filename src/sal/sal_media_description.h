@@ -38,7 +38,7 @@ class SalStreamBundle;
 class LINPHONE_PUBLIC SalMediaDescription {
 	public:
 
-		SalMediaDescription(const bool capabilityNegotiation);
+		SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps);
 		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
@@ -73,6 +73,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasLimeIk() const;
 		bool hasIpv6() const;
 		bool supportCapabilityNegotiation() const;
+		bool tcapLinesMerged() const;
 
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
@@ -123,6 +124,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 		bool haveLimeIk = false; /**< flag for lime Ik presence */
 
+		bool mergeTcapLines = false;
 	private:
 
 		SalStreamDescription::acap_map_t acaps;

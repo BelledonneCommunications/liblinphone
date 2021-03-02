@@ -1247,7 +1247,7 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes) {
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
-	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes);
+	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 
 	this->localIsOfferer = localIsOfferer;

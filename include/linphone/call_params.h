@@ -99,6 +99,21 @@ LINPHONE_PUBLIC bool_t linphone_call_params_capability_negotiations_enabled (con
 LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled);
 
 /**
+ * Indicates whether tcap lines with consecutive indexes are going to be merged or not if capability negotiations (RFC5939) is enabled.
+ * @param params the #LinphoneCallParams @notnil
+ * @return a boolean indicating the enablement of tcap line merging
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_tcap_lines_merged (const LinphoneCallParams *params);
+
+/**
+ * Enable merging of tcap lines with consecutive indexes if capability negotiations (RFC5939) is enabled.
+ * @param params #LinphoneCallParams object @notnil
+ * @param enabled A boolean value telling whether to merge tcap lines
+**/
+LINPHONE_PUBLIC void linphone_call_params_enable_tcap_line_merging (LinphoneCallParams *params, bool_t enabled);
+
+/**
  * Returns the encryption is supported
  * @param params the #LinphoneCallParams @notnil
  * @param encryption The #LinphoneMediaEncryption to check whether is supported
