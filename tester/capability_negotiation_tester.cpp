@@ -255,20 +255,18 @@ static void zrtp_call_from_dtls_enc_to_enc(void) {
 	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, TRUE, TRUE, FALSE);
 }
 
-static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const bool_t enable_caller_capability_negotiations, const bool_t enable_callee_capability_negotiations, const bool_t enable_video) {
+static void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const LinphoneCallParams *caller_params, LinphoneCallParams *callee_params, const bool_t enable_video) {
 
-	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
-	linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
-	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
-	linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
-
-	bool_t caller_enc_mandatory = linphone_core_is_media_encryption_mandatory(caller->lc);
-	bool_t callee_enc_mandatory = linphone_core_is_media_encryption_mandatory(callee->lc);
-	const LinphoneMediaEncryption caller_encryption = linphone_core_get_media_encryption(caller->lc);
-	const LinphoneMediaEncryption callee_encryption = linphone_core_get_media_encryption(callee->lc);
+	bool_t caller_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(caller_params);
+	bool_t callee_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(callee_params);
+	const LinphoneMediaEncryption caller_encryption = linphone_call_params_get_media_encryption(caller_params);
+	const LinphoneMediaEncryption callee_encryption = linphone_call_params_get_media_encryption(callee_params);
 	if (caller_enc_mandatory && callee_enc_mandatory && (caller_encryption != callee_encryption)) {
 		BC_ASSERT_FALSE(call_with_params(caller, callee, caller_params, callee_params));
 	} else {
+
+		const bool_t caller_capability_negotiations = linphone_call_params_capability_negotiations_enabled(caller_params);
+		const bool_t callee_capability_negotiations = linphone_call_params_capability_negotiations_enabled(callee_params);
 
 		char *path = bc_tester_file("certificates-marie");
 		linphone_core_set_user_certificates_path(callee->lc, path);
@@ -297,13 +295,13 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 			expectedEncryption = callee_encryption;
 
 			// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
-			potentialConfigurationChosen = (enable_callee_capability_negotiations && enable_caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
-		} else if (enable_callee_capability_negotiations && enable_caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
+			potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
+		} else if (callee_capability_negotiations && caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
 			expectedEncryption = encryption;
 			// reINVITE is always sent
-			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption) && (linphone_core_get_media_encryption(caller->lc) != encryption);
+			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption);
 		} else {
-			expectedEncryption = linphone_core_get_media_encryption(caller->lc);
+			expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall));
 			// reINVITE is not sent because either parts of the call doesn't support capability negotiations
 			potentialConfigurationChosen = false;
 		}
@@ -371,8 +369,8 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 				expectedEncryption = caller_encryption;
 
 				// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
-				potentialConfigurationChosen = (enable_callee_capability_negotiations && enable_caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
-			} else if (enable_callee_capability_negotiations && enable_caller_capability_negotiations) {
+				potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
+			} else if (callee_capability_negotiations && caller_capability_negotiations) {
 
 				bctbx_list_t* callee_supported_encs = linphone_call_params_get_supported_encryptions (linphone_call_get_params(calleeCall));
 				bool_t enc_check_result = FALSE;
@@ -387,12 +385,12 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 				}
 
 				if (!enc_check_result) {
-					expectedEncryption = linphone_core_get_media_encryption(callee->lc);
+					expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall));
 				}
 				// reINVITE is always sent
-				potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), expectedEncryption) && (linphone_core_get_media_encryption(callee->lc) != expectedEncryption);
+				potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), expectedEncryption) && (linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall)) != expectedEncryption);
 			} else {
-				expectedEncryption = linphone_core_get_media_encryption(callee->lc);
+				expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall));
 				// reINVITE is not sent because either parts of the call doesn't support capability negotiations
 				potentialConfigurationChosen = false;
 			}
@@ -426,6 +424,17 @@ static void call_with_encryption_base(LinphoneCoreManager* caller, LinphoneCoreM
 		end_call(callee, caller);
 
 	}
+
+}
+
+static void encrypted_call_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const bool_t enable_caller_capability_negotiations, const bool_t enable_callee_capability_negotiations, const bool_t enable_video) {
+
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
+	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
+
+	encrypted_call_with_params_base(caller, callee, encryption, caller_params, callee_params, enable_video);
 
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
@@ -473,7 +482,7 @@ static void call_with_capability_negotiation_failure(void) {
 	BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, paulineOptionalEncryption));
 	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, marieOptionalEncryption));
 
-	call_with_encryption_base(marie, pauline, marieOptionalEncryption, TRUE, TRUE, FALSE);
+	encrypted_call_base(marie, pauline, marieOptionalEncryption, TRUE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -528,7 +537,7 @@ static void call_with_capability_negotiation_failure_multiple_potential_configur
 	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, marieOptionalEncryption0));
 	BC_ASSERT_FALSE(linphone_core_is_media_encryption_supported(pauline->lc, marieOptionalEncryption1));
 
-	call_with_encryption_base(marie, pauline, marieOptionalEncryption0, TRUE, TRUE, FALSE);
+	encrypted_call_base(marie, pauline, marieOptionalEncryption0, TRUE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -549,7 +558,7 @@ static void call_with_capability_negotiation_disable_call_level(void) {
 	linphone_core_set_supported_media_encryptions(pauline->lc,cfg_enc);
 	bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
 
-	call_with_encryption_base(marie, pauline, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
+	encrypted_call_base(marie, pauline, LinphoneMediaEncryptionNone, FALSE, FALSE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -571,7 +580,7 @@ static void call_with_capability_negotiation_disable_core_level(void) {
 
 	const char * chosenMediaEnc = static_cast<const char *>(bctbx_list_get_data(cfg_enc));
 
-	call_with_encryption_base(marie, pauline, static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(chosenMediaEnc)), TRUE, TRUE, FALSE);
+	encrypted_call_base(marie, pauline, static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(chosenMediaEnc)), TRUE, TRUE, FALSE);
 	bctbx_list_free_with_data(cfg_enc, (bctbx_list_free_func)bctbx_free);
 
 	linphone_core_manager_destroy(marie);
@@ -793,6 +802,77 @@ static void zrtp_call_with_video_and_capability_negotiation(void) {
 static void dtls_srtp_call_with_video_and_capability_negotiation(void) {
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionDTLS; // Desired encryption
 	call_with_video_and_capability_negotiation_base(encryption);
+}
+
+static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const bool_t callee_tcap_merge) {
+	encryption_params caller_enc_mgr_params;
+	caller_enc_mgr_params.encryption = LinphoneMediaEncryptionZRTP;
+	caller_enc_mgr_params.level = E_OPTIONAL;
+	caller_enc_mgr_params.preferences = set_encryption_preference(TRUE);
+
+	encryption_params callee_enc_mgr_params;
+	callee_enc_mgr_params.encryption = LinphoneMediaEncryptionDTLS;
+	callee_enc_mgr_params.level = E_OPTIONAL;
+	callee_enc_mgr_params.preferences = set_encryption_preference(FALSE);
+
+	LinphoneCoreManager * caller = create_core_mgr_with_capability_negotiation_setup("marie_rc", caller_enc_mgr_params, TRUE, FALSE, TRUE);
+	LinphoneCoreManager * callee = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), callee_enc_mgr_params, TRUE, FALSE, TRUE);
+
+	// Caller call params:
+	// - RFC5939 is supported
+	// - Merge tcap lines
+	// - Default encryption SRTP
+	// - No mandatory encryption
+	// - Supported optional encryptions: DTLS, ZRTP
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (caller_params, TRUE);
+	bctbx_list_t * caller_cfg_enc = NULL;
+	caller_cfg_enc = bctbx_list_append(caller_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	caller_cfg_enc = bctbx_list_append(caller_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	linphone_call_params_set_supported_encryptions(caller_params,caller_cfg_enc);
+	bctbx_list_free_with_data(caller_cfg_enc, (bctbx_list_free_func)bctbx_free);
+	linphone_call_params_set_media_encryption (caller_params, LinphoneMediaEncryptionSRTP);
+	linphone_call_params_enable_mandatory_media_encryption(caller_params,0);
+	linphone_call_params_enable_tcap_line_merging(caller_params, TRUE);
+
+	// Callee call params:
+	// - RFC5939 is supported
+	// - Merge tcap lines
+	// - Default encryption SRTP
+	// - No mandatory encryption
+	// - Supported optional encryptions: SRTP, ZRTP, DTLS
+	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (callee_params, TRUE);
+	bctbx_list_t * callee_cfg_enc = NULL;
+	callee_cfg_enc = bctbx_list_append(callee_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	callee_cfg_enc = bctbx_list_append(callee_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	callee_cfg_enc = bctbx_list_append(callee_cfg_enc, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	linphone_call_params_set_supported_encryptions(callee_params,callee_cfg_enc);
+	bctbx_list_free_with_data(callee_cfg_enc, (bctbx_list_free_func)bctbx_free);
+	linphone_call_params_set_media_encryption (callee_params, LinphoneMediaEncryptionNone);
+	linphone_call_params_enable_mandatory_media_encryption(callee_params,0);
+	linphone_call_params_enable_tcap_line_merging(callee_params, TRUE);
+
+	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionDTLS;
+	encrypted_call_with_params_base(caller, callee, expectedEncryption, caller_params, callee_params, TRUE);
+
+	linphone_call_params_unref(caller_params);
+	linphone_call_params_unref(callee_params);
+
+	linphone_core_manager_destroy(caller);
+	linphone_core_manager_destroy(callee);
+}
+
+static void call_with_tcap_line_merge_on_caller(void) {
+	call_with_tcap_line_merge_base(TRUE, FALSE);
+}
+
+static void call_with_tcap_line_merge_on_callee(void) {
+	call_with_tcap_line_merge_base(FALSE, TRUE);
+}
+
+static void call_with_tcap_line_merge_on_both_sides(void) {
+	call_with_tcap_line_merge_base(TRUE, TRUE);
 }
 
 static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const bool_t callee_cap_neg) {
@@ -1599,7 +1679,7 @@ static void call_with_potential_configuration_same_as_actual_configuration_base 
 	BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, encryption));
 	BC_ASSERT_TRUE(linphone_core_get_media_encryption(pauline->lc) == encryption);
 
-	call_with_encryption_base(marie, pauline, encryption, TRUE, TRUE, FALSE);
+	encrypted_call_base(marie, pauline, encryption, TRUE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1651,7 +1731,7 @@ static void simple_call_with_capability_negotiations(const LinphoneMediaEncrypti
 		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
 	}
 
-	call_with_encryption_base(marie, pauline, optionalEncryption, TRUE, TRUE, FALSE);
+	encrypted_call_base(marie, pauline, optionalEncryption, TRUE, TRUE, FALSE);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -1679,7 +1759,7 @@ static void call_with_encryption_test_base(const encryption_params marie_enc_par
 		expectedEncryption = marie_enc_params.encryption;
 	}
 
-	call_with_encryption_base(marie, pauline, expectedEncryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations, enable_video);
+	encrypted_call_base(marie, pauline, expectedEncryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations, enable_video);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -2031,6 +2111,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with capability negotiation disabled at core level", call_with_capability_negotiation_disable_core_level),
 	TEST_NO_TAG("Call with incompatible encryptions in call params", call_with_incompatible_encs_in_call_params),
 	TEST_NO_TAG("Call with update and incompatible encryptions in call params", call_with_update_and_incompatible_encs_in_call_params),
+	TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
+	TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
+	TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
 //	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides", call_with_no_sdp_on_update_cap_neg_both_sides),
