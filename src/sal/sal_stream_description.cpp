@@ -256,6 +256,18 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 	baseCfg.index = idx;
 	baseCfg.delete_media_attributes = delete_media_attributes;
 	baseCfg.delete_session_attributes = delete_session_attributes;
+	// Clear encryption flags
+	// ZRTP
+	baseCfg.haveZrtpHash = 0;
+	memset(baseCfg.zrtphash, 0, sizeof(baseCfg.zrtphash));
+	// SRTP
+	baseCfg.crypto.clear();
+	baseCfg.acapIndexes.clear();
+	// DTLS
+	baseCfg.dtls_fingerprint.clear();
+	baseCfg.dtls_role = SalDtlsRoleInvalid;
+	baseCfg.rtp_ssrc = 0;
+	baseCfg.rtcp_cname.clear();
 
 	std::list<SalStreamDescription::cfg_map::mapped_type> cfgList;
 	if (protoMap.empty()) {
@@ -410,6 +422,7 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 			// Only potential configurations should be parsed - it is allowed to add a potential configuration identical to the actual one
 			return ((currentCfg.first != this->getActualConfigurationIndex()) && (currentCfg.second == cfg));
 		});
+
 		if (sameCfg == cfgs.cend()) {
 			auto ret = cfgs.insert(std::make_pair(idx, cfg));
 			const auto & success = ret.second;
