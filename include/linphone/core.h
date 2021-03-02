@@ -4082,6 +4082,38 @@ LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_supported(Linphon
 LINPHONE_PUBLIC void linphone_core_set_support_capability_negotiation(LinphoneCore *core, bool_t support);
 
 /**
+ * Check if tcap lines are going to the merged if the capability negotiation (RFC5939) is supported or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if tcap lines with consecutive indexes are going to be merged; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_tcap_lines_merged(LinphoneCore *core);
+
+/**
+ * Define whether tcap lines are going to be merged if capability negotiation (RFC5939) is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param merge TRUE to merge tcap lines with consecutive indexes; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, bool_t merge);
+
+/**
+ * Check if the capability negotiation (RFC5939) is supported or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation is supported; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_supported(LinphoneCore *core);
+
+/**
+ * Define whether capability negotiation (RFC5939) is supported
+ * @param core #LinphoneCore object. @notnil
+ * @param support TRUE to support RFC5939; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_set_support_capability_negotiation(LinphoneCore *core, bool_t support);
+
+/**
  * Init call params using LinphoneCore's current configuration
  */
 LINPHONE_PUBLIC void linphone_core_init_default_params(LinphoneCore* core, LinphoneCallParams *params);

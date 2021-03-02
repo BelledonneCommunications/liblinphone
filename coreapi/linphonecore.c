@@ -7578,6 +7578,14 @@ void linphone_core_set_support_capability_negotiation(LinphoneCore *lc, bool_t c
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)c);
 }
 
+bool_t linphone_core_tcap_lines_merged(LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "tcap_line_merge", 0);
+}
+
+void linphone_core_enable_tcap_line_merging(LinphoneCore *lc, bool_t c) {
+	linphone_config_set_int(lc->config, "sip", "tcap_line_merge", (int)c);
+}
+
 void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_t * enc_list) {
 	linphone_config_set_string_list(lc->config,"sip","supported_encryptions",enc_list);
 }
