@@ -114,12 +114,12 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	return msg;
 }
 
-LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *filepath) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
 	LinphoneChatMessage* msg;
-	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath = bc_tester_res(filepath);
 	size_t file_size;
 	file_to_send = fopen(send_filepath, "rb");
 	fseek(file_to_send, 0, SEEK_END);
@@ -130,7 +130,7 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	belle_sip_object_set_name(BELLE_SIP_OBJECT(content), "sintel trailer content");
 	linphone_content_set_type(content,"video");
 	linphone_content_set_subtype(content,"mkv");
-	linphone_content_set_name(content,"sintel_trailer_opus_h264.mkv");
+	linphone_content_set_name(content,filepath);
 	linphone_content_set_file_path(content, send_filepath);
 	linphone_content_set_size(content,file_size); /*total size to be transfered*/
 
@@ -145,6 +145,9 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	linphone_content_unref(content);
 	bc_free(send_filepath);
 	return msg;
+}
+LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+	return create_file_transfer_message_from_file(chat_room, "sounds/sintel_trailer_opus_h264.mkv");
 }
 
 void text_message_base_with_text_and_forward(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, const char* text, const char* content_type, bool_t forward_message) {
@@ -596,15 +599,22 @@ static void text_message_in_call_chat_room_from_denied_text_offer(void) {
 	text_message_in_call_chat_room_base(TRUE);
 }
 
-void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
-							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history, 
-							int auto_download, bool_t two_files, bool_t legacy, const char* url, bool_t expect_auth_failure_up, bool_t expect_auth_failure_down ) {
+void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pauline,
+				bool_t upload_error, bool_t download_error,
+				bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download,
+				bool_t download_from_history,
+				int auto_download,
+				bool_t two_files,
+				bool_t legacy,
+				const char* url,
+				bool_t expect_auth_failure_up, bool_t expect_auth_failure_down,
+				const char *file1_path) {
 	if (!linphone_factory_is_database_storage_available(linphone_factory_get())) {
 		ms_warning("Test skipped, database storage is not available");
 		return;
 	}
 
-	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *send_filepath = bc_tester_res(file1_path);
 	char *send_filepath2 = bc_tester_res("sounds/ahbahouaismaisbon.wav");
 	
 	LinphoneChatRoom* chat_room;
@@ -627,7 +637,7 @@ void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 	/* create a file transfer msg */
 	if (use_file_body_handler_in_upload) {
-		msg = create_file_transfer_message_from_sintel_trailer(chat_room);
+		msg = create_file_transfer_message_from_file(chat_room, file1_path);
 	} else {
 		if (legacy) {
 			msg = create_message_from_sintel_trailer_legacy(chat_room);
@@ -823,6 +833,12 @@ end:
 	bc_free(send_filepath2);
 }
 
+void transfer_message_base3(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
+							bool_t use_file_body_handler_in_upload, bool_t use_file_body_handler_in_download, bool_t download_from_history,
+							int auto_download, bool_t two_files, bool_t legacy, const char* url, bool_t expect_auth_failure_up, bool_t expect_auth_failure_down ) {
+	transfer_message_base4(marie, pauline, upload_error, download_error, use_file_body_handler_in_upload, use_file_body_handler_in_download, download_from_history, auto_download, two_files, legacy, url, expect_auth_failure_up, expect_auth_failure_down, "sounds/sintel_trailer_opus_h264.mkv");
+}
+
 // Add tls information for given user into the linphone core
 // cert and keys are path to the file, set them as buffer as it is the most likely method to be used
 static void add_tls_client_certificate(LinphoneCore *lc, const char *username, const char *realm, const char *cert, const char *key ) {
@@ -970,6 +986,54 @@ static void transfer_message_digest_auth_fail_any_domain_up(void) {
 
 static void transfer_message_digest_auth_fail_any_domain_down(void) {
 	transfer_message_digest_auth_arg(file_transfer_url_digest_auth_any_domain, FALSE, TRUE);
+}
+
+static void transfer_message_small_files_pass(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+		// enable imdn (otherwise transfer_message_base3 is unhappy)
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+		transfer_message_base4(marie, pauline,
+			FALSE, FALSE,
+			TRUE, FALSE,
+			FALSE,
+			-1, FALSE, FALSE, file_transfer_url_small_files, FALSE, FALSE, "sounds/ahbahouaismaisbon.wav"); // small file transfer, it should work
+
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
+}
+
+static void transfer_message_small_files_fail(void) {
+	if (transport_supported(LinphoneTransportTls)) {
+		LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
+		LinphoneCoreManager* pauline = linphone_core_manager_new( "pauline_tcp_rc");
+
+		// enable imdn (otherwise transfer_message_base3 is unhappy)
+		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "deliver_imdn", 1);
+		linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "deliver_imdn", 1);
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(marie->lc));
+		linphone_im_notif_policy_enable_all(linphone_core_get_im_notif_policy(pauline->lc));
+
+		transfer_message_base4(marie, pauline,
+			FALSE, FALSE,
+			TRUE, FALSE,
+			FALSE,
+			-1, FALSE, FALSE, file_transfer_url_small_files, TRUE, FALSE, "sounds/sintel_trailer_opus_h264.mkv"); // large file transfer, the upload should fail
+
+		// Give some time for IMDN's 200 OK to be received so it doesn't leak
+		wait_for_until(pauline->lc, marie->lc, NULL, 0, 1000);
+		linphone_core_manager_destroy(pauline);
+		linphone_core_manager_destroy(marie);
+	}
 }
 
 void transfer_message_base2(LinphoneCoreManager* marie, LinphoneCoreManager* pauline, bool_t upload_error, bool_t download_error,
@@ -3478,6 +3542,8 @@ test_t message_tests[] = {
 	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth - download auth fail", transfer_message_digest_auth_fail_down),
 	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain - upload auth fail", transfer_message_digest_auth_fail_any_domain_up),
 	TEST_NO_TAG("Transfer message - file transfer server authenticates client using digest auth server accepting multiple auth domain - download auth fail", transfer_message_digest_auth_fail_any_domain_down),
+	TEST_NO_TAG("Transfer message - file size limited pass", transfer_message_small_files_pass),
+	TEST_NO_TAG("Transfer message - file size limited fail", transfer_message_small_files_fail),
 	TEST_NO_TAG("Text message denied", text_message_denied),
 #ifdef HAVE_ADVANCED_IM
 	TEST_NO_TAG("IsComposing notification", is_composing_notification),
