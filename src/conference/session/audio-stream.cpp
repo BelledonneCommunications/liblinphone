@@ -51,7 +51,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	isOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
-	/* Initialize if it the default encryption of it is supported */
+	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
 	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) || (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP))) {
 		initZrtp();
 	}

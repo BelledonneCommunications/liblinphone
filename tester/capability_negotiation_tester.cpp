@@ -1850,7 +1850,6 @@ static void call_with_encryption_test_base(const encryption_params marie_enc_par
 		for (const auto & enc : marie_enc_params.preferences) {
 			if (std::find(pauline_enc_params.preferences.cbegin(), pauline_enc_params.preferences.cend(), enc) != pauline_enc_params.preferences.cend()) {
 				expectedEncryption = enc;
-printf("%s - found enc %s\n", __func__, linphone_media_encryption_to_string(enc));
 				break;
 			}
 		}
@@ -1859,8 +1858,6 @@ printf("%s - found enc %s\n", __func__, linphone_media_encryption_to_string(enc)
 	} else {
 		expectedEncryption = marie_enc_params.encryption;
 	}
-
-printf("%s - result found enc %s\n", __func__, linphone_media_encryption_to_string(expectedEncryption));
 
 	encrypted_call_base(marie, pauline, expectedEncryption, enable_marie_capability_negotiations, enable_pauline_capability_negotiations, enable_video);
 
