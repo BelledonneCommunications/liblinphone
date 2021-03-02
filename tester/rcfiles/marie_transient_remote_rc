@@ -1,2 +1,5 @@
 [misc]
 config-uri=http://smtp.linphone.org/marie_transient_xml
+
+[tester]
+test_env=1
