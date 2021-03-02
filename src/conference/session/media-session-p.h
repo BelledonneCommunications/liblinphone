@@ -83,6 +83,8 @@ public:
 	IceService &getIceService() const { return streamsGroup->getIceService(); }
 	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
 
+	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const;
+
 	unsigned int getAudioStartCount () const;
 	unsigned int getVideoStartCount () const;
 	unsigned int getTextStartCount () const;
@@ -150,6 +152,8 @@ public:
 	IceSession *getIceSession()const;
 	
 	void setState (CallSession::State newState, const std::string &message) override;
+
+	LinphoneMediaEncryption getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const;
 private:
 	/* IceServiceListener methods:*/
 	virtual void onGatheringFinished(IceService &service) override;
@@ -181,9 +185,9 @@ private:
 	void selectOutgoingIpVersion ();
 
 	void forceStreamsDirAccordingToState (std::shared_ptr<SalMediaDescription> & md);
-	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize);
-	void makeLocalMediaDescription (bool localIsOfferer);
-	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag);
+	bool generateB64CryptoKey (size_t keyLength, std::string & keyOut, size_t keyOutSize) const;
+	void makeLocalStreamDecription(std::shared_ptr<SalMediaDescription> & md, const bool enabled, const std::string name, const size_t & idx, const SalStreamType type, const SalMediaProto proto, const SalStreamDir dir, const std::list<OrtpPayloadType*> & codecs, const std::string mid, const bool & multicastEnabled, const int & ttl, const SalCustomSdpAttribute *customSdpAttributes);
+	void makeLocalMediaDescription (bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes);
 	void setupDtlsKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md);
 	void setupRtcpFb (std::shared_ptr<SalMediaDescription> & md);
@@ -191,7 +195,7 @@ private:
 	void setupZrtpHash (std::shared_ptr<SalMediaDescription> & md);
 	void setupImEncryptionEngineParameters (std::shared_ptr<SalMediaDescription> & md);
 	void transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md);
-	void updateLocalMediaDescriptionFromIce(bool localIsOfferer);
+	void updateLocalMediaDescriptionFromIce(bool localIsOfferer, bool addIceCandidates);
 	void startDtlsOnAllStreams ();
 
 	void freeResources ();
@@ -228,7 +232,7 @@ private:
 	void refreshSockets ();
 	void reinviteToRecoverFromConnectionLoss () override;
 	void repairByInviteWithReplaces () override;
-	void addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, const std::string mid);
+	void addStreamToBundle(std::shared_ptr<SalMediaDescription> & md, SalStreamDescription &sd, SalStreamConfiguration & cfg, const std::string mid);
 
 	void realTimeTextCharacterReceived (MSFilter *f, unsigned int id, void *arg);
 	int sendDtmf ();
@@ -239,6 +243,9 @@ private:
 	SalMediaProto getAudioProto();
 	SalMediaProto getAudioProto(const std::shared_ptr<SalMediaDescription> remote_md);
 	bool hasAvpf(const std::shared_ptr<SalMediaDescription> & md)const;
+	void queueIceGatheringTask(const std::function<void()> &lambda);
+	void runIceGatheringTasks();
+
 	void queueIceCompletionTask(const std::function<void()> &lambda);
 	void runIceCompletionTasks();
 private:
@@ -256,7 +263,8 @@ private:
 	LinphoneNatPolicy *natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
 
-	std::queue<std::function<void()>> iceDeferedTasks;
+	std::queue<std::function<void()>> iceDeferedGatheringTasks;
+	std::queue<std::function<void()>> iceDeferedCompletionTasks;
 
 	// The address family to prefer for RTP path, guessed from signaling path.
 	int af;

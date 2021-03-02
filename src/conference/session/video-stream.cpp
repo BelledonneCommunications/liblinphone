@@ -130,17 +130,30 @@ MSWebCam *MS2VideoStream::getVideoDevice()const{
 	
 }
 
+void MS2VideoStream::initZrtp() {
+	Stream *audioStream = getGroup().lookupMainStream(SalAudio);
+	if (audioStream){
+		MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
+		video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+	} else {
+		lError() << "Unable to initiate ZRTP session because no audio stream is attached to video stream " << this << ".";
+	}
+
+}
+
 void MS2VideoStream::activateZrtp(){
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)){
-		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
-		if (audioStream){
-			MS2AudioStream *msa = dynamic_cast<MS2AudioStream*>(audioStream);
-			video_stream_enable_zrtp(mStream, (AudioStream*)msa->getMediaStream());
+	if (getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP)) {
+
+		if (!mSessions.zrtp_context) {
+			initZrtp();
+		}
+
+		if (mSessions.zrtp_context) {
 			// Since the zrtp session is now initialized, make sure it is retained for future use.
 			media_stream_reclaim_sessions((MediaStream*)mStream, &mSessions);
 			video_stream_start_zrtp(mStream);
 		}else{
-			lError() << "Error while enabling zrtp on video stream: the audio stream isn't known. This is unsupported.";
+			lError() << "Error while enabling zrtp on video stream: ZRTP context is NULL";
 		}
 	}
 }
@@ -244,11 +257,11 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	getRtpDestination(ctx, &dest);
 	MediaStreamDir dir = MediaStreamSendRecv;
 		
-	if ((vstream.dir == SalStreamSendOnly) && getCCore()->video_conf.capture)
+	if ((vstream.getDirection() == SalStreamSendOnly) && getCCore()->video_conf.capture)
 		dir = MediaStreamSendOnly;
-	else if ((vstream.dir == SalStreamRecvOnly) && getCCore()->video_conf.display)
+	else if ((vstream.getDirection() == SalStreamRecvOnly) && getCCore()->video_conf.display)
 		dir = MediaStreamRecvOnly;
-	else if (vstream.dir == SalStreamSendRecv) {
+	else if (vstream.getDirection() == SalStreamSendRecv) {
 		if (getCCore()->video_conf.display && getCCore()->video_conf.capture)
 			dir = MediaStreamSendRecv;
 		else if (getCCore()->video_conf.display)
@@ -310,13 +323,13 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
 	const auto & remoteStream = ctx.getRemoteStreamDescription();
-	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream.haveZrtpHash == 1)) {
+	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream.getChosenConfiguration().hasZrtpHash() == 1)) {
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
 			activateZrtp();
-			if (remoteStream.haveZrtpHash == 1) {
-				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.zrtphash, strlen((const char *)(remoteStream.zrtphash)));
+			if (remoteStream.getChosenConfiguration().hasZrtpHash() == 1) {
+				int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remoteStream.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remoteStream.getChosenConfiguration().getZrtpHash())));
 				if (retval != 0)
 					lError() << "Video stream ZRTP hash mismatch 0x" << hex << retval;
 			}
@@ -334,7 +347,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 	}
 	if (videoMixer){
 		mConferenceEndpoint = ms_video_endpoint_get_from_stream(mStream, TRUE);
-		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.dir == SalStreamRecvOnly));
+		videoMixer->connectEndpoint(this, mConferenceEndpoint, (vstream.getDirection() == SalStreamRecvOnly));
 	}
 }
 
