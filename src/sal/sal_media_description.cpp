@@ -740,13 +740,11 @@ void SalMediaDescription::createPotentialConfigurationsForStream(const unsigned 
 		if (!allStreamAcaps.empty() || !allStreamTcaps.empty()) {
 			if (allStreamTcaps.empty()) {
 				const SalStreamDescription::tcap_map_t proto;
-				const auto cfgIdx = stream.getFreeCfgIdx();
-				stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+				stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
 			} else {
 				for (const auto & protoPair : allStreamTcaps) {
 					const SalStreamDescription::tcap_map_t proto{{protoPair}};
-					const auto cfgIdx = stream.getFreeCfgIdx();
-					stream.createPotentialConfiguration(cfgIdx, proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
+					stream.createPotentialConfiguration(proto, {allStreamAcaps}, delete_session_attributes, delete_media_attributes);
 				}
 			}
 		} else {

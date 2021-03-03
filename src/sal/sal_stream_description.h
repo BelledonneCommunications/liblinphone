@@ -192,8 +192,12 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void addSupportedEncryptionFromSdp(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList);
 
 		// Potential configurations
+		SalStreamConfiguration createBasePotentialCfg() const;
 		void fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs);
-		void createPotentialConfiguration(const unsigned int & idx, const tcap_map_t & protoMap, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
+		void createPotentialConfigurationAtIdx(const unsigned int & idx, const SalStreamDescription::tcap_map_t & tcaps, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
+		void createPotentialConfiguration(const tcap_map_t & protoMap, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
+		void insertOrMergeConfiguration(const unsigned & idx, const SalStreamConfiguration & cfg);
+		SalStreamConfiguration addAcapsToConfiguration(const SalStreamConfiguration & baseCfg, const LinphoneMediaEncryption & enc, const std::list<SalStreamDescription::acap_map_t> & attrList) const;
 
 		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);
