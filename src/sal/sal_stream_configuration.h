@@ -122,7 +122,7 @@ class LINPHONE_PUBLIC SalStreamConfiguration {
 		const unsigned int & getTcapIndex() const;
 
 		static std::string cryptoToSdpValue(const SalSrtpCryptoAlgo & crypto);
-
+		static SalSrtpCryptoAlgo fillStrpCryptoAlgoFromString(const std::string & value);
 
 	private:
 		unsigned int index = 0;
