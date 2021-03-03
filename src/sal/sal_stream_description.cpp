@@ -318,34 +318,11 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 									const auto & capIndex = attr.first;
 									cfgAcaps.push_back(capIndex);
 									cfg.acapIndexes.push_back(cfgAcaps);
+
 									const auto & capValue = capNameValue.second;
-									unsigned int tag;
-									char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
-									const auto nb = sscanf ( capValue.c_str(), "%u %256s inline:%128s %256s",
-												&tag,
-												name,
-												masterKey, parameters );
-
-									if ( nb >= 3 ) {
-										MSCryptoSuiteNameParams np;
-										np.name=name;
-										np.params=parameters[0]!='\0' ? parameters : NULL;
-										const auto cs=ms_crypto_suite_build_from_name_params(&np);
-
-										if (cs==MS_CRYPTO_SUITE_INVALID){
-											ms_warning ( "Failed to parse crypto-algo: '%s'", name);
-										} else {
-											SalSrtpCryptoAlgo cryptoEl;
-											cryptoEl.tag = tag;
-											cryptoEl.master_key = masterKey;
-											// Erase all characters after | if it is found
-											size_t sep = cryptoEl.master_key.find("|");
-											if (sep != std::string::npos) cryptoEl.master_key.erase(cryptoEl.master_key.begin() + static_cast<long>(sep), cryptoEl.master_key.end());
-											cryptoEl.algo = cs;
-											cfg.crypto.push_back(cryptoEl);
-										}
-									} else {
-										lError() << "Unable to extract cryto infor,ations from crypto argument value " << capValue;
+									const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(capValue);
+									if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
+										cfg.crypto.push_back(keyEnc);
 									}
 								}
 							}
