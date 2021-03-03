@@ -325,49 +325,6 @@ static void local_phone_number_ok(void) {
 	linphone_core_manager_destroy(marie);
 }
 
-/////////// SERVER TESTS ///////////
-
-static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
-	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator));
-	BC_ASSERT_EQUAL(
-		status,
-		expected_status,
-		LinphoneAccountCreatorStatus,
-		"%i");
-	account_creator_set_cb_done(cbs);
-}
-
-static void set_string(char **dest, const char *src, bool_t lowercase) {
-	if (*dest) {
-		ms_free(*dest);
-		*dest = NULL;
-	}
-	if (src) {
-		*dest = ms_strdup(src);
-		if (lowercase) {
-			char *cur = *dest;
-			for (; *cur; cur++) *cur = tolower(*cur);
-		}
-	}
-}
-
-static void _get_activation_code_cb(LinphoneXmlRpcRequest *request) {
-	LinphoneAccountCreator *creator = (LinphoneAccountCreator *)linphone_xml_rpc_request_get_user_data(request);
-	LinphoneAccountCreatorStatus status = LinphoneAccountCreatorStatusRequestFailed;
-	const char* resp = linphone_xml_rpc_request_get_string_response(request);
-	if (linphone_xml_rpc_request_get_status(request) == LinphoneXmlRpcStatusOk) {
-		if (strstr(resp, "ERROR_") == resp) {
-			status = LinphoneAccountCreatorStatusRequestFailed;
-		} else {
-			status = LinphoneAccountCreatorStatusRequestOk;
-			set_string(&creator->activation_code, resp, FALSE);
-		}
-	}
-	account_creator_cb(creator, status, resp);
-}
-
 /****************** End Update Account ************************/
 
 test_t account_creator_local_tests[] = {
