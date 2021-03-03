@@ -557,7 +557,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 	if (multi_config) {
 		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
@@ -568,7 +568,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	linphone_core_set_push_notification_enabled(marie->lc, TRUE);
 	// Nothing should happen, push information aren't set
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
@@ -582,7 +582,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	// Nothing should happen, push aren't allowed on proxy config
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
-	BC_ASSERT_TRUE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 	if (multi_config) {
 		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
@@ -636,7 +636,7 @@ static void proxy_config_push_notification_scenario_1(bool_t use_legacy_format, 
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+2, 10000));
 	if (multi_config) {
 		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
@@ -674,7 +674,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 	if (multi_config) {
 		BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg_2));
@@ -685,7 +685,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	linphone_core_set_push_notification_enabled(marie->lc, TRUE);
 	// Nothing should happen, push information aren't set
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
@@ -701,7 +701,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 		BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 	}
 	// Nothing should happen, push informations aren't supplied
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
@@ -711,7 +711,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 
 	// Third: configure push informations
 	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
-	BC_ASSERT_TRUE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(uriParams);
 	if (uriParams) {
@@ -749,7 +749,7 @@ static void proxy_config_push_notification_scenario_2(bool_t use_legacy_format, 
 	// Fourth: disable push notification on core
 	linphone_core_set_push_notification_enabled(marie->lc, FALSE);
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_TRUE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+2, 10000));
@@ -796,7 +796,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 		BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_allowed(marie_cfg_2));
 	}
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 
 	// First: allow push notification on proxy config
@@ -808,7 +808,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 	// Nothing should happen, push aren't enabled at core level
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_FALSE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
 	if (multi_config) {
@@ -823,7 +823,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 	linphone_core_set_push_notification_enabled(marie->lc, TRUE);
 	// Nothing should happen, push informations aren't supplied
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count, int, "%i");
@@ -837,7 +837,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 
 	// Third: configure push informations
 	linphone_core_update_push_notification_information(marie->lc, "test-app-id", "test-push-token");
-	BC_ASSERT_TRUE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	const char *uriParams = linphone_proxy_config_get_contact_uri_parameters(marie_cfg);
 	BC_ASSERT_PTR_NOT_NULL(uriParams);
 	if (uriParams) {
@@ -873,7 +873,7 @@ static void proxy_config_push_notification_scenario_3(bool_t use_legacy_format, 
 	// Fourth: update push information with null
 	linphone_core_update_push_notification_information(marie->lc, NULL, NULL);
 	BC_ASSERT_TRUE(linphone_core_is_push_notification_enabled(marie->lc));
-	BC_ASSERT_FALSE(linphone_core_is_push_notification_available(marie->lc));
+	BC_ASSERT_FALSE(linphone_proxy_config_is_push_notification_available(marie_cfg));
 	BC_ASSERT_TRUE(linphone_proxy_config_is_push_notification_allowed(marie_cfg));
 	BC_ASSERT_PTR_NULL(linphone_proxy_config_get_contact_uri_parameters(marie_cfg));
 	BC_ASSERT_TRUE(wait_for_until(marie->lc, NULL, &marie->stat.number_of_LinphoneRegistrationOk, proxy_config_count+2, 10000));

@@ -32,7 +32,7 @@ set(LINK_LIBS
 if(APPLE)
 	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")
 	if(IOS)
-		list(APPEND APPLE_LIBS "-framework UIKit")
+		list(APPEND APPLE_LIBS "-framework UIKit -framework PushKit")
 	endif()
 endif()
 
@@ -236,6 +236,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	object/property-container.h
 	object/singleton.h
 	push-notification-message/push-notification-message.h
+	push-notification/push-notification-config.h
 	sal/sal.h
 	sal/sal_stream_bundle.h
 	sal/sal_stream_description.h
@@ -314,6 +315,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-participant-imdn-state.cpp
 	c-wrapper/api/c-participant.cpp
 	c-wrapper/api/c-push-notification-message.cpp
+	c-wrapper/api/c-push-notification-config.cpp
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
@@ -405,6 +407,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	object/object.cpp
 	object/property-container.cpp
 	push-notification-message/push-notification-message.cpp
+	push-notification/push-notification-config.cpp
 	sal/call-op.cpp
 	sal/event-op.cpp
 	sal/message-op.cpp

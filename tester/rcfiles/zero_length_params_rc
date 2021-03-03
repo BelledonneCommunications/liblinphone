@@ -1,3 +1,6 @@
 [test]
 zero_len=
 non_zero_len=test
+
+[tester]
+test_env=1

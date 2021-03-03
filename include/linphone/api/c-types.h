@@ -247,6 +247,18 @@ typedef struct _LinphoneCallLog LinphoneCallLog;
 **/
 typedef struct _LinphoneAudioDevice LinphoneAudioDevice;
 
+/**
+ * Object holding chat message data received by a push notification
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
+
+/**
+ * Object holding push notification config for contact uri parameter
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
+
 // -----------------------------------------------------------------------------
 // ChatRoom.
 // -----------------------------------------------------------------------------
