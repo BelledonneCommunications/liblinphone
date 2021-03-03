@@ -207,7 +207,7 @@ void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(cons
 		}
 
 		addSupportedEncryptionFromSdp(protoMap, attrList);
-		createPotentialConfiguration(idx, protoMap, attrList, cfgAttributeList.delete_session_attributes, cfgAttributeList.delete_media_attributes);
+		createPotentialConfigurationAtIdx(idx, protoMap, attrList, cfgAttributeList.delete_session_attributes, cfgAttributeList.delete_media_attributes);
 	}
 }
 
@@ -234,40 +234,67 @@ void SalStreamDescription::addSupportedEncryptionFromSdp(const SalStreamDescript
 		haveZrtpHash |= (zrtpHashIt != attrs.cend());
 	}
 
+	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
 	for (const auto & tAttr : protoMap) {
 		auto protoStr = tAttr.second;
-		LinphoneMediaEncryption enc = media_protocol_to_encryption(string_to_sal_media_proto(protoStr.c_str()), (haveZrtpHash ? TRUE : FALSE));
+		enc = media_protocol_to_encryption(string_to_sal_media_proto(protoStr.c_str()), (haveZrtpHash ? TRUE : FALSE));
 		supportedEncryption.push_front(enc);
 		lInfo() << "Adding encryption " << linphone_media_encryption_to_string(enc) << " to stream " << this;
 	}
 
 	// Delete duplicates
 	supportedEncryption.unique();
-
 }
 
 const std::list<LinphoneMediaEncryption> SalStreamDescription::getSupportedEncryptionsInPotentialCfgs() const {
 	return {supportedEncryption.cbegin(), std::prev(supportedEncryption.cend(),1)}; 
 }
 
-void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx, const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes) {
+void SalStreamDescription::createPotentialConfigurationAtIdx(const unsigned int & idx, const SalStreamDescription::tcap_map_t & tcaps, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes) {
 
-	auto baseCfg = getActualConfiguration();
-	baseCfg.index = idx;
+	auto baseCfg = createBasePotentialCfg();
+
 	baseCfg.delete_media_attributes = delete_media_attributes;
 	baseCfg.delete_session_attributes = delete_session_attributes;
-	// Clear encryption flags
-	// ZRTP
-	baseCfg.haveZrtpHash = 0;
-	memset(baseCfg.zrtphash, 0, sizeof(baseCfg.zrtphash));
-	// SRTP
-	baseCfg.crypto.clear();
-	baseCfg.acapIndexes.clear();
-	// DTLS
-	baseCfg.dtls_fingerprint.clear();
-	baseCfg.dtls_role = SalDtlsRoleInvalid;
-	baseCfg.rtp_ssrc = 0;
-	baseCfg.rtcp_cname.clear();
+
+	for (const auto & protoEl : tcaps) {
+		const auto & protoIdx = protoEl.first;
+		const auto & protoValue = protoEl.second;
+		const auto proto = string_to_sal_media_proto(protoValue.c_str());
+		baseCfg.tcapIndex = protoIdx;
+		baseCfg.proto = proto;
+		std::string protoString = (proto == SalProtoOther) ? protoValue : std::string();
+		std::transform(protoString.begin(), protoString.end(), protoString.begin(), ::toupper);
+		baseCfg.proto_other = protoString;
+		if (baseCfg.hasAvpf()) {
+			baseCfg.enableAvpfForStream();
+		} else {
+			baseCfg.disableAvpfForStream();
+		}
+
+		bool haveZrtpHash = false;
+		for (const auto & attrs : attrList) {
+			const auto zrtpHashIt = std::find_if(attrs.cbegin(), attrs.cend(), [] (const auto & attr) {
+				// attr is a map<unsigned int (attr index), std::pair<std::string (name), std::string (value)>>
+				return (attr.second.first.compare("zrtp-hash") == 0);
+			});
+
+			haveZrtpHash |= (zrtpHashIt != attrs.cend());
+		}
+		const LinphoneMediaEncryption enc = media_protocol_to_encryption(proto, haveZrtpHash);
+		auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
+
+		cfg.index = idx;
+		insertOrMergeConfiguration(idx, cfg);
+	}
+}
+
+void SalStreamDescription::createPotentialConfiguration(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes) {
+
+	auto baseCfg = createBasePotentialCfg();
+
+	baseCfg.delete_media_attributes = delete_media_attributes;
+	baseCfg.delete_session_attributes = delete_session_attributes;
 
 	std::list<SalStreamDescription::cfg_map::mapped_type> cfgList;
 	if (protoMap.empty()) {
@@ -306,120 +333,145 @@ void SalStreamDescription::createPotentialConfiguration(const unsigned int & idx
 							break;
 					}
 
-					for (const auto & attrs : attrList) {
-						if (enc == LinphoneMediaEncryptionSRTP) {
-							auto cfg = baseCfg;
-							for (const auto & attr : attrs) {
-								std::list<unsigned int> cfgAcaps;
-								const auto & capNameValue = attr.second;
-								const auto & capName = capNameValue.first;
-								// For SRTP, only crypto attributes are valid in configurations
-								if (capName.compare("crypto") == 0) {
-									const auto & capIndex = attr.first;
-									cfgAcaps.push_back(capIndex);
-									cfg.acapIndexes.push_back(cfgAcaps);
+					cfgList.push_back(addAcapsToConfiguration(baseCfg, enc, attrList));
 
-									const auto & capValue = capNameValue.second;
-									const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(capValue);
-									if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
-										cfg.crypto.push_back(keyEnc);
-									}
-								}
-							}
-							cfgList.push_back(cfg);
-						} else if (enc == LinphoneMediaEncryptionDTLS) {
-							std::list<unsigned int> cfgAcaps;
-							auto cfg = baseCfg;
-							for (const auto & attr : attrs) {
-								const auto & capIndex = attr.first;
-								const auto & capNameValue = attr.second;
-								const auto & capName = capNameValue.first;
-								const auto & capValue = capNameValue.second;
-								if (capName.compare("fingerprint") == 0) {
-									cfgAcaps.push_back(capIndex);
-									cfg.dtls_fingerprint = capValue;
-								} else if (capName.compare("setup") == 0) {
-									cfg.dtls_role = SalStreamConfiguration::getDtlsRoleFromSetupAttribute(capValue);
-									cfgAcaps.push_back(capIndex);
-								} else if (capName.compare("ssrc") == 0) {
+				}
+			}
+		}
+	}
 
-									unsigned int rtpSsrc;
-									char rtcpName[256]={0};
-									const auto nb = sscanf ( capValue.c_str(), "%u cname:%s", &rtpSsrc, rtcpName);
-									if (nb == 2) {
-										cfgAcaps.push_back(capIndex);
-										cfg.rtp_ssrc = rtpSsrc;
-										cfg.rtcp_cname = rtcpName;
-									} else {
-										lError() << "Unable to retrieve rtp ssrc and rtcp cname from atribute " << capValue;
-									}
-								}
-							}
-							cfg.acapIndexes.push_back(cfgAcaps);
-							cfgList.push_back(cfg);
-						} else if (enc == LinphoneMediaEncryptionZRTP) {
-							for (const auto & attr : attrs) {
-								const auto & capNameValue = attr.second;
-								const auto & capName = capNameValue.first;
-								auto cfg = baseCfg;
-								std::list<unsigned int> cfgAcaps;
-								if (capName.compare("zrtp-hash") == 0) {
-									const auto & capIndex = attr.first;
-									cfgAcaps.push_back(capIndex);
-									cfg.haveZrtpHash = true;
-									const auto & capValue = capNameValue.second;
-									strncpy((char *)cfg.zrtphash, capValue.c_str(), capValue.size());
-									cfg.acapIndexes.push_back(cfgAcaps);
-									cfgList.push_back(cfg);
-								}
-							}
-						} else if (enc == LinphoneMediaEncryptionNone) {
-							lInfo() << "No acap to add to potentiual configuration for encryption " << linphone_media_encryption_to_string(enc);
-							auto cfg = baseCfg;
-							cfgList.push_back(cfg);
-						} else {
-							lInfo() << "Adding acaps to potential configuration with transport protocol " << proto;
-							auto cfg = baseCfg;
-							std::list<unsigned int> cfgAcaps;
-							for (const auto & attr : attrs) {
-								const auto & capIndex = attr.first;
-								cfgAcaps.push_back(capIndex);
-							}
-							cfg.acapIndexes.push_back(cfgAcaps);
-							cfgList.push_back(cfg);
-						}
+	for (auto & cfg : cfgList) {
+		const auto idx = getFreeCfgIdx();
+		cfg.index = idx;
+		insertOrMergeConfiguration(idx, cfg);
+	}
+
+}
+
+SalStreamConfiguration SalStreamDescription::createBasePotentialCfg() const {
+	auto baseCfg = getActualConfiguration();
+	// Clear encryption flags
+	// ZRTP
+	baseCfg.haveZrtpHash = 0;
+	memset(baseCfg.zrtphash, 0, sizeof(baseCfg.zrtphash));
+	// SRTP
+	baseCfg.crypto.clear();
+	baseCfg.acapIndexes.clear();
+	// DTLS
+	baseCfg.dtls_fingerprint.clear();
+	baseCfg.dtls_role = SalDtlsRoleInvalid;
+	baseCfg.rtp_ssrc = 0;
+	baseCfg.rtcp_cname.clear();
+
+	return baseCfg;
+}
+
+void SalStreamDescription::insertOrMergeConfiguration(const unsigned & idx, const SalStreamConfiguration & cfg) {
+	const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg, this](const auto & currentCfg) {
+		// Only potential configurations should be parsed - it is allowed to add a potential configuration identical to the actual one
+		return ((currentCfg.first != this->getActualConfigurationIndex()) && (currentCfg.second == cfg));
+	});
+
+	if (sameCfg == cfgs.cend()) {
+		auto ret = cfgs.insert(std::make_pair(idx, cfg));
+		const auto & success = ret.second;
+		if (success == false) {
+			const auto & cfgPair = ret.first;
+			const auto & cfgIndex = cfgPair->first;
+			auto & existingCfg = cfgPair->second;
+			const auto & existingCfgTcap = existingCfg.getTcapIndex();
+			const auto & newCfgTcap = cfg.getTcapIndex();
+			lInfo() << "Failed to insert potential configuration " << cfgIndex << " into the configuration map";
+			if (existingCfgTcap == newCfgTcap) {
+				existingCfg.mergeAcaps(cfg.getAcapIndexes());
+				lInfo() << "Merging attribute capabiities with the existing one because both have the same transport protocol " << existingCfgTcap;
+			} else {
+				lError() << "Unable to merge merging attribute capabiities with the existing configuration as they have different transport protocol indexes - stored configuration " << existingCfgTcap << " new configuration " << newCfgTcap;
+			}
+		}
+	}
+}
+
+SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalStreamConfiguration & baseCfg, const LinphoneMediaEncryption & enc, const std::list<SalStreamDescription::acap_map_t> & attrList) const {
+
+	auto cfg = baseCfg;
+
+	for (const auto & attrs : attrList) {
+		if (enc == LinphoneMediaEncryptionSRTP) {
+			for (const auto & attr : attrs) {
+				std::list<unsigned int> cfgAcaps;
+				const auto & capNameValue = attr.second;
+				const auto & capName = capNameValue.first;
+				// For SRTP, only crypto attributes are valid in configurations
+				if (capName.compare("crypto") == 0) {
+					const auto & capIndex = attr.first;
+					cfgAcaps.push_back(capIndex);
+					cfg.acapIndexes.push_back(cfgAcaps);
+
+					const auto & capValue = capNameValue.second;
+					const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(capValue);
+					if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
+						cfg.crypto.push_back(keyEnc);
 					}
 				}
 			}
-		}
-	}
+		} else if (enc == LinphoneMediaEncryptionDTLS) {
+			std::list<unsigned int> cfgAcaps;
+			for (const auto & attr : attrs) {
+				const auto & capIndex = attr.first;
+				const auto & capNameValue = attr.second;
+				const auto & capName = capNameValue.first;
+				const auto & capValue = capNameValue.second;
+				if (capName.compare("fingerprint") == 0) {
+					cfgAcaps.push_back(capIndex);
+					cfg.dtls_fingerprint = capValue;
+				} else if (capName.compare("setup") == 0) {
+					cfg.dtls_role = SalStreamConfiguration::getDtlsRoleFromSetupAttribute(capValue);
+					cfgAcaps.push_back(capIndex);
+				} else if (capName.compare("ssrc") == 0) {
 
-	for (const auto & cfg : cfgList) {
-		const auto sameCfg = std::find_if(cfgs.cbegin(), cfgs.cend(), [&cfg, this](const auto & currentCfg) {
-			// Only potential configurations should be parsed - it is allowed to add a potential configuration identical to the actual one
-			return ((currentCfg.first != this->getActualConfigurationIndex()) && (currentCfg.second == cfg));
-		});
-
-		if (sameCfg == cfgs.cend()) {
-			auto ret = cfgs.insert(std::make_pair(idx, cfg));
-			const auto & success = ret.second;
-			if (success == false) {
-				const auto & cfgPair = ret.first;
-				const auto & cfgIndex = cfgPair->first;
-				auto & existingCfg = cfgPair->second;
-				const auto & existingCfgTcap = existingCfg.getTcapIndex();
-				const auto & newCfgTcap = cfg.getTcapIndex();
-				lInfo() << "Failed to insert potential configuration " << cfgIndex << " into the configuration map";
-				if (existingCfgTcap == newCfgTcap) {
-					existingCfg.mergeAcaps(cfg.getAcapIndexes());
-					lInfo() << "Merging attribute capabiities with the existing one because both have the same transport protocol " << existingCfgTcap;
-				} else {
-					lError() << "Unable to merge merging attribute capabiities with the existing configuration as they have different transport protocol indexes - stored configuration " << existingCfgTcap << " new configuration " << newCfgTcap;
+					unsigned int rtpSsrc;
+					char rtcpName[256]={0};
+					const auto nb = sscanf ( capValue.c_str(), "%u cname:%s", &rtpSsrc, rtcpName);
+					if (nb == 2) {
+						cfgAcaps.push_back(capIndex);
+						cfg.rtp_ssrc = rtpSsrc;
+						cfg.rtcp_cname = rtcpName;
+					} else {
+						lError() << "Unable to retrieve rtp ssrc and rtcp cname from atribute " << capValue;
+					}
 				}
 			}
+			cfg.acapIndexes.push_back(cfgAcaps);
+		} else if (enc == LinphoneMediaEncryptionZRTP) {
+			for (const auto & attr : attrs) {
+				const auto & capNameValue = attr.second;
+				const auto & capName = capNameValue.first;
+				std::list<unsigned int> cfgAcaps;
+				if (capName.compare("zrtp-hash") == 0) {
+					const auto & capIndex = attr.first;
+					cfgAcaps.push_back(capIndex);
+					cfg.acapIndexes.push_back(cfgAcaps);
+
+					cfg.haveZrtpHash = true;
+					const auto & capValue = capNameValue.second;
+					strncpy((char *)cfg.zrtphash, capValue.c_str(), capValue.size());
+				}
+			}
+		} else if (enc == LinphoneMediaEncryptionNone) {
+			lInfo() << "No acap to add to potentiual configuration for encryption " << linphone_media_encryption_to_string(enc);
+		} else {
+			lInfo() << "Adding acaps to potential configuration for encryption " << linphone_media_encryption_to_string(enc);
+			std::list<unsigned int> cfgAcaps;
+			for (const auto & attr : attrs) {
+				const auto & capIndex = attr.first;
+				cfgAcaps.push_back(capIndex);
+			}
+			cfg.acapIndexes.push_back(cfgAcaps);
 		}
 	}
 
+	return cfg;
 }
 
 const SalStreamDescription::cfg_map SalStreamDescription::getAllCfgs() const {
