@@ -25,7 +25,7 @@ set(OTHER_LIBS_FOR_TESTER
 	bctoolbox-tester
 	ortp
 	mediastreamer
-	jsoncpp_lib
+	jsoncpp_object
 	${BELLESIP_TARGETNAME}
 	belr
 	${XML2_LIBRARIES} ${XSD_LIBRARIES}
