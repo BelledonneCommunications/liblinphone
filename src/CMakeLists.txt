@@ -26,8 +26,13 @@ set(LINK_LIBS
 	belr
 	mediastreamer
 	ortp
-	jsoncpp_lib
 )
+
+if (XCODE)
+	list(APPEND LINK_LIBS jsonspp_static)
+else()
+	list(APPEND LINK_LIBS jsoncpp_object)
+endif()
 
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
