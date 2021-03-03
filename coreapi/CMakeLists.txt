@@ -167,8 +167,8 @@ if (ENABLE_SHARED)
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
-        add_dependencies(linphone-coreapi linphonej)
-    endif()
+		add_dependencies(linphone-coreapi linphonej)
+	endif()
 endif ()
 
 
