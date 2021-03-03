@@ -1495,51 +1495,98 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 	L_Q();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
+	const std::string attrName("crypto");
 //	for(auto newStream = md->streams.begin(), oldStream = oldMd->streams.cbegin(); (newStream != md->streams.end() && oldStream != oldMd->streams.cend()); ++newStream, ++oldStream){
 	for (size_t i = 0; i < md->streams.size(); i++) {
 
+		auto & newStream = md->streams[i];
+		auto & newStreamActualCfg = newStream.cfgs[newStream.getActualConfigurationIndex()];
+		auto & newStreamActualCfgCrypto = newStreamActualCfg.crypto;
+
+		// Make best effort to keep same keys if user wishes so
 		if (keepSrtpKeys && oldMd && (i < oldMd->streams.size()) && oldMd->streams[i].enabled()) {
 			const auto & oldStream = oldMd->streams[i];
-			auto & newStream = md->streams[i];
-			if (q->isCapabilityNegotiationEnabled()) {
-				const auto & oldStreamSupportedEncryptions = oldStream.getSupportedEncryptions();
-				const auto newStreamSupportedEncryptions = newStream.getSupportedEncryptions();
-				// If both old and new stream support SRTP
-				if ((std::find(newStreamSupportedEncryptions.cbegin(), newStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != newStreamSupportedEncryptions.cend()) && 
-				   (std::find(oldStreamSupportedEncryptions.cbegin(), oldStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != oldStreamSupportedEncryptions.cend())) {
-					// Copy acap crypto attributes
-					for (const auto & cap : oldStream.acaps) {
-						const auto & nameValuePair = cap.second;
-						const auto & name = nameValuePair.first;
-						if (name.compare("crypto") == 0) {
-							const auto & value = nameValuePair.second;
-							const auto & idx = cap.first;
-							newStream.addAcap(idx, name, value);
+			const auto & oldStreamSupportedEncryptions = oldStream.getSupportedEncryptions();
+			const bool oldStreamSupportsSrtp = (std::find(oldStreamSupportedEncryptions.cbegin(), oldStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != oldStreamSupportedEncryptions.cend());
+			const auto newStreamSupportedEncryptions = newStream.getSupportedEncryptions();
+			const bool newStreamSupportsSrtp = (std::find(newStreamSupportedEncryptions.cbegin(), newStreamSupportedEncryptions.cend(), LinphoneMediaEncryptionSRTP) != newStreamSupportedEncryptions.cend());
+			const auto & oldStreamActualCfg = oldStream.getActualConfiguration();
+			const auto & oldStreamActualCfgCrypto = oldStreamActualCfg.crypto;
+
+			// If capability negotiation is enabled, search keys among acaps
+			if (md->supportCapabilityNegotiation()) {
+
+				// If both old and new stream support SRTP as potential configuration
+				if (newStreamSupportsSrtp) {
+					if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
+						// Copy acap crypto attributes if old stream supports it as potential configuration
+						for (const auto & cap : oldStream.acaps) {
+							const auto & nameValuePair = cap.second;
+							const auto & name = nameValuePair.first;
+							if (name.compare(attrName) == 0) {
+								const auto & value = nameValuePair.second;
+								const auto & idx = cap.first;
+								newStream.addAcap(idx, name, value);
+							}
+						}
+					} else if (oldStreamActualCfg.hasSrtp()) {
+						// Copy crypto attributes from actual configuration if old stream supports it as actual configuration
+						for (const auto & c : oldStreamActualCfgCrypto) {
+							MSCryptoSuiteNameParams desc;
+							if (ms_crypto_suite_to_name_params(c.algo,&desc)==0){
+								const auto & idx = md->getFreeAcapIdx();
+								const auto value = SalStreamConfiguration::cryptoToSdpValue(c);
+								newStream.addAcap(idx, attrName, value);
+							}
 						}
 					}
 				}
 			}
 
 			// Actual configuration
-			auto & newStreamActualCfg = newStream.cfgs[newStream.getActualConfigurationIndex()];
-			const auto & oldStreamActualCfg = oldStream.getActualConfiguration();
 			if (newStreamActualCfg.hasSrtp()) {
-				auto & newStreamActualCfgCrypto = newStreamActualCfg.crypto;
-				const auto & oldStreamActualCfgCrypto = oldStreamActualCfg.crypto;
 				if (oldStreamActualCfg.hasSrtp()) {
+					// If old stream actual configuration supported SRTP, then copy crypto parameters
 					lInfo() << "Keeping same crypto keys when making new local stream description";
 					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
-				} else {
-					const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
-					for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-						SalSrtpCryptoAlgo newCrypto;
-						setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
-						newStreamActualCfgCrypto.emplace(std::next(newStreamActualCfgCrypto.begin(),static_cast<long>(j)),newCrypto);
+				} else if (!md->supportCapabilityNegotiation() && oldMd->supportCapabilityNegotiation()) {
+					// If current media description doesn't support capability negotiations and previous one did, try to see if encryption keys were generated as attribute capabilities
+					// Copy acap crypto attributes if old stream supports it as potential configuration
+					for (const auto & cap : oldStream.acaps) {
+						const auto & nameValuePair = cap.second;
+						const auto & name = nameValuePair.first;
+						if (name.compare(attrName) == 0) {
+							const auto & attrValue = nameValuePair.second;
+
+							const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
+							if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
+								newStreamActualCfgCrypto.push_back(keyEnc);
+							}
+						}
 					}
+				} else {
+					newStreamActualCfgCrypto = generateNewCryptoKeys();
 				}
+			}
+		} else {
+			if (newStreamActualCfg.hasSrtp()) {
+				newStreamActualCfgCrypto = generateNewCryptoKeys();
 			}
 		}
 	}
+}
+
+std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
+	L_Q();
+	std::vector<SalSrtpCryptoAlgo>  cryptos;
+	const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
+	for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+		SalSrtpCryptoAlgo newCrypto;
+		setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
+		cryptos.emplace(std::next(cryptos.begin(),static_cast<long>(j)),newCrypto);
+	}
+
+	return cryptos;
 }
 
 void MediaSessionPrivate::transferAlreadyAssignedPayloadTypes (std::shared_ptr<SalMediaDescription> & oldMd, std::shared_ptr<SalMediaDescription> & md) {
