@@ -128,6 +128,8 @@ find_package(ortp CONFIG REQUIRED)
 find_package(bctoolbox 0.0.3 CONFIG REQUIRED OPTIONAL_COMPONENTS tester)
 find_package(belr CONFIG REQUIRED)
 
+find_package(jsoncpp REQUIRED)
+
 if(ENABLE_ADVANCED_IM)
 	find_package(XercesC REQUIRED)
 	set(HAVE_ADVANCED_IM 1)
