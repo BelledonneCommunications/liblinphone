@@ -25,11 +25,16 @@ set(OTHER_LIBS_FOR_TESTER
 	bctoolbox-tester
 	ortp
 	mediastreamer
-	jsoncpp_lib
 	${BELLESIP_TARGETNAME}
 	belr
 	${XML2_LIBRARIES} ${XSD_LIBRARIES}
 )
+
+if (XCODE)
+	list(APPEND OTHER_LIBS_FOR_TESTER jsonspp_static)
+else()
+	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
+endif()
 
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
