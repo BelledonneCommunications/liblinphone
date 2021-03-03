@@ -321,16 +321,6 @@ typedef int LinphoneChatRoomCapabilitiesMask;
  */
 typedef struct _LinphoneChatRoomCbs LinphoneChatRoomCbs;
 
-/**
- * @brief Object holding chat message data received by a push notification on iOS platform only.
- * 
- * This object is a subset of #LinphoneChatMessage, so only a few methods of it's parent are available,
- * like linphone_push_notification_message_get_text_content() and linphone_push_notification_message_get_subject(),
- * just enough to be able to build a notification to show the user.
- * @ingroup chatroom
-**/
-typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
-
 // -----------------------------------------------------------------------------
 // EventLog.
 // -----------------------------------------------------------------------------
@@ -371,6 +361,22 @@ typedef struct _LinphoneContent LinphoneContent;
  * @ingroup misc
  */
 typedef struct _LinphoneDialPlan LinphoneDialPlan;
+
+/**
+ * @brief Object holding chat message data received by a push notification on iOS platform only.
+ *
+ * This object is a subset of #LinphoneChatMessage, so only a few methods of it's parent are available,
+ * like linphone_push_notification_message_get_text_content() and linphone_push_notification_message_get_subject(),
+ * just enough to be able to build a notification to show the user.
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationMessage LinphonePushNotificationMessage;
+
+/**
+ * @brief Object holding push notification config for contact uri parameter.
+ * @ingroup misc
+**/
+typedef struct _LinphonePushNotificationConfig LinphonePushNotificationConfig;
 
 // -----------------------------------------------------------------------------
 // Search.
