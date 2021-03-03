@@ -84,6 +84,7 @@ public:
 	std::shared_ptr<SalMediaDescription> getLocalDesc () const { return localDesc; }
 
 	int setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCryptoSuite suite, unsigned int tag) const;
+	std::vector<SalSrtpCryptoAlgo> generateNewCryptoKeys() const;
 
 	unsigned int getAudioStartCount () const;
 	unsigned int getVideoStartCount () const;

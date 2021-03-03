@@ -465,4 +465,32 @@ SalDtlsRole SalStreamConfiguration::getDtlsRoleFromSetupAttribute(const std::str
 	return role;
 }
 
+SalSrtpCryptoAlgo SalStreamConfiguration::fillStrpCryptoAlgoFromString(const std::string & value) {
+	unsigned int tag;
+	char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
+	const auto nb = sscanf ( value.c_str(), "%u %256s inline:%128s %256s", &tag, name, masterKey, parameters );
+
+	SalSrtpCryptoAlgo keyEnc;
+	keyEnc.algo = MS_CRYPTO_SUITE_INVALID;
+	if ( nb >= 3 ) {
+		MSCryptoSuiteNameParams np;
+		np.name=name;
+		np.params=parameters[0]!='\0' ? parameters : NULL;
+		const auto cs=ms_crypto_suite_build_from_name_params(&np);
+
+		keyEnc.algo = cs;
+		if (cs==MS_CRYPTO_SUITE_INVALID){
+			ms_warning ( "Failed to parse crypto-algo: '%s'", name);
+		} else {
+			keyEnc.tag = tag;
+			keyEnc.master_key = masterKey;
+			// Erase all characters after | if it is found
+			size_t sep = keyEnc.master_key.find("|");
+			if (sep != std::string::npos) keyEnc.master_key.erase(keyEnc.master_key.begin() + static_cast<long>(sep), keyEnc.master_key.end());
+		}
+	} else {
+		lError() << "Unable to extract crypto key informations from crypto argument value " << value;
+	}
+	return keyEnc;
+}
 LINPHONE_END_NAMESPACE
