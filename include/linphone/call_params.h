@@ -372,7 +372,7 @@ bool_t linphone_call_params_real_early_media_enabled(const LinphoneCallParams *p
 bool_t linphone_call_params_avpf_enabled(const LinphoneCallParams *params);
 bool_t linphone_call_params_has_avpf_enabled_been_set(const LinphoneCallParams *params);
 LINPHONE_PUBLIC bool_t linphone_call_params_mandatory_media_encryption_enabled(const LinphoneCallParams *params);
-void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
+LINPHONE_PUBLIC void linphone_call_params_enable_mandatory_media_encryption(LinphoneCallParams *params, bool_t value);
 uint16_t linphone_call_params_get_avpf_rr_interval(const LinphoneCallParams *params);
 void linphone_call_params_set_avpf_rr_interval(LinphoneCallParams *params, uint16_t value);
 
