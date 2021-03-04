@@ -165,6 +165,8 @@ private:
 	virtual void onLosingPairsCompleted(IceService &service) override;
 	virtual void onIceRestartNeeded(IceService & service) override;
 
+	bool isUpdateSentWhenIceCompleted() const;
+
 #ifdef TEST_EXT_RENDERER
 	static void extRendererCb (void *userData, const MSPicture *local, const MSPicture *remote);
 #endif // ifdef TEST_EXT_RENDERER
