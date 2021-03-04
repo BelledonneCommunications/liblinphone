@@ -172,7 +172,6 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 
 void IosPlatformHelpers::stop () {
 	mStart = false;
-	[mHandler dealloc];
 	ms_message("IosPlatformHelpers is fully stopped");
 }
 
@@ -324,6 +323,8 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 		ms_message("[IosPlatformHelpers] Auto core.iterate() stopped");
 	}
 
+	// To avoid trigger callbacks of mHandler after linphone core stop
+	[mHandler dealloc];
 	getSharedCoreHelpers()->onLinphoneCoreStop();
 }
 
