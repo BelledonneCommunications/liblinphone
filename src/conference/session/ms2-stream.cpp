@@ -217,7 +217,8 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	// Add ZRTP attributes if:
 	// - chosen configuration is the actual one, then look at default encryption
 	// - chosen configuration is the a potential one, then look at list of supported encryptions
-	const bool addZrtpAttributes = (localDesc.getChosenConfigurationIndex() == localDesc.getActualConfigurationIndex()) ? (getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) : (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP));
+	//const bool addZrtpAttributes = (localDesc.getChosenConfigurationIndex() == localDesc.getActualConfigurationIndex()) ? (getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) : (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP));
+	const bool addZrtpAttributes = (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionZRTP);
 	if (addZrtpAttributes) {
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
