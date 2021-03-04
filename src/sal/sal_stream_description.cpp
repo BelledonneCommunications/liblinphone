@@ -247,6 +247,7 @@ void SalStreamDescription::addSupportedEncryptionFromSdp(const SalStreamDescript
 }
 
 const std::list<LinphoneMediaEncryption> SalStreamDescription::getSupportedEncryptionsInPotentialCfgs() const {
+	// Last element of the list is the encryption of the actual configuration
 	return {supportedEncryption.cbegin(), std::prev(supportedEncryption.cend(),1)}; 
 }
 
@@ -310,8 +311,9 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 		}
 	} else {
 		const auto supportedEncs = getSupportedEncryptionsInPotentialCfgs();
-		for (const auto & enc : supportedEncs) {
-			for (const auto avpf : {true, false}) {
+		unsigned int idx = 1;
+		for (const auto avpf : {true, false}) {
+			for (const auto & enc : supportedEncs) {
 				const auto & protoEl = SalStreamDescription::encryptionToTcap(protoMap, enc, avpf);
 				if (protoEl != Utils::getEmptyConstRefObject<SalStreamDescription::tcap_map_t::value_type>()) {
 					const auto & protoIdx = protoEl.first;
@@ -332,18 +334,17 @@ void SalStreamDescription::createPotentialConfiguration(const SalStreamDescripti
 							baseCfg.disableAvpfForStream();
 							break;
 					}
-
-					cfgList.push_back(addAcapsToConfiguration(baseCfg, enc, attrList));
-
+					auto cfg = addAcapsToConfiguration(baseCfg, enc, attrList);
+					cfg.index = idx;
+					cfgList.push_back(cfg);
 				}
+				idx++;
 			}
 		}
 	}
 
 	for (auto & cfg : cfgList) {
-		const auto idx = getFreeCfgIdx();
-		cfg.index = idx;
-		insertOrMergeConfiguration(idx, cfg);
+		insertOrMergeConfiguration(cfg.index, cfg);
 	}
 
 }
