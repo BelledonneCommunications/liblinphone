@@ -722,6 +722,13 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 	if (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleInvalid){
 		lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
 	}else {
+
+		// Destroy SRTP context if starting DTLS SRTP
+		// It will be recreated when setting SRTP keys if SRTP will be selected in the future
+		if (mSessions.srtp_context) {
+			ms_srtp_context_delete(mSessions.srtp_context);
+		}
+
 		if (!isTransportOwner()){
 			/* RTP bundle mode: there must be only one DTLS association per transport. */
 			return;
