@@ -29,16 +29,16 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "ortp/rtpsession.h"
 #include "sal/sal_stream_bundle.h"
+#include "sal/sal_stream_description.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
-class SalStreamDescription;
 class SalStreamBundle;
 
 class LINPHONE_PUBLIC SalMediaDescription {
 	public:
 
-		SalMediaDescription();
+		SalMediaDescription(const bool capabilityNegotiation, const bool mergeTcaps);
 		SalMediaDescription(belle_sdp_session_description_t  *sdp);
 		SalMediaDescription(const SalMediaDescription & other);
 		virtual ~SalMediaDescription();
@@ -63,6 +63,7 @@ class LINPHONE_PUBLIC SalMediaDescription {
 
 		int getNbActiveStreams() const;
 
+		bool hasIceParams() const;
 		bool hasDir(const SalStreamDir & stream_dir) const;
 		bool hasAvpf() const;
 		bool hasImplicitAvpf() const;
@@ -70,17 +71,39 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool hasDtls() const;
 		bool hasZrtp() const;
 		bool hasIpv6() const;
+		bool supportCapabilityNegotiation() const;
+		bool tcapLinesMerged() const;
 
 		bool operator==(const SalMediaDescription & other) const;
 		bool operator!=(const SalMediaDescription & other) const;
 		int equal(const SalMediaDescription & otherMd) const;
 		int globalEqual(const SalMediaDescription & otherMd) const;
+		int compareToChosenConfiguration(const SalMediaDescription & otherMd) const;
+		int compareToActualConfiguration(const SalMediaDescription & otherMd) const;
 
 		static const std::string printDifferences(int result);
 
 		size_t getNbStreams() const;
 		const std::string & getAddress() const;
 		const SalStreamDescription & getStreamIdx(unsigned int idx) const;
+
+		void addTcap(const unsigned int & idx, const std::string & value);
+		void addTcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & value);
+		const std::string & getTcap(const unsigned int & idx) const;
+		const SalStreamDescription::tcap_map_t & getTcaps() const;
+		const SalStreamDescription::tcap_map_t getAllTcapForStream(const unsigned int & idx) const;
+		unsigned int getFreeTcapIdx() const;
+
+		void addAcap(const unsigned int & idx, const std::string & name, const std::string & value);
+		void addAcapToStream(const std::size_t & streamIdx, const unsigned int & idx, const std::string & name, const std::string & value);
+		const SalStreamDescription::acap_t & getAcap(const unsigned int & idx) const;
+		const SalStreamDescription::acap_map_t & getAcaps() const;
+		const SalStreamDescription::acap_map_t getAllAcapForStream(const unsigned int & idx) const;
+		unsigned int getFreeAcapIdx() const;
+
+		const SalStreamDescription::cfg_map getCfgsForStream(const unsigned int & idx) const;
+		// Creates potential configuration based on stored tcap and acaps
+		void createPotentialConfigurationsForStream(const unsigned int & streamIdx, const bool delete_session_attributes, const bool delete_media_attributes);
 
 		std::string name;
 		std::string addr;
@@ -100,11 +123,19 @@ class LINPHONE_PUBLIC SalMediaDescription {
 		bool accept_bundles = false; /* Set to true if RTP bundles can be accepted during offer answer. This field has no appearance on the SDP.*/
 		bool pad;
 
+		bool mergeTcapLines = false;
 	private:
+
+		SalStreamDescription::acap_map_t acaps;
+		SalStreamDescription::tcap_map_t tcaps;
+
+		mutable bool capabilityNegotiationSupported = false; /* Set to true if the stream allows capability negotiation */
 		/*check for the presence of at least one stream with requested direction */
 		bool containsStreamWithDir(const SalStreamDir & stream_dir) const; 
 
 		bool isNullAddress(const std::string & addr) const;
+
+		void addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const;
 
 };
 

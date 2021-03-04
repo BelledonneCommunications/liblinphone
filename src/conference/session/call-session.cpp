@@ -532,12 +532,15 @@ void CallSessionPrivate::init () {
 // -----------------------------------------------------------------------------
 
 void CallSessionPrivate::accept (const CallSessionParams *csp) {
+	L_Q();
 	/* Try to be best-effort in giving real local or routable contact address */
 	setContactOp();
-	if (csp)
+	if (csp) 
 		setParams(new CallSessionParams(*csp));
-	if (params)
+	if (params) {
+		op->enableCapabilityNegotiation (q->isCapabilityNegotiationEnabled());
 		op->setSentCustomHeaders(params->getPrivate()->getCustomHeaders());
+	}
 
 	op->accept();
 	setState(CallSession::State::Connected, "Connected");
@@ -832,11 +835,13 @@ void CallSessionPrivate::createOpTo (const LinphoneAddress *to) {
 	L_Q();
 	if (op)
 		op->release();
-	op = new SalCallOp(q->getCore()->getCCore()->sal);
+
+	const auto & core = q->getCore()->getCCore();
+	op = new SalCallOp(core->sal, q->isCapabilityNegotiationEnabled());
 	op->setUserPointer(q);
 	if (params->getPrivate()->getReferer())
 		op->setReferrer(params->getPrivate()->getReferer()->getPrivate()->getOp());
-	linphone_configure_op(q->getCore()->getCCore(), op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
+	linphone_configure_op(core, op, to, q->getParams()->getPrivate()->getCustomHeaders(), false);
 	if (q->getParams()->getPrivacy() != LinphonePrivacyDefault)
 		op->setPrivacy((SalPrivacyMask)q->getParams()->getPrivacy());
 	/* else privacy might be set by proxy */
@@ -1055,9 +1060,11 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 	d->setDestProxy(cfg);
 	LinphoneAddress *fromAddr = linphone_address_new(from.asString().c_str());
 	LinphoneAddress *toAddr = linphone_address_new(to.asString().c_str());
+
+	const auto & core = getCore()->getCCore();
 	if (!d->destProxy) {
 		/* Try to define the destination proxy if it has not already been done to have a correct contact field in the SIP messages */
-		d->setDestProxy( linphone_core_lookup_known_proxy(getCore()->getCCore(), toAddr) );
+		d->setDestProxy( linphone_core_lookup_known_proxy(core, toAddr) );
 	}
 
 	if (d->log) {
@@ -1070,9 +1077,10 @@ void CallSession::configure (LinphoneCallDir direction, LinphoneProxyConfig *cfg
 		/* We already have an op for incoming calls */
 		d->op = op;
 		d->op->setUserPointer(this);
+		op->enableCapabilityNegotiation (isCapabilityNegotiationEnabled());
 		op->enableCnxIpTo0000IfSendOnly(
 			!!linphone_config_get_default_int(
-				linphone_core_get_config(getCore()->getCCore()), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
+				linphone_core_get_config(core), "sip", "cnx_ip_to_0000_if_sendonly_enabled", 0
 			)
 		);
 		linphone_call_log_set_call_id(d->log, op->getCallId().c_str()); /* Must be known at that time */
@@ -1160,6 +1168,20 @@ LinphoneStatus CallSession::deferUpdate () {
 	}
 	d->deferUpdate = true;
 	return 0;
+}
+
+const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() const {
+	if (getParams()) {
+		return getParams()->getPrivate()->getSupportedEncryptions();
+	}
+	return getCore()->getSupportedMediaEncryptions();
+}
+
+bool CallSession::isCapabilityNegotiationEnabled() const {
+	if (getParams()) {
+		return getParams()->getPrivate()->capabilityNegotiationEnabled();
+	}
+	return !!linphone_core_is_capability_negotiation_supported(getCore()->getCCore());
 }
 
 bool CallSession::hasTransferPending () {
@@ -1279,8 +1301,9 @@ int CallSession::startInvite (const Address *destination, const string &subject,
 	char *from = linphone_address_as_string(d->log->from);
 	/* Take a ref because sal_call() may destroy the CallSession if no SIP transport is available */
 	shared_ptr<CallSession> ref = getSharedFromThis();
-	if (content)
+	if (content) {
 		d->op->setLocalBody(*content);
+	}
 
 	// If a custom Content has been set in the call params, create a multipart body for the INVITE
 	for (auto& content : d->params->getCustomContents()) {
@@ -1370,6 +1393,7 @@ LinphoneStatus CallSession::update (const CallSessionParams *csp, const string &
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (csp)
 		d->setParams(new CallSessionParams(*csp));
+
 	d->op->setLocalBody(content ? *content : Content());
 	LinphoneStatus result = d->startUpdate(subject);
 	if (result && (d->state != initialState)) {

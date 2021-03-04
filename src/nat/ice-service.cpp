@@ -40,6 +40,11 @@ bool IceService::isActive() const{
 	return mIceSession != nullptr;
 }
 
+bool IceService::isRunning() const{
+	if (!isActive()) return false; // No running because it is not active
+	return ice_session_state(mIceSession) == IS_Running;
+}
+
 bool IceService::hasCompleted() const{
 	if (!isActive()) return true; // Completed because nothing to do.
 	return ice_session_state(mIceSession) == IS_Completed;
@@ -53,7 +58,7 @@ bool IceService::iceFoundInMediaDescription (const std::shared_ptr<SalMediaDescr
 	if ((!md->ice_pwd.empty()) && (!md->ice_ufrag.empty()))
 		return true;
 	for (const auto & stream : md->streams) {
-		if ((!stream.ice_pwd.empty()) && (!stream.ice_ufrag.empty())){
+		if ((!stream.getIcePwd().empty()) && (!stream.getIceUfrag().empty())){
 			return true;
 		}
 		
@@ -108,13 +113,15 @@ void IceService::fillLocalMediaDescription(OfferAnswerContext & ctx){
 		ice_session_choose_default_candidates(mIceSession);
 		mGatheringFinished = false;
 	}
-	updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
+	if (ctx.addIceCandidates) {
+		updateLocalMediaDescriptionFromIce(ctx.localMediaDescription);
+	}
 }
 
 void IceService::createStreams(const OfferAnswerContext &params){
 	checkSession(params.localIsOfferer ? IR_Controlling : IR_Controlled, getMediaSessionPrivate().getAf() == AF_INET6);
 	
-	if (!mIceSession) return;
+	if (!mIceSession || !params.addIceCandidates) return;
 	
 	const auto & streams = mStreamsGroup.getStreams();
 	for (auto & stream : streams){
@@ -285,14 +292,14 @@ bool IceService::checkForIceRestartAndSetRemoteCredentials (const std::shared_pt
 	for (size_t i = 0; i < md->streams.size(); i++) {
 		const auto & stream = md->streams[i];
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
-		if (cl && (!stream.ice_pwd.empty()) && (!stream.ice_ufrag.empty())) {
-			if (ice_check_list_remote_credentials_changed(cl, L_STRING_TO_C(stream.ice_ufrag), L_STRING_TO_C(stream.ice_pwd))) {
+		if (cl && (!stream.getIcePwd().empty()) && (!stream.getIceUfrag().empty())) {
+			if (ice_check_list_remote_credentials_changed(cl, L_STRING_TO_C(stream.getIceUfrag()), L_STRING_TO_C(stream.getIcePwd()))) {
 				if (!iceRestarted && ice_check_list_get_remote_ufrag(cl) && ice_check_list_get_remote_pwd(cl)) {
 					// Restart only if remote ufrag/paswd was already set.
 					restartSession(isOffer ? IR_Controlled : IR_Controlling);
 					iceRestarted = true;
 				}
-				ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream.ice_ufrag), L_STRING_TO_C(stream.ice_pwd));
+				ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream.getIceUfrag()), L_STRING_TO_C(stream.getIcePwd()));
 			}
 		}
 	}
@@ -323,7 +330,7 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 		IceCheckList *cl = ice_session_check_list(mIceSession, (int)i);
 		if (!cl)
 			continue;
-		if (stream.ice_mismatch) {
+		if (stream.getIceMismatch()) {
 			ice_check_list_set_state(cl, ICL_Failed);
 			continue;
 		}
@@ -332,8 +339,8 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 			mStreamsGroup.getStream(i)->setIceCheckList(nullptr);
 			continue;
 		}
-		if ((!stream.ice_pwd.empty()) && (!stream.ice_ufrag.empty()))
-			ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream.ice_ufrag), L_STRING_TO_C(stream.ice_pwd));
+		if ((!stream.getIcePwd().empty()) && (!stream.getIceUfrag().empty()))
+			ice_check_list_set_remote_credentials(cl, L_STRING_TO_C(stream.getIceUfrag()), L_STRING_TO_C(stream.getIcePwd()));
 		for (const auto & candidate : stream.ice_candidates) {
 			bool defaultCandidate = false;
 			if (candidate.addr[0] == '\0')
@@ -356,8 +363,8 @@ void IceService::createIceCheckListsAndParseIceAttributes (const std::shared_ptr
 		}
 		if (!iceRestarted) {
 			bool losingPairsAdded = false;
-			for (int j = 0; j < (int)stream.ice_remote_candidates.size(); j++) {
-				const auto & remoteCandidate = stream.ice_remote_candidates[(size_t)j];
+			for (int j = 0; j < static_cast<int>(stream.ice_remote_candidates.size()); j++) {
+				const auto & remoteCandidate = stream.getIceRemoteCandidateAtIndex(static_cast<size_t>(j));
 				std::string addr = std::string();
 				int port = 0;
 				int componentID = j + 1;
@@ -389,8 +396,8 @@ void IceService::clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescrip
 			continue;
 		const auto & localStream = localDesc->streams[i];
 		const auto & stream = remoteDesc->streams[i];
-		if ((localIsOfferer && stream.rtcp_mux && localStream.rtcp_mux)
-			|| (!localIsOfferer && stream.rtcp_mux)) {
+		if ((localIsOfferer && stream.getChosenConfiguration().rtcp_mux && localStream.getChosenConfiguration().rtcp_mux)
+			|| (!localIsOfferer && stream.getChosenConfiguration().rtcp_mux)) {
 			ice_check_list_remove_rtcp_candidates(cl);
 		}
 	}
@@ -548,8 +555,9 @@ void IceService::updateLocalMediaDescriptionFromIce (std::shared_ptr<SalMediaDes
 					rtcp_remote_candidate.port = rtcpCandidate->taddr.port;
 					stream.ice_remote_candidates.push_back(rtcp_remote_candidate);
 				}
-			} else
+			} else {
 				lError() << "ice: Selected valid remote candidates should be present if the check list is in the Completed state";
+			}
 		} else {
 			for (auto & ice_remote_candidate : stream.ice_remote_candidates) {
 				ice_remote_candidate.addr.clear();
@@ -730,8 +738,9 @@ bool IceService::reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDesc
 		if (!cl)
 			continue;
 
-		if (stream.ice_mismatch)
+		if (stream.getIceMismatch()) {
 			return false;
+		}
 		if ((stream.rtp_port == 0) || (ice_check_list_state(cl) != ICL_Running))
 			continue;
 

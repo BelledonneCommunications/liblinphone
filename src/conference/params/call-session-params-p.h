@@ -44,6 +44,13 @@ public:
 	void setInternalCallUpdate (bool value) { internalCallUpdate = value; }
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
+	void enableCapabilityNegotiation (const bool enable);
+	bool capabilityNegotiationEnabled () const;
+	void enableTcapLineMerging (const bool enable);
+	bool tcapLinesMerged () const;
+	bool isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const;
+	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
+	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions);
 
 	SalCustomHeader * getCustomHeaders () const;
 	void setCustomHeaders (const SalCustomHeader *ch);
@@ -60,6 +67,9 @@ public:
 	LinphoneProxyConfig * proxyConfig = NULL;
 
 private:
+	bool capabilityNegotiation = false;
+	bool mergeTcapLines = false;
+	std::list<LinphoneMediaEncryption> supportedEncryptions;
 	bool inConference = false;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */
