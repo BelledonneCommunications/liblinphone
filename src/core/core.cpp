@@ -166,7 +166,9 @@ void Core::onStopAsyncBackgroundTaskStarted() {
 	d->stopAsyncEndEnabled = false;
 
 	function<void()> stopAsyncEnd = [d]() {
-		_linphone_core_stop_async_end(d->getCCore());
+		if (linphone_core_get_global_state(d->getCCore()) == LinphoneGlobalShutdown) {
+			_linphone_core_stop_async_end(d->getCCore());
+		}
 	};
 	function<void()> enableStopAsyncEnd = [d]() {
 		d->stopAsyncEndEnabled = true;
