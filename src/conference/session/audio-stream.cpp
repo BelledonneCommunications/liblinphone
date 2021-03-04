@@ -138,7 +138,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 	/* ZRTP Autostart: avoid starting a ZRTP session before we got peer's lime Ik */
 	/* We MUST start if ZRTP is not active otherwise we break RFC compatibility */
 	/* When we are not offerer, we received the lime-Ik in SDP so we can start upon ZRTP Hello reception */
-	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) || (!localIsOfferer);
+	params->autoStart =  (getMediaSessionPrivate().getNegotiatedMediaEncryption() != LinphoneMediaEncryptionZRTP) || (!localIsOfferer);
 }
 
 void MS2AudioStream::configureAudioStream(){
@@ -415,9 +415,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
-	if (getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP) && isMain()) {
+
+	if (((getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) || (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP))) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
-		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
+		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getNegotiatedMediaEncryption();
 		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
 		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().getChosenConfiguration().hasZrtpHash() == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
