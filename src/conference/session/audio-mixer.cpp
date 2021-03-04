@@ -103,6 +103,11 @@ void MS2AudioMixer::addLocalParticipant(){
 		? core->sound_conf.lsd_card
 		: core->sound_conf.play_sndcard;
 	MSSndCard *captcard = core->sound_conf.capt_sndcard;
+	
+	// If playfile are supplied don't use soundcards
+	if (core->use_files) {
+		captcard = playcard = nullptr;
+	}
 	const MSAudioConferenceParams *params = ms_audio_conference_get_params(mConference);
 	mLocalDummyProfile = sMakeDummyProfile(params->samplerate);
 	audio_stream_start_full(st, mLocalDummyProfile,
