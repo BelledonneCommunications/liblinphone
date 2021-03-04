@@ -324,7 +324,7 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 		listener->onResetFirstVideoFrameDecoded(getMediaSession().getSharedFromThis());
 	/* Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute */
 	const auto & remoteStream = ctx.getRemoteStreamDescription();
-	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream.getChosenConfiguration().hasZrtpHash() == 1)) {
+	if ((getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionZRTP) || (remoteStream.getChosenConfiguration().hasZrtpHash() == 1)) {
 		Stream *audioStream = getGroup().lookupMainStream(SalAudio);
 		/* Audio stream is already encrypted and video stream is active */
 		if (audioStream && audioStream->isEncrypted()) {
