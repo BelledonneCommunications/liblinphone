@@ -222,12 +222,14 @@ void MediaSessionPrivate::accepted () {
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
 			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning)) {
+				// In case of DTLS, the update is not sent after ICE completed due to interopability issues with webRTC
+				const bool sendUpdateWhenIceCompleted = (getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS) ? linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "sip", "update_call_when_ice_completed_with_dtls", false) : getParams()->getPrivate()->getUpdateCallWhenIceCompleted();
 				// If no ICE session or checklist has completed, then send re-INVITE
 				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
 				// - no ICE session is found in th stream group
 				// - an ICE sesson is found and its checklist has already completed
 				// - an ICE sesson is found and ICE reINVITE is not sent upon completition if the checklist (This case is the default one for DTLS SRTP negotiation as it was observed that webRTC gateway did not correctly support SIP ICE reINVITEs)
-				 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && (!getParams()->getPrivate()->getUpdateCallWhenIceCompleted() || getStreamsGroup().getIceService().hasCompletedCheckList()))) {
+				 if (!getStreamsGroup().getIceService().getSession() || (getStreamsGroup().getIceService().getSession() && (!sendUpdateWhenIceCompleted || getStreamsGroup().getIceService().hasCompletedCheckList()))) {
 					// Compare the chosen final configuration with the actual configuration in the local decription
 					const auto diff = md->compareToActualConfiguration(*localDesc);
 					const bool potentialConfigurationChosen = (diff & SAL_MEDIA_DESCRIPTION_CRYPTO_TYPE_CHANGED);
@@ -2878,10 +2880,14 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 			d->queueIceGatheringTask(updateCompletionTask);
 			return 0;
 		} else if (getStreamsGroup().getIceService().isRunning()) {
+			// In case of DTLS, the update is not sent after ICE completed due to interopability issues with webRTC
+			const bool sendUpdateWhenIceCompleted = (d->getNegotiatedMediaEncryption() == LinphoneMediaEncryptionDTLS) ? linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "sip", "update_call_when_ice_completed_with_dtls", false) : d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted();
 			// ICE negotiations are ongoing hence the update cannot be send right now
-			if (!d->getParams()->getPrivate()->getUpdateCallWhenIceCompleted()) {
-				lInfo() << "Defer CallSession update to complete ICE negotiations";
+			if (!sendUpdateWhenIceCompleted) {
+				lInfo() << "Queue ice completition task to defer CallSession update to complete ICE negotiations as update will not be sent when ICE negotiations complete";
 				d->queueIceCompletionTask(updateCompletionTask);
+			} else {
+				lInfo() << "Ice negotiations are ongoing and update once they complete, therefore defer CallSession update.";
 			}
 			return 0;
 		}
