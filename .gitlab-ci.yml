@@ -1,0 +1,16 @@
+update-rootca:
+  stage: update-rootca
+  tags: [ "deploy" ]
+  script:
+    - ./scripts/mk-ca-bundle.pl -d risk
+    - ./scripts/mk-ca-bundle.pl -u ./share/rootca.pem
+    - git diff --compact-summary --raw share/rootca.pem
+    - git branch
+    - git show-ref
+    - git commit -a -m "Update rootca.pem"
+    - git pull --rebase origin $CI_COMMIT_REF_NAME
+    #"HEAD:" is used to tell git to push to the upstream branch of the remote insted of trying to find a branch based on our local branch name (because here for some reason we are on detached head state)
+    - git push origin refs/remotes/origin/$CI_COMMIT_REF_NAME
+
+stages:
+  - update-rootca
