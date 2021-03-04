@@ -184,6 +184,8 @@ typedef enum _LinphoneAccountCreatorStatus {
 	/* Creation */
 	LinphoneAccountCreatorStatusAccountCreated, /**< Account created */
 	LinphoneAccountCreatorStatusAccountNotCreated, /**< Account not created */
+	LinphoneAccountCreatorStatusValidationAccountCreated, /**<Validation Account created, credentials sent by push */
+	LinphoneAccountCreatorStatusValidationAccountNotCreated, /**<Validation Account not created */
 	/* Existence */
 	LinphoneAccountCreatorStatusAccountExist, /**< Account exist */
 	LinphoneAccountCreatorStatusAccountExistWithAlias, /**< Account exist with alias */
