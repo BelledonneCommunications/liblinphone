@@ -1,0 +1,13 @@
+update-rootca:
+  stage: update-rootca
+  tags: [ "deploy" ]
+  script:
+    - ./scripts/mk-ca-bundle.pl -d risk
+    - ./scripts/mk-ca-bundle.pl -u ./share/rootca.pem
+    - git diff --compact-summary --raw share/rootca.pem
+    - git commit -a -m "Update rootca.pem"
+    - git pull --rebase
+    - git push
+
+stages:
+  - update-rootca
