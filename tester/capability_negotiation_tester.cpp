@@ -37,6 +37,52 @@ struct encryption_params {
 	std::list<LinphoneMediaEncryption> preferences;
 };
 
+static void get_expected_encryption_from_call_params(LinphoneCall *offererCall, LinphoneCall *answererCall, LinphoneMediaEncryption* expectedEncryption, bool* potentialConfigurationChosen) {
+	const LinphoneCallParams *offerer_params = linphone_call_get_params(offererCall);
+	const LinphoneCallParams *answerer_params = linphone_call_get_params(answererCall);
+	bool_t offerer_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(offerer_params);
+	bool_t answerer_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(answerer_params);
+	const LinphoneMediaEncryption offerer_encryption = linphone_call_params_get_media_encryption(offerer_params);
+	const LinphoneMediaEncryption answerer_encryption = linphone_call_params_get_media_encryption(answerer_params);
+	const bool_t offerer_capability_negotiations = linphone_call_params_capability_negotiations_enabled(offerer_params);
+	const bool_t answerer_capability_negotiations = linphone_call_params_capability_negotiations_enabled(answerer_params);
+
+
+	if (offerer_enc_mandatory) {
+		*expectedEncryption = offerer_encryption;
+		// reINVITE is not sent because the call should not offer potential configurations as it must enforce an encryption that will be stored in the actual configuration
+		*potentialConfigurationChosen = false;
+	} else if (answerer_enc_mandatory) {
+		*expectedEncryption = answerer_encryption;
+
+		// reINVITE is only sent if offerer and answerer support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the offerer
+		*potentialConfigurationChosen = (offerer_capability_negotiations && answerer_capability_negotiations && linphone_call_params_is_media_encryption_supported(answerer_params, *expectedEncryption));
+	} else if (answerer_capability_negotiations && offerer_capability_negotiations) {
+
+		bctbx_list_t* offerer_supported_encs = linphone_call_params_get_supported_encryptions (offerer_params);
+		bool_t enc_check_result = FALSE;
+		// Find first encryption listed in the list of supported encryptions of the offerer that is supported by the answerer
+		for(bctbx_list_t * enc = offerer_supported_encs;enc!=NULL;enc=enc->next){
+			const char *enc_string = (const char *)bctbx_list_get_data(enc);
+			*expectedEncryption = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc_string));
+			enc_check_result |= (linphone_call_params_is_media_encryption_supported (answerer_params, *expectedEncryption) || (linphone_call_params_get_media_encryption(answerer_params) == *expectedEncryption));
+			if (enc_check_result) {
+				break;
+			}
+		}
+
+		if (!enc_check_result) {
+			*expectedEncryption = linphone_call_params_get_media_encryption(offerer_params);
+		}
+		// reINVITE is always sent
+		*potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (offerer_params, *expectedEncryption) && (linphone_call_params_get_media_encryption(offerer_params) != *expectedEncryption);
+	} else {
+		*expectedEncryption = linphone_call_params_get_media_encryption(offerer_params);
+		// reINVITE is not sent because either parts of the call doesn't support capability negotiations
+		*potentialConfigurationChosen = false;
+	}
+}
+
 static std::list<LinphoneMediaEncryption> set_encryption_preference(const bool_t encryption_preferred) {
 	std::list<LinphoneMediaEncryption> preferences;
 	for (int idx = 0; idx <= LinphoneMediaEncryptionDTLS; idx++) {
@@ -258,6 +304,7 @@ static void zrtp_call_from_dtls_enc_to_enc(void) {
 	call_from_enc_to_dtls_enc_base(LinphoneMediaEncryptionZRTP, TRUE, TRUE, FALSE);
 }
 
+
 static void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const LinphoneCallParams *caller_params, LinphoneCallParams *callee_params, const bool_t enable_video) {
 
 	bool_t caller_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(caller_params);
@@ -299,12 +346,12 @@ static void encrypted_call_with_params_base(LinphoneCoreManager* caller, Linphon
 
 			// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
 			potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(caller_params,expectedEncryption) && (linphone_call_params_get_media_encryption(caller_params) != expectedEncryption));
-		} else if (callee_capability_negotiations && caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), encryption)) && (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), encryption))) {
+		} else if (callee_capability_negotiations && caller_capability_negotiations && (linphone_call_params_is_media_encryption_supported (caller_params, encryption)) && (linphone_call_params_is_media_encryption_supported (callee_params, encryption))) {
 			expectedEncryption = encryption;
 			// reINVITE is always sent
 			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (caller_params, encryption) && (linphone_call_params_get_media_encryption(caller_params) != encryption);
 		} else {
-			expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall));
+			expectedEncryption = linphone_call_params_get_media_encryption(caller_params);
 			// reINVITE is not sent because either parts of the call doesn't support capability negotiations
 			potentialConfigurationChosen = false;
 		}
@@ -364,39 +411,8 @@ static void encrypted_call_with_params_base(LinphoneCoreManager* caller, Linphon
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
 
-			if (callee_enc_mandatory) {
-				expectedEncryption = callee_encryption;
-				// reINVITE is not sent because the call should not offer potential configurations as it must enforce an encryption that will be stored in the actual configuration
-				potentialConfigurationChosen = false;
-			} else if (caller_enc_mandatory) {
-				expectedEncryption = caller_encryption;
+			get_expected_encryption_from_call_params(calleeCall, callerCall, &expectedEncryption, &potentialConfigurationChosen);
 
-				// reINVITE is only sent if caller and callee support capability negotiations enabled and the expected encryption is listed in one potential configuration offered by the caller
-				potentialConfigurationChosen = (callee_capability_negotiations && caller_capability_negotiations && linphone_call_params_is_media_encryption_supported(linphone_call_get_params(callerCall),expectedEncryption));
-			} else if (callee_capability_negotiations && caller_capability_negotiations) {
-
-				bctbx_list_t* callee_supported_encs = linphone_call_params_get_supported_encryptions (linphone_call_get_params(calleeCall));
-				bool_t enc_check_result = FALSE;
-				// Find first encryption listed in the list of supported encryptions of the caller that is supported by the callee
-				for(bctbx_list_t * enc = callee_supported_encs;enc!=NULL;enc=enc->next){
-					const char *enc_string = (const char *)bctbx_list_get_data(enc);
-					expectedEncryption = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(enc_string));
-					enc_check_result |= (linphone_call_params_is_media_encryption_supported (linphone_call_get_params(callerCall), expectedEncryption) || (linphone_call_params_get_media_encryption(linphone_call_get_params(callerCall)) == expectedEncryption));
-					if (enc_check_result) {
-						break;
-					}
-				}
-
-				if (!enc_check_result) {
-					expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall));
-				}
-				// reINVITE is always sent
-				potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (linphone_call_get_params(calleeCall), expectedEncryption) && (linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall)) != expectedEncryption);
-			} else {
-				expectedEncryption = linphone_call_params_get_media_encryption(linphone_call_get_params(calleeCall));
-				// reINVITE is not sent because either parts of the call doesn't support capability negotiations
-				potentialConfigurationChosen = false;
-			}
 
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1+((potentialConfigurationChosen) ? 1 : 0))));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1+((potentialConfigurationChosen) ? 1 : 0))));
@@ -983,7 +999,8 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	LinphoneNatPolicy *pauline_nat_policy = linphone_core_get_nat_policy(pauline->lc);
 	const bool_t pauline_ice_enabled = linphone_nat_policy_ice_enabled(pauline_nat_policy);
 
-	bool sendReInvite = ((caller_cap_neg && callee_cap_neg) || (marie_ice_enabled && pauline_ice_enabled));
+	bool potentialConfigurationChosen = (caller_cap_neg && callee_cap_neg);
+	bool sendReInvite = (potentialConfigurationChosen || (marie_ice_enabled && pauline_ice_enabled));
 	int expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, expectedStreamsRunning, int, "%d");
@@ -1009,7 +1026,12 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
 
-	sendReInvite = (marie_ice_enabled && pauline_ice_enabled);
+	LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
+	bool dummyPotentialConfigurationChosen = false;
+	get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &dummyPotentialConfigurationChosen);
+	// As Pauline sends a reINVITE without SDP, Marie replies with the same SDP as she previously sent hence it has the same capability negotiation flags as the previous answer to the INVITE.
+	// A reINVITE is sent again if capability negotiations are sent
+	sendReInvite = potentialConfigurationChosen || (marie_ice_enabled && pauline_ice_enabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
 	/*wait for reINVITEs to complete*/
@@ -1020,7 +1042,6 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
-	// Check that encryption has not changed after sending update
 	if (marieCall) {
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
 	}
@@ -1041,7 +1062,8 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
 
-	expectedStreamsRunning = 1;
+	get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &potentialConfigurationChosen);
+	expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
 
 	/*wait for reINVITEs to complete*/
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
@@ -1067,6 +1089,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	liblinphone_tester_check_rtcp(marie, pauline);
 
 	// Check that encryption has not changed after sending update
+	BC_ASSERT_EQUAL(expectedEncryption, encryption, int, "%i");
 	if (marieCall) {
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), encryption, int, "%i");
 	}
