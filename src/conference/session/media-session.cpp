@@ -168,7 +168,7 @@ void MediaSessionPrivate::accepted () {
 		lInfo() << "Using early media SDP since none was received with the 200 OK";
 		md = resultDesc;
 	}
-	if (md && (md->isEmpty() || q->getCore()->incompatibleSecurity(md)))
+	if (md && (md->isEmpty() || incompatibleSecurity(md)))
 		md = nullptr;
 	if (md) {
 		/* There is a valid SDP in the response, either offer or answer, and we're able to start/update the streams */
@@ -2728,7 +2728,7 @@ void MediaSession::startIncomingNotification (bool notifyRinging) {
 
 	std::shared_ptr<SalMediaDescription> & md = d->op->getFinalMediaDescription();
 	if (md) {
-		if (md->isEmpty() || getCore()->incompatibleSecurity(md)) {
+		if (md->isEmpty() || d->incompatibleSecurity(md)) {
 			LinphoneErrorInfo *ei = linphone_error_info_new();
 			linphone_error_info_set(ei, nullptr, LinphoneReasonNotAcceptable, 488, "Not acceptable here", nullptr);
 			if (d->listener)
