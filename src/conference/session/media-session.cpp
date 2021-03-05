@@ -1330,8 +1330,17 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 			const std::string mediaProto(sal_media_proto_to_string(encryption_to_media_protocol(enc, (getParams()->avpfEnabled() ? TRUE : FALSE))));
 			const auto & idx = md->getFreeTcapIdx();
 
-			lInfo() << "Adding media protocol " << mediaProto << " at index " << idx;
-			md->addTcap(idx, mediaProto);
+			const auto & tcaps = md->getTcaps();
+			const auto & tcapFoundIt = std::find_if(tcaps.cbegin(), tcaps.cend(), [&mediaProto] (const auto & cap) {
+				return (mediaProto.compare(cap.second) == 0);
+			});
+
+			if (tcapFoundIt == tcaps.cend()) {
+				lInfo() << "Adding media protocol " << mediaProto << " at index " << idx << " for encryption " << linphone_media_encryption_to_string(enc);
+				md->addTcap(idx, mediaProto);
+			} else {
+				lInfo() << "Media protocol " << mediaProto << " is already found at " << tcapFoundIt->first << " hence a duplicate will not be added to the tcap list";
+			}
 		}
 	}
 
