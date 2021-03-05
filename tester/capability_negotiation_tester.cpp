@@ -75,6 +75,10 @@ static void get_expected_encryption_from_call_params(LinphoneCall *offererCall, 
 		}
 		// reINVITE is always sent
 		*potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (offerer_params, *expectedEncryption) && (linphone_call_params_get_media_encryption(offerer_params) != *expectedEncryption);
+
+		if (offerer_supported_encs) {
+			bctbx_list_free_with_data(offerer_supported_encs, (bctbx_list_free_func)bctbx_free);
+		}
 	} else {
 		*expectedEncryption = linphone_call_params_get_media_encryption(offerer_params);
 		// reINVITE is not sent because either parts of the call doesn't support capability negotiations
@@ -674,8 +678,18 @@ static void call_with_incompatible_encs_in_call_params(void) {
 	// - encryption of Marie and Pauline should be different
 	// - Marie and Pauline encryption list in the call params must be equal to 1
 	BC_ASSERT_NOT_EQUAL(paulineEncryption, marieEncryption, int, "%i");
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_call_params_get_supported_encryptions(pauline_params)), 1, int, "%d");
-	BC_ASSERT_EQUAL(bctbx_list_size(linphone_call_params_get_supported_encryptions(marie_params)), 1, int, "%d");
+
+	bctbx_list_t* pauline_supported_encs = linphone_call_params_get_supported_encryptions (pauline_params);
+	BC_ASSERT_EQUAL(bctbx_list_size(pauline_supported_encs), 1, int, "%d");
+	if (pauline_supported_encs) {
+		bctbx_list_free_with_data(pauline_supported_encs, (bctbx_list_free_func)bctbx_free);
+	}
+
+	bctbx_list_t* marie_supported_encs = linphone_call_params_get_supported_encryptions (marie_params);
+	BC_ASSERT_EQUAL(bctbx_list_size(marie_supported_encs), 1, int, "%d");
+	if (marie_supported_encs) {
+		bctbx_list_free_with_data(marie_supported_encs, (bctbx_list_free_func)bctbx_free);
+	}
 
 	BC_ASSERT_TRUE(call_with_params_and_encryption_negotiation_failure_base(marie, pauline, marie_params, pauline_params, TRUE));
 
