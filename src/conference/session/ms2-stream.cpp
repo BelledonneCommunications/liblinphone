@@ -718,15 +718,16 @@ void MS2Stream::startDtls(const OfferAnswerContext &params){
 	if (mDtlsStarted) return;
 	const auto & resultStreamDesc = params.getResultStreamDescription();
 	if (!resultStreamDesc.hasDtls()) return;
-	
+
 	if (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleInvalid){
 		lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
 	}else {
 
-		// Destroy SRTP context if starting DTLS SRTP
+		// Destroy SRTP context if negotiated stream doesn't enable SRTP
 		// It will be recreated when setting SRTP keys if SRTP will be selected in the future
 		if (mSessions.srtp_context) {
 			ms_srtp_context_delete(mSessions.srtp_context);
+			mSessions.srtp_context = NULL;
 		}
 
 		if (!isTransportOwner()){
@@ -786,20 +787,30 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 
 void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	const auto & localStreamDesc = params.getLocalStreamDescription();
-	const auto & newStream = params.getResultStreamDescription();
+	const auto & resultStreamDesc = params.getResultStreamDescription();
 	MediaStream * ms = getMediaStream();
 	
-	if (newStream.getChosenConfiguration().proto == SalProtoRtpSavpf || newStream.getChosenConfiguration().proto == SalProtoRtpSavp){
-		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, static_cast<unsigned char>(newStream.getChosenConfiguration().crypto_local_tag));
+	if (resultStreamDesc.hasSrtp()){
+		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, static_cast<unsigned char>(resultStreamDesc.getChosenConfiguration().crypto_local_tag));
 		if (cryptoIdx >= 0) {
 			if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
-				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, newStream.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
 			}
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, newStream.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(newStream.getChosenConfiguration().crypto[0].master_key));
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
 		} else
-			lWarning() << "Failed to find local crypto algo with tag: " << newStream.getChosenConfiguration().crypto_local_tag;
+			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 	}
-	startDtls(params);
+
+	if (resultStreamDesc.hasZrtp()) {
+		if (!mSessions.zrtp_context) {
+			initZrtp();
+		}
+	}
+
+	if (resultStreamDesc.hasDtls()) {
+		startDtls(params);
+	}
+
 }
 
 void MS2Stream::updateDestinations(const OfferAnswerContext &params) {
