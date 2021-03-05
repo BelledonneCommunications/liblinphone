@@ -214,15 +214,19 @@ void MS2Stream::fillLocalMediaDescription(OfferAnswerContext & ctx){
 	
 	localDesc.cfgs[localDesc.getChosenConfigurationIndex()].rtp_ssrc = rtp_session_get_send_ssrc(mSessions.rtp_session);
 
-	// Add ZRTP attributes if:
-	// - chosen configuration is the actual one, then look at default encryption
-	// - chosen configuration is the a potential one, then look at list of supported encryptions
-	//const bool addZrtpAttributes = (localDesc.getChosenConfigurationIndex() == localDesc.getActualConfigurationIndex()) ? (getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) : (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP));
+	// Add ZRTP attributes if the negotiated encryption is ZRTP
 	const bool addZrtpAttributes = (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionZRTP);
 	if (addZrtpAttributes) {
 		/* set the hello hash */
 		uint8_t enableZrtpHash = false;
 		uint8_t zrtphash[128];
+		// Initialize ZRTP if not already done
+		// This may happen when adding a stream through a reINVITE
+		if (!mSessions.zrtp_context) {
+			initZrtp();
+			// Copy newly created zrtp context into mSessions
+			media_stream_reclaim_sessions(getMediaStream(), &mSessions);
+		}
 		if (mSessions.zrtp_context) {
 			ms_zrtp_getHelloHash(mSessions.zrtp_context, zrtphash, sizeof(zrtphash));
 			/* Turn on the flag to use it if ZRTP is set */
@@ -804,6 +808,8 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	if (resultStreamDesc.hasZrtp()) {
 		if (!mSessions.zrtp_context) {
 			initZrtp();
+			// Copy newly created zrtp context into mSessions
+			media_stream_reclaim_sessions(ms, &mSessions);
 		}
 	}
 
