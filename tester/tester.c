@@ -605,6 +605,11 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 	if (existing_call) {
 		ms_free(existing_call);
 	}
+
+	if (participant_addresses) {
+		bctbx_list_free(participant_addresses);
+	}
+
 	return status;
 
 }
