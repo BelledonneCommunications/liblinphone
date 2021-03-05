@@ -489,6 +489,12 @@ void MS2AudioStream::stop(){
 //To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const auto & remote = params.getRemoteStreamDescription();
+	if (!mSessions.zrtp_context) {
+		initZrtp();
+		// Copy newly created zrtp context into mSessions
+		MediaStream *ms = getMediaStream();
+		media_stream_reclaim_sessions(ms, &mSessions);
+	}
 	audio_stream_start_zrtp(mStream);
 	if (remote.getChosenConfiguration().hasZrtpHash() == 1) {
 		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remote.getChosenConfiguration().getZrtpHash())));
