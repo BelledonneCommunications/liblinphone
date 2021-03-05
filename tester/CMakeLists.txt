@@ -282,6 +282,7 @@ set(SOURCE_FILES_CXX
 	call_video_tester.cpp
 	call_ice_tester.cpp
 	capability_negotiation_tester.cpp
+	ice_capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
@@ -304,6 +305,7 @@ endif()
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
+	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h
