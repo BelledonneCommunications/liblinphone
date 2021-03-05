@@ -127,7 +127,7 @@ const list<shared_ptr<DialPlan>> DialPlan::DialPlans = {
 	DialPlan::create("Honduras", "HN", "504", 8, "00"),
 	DialPlan::create("Hong Kong", "HK", "852", 8, "001"),
 	DialPlan::create("Hungary", "HU", "36", 9, "00"),
-	DialPlan::create("Iceland", "IS", "354", 9, "00"),
+	DialPlan::create("Iceland", "IS", "354", 7, "00"),
 	DialPlan::create("India", "IN", "91", 10, "00"),
 	DialPlan::create("Indonesia", "ID", "62", 12, "001"),
 	DialPlan::create("Iran", "IR", "98", 10, "00"),
