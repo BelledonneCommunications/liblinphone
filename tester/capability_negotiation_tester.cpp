@@ -47,7 +47,6 @@ static void get_expected_encryption_from_call_params(LinphoneCall *offererCall, 
 	const bool_t offerer_capability_negotiations = linphone_call_params_capability_negotiations_enabled(offerer_params);
 	const bool_t answerer_capability_negotiations = linphone_call_params_capability_negotiations_enabled(answerer_params);
 
-
 	if (offerer_enc_mandatory) {
 		*expectedEncryption = offerer_encryption;
 		// reINVITE is not sent because the call should not offer potential configurations as it must enforce an encryption that will be stored in the actual configuration
@@ -940,7 +939,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	// Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
+	// TODO: DELETE - Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
 	if (callee_cap_neg && caller_cap_neg) {
 		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	} else {
@@ -1215,7 +1214,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	// Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
+	// TODO: DELETE - Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
 	if (callee_cap_neg && caller_cap_neg) {
 		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	} else {
