@@ -4003,13 +4003,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 	if (liblinphone_serialize_logs == TRUE) {
 		ortp_logv_flush();
 	}
-#ifdef VIDEO_ENABLED
-	linphone_core_preview_ogl_render(lc);
-	for(const bctbx_list_t * call_elem = linphone_core_get_calls(lc) ; call_elem != NULL ; call_elem = bctbx_list_next(call_elem)){
-		if(call_elem->data)
-			linphone_call_ogl_render((const LinphoneCall*)call_elem->data);
-	}
-#endif
 	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
 	Then linphone_core_iterate() needs to be called until synchronous tasks are done
 	Then the stop is finished and the status is changed to LinphoneGlobalOff */
