@@ -594,7 +594,7 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 	if (!ice_pwd.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",L_STRING_TO_C(ice_pwd)));
 	if (!ice_ufrag.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",L_STRING_TO_C(ice_ufrag)));
 
-	if (rtcp_xr.enabled == true) {
+	if (rtcp_xr.enabled == TRUE) {
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&rtcp_xr));
 	}
 
