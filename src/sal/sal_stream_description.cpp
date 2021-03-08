@@ -81,16 +81,16 @@ SalStreamDescription::SalStreamDescription(const SalStreamDescription & other){
 
 }
 
-SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
-	fillStreamDescriptionFromSdp(salMediaDesc, media_desc);
+SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) : SalStreamDescription() {
+	fillStreamDescriptionFromSdp(salMediaDesc, sdp, media_desc);
 }
 
-SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) : SalStreamDescription(salMediaDesc, media_desc) {
+SalStreamDescription::SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) : SalStreamDescription(salMediaDesc, sdp, media_desc) {
 	// Create potential configurations
 	fillPotentialConfigurationsFromPotentialCfgGraph(attrs.cfgs);
 }
 
-void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) {
+void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) {
 	belle_sdp_connection_t* cnx;
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
@@ -141,13 +141,13 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 		bandwidth=belle_sdp_media_description_get_bandwidth ( media_desc,"AS" );
 	}
 
-	createActualCfg(salMediaDesc, media_desc);
+	createActualCfg(salMediaDesc, sdp, media_desc);
 }
 
-void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
+void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
 
 	// Populate stream global parameters and actual configuration
-	fillStreamDescriptionFromSdp(salMediaDesc, media_desc);
+	fillStreamDescriptionFromSdp(salMediaDesc, sdp, media_desc);
 
 	if (salMediaDesc->supportCapabilityNegotiation()) {
 
@@ -507,8 +507,7 @@ void SalStreamDescription::setProtoInCfg(SalStreamConfiguration & cfg, const std
 	cfg.proto_other = protoOther;
 }
 
-void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc) {
-	belle_sdp_connection_t* cnx;
+void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc) {
 	belle_sdp_media_t* media;
 	belle_sdp_attribute_t* attribute;
 	belle_sip_list_t *custom_attribute_it;
@@ -518,6 +517,26 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 
 	SalStreamConfiguration actualCfg;
 	actualCfg.custom_sdp_attributes = NULL;
+
+	/*copy dtls attributes from session descriptiun, might be overwritten stream by stream*/
+	/*DTLS attributes can be defined at session level.*/
+	SalDtlsRole session_role=SalDtlsRoleInvalid;
+	value=belle_sdp_session_description_get_attribute_value(sdp,"setup");
+	if (value){
+		if (strncmp(value, "actpass", 7) == 0) {
+			session_role = SalDtlsRoleUnset;
+		} else if (strncmp(value, "active", 6) == 0) {
+			session_role = SalDtlsRoleIsClient;
+		} else if (strncmp(value, "passive", 7) == 0) {
+			session_role = SalDtlsRoleIsServer;
+		}
+	}
+	actualCfg.dtls_role = session_role;
+
+	value=belle_sdp_session_description_get_attribute_value(sdp,"fingerprint");
+	if (value) {
+		actualCfg.dtls_fingerprint = L_C_TO_STRING(value);
+	}
 
 	const std::string protoStr = belle_sdp_media_get_protocol ( media );
 	setProtoInCfg(actualCfg, protoStr);
@@ -538,6 +557,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		}
 	}
 
+	belle_sdp_connection_t* cnx;
 	if ( ( cnx=belle_sdp_media_description_get_connection ( media_desc ) ) && belle_sdp_connection_get_address ( cnx ) ) {
 		actualCfg.ttl = belle_sdp_connection_get_ttl(cnx);
 	}
