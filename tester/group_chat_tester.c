@@ -6683,6 +6683,114 @@ static void group_chat_room_admin_creator_leaves_and_is_reinvited (void) {
 	linphone_core_manager_destroy(laure);
 }
 
+
+static void group_chat_forward_file_transfer_message_url (const char *file_transfer_server_url) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *receivePaulineFilepath = bc_tester_file("receive_file_pauline.dump");
+	char *receiveMarieFilepath = bc_tester_file("receive_file_marie.dump");
+	int dummy = 0;
+	/* Remove any previously downloaded file */
+	remove(receivePaulineFilepath);
+	remove(receiveMarieFilepath);
+
+
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+
+	linphone_core_set_file_transfer_server(marie->lc, file_transfer_server_url);
+	linphone_core_set_file_transfer_server(pauline->lc, file_transfer_server_url);
+
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Pauline";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+	BC_ASSERT_TRUE(linphone_chat_room_get_capabilities(paulineCr) & LinphoneChatRoomCapabilitiesOneToOne);
+
+	// Marie sends a message
+	_send_file(marieCr, sendFilepath, NULL, FALSE);
+	wait_for_list(coresList, &dummy, 1, 10000);
+	// Check pauline got it
+	// Note: we must not use the buffer reception(last param to FALSE) or our message transfer won't work, probably some fix to be done in the callback
+	_receive_file(coresList, pauline, &initialPaulineStats, receivePaulineFilepath, sendFilepath, NULL, FALSE);
+
+	// Retrieve message from Pauline chatroom history
+	BC_ASSERT_EQUAL(linphone_chat_room_get_history_size(paulineCr), 1, int," %i");
+	if (linphone_chat_room_get_history_size(paulineCr) > 0) {
+		bctbx_list_t *history = linphone_chat_room_get_history(paulineCr, 1);
+		LinphoneChatMessage *recv_msg = (LinphoneChatMessage *)(history->data);
+
+		// Forward it to Marie
+		LinphoneChatMessage *msg = linphone_chat_room_create_forward_message(paulineCr, recv_msg);
+		const LinphoneAddress *forwarded_from_address = linphone_chat_message_get_from_address(recv_msg);
+		char *forwarded_from = linphone_address_as_string_uri_only(forwarded_from_address);
+
+		bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
+
+		LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
+		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
+		linphone_chat_message_send(msg);
+
+		BC_ASSERT_TRUE(linphone_chat_message_is_forward(msg));
+		BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_forward_info(msg), forwarded_from);
+
+		// Check Marie received it and that the file is still the same
+		_receive_file(coresList, marie, &initialMarieStats, receiveMarieFilepath, sendFilepath, NULL, FALSE);
+
+		linphone_chat_message_unref(msg);
+		ms_free(forwarded_from);
+	} else {
+		BC_FAIL("Could not get message to forward from history");
+	}
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	wait_for_list(coresList, 0, 1, 2000);
+	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(marie->lc), 0, int,"%i");
+	BC_ASSERT_EQUAL(linphone_core_get_call_history_size(pauline->lc), 0, int,"%i");
+	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(marie->lc));
+	BC_ASSERT_PTR_NULL(linphone_core_get_call_logs(pauline->lc));
+
+	//linphone_address_unref(confAddr);
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void group_chat_forward_file_transfer_message (void) {
+	group_chat_forward_file_transfer_message_url(file_transfer_url);
+}
+
+static void group_chat_forward_file_transfer_message_digest_auth_server (void) {
+	group_chat_forward_file_transfer_message_url(file_transfer_url_digest_auth);
+}
+
+static void group_chat_forward_file_transfer_message_digest_auth_server_encryptedFS (void) {
+	uint8_t evfs_key[32] = {0xaa, 0x55, 0xFF, 0xFF, 0x12, 0x34, 0x56, 0x78, 0x9a, 0xbc, 0xde, 0xf0, 0x11, 0x22, 0x33, 0x44,
+				0x5a, 0xa5, 0x5F, 0xaF, 0x52, 0xa4, 0xa6, 0x58, 0xaa, 0x5c, 0xae, 0x50, 0xa1, 0x52, 0xa3, 0x54};
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_AES256GCM128_SHA256, evfs_key, 32);
+
+	group_chat_forward_file_transfer_message_url(file_transfer_url_digest_auth);
+
+	linphone_factory_set_vfs_encryption(linphone_factory_get(), LINPHONE_VFS_ENCRYPTION_UNSET, NULL, 0);
+}
+
 test_t group_chat_tests[] = {
 	TEST_NO_TAG("Chat room params", group_chat_room_params),
 	TEST_NO_TAG("Chat room with forced local identity", group_chat_room_creation_with_given_identity),
@@ -6761,6 +6869,9 @@ test_t group_chat_tests[] = {
 	TEST_ONE_TAG("Subscribe successfull after set chat database path", subscribe_test_after_set_chat_database_path, "LeaksMemory" /*due to core restart*/),
 	TEST_NO_TAG("Make sure device unregistration does not triger user to be removed from a group", group_chat_room_device_unregistered),
 	TEST_NO_TAG("Admin leaves the room and is reinvited", group_chat_room_admin_creator_leaves_and_is_reinvited),
+	TEST_NO_TAG("Forward file transfer message", group_chat_forward_file_transfer_message),
+	TEST_NO_TAG("Forward file transfer message using digest auth on server", group_chat_forward_file_transfer_message_digest_auth_server),
+	TEST_NO_TAG("Forward file transfer message using digest auth on server and encrypted FS", group_chat_forward_file_transfer_message_digest_auth_server_encryptedFS),
 };
 
 test_suite_t group_chat_test_suite = {
