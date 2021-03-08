@@ -188,7 +188,7 @@ private:
 	virtual void handleEvent(const OrtpEvent *ev) override;
 	void setupMediaLossCheck();
 	void setPlaybackGainDb (float gain);
-	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
+	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOffer);
 	void startZrtpPrimaryChannel(const OfferAnswerContext &params);
 	static void parameterizeEqualizer(AudioStream *as, LinphoneCore *lc);
 	static void configureFlowControl(AudioStream *as, LinphoneCore *lc);
