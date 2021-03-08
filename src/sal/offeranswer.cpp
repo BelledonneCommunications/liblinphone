@@ -556,7 +556,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 
 SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
-						bool_t one_matching_codec, const char *bundle_owner_mid, const bool allowCapabilityNegotiation){
+						bool_t one_matching_codec, const std::string &bundle_owner_mid, const bool allowCapabilityNegotiation){
 	SalStreamDescription result;
 	result.name = local_cap.name;
 	result.type=local_cap.getType();
@@ -577,8 +577,8 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		result.bandwidth=local_cap.bandwidth;
 	}
 
-	unsigned int remoteCfgIdx = remote_offer.getActualConfigurationIndex();
-	unsigned int localCfgIdx = local_cap.getActualConfigurationIndex();
+	auto remoteCfgIdx = remote_offer.getActualConfigurationIndex();
+	auto localCfgIdx = local_cap.getActualConfigurationIndex();
 
 	result.ice_pwd = local_cap.ice_pwd;
 	result.ice_ufrag = local_cap.ice_ufrag;
@@ -617,6 +617,12 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	if (success) {
 		remote_offer.cfgIndex = remoteCfgIdx;
 		local_cap.cfgIndex = localCfgIdx;
+
+		if (resultCfg.bundle_only == TRUE) {
+			/* The stream is a secondary one part of a bundle.
+			* In this case it must set the bundle-only attribute, and set port to zero.*/
+			result.rtp_port = 0;
+		}
 		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
 	} else {
 		result.disable();
@@ -625,7 +631,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	return result;
 }
 
-std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 
 	SalStreamConfiguration resultCfg;
 	if (result.hasConfigurationAtIndex(result.getActualConfigurationIndex())) {
@@ -672,7 +678,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
 	
 	/* Handle RTP bundle negociation */
-	if (!remoteCfg.mid.empty() && bundle_owner_mid){
+	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty()){
 		resultCfg.mid = remoteCfg.mid;
 		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 		
@@ -680,7 +686,6 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
 			resultCfg.bundle_only = TRUE;
-			success = false;
 		}
 		resultCfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
@@ -862,11 +867,11 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 				rs.setProto(ls.getProto());
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
 			}
-			const char *bundle_owner_mid = NULL;
+			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
 				if (owner_index != -1){
-					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid());
+					bundle_owner_mid = remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid();
 				}
 			}
 			stream = OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
