@@ -28,6 +28,12 @@ set(LINK_LIBS
 	ortp
 )
 
+if (XCODE)
+	list(APPEND LINK_LIBS jsonspp_static)
+else()
+	list(APPEND LINK_LIBS jsoncpp_lib)
+endif()
+
 #APPLE_LIBS is mandatory for apple compilation
 if(APPLE)
 	list(APPEND APPLE_LIBS "-framework CFNetwork -framework Foundation -framework AVFoundation -framework SystemConfiguration -framework CoreLocation")

@@ -23,7 +23,7 @@
 #include "c-wrapper/c-wrapper.h"
 
 // TODO: From coreapi. Remove me later.
-#include "private.h"
+#include "../private.h"
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneAccountCreatorService);
 
@@ -34,7 +34,6 @@ BELLE_SIP_INSTANCIATE_VPTR(LinphoneAccountCreatorService, belle_sip_object_t,
 	FALSE
 );
 
-/************************** Start Account Creator service **************************/
 LinphoneAccountCreatorService * linphone_account_creator_service_new(void) {
 	return belle_sip_object_new(LinphoneAccountCreatorService);
 }
@@ -163,11 +162,11 @@ void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAcco
 /************************** End Account Creator service **************************/
 
 void linphone_core_set_account_creator_service(LinphoneCore *lc, LinphoneAccountCreatorService *service) {
-  if (lc->default_ac_service)
-    linphone_account_creator_service_unref(lc->default_ac_service);
-  lc->default_ac_service = service;
+	if (lc->default_ac_service)
+		linphone_account_creator_service_unref(lc->default_ac_service);
+	lc->default_ac_service = service;
 }
 
 LinphoneAccountCreatorService * linphone_core_get_account_creator_service(LinphoneCore *lc) {
-  return lc->default_ac_service;
+	return lc->default_ac_service;
 }

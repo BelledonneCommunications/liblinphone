@@ -20,7 +20,21 @@
 #
 ############################################################################
 
-set(OTHER_LIBS_FOR_TESTER bctoolbox bctoolbox-tester ortp mediastreamer ${BELLESIP_TARGETNAME} belr ${XML2_LIBRARIES} ${XSD_LIBRARIES})
+set(OTHER_LIBS_FOR_TESTER
+	bctoolbox
+	bctoolbox-tester
+	ortp
+	mediastreamer
+	${BELLESIP_TARGETNAME}
+	belr
+	${XML2_LIBRARIES} ${XSD_LIBRARIES}
+)
+
+if (XCODE)
+	list(APPEND OTHER_LIBS_FOR_TESTER jsonspp_static)
+else()
+	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
+endif()
 
 if(INTL_FOUND)
 	list(APPEND OTHER_LIBS_FOR_TESTER ${INTL_LIBRARIES})
@@ -103,6 +117,7 @@ set(DB_FILES
 
 set(RC_FILES
 	rcfiles/account_creator_rc
+	rcfiles/account_creator_flexiapi_rc
 	rcfiles/assistant_create.rc
 	rcfiles/carddav_rc
 	rcfiles/claire_rc
@@ -134,7 +149,7 @@ set(RC_FILES
 	rcfiles/marie_quality_reporting_rc
 	rcfiles/marie_rc
 	rcfiles/marie_rtp_port_range_rc
-	rcfiles/marie_os_defined_rtp_ports_rc 
+	rcfiles/marie_os_defined_rtp_ports_rc
 	rcfiles/marie_rc_rtcp_xr
 	rcfiles/marie_remote_404_rc
 	rcfiles/marie_remote_default_values_rc
@@ -167,7 +182,7 @@ set(RC_FILES
 	rcfiles/pauline_nat64_rc
 	rcfiles/pauline_rc
 	rcfiles/pauline_rtp_port_range_rc
-	rcfiles/pauline_os_defined_rtp_ports_rc 
+	rcfiles/pauline_os_defined_rtp_ports_rc
 	rcfiles/pauline_rc_rtcp_xr
 	rcfiles/pauline_sips_rc
 	rcfiles/pauline_tcp_rc
@@ -187,7 +202,7 @@ set(RC_FILES
 	rcfiles/marie_bodyless_rc
 	rcfiles/groupchat_rc
 	rcfiles/groupchat_lime_x3dh_rc
-	rcfiles/arthur_rc 
+	rcfiles/arthur_rc
 )
 
 set(IMAGE_FILES
@@ -220,7 +235,9 @@ set(IOS_RESOURCES_FILES
 )
 
 set(SOURCE_FILES_C
-	account_creator_tester.c
+	account_creator_local_tester.c
+	account_creator_xmlrpc_tester.c
+	account_creator_flexiapi_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
@@ -237,7 +254,7 @@ set(SOURCE_FILES_C
 	eventapi_tester.c
 	external_domain_tester.c
 	flexisip_tester.c
-        group_chat_tester.c
+	group_chat_tester.c
 	group_chat_ephemeral_tester.c
 	group_chat_secure_tester.c
 	group_chat_tester.c
@@ -264,11 +281,11 @@ set(SOURCE_FILES_C
 	video_tester.c
 )
 if(ENABLE_LIME_X3DH)
-    list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
+	list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
 endif()
 
 set(SOURCE_FILES_CXX
-	audio_quality_tester.cpp
+	audio-quality-tester.cpp
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
@@ -277,10 +294,12 @@ set(SOURCE_FILES_CXX
 	multipart-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
+	#account-creator-flexiapi-tester.cpp
+	flexiapiclient-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
-	vfs_encryption-tester.cpp
+	vfs-encryption-tester.cpp
 )
 
 if(ENABLE_ADVANCED_IM)
@@ -420,14 +439,14 @@ if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "WindowsStore")
 		set_target_properties(liblinphone_tester PROPERTIES C_STANDARD 99)
 		target_include_directories(liblinphone_tester PRIVATE ${LINPHONE_INCLUDE_DIRS})
 		target_link_libraries(liblinphone_tester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
-                if(MSVC)
-                        if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-                                install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
-                                        DESTINATION ${CMAKE_INSTALL_BINDIR}
-                                        PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
-                                )
-                        endif()
-                endif()
+		if(MSVC)
+				if(CMAKE_BUILD_TYPE STREQUAL "Debug" OR CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+						install(FILES $<TARGET_PDB_FILE:liblinphone_tester>
+								DESTINATION ${CMAKE_INSTALL_BINDIR}
+								PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE
+						)
+				endif()
+		endif()
 
 		install(TARGETS liblinphone_tester
 			RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
