@@ -213,7 +213,7 @@ void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(cons
 
 const SalStreamDescription::tcap_map_t::value_type & SalStreamDescription::encryptionToTcap(const SalStreamDescription::tcap_map_t & caps, const LinphoneMediaEncryption encEnum, const bool avpf) {
 	const auto & it = std::find_if(caps.cbegin(), caps.cend(), [&avpf, &encEnum] (const auto & cap) {
-		return (cap.second.compare(sal_media_proto_to_string(encryption_to_media_protocol(encEnum, ((avpf) ? TRUE : FALSE)))) == 0);
+		return (cap.second.compare(sal_media_proto_to_string(encryption_to_media_protocol(encEnum, ((avpf) ? true : false)))) == 0);
 	});
 	if (it != caps.end()) {
 		return *it;
@@ -237,7 +237,7 @@ void SalStreamDescription::addSupportedEncryptionFromSdp(const SalStreamDescript
 	LinphoneMediaEncryption enc = LinphoneMediaEncryptionNone;
 	for (const auto & tAttr : protoMap) {
 		auto protoStr = tAttr.second;
-		enc = media_protocol_to_encryption(string_to_sal_media_proto(protoStr.c_str()), (haveZrtpHash ? TRUE : FALSE));
+		enc = media_protocol_to_encryption(string_to_sal_media_proto(protoStr.c_str()), (haveZrtpHash ? true : false));
 		supportedEncryption.push_front(enc);
 		lInfo() << "Adding encryption " << linphone_media_encryption_to_string(enc) << " to stream " << this;
 	}
@@ -613,7 +613,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		actualCfg.enableAvpfForStream();
 	}else if (has_avpf_attributes ){
 		actualCfg.enableAvpfForStream();
-		actualCfg.implicit_rtcp_fb = TRUE;
+		actualCfg.implicit_rtcp_fb = true;
 	}
 
 	/* Get RTCP-XR attributes if any */
@@ -638,7 +638,7 @@ void SalStreamDescription::createActualCfg(const SalMediaDescription * salMediaD
 		}
 	}
 
-	LinphoneMediaEncryption enc = media_protocol_to_encryption(actualCfg.getProto(), (actualCfg.hasZrtpHash() ? TRUE : FALSE));
+	LinphoneMediaEncryption enc = media_protocol_to_encryption(actualCfg.getProto(), (actualCfg.hasZrtpHash() ? true : false));
 	supportedEncryption.push_front(enc);
 
 	addActualConfiguration(actualCfg);
@@ -930,13 +930,13 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		bool_t inet6;
 		belle_sdp_connection_t *connection;
 		if (rtp_addr.find(':')!=std::string::npos){
-			inet6=TRUE;
-		}else inet6=FALSE;
+			inet6=true;
+		}else inet6=false;
 		connection = belle_sdp_connection_create("IN", inet6 ? "IP6" : "IP4", L_STRING_TO_C(rtp_addr));
 		if (ms_is_multicast(L_STRING_TO_C(rtp_addr))) {
 			/*remove session cline in case of multicast*/
 			belle_sdp_session_description_set_connection(session_desc,NULL);
-			if (inet6 == FALSE)
+			if (inet6 == false)
 				belle_sdp_connection_set_ttl(connection,actualCfg.ttl);
 		}
 		belle_sdp_media_description_set_connection(media_desc,connection);
@@ -987,18 +987,18 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
-		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == TRUE)) {
+		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == true)) {
 			std::string rtcpAttrValue = std::to_string(rtcp_port);
-			if (different_rtp_and_rtcp_addr == TRUE) {
+			if (different_rtp_and_rtcp_addr == true) {
 				rtcpAttrValue += " IN IP4 " + rtcp_addr;
 			}
 			belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("rtcp",rtcpAttrValue.c_str()));
 		}
 	}
-	if (actualCfg.set_nortpproxy == TRUE) {
+	if (actualCfg.set_nortpproxy == true) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("nortpproxy","yes"));
 	}
-	if (ice_mismatch == TRUE) {
+	if (ice_mismatch == true) {
 		belle_sdp_media_description_add_attribute(media_desc,belle_sdp_attribute_create ("ice-mismatch",NULL));
 	} else {
 		if (rtp_port != 0) {
@@ -1015,7 +1015,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		addRtcpFbAttributesToSdp(actualCfg, media_desc);
 	}
 
-	if (stream_enabled && (actualCfg.rtcp_xr.enabled == TRUE)) {
+	if (stream_enabled && (actualCfg.rtcp_xr.enabled == true)) {
 		char sastr[1024] = {0};
 		char mastr[1024] = {0};
 		size_t saoff = 0;
@@ -1307,7 +1307,7 @@ void SalStreamDescription::sdpParseMediaIceParameters(SalStreamConfiguration & c
 		} else if ((keywordcmp("ice-pwd", att_name) == 0) && (value != NULL)) {
 			ice_pwd = L_C_TO_STRING(value);
 		} else if (keywordcmp("ice-mismatch", att_name) == 0) {
-			ice_mismatch = TRUE;
+			ice_mismatch = true;
 		}
 	}
 }
@@ -1333,10 +1333,10 @@ void SalStreamDescription::applyRtcpFbAttributeToPayload(SalStreamConfiguration 
 					 * AVPF wrongly declared RPSI as negative feedback, so this is kept for compatibility
 					 * with these versions but will probably be removed at some point in time. */
 					avpf_params.features |= PAYLOAD_TYPE_AVPF_RPSI;
-					avpf_params.rpsi_compatibility = TRUE;
+					avpf_params.rpsi_compatibility = true;
 					break;
 				case BELLE_SDP_RTCP_FB_NONE:
-					cfg.rtcp_fb.generic_nack_enabled = TRUE;
+					cfg.rtcp_fb.generic_nack_enabled = true;
 					break;
 				default:
 					break;
@@ -1351,7 +1351,7 @@ void SalStreamDescription::applyRtcpFbAttributeToPayload(SalStreamConfiguration 
 					avpf_params.features |= PAYLOAD_TYPE_AVPF_FIR;
 					break;
 				case BELLE_SDP_RTCP_FB_TMMBR:
-					cfg.rtcp_fb.tmmbr_enabled = TRUE;
+					cfg.rtcp_fb.tmmbr_enabled = true;
 					break;
 				default:
 					break;
@@ -1401,10 +1401,10 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 	if (general_trr_int == true && trr_int != 0) {
 		add_rtcp_fb_trr_int_attribute(media_desc, -1, trr_int);
 	}
-	if (cfg.rtcp_fb.generic_nack_enabled == TRUE) {
+	if (cfg.rtcp_fb.generic_nack_enabled == true) {
 		add_rtcp_fb_nack_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_NONE);
 	}
-	if (cfg.rtcp_fb.tmmbr_enabled == TRUE) {
+	if (cfg.rtcp_fb.tmmbr_enabled == true) {
 		add_rtcp_fb_ccm_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_TMMBR);
 	}
 
@@ -1415,7 +1415,7 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 		avpf_params = payload_type_get_avpf_params(pt);
 
 		/* Add trr-int if not set generally. */
-		if (general_trr_int != TRUE && trr_int != 0) {
+		if (general_trr_int != true && trr_int != 0) {
 			add_rtcp_fb_trr_int_attribute(media_desc, (int8_t)payload_type_get_number(pt), avpf_params.trr_interval);
 		}
 
@@ -1427,7 +1427,7 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 			add_rtcp_fb_nack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_SLI);
 		}
 		if (avpf_params.features & PAYLOAD_TYPE_AVPF_RPSI) {
-			if (avpf_params.rpsi_compatibility == TRUE) {
+			if (avpf_params.rpsi_compatibility == true) {
 				add_rtcp_fb_nack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_RPSI);
 			} else {
 				add_rtcp_fb_ack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_RPSI);
