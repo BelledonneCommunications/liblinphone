@@ -953,8 +953,9 @@ bool OfferAnswerEngine::fillZrtpAttributes(const SalStreamDescription & localStr
 	// If local or remote configuration is not the actual one, ensure that both have zrtp hashes
 	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
 		const auto & availableEncs = localStream.getSupportedEncryptions();
-		const auto zrtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionZRTP);
-		if (zrtpFound == availableEncs.cend()) {
+		// For actual configurations, all encryptions are supported
+		const auto zrtpFound = (!isLocalActualCfg || !isRemoteActualCfg) ? (std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionZRTP) != availableEncs.cend()) : true ;
+		if (!zrtpFound) {
 			lInfo() <<  __func__ << " ZRTP encryption is not supported by the local configuration - ZRTP attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
 			return false;
 		} else {
