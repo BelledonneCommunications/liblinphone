@@ -1171,7 +1171,30 @@ LinphoneStatus CallSession::deferUpdate () {
 }
 
 const std::list<LinphoneMediaEncryption> CallSession::getSupportedEncryptions() const {
-	if (getParams()) {
+	L_D();
+	if ((d->direction == LinphoneCallIncoming) && (d->state == CallSession::State::Idle)) {
+		// If we are in the IncomingReceived state, we support all encryptions the core had enabled at compile time
+		// In fact, the policy is to preliminary accept (i.e. send 180 Ringing) the wider possible range of offers.
+		// Note that special treatment is dedicated to ZRTP as, for testing purposes, a core can have its member zrtp_not_available_simulation set to TRUE which prevent the core to accept calls with ZRTP encryptions
+		// The application can then decline a call based on the call parameter the call was accepted with
+		const auto core = getCore()->getCCore();
+		const auto encList = linphone_core_get_supported_media_encryptions_at_compile_time();
+		std::list<LinphoneMediaEncryption> encEnumList;
+		for(bctbx_list_t * enc = encList;enc!=NULL;enc=enc->next){
+			const char *encString = static_cast<const char *>(bctbx_list_get_data(enc));
+			const auto encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(encString));
+			// Do not add ZRTP if it is not supported by core even though the core was compile with it on
+			if ((encEnum != LinphoneMediaEncryptionZRTP) || ((encEnum == LinphoneMediaEncryptionZRTP) && !core->zrtp_not_available_simulation)) {
+				encEnumList.push_back(encEnum);
+			}
+		}
+
+		if (encList) {
+			bctbx_list_free_with_data(encList, (bctbx_list_free_func)bctbx_free);
+		}
+
+		return encEnumList;
+	} else if (getParams()) {
 		return getParams()->getPrivate()->getSupportedEncryptions();
 	}
 	return getCore()->getSupportedMediaEncryptions();
