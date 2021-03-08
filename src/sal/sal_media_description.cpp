@@ -140,7 +140,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	if (value) ice_pwd = L_C_TO_STRING(value);
 
 	value=belle_sdp_session_description_get_attribute_value(sdp,"ice-lite");
-	if (value) ice_lite = TRUE;
+	if (value) ice_lite = true;
 
 	/* Get session RTCP-XR attributes if any */
 	sdp_parse_session_rtcp_xr_parameters(sdp, &rtcp_xr);
@@ -590,11 +590,11 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		belle_sdp_session_description_set_bandwidth ( session_desc,"AS",bandwidth );
 	}
 
-	if (set_nortpproxy == TRUE) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy","yes"));
+	if (set_nortpproxy == true) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("nortpproxy","yes"));
 	if (!ice_pwd.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-pwd",L_STRING_TO_C(ice_pwd)));
 	if (!ice_ufrag.empty()) belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("ice-ufrag",L_STRING_TO_C(ice_ufrag)));
 
-	if (rtcp_xr.enabled == TRUE) {
+	if (rtcp_xr.enabled == true) {
 		belle_sdp_session_description_add_attribute(session_desc, create_rtcp_xr_attribute(&rtcp_xr));
 	}
 

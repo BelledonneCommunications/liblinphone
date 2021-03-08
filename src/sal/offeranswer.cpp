@@ -136,13 +136,13 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 
 LINPHONE_BEGIN_NAMESPACE
 
-bool_t OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
+bool OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
 	for (const auto & p : l) {
 		if (strcasecmp(p->mime_type,"telephone-event")!=0){
-			return FALSE;
+			return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
@@ -161,7 +161,7 @@ PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> 
  * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
 */
 PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt,
-						  const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response){
+						  const std::list<OrtpPayloadType*> & remote_payloads, bool reading_response){
 	PayloadType *ret = NULL;
 	MSOfferAnswerContext *ctx = NULL;
 
@@ -176,10 +176,10 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 }
 
 
-std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec){
+std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool reading_response, bool one_matching_codec){
 	std::list<OrtpPayloadType*> res;
 	PayloadType *matched;
-	bool_t found_codec=FALSE;
+	bool found_codec=false;
 
 	for (const auto & p2 : remote) {
 		matched=OfferAnswerEngine::findPayloadTypeBestMatch(factory, local, p2, remote, reading_response);
@@ -191,7 +191,7 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 				if (strcasecmp(matched->mime_type,"telephone-event")!=0){
 					if (found_codec){/* we have found a real codec already*/
 						continue; /*this codec won't be added*/
-					}else found_codec=TRUE;
+					}else found_codec=true;
 				}
 			}
 
@@ -238,10 +238,10 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 	if (reading_response){
 		/* add remaning local payload as CAN_RECV only so that if we are in front of a non-compliant equipment we are still able to decode the RTP stream*/
 		for (const auto & p1 : local) {
-			bool_t found=FALSE;
+			bool found=false;
 			for (const auto & p2 : remote) {
 				if (payload_type_get_number(p2)==payload_type_get_number(p1)){
-					found=TRUE;
+					found=true;
 					break;
 				}
 			}
@@ -257,8 +257,8 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 	return res;
 }
 
-bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
-	SalSrtpCryptoAlgo & result, unsigned int & choosen_local_tag, bool_t use_local_key) {
+bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
+	SalSrtpCryptoAlgo & result, unsigned int & choosen_local_tag, bool use_local_key) {
 	for(const auto & rc : remote) {
 		if (rc.algo == 0)
 			break;
@@ -279,11 +279,11 @@ bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &
 					result.tag = lc.tag;
 					choosen_local_tag = lc.tag;
 				}
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 SalStreamDir OfferAnswerEngine::computeDirOutgoing(SalStreamDir local, SalStreamDir answered){
@@ -448,7 +448,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
 
 	const auto & availableEncs = local_offer.getSupportedEncryptions();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,TRUE,FALSE);
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
 
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
@@ -487,7 +487,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 			resultCfg.mid = remoteCfg.mid;
 			resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
 			resultCfg.bundle_only = remoteCfg.bundle_only;
-			resultCfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+			resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
@@ -500,7 +500,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 		success = false;
 	}
 
-	if (resultCfg.hasSrtp() == TRUE) {
+	if (resultCfg.hasSrtp() == true) {
 		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
 		if (srtpFound == availableEncs.cend()) {
 			ms_message("Found matching payloads but SRTP is not supported");
@@ -511,7 +511,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 			/* verify crypto algo */
 			crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
-			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, FALSE)) {
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, false)) {
 				success = false;
 			}
 			crypto.emplace(crypto.begin(),crypto_result);
@@ -556,7 +556,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfi
 
 SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
-						bool_t one_matching_codec, const std::string &bundle_owner_mid, const bool allowCapabilityNegotiation){
+						bool one_matching_codec, const std::string &bundle_owner_mid, const bool allowCapabilityNegotiation){
 	SalStreamDescription result;
 	result.name = local_cap.name;
 	result.type=local_cap.getType();
@@ -618,7 +618,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 		remote_offer.cfgIndex = remoteCfgIdx;
 		local_cap.cfgIndex = localCfgIdx;
 
-		if (resultCfg.bundle_only == TRUE) {
+		if (resultCfg.bundle_only == true) {
 			/* The stream is a secondary one part of a bundle.
 			* In this case it must set the bundle-only attribute, and set port to zero.*/
 			result.rtp_port = 0;
@@ -631,7 +631,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	return result;
 }
 
-std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool_t one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 
 	SalStreamConfiguration resultCfg;
 	if (result.hasConfigurationAtIndex(result.getActualConfigurationIndex())) {
@@ -643,7 +643,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 	bool success = true;
 
 	const auto & availableEncs = local_cap.getSupportedEncryptions();
-	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, FALSE, one_matching_codec);
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec);
 	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
 		resultCfg.proto=remoteCfg.getProto();
 	} else {
@@ -661,7 +661,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		return std::make_pair(resultCfg, success);
 	}
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
-		if (resultCfg.hasSrtp() == TRUE) {
+		if (resultCfg.hasSrtp() == true) {
 			lInfo() << __func__ << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
 			success = false;
 			return std::make_pair(resultCfg, success);
@@ -685,12 +685,12 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
 			/* The stream is a secondary one part of a bundle.
 			 * In this case it must set the bundle-only attribute, and set port to zero.*/
-			resultCfg.bundle_only = TRUE;
+			resultCfg.bundle_only = true;
 		}
-		resultCfg.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	if (resultCfg.hasSrtp() == TRUE) {
+	if (resultCfg.hasSrtp() == true) {
 		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
 		if (srtpFound == availableEncs.cend()) {
 			ms_message("Found matching payloads but SRTP is not supported");
@@ -700,7 +700,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			/* select crypto algo */
 			resultCfg.crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
-			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, TRUE)) {
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, true)) {
 				lInfo() <<  __func__ << "No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
 				success = false;
 				return std::make_pair(resultCfg, success);
@@ -801,8 +801,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
-			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
-				actualCfg.rtcp_xr.enabled = FALSE;
+			if ((ls.getChosenConfiguration().rtcp_xr.enabled == true) && (rs.getChosenConfiguration().rtcp_xr.enabled == false)) {
+				actualCfg.rtcp_xr.enabled = false;
 			}
 			actualCfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
 			actualCfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
@@ -816,8 +816,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 	result->ice_pwd = local_offer->ice_pwd;
 	result->ice_ufrag = local_offer->ice_ufrag;
 	memcpy(&result->rtcp_xr, &local_offer->rtcp_xr, sizeof(result->rtcp_xr));
-	if ((local_offer->rtcp_xr.enabled == TRUE) && (remote_answer->rtcp_xr.enabled == FALSE)) {
-		result->rtcp_xr.enabled = FALSE;
+	if ((local_offer->rtcp_xr.enabled == true) && (remote_answer->rtcp_xr.enabled == false)) {
+		result->rtcp_xr.enabled = false;
 	}
 	/* TODO: check that the bundle answer is compliant with our offer.
 	 * For now, just check the presence of a bundle response. */
@@ -840,7 +840,7 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 **/
 std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
 					std::shared_ptr<SalMediaDescription> remote_offer,
-					bool_t one_matching_codec){
+					bool one_matching_codec){
 
 	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
 	size_t i;
@@ -882,14 +882,14 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
 			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
-			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
+			if (rs.getChosenConfiguration().rtcp_xr.enabled == true) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
-				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
+				if (ls.getChosenConfiguration().rtcp_xr.enabled == true) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
+				else if (local_capabilities->rtcp_xr.enabled == true) rtcp_xr_conf = &local_capabilities->rtcp_xr;
 				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
 					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
 				} else {
-					actualCfg.rtcp_xr.enabled = TRUE;
+					actualCfg.rtcp_xr.enabled = true;
 				}
 			}
 		}else {
@@ -925,11 +925,11 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 
 	// Handle session RTCP XR attribute
 	memset(&result->rtcp_xr, 0, sizeof(result->rtcp_xr));
-	if (remote_offer->rtcp_xr.enabled == TRUE) {
-		if ((local_capabilities->rtcp_xr.enabled == TRUE) && (local_capabilities->dir == SalStreamSendRecv)) {
+	if (remote_offer->rtcp_xr.enabled == true) {
+		if ((local_capabilities->rtcp_xr.enabled == true) && (local_capabilities->dir == SalStreamSendRecv)) {
 			memcpy(&result->rtcp_xr, &local_capabilities->rtcp_xr, sizeof(result->rtcp_xr));
 		} else {
-			result->rtcp_xr.enabled = TRUE;
+			result->rtcp_xr.enabled = true;
 		}
 	}
 
