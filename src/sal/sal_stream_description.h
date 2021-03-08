@@ -74,8 +74,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		static const tcap_map_t::value_type & encryptionToTcap(const tcap_map_t & caps, const LinphoneMediaEncryption encEnum, const bool avpf);
 
 		SalStreamDescription();
-		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
-		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc);
+		SalStreamDescription(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs);
 		SalStreamDescription(const SalStreamDescription & other);
 		virtual ~SalStreamDescription();
 		SalStreamDescription &operator=(const SalStreamDescription& other);
@@ -187,8 +187,8 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		std::map<unsigned int, std::string> unparsed_cfgs;
 		std::list<LinphoneMediaEncryption> supportedEncryption;
 
-		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
-		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
+		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc);
+		void fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const raw_capability_negotiation_attrs_t & attrs);
 		void addSupportedEncryptionFromSdp(const SalStreamDescription::tcap_map_t & protoMap, const std::list<SalStreamDescription::acap_map_t> & attrList);
 
 		// Potential configurations
@@ -199,7 +199,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		void insertOrMergeConfiguration(const unsigned & idx, const SalStreamConfiguration & cfg);
 		SalStreamConfiguration addAcapsToConfiguration(const SalStreamConfiguration & baseCfg, const LinphoneMediaEncryption & enc, const std::list<SalStreamDescription::acap_map_t> & attrList) const;
 
-		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_media_description_t *media_desc);
+		void createActualCfg(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc);
 		void setProtoInCfg(SalStreamConfiguration & cfg, const std::string & str);
 
 		void addDtlsAttributesToMediaDesc(const SalStreamConfiguration & cfg, belle_sdp_media_description_t *media_desc) const;
