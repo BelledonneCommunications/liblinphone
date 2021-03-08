@@ -1173,6 +1173,7 @@ ChatMessage::ChatMessage (ChatMessagePrivate &p) : Object(p), CoreAccessor(p.get
 ChatMessage::~ChatMessage () {
 	L_D();
 
+	fileUploadEndBackgroundTask();
 	deleteChatMessageFromCache();
 
 	for (Content *content : d->contents) {
@@ -1511,6 +1512,11 @@ int ChatMessage::putCharacter (uint32_t character) {
 	);
 
 	return 0;
+}
+
+void ChatMessage::fileUploadEndBackgroundTask () {
+	L_D();
+	d->fileTransferChatMessageModifier.fileUploadEndBackgroundTask();
 }
 
 std::ostream& operator<<(std::ostream& lhs, ChatMessage::State e) {

@@ -286,6 +286,11 @@ void CorePrivate::uninit() {
 				}
 			}
 #endif
+			// end all file transfer background tasks before linphonecore off
+			const auto &chatRoomPrivate = cr->getPrivate();
+			for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
+				chatMessage->fileUploadEndBackgroundTask();
+			}
 		}
 	}
 
