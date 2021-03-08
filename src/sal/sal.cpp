@@ -29,6 +29,7 @@
 #include "bellesip_sal/sal_impl.h"
 #include "tester_utils.h"
 #include "private.h"
+#include "bctoolbox/utils.hh"
 #include "bctoolbox/crypto.hh"
 
 #include "c-wrapper/internal/c-tools.h"
@@ -588,7 +589,7 @@ void Sal::makeSupportedHeader () {
 }
 
 void Sal::setSupportedTags (const string &tags) {
-	vector<string> splittedTags = Utils::split(tags, ",");
+	vector<string> splittedTags = bctoolbox::Utils::split(tags, ",");
 	mSupportedTags.clear();
 	for (const auto &tag : splittedTags)
 		mSupportedTags.push_back(Utils::trim(tag));

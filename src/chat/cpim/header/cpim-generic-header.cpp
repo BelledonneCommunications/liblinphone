@@ -19,6 +19,8 @@
 
 #include <set>
 
+#include "bctoolbox/utils.hh"
+
 #include "linphone/utils/utils.h"
 
 #include "chat/cpim/parser/cpim-parser.h"
@@ -47,7 +49,7 @@ Cpim::GenericHeader::GenericHeader (string name, string value, string parameters
 	setName(name);
 	setValue(value);
 
-	for (const auto &parameter : Utils::split(parameters, ';')) {
+	for (const auto &parameter : bctoolbox::Utils::split(parameters, ';')) {
 		size_t equalIndex = parameter.find('=');
 		if (equalIndex != string::npos)
 			addParameter(parameter.substr(0, equalIndex), parameter.substr(equalIndex + 1));
