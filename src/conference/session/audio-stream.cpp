@@ -31,6 +31,7 @@
 
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msvolume.h"
+#include "mediastreamer2/flowcontrol.h"
 
 #include "linphone/core.h"
 
@@ -513,6 +514,25 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 	}
 }
 
+void MS2AudioStream::configureFlowControl(AudioStream *as, LinphoneCore *lc){
+	if (as->flowcontrol){
+		LinphoneConfig *config = linphone_core_get_config(lc);
+		MSAudioFlowControlConfig cfg;
+		memset(&cfg, 0, sizeof(cfg));
+		string strategy = linphone_config_get_string(config, "sound", "flow_control_strategy", "soft");
+		if (strategy == "soft")
+			cfg.strategy = MSAudioFlowControlSoft;
+		else if (strategy == "basic"){
+			cfg.strategy = MSAudioFlowControlBasic;
+		}else{
+			lError() << "Unsupported flow_control_strategy '" << strategy <<"'";
+			return;
+		}
+		cfg.silent_threshold = linphone_config_get_float(config, "sound", "flow_control_silence_threshold", 0.02f);
+		ms_filter_call_method(as->flowcontrol, MS_AUDIO_FLOW_CONTROL_SET_CONFIG, &cfg);
+	}
+}
+
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
 	float micGain = lc->sound_conf.soft_mic_lev;
 	if (muted)
@@ -563,6 +583,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &floorGain);
 	}
 	parameterizeEqualizer(as, lc);
+	configureFlowControl(as, lc);
 }
 
 void MS2AudioStream::postConfigureAudioStream(bool muted) {
