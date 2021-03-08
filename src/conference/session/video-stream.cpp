@@ -143,7 +143,7 @@ void MS2VideoStream::initZrtp() {
 
 void MS2VideoStream::activateZrtp(){
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
-	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) || (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP))) {
+	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 
 		if (!mSessions.zrtp_context) {
 			initZrtp();
