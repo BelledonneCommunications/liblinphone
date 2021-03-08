@@ -109,6 +109,10 @@ LinphoneMediaEncryption MediaSessionPrivate::getEncryptionFromMediaDescription(c
 	return getParams()->getMediaEncryption();
 }
 
+bool MediaSessionPrivate::isMediaEncryptionAccepted(const LinphoneMediaEncryption enc) const {
+	return ((getParams()->getMediaEncryption() ==  enc) || (getParams()->getPrivate()->isMediaEncryptionSupported(enc)));
+}
+
 LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() const {
 	L_Q();
 	switch (state){
