@@ -7570,7 +7570,7 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
-bool_t linphone_core_is_capability_negotiation_supported(LinphoneCore *lc) {
+bool_t linphone_core_is_capability_negotiation_supported(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "support_capability_negotiations", 0);
 }
 
@@ -7578,8 +7578,13 @@ void linphone_core_set_support_capability_negotiation(LinphoneCore *lc, bool_t c
 	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)c);
 }
 
-bool_t linphone_core_tcap_lines_merged(LinphoneCore *lc) {
-	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "tcap_line_merge", 0);
+bool_t linphone_core_tcap_lines_merged(const LinphoneCore *lc) {
+	bool_t capability_negotiation_supported = linphone_core_is_capability_negotiation_supported(lc);
+	if (capability_negotiation_supported) {
+		return (bool_t)!!linphone_config_get_int(lc->config, "sip", "tcap_line_merge", 0);
+	}
+
+	return FALSE;
 }
 
 void linphone_core_enable_tcap_line_merging(LinphoneCore *lc, bool_t c) {
@@ -7590,20 +7595,40 @@ void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_
 	linphone_config_set_string_list(lc->config,"sip","supported_encryptions",enc_list);
 }
 
+bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time() {
+	bctbx_list_t * encryption_list = NULL;
+	if (ms_srtp_supported()) {
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	}
+	if (ms_dtls_srtp_available()) {
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+	}
+	if (ms_zrtp_available()) {
+		encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
+	}
+	encryption_list = bctbx_list_append(encryption_list, bctbx_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+
+	return encryption_list;
+}
+
+static int string_compare(char * str1, char * str2) {
+	return strcmp(str1, str2);
+}
+
 bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore *lc) {
 	bctbx_list_t * supported_encryptions = linphone_config_get_string_list(lc->config,"sip","supported_encryptions",NULL);
+	bool_t capability_negotiation_supported = linphone_core_is_capability_negotiation_supported(lc);
 	bctbx_list_t * encryption_list = NULL;
-	if (supported_encryptions == NULL) {
-		if (ms_srtp_supported()) {
-			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionSRTP)));
+	// If capability negotiation is not enabled or user didn't specify the list of supported encryption, then it is assumed that all encryptions that were enabled at compile time are supported
+	if (!capability_negotiation_supported || (supported_encryptions == NULL)) {
+		bctbx_list_t * default_encryption_list = linphone_core_get_supported_media_encryptions_at_compile_time();
+		if (lc->zrtp_not_available_simulation) {
+			default_encryption_list = bctbx_list_remove_custom(default_encryption_list, (bctbx_compare_func)string_compare, linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP));
 		}
-		if (ms_dtls_srtp_available()) {
-			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
+		if (default_encryption_list) {
+			encryption_list = bctbx_list_copy_with_data(default_encryption_list, (bctbx_list_copy_func)bctbx_strdup);
+			bctbx_list_free_with_data(default_encryption_list, (bctbx_list_free_func)bctbx_free);
 		}
-		if (ms_zrtp_available() && !lc->zrtp_not_available_simulation) {
-			encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
-		}
-		encryption_list = bctbx_list_append(encryption_list, bctbx_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
 	} else {
 		encryption_list = bctbx_list_copy_with_data(supported_encryptions, (bctbx_list_copy_func)bctbx_strdup);
 	}
@@ -7612,10 +7637,6 @@ bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore 
 		bctbx_list_free_with_data(supported_encryptions, (bctbx_list_free_func)bctbx_free);
 	}
 	return encryption_list;
-}
-
-static int string_compare(char * str1, char * str2) {
-	return strcmp(str1, str2);
 }
 
 bool_t linphone_core_is_media_encryption_supported(const LinphoneCore *lc, LinphoneMediaEncryption menc) {
