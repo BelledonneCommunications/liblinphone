@@ -51,10 +51,12 @@ void FileTransferChatMessageModifier::setHttpRequest (belle_http_request_t *requ
 }
 
 FileTransferChatMessageModifier::~FileTransferChatMessageModifier () {
-	if (isFileTransferInProgressAndValid())
+	if (isFileTransferInProgressAndValid()) {
 		cancelFileTransfer(); //to avoid body handler to still refference zombie FileTransferChatMessageModifier
-	else
+	} else {
 		releaseHttpRequest();
+	}
+	fileUploadEndBackgroundTask();
 }
 
 ChatMessageModifier::Result FileTransferChatMessageModifier::encode (const shared_ptr<ChatMessage> &message, int &errorCode) {
