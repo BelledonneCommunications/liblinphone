@@ -1135,12 +1135,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	// TODO: DELETE - Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
-	if (callee_cap_neg && caller_cap_neg) {
-		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
-	} else {
-		pauline_enc_mgr_params.encryption = marieEncryption;
-	}
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	pauline_enc_mgr_params.level = E_OPTIONAL;
 	pauline_enc_mgr_params.preferences = pauline_enc_list;
 
@@ -1209,6 +1204,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
 	}
 
+	ms_message("Pauline sends a reINVITE without SDP");
 	// Pauline send an empty SDP for the update
 	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
 
@@ -1246,12 +1242,14 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+printf("%s - pauline sends update without SDP - pauline streams running actual %0d expected %0d marie streams running actual %0d expected %0d\n", __func__, pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning));
 
 	marie_stat = marie->stat; 
 	pauline_stat = pauline->stat; 
 	LinphoneCallParams * params1 = linphone_core_create_call_params(pauline->lc, paulineCall);
 	linphone_call_params_enable_video(params1, TRUE);
 	BC_ASSERT_FALSE(linphone_core_sdp_200_ack_enabled(pauline->lc));
+	ms_message("Pauline enables video");
 	linphone_call_update(paulineCall, params1);
 	linphone_call_params_unref(params1);
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
@@ -1292,10 +1290,11 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), encryption, int, "%i");
 	}
 
+printf("%s - pauline enables video - pauline streams running actual %0d expected %0d marie streams running actual %0d expected %0d\n", __func__, pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning));
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
 
-	// Pauline send an empty SDP for the update
+	// Marie send an empty SDP for the update
 	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
 
 	marie_stat = marie->stat; 
@@ -1303,10 +1302,14 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	LinphoneCallParams * params2 = linphone_core_create_call_params(marie->lc, marieCall);
 	linphone_call_params_set_media_encryption (params2, marieEncryption);
 	BC_ASSERT_TRUE(linphone_core_sdp_200_ack_enabled(marie->lc));
+	ms_message("Marie sends a reINVITE without SDP");
 	linphone_call_update(marieCall, params2);
 	linphone_call_params_unref(params2);
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdating,(marie_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote,(pauline_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	get_expected_encryption_from_call_params(marieCall, paulineCall, &expectedEncryption, &potentialConfigurationChosen);
+	expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
 
 	/*wait for reINVITEs to complete*/
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
@@ -1338,6 +1341,8 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+printf("%s - marie sends update without SDP - pauline streams running actual %0d expected %0d marie streams running actual %0d expected %0d\n", __func__, pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning));
 
 	bctbx_list_free_with_data(pauline_call_enc, (bctbx_list_free_func)bctbx_free);
 	bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
@@ -1410,12 +1415,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	}
 
 	encryption_params pauline_enc_mgr_params;
-	// TODO: DELETE - Ugly workaround as when incoming call is received, received SDP is compared with an SDP build from core configuration
-	if (callee_cap_neg && caller_cap_neg) {
-		pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
-	} else {
-		pauline_enc_mgr_params.encryption = marieEncryption;
-	}
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	pauline_enc_mgr_params.level = E_OPTIONAL;
 	pauline_enc_mgr_params.preferences = pauline_enc_list;
 
@@ -1458,6 +1458,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	// - actual configuration: SRTP
 	// ==================== RESULT =====================
 	// Result: encryption SRTP is chosen
+	ms_message("SRTP Call from Marie to Pauline");
 	BC_ASSERT_TRUE(call_with_params(marie, pauline, marie_params, pauline_params));
 
 	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
@@ -1503,6 +1504,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	if (caller_cap_neg && callee_cap_neg) {
 		expectedEncryption = LinphoneMediaEncryptionDTLS;
 	}
+	ms_message("Pauline changes encryption to %s", linphone_media_encryption_to_string(expectedEncryption));
 	pauline_call_enc0 = bctbx_list_append(pauline_call_enc0, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
 	pauline_call_enc0 = bctbx_list_append(pauline_call_enc0, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
 	linphone_call_params_set_supported_encryptions (params0, pauline_call_enc0);
@@ -1561,6 +1563,7 @@ static void call_changes_enc_on_update_base (const bool_t caller_cap_neg, const 
 	if (caller_cap_neg && callee_cap_neg) {
 		expectedEncryption = LinphoneMediaEncryptionZRTP;
 	}
+	ms_message("Marie changes encryption to %s", linphone_media_encryption_to_string(expectedEncryption));
 	marie_call_enc1 = bctbx_list_append(marie_call_enc1, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionZRTP)));
 	marie_call_enc1 = bctbx_list_append(marie_call_enc1, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionDTLS)));
 	linphone_call_params_set_supported_encryptions (params1, marie_call_enc1);
