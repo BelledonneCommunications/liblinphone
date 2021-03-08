@@ -155,6 +155,7 @@ public:
 	void setState (CallSession::State newState, const std::string &message) override;
 
 	LinphoneMediaEncryption getEncryptionFromMediaDescription(const std::shared_ptr<SalMediaDescription> & md) const;
+	bool isMediaEncryptionAccepted(const LinphoneMediaEncryption enc) const;
 
 	LinphoneMediaEncryption getNegotiatedMediaEncryption() const;
 

@@ -51,7 +51,7 @@ MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &param
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
 	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
-	if ((getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) || (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP))) {
+	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
 		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
@@ -415,7 +415,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
 
-	if (((getMediaSessionPrivate().getParams()->getMediaEncryption() ==  LinphoneMediaEncryptionZRTP) || (getMediaSession().isCapabilityNegotiationEnabled() && getMediaSessionPrivate().getParams()->getPrivate()->isMediaEncryptionSupported(LinphoneMediaEncryptionZRTP))) && isMain()) {
+	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
 		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getNegotiatedMediaEncryption();
 		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
