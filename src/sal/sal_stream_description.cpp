@@ -895,8 +895,8 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 	belle_sdp_mime_parameter_t* mime_param;
 	belle_sdp_media_description_t* media_desc;
 	const char* dirStr=NULL;
-	bool_t different_rtp_and_rtcp_addr;
-	bool_t stream_enabled = enabled();
+	bool different_rtp_and_rtcp_addr;
+	bool stream_enabled = enabled();
 
 	const auto & actualCfg = getActualConfiguration();
 
@@ -1015,7 +1015,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 		addRtcpFbAttributesToSdp(actualCfg, media_desc);
 	}
 
-	if (stream_enabled && (actualCfg.rtcp_xr.enabled == true)) {
+	if (stream_enabled && (actualCfg.rtcp_xr.enabled == TRUE)) {
 		char sastr[1024] = {0};
 		char mastr[1024] = {0};
 		size_t saoff = 0;
@@ -1401,10 +1401,10 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 	if (general_trr_int == true && trr_int != 0) {
 		add_rtcp_fb_trr_int_attribute(media_desc, -1, trr_int);
 	}
-	if (cfg.rtcp_fb.generic_nack_enabled == true) {
+	if (cfg.rtcp_fb.generic_nack_enabled == TRUE) {
 		add_rtcp_fb_nack_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_NONE);
 	}
-	if (cfg.rtcp_fb.tmmbr_enabled == true) {
+	if (cfg.rtcp_fb.tmmbr_enabled == TRUE) {
 		add_rtcp_fb_ccm_attribute(media_desc, -1, BELLE_SDP_RTCP_FB_TMMBR);
 	}
 
@@ -1427,7 +1427,7 @@ void SalStreamDescription::addRtcpFbAttributesToSdp(const SalStreamConfiguration
 			add_rtcp_fb_nack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_SLI);
 		}
 		if (avpf_params.features & PAYLOAD_TYPE_AVPF_RPSI) {
-			if (avpf_params.rpsi_compatibility == true) {
+			if (avpf_params.rpsi_compatibility == TRUE) {
 				add_rtcp_fb_nack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_RPSI);
 			} else {
 				add_rtcp_fb_ack_attribute(media_desc, (int8_t)payload_type_get_number(pt), BELLE_SDP_RTCP_FB_RPSI);
