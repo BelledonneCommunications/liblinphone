@@ -801,8 +801,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
 			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
 			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
-			if ((ls.getChosenConfiguration().rtcp_xr.enabled == true) && (rs.getChosenConfiguration().rtcp_xr.enabled == false)) {
-				actualCfg.rtcp_xr.enabled = false;
+			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
+				actualCfg.rtcp_xr.enabled = FALSE;
 			}
 			actualCfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
 			actualCfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
@@ -816,8 +816,8 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFacto
 	result->ice_pwd = local_offer->ice_pwd;
 	result->ice_ufrag = local_offer->ice_ufrag;
 	memcpy(&result->rtcp_xr, &local_offer->rtcp_xr, sizeof(result->rtcp_xr));
-	if ((local_offer->rtcp_xr.enabled == true) && (remote_answer->rtcp_xr.enabled == false)) {
-		result->rtcp_xr.enabled = false;
+	if ((local_offer->rtcp_xr.enabled == TRUE) && (remote_answer->rtcp_xr.enabled == FALSE)) {
+		result->rtcp_xr.enabled = FALSE;
 	}
 	/* TODO: check that the bundle answer is compliant with our offer.
 	 * For now, just check the presence of a bundle response. */
@@ -882,14 +882,14 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
 			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
-			if (rs.getChosenConfiguration().rtcp_xr.enabled == true) {
+			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls.getChosenConfiguration().rtcp_xr.enabled == true) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
-				else if (local_capabilities->rtcp_xr.enabled == true) rtcp_xr_conf = &local_capabilities->rtcp_xr;
+				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
+				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
 				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
 					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
 				} else {
-					actualCfg.rtcp_xr.enabled = true;
+					actualCfg.rtcp_xr.enabled = TRUE;
 				}
 			}
 		}else {
@@ -925,11 +925,11 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 
 	// Handle session RTCP XR attribute
 	memset(&result->rtcp_xr, 0, sizeof(result->rtcp_xr));
-	if (remote_offer->rtcp_xr.enabled == true) {
-		if ((local_capabilities->rtcp_xr.enabled == true) && (local_capabilities->dir == SalStreamSendRecv)) {
+	if (remote_offer->rtcp_xr.enabled == TRUE) {
+		if ((local_capabilities->rtcp_xr.enabled == TRUE) && (local_capabilities->dir == SalStreamSendRecv)) {
 			memcpy(&result->rtcp_xr, &local_capabilities->rtcp_xr, sizeof(result->rtcp_xr));
 		} else {
-			result->rtcp_xr.enabled = true;
+			result->rtcp_xr.enabled = TRUE;
 		}
 	}
 
