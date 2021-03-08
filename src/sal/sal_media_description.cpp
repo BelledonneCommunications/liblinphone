@@ -78,7 +78,6 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 	belle_sdp_session_name_t *sname;
 	belle_sip_list_t *custom_attribute_it;
 	const char* value;
-	SalDtlsRole session_role=SalDtlsRoleInvalid;
 
 	dir = SalStreamSendRecv;
 
@@ -111,26 +110,6 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 		dir=SalStreamRecvOnly;
 	} else if ( belle_sdp_session_description_get_attribute ( sdp,"inactive" ) ) {
 		dir=SalStreamInactive;
-	}
-
-	/*DTLS attributes can be defined at session level.*/
-	value=belle_sdp_session_description_get_attribute_value(sdp,"setup");
-	if (value){
-		if (strncmp(value, "actpass", 7) == 0) {
-			session_role = SalDtlsRoleUnset;
-		} else if (strncmp(value, "active", 6) == 0) {
-			session_role = SalDtlsRoleIsClient;
-		} else if (strncmp(value, "passive", 7) == 0) {
-			session_role = SalDtlsRoleIsServer;
-		}
-	}
-	value=belle_sdp_session_description_get_attribute_value(sdp,"fingerprint");
-	/*copy dtls attributes to every streams, might be overwritten stream by stream*/
-	for (auto & stream : streams) {
-		std::string fingerprint;
-		if (value)
-			fingerprint = L_C_TO_STRING(value);
-		stream.setDtls(session_role, fingerprint);
 	}
 
 	/* Get ICE remote ufrag and remote pwd, and ice_lite flag */
@@ -184,9 +163,9 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 			attrs.cfgs =  potentialCfgGraph.getCfgForStream(currentStreamIdx);
 			attrs.acaps = potentialCfgGraph.getMediaAcapForStream(currentStreamIdx);
 			attrs.tcaps = potentialCfgGraph.getMediaTcapForStream(currentStreamIdx);
-			stream.fillStreamDescriptionFromSdp(this, media_desc, attrs);
+			stream.fillStreamDescriptionFromSdp(this, sdp, media_desc, attrs);
 		} else {
-			stream.fillStreamDescriptionFromSdp(this, media_desc);
+			stream.fillStreamDescriptionFromSdp(this, sdp, media_desc);
 		}
 		streams.push_back(stream);
 		currentStreamIdx++;
