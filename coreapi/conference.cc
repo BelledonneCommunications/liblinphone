@@ -413,6 +413,7 @@ LocalConference::LocalConference (
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
 	getMe()->setAdmin(true);
+	getMe()->setFocus(true);
 }
 
 LocalConference::~LocalConference() {
