@@ -259,6 +259,7 @@ static void call_with_unreliable_device(void) {
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
 }
 
 static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t during_ringback, bool_t during_call) {
@@ -369,6 +370,9 @@ static void call_with_disconnecting_device_base(bool_t before_ringback, bool_t d
 	// After call, unref the sound card
 	linphone_audio_device_unref(current_dev);
 end:
+	if (lcs) {
+		bctbx_list_free(lcs);
+	}
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
 }
@@ -549,6 +553,7 @@ end:
 	linphone_audio_device_unref(current_dev);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
 }
 
 static void simple_call_with_audio_device_change_same_audio_device_pingpong(void) {
@@ -760,6 +765,7 @@ end:
 	linphone_audio_device_unref(current_output_dev);
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie);
+	bctbx_list_free(lcs);
 }
 
 static void simple_call_with_audio_device_change_before_ringback(void) {
@@ -1001,6 +1007,7 @@ end:
 	linphone_audio_device_unref(pauline_dev1);
 	linphone_audio_device_unref(pauline_current_dev);
 	linphone_core_manager_destroy(pauline);
+	bctbx_list_free(lcs);
 }
 
 static void simple_call_with_audio_device_change_during_call_pause_callee(void) {
