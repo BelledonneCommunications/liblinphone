@@ -1550,9 +1550,34 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 			const auto & oldStreamActualCfg = oldStream.getActualConfiguration();
 			const auto & oldStreamActualCfgCrypto = oldStreamActualCfg.crypto;
 
+			// Actual configuration
+			if (newStreamActualCfg.hasSrtp()) {
+				if (oldStreamActualCfg.hasSrtp()) {
+					// If old stream actual configuration supported SRTP, then copy crypto parameters
+					lInfo() << "Keeping same crypto keys when making new local stream description";
+					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
+				} else if (!md->supportCapabilityNegotiation() && oldMd->supportCapabilityNegotiation()) {
+					// If current media description doesn't support capability negotiations and previous one did, try to see if encryption keys were generated as attribute capabilities
+					// Copy acap crypto attributes if old stream supports it as potential configuration
+					for (const auto & cap : oldStream.acaps) {
+						const auto & nameValuePair = cap.second;
+						const auto & name = nameValuePair.first;
+						if (name.compare(attrName) == 0) {
+							const auto & attrValue = nameValuePair.second;
+
+							const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
+							if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
+								newStreamActualCfgCrypto.push_back(keyEnc);
+							}
+						}
+					}
+				} else {
+					newStreamActualCfgCrypto = generateNewCryptoKeys();
+				}
+			}
+
 			// If capability negotiation is enabled, search keys among acaps
 			if (md->supportCapabilityNegotiation()) {
-
 				// If both old and new stream support SRTP as potential configuration
 				if (newStreamSupportsSrtp) {
 					if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
@@ -1577,32 +1602,6 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 							}
 						}
 					}
-				}
-			}
-
-			// Actual configuration
-			if (newStreamActualCfg.hasSrtp()) {
-				if (oldStreamActualCfg.hasSrtp()) {
-					// If old stream actual configuration supported SRTP, then copy crypto parameters
-					lInfo() << "Keeping same crypto keys when making new local stream description";
-					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
-				} else if (!md->supportCapabilityNegotiation() && oldMd->supportCapabilityNegotiation()) {
-					// If current media description doesn't support capability negotiations and previous one did, try to see if encryption keys were generated as attribute capabilities
-					// Copy acap crypto attributes if old stream supports it as potential configuration
-					for (const auto & cap : oldStream.acaps) {
-						const auto & nameValuePair = cap.second;
-						const auto & name = nameValuePair.first;
-						if (name.compare(attrName) == 0) {
-							const auto & attrValue = nameValuePair.second;
-
-							const auto keyEnc = SalStreamConfiguration::fillStrpCryptoAlgoFromString(attrValue);
-							if (keyEnc.algo!=MS_CRYPTO_SUITE_INVALID){
-								newStreamActualCfgCrypto.push_back(keyEnc);
-							}
-						}
-					}
-				} else {
-					newStreamActualCfgCrypto = generateNewCryptoKeys();
 				}
 			}
 		} else {
