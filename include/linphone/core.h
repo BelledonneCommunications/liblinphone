@@ -3902,6 +3902,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_remove_from_conference(LinphoneCore
  * linphone_conference_remove_participant() instead.
  * @param core the linphone core @notnil
  * @return TRUE if the local participant is in a conference, FALSE otherwise.
+ * @deprecated 09/03/2021 Use linphone_conference_is_in() instead.
 */
 LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
 
@@ -3909,6 +3910,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_in_conference(const LinphoneCore *core);
  * Join the local participant to the running conference
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 09/03/2021 Use linphone_conference_enter() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core);
 
@@ -3916,6 +3918,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_core_enter_conference(LinphoneCore *core
  * Make the local participant leave the running conference
  * @param core #LinphoneCore @notnil
  * @return 0 if succeeded. Negative number if failed
+ * @deprecated 09/03/2021 Use linphone_conference_leave() instead.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_core_leave_conference(LinphoneCore *core);
 

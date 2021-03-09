@@ -292,6 +292,30 @@ LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conferen
  */
 LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t is_admin);
 
+/**
+ * For a local conference, the local participant joins the conference
+ * For a remote conference, the participant rejoins the conference after leaving it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
+
+/**
+ * For a local conference, the local participant leaves the conference
+ * For a remote conference, the participant leaves the conference after joining it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_leave(LinphoneConference *conference);
+
+/**
+ * For a local conference, it returns whether the local participant is enabled
+ * For a remote conference, it return whether the remote participant has left the conference without bein removed from it
+ * @param conference A #LinphoneConference object @notnil
+ * @return TRUE if the local participant is in a conference, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
+
 /************ */
 /* DEPRECATED */
 /* ********** */
@@ -311,11 +335,6 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const
  * @deprecated 10/07/2020 Use linphone_conference_set_conference_address() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
-
-
-LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
-int linphone_conference_leave(LinphoneConference *conference);
-LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
 
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
