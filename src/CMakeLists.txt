@@ -323,6 +323,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
+
+	account_creator/utils.c
+	account_creator/service.c
+
+	account_creator/main.cpp
+	account_creator/connector_xmlrpc.cpp
+	account_creator/connector_flexiapi.cpp
+	FlexiAPIClient.cc
+
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	call/call.cpp
