@@ -794,6 +794,10 @@ int LocalConference::enter () {
 
 	confParams->enableLocalParticipant(true);
 	addLocalEndpoint();
+
+	time_t creationTime = time(nullptr);
+	notifyParticipantAdded(creationTime, false, getMe());
+
 	return 0;
 }
 
@@ -807,6 +811,10 @@ void LocalConference::leave () {
 		lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress();
 		confParams->enableLocalParticipant(false);
 		removeLocalEndpoint();
+
+		time_t creationTime = time(nullptr);
+		notifyParticipantRemoved(creationTime, false, getMe());
+
 	}
 }
 
@@ -1194,12 +1202,15 @@ int RemoteConference::enter () {
 		ms_error("Could not enter in the conference: bad conference state (%s)", Utils::toString(state).c_str());
 		return -1;
 	}
+
+	time_t creationTime = time(nullptr);
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallStreamsRunning:
 			break;
 		case LinphoneCallPaused:
 			m_focusCall->resume();
+			notifyParticipantAdded(creationTime, false, getMe());
 			break;
 		default:
 			ms_error("Could not join the conference: bad focus call state (%s)",
@@ -1213,6 +1224,7 @@ void RemoteConference::leave () {
 	if (state != ConferenceInterface::State::Created) {
 		ms_error("Could not leave the conference: bad conference state (%s)", Utils::toString(state).c_str());
 	}
+	time_t creationTime = time(nullptr);
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
@@ -1221,6 +1233,7 @@ void RemoteConference::leave () {
 		case LinphoneCallStreamsRunning:
 			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << ". Focus call is going to be paused.";
 			m_focusCall->pause();
+			notifyParticipantRemoved(creationTime, false, getMe());
 			break;
 		default:
 			lError() << getMe()->getAddress() << " cannot leave conference " << getConferenceAddress() << " because focus call is in state " << linphone_call_state_to_string(callState);
