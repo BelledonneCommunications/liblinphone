@@ -37,8 +37,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 )
 
 set(LINPHONE_SOURCE_FILES_C
-	account_creator/utils.c
-	account_creator/service.c
 	authentication.c
 	bellesip_sal/sal_address_impl.c
 	bellesip_sal/sal_impl.c
@@ -92,10 +90,6 @@ set(LINPHONE_SOURCE_FILES_C
 	vtables.c
 )
 set(LINPHONE_SOURCE_FILES_CXX
-	FlexiAPIClient.cc
-	account_creator/main.cc
-	account_creator/connector_xmlrpc.cc
-	account_creator/connector_flexiapi.cc
 	conference.cc
 	tester_utils.cpp
 )
@@ -152,11 +146,6 @@ if (ENABLE_STATIC)
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
 	target_include_directories(linphone-coreapi-static PRIVATE ${LINPHONE_INCLUDE_DIRS})
-	if (XCODE)
-		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_static)
-	else()
-		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_object)
-	endif()
 	add_dependencies(linphone-coreapi-static liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)
 		add_dependencies(linphone-coreapi-static linphonej)
@@ -168,11 +157,6 @@ if (ENABLE_SHARED)
 		${LINPHONE_PRIVATE_HEADER_FILES} ${LINPHONE_SOURCE_FILES_C} ${LINPHONE_SOURCE_FILES_CXX} ${LINPHONE_SOURCE_FILES_OBJC}
 	)
 	target_include_directories(linphone-coreapi PRIVATE ${LINPHONE_INCLUDE_DIRS})
-	if (XCODE)
-		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_static)
-	else()
-		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_object)
-	endif()
 	target_compile_options(linphone-coreapi PRIVATE "-fPIC")
 	add_dependencies(linphone-coreapi liblinphone-git-version)
 	if (ENABLE_JAVA_WRAPPER)

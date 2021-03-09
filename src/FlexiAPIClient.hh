@@ -29,7 +29,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
+class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
   public:
 	class Response {
 	  public:
