@@ -260,7 +260,8 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
             setHa1(myHa1);
             ms_free(myHa1);
         }
-            /* If algorithm is SHA-256, calcul ha1 by sha256*/
+
+        /* If algorithm is SHA-256, calcul ha1 by sha256*/
         else if(getAlgorithm().compare("SHA-256") == 0){
             myHa1 = reinterpret_cast<char *>(ms_malloc(65));
             sal_auth_compute_ha1_for_algorithm(getUserid().empty() ? getUsername().c_str() : getUserid().c_str(), getRealm().c_str(), getPassword().c_str(), myHa1, 65, getAlgorithm().c_str());
@@ -283,7 +284,7 @@ void AuthInfo::writeConfig(LpConfig *config, int pos){
     linphone_config_set_string(config, key, "client_cert_key", getTlsKeyPath().c_str());
     linphone_config_set_string(config, key, "client_cert_key_password", getTlsKeyPassword().c_str());
     linphone_config_set_string(config, key, "algorithm",getAlgorithm().c_str());
-    
+
     if(mAvailableAlgorithms.size()>0){
         for(auto i = mAvailableAlgorithms.begin() ; i!= mAvailableAlgorithms.end() ; ++i)
              algos = bctbx_list_append(algos, (void *)i->c_str());
@@ -313,9 +314,9 @@ std::string AuthInfo::toString() const{
 
 // Check if Authinfos are the same without taking account algorithms
 bool_t AuthInfo::isEqualButAlgorithms(const AuthInfo* authInfo)const{
-    return authInfo && getUsername()==authInfo->getUsername() 
-        && getUserid()==authInfo->getUserid() 
-        && getRealm()==authInfo->getRealm() 
+    return authInfo && getUsername()==authInfo->getUsername()
+        && getUserid()==authInfo->getUserid()
+        && getRealm()==authInfo->getRealm()
         && getDomain()==authInfo->getDomain();
 }
 LINPHONE_END_NAMESPACE

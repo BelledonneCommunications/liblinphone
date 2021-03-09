@@ -57,7 +57,7 @@ void ParticipantDeviceIdentity::setCapabilityDescriptor(const string &capabiliti
 }
 
 ParticipantDeviceIdentity::~ParticipantDeviceIdentity(){
-	linphone_address_destroy(mDeviceAddressCache);
+	linphone_address_unref(mDeviceAddressCache);
 }
 
 // -----------------------------------------------------------------------------
@@ -146,23 +146,23 @@ void ServerGroupChatRoomPrivate::confirmCreation () {
 	shared_ptr<Participant> me = q->getMe();
 	shared_ptr<CallSession> session = me->getSession();
 	session->startIncomingNotification(false);
-	
+
 	/* Assign a random conference address to this new chatroom, with domain
 	 * set according to the proxy config used to receive the INVITE.
 	 */
-	
+
 	LinphoneProxyConfig *cfg = session->getPrivate()->getDestProxy();
 	if (!cfg) cfg = linphone_core_get_default_proxy_config(L_GET_C_BACK_PTR(q->getCore()));
 	LinphoneAddress *addr = linphone_address_clone(linphone_proxy_config_get_identity_address(cfg));
-	
+
 	char token[17];
 	ostringstream os;
-	
+
 	belle_sip_random_token(token, sizeof(token));
 	os << "chatroom-" << token;
 	linphone_address_set_username(addr, os.str().c_str());
 	q->getConference()->confParams->setConferenceAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(addr));
-	linphone_address_destroy(addr);
+	linphone_address_unref(addr);
 
 	/* Application (conference server) callback to register the name.
 	 * In response, the conference server will call setConferenceAddress().
@@ -191,7 +191,7 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	if (!registrationSubscriptions.empty()){
 		lError() << q << " still " << registrationSubscriptions.size() << " registration subscriptions pending while deletion is requested.";
 	}
-	
+
 	shared_ptr<ChatRoom> chatRoom(q->getSharedFromThis()); // Take a shared_ptr here, because onChatRoomDeleteRequested() may destroy our chatroom otherwise.
 	chatRoomListener->onChatRoomDeleteRequested(chatRoom);
 	/*
@@ -589,7 +589,7 @@ void ServerGroupChatRoomPrivate::updateParticipantDevices(const IdentityAddress 
 	// Remove all devices that are no longer existing.
 	for (auto &device : devicesToRemove)
 		removeParticipantDevice(participant, device->getAddress());
-	
+
 	if (protocolVersion < CorePrivate::groupChatProtocolVersion){
 		/* we need to recheck in case some devices have upgraded. */
 		determineProtocolVersion();
@@ -603,7 +603,7 @@ void ServerGroupChatRoomPrivate::conclude(){
 	L_Q();
 	lInfo() << q << "All devices are known, the chatroom creation can be concluded.";
 	shared_ptr<CallSession> session = mInitiatorDevice->getSession();
-	
+
 	if (!session){
 		lError() << "ServerGroupChatRoomPrivate::conclude(): initiator's session died.";
 		requestDeletion();
@@ -621,7 +621,7 @@ void ServerGroupChatRoomPrivate::conclude(){
 		acceptSession(session);
 		if ((capabilities & ServerGroupChatRoom::Capabilities::OneToOne) && (q->getParticipantCount() == 2)) {
 			// Insert the one-to-one chat room in Db if participants count is 2.
-			// This is necessary for protocol version < 1.1, and for backward compatibility in case these prior versions 
+			// This is necessary for protocol version < 1.1, and for backward compatibility in case these prior versions
 			// are subsequently used by device that gets joined to the chatroom.
 			q->getCore()->getPrivate()->mainDb->insertOneToOneConferenceChatRoom(q->getSharedFromThis(),
 				!!(capabilities & ServerGroupChatRoom::Capabilities::Encrypted) );
@@ -1004,7 +1004,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 			mainDb->deleteChatRoomParticipant(q->getSharedFromThis(), participant->getAddress());
 		}
 	}
-	
+
 	//device left, we no longuer need to receive subscription info from it
 	if (device->isSubscribedToConferenceEventPackage()) {
 		lError() << q << " still subscription pending for [" << device << "], terminating in emergency";
@@ -1015,7 +1015,7 @@ void ServerGroupChatRoomPrivate::onParticipantDeviceLeft (const std::shared_ptr<
 		linphone_event_terminate(device->getConferenceSubscribeEvent());
 		device->setConferenceSubscribeEvent(nullptr);
 	}
-	
+
 	/* if all devices of participants are left we'll delete the chatroom*/
 	bool allLeft = true;
 	for (const auto &participant : q->cachedParticipants){
@@ -1076,16 +1076,16 @@ std::shared_ptr<Participant> ServerGroupChatRoomPrivate::getOtherParticipant(con
 void ServerGroupChatRoomPrivate::onBye(const shared_ptr<ParticipantDevice> &participantLeaving){
 	L_Q();
 	bool shouldRemoveParticipant = true;
-	
+
 	if (capabilities & ServerGroupChatRoom::Capabilities::OneToOne ){
 		if (protocolVersion < Utils::Version(1, 1)){
-			/* 
+			/*
 			* In protocol 1.0, unlike normal group chatrooms, a participant can never leave a one to one chatroom.
 			* The receiving of BYE is instead interpreted as a termination of the SIP session specific for the device.
 			*/
 			shouldRemoveParticipant = false;
 		}else{
-			/* 
+			/*
 			* In subsequent protocol versions, both participants of a one to one chatroom are removed,
 			* which terminates the chatroom forever.
 			*/
