@@ -323,6 +323,15 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	c-wrapper/api/c-search-result.cpp
 	c-wrapper/internal/c-sal.cpp
 	c-wrapper/internal/c-tools.cpp
+
+	account_creator/utils.c
+	account_creator/service.c
+
+	account_creator/main.cpp
+	account_creator/connector_xmlrpc.cpp
+	account_creator/connector_flexiapi.cpp
+	FlexiAPIClient.cc
+
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
 	call/call.cpp
@@ -525,8 +534,15 @@ endif()
 if(ENABLE_STATIC)
 	add_library(linphone-static STATIC ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
-		$<TARGET_OBJECTS:linphone-coreapi-static>
+		$<TARGET_OBJECTS:linphone-coreapi-static> $⁣<TARGET_OBJECTS:jsoncpp_object⁣>
 	)
+
+	if (XCODE)
+		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_static)
+	else()
+		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_object)
+	endif()
+
 	if (APPLE)
 		set_target_properties(linphone-static PROPERTIES OUTPUT_NAME linphone)
 	else()
@@ -567,8 +583,15 @@ if(ENABLE_SHARED)
 
 	add_library(linphone SHARED ${LINPHONE_RESOURCES} ${SWIFT_MODULE_FILES} ${LINPHONE_HEADER_FILES}
 		${LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES} ${LINPHONE_CXX_OBJECTS_SOURCE_FILES} ${LINPHONE_OBJC_SOURCE_FILES}
-		$<TARGET_OBJECTS:linphone-coreapi>
+		$<TARGET_OBJECTS:linphone-coreapi> $⁣<TARGET_OBJECTS:jsoncpp_object⁣>
 	)
+
+	if (XCODE)
+		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_static)
+	else()
+		target_link_libraries(linphone-coreapi PRIVATE jsoncpp_object)
+	endif()
+
 	if(APPLE)
 		set_target_properties(linphone PROPERTIES OUTPUT_NAME linphone)
 	else()
