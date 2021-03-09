@@ -59,6 +59,9 @@ struct _LinphoneAccountCreatorService {
 	LinphoneAccountCreatorRequestFunc recover_account_request_cb; /**< Request to recover account */
 	LinphoneAccountCreatorRequestFunc update_account_request_cb; /**< Request to update account */
 	LinphoneAccountCreatorRequestFunc login_linphone_account_request_cb; /**< Request to get password & algorithm from confirmation key */
+
+	LinphoneAccountCreatorRequestFunc send_token_request_cb; /**< Generate and send a token via push notification */
+	LinphoneAccountCreatorRequestFunc create_account_with_token_request_cb; /**< Use a received token to create an account */
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneAccountCreatorService);
