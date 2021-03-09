@@ -550,7 +550,6 @@ static void conference_state_changed (LinphoneConference *conference, LinphoneCo
 	if ((newState != LinphoneConferenceStateNone) && (newState != LinphoneConferenceStateInstantiated) && (newState != LinphoneConferenceStateCreationPending)) {
 			LinphoneParticipant *me = linphone_conference_get_me(conference);
 			BC_ASSERT_PTR_NOT_NULL(me);
-			BC_ASSERT_TRUE(linphone_participant_is_focus(me));
 	}
 
 	switch (newState) {
@@ -908,8 +907,13 @@ LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreMana
 		LinphoneCall * participant_call = linphone_core_get_current_call(m->lc);
 		BC_ASSERT_PTR_NOT_NULL(participant_call);
 		if (participant_call) {
-			BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(participant_call));
+			LinphoneConference * pconf = linphone_call_get_conference(participant_call);
+			BC_ASSERT_PTR_NOT_NULL(pconf);
 			BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+			if (pconf) {
+				LinphoneParticipant * participant = linphone_conference_get_me(pconf);
+				BC_ASSERT_FALSE(linphone_participant_is_focus (participant));
+			}
 		}
 
 		counter++;
