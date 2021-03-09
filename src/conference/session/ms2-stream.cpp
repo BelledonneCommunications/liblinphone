@@ -328,8 +328,20 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 							const auto & name = nameValuePair.first;
 							return (name.compare(attrName) == 0);
 						});
-						// If no crypto attribute is found, generate it
-						if (cryptoCap == acaps.cend()) {
+
+						const auto & actualCfg = stream.getActualConfiguration();
+						const auto & actualCfgCrypto = actualCfg.crypto;
+						if (!actualCfgCrypto.empty()) {
+							// Copy crypto attributes from actual configuration
+							for (const auto & c : actualCfgCrypto) {
+								MSCryptoSuiteNameParams desc;
+								if (ms_crypto_suite_to_name_params(c.algo,&desc)==0){
+									const auto attrValue = SalStreamConfiguration::cryptoToSdpValue(c);
+									addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
+								}
+							}
+						} else if (cryptoCap == acaps.cend()) {
+							// If no crypto attribute is found, generate it
 							for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
 								SalSrtpCryptoAlgo crypto;
 								getMediaSessionPrivate().setupEncryptionKey(crypto, suites[j], static_cast<unsigned int>(j) + 1);
