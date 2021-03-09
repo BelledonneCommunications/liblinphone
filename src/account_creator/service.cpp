@@ -22,8 +22,8 @@
 
 #include "c-wrapper/c-wrapper.h"
 
-// TODO: From coreapi. Remove me later.
-#include "../private.h"
+#include "core_private.h"
+#include "account_creator/private.h"
 
 BELLE_SIP_DECLARE_NO_IMPLEMENTED_INTERFACES(LinphoneAccountCreatorService);
 
@@ -157,6 +157,22 @@ LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_login_lin
 
 void linphone_account_creator_service_set_login_linphone_account_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
 	service->login_linphone_account_request_cb = cb;
+}
+
+LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_send_token_cb(const LinphoneAccountCreatorService *service) {
+	return service->send_token_request_cb;
+}
+
+void linphone_account_creator_service_set_send_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
+	service->send_token_request_cb = cb;
+}
+
+LinphoneAccountCreatorRequestFunc linphone_account_creator_service_get_create_account_with_token_cb(const LinphoneAccountCreatorService *service) {
+	return service->create_account_with_token_request_cb;
+}
+
+void linphone_account_creator_service_set_create_account_with_token_cb(LinphoneAccountCreatorService *service, LinphoneAccountCreatorRequestFunc cb) {
+	service->create_account_with_token_request_cb = cb;
 }
 
 /************************** End Account Creator service **************************/
