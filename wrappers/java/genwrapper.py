@@ -131,7 +131,7 @@ class JNILangTranslator(AbsApi.Translator):
         return type_.name
 
 
-class JavaTranslator(object):
+class JavaTranslator:
     def __init__(self, packageName, exceptions):
         self.exceptions = exceptions
         package_dirs = packageName.split('.')
@@ -558,7 +558,7 @@ class JavaTranslator(object):
 
 ##########################################################################
 
-class JavaEnum(object):
+class JavaEnum:
     def __init__(self, package, _enum, translator):
         javaNameTranslator = metaname.Translator.get('Java')
         self._class = translator.translate_enum(_enum)
@@ -571,7 +571,7 @@ class JavaEnum(object):
         self.detailedDoc = self._class['detailedDoc']
         self.jniName = _enum.name.translate(JNINameTranslator.get())
 
-class JniInterface(object):
+class JniInterface:
     def __init__(self, javaClass, apiClass):
         self.isSingleListener = (apiClass.singlelistener)
         self.isMultiListener = (apiClass.multilistener)
@@ -586,7 +586,7 @@ class JniInterface(object):
                 'callback': method.name.to_snake_case()[3:], # Remove the on_
             })
 
-class JavaInterface(object):
+class JavaInterface:
     def __init__(self, package, _interface, translator):
         self._class = translator.translate_interface(_interface)
         self.packageName = package
@@ -599,7 +599,7 @@ class JavaInterface(object):
         self.detailedDoc = self._class['detailedDoc']
         self.jniMethods = self._class['jniMethods']
 
-class JavaInterfaceStub(object):
+class JavaInterfaceStub:
     def __init__(self, _interface):
         self.packageName = _interface.packageName
         self.className = _interface.className
@@ -607,7 +607,7 @@ class JavaInterfaceStub(object):
         self.filename = self.className + "Stub.java"
         self.methods = _interface.methods
 
-class JavaClass(object):
+class JavaClass:
     def __init__(self, package, _class, translator):
         self._class = translator.translate_class(_class)
         self.isLinphoneFactory = self._class['isLinphoneFactory']
@@ -640,7 +640,7 @@ class JavaClass(object):
             enum.className = enum.className[len(self.className):]
         self.enums.append(enum)
 
-class Jni(object):
+class Jni:
     def __init__(self, package):
         self.enums = []
         self.interfaces = []
@@ -708,7 +708,7 @@ class Jni(object):
         for method in methods:
             self.methods.append(method)
 
-class Proguard(object):
+class Proguard:
     def __init__(self, package):
         self.package = package
         self.classes = []
@@ -744,14 +744,14 @@ class Proguard(object):
         }
         self.listeners.append(obj)
 
-class PackageInfo(object):
+class PackageInfo:
     def __init__(self, directory, version):
         self.directory = directory
         self.version = version
 
 ##########################################################################
 
-class GenWrapper(object):
+class GenWrapper:
     def __init__(self, srcdir, javadir, package, xmldir, exceptions, upload_dir, version):
         self.srcdir = srcdir
         self.javadir = javadir

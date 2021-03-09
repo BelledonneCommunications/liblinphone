@@ -142,9 +142,9 @@ LINPHONE_PUBLIC void linphone_vcard_remove_sip_address(LinphoneVcard *vCard, con
 LINPHONE_PUBLIC void linphone_vcard_edit_main_sip_address(LinphoneVcard *vCard, const char *sip_address);
 
 /**
- * Returns the list of SIP addresses (as LinphoneAddress) in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or NULL
+ * Returns the list of SIP addresses in the vCard (all the IMPP attributes that has an URI value starting by "sip:") or NULL
  * @param vCard the #LinphoneVcard @notnil
- * @return \bctbx_list{LinphoneAddress} @maybenil
+ * @return The SIP addresses. \bctbx_list{LinphoneAddress} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t* linphone_vcard_get_sip_addresses(LinphoneVcard *vCard);
 
@@ -163,9 +163,9 @@ LINPHONE_PUBLIC void linphone_vcard_add_phone_number(LinphoneVcard *vCard, const
 LINPHONE_PUBLIC void linphone_vcard_remove_phone_number(LinphoneVcard *vCard, const char *phone);
 
 /**
- * Returns the list of phone numbers (as string) in the vCard (all the TEL attributes) or NULL
+ * Returns the list of phone numbers in the vCard (all the TEL attributes) or NULL
  * @param vCard the #LinphoneVcard @notnil
- * @return \bctbx_list{const char *} @maybenil
+ * @return The phone numbers as string. \bctbx_list{const char *} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_get_phone_numbers(const LinphoneVcard *vCard);
 

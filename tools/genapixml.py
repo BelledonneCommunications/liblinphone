@@ -307,7 +307,7 @@ class Project:
 				para.remove(n)
 			for n in para.findall('.//ref'):
 				n.attrib = {}
-			for n in para.findall(".//bctbx_list"):
+			for n in para.findall(".//bctbxlist"):
 				para.remove(n)
 		if descriptionNode.tag == 'parameterdescription':
 			descriptionNode.tag = 'description'

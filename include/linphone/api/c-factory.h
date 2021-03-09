@@ -287,7 +287,7 @@ LINPHONE_PUBLIC LinphoneVideoDefinition * linphone_factory_create_video_definiti
 /**
  * Get the list of standard video definitions supported by Linphone.
  * @param factory #LinphoneFactory singleton object @notnil
- * @return \bctbx_list{LinphoneVideoDefinition} @maybenil
+ * @return A list of video definitions. \bctbx_list{LinphoneVideoDefinition} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_supported_video_definitions(const LinphoneFactory *factory);
 
@@ -407,7 +407,7 @@ LINPHONE_PUBLIC LinphoneVideoActivationPolicy *linphone_factory_create_video_act
 /**
  * Returns a bctbx_list_t of all DialPlans
  * @param factory the #LinphoneFactory object @notnil
- * @return \bctbx_list{LinphoneDialPlan} a list of #LinphoneDialPlan @notnil
+ * @return A list of #LinphoneDialPlan \bctbx_list{LinphoneDialPlan} @notnil
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_factory_get_dial_plans(const LinphoneFactory *factory);
 

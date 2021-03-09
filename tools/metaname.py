@@ -21,7 +21,7 @@
 import re
 
 
-class Name(object):
+class Name:
 	camelCaseParsingRegex = re.compile('[A-Z][a-z0-9]*')
 	lowerCamelCaseSplitingRegex = re.compile('([a-z][a-z0-9]*)([A-Z][a-z0-9]*)')
 	
@@ -280,16 +280,25 @@ class CTranslator(Translator):
 class JavaTranslator(Translator):
 	def __init__(self):
 		self.nsSep = '.'
+		self._classMemberSep = None # None meams equal to self.nsSep
 		self.keyWordEscapes = {}
 		self.lowerMethodNames = True
 		self.lowerNamespaceNames = True
+
+	@property
+	def classMemberSep(self):
+		return self._classMemberSep if self._classMemberSep is not None else self.nsSep;
+
+	@classMemberSep.setter
+	def classMemberSep(self, sep):
+		self._classMemberSep = sep
 	
 	def translate_class_name(self, name, recursive=False, topAncestor=None):
 		if name.prev is None or not recursive or name.prev is topAncestor:
 			return name.to_camel_case()
 		else:
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
-			return name.prev.translate(self, **params) + self.nsSep + name.to_camel_case()
+			return name.prev.translate(self, **params) + self._get_separator(name.prev) + name.to_camel_case()
 	
 	def translate_interface_name(self, name, **params):
 		return self.translate_class_name(name, **params)
@@ -308,7 +317,7 @@ class JavaTranslator(Translator):
 			return translatedName
 		else:
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
-			return name.prev.translate(self, **params) + self.nsSep + translatedName
+			return name.prev.translate(self, **params) + self._get_separator(name.prev) + translatedName
 	
 	def translate_namespace_name(self, name, recursive=False, topAncestor=None):
 		translatedName = name.concatenate() if self.lowerNamespaceNames else name.to_camel_case()
@@ -316,7 +325,7 @@ class JavaTranslator(Translator):
 			return translatedName
 		else:
 			params = {'recursive': recursive, 'topAncestor': topAncestor}
-			return name.prev.translate(self, **params) + self.nsSep + translatedName
+			return name.prev.translate(self, **params) + self._get_separator(name.prev) + translatedName
 
 	def translate_argument_name(self, name):
 		argname = name.to_camel_case(lower=True)
@@ -330,6 +339,15 @@ class JavaTranslator(Translator):
 			return self.keyWordEscapes[keyword]
 		except KeyError:
 			return keyword
+
+	def _get_separator(self, prefix):
+		if prefix is None:
+			return ''
+		elif type(prefix) in (ClassName, EnumName):
+			return self.classMemberSep
+		else:
+			return self.nsSep
+
 
 class SwiftTranslator(JavaTranslator):
 	def __init__(self):
@@ -350,6 +368,7 @@ class SwiftTranslator(JavaTranslator):
 
 	def translate_class_name(self, name, recursive=False, topAncestor=None):
 		return name.to_camel_case()
+
 
 class CppTranslator(JavaTranslator):
 	def __init__(self):

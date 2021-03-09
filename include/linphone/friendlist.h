@@ -133,7 +133,7 @@ LINPHONE_PUBLIC LinphoneFriendListStatus linphone_friend_list_remove_friend(Linp
 /**
  * Retrieves the list of #LinphoneFriend from this LinphoneFriendList.
  * @param friend_list #LinphoneFriendList object @notnil
- * @return \bctbx_list{LinphoneFriend} a list of #LinphoneFriend @maybenil
+ * @return A list of #LinphoneFriend \bctbx_list{LinphoneFriend} @maybenil
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_friend_list_get_friends(const LinphoneFriendList *friend_list);
 
@@ -157,7 +157,7 @@ LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_phone_numbe
  * Find all friends in the friend list using a LinphoneAddress.
  * @param friend_list #LinphoneFriendList object. @notnil
  * @param address #LinphoneAddress object of the friends we want to search for. @notnil
- * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise. @maybenil
+ * @return A list of #LinphoneFriend if found, NULL otherwise. \bctbx_list{LinphoneFriend} @maybenil
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_address(const LinphoneFriendList *friend_list, const LinphoneAddress *address);
 
@@ -173,7 +173,7 @@ LINPHONE_PUBLIC LinphoneFriend * linphone_friend_list_find_friend_by_uri(const L
  * Find all friends in the friend list using an URI string.
  * @param friend_list #LinphoneFriendList object. @notnil
  * @param uri A string containing the URI of the friends we want to search for. @notnil
- * @return \bctbx_list{LinphoneFriend} as a list of #LinphoneFriend if found, NULL otherwise. @maybenil
+ * @return A list of #LinphoneFriend if found, NULL otherwise. \bctbx_list{LinphoneFriend} @maybenil
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_friend_list_find_friends_by_uri(const LinphoneFriendList *friend_list, const char *uri);
 
