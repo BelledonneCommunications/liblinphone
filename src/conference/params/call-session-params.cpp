@@ -19,8 +19,10 @@
 
 #include "call-session-params-p.h"
 #include "call-session-params.h"
+#include "core/core-p.h"
 
 #include "linphone/proxy_config.h"
+#include "linphone/core.h"
 
 using namespace std;
 
@@ -35,6 +37,10 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	conferenceId = src->conferenceId;
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
+	capabilityNegotiation = src->capabilityNegotiation;
+	mergeTcapLines = src->mergeTcapLines;
+	supportedEncryptions = src->supportedEncryptions;
+	disallowZrtp = src->disallowZrtp;
 	/* The management of the custom headers is not optimal. We copy everything while ref counting would be more efficient. */
 	if (customHeaders) {
 		sal_custom_header_free(customHeaders);
@@ -51,6 +57,64 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 }
 
 // -----------------------------------------------------------------------------
+
+bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
+	return capabilityNegotiation;
+}
+
+void CallSessionParamsPrivate::enableCapabilityNegotiation (const bool enable) {
+	capabilityNegotiation = enable;
+}
+
+bool CallSessionParamsPrivate::tcapLinesMerged() const {
+	if (capabilityNegotiationEnabled()) {
+		return mergeTcapLines;
+	}
+
+	return false;
+}
+
+void CallSessionParamsPrivate::enableTcapLineMerging (const bool enable) {
+	mergeTcapLines = enable;
+}
+
+bool CallSessionParamsPrivate::isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const {
+	const auto encEnumList = getSupportedEncryptions();
+	const auto foundIt = std::find(encEnumList.cbegin(), encEnumList.cend(), encryption);
+	return (foundIt != encEnumList.cend());
+}
+
+const std::list<LinphoneMediaEncryption> CallSessionParamsPrivate::getSupportedEncryptions() const {
+	// If capability negotiation is enabled, it is possible to restrict the valid encryptions
+	if (capabilityNegotiationEnabled()) {
+		return supportedEncryptions;
+	}
+
+	std::list<LinphoneMediaEncryption> encEnumList;
+	bctbx_list_t * encList = linphone_core_get_supported_media_encryptions_at_compile_time();
+	for(bctbx_list_t * enc = encList;enc!=NULL;enc=enc->next){
+		const char *encString = static_cast<const char *>(bctbx_list_get_data(enc));
+
+		const auto encEnum = static_cast<LinphoneMediaEncryption>(string_to_linphone_media_encryption(encString));
+		// Do not add ZRTP if it is not supported by core even though the core was compile with it on
+		if ((encEnum != LinphoneMediaEncryptionZRTP) || ((encEnum == LinphoneMediaEncryptionZRTP) && !disallowZrtp)) {
+			encEnumList.push_back(encEnum);
+		}
+	}
+
+	if (encList) {
+		bctbx_list_free_with_data(encList, (bctbx_list_free_func)bctbx_free);
+	}
+
+	return encEnumList;
+
+
+}
+
+void CallSessionParamsPrivate::setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions) {
+	supportedEncryptions = encryptions;
+}
+
 
 SalCustomHeader * CallSessionParamsPrivate::getCustomHeaders () const {
 	return customHeaders;
@@ -101,7 +165,12 @@ CallSessionParams &CallSessionParams::operator= (const CallSessionParams &other)
 
 void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, LinphoneCallDir dir) {
 	L_D();
+	const auto & cCore = core->getCCore();
 	d->inConference = false;
+	d->capabilityNegotiation = !!linphone_core_is_capability_negotiation_supported(cCore);
+	d->mergeTcapLines = !!linphone_core_tcap_lines_merged(cCore);
+	d->supportedEncryptions = core->getSupportedMediaEncryptions();
+	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
 	d->conferenceId = "";
 	d->privacy = LinphonePrivacyDefault;
 	setProxyConfig(NULL);

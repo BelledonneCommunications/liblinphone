@@ -89,6 +89,8 @@ extern test_suite_t tunnel_test_suite;
 extern test_suite_t upnp_test_suite;
 extern test_suite_t utils_test_suite;
 extern test_suite_t video_test_suite;
+extern test_suite_t capability_negotiation_test_suite;
+extern test_suite_t ice_capability_negotiation_test_suite;
 extern test_suite_t call_recovery_test_suite;
 extern test_suite_t call_with_ice_test_suite;
 extern test_suite_t call_secure_test_suite;
@@ -598,6 +600,7 @@ LinphoneAddress * linphone_core_manager_resolve(LinphoneCoreManager *mgr, const 
 FILE *sip_start(const char *senario, const char* dest_username, const char *passwd, LinphoneAddress* dest_addres);
 
 void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice );
+void enable_stun_in_core(LinphoneCoreManager * mgr, const bool_t enable_ice);
 void linphone_conf_event_notify(LinphoneEvent *lev);
 void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList, const unsigned int index, const char* uri, const char* phone);
 

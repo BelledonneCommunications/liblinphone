@@ -21,6 +21,7 @@
 #include "c-wrapper/internal/c-sal.h"
 #include "sal/sal_stream_bundle.h"
 #include "sal/sal_media_description.h"
+#include "sal/sal_stream_configuration.h"
 #include "sal/sal.h"
 #include "offeranswer.h"
 #include "private.h"
@@ -135,13 +136,13 @@ void linphone_core_register_offer_answer_providers(LinphoneCore *lc){
 
 LINPHONE_BEGIN_NAMESPACE
 
-bool_t OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
+bool OfferAnswerEngine::onlyTelephoneEvent(const std::list<OrtpPayloadType*> & l){
 	for (const auto & p : l) {
 		if (strcasecmp(p->mime_type,"telephone-event")!=0){
-			return FALSE;
+			return false;
 		}
 	}
-	return TRUE;
+	return true;
 }
 
 PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt, const std::list<OrtpPayloadType*> & remote_payloads){
@@ -160,7 +161,7 @@ PayloadType * OfferAnswerEngine::genericMatch(const std::list<OrtpPayloadType*> 
  * Returns a PayloadType from the local list that matches a PayloadType offered or answered in the remote list
 */
 PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, const std::list<OrtpPayloadType*> & local_payloads, const PayloadType *refpt,
-						  const std::list<OrtpPayloadType*> & remote_payloads, bool_t reading_response){
+						  const std::list<OrtpPayloadType*> & remote_payloads, bool reading_response){
 	PayloadType *ret = NULL;
 	MSOfferAnswerContext *ctx = NULL;
 
@@ -175,10 +176,10 @@ PayloadType * OfferAnswerEngine::findPayloadTypeBestMatch(MSFactory *factory, co
 }
 
 
-std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool_t reading_response, bool_t one_matching_codec){
+std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory, const std::list<OrtpPayloadType*> & local, const std::list<OrtpPayloadType*> & remote, bool reading_response, bool one_matching_codec){
 	std::list<OrtpPayloadType*> res;
 	PayloadType *matched;
-	bool_t found_codec=FALSE;
+	bool found_codec=false;
 
 	for (const auto & p2 : remote) {
 		matched=OfferAnswerEngine::findPayloadTypeBestMatch(factory, local, p2, remote, reading_response);
@@ -190,7 +191,7 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 				if (strcasecmp(matched->mime_type,"telephone-event")!=0){
 					if (found_codec){/* we have found a real codec already*/
 						continue; /*this codec won't be added*/
-					}else found_codec=TRUE;
+					}else found_codec=true;
 				}
 			}
 
@@ -237,10 +238,10 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 	if (reading_response){
 		/* add remaning local payload as CAN_RECV only so that if we are in front of a non-compliant equipment we are still able to decode the RTP stream*/
 		for (const auto & p1 : local) {
-			bool_t found=FALSE;
+			bool found=false;
 			for (const auto & p2 : remote) {
 				if (payload_type_get_number(p2)==payload_type_get_number(p1)){
-					found=TRUE;
+					found=true;
 					break;
 				}
 			}
@@ -256,8 +257,8 @@ std::list<OrtpPayloadType*> OfferAnswerEngine::matchPayloads(MSFactory *factory,
 	return res;
 }
 
-bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
-	SalSrtpCryptoAlgo & result, unsigned int* choosen_local_tag, bool_t use_local_key) {
+bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &local, const std::vector<SalSrtpCryptoAlgo> &remote,
+	SalSrtpCryptoAlgo & result, unsigned int & choosen_local_tag, bool use_local_key) {
 	for(const auto & rc : remote) {
 		if (rc.algo == 0)
 			break;
@@ -270,19 +271,19 @@ bool_t OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &
 				if (use_local_key) {
 					result.master_key = lc.master_key;
 					result.tag = rc.tag;
-					*choosen_local_tag = lc.tag;
+					choosen_local_tag = lc.tag;
 				}
 				/* We received an answer to our SDP crypto proposal. Copy matching algo remote master key to result, and memorize local tag */
 				else {
 					result.master_key = rc.master_key;
 					result.tag = lc.tag;
-					*choosen_local_tag = lc.tag;
+					choosen_local_tag = lc.tag;
 				}
-				return TRUE;
+				return true;
 			}
 		}
 	}
-	return FALSE;
+	return false;
 }
 
 SalStreamDir OfferAnswerEngine::computeDirOutgoing(SalStreamDir local, SalStreamDir answered){
@@ -324,22 +325,15 @@ SalStreamDir OfferAnswerEngine::computeDirIncoming(SalStreamDir local, SalStream
 	return res;
 }
 
-void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer,
-						const SalStreamDescription & remote_answer,
-						SalStreamDescription & result){
-	if (remote_answer.enabled())
-		result.payloads=OfferAnswerEngine::matchPayloads(factory, local_offer.payloads,remote_answer.payloads,TRUE,FALSE);
-	else {
-		ms_message("Local stream description [%p] rejected by peer",&local_offer);
-		result.rtp_port=0;
-		return;
-	}
-	result.proto=remote_answer.proto;
-	result.type=local_offer.type;
+SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const bool allowCapabilityNegotiation){
+
+	SalStreamDescription result;
+
+	result.type=local_offer.getType();
 
 	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
-			/*6.2 Multicast Streams
-			...
+		/*6.2 Multicast Streams
+		...
 		If a multicast stream is accepted, the address and port information
 		in the answer MUST match that of the offer.  Similarly, the
 		directionality information in the answer (sendonly, recvonly, or
@@ -353,7 +347,7 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,L_STRING_TO_C(local_offer.rtp_addr)
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		if (local_offer.rtp_port!=remote_answer.rtp_port) {
 			ms_message("Remote answered rtp port [%i] does not match offered [%i] for local stream description [%p]"
@@ -361,15 +355,15 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,local_offer.rtp_port
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
-		if (local_offer.dir!=remote_answer.dir) {
+		if (local_offer.getDirection()!=remote_answer.getDirection()) {
 			ms_message("Remote answered dir [%s] does not match offered [%s] for local stream description [%p]"
-																,sal_stream_dir_to_string(remote_answer.dir)
-																,sal_stream_dir_to_string(local_offer.dir)
+																,sal_stream_dir_to_string(remote_answer.getDirection())
+																,sal_stream_dir_to_string(local_offer.getDirection())
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
 		if (local_offer.bandwidth!=remote_answer.bandwidth) {
 			ms_message("Remote answered bandwidth [%i] does not match offered [%i] for local stream description [%p]"
@@ -377,114 +371,203 @@ void OfferAnswerEngine::initiateOutgoingStream(MSFactory* factory, const SalStre
 																,local_offer.bandwidth
 																,&local_offer);
 			result.rtp_port=0;
-			return;
+			return result;
 		}
-		if (local_offer.ptime > 0 && local_offer.ptime!=remote_answer.ptime) {
-			ms_message("Remote answered ptime [%i] does not match offered [%i] for local stream description [%p]"
-																,remote_answer.ptime
-																,local_offer.ptime
-																,&local_offer);
-			result.rtp_port=0;
-			return;
-		}
-		if (local_offer.ttl > 0 && local_offer.ttl!=remote_answer.ttl) {
-			ms_message("Remote answered ttl [%i] does not match offered [%i] for local stream description [%p]"
-																		,remote_answer.ttl
-																		,local_offer.ttl
-																		,&local_offer);
-			result.rtp_port=0;
-			return;
-		}
-		result.ttl=local_offer.ttl;
-		result.dir=local_offer.dir;
 		result.multicast_role = SalMulticastSender;
-	} else {
-		result.dir=OfferAnswerEngine::computeDirOutgoing(local_offer.dir,remote_answer.dir);
 	}
 
-	result.rtcp_mux = remote_answer.rtcp_mux && local_offer.rtcp_mux;
-	if (remote_answer.mid.empty() == false){
-		if (local_offer.mid.empty() == false){
-			result.mid = remote_answer.mid;
-			result.mid_rtp_ext_header_id = remote_answer.mid_rtp_ext_header_id;
-			result.bundle_only = remote_answer.bundle_only;
-			result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
+	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
+
+	if (remote_answer.enabled()) {
+		const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
+		unsigned int localCfgIdx = local_offer.getActualConfigurationIndex();
+		if (allowCapabilityNegotiation) {
+			const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
+			// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
+			// If not, the actual configuration from the local offer has been selected
+			if (answerUnparsedCfgs.empty()) {
+				localCfgIdx = local_offer.getActualConfigurationIndex();
+				resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remoteCfgIdx);
+			} else {
+				if (answerUnparsedCfgs.size() > 1) {
+					lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead";
+				}
+				for (const auto & cfg : answerUnparsedCfgs) {
+					const auto success = resultCfgPair.second;
+					localCfgIdx = cfg.first;
+					if (success) {
+						break;
+					} else {
+						resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+					}
+				}
+			}
+		} else {
+			localCfgIdx = local_offer.getActualConfigurationIndex();
+			resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+		}
+
+		const auto & resultCfg = resultCfgPair.first;
+		result.addActualConfiguration(resultCfg);
+
+		// finalize stream settings based on result configuration
+		if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
+			result.rtp_addr=remote_answer.rtp_addr;
+			result.rtcp_addr=remote_answer.rtcp_addr;
+			result.rtp_port=remote_answer.rtp_port;
+			result.rtcp_port=remote_answer.rtcp_port;
+			result.bandwidth=remote_answer.bandwidth;
+		}else{
+			lInfo() <<  __func__ << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
+			result.disable();
+		}
+
+		const auto success = resultCfgPair.second;
+		if (success) {
+			remote_answer.cfgIndex = remoteCfgIdx;
+			local_offer.cfgIndex = localCfgIdx;
+			lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
+		} else {
+			result.disable();
+		}
+	} else {
+		result.disable();
+	}
+
+	return result;
+}
+
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+	SalStreamConfiguration resultCfg = result.getActualConfiguration();
+	const SalStreamConfiguration & localCfg = local_offer.getConfigurationAtIndex(localCfgIdx);
+	const SalStreamConfiguration & remoteCfg = remote_answer.getConfigurationAtIndex(remoteCfgIdx);
+
+	bool success = true;
+
+	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
+	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
+
+	const auto & availableEncs = local_offer.getSupportedEncryptions();
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads,true,false);
+
+	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		resultCfg.proto=remoteCfg.getProto();
+	} else {
+		ms_message("%s -  the transport protocol %s of local stream configuration at index %0d is not compatible with the transport protocol %s of the remote stream configuration at index %0d", __func__, sal_media_proto_to_string(localCfg.getProto()), localCfgIdx,  sal_media_proto_to_string(remoteCfg.getProto()), remoteCfgIdx);
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
+	if (local_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(local_offer.rtp_addr))) {
+		if (localCfg.ptime > 0 && localCfg.ptime!=remoteCfg.ptime) {
+			ms_message("Remote answered ptime [%i] does not match offered [%i] for local stream description [%p]"
+																,remoteCfg.ptime
+																,localCfg.ptime
+																,&local_offer);
+			success = false;
+			return std::make_pair(resultCfg, success);
+		}
+		if (localCfg.ttl > 0 && localCfg.ttl!=remoteCfg.ttl) {
+			ms_message("Remote answered ttl [%i] does not match offered [%i] for local stream description [%p]"
+																		,remoteCfg.ttl
+																		,localCfg.ttl
+																		,&local_offer);
+			success = false;
+			return std::make_pair(resultCfg, success);
+		}
+		resultCfg.ttl=localCfg.ttl;
+		resultCfg.dir=localCfg.getDirection();
+	} else {
+		resultCfg.dir=OfferAnswerEngine::computeDirOutgoing(localCfg.getDirection(),remoteCfg.getDirection());
+	}
+
+	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
+	if (remoteCfg.mid.empty() == false){
+		if (localCfg.mid.empty() == false){
+			resultCfg.mid = remoteCfg.mid;
+			resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
+			resultCfg.bundle_only = remoteCfg.bundle_only;
+			resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
 		}else{
 			ms_error("The remote has set a mid in an answer while we didn't offered it.");
 		}
 	}
 
-	if (!result.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(result.payloads)){
-		result.rtp_addr=remote_answer.rtp_addr;
-		result.rtcp_addr=remote_answer.rtcp_addr;
-		result.rtp_port=remote_answer.rtp_port;
-		result.rtcp_port=remote_answer.rtcp_port;
-		result.bandwidth=remote_answer.bandwidth;
-		result.ptime=remote_answer.ptime;
-		result.maxptime=remote_answer.maxptime;
+	if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
+		resultCfg.ptime=remoteCfg.ptime;
+		resultCfg.maxptime=remoteCfg.maxptime;
 	}else{
-		result.disable();
+		success = false;
 	}
-	if (result.hasSrtp() == TRUE) {
-		/* verify crypto algo */
-		result.crypto.clear();
-		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(local_offer.crypto, remote_answer.crypto, crypto_result, &result.crypto_local_tag, FALSE)) {
-			result.disable();
+
+	if (resultCfg.hasSrtp() == true) {
+		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
+		if (srtpFound == availableEncs.cend()) {
+			ms_message("Found matching payloads but SRTP is not supported");
+			success = false;
+			return std::make_pair(resultCfg, success);
+		} else {
+			auto & crypto = resultCfg.crypto;
+			/* verify crypto algo */
+			crypto.clear();
+			SalSrtpCryptoAlgo crypto_result;
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, false)) {
+				success = false;
+			}
+			crypto.emplace(crypto.begin(),crypto_result);
 		}
-		if (result.crypto.empty()) {
-			result.crypto.resize(1);
-		}
-		result.crypto[0] = crypto_result;
 	}
-	result.rtp_ssrc=local_offer.rtp_ssrc;
-	result.rtcp_cname=local_offer.rtcp_cname;
+	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
+	resultCfg.rtcp_cname=localCfg.rtcp_cname;
+
+	if (!OfferAnswerEngine::fillZrtpAttributes(local_offer, localCfgIdx, remote_answer, remoteCfgIdx, resultCfg)) {
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
 
 	// Handle dtls session attribute: if both local and remote have a dtls fingerprint and a dtls setup, get the remote fingerprint into the result
-	if ((local_offer.dtls_role!=SalDtlsRoleInvalid) && (remote_answer.dtls_role!=SalDtlsRoleInvalid)
-			&&(!local_offer.dtls_fingerprint.empty()) && (!remote_answer.dtls_fingerprint.empty())) {
-		result.dtls_fingerprint = remote_answer.dtls_fingerprint;
-		if (remote_answer.dtls_role==SalDtlsRoleIsClient) {
-			result.dtls_role = SalDtlsRoleIsServer;
+	if ((localCfg.dtls_role!=SalDtlsRoleInvalid) && (remoteCfg.dtls_role!=SalDtlsRoleInvalid)
+			&&(!localCfg.dtls_fingerprint.empty()) && (!remoteCfg.dtls_fingerprint.empty())) {
+		const auto dtlsFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionDTLS);
+		if (dtlsFound == availableEncs.cend()) {
+			lInfo() << "DTLS is not supported even tough negotiation succeded";
+			success = false;
+			return std::make_pair(resultCfg, success);
 		} else {
-			result.dtls_role = SalDtlsRoleIsClient;
+			resultCfg.dtls_fingerprint = remoteCfg.dtls_fingerprint;
+			if (remoteCfg.dtls_role==SalDtlsRoleIsClient) {
+				resultCfg.dtls_role = SalDtlsRoleIsServer;
+			} else {
+				resultCfg.dtls_role = SalDtlsRoleIsClient;
+			}
 		}
 	} else {
-		result.dtls_fingerprint.clear();
-		result.dtls_role = SalDtlsRoleInvalid;
+		resultCfg.dtls_fingerprint.clear();
+		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
-	result.implicit_rtcp_fb = local_offer.implicit_rtcp_fb && remote_answer.implicit_rtcp_fb;
+	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
+
+	resultCfg.acapIndexes = remoteCfg.acapIndexes;
+	resultCfg.tcapIndex = remoteCfg.tcapIndex;
+	resultCfg.index = remoteCfg.index;
+
+	return std::make_pair(resultCfg, success);
 }
 
-
-void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
+SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStreamDescription & local_cap,
 						const SalStreamDescription & remote_offer,
-						SalStreamDescription & result, bool_t one_matching_codec, const char *bundle_owner_mid){
-	result.payloads=OfferAnswerEngine::matchPayloads(factory, local_cap.payloads,remote_offer.payloads, FALSE, one_matching_codec);
-	result.proto=remote_offer.proto;
-	result.type=local_cap.type;
-	result.dir=OfferAnswerEngine::computeDirIncoming(local_cap.dir,remote_offer.dir);
-	
-	if (result.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(result.payloads) || !remote_offer.enabled()){
-		result.rtp_port=0;
-		return;
-	}
+						bool one_matching_codec, const std::string &bundle_owner_mid, const bool allowCapabilityNegotiation){
+	SalStreamDescription result;
+	result.name = local_cap.name;
+	result.type=local_cap.getType();
+
 	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
-		if (result.hasSrtp() == TRUE) {
-			ms_message("SAVP not supported for multicast address for remote stream [%p]",&remote_offer);
-			result.rtp_port=0;
-			return;
-		}
-		result.dir=remote_offer.dir;
 		result.rtp_addr=remote_offer.rtp_addr;
 		result.rtcp_addr=remote_offer.rtcp_addr;
 		result.rtp_port=remote_offer.rtp_port;
 		/*result.rtcp_port=remote_offer.rtcp_port;*/
 		result.rtcp_port=0; /* rtcp not supported yet*/
 		result.bandwidth=remote_offer.bandwidth;
-		result.ptime=remote_offer.ptime;
-		result.maxptime=remote_offer.maxptime;
-		result.ttl=remote_offer.ttl;
 		result.multicast_role = SalMulticastReceiver;
 	} else {
 		result.rtp_addr=local_cap.rtp_addr;
@@ -492,72 +575,189 @@ void OfferAnswerEngine::initiateIncomingStream(MSFactory *factory, const SalStre
 		result.rtp_port=local_cap.rtp_port;
 		result.rtcp_port=local_cap.rtcp_port;
 		result.bandwidth=local_cap.bandwidth;
-		result.ptime=local_cap.ptime;
-		result.maxptime=local_cap.maxptime;
-	}
-	
-	result.rtcp_mux = remote_offer.rtcp_mux && local_cap.rtcp_mux;
-	
-	/* Handle RTP bundle negociation */
-	if (!remote_offer.mid.empty() && bundle_owner_mid){
-		result.mid = remote_offer.mid;
-		result.mid_rtp_ext_header_id = remote_offer.mid_rtp_ext_header_id;
-		
-		if (remote_offer.mid.compare(bundle_owner_mid) != 0){
-			/* The stream is a secondary one part of a bundle.
-			 * In this case it must set the bundle-only attribute, and set port to zero.*/
-			result.bundle_only = TRUE;
-			result.rtp_port = 0;
-		}
-		result.rtcp_mux = TRUE; /* RTCP mux must be enabled in bundle mode. */
 	}
 
-	if (result.hasSrtp() == TRUE) {
-		/* select crypto algo */
-		result.crypto.clear();
-		SalSrtpCryptoAlgo crypto_result;
-		if (!OfferAnswerEngine::matchCryptoAlgo(local_cap.crypto, remote_offer.crypto, crypto_result, &result.crypto_local_tag, TRUE)) {
-			result.disable();
-			ms_message("No matching crypto algo for remote stream's offer [%p]",&remote_offer);
-		}
-		if (result.crypto.empty()) {
-			result.crypto.resize(1);
-		}
-		result.crypto[0] = crypto_result;
-	}
-
-	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
-	// haveZrtpHash is set in local_cap when ZRTP is active on our side.
-	if ((remote_offer.haveZrtpHash == 1) || (local_cap.haveZrtpHash == 1)) {
-		if (local_cap.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
-			strncpy((char *)(result.zrtphash), (char *)(local_cap.zrtphash), sizeof(result.zrtphash));
-			result.haveZrtpHash =  1;
-		}
-	}
+	auto remoteCfgIdx = remote_offer.getActualConfigurationIndex();
+	auto localCfgIdx = local_cap.getActualConfigurationIndex();
 
 	result.ice_pwd = local_cap.ice_pwd;
 	result.ice_ufrag = local_cap.ice_ufrag;
 	result.ice_mismatch = local_cap.ice_mismatch;
-	result.set_nortpproxy = local_cap.set_nortpproxy;
 	result.ice_candidates = local_cap.ice_candidates;
 	result.ice_remote_candidates = local_cap.ice_remote_candidates;
-	result.name = local_cap.name;
-	result.rtp_ssrc=local_cap.rtp_ssrc;
-	result.rtcp_cname=local_cap.rtcp_cname;
+
+	std::pair<SalStreamConfiguration, bool> resultCfgPair{SalStreamConfiguration(), false};
+	if (allowCapabilityNegotiation) {
+		for (const auto & remoteCfg : remote_offer.getAllCfgs()) {
+			for (const auto & localCfg : local_cap.getAllCfgs()) {
+				const auto success = resultCfgPair.second;
+				if (success) {
+					break;
+				} else {
+					localCfgIdx = localCfg.first;
+					remoteCfgIdx = remoteCfg.first;
+					resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
+
+				}
+			}
+			if (resultCfgPair.second) {
+				break;
+			}
+		}
+	} else {
+		localCfgIdx = local_cap.getActualConfigurationIndex();
+		remoteCfgIdx = remote_offer.getActualConfigurationIndex();
+		resultCfgPair = OfferAnswerEngine::initiateIncomingConfiguration(factory, local_cap, remote_offer,result,one_matching_codec, bundle_owner_mid, localCfgIdx, remoteCfgIdx);
+	}
+
+	const auto & resultCfg = resultCfgPair.first;
+	result.addActualConfiguration(resultCfg);
+
+	const auto success = resultCfgPair.second;
+	if (success) {
+		remote_offer.cfgIndex = remoteCfgIdx;
+		local_cap.cfgIndex = localCfgIdx;
+
+		if (resultCfg.bundle_only == true) {
+			/* The stream is a secondary one part of a bundle.
+			* In this case it must set the bundle-only attribute, and set port to zero.*/
+			result.rtp_port = 0;
+		}
+		lInfo() << __func__ << " Found matching configurations: local configuration index " << local_cap.cfgIndex << " remote configuration index " << remote_offer.cfgIndex;
+	} else {
+		result.disable();
+	}
+
+	return result;
+}
+
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+
+	SalStreamConfiguration resultCfg;
+	if (result.hasConfigurationAtIndex(result.getActualConfigurationIndex())) {
+		resultCfg = result.getActualConfiguration();
+	}
+	const SalStreamConfiguration & localCfg = local_cap.getConfigurationAtIndex(localCfgIdx);
+	const SalStreamConfiguration & remoteCfg = remote_offer.getConfigurationAtIndex(remoteCfgIdx);
+
+	bool success = true;
+
+	const auto & availableEncs = local_cap.getSupportedEncryptions();
+	resultCfg.payloads=OfferAnswerEngine::matchPayloads(factory, localCfg.payloads,remoteCfg.payloads, false, one_matching_codec);
+	if (OfferAnswerEngine::areProtoCompatibles(localCfg.getProto(), remoteCfg.getProto())) {
+		resultCfg.proto=remoteCfg.getProto();
+	} else {
+		lInfo() << __func__ << " -  the transport protocol " << sal_media_proto_to_string(localCfg.getProto()) << " of local stream configuration at index " << localCfgIdx << " is not compatible with the transport protocol " << sal_media_proto_to_string(remoteCfg.getProto()) << " of the remote stream configuration at index " << remoteCfgIdx;
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+	resultCfg.dir=OfferAnswerEngine::computeDirIncoming(localCfg.getDirection(),remoteCfg.getDirection());
+
+	resultCfg.delete_media_attributes = localCfg.delete_media_attributes;
+	resultCfg.delete_session_attributes = localCfg.delete_session_attributes;
+
+	if (resultCfg.payloads.empty() || OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads) || !remote_offer.enabled()){
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
+		if (resultCfg.hasSrtp() == true) {
+			lInfo() << __func__ << "SAVP not supported for multicast address for remote stream [" << &remote_offer << "]";
+			success = false;
+			return std::make_pair(resultCfg, success);
+		}
+		resultCfg.dir=remoteCfg.getDirection();
+		resultCfg.ptime=remoteCfg.ptime;
+		resultCfg.maxptime=remoteCfg.maxptime;
+		resultCfg.ttl=remoteCfg.ttl;
+	} else {
+		resultCfg.ptime=localCfg.ptime;
+		resultCfg.maxptime=localCfg.maxptime;
+	}
+	
+	resultCfg.rtcp_mux = remoteCfg.rtcp_mux && localCfg.rtcp_mux;
+	
+	/* Handle RTP bundle negociation */
+	if (!remoteCfg.mid.empty() && !bundle_owner_mid.empty()){
+		resultCfg.mid = remoteCfg.mid;
+		resultCfg.mid_rtp_ext_header_id = remoteCfg.mid_rtp_ext_header_id;
+		
+		if (remoteCfg.mid.compare(bundle_owner_mid) != 0){
+			/* The stream is a secondary one part of a bundle.
+			 * In this case it must set the bundle-only attribute, and set port to zero.*/
+			resultCfg.bundle_only = true;
+		}
+		resultCfg.rtcp_mux = true; /* RTCP mux must be enabled in bundle mode. */
+	}
+
+	if (resultCfg.hasSrtp() == true) {
+		const auto srtpFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionSRTP);
+		if (srtpFound == availableEncs.cend()) {
+			ms_message("Found matching payloads but SRTP is not supported");
+			success = false;
+			return std::make_pair(resultCfg, success);
+		} else {
+			/* select crypto algo */
+			resultCfg.crypto.clear();
+			SalSrtpCryptoAlgo crypto_result;
+			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, true)) {
+				lInfo() <<  __func__ << "No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
+				success = false;
+				return std::make_pair(resultCfg, success);
+			}
+			if (resultCfg.crypto.empty()) {
+				resultCfg.crypto.resize(1);
+			}
+			resultCfg.crypto[0] = crypto_result;
+		}
+	}
+
+	if (!OfferAnswerEngine::fillZrtpAttributes(local_cap, localCfgIdx, remote_offer, remoteCfgIdx, resultCfg)) {
+		success = false;
+		return std::make_pair(resultCfg, success);
+	}
+
+	resultCfg.set_nortpproxy = localCfg.set_nortpproxy;
+	resultCfg.rtp_ssrc=localCfg.rtp_ssrc;
+	resultCfg.rtcp_cname=localCfg.rtcp_cname;
 
 	// Handle dtls stream attribute: if both local and remote have a dtls fingerprint and a dtls setup, add the local fingerprint to the answer
 	// Note: local description usually stores dtls config at session level which means it apply to all streams, check this too
-	if (((local_cap.dtls_role!=SalDtlsRoleInvalid)) && (remote_offer.dtls_role!=SalDtlsRoleInvalid)
-			&& (!local_cap.dtls_fingerprint.empty()) && (!remote_offer.dtls_fingerprint.empty())) {
-		result.dtls_fingerprint = local_cap.dtls_fingerprint;
-		if (remote_offer.dtls_role==SalDtlsRoleUnset) {
-			result.dtls_role = SalDtlsRoleIsClient;
+	if (((localCfg.dtls_role!=SalDtlsRoleInvalid)) && (remoteCfg.dtls_role!=SalDtlsRoleInvalid)
+			&& (!localCfg.dtls_fingerprint.empty()) && (!remoteCfg.dtls_fingerprint.empty())) {
+		const auto dtlsFound = std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionDTLS);
+		if (dtlsFound == availableEncs.cend()) {
+			lInfo() << "DTLS is not supported even tough negotiation succeded";
+			success = false;
+			return std::make_pair(resultCfg, success);
+		} else {
+			resultCfg.dtls_fingerprint = localCfg.dtls_fingerprint;
+			if (remoteCfg.dtls_role==SalDtlsRoleUnset) {
+				resultCfg.dtls_role = SalDtlsRoleIsClient;
+			}
 		}
 	} else {
-		result.dtls_fingerprint.clear();
-		result.dtls_role = SalDtlsRoleInvalid;
+		resultCfg.dtls_fingerprint.clear();
+		resultCfg.dtls_role = SalDtlsRoleInvalid;
 	}
-	result.implicit_rtcp_fb = local_cap.implicit_rtcp_fb && remote_offer.implicit_rtcp_fb;
+	resultCfg.implicit_rtcp_fb = localCfg.implicit_rtcp_fb && remoteCfg.implicit_rtcp_fb;
+	resultCfg.tcapIndex = remoteCfg.tcapIndex;
+	resultCfg.acapIndexes = remoteCfg.acapIndexes;
+	resultCfg.index = remoteCfg.index;
+	return std::make_pair(resultCfg, success);
+}
+
+bool OfferAnswerEngine::areProtoInStreamCompatibles(const SalStreamDescription & localStream, const SalStreamDescription & otherStream) {
+
+	for (const auto & otherCfg : otherStream.getAllCfgs()) {
+		for (const auto & localCfg : localStream.getAllCfgs()) {
+			const auto compatible = OfferAnswerEngine::areProtoCompatibles(localCfg.second.getProto(), otherCfg.second.getProto());
+			if (compatible) {
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaProto otherProto)
@@ -581,31 +781,33 @@ bool OfferAnswerEngine::areProtoCompatibles(SalMediaProto localProto, SalMediaPr
  * Returns a media description to run the streams with, based on a local offer
  * and the returned response (remote).
 **/
-int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
-					const std::shared_ptr<SalMediaDescription> remote_answer,
-					std::shared_ptr<SalMediaDescription> result){
+std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalMediaDescription> local_offer,
+					const std::shared_ptr<SalMediaDescription> remote_answer){
 	size_t i;
+
+	auto result = std::make_shared<SalMediaDescription>(local_offer->supportCapabilityNegotiation(), local_offer->tcapLinesMerged());
+	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 
 	for(i=0;i<local_offer->streams.size();++i){
 		ms_message("Processing for stream %zu",i);
 		SalStreamDescription & ls = local_offer->streams[i];
 		const SalStreamDescription & rs = remote_answer->streams[i];
-		if ((i < remote_answer->streams.size()) && rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
+		if ((i < remote_answer->streams.size()) && rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.proto != rs.proto && ls.hasAvpf()) {
-				ls.proto = rs.proto;
+			if (ls.getProto() != rs.getProto() && ls.hasAvpf()) {
+				ls.setProto(rs.getProto());
 				ms_warning("Received a downgraded AVP answer for our AVPF offer");
 			}
-			if (i <= result->streams.size()) {
-				result->streams.resize((i + 1));
+			auto stream = OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs, capabilityNegotiation);
+			SalStreamConfiguration actualCfg = stream.getActualConfiguration();
+			memcpy(&actualCfg.rtcp_xr, &ls.getChosenConfiguration().rtcp_xr, sizeof(stream.getChosenConfiguration().rtcp_xr));
+			if ((ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) && (rs.getChosenConfiguration().rtcp_xr.enabled == FALSE)) {
+				actualCfg.rtcp_xr.enabled = FALSE;
 			}
-			OfferAnswerEngine::initiateOutgoingStream(factory, ls,rs,result->streams[i]);
-			memcpy(&result->streams[i].rtcp_xr, &ls.rtcp_xr, sizeof(result->streams[i].rtcp_xr));
-			if ((ls.rtcp_xr.enabled == TRUE) && (rs.rtcp_xr.enabled == FALSE)) {
-				result->streams[i].rtcp_xr.enabled = FALSE;
-			}
-			result->streams[i].rtcp_fb.generic_nack_enabled = ls.rtcp_fb.generic_nack_enabled & rs.rtcp_fb.generic_nack_enabled;
-			result->streams[i].rtcp_fb.tmmbr_enabled = ls.rtcp_fb.tmmbr_enabled & rs.rtcp_fb.tmmbr_enabled;
+			actualCfg.rtcp_fb.generic_nack_enabled = ls.getChosenConfiguration().rtcp_fb.generic_nack_enabled & rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			actualCfg.rtcp_fb.tmmbr_enabled = ls.getChosenConfiguration().rtcp_fb.tmmbr_enabled & rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+			stream.addActualConfiguration(actualCfg);
+			result->streams.push_back(stream);
 		}
 		else ms_warning("No matching stream for %zu",i);
 	}
@@ -628,7 +830,7 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
 		ms_error("Remote answerer is proposing bundles, which we did not offer.");
 	}
 
-	return 0;
+	return result;
 }
 
 /**
@@ -636,9 +838,11 @@ int OfferAnswerEngine::initiateOutgoing(MSFactory *factory, std::shared_ptr<SalM
  * and the received offer.
  * The returned media description is an answer and should be sent to the offerer.
 **/
-int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
+std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_ptr<SalMediaDescription> local_capabilities,
 					std::shared_ptr<SalMediaDescription> remote_offer,
-					std::shared_ptr<SalMediaDescription> result, bool_t one_matching_codec){
+					bool one_matching_codec){
+
+	auto result = std::make_shared<SalMediaDescription>(local_capabilities->supportCapabilityNegotiation(), local_capabilities->tcapLinesMerged());
 	size_t i;
 
 	if (!remote_offer->bundles.empty() && local_capabilities->accept_bundles){
@@ -646,10 +850,7 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		result->bundles = remote_offer->bundles;
 	}
 
-	if (result->streams.size() < remote_offer->streams.size()) {
-		result->streams.resize(remote_offer->streams.size());
-	}
-
+	const bool capabilityNegotiation = result->supportCapabilityNegotiation();
 	for(i=0;i<remote_offer->streams.size();++i){
 
 		if (i >= local_capabilities->streams.size()) {
@@ -657,52 +858,57 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		}
 		const SalStreamDescription & ls = local_capabilities->streams[i];
 		SalStreamDescription & rs = remote_offer->streams[i];
-		SalStreamDescription & resultStream = result->streams[i];
+		SalStreamDescription stream;
+		SalStreamConfiguration actualCfg;
 
-		if (rs.type == ls.type && OfferAnswerEngine::areProtoCompatibles(ls.proto, rs.proto))
+		if (rs.getType() == ls.getType() && OfferAnswerEngine::areProtoInStreamCompatibles(ls, rs))
 		{
-			if (ls.proto != rs.proto && rs.hasAvpf())	{
-				rs.proto = ls.proto;
+			if (ls.getProto() != rs.getProto() && rs.hasAvpf())	{
+				rs.setProto(ls.getProto());
 				ms_warning("Sending a downgraded AVP answer for the received AVPF offer");
 			}
-			const char *bundle_owner_mid = NULL;
+			std::string bundle_owner_mid;
 			if (local_capabilities->accept_bundles){
 				int owner_index = remote_offer->getIndexOfTransportOwner(rs);
 				if (owner_index != -1){
-					bundle_owner_mid = L_STRING_TO_C(remote_offer->streams[(size_t)owner_index].mid);
+					bundle_owner_mid = remote_offer->streams[(size_t)owner_index].getChosenConfiguration().getMid();
 				}
 			}
-			OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,resultStream,one_matching_codec, bundle_owner_mid);
+			stream = OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
+			// Get an up to date actual configuration as it may have changed
+			actualCfg = stream.getActualConfiguration();
 			// Handle global RTCP FB attributes
-			resultStream.rtcp_fb.generic_nack_enabled = rs.rtcp_fb.generic_nack_enabled;
-			resultStream.rtcp_fb.tmmbr_enabled = rs.rtcp_fb.tmmbr_enabled;
+			actualCfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
 			// Handle media RTCP XR attribute
-			memset(&resultStream.rtcp_xr, 0, sizeof(resultStream.rtcp_xr));
-			if (rs.rtcp_xr.enabled == TRUE) {
+			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
+			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
 				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls.rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.rtcp_xr;
+				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
 				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
-				if ((rtcp_xr_conf != NULL) && (ls.dir == SalStreamSendRecv)) {
-					memcpy(&resultStream.rtcp_xr, rtcp_xr_conf, sizeof(resultStream.rtcp_xr));
+				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
+					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
 				} else {
-					resultStream.rtcp_xr.enabled = TRUE;
+					actualCfg.rtcp_xr.enabled = TRUE;
 				}
 			}
 		}else {
 			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
 			/* create an inactive stream for the answer, as there where no matching stream in local capabilities */
-			resultStream.dir=SalStreamInactive;
-			resultStream.rtp_port=0;
-			resultStream.type=rs.type;
-			resultStream.proto=rs.proto;
-			if (rs.type==SalOther){
-				resultStream.typeother = rs.typeother;
+			actualCfg.dir=SalStreamInactive;
+			stream.rtp_port=0;
+			stream.type=rs.getType();
+			actualCfg.proto=rs.getProto();
+			if (rs.getType()==SalOther){
+				stream.typeother = rs.typeother;
 			}
-			if (rs.proto==SalProtoOther){
-				resultStream.proto_other = rs.proto_other;
+			if (rs.getProto()==SalProtoOther){
+				actualCfg.proto_other = rs.getChosenConfiguration().proto_other;
 			}
 		}
-		resultStream.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.custom_sdp_attributes);
+		actualCfg.custom_sdp_attributes = sal_custom_sdp_attribute_clone(ls.getChosenConfiguration().custom_sdp_attributes);
+		stream.addActualConfiguration(actualCfg);
+		result->streams.push_back(stream);
 	}
 	result->username=local_capabilities->username;
 	result->addr=local_capabilities->addr;
@@ -727,7 +933,40 @@ int OfferAnswerEngine::initiateIncoming(MSFactory *factory, const std::shared_pt
 		}
 	}
 
-	return 0;
+	return result;
+}
+
+bool OfferAnswerEngine::fillZrtpAttributes(const SalStreamDescription & localStream, const unsigned int & localCfgIdx, const SalStreamDescription & remoteStream, const unsigned int & remoteCfgIdx, SalStreamConfiguration & resultCfg) {
+
+	const SalStreamConfiguration & localCfg = localStream.getConfigurationAtIndex(localCfgIdx);
+	const SalStreamConfiguration & remoteCfg = remoteStream.getConfigurationAtIndex(remoteCfgIdx);
+
+	const bool isLocalActualCfg = (localStream.getActualConfigurationIndex() == localCfgIdx);
+	const bool isRemoteActualCfg = (remoteStream.getActualConfigurationIndex() == remoteCfgIdx);
+
+	if ((!isLocalActualCfg || !isRemoteActualCfg) && (localCfg.haveZrtpHash != remoteCfg.haveZrtpHash))  {
+		lInfo() <<  __func__ << " No matching zrtp attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+		return false;
+	}
+	// add our zrtp hash if remote gave one but also when our side has set ZRTP as active to help peer starting earlier if it has ZRTP capabilities
+	// haveZrtpHash is set in localStream when ZRTP is active on our side.
+	// If local or remote configuration is not the actual one, ensure that both have zrtp hashes
+	if ((remoteCfg.haveZrtpHash == 1) || (localCfg.haveZrtpHash == 1)) {
+		const auto & availableEncs = localStream.getSupportedEncryptions();
+		// For actual configurations, all encryptions are supported
+		const auto zrtpFound = (!isLocalActualCfg || !isRemoteActualCfg) ? (std::find(availableEncs.cbegin(), availableEncs.cend(), LinphoneMediaEncryptionZRTP) != availableEncs.cend()) : true ;
+		if (!zrtpFound) {
+			lInfo() <<  __func__ << " ZRTP encryption is not supported by the local configuration - ZRTP attribute for remote configuration " << remoteCfgIdx << " (hash \"" << (char*)remoteCfg.zrtphash << "\") and local configuration " << localCfgIdx << " (hash \"" << (char*)localCfg.zrtphash << "\")";
+			return false;
+		} else {
+			if (localCfg.zrtphash[0] != 0) { /* if ZRTP is available, set the zrtp hash even if it is not selected */
+				strncpy((char *)(resultCfg.zrtphash), (char *)(localCfg.zrtphash), sizeof(resultCfg.zrtphash));
+				resultCfg.haveZrtpHash =  1;
+			}
+		}
+	}
+
+	return true;
 }
 
 LINPHONE_END_NAMESPACE
