@@ -31,7 +31,7 @@ set(OTHER_LIBS_FOR_TESTER
 )
 
 if (XCODE)
-	list(APPEND OTHER_LIBS_FOR_TESTER jsonspp_static)
+	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_static)
 else()
 	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
 endif()
