@@ -29,7 +29,7 @@
 using namespace LinphonePrivate;
 using namespace std;
 
-class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
+class LINPHONE_PUBLIC FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
   public:
 	class Response {
 	  public:
@@ -37,9 +37,16 @@ class FlexiAPIClient : public enable_shared_from_this<FlexiAPIClient> {
 		string body = "";
 
 		Json::Value json() {
-			Json::Reader reader;
+			JSONCPP_STRING err;
+			Json::CharReaderBuilder builder;
 			Json::Value obj;
-			reader.parse(body, obj);
+
+			const std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
+
+			if (!reader->parse(body.c_str(), body.c_str() + body.length(), &obj, &err)) {
+				lError() << err;
+			}
+
 			return obj;
 		};
 	};
