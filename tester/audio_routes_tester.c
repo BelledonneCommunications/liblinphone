@@ -1668,7 +1668,13 @@ static void conference_with_simple_audio_device_change(void) {
 
 	// wait a bit before Laure changes device
 	wait_for_list(lcs,NULL,0,2000);
-	BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
+
+	// If core uses file, then initial audio device is NULL
+	if (linphone_core_get_use_files(laure->lc)) {
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), NULL);
+	} else {
+		BC_ASSERT_PTR_EQUAL(linphone_core_get_output_audio_device(laure->lc), laure_current_dev);
+	}
 	laure_current_dev = change_device(TRUE, laure, laure_current_dev, laure_dev0, laure_dev1);
 
 	terminate_conference(participants, laure, conf, NULL);
