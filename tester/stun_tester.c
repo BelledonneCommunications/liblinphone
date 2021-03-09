@@ -48,7 +48,7 @@ static void linphone_stun_test_encode(void)
 }
 
 static void linphone_stun_test_grab_ip(void) {
-	LinphoneCoreManager* lc_stun = linphone_core_manager_new2("stun_rc", FALSE);
+	LinphoneCoreManager* lc_stun = linphone_core_manager_new_with_proxies_check("stun_rc", FALSE);
 	int ping_time;
 	int tmp = 0;
 	char audio_addr[LINPHONE_IPADDR_SIZE] = { 0 };
@@ -100,7 +100,7 @@ static void configure_nat_policy(LinphoneCore *lc, bool_t turn_enabled, bool_t t
 	linphone_nat_policy_enable_ice(nat_policy, TRUE);
 	if (turn_enabled) {
 		linphone_nat_policy_enable_turn(nat_policy, TRUE);
-		linphone_nat_policy_set_stun_server(nat_policy, "sip1.linphone.org:3479"); // This is our unofficial turn server. 
+		linphone_nat_policy_set_stun_server(nat_policy, "sip1.linphone.org:3479"); // This is our unofficial turn server.
 		/* When the turn server is incorporated in flexisip-tester, use turn.example.org . */
 		linphone_nat_policy_set_stun_server_username(nat_policy, username);
 		if (turn_tcp) {
@@ -138,7 +138,7 @@ static void check_turn_context_statistics(MSTurnContext *turn_context1, MSTurnCo
 		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_refresh > 0 || (turn_context2 && turn_context2->stats.nb_successful_refresh > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_create_permission > 0 || (turn_context2 && turn_context2->stats.nb_successful_create_permission > 0));
 		BC_ASSERT_TRUE(turn_context1->stats.nb_successful_channel_bind > 0 || (turn_context2 && turn_context2->stats.nb_successful_channel_bind > 0));
-		
+
 	}
 }
 
@@ -226,7 +226,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 		if (ice_session != NULL) {
 			cl1 = ice_session_check_list(ice_session, 0);
 			BC_ASSERT_PTR_NOT_NULL(cl1);
-			
+
 		}
 	}
 	lcall = linphone_core_get_current_call(pauline->lc);
@@ -237,7 +237,7 @@ static void ice_turn_call_base(bool_t video_enabled, bool_t forced_relay, bool_t
 		if (ice_session != NULL) {
 			cl2 = ice_session_check_list(ice_session, 0);
 			BC_ASSERT_PTR_NOT_NULL(cl2);
-			
+
 		}
 	}
 	/*
