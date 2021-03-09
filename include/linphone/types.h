@@ -1008,7 +1008,7 @@ typedef struct _LinphoneRingtonePlayer LinphoneRingtonePlayer;
 /**
  * Linphone core SIP transport ports.
  * Special values #LC_SIP_TRANSPORT_RANDOM, #LC_SIP_TRANSPORT_RANDOM, #LC_SIP_TRANSPORT_DONTBIND can be used.
- * Use with #linphone_core_set_sip_transports
+ * Use with #linphone_core_set_sip_transports()
  * @deprecated 18/04/2017
  * @donotwrap
  */

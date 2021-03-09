@@ -359,10 +359,10 @@ LINPHONE_PUBLIC void linphone_call_params_unref(LinphoneCallParams *call_params)
 
 /**
  * Use to enable multicast rtp for audio stream.
- * * If enabled, outgoing calls put a multicast address from #linphone_core_get_video_multicast_addr into audio cline. In case of outgoing call audio stream is sent to this multicast address.
+ * * If enabled, outgoing calls put a multicast address from #linphone_core_get_video_multicast_addr() into audio cline. In case of outgoing call audio stream is sent to this multicast address.
  * <br> For incoming calls behavior is unchanged.
  * @param params #LinphoneCallParams @notnil
- * @param yesno if yes, subsequent calls will propose multicast ip set by #linphone_core_set_audio_multicast_addr
+ * @param yesno if yes, subsequent calls will propose multicast ip set by #linphone_core_set_audio_multicast_addr()
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_audio_multicast(LinphoneCallParams *params, bool_t yesno);
@@ -370,17 +370,17 @@ LINPHONE_PUBLIC void linphone_call_params_enable_audio_multicast(LinphoneCallPar
 /**
  * Use to get multicast state of audio stream.
  * @param params #LinphoneCallParams @notnil
- * @return true if  subsequent calls will propose multicast ip set by #linphone_core_set_audio_multicast_addr
+ * @return true if  subsequent calls will propose multicast ip set by #linphone_core_set_audio_multicast_addr()
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_call_params_audio_multicast_enabled(const LinphoneCallParams *params);
 
 /**
  * Use to enable multicast rtp for video stream.
- * If enabled, outgoing calls put a multicast address from #linphone_core_get_video_multicast_addr into video cline. In case of outgoing call video stream is sent to this  multicast address.
+ * If enabled, outgoing calls put a multicast address from #linphone_core_get_video_multicast_addr() into video cline. In case of outgoing call video stream is sent to this  multicast address.
  * <br> For incoming calls behavior is unchanged.
  * @param params #LinphoneCallParams @notnil
- * @param yesno if yes, subsequent outgoing calls will propose multicast ip set by #linphone_core_set_video_multicast_addr
+ * @param yesno if yes, subsequent outgoing calls will propose multicast ip set by #linphone_core_set_video_multicast_addr()
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC void linphone_call_params_enable_video_multicast(LinphoneCallParams *params, bool_t yesno);
@@ -388,7 +388,7 @@ LINPHONE_PUBLIC void linphone_call_params_enable_video_multicast(LinphoneCallPar
 /**
  * Use to get multicast state of video stream.
  * @param params #LinphoneCallParams @notnil
- * @return true if  subsequent calls will propose multicast ip set by #linphone_core_set_video_multicast_addr
+ * @return true if  subsequent calls will propose multicast ip set by #linphone_core_set_video_multicast_addr()
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bool_t linphone_call_params_video_multicast_enabled(const LinphoneCallParams *params);
@@ -483,7 +483,7 @@ LINPHONE_PUBLIC void linphone_call_params_clear_custom_sdp_media_attributes(Linp
 /**
  * Gets a list of #LinphoneContent set if exists
  * @param params The #LinphoneCallParams to get the custom Content from. @notnil
- * @return \bctbx_list{LinphoneContent} A list of #LinphoneContent set if exists, NULL otherwise. @maybenil
+ * @return A list of #LinphoneContent set if exists, NULL otherwise. \bctbx_list{LinphoneContent}  @maybenil
  * @ingroup media_parameters
 **/
 LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_custom_contents (const LinphoneCallParams *params);

@@ -228,7 +228,7 @@ TAB_SIZE               = 8
 # "Side Effects:". You can put \n's in the value part of an alias to insert
 # newlines.
 
-ALIASES                = bctbx_list{1}="A list of \ref \1 objects. \xmlonly <bctbxlist>\1</bctbxlist> \endxmlonly"
+ALIASES                = bctbx_list{1}="\xmlonly<bctbxlist>\1</bctbxlist>\endxmlonly"
 ALIASES               += donotwrap="\xmlonly <donotwrap /> \endxmlonly"
 ALIASES               += maybenil="\xmlonly <maybenil /> \endxmlonly"
 ALIASES               += notnil="\xmlonly <notnil /> \endxmlonly"

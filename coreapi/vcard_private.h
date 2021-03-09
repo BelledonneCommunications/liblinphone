@@ -63,7 +63,7 @@ LINPHONE_PUBLIC void linphone_vcard_context_set_user_data(LinphoneVcardContext *
  * Uses belcard to parse the content of a file and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
  * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] file the path to the file to parse
- * @return \bctbx_list{LinphoneVcard}
+ * @return A list of VCards. \bctbx_list{LinphoneVcard}
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(LinphoneVcardContext *context, const char *file);
 
@@ -71,7 +71,7 @@ LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_file(Li
  * Uses belcard to parse the content of a buffer and returns all the vcards it contains as LinphoneVcards, or NULL if it contains none.
  * @param[in] context the vCard context to use (speed up the process by not creating a Belcard parser each time)
  * @param[in] buffer the buffer to parse
- * @return \bctbx_list{LinphoneVcard}
+ * @return A list of VCards. \bctbx_list{LinphoneVcard}
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_vcard_context_get_vcard_list_from_buffer(LinphoneVcardContext *context, const char *buffer);
 

@@ -34,7 +34,7 @@ import metadoc
 import metaname
 
 
-class SwiftTranslator(object):
+class SwiftTranslator:
     def __init__(self):
         self.ignore = []
         self.nameTranslator = metaname.Translator.get('Swift')
@@ -483,25 +483,25 @@ class SwiftTranslator(object):
 
 ##########################################################################
 
-class EnumImpl(object):
+class EnumImpl:
     def __init__(self, enum, translator):
         namespace = enum.find_first_ancestor_by_type(AbsApi.Namespace)
         self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
         self.enum = translator.translate_enum(enum)
 
-class ClassImpl(object):
+class ClassImpl:
     def __init__(self, _class, translator):
         namespace = _class.find_first_ancestor_by_type(AbsApi.Namespace)
         self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
         self._class = translator.translate_class(_class)
 
-class InterfaceImpl(object):
+class InterfaceImpl:
     def __init__(self, interface, translator):
         namespace = interface.find_first_ancestor_by_type(AbsApi.Namespace)
         self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
         self.interface = translator.translate_interface(interface)
 
-class WrapperImpl(object):
+class WrapperImpl:
     def __init__(self, version, enums, interfaces, classes):
         self.version = version
         self.enums = enums

@@ -36,7 +36,7 @@ import metadoc
 import metaname
 
 
-class CppTranslator(object):
+class CppTranslator:
 	sharedPtrTypeExtractor = re.compile('^(const )?std::shared_ptr<(.+)>( &)?$')
 	
 	def __init__(self, rootNs=None):
@@ -332,7 +332,7 @@ class CppTranslator(object):
 		raise AbsApi.Error('Cannot translate {0} type'.format(type(obj)))
 
 
-class EnumsHeader(object):
+class EnumsHeader:
 	def __init__(self, translator):
 		self.translator = translator
 		self.enums = []
@@ -341,7 +341,7 @@ class EnumsHeader(object):
 		self.enums.append(self.translator.translate_enum(enum))
 
 
-class ClassHeader(object):
+class ClassHeader:
 	def __init__(self, _class, translator):
 		if type(_class) is AbsApi.Class:
 			self._class = translator.translate_class(_class)
@@ -423,7 +423,7 @@ class ClassHeader(object):
 			self.priorDeclarations.append({'declaration': decl})
 
 
-class MainHeader(object):
+class MainHeader:
 	def __init__(self):
 		self.includes = []
 		self.define = '_LINPHONE_HH'
@@ -432,12 +432,12 @@ class MainHeader(object):
 		self.includes.append({'name': include})
 
 
-class ClassImpl(object):
+class ClassImpl:
 	def __init__(self):
 		self.classes = []
 		self.namespace = 'linphone'
 
-class GenWrapper(object):
+class GenWrapper:
 	def __init__(self, includedir, srcdir, xmldir):
 		self.includedir = includedir
 		self.srcdir = srcdir
