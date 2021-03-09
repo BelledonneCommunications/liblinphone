@@ -90,7 +90,8 @@ class CsharpTranslator:
 		methodDict = {}
 		methodDict['prototype'] = "static extern {return} {name}({params});".format(**methodElems)
 
-		methodDict['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		methodDict['briefDoc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+		methodDict['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
 
 		methodDict['has_impl'] = genImpl
 		if genImpl:
@@ -294,6 +295,10 @@ class CsharpTranslator:
 			listenerDict['delegate']['params_private'] += dllImportType + " " + argName
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter
+
+		listenerDict['delegate']['briefDoc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+		listenerDict['delegate']['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
+		
 		return listenerDict
 
 ###########################################################################################################################################
@@ -301,7 +306,8 @@ class CsharpTranslator:
 	def translate_enum(self, enum):
 		enumDict = {}
 		enumDict['enumName'] = enum.name.translate(self.nameTranslator)
-		enumDict['doc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		enumDict['briefDoc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		enumDict['detailedDoc'] = enum.detailedDescription.translate(self.docTranslator)
 		enumDict['values'] = []
 		enumDict['isFlag'] = False
 		i = 0
@@ -309,7 +315,8 @@ class CsharpTranslator:
 		for enumValue in enum.enumerators:
 			enumValDict = {}
 			enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
-			enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+			enumValDict['briefDoc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+			enumValDict['detailedDoc'] = enumValue.detailedDescription.translate(self.docTranslator)
 			if isinstance(enumValue.value, int):
 				lastValue = enumValue.value
 				enumValDict['value'] = str(enumValue.value)
@@ -335,7 +342,8 @@ class CsharpTranslator:
 		classDict['isLinphoneFactory'] = classDict['className'] == "Factory"
 		classDict['isLinphoneCall'] = _class.name.to_camel_case() == "Call"
 		classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
-		classDict['doc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		classDict['briefDoc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		classDict['detailedDoc'] = _class.detailedDescription.translate(self.docTranslator)
 		classDict['dllImports'] = []
 
 		islistenable = _class.listenerInterface is not None
@@ -382,6 +390,8 @@ class CsharpTranslator:
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
 		interfaceDict['set_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_user_data'
 		interfaceDict['get_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_get_user_data'
+		interfaceDict['briefDoc'] = interface.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		interfaceDict['detailedDoc'] = interface.detailedDescription.translate(self.docTranslator)
 
 		interfaceDict['methods'] = []
 		for method in interface.instanceMethods:
