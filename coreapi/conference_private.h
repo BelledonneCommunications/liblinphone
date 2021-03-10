@@ -149,7 +149,6 @@ public:
 
 	virtual void onConferenceTerminated (const IdentityAddress &addr) override;
 
-	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 	void checkIfTerminated();
 
 	void setID(const std::string &conferenceID) {
@@ -160,6 +159,7 @@ public:
 	}
 
 	void setConferenceAddress (const ConferenceAddress &conferenceAddress);
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 protected:
 	void setConferenceId (const ConferenceId &conferenceId);
@@ -225,6 +225,8 @@ public:
 
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
+
 private:
 
 	void chooseAnotherAdminIfNoneInConference();
@@ -279,6 +281,8 @@ public:
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 	virtual void setSubject (const std::string &subject) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
+
+	virtual void notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) override;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<RemoteConferenceEventHandler> eventHandler;
