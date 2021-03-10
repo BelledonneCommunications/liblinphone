@@ -110,9 +110,12 @@ bool Conference::addParticipant (const IdentityAddress &participantAddress) {
 	bool success = LinphonePrivate::Conference::addParticipant(participantAddress);
 
 	if (success == true) {
+		lInfo() << "Participant with address " << participantAddress << " has been added to conference " << getConferenceAddress();
 		time_t creationTime = time(nullptr);
 		std::shared_ptr<LinphonePrivate::Participant> p = findParticipant(participantAddress);
 		notifyParticipantAdded(creationTime, false, p);
+	} else {
+		lError() << "Unable to add participant with address " << participantAddress << " to conference " << getConferenceAddress();
 	}
 
 	return 0;
@@ -140,8 +143,11 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 	bool success = addParticipantDevice(call);
 
 	if (success) {
+		lInfo() << "Participant with address " << call->getRemoteContact() << " has been added to conference " << getConferenceAddress();
 		time_t creationTime = time(nullptr);
 		notifyParticipantAdded(creationTime, false, p);
+	} else {
+		lError() << "Unable to add participant with address " << call->getRemoteContact() << " to conference " << getConferenceAddress();
 	}
 	return success;
 }
@@ -385,8 +391,6 @@ LocalConference::LocalConference (
 	}
 #endif // HAVE_ADVANCED_IM
 
-	confParams->enableLocalParticipant(true);
-
 	setState(ConferenceInterface::State::Instantiated);
 	mMixerSession.reset(new MixerSession(*core.get()));
 
@@ -469,7 +473,7 @@ void LocalConference::onConferenceTerminated (const IdentityAddress &addr) {
 }
 
 void LocalConference::addLocalEndpoint () {
-	if (!confParams->localParticipantEnabled()) return;
+	confParams->enableLocalParticipant(true);
 	
 	StreamMixer *mixer = mMixerSession->getMixerByType(SalAudio);
 	if (mixer) mixer->enableLocalParticipant(true);
@@ -485,7 +489,10 @@ void LocalConference::addLocalEndpoint () {
 			}
 		}
 	}
-	mIsIn = true;
+
+	time_t creationTime = time(nullptr);
+	notifyParticipantAdded(creationTime, false, getMe());
+
 }
 
 int LocalConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
@@ -544,7 +551,6 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 	// Add participant only if creation is successful
 	bool canAddParticipant = (getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created);
 	if (canAddParticipant) {
-		confParams->enableLocalParticipant(true);
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
 		const Address & conferenceAddress = getConferenceAddress().asAddress();
@@ -600,14 +606,14 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 			L_GET_PRIVATE_FROM_C_OBJECT(getCore()->getCCore())->setCurrentCall(nullptr);
 		mMixerSession->joinStreamsGroup(call->getMediaSession()->getStreamsGroup());
 		Conference::addParticipant(call);
-		setState(ConferenceInterface::State::Created);
 		if (localEndpointCanBeAdded){
 			/*
 			 * This needs to be done at the end, to ensure that the call in StreamsRunning state has released the local
 			 * resources (mic and camera), which is done during the joinStreamsGroup() step.
 			 */
-			addLocalEndpoint();
+			enter();
 		}
+		setState(ConferenceInterface::State::Created);
 		return true;
 	}
 
@@ -617,9 +623,9 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 }
 
 bool LocalConference::addParticipant (const IdentityAddress &participantAddress) {
-	confParams->enableLocalParticipant(true);
 	bool success = Conference::addParticipant(participantAddress);
 	setState(ConferenceInterface::State::Created);
+	enter();
 	return success;
 }
 
@@ -797,29 +803,25 @@ int LocalConference::enter () {
 	if (linphone_core_get_current_call(getCore()->getCCore()))
 		linphone_call_pause(linphone_core_get_current_call(getCore()->getCCore()));
 
-	confParams->enableLocalParticipant(true);
-	addLocalEndpoint();
-
-	time_t creationTime = time(nullptr);
-	notifyParticipantAdded(creationTime, false, getMe());
+	if (!isIn()) {
+		addLocalEndpoint();
+	}
 
 	return 0;
 }
 
 void LocalConference::removeLocalEndpoint () {
+	confParams->enableLocalParticipant(false);
 	mMixerSession->enableLocalParticipant(false);
-	mIsIn = false;
+
+	time_t creationTime = time(nullptr);
+	notifyParticipantRemoved(creationTime, false, getMe());
 }
 
 void LocalConference::leave () {
 	if (isIn()) {
 		lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress();
-		confParams->enableLocalParticipant(false);
 		removeLocalEndpoint();
-
-		time_t creationTime = time(nullptr);
-		notifyParticipantRemoved(creationTime, false, getMe());
-
 	}
 }
 
@@ -882,7 +884,7 @@ int LocalConference::stopRecording () {
 }
 
 bool LocalConference::isIn() const{
-	return mIsIn;
+	return confParams->localParticipantEnabled();
 }
 
 AudioControlInterface *LocalConference::getAudioControlInterface()const{
