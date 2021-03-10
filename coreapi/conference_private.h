@@ -233,7 +233,6 @@ private:
 	void addLocalEndpoint();
 	void removeLocalEndpoint();
 	std::unique_ptr<MixerSession> mMixerSession;
-	bool mIsIn = false;
 
 #ifdef HAVE_ADVANCED_IM
 	std::shared_ptr<LocalAudioVideoConferenceEventHandler> eventHandler;
