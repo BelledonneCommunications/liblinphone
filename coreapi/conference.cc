@@ -296,8 +296,6 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 }
 
 void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
-	// Call callbacks before calling listeners because listeners may change state
-	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
 	// Call listeners
 	LinphonePrivate::Conference::notifyStateChanged(state);
 }
@@ -427,6 +425,13 @@ LocalConference::~LocalConference() {
 	eventHandler.reset();
 #endif // HAVE_ADVANCED_IM
 	mMixerSession.reset();
+}
+
+void LocalConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+	// Call callbacks before calling listeners because listeners may change state
+	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
+
+	Conference::notifyStateChanged (state);
 }
 
 void LocalConference::finalizeCreation() {
@@ -1067,6 +1072,13 @@ void RemoteConference::finalizeCreation() {
 	} else {
 		lError() << "Cannot finalize creation of Conference in state " << getState();
 	}
+}
+
+void RemoteConference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
+	// Call callbacks before calling listeners because listeners may change state
+	linphone_core_notify_conference_state_changed(getCore()->getCCore(), toC(), (LinphoneConferenceState)getState());
+
+	Conference::notifyStateChanged (state);
 }
 
 int RemoteConference::inviteAddresses (const list<const LinphoneAddress *> &addresses, const LinphoneCallParams *params) {
