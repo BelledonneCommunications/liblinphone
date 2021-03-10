@@ -67,7 +67,6 @@ Conference::Conference(
 	{
 
 	addListener(std::make_shared<NotifyConferenceListener>(this));
-	setState(ConferenceInterface::State::Instantiated);
 
 	// Video is already enable in the conference params constructor
 	confParams->enableAudio(true);
@@ -982,6 +981,8 @@ RemoteConference::RemoteConference (
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, conferenceId.getLocalAddress(), listener, params){
 
+	setState(ConferenceInterface::State::Instantiated);
+
 	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
 	// Local conference sets last notify to 1 in its constructor
 //	lastNotify = 0;
@@ -1011,6 +1012,8 @@ RemoteConference::RemoteConference (
 	CallSessionListener *listener,
 	const std::shared_ptr<LinphonePrivate::ConferenceParams> params) :
 	Conference(core, conferenceId.getLocalAddress(), listener, params){
+
+	setState(ConferenceInterface::State::Instantiated);
 
 	// Set last notify to 0 in order to ensure that the 1st notify from local conference is correctly processed
 	// Local conference sets last notify to 1 in its constructor
