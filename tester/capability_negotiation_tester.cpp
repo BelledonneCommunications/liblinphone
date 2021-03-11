@@ -2025,101 +2025,138 @@ static void zrtp_call_with_potential_configuration_same_as_actual_configuration(
 	call_with_potential_configuration_same_as_actual_configuration_base(LinphoneMediaEncryptionZRTP);
 }
 
-static void simple_call_with_capability_negotiations(const LinphoneMediaEncryption optionalEncryption, bool_t encrypted) {
-	LinphoneCoreManager* marie = linphone_core_manager_new((encrypted) ? "marie_rc" : "marie_zrtp_srtpsuite_unencrypted_rc");
-	linphone_core_set_support_capability_negotiation(marie->lc, 1);
-
-	LinphoneCoreManager* pauline = linphone_core_manager_new((encrypted) ? (transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc") : "pauline_zrtp_srtpsuite_unencrypted_rc");
-	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
-
+static void simple_call_with_capability_negotiations(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption) {
+	linphone_core_set_support_capability_negotiation(caller->lc, 1);
+	linphone_core_set_support_capability_negotiation(callee->lc, 1);
 	bctbx_list_t * encryption_list = NULL;
 	encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(optionalEncryption))));
 
-	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(pauline->lc,optionalEncryption));
-	if (linphone_core_media_encryption_supported(pauline->lc,optionalEncryption)) {
-		linphone_core_set_media_encryption_mandatory(pauline->lc,0);
-		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
-		linphone_core_set_supported_media_encryptions(pauline->lc,encryption_list);
-		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, optionalEncryption));
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(callee->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(callee->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(callee->lc,0);
+		linphone_core_set_media_encryption(callee->lc,LinphoneMediaEncryptionNone);
+		linphone_core_set_supported_media_encryptions(callee->lc,encryption_list);
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(callee->lc, optionalEncryption));
 	}
 
-	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,optionalEncryption));
-	if (linphone_core_media_encryption_supported(marie->lc,optionalEncryption)) {
-		linphone_core_set_media_encryption_mandatory(marie->lc,0);
-		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
-		linphone_core_set_supported_media_encryptions(marie->lc,encryption_list);
-		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(caller->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(caller->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(caller->lc,0);
+		linphone_core_set_media_encryption(caller->lc,LinphoneMediaEncryptionNone);
+		linphone_core_set_supported_media_encryptions(caller->lc,encryption_list);
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(caller->lc, optionalEncryption));
 	}
 
 	if (encryption_list) {
 		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
 	}
 
-	encrypted_call_base(marie, pauline, optionalEncryption, TRUE, TRUE, FALSE);
+	encrypted_call_base(caller, callee, optionalEncryption, TRUE, TRUE, FALSE);
+}
 
+static void simple_srtp_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
-static void simple_srtp_call_with_capability_negotiations(void) {
-	simple_call_with_capability_negotiations(LinphoneMediaEncryptionSRTP, FALSE);
+static void unencrypted_srtp_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
-static void unencrypted_srtp_call_with_capability_negotiations(void) {
-	simple_call_with_capability_negotiations(LinphoneMediaEncryptionSRTP, TRUE);
+static void srtp_call_with_capability_negotiations_caller_unencrypted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void srtp_call_with_capability_negotiations_callee_unencrypted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_zrtp_call_with_capability_negotiations(void) {
-	simple_call_with_capability_negotiations(LinphoneMediaEncryptionZRTP, FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void simple_dtls_srtp_call_with_capability_negotiations(void) {
-	simple_call_with_capability_negotiations(LinphoneMediaEncryptionDTLS, FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionDTLS);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
-static void srtp_call_with_suite_mismatch_and_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
-	linphone_core_set_support_capability_negotiation(marie->lc, 1);
+static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption) {
 
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	linphone_core_set_support_capability_negotiation(pauline->lc, 1);
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(callee->lc,optionalEncryption));
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(caller->lc,optionalEncryption));
 
 	bctbx_list_t * encryption_list = NULL;
 	encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(optionalEncryption))));
 
-	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(pauline->lc,optionalEncryption));
-	if (linphone_core_media_encryption_supported(pauline->lc,optionalEncryption)) {
-		linphone_core_set_media_encryption_mandatory(pauline->lc,0);
-		linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionNone);
-		linphone_core_set_supported_media_encryptions(pauline->lc,encryption_list);
-		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(pauline->lc, optionalEncryption));
-	}
+	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (caller_params, TRUE);
+	linphone_call_params_set_supported_encryptions(caller_params,encryption_list);
+	linphone_call_params_enable_mandatory_media_encryption(caller_params,0);
+	linphone_call_params_set_media_encryption(caller_params,LinphoneMediaEncryptionNone);
+	BC_ASSERT_TRUE(linphone_call_params_is_media_encryption_supported(caller_params, optionalEncryption));
 
-	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,optionalEncryption));
-	if (linphone_core_media_encryption_supported(marie->lc,optionalEncryption)) {
-		linphone_core_set_media_encryption_mandatory(marie->lc,0);
-		linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionNone);
-		linphone_core_set_supported_media_encryptions(marie->lc,encryption_list);
-		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(marie->lc, optionalEncryption));
-	}
+	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
+	linphone_call_params_enable_capability_negotiations (callee_params, TRUE);
+	linphone_call_params_set_supported_encryptions(callee_params,encryption_list);
+	linphone_call_params_enable_mandatory_media_encryption(callee_params,0);
+	linphone_call_params_set_media_encryption(callee_params,LinphoneMediaEncryptionNone);
+	BC_ASSERT_TRUE(linphone_call_params_is_media_encryption_supported(callee_params, optionalEncryption));
 
 	if (encryption_list) {
 		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
 	}
 
-	LinphoneCallParams *caller_params = linphone_core_create_call_params(caller->lc, NULL);
-	linphone_call_params_enable_capability_negotiations (caller_params, enable_caller_capability_negotiations);
-	LinphoneCallParams *callee_params = linphone_core_create_call_params(callee->lc, NULL);
-	linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
 
 	BC_ASSERT_FALSE(call_with_params(caller, callee, caller_params, callee_params));
 
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
+}
 
+static void srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_aes256_rc");
+	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
+}
 
+static void srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
+	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_call_with_suite_mismatch_and_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
 }
 
 static void call_with_no_encryption(void) {
@@ -2375,7 +2412,10 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Back to back call with capability negotiations on both sides", back_to_back_calls_cap_neg_both_sides),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
-	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations", srtp_call_with_suite_mismatch_and_capability_negotiations),
+	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
+	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
+	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (caller unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted),
+	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (callee unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted),
 	TEST_NO_TAG("SRTP call with different encryptions in call params", srtp_call_with_encryption_supported_in_call_params_only),
 	TEST_NO_TAG("SRTP call started with video and capability negotiation", srtp_call_with_video_and_capability_negotiation),
 	TEST_NO_TAG("SRTP call with potential configuration same as actual one", srtp_call_with_potential_configuration_same_as_actual_configuration),
@@ -2412,6 +2452,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on callee", dtls_srtp_video_call_with_optional_encryption_on_callee, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on both sides", dtls_srtp_video_call_with_optional_encryption_on_both_sides, "DTLS"),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
+	TEST_NO_TAG("ZRTP call with suite mismatch and capability negotiations", zrtp_call_with_suite_mismatch_and_capability_negotiations),
 	TEST_NO_TAG("ZRTP call with different encryptions in call params", zrtp_call_with_encryption_supported_in_call_params_only),
 	TEST_NO_TAG("ZRTP call started with video and capability negotiation", zrtp_call_with_video_and_capability_negotiation),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
