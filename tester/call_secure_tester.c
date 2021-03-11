@@ -45,6 +45,13 @@ static void srtp_call_with_different_crypto_suite(void) {
 	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "laure_tcp_rc", "marie_rc");
 }
 
+static void srtp_call_with_crypto_suite_parameters(void) {
+	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "pauline_zrtp_srtpsuite_unencrypted_rc", "marie_zrtp_srtpsuite_unencrypted_rc");
+	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, "pauline_zrtp_srtpsuite_unencrypted_rc", "marie_rc");
+	call_base_with_configfile(LinphoneMediaEncryptionSRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE, (transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), "marie_zrtp_srtpsuite_unencrypted_rc");
+}
+
+
 static void zrtp_call(void) {
 	call_base(LinphoneMediaEncryptionZRTP,FALSE,FALSE,LinphonePolicyNoFirewall,FALSE);
 }
@@ -588,6 +595,7 @@ static void dtls_srtp_audio_call_with_rtcp_mux(void) {
 test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call", srtp_call),
 	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
+	TEST_NO_TAG("SRTP call with crypto suite parameters", srtp_call_with_crypto_suite_parameters),
 	TEST_NO_TAG("ZRTP call", zrtp_call),
 	TEST_NO_TAG("ZRTP silent call", zrtp_silent_call),
 	TEST_NO_TAG("ZRTP SAS call", zrtp_sas_call),
