@@ -79,6 +79,10 @@ static void linphone_version_test(void){
 	/*make sure the git version is always included in the version number*/
 	BC_ASSERT_PTR_NOT_NULL(version);
 	BC_ASSERT_PTR_NULL(strstr(version,"unknown"));
+	linphone_logging_service_set_domain(linphone_logging_service_get(),"test");
+	linphone_logging_service_set_log_level_mask(linphone_logging_service_get(), LinphoneLogLevelTrace);
+	linphone_logging_service_trace(linphone_logging_service_get(),"httpd_username=test-stefano%40nopmail.com");
+
 }
 
 static void core_init_test(void) {
