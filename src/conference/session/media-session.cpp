@@ -1987,7 +1987,7 @@ void MediaSessionPrivate::startAccept(){
 		callConference = listener->getCallSessionConference(q->getSharedFromThis());
 	}
 	LinphoneConference * coreConference = linphone_core_get_conference(q->getCore()->getCCore());
-	// If the core in a conference, request to empty sound resources only if the call is in a difference conference or the call is not part of a conference
+	// If the core in a conference, request to empty sound resources only if the call is in a different conference or the call is not part of a conference
 	bool isThisNotCurrentConference = isCoreInLocalConference && (!callConference || (callConference != coreConference));
 
 	// Try to preempt sound resources if the core is in a call or conference that are not the current ones
