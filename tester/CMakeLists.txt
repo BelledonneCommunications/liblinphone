@@ -156,6 +156,7 @@ set(RC_FILES
 	rcfiles/marie_zrtp_ecdh255_rc
 	rcfiles/marie_zrtp_ecdh448_rc
 	rcfiles/marie_zrtp_srtpsuite_aes256_rc
+	rcfiles/marie_zrtp_srtpsuite_unencrypted_rc
 	rcfiles/michelle_rc
 	rcfiles/michelle_rc_udp
 	rcfiles/multi_account_rc
@@ -181,6 +182,7 @@ set(RC_FILES
 	rcfiles/pauline_zrtp_ecdh255_rc
 	rcfiles/pauline_zrtp_ecdh448_rc
 	rcfiles/pauline_zrtp_srtpsuite_aes256_rc
+	rcfiles/pauline_zrtp_srtpsuite_unencrypted_rc
 	rcfiles/remote_zero_length_params_rc
 	rcfiles/stun_rc
 	rcfiles/zero_length_params_rc
@@ -272,6 +274,8 @@ set(SOURCE_FILES_CXX
 	clonable-object-tester.cpp
 	call_video_tester.cpp
 	call_ice_tester.cpp
+	capability_negotiation_tester.cpp
+	ice_capability_negotiation_tester.cpp
 	contents-tester.cpp
 	cpim-tester.cpp
 	multipart-tester.cpp
@@ -294,6 +298,7 @@ endif()
 set(HEADER_FILES
 	audio_quality_tester.h
 	shared_tester_functions.h
+	capability_negotiation_tester.h
 	liblinphone_tester.h
 	tools/private-access.h
 	tools/tester.h

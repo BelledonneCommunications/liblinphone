@@ -664,6 +664,7 @@ LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
 
 void linphone_core_invalidate_friends_maps(LinphoneCore *lc);
+bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time();
 
 // The following methods are private and they allow a conversion from conference state enum to chat room state enum and viceversa.
 // This allows to easily go from one type to another one ensuring that they are synchronized and ease debugging in case they are not

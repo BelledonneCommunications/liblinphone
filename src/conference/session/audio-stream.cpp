@@ -47,39 +47,44 @@ LINPHONE_BEGIN_NAMESPACE
 MS2AudioStream::MS2AudioStream(StreamsGroup &sg, const OfferAnswerContext &params) : MS2Stream(sg, params){
 	string bindIp = mPortConfig.multicastIp.empty() ? getBindIp() : mPortConfig.multicastIp;
 	mStream = audio_stream_new2(getCCore()->factory, bindIp.empty() ? nullptr : bindIp.c_str(), mPortConfig.rtpPort, mPortConfig.rtcpPort);
+	isOfferer = params.localIsOfferer;
 	mStream->disable_record_on_mute = getCCore()->sound_conf.disable_record_on_mute;
 	
-	/* Initialize zrtp even if we didn't explicitely set it, just in case peer offers it */
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP)) {
-		LinphoneCallLog *log = getMediaSession().getLog();
-		const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
-		const LinphoneAddress *selfAddr = linphone_call_log_get_local_address(log);
-		char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
-													, linphone_address_get_username(peerAddr)
-													, linphone_address_get_domain(peerAddr));
-		char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
-													, linphone_address_get_username(selfAddr)
-													, linphone_address_get_domain(selfAddr));
-
-		MSZrtpParams zrtpParams;
-		zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());
-
-		memset(&zrtpParams, 0, sizeof(MSZrtpParams));
-		/* media encryption of current params will be set later when zrtp is activated */
-		zrtpParams.zidCacheDB = zrtpCacheInfo.db;
-		zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
-		zrtpParams.peerUri = peerUri;
-		zrtpParams.selfUri = selfUri;
-		/* Get key lifespan from config file, default is 0:forever valid */
-		zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
-		setZrtpCryptoTypesParameters(&zrtpParams, params.localIsOfferer);
-		audio_stream_enable_zrtp(mStream, &zrtpParams);
-		if (peerUri)
-			ms_free(peerUri);
-		if (selfUri)
-			ms_free(selfUri);
+	/* initialize ZRTP if it supported as default encryption or as optional encryption and capability negotiation is enabled */
+	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP)) {
+		initZrtp();
 	}
 	initializeSessions((MediaStream*)mStream);
+}
+
+void MS2AudioStream::initZrtp() {
+	LinphoneCallLog *log = getMediaSession().getLog();
+	const LinphoneAddress *peerAddr = linphone_call_log_get_remote_address(log);
+	const LinphoneAddress *selfAddr = linphone_call_log_get_local_address(log);
+	char *peerUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(peerAddr)
+												, linphone_address_get_username(peerAddr)
+												, linphone_address_get_domain(peerAddr));
+	char *selfUri = ms_strdup_printf("%s:%s@%s"	, linphone_address_get_scheme(selfAddr)
+												, linphone_address_get_username(selfAddr)
+												, linphone_address_get_domain(selfAddr));
+
+	MSZrtpParams zrtpParams;
+	zrtpCacheAccess zrtpCacheInfo = linphone_core_get_zrtp_cache_access(getCCore());
+
+	memset(&zrtpParams, 0, sizeof(MSZrtpParams));
+	/* media encryption of current params will be set later when zrtp is activated */
+	zrtpParams.zidCacheDB = zrtpCacheInfo.db;
+	zrtpParams.zidCacheDBMutex = zrtpCacheInfo.dbMutex;
+	zrtpParams.peerUri = peerUri;
+	zrtpParams.selfUri = selfUri;
+	/* Get key lifespan from config file, default is 0:forever valid */
+	zrtpParams.limeKeyTimeSpan = bctbx_time_string_to_sec(linphone_config_get_string(linphone_core_get_config(getCCore()), "sip", "lime_key_validity", "0"));
+	setZrtpCryptoTypesParameters(&zrtpParams, isOfferer);
+	audio_stream_enable_zrtp(mStream, &zrtpParams);
+	if (peerUri)
+		ms_free(peerUri);
+	if (selfUri)
+		ms_free(selfUri);
 }
 
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
@@ -94,7 +99,9 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 				case MS_AES_128_NO_AUTH:
 					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
 					break;
-				case MS_NO_CIPHER_SHA1_80:
+				case MS_NO_CIPHER_SRTP_SHA1_80:
+				case MS_NO_CIPHER_SRTCP_SHA1_80:
+				case MS_NO_CIPHER_SRTP_SRTCP_SHA1_80:
 					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
 					break;
 				case MS_AES_128_SHA1_80:
@@ -132,7 +139,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 	/* ZRTP Autostart: avoid starting a ZRTP session before we got peer's lime Ik */
 	/* We MUST start if ZRTP is not active otherwise we break RFC compatibility */
 	/* When we are not offerer, we received the lime-Ik in SDP so we can start upon ZRTP Hello reception */
-	params->autoStart =  (getMediaSessionPrivate().getParams()->getMediaEncryption() != LinphoneMediaEncryptionZRTP) || (!localIsOfferer);
+	params->autoStart =  (getMediaSessionPrivate().getNegotiatedMediaEncryption() != LinphoneMediaEncryptionZRTP) || (!localIsOfferer);
 }
 
 void MS2AudioStream::configureAudioStream(){
@@ -248,11 +255,11 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		getMediaSessionPrivate().getCurrentParams()->getPrivate()->setUsedAudioCodec(rtp_profile_get_payload(audioProfile, usedPt));
 	}
 
-	if (stream.dir == SalStreamSendOnly)
+	if (stream.getDirection() == SalStreamSendOnly)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendOnly);
-	else if (stream.dir == SalStreamRecvOnly)
+	else if (stream.getDirection() == SalStreamRecvOnly)
 		media_stream_set_direction(&mStream->ms, MediaStreamRecvOnly);
-	else if (stream.dir == SalStreamSendRecv)
+	else if (stream.getDirection() == SalStreamSendRecv)
 		media_stream_set_direction(&mStream->ms, MediaStreamSendRecv);
 
 	AudioDevice *outputAudioDevice = getMediaSessionPrivate().getCurrentOutputAudioDevice();
@@ -286,7 +293,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	string playfile = L_C_TO_STRING(getCCore()->play_file);
 	string recfile = L_C_TO_STRING(getCCore()->rec_file);
 	/* Don't use file or soundcard capture when placed in recv-only mode */
-	if ((stream.rtp_port == 0) || (stream.dir == SalStreamRecvOnly) || (stream.multicast_role == SalMulticastReceiver)) {
+	if ((stream.rtp_port == 0) || (stream.getDirection() == SalStreamRecvOnly) || (stream.multicast_role == SalMulticastReceiver)) {
 		captcard = nullptr;
 		playfile = "";
 	}
@@ -327,10 +334,10 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	configureAudioStream();
 	bool useEc = captcard && linphone_core_echo_cancellation_enabled(getCCore());
 	audio_stream_enable_echo_canceller(mStream, useEc);
-	if (playcard && (stream.max_rate > 0))
-		ms_snd_card_set_preferred_sample_rate(playcard, stream.max_rate);
-	if (captcard && (stream.max_rate > 0))
-		ms_snd_card_set_preferred_sample_rate(captcard, stream.max_rate);
+	if (playcard && (stream.getMaxRate() > 0))
+		ms_snd_card_set_preferred_sample_rate(playcard, stream.getMaxRate());
+	if (captcard && (stream.getMaxRate() > 0))
+		ms_snd_card_set_preferred_sample_rate(captcard, stream.getMaxRate());
 	
 	if (!audioMixer && !getMediaSessionPrivate().getParams()->getRecordFilePath().empty()) {
 		audio_stream_mixed_record_open(mStream, getMediaSessionPrivate().getParams()->getRecordFilePath().c_str());
@@ -403,17 +410,18 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 	
 	if (audioMixer){
 		mConferenceEndpoint = ms_audio_endpoint_get_from_stream(mStream, TRUE);
-		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.dir == SalStreamRecvOnly));
+		audioMixer->connectEndpoint(this, mConferenceEndpoint, (stream.getDirection() == SalStreamRecvOnly));
 	}
 	getMediaSessionPrivate().getCurrentParams()->getPrivate()->setInConference(audioMixer != nullptr);
 	getMediaSessionPrivate().getCurrentParams()->enableLowBandwidth(getMediaSessionPrivate().getParams()->lowBandwidthEnabled());
 	
 	// Start ZRTP engine if needed : set here or remote have a zrtp-hash attribute
-	if (linphone_core_media_encryption_supported(getCCore(), LinphoneMediaEncryptionZRTP) && isMain()) {
+
+	if (getMediaSessionPrivate().isMediaEncryptionAccepted(LinphoneMediaEncryptionZRTP) && isMain()) {
 		getMediaSessionPrivate().performMutualAuthentication();
-		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getParams()->getMediaEncryption();
+		LinphoneMediaEncryption requestedMediaEncryption = getMediaSessionPrivate().getNegotiatedMediaEncryption();
 		// Start ZRTP: If requested (by local config or peer giving zrtp-hash in SDP, we shall start the ZRTP engine
-		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().haveZrtpHash == 1)) {
+		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().getChosenConfiguration().hasZrtpHash() == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
 			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
 			if (!params.localIsOfferer && params.getRemoteStreamDescription().hasLimeIk()) {
@@ -483,9 +491,15 @@ void MS2AudioStream::stop(){
 //To give a chance for auxilary secret to be used, primary channel (I.E audio) should be started either on 200ok if ZRTP is signaled by a zrtp-hash or when ACK is received in case calling side does not have zrtp-hash.
 void MS2AudioStream::startZrtpPrimaryChannel(const OfferAnswerContext &params) {
 	const auto & remote = params.getRemoteStreamDescription();
+	if (!mSessions.zrtp_context) {
+		initZrtp();
+		// Copy newly created zrtp context into mSessions
+		MediaStream *ms = getMediaStream();
+		media_stream_reclaim_sessions(ms, &mSessions);
+	}
 	audio_stream_start_zrtp(mStream);
-	if (remote.haveZrtpHash == 1) {
-		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.zrtphash, strlen((const char *)(remote.zrtphash)));
+	if (remote.getChosenConfiguration().hasZrtpHash() == 1) {
+		int retval = ms_zrtp_setPeerHelloHash(mSessions.zrtp_context, (uint8_t *)remote.getChosenConfiguration().getZrtpHash(), strlen((const char *)(remote.getChosenConfiguration().getZrtpHash())));
 		if (retval != 0)
 			lError() << "ZRTP hash mismatch 0x" << hex << retval;
 	}
