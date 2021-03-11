@@ -6,7 +6,7 @@ default_proxy=0
 ping_with_options=0
 
 composing_idle_timeout=1
-srtp_crypto_suites=MS_NO_CIPHER_SHA1_80,MS_AES_128_NO_AUTH
+srtp_crypto_suites= AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP
 
 [auth_info_0]
 username=marie
