@@ -269,6 +269,7 @@ bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &lo
 				result.algo = rc.algo;
 				/* We're answering an SDP offer. Supply our master key, associated with the remote supplied tag */
 				if (use_local_key) {
+
 					result.master_key = lc.master_key;
 					result.tag = rc.tag;
 					choosen_local_tag = lc.tag;
@@ -279,6 +280,7 @@ bool OfferAnswerEngine::matchCryptoAlgo(const std::vector<SalSrtpCryptoAlgo> &lo
 					result.tag = lc.tag;
 					choosen_local_tag = lc.tag;
 				}
+
 				return true;
 			}
 		}
@@ -701,7 +703,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			resultCfg.crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
 			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, true)) {
-				lInfo() <<  __func__ << "No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
+				lInfo() <<  __func__ << " No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
 				success = false;
 				return std::make_pair(resultCfg, success);
 			}
