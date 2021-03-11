@@ -599,6 +599,7 @@ const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc){
 
 	char *sep;
 	char *pos;
+	char *nameend;
 	char *nextpos;
 	char *params;
 	unsigned long found=0;
@@ -617,6 +618,10 @@ const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc){
 		params=strchr(pos,' '); /*look for params that arrive after crypto suite name*/
 		if (params){
 			while(*params==' ') ++params; /*strip parameters leading space*/
+		}
+		nameend=strchr(pos,' ');
+		if (nameend) {
+			*nameend='\0';
 		}
 		if (sep-pos>0){
 			MSCryptoSuiteNameParams np;
