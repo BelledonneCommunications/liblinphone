@@ -1252,10 +1252,10 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration 
 					// Erase all characters after | if it is found
 					if (sep != std::string::npos) cryptoEl.master_key.erase(cryptoEl.master_key.begin() + static_cast<long>(sep), cryptoEl.master_key.end());
 					cryptoEl.algo = cs;
-					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s'",
+					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s' parameters:'%s'",
 									cryptoEl.tag,
 									tmp,
-									cryptoEl.master_key.c_str() );
+									cryptoEl.master_key.c_str(), parameters );
 					cfg.crypto.push_back(cryptoEl);
 				}
 
