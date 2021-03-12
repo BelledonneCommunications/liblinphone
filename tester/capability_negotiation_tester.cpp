@@ -2094,6 +2094,62 @@ static void simple_zrtp_call_with_capability_negotiations(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
+static void zrtp_sas_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_b256_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_sas_call_with_capability_negotiations_default_keys_on_callee(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_b256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_cipher_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_aes256_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_cipher_call_with_capability_negotiations_aes256(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_aes256_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_call_with_different_cipher_suites_and_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void zrtp_key_agreement_call_with_capability_negotiations(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_ecdh255_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void simple_dtls_srtp_call_with_capability_negotiations(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -2147,14 +2203,6 @@ static void srtp_call_with_suite_mismatch_and_capability_negotiations_callee_une
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
 	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
-	linphone_core_manager_destroy(marie);
-	linphone_core_manager_destroy(pauline);
-}
-
-static void zrtp_call_with_suite_mismatch_and_capability_negotiations(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_aes256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_ecdh255_rc");
-	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2452,7 +2500,13 @@ test_t capability_negotiation_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on callee", dtls_srtp_video_call_with_optional_encryption_on_callee, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on both sides", dtls_srtp_video_call_with_optional_encryption_on_both_sides, "DTLS"),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
-	TEST_NO_TAG("ZRTP call with suite mismatch and capability negotiations", zrtp_call_with_suite_mismatch_and_capability_negotiations),
+	TEST_NO_TAG("ZRTP call with differet cipher suites and capability negotiations", zrtp_call_with_different_cipher_suites_and_capability_negotiations),
+	TEST_NO_TAG("ZRTP cipher call with capability negotiations default keys on callee", zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee),
+	TEST_NO_TAG("ZRTP cipher call with capability negotiations aes256", zrtp_cipher_call_with_capability_negotiations_aes256),
+	TEST_NO_TAG("ZRTP cipher call with capability negotiations", zrtp_cipher_call_with_capability_negotiations),
+	TEST_NO_TAG("ZRTP sas call with capability negotiations default keys on callee", zrtp_sas_call_with_capability_negotiations_default_keys_on_callee),
+	TEST_NO_TAG("ZRTP sas call with capability negotiations", zrtp_sas_call_with_capability_negotiations),
+	TEST_NO_TAG("ZRTP key agreement call with capability negotiations", zrtp_key_agreement_call_with_capability_negotiations),
 	TEST_NO_TAG("ZRTP call with different encryptions in call params", zrtp_call_with_encryption_supported_in_call_params_only),
 	TEST_NO_TAG("ZRTP call started with video and capability negotiation", zrtp_call_with_video_and_capability_negotiation),
 	TEST_NO_TAG("ZRTP call with potential configuration same as actual one", zrtp_call_with_potential_configuration_same_as_actual_configuration),
