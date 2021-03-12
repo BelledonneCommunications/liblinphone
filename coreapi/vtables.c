@@ -74,7 +74,7 @@ static void cleanup_dead_vtable_refs(LinphoneCore *lc){
 		}\
 	}\
 	lc->vtable_notify_recursion--;\
-	if (has_cb) ms_message("Linphone core [%p] notified [%s]",lc,#function_name)
+	if (has_cb) { ms_debug("Linphone core [%p] notified [%s]",lc,#function_name) }
 
 #define NOTIFY_IF_EXIST_INTERNAL(function_name, internal_val, ...) \
 	bctbx_list_t* iterator; \
