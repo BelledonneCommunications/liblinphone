@@ -1537,6 +1537,117 @@ bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &
 	return Conference::update(newParameters);
 }
 
+void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+	const IdentityAddress &pAddr = event->getParticipantAddress();
+	shared_ptr<Participant> confParticipant;
+	if (isMe(pAddr))
+		confParticipant = getMe();
+	else
+		confParticipant = findParticipant(pAddr);
+
+	if (!confParticipant) {
+		LinphonePrivate::Conference::addParticipant(pAddr);
+	} else {
+		lInfo() << "Ignoring notification of addition of participant with address " << pAddr << " because it is already part of conference " << getConferenceId();
+	}
+}
+
+void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+	const IdentityAddress &pAddr = event->getParticipantAddress();
+
+	shared_ptr<Participant> confParticipant;
+	if (isMe(pAddr))
+		confParticipant = getMe();
+	else
+		confParticipant = findParticipant(pAddr);
+
+	if (confParticipant) {
+		// Delete all devices of a participant
+		std::for_each(confParticipant->getDevices().cbegin(), confParticipant->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
+			LinphoneEvent * event = device->getConferenceSubscribeEvent();
+			if (event) {
+				//try to terminate subscription if any, but do not wait for answer.
+				LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
+				linphone_event_cbs_set_user_data(cbs, nullptr);
+				linphone_event_cbs_set_notify_response(cbs, nullptr);
+				linphone_event_terminate(event);
+			}
+		});
+		confParticipant->clearDevices();
+		participants.remove(confParticipant);
+	} else {
+		lInfo() << "Ignoring notification of removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceId();
+	}
+}
+
+void RemoteConference::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
+	const IdentityAddress &pAddr = event->getParticipantAddress();
+
+	shared_ptr<Participant> confParticipant;
+	if (isMe(pAddr))
+		confParticipant = getMe();
+	else
+		confParticipant = findParticipant(pAddr);
+
+	if (confParticipant) {
+		confParticipant->setAdmin(event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
+	} else {
+		lInfo() << "Ignoring notification of admin change for participant with address " << pAddr << " because it was not found in conference " << getConferenceId();
+	}
+}
+
+void RemoteConference::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event) {
+	confParams->setSubject(event->getSubject());
+}
+
+void RemoteConference::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	const IdentityAddress &pAddr = event->getParticipantAddress();
+	shared_ptr<Participant> participant;
+	if (isMe(pAddr))
+		participant = getMe();
+	else
+		participant = findParticipant(pAddr);
+
+	if (!participant) {
+		bool success = LinphonePrivate::Conference::addParticipant(pAddr);
+		if (success) {
+			participant = findParticipant(pAddr);
+		}
+	}
+
+	if (participant) {
+		const IdentityAddress &dAddr = event->getDeviceAddress();
+
+		const auto pDevice = participant->findDevice(dAddr);
+		if (!pDevice) {
+			lInfo() << "Adding device with address " << dAddr << " to participant " << pAddr;
+			participant->addDevice(dAddr);
+		}
+	} else {
+		lInfo() << "Unable to find participant with address " << pAddr << " in conference " << getConferenceId();
+	}
+}
+
+void RemoteConference::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
+	const IdentityAddress &pAddr = event->getParticipantAddress();
+	const IdentityAddress &dAddr = event->getDeviceAddress();
+	shared_ptr<Participant> participant;
+	if (isMe(pAddr))
+		participant = getMe();
+	else
+		participant = findParticipant(pAddr);
+
+	if (participant) {
+		participant->removeDevice(dAddr);
+		if (participant->getDevices().size() == 0) {
+			participant->clearDevices();
+			participants.remove(participant);
+		}
+	} else {
+		lInfo() << "Ignoring notification of removal of device " << dAddr << " because participant with address " << pAddr << " was not found in conference " << getConferenceId();
+	}
+}
+
 }//end of namespace MediaConference
 
 LINPHONE_END_NAMESPACE
