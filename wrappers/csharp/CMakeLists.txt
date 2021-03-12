@@ -24,7 +24,6 @@ add_custom_command(OUTPUT LinphoneWrapper.cs
 	COMMAND ${CMAKE_COMMAND} -E remove_directory "${CMAKE_INSTALL_DATADIR}/linphonecs/"
 	COMMAND ${PYTHON_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/genwrapper.py" "${PROJECT_BINARY_DIR}/coreapi/help/doc/doxygen/xml"
 	DEPENDS ${PROJECT_SOURCE_DIR}/tools/genapixml.py
-	${LINPHONE_HEADER_FILES}
 	${PROJECT_SOURCE_DIR}/tools/metadoc.py
 	${PROJECT_SOURCE_DIR}/tools/abstractapi.py
 	genwrapper.py
