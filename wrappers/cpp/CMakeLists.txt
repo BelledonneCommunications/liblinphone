@@ -43,6 +43,8 @@ add_library(linphone++ SHARED
 	tools.cc
 	${CMAKE_CURRENT_BINARY_DIR}/src/linphone++.cc
 )
+add_dependencies(linphone++ linphone-cxx-wrapper)
+
 if(APPLE)
 	set_target_properties(linphone++ PROPERTIES OUTPUT_NAME linphone++)
 else()
