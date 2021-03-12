@@ -2802,6 +2802,20 @@ void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManage
 	}
 }
 
+bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr) {
+	const MSCryptoSuite *callee_suites = linphone_core_get_srtp_crypto_suites(callee_mgr->lc);
+	const MSCryptoSuite *caller_suites = linphone_core_get_srtp_crypto_suites(caller_mgr->lc);
+	bool_t crypto_suite_found = FALSE;
+	if (caller_suites && callee_suites) {
+		for (size_t i = 0; (callee_suites != NULL) && (callee_suites[i] != MS_CRYPTO_SUITE_INVALID); i++) {
+			for (size_t j = 0; (caller_suites != NULL) && (caller_suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
+				crypto_suite_found |= (callee_suites[i] == caller_suites[j]);
+			}
+		}
+	}
+	return crypto_suite_found;
+}
+
 /*
  * CAUTION this function is error prone. you should not use it anymore in new tests.
  * Creating callee call params before the call is actually received is not the good way
@@ -2950,17 +2964,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			}
 		}
 		if (enc_check_result && (matched_enc == LinphoneMediaEncryptionSRTP)) {
-			const MSCryptoSuite *callee_suites = linphone_core_get_srtp_crypto_suites(callee_mgr->lc);
-			const MSCryptoSuite *caller_suites = linphone_core_get_srtp_crypto_suites(caller_mgr->lc);
-			bool_t crypto_suite_found = FALSE;
-			if (caller_suites && callee_suites) {
-				for (size_t i = 0; (callee_suites != NULL) && (callee_suites[i] != MS_CRYPTO_SUITE_INVALID); i++) {
-					for (size_t j = 0; (caller_suites != NULL) && (caller_suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-						crypto_suite_found |= (callee_suites[i] == caller_suites[j]);
-					}
-				}
-			}
-			enc_check_result = crypto_suite_found;
+			enc_check_result = search_matching_srtp_suite(caller_mgr, callee_mgr);
 		}
 
 		if (!enc_check_result) {
