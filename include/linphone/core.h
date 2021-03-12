@@ -3327,10 +3327,9 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
  *** Setting window id is only used to stop rendering by passing LINPHONE_VIDEO_DISPLAY_NONE.
  *** #linphone_core_get_native_preview_window_id will create and return a QQuickFramebufferObject::Renderer. It must be used to Qt in the QQuickFramebufferObject::createRenderer() overload.
  *
- * On Mobile, LINPHONE_VIDEO_DISPLAY_AUTO is not supported and `window_id` depends of the platform :
+ * On mobile operating systems, LINPHONE_VIDEO_DISPLAY_AUTO is not supported and `window_id` depends of the platform :
  ** iOS : It is a `UIView`
  ** Android : It is a `TextureView`.
- **
  *
  * @param core #LinphoneCore object @notnil
  * @param window_id The native window id where the remote video is to be displayed. @maybenil
@@ -3342,8 +3341,10 @@ LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core
  * see #linphone_core_set_native_video_window_id for details about `window_id`
  *
  * There is a special case for Qt :
- ** #linphone_core_get_native_preview_window_id will create and return a QQuickFramebufferObject::Renderer. It must be used to Qt in the QQuickFramebufferObject::createRenderer() overload.
- ** It is safe to call #linphone_core_iterate()while being in this Qt function.
+ ** #linphone_core_get_native_preview_window_id will create and return a QQuickFramebufferObject::Renderer. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** When retrieving a renderer from the preview, the render may not be ready and this function returns a NULL pointer in this case. You must Iterate one time from linphone core with #linphone_core_iterate to get the renderer with another call of #linphone_core_get_native_preview_window_id .
+ ** Qt blocks GUI thread when calling createRenderer(), so it is safe to call #linphone_core_iterate if you are running it in the GUI thread. If not, you need to protect the iteration from other threads.
+ *
  * @param core #LinphoneCore object @notnil
  * @return The native window handle of the video preview window. @maybenil
  * @ingroup media_parameters
