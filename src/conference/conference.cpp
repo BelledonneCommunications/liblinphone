@@ -23,6 +23,7 @@
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
+#include "core/core.h"
 #include "logger/logger.h"
 #include "participant.h"
 
@@ -396,7 +397,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
-		lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+			lDebug() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		} else {
+			lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		}
 		this->state = state;
 		notifyStateChanged(state);
 	}
