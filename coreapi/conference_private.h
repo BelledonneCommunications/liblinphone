@@ -276,7 +276,14 @@ public:
 
 	void notifyReceived (const std::string &body);
 
-	void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	virtual void onStateChanged(LinphonePrivate::ConferenceInterface::State state) override;
+	virtual void onParticipantAdded (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	virtual void onParticipantRemoved (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	virtual void onParticipantSetAdmin (const std::shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) override;
+	virtual void onSubjectChanged (const std::shared_ptr<ConferenceSubjectEvent> &event) override;
+	virtual void onParticipantDeviceAdded (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+	virtual void onParticipantDeviceRemoved (const std::shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) override;
+
 	virtual void setParticipantAdminStatus (const std::shared_ptr<LinphonePrivate::Participant> &participant, bool isAdmin) override;
 	virtual void setSubject (const std::string &subject) override;
 	virtual bool update(const ConferenceParamsInterface &params) override;
