@@ -382,7 +382,11 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
 	getConference()->setLastNotify(forceFullState ? 0 : lastNotifyId);
-	lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+		lDebug() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	} else {
+		lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	}
 
 	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(getConference())->eventHandler.get());
