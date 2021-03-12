@@ -245,7 +245,7 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	std::for_each(participant->getDevices().cbegin(), participant->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
 		LinphoneEvent * event = device->getConferenceSubscribeEvent();
 		if (event) {
-			//try to terminate subscription if any, but do not wait for anser.
+			//try to terminate subscription if any, but do not wait for answer.
 			LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
 			linphone_event_cbs_set_user_data(cbs, nullptr);
 			linphone_event_cbs_set_notify_response(cbs, nullptr);
@@ -652,7 +652,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 
 			if (preserveSession) {
 				CallSession::State sessionState = session->getState();
-				// If the session is already paused,then send anupdate to kick the participant out of the conference, pause the call otherwise
+				// If the session is already paused,then send an update to kick the participant out of the conference, pause the call otherwise
 				if (sessionState == CallSession::State::Paused) {
 					const MediaSessionParams * params = static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams();
 					MediaSessionParams *currentParams = params->clone();
@@ -664,7 +664,10 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 					const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
 							L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(session)->getMediaParams()))->setInConference(false);
 
-					err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseFromConference();
+					// If the call is in paused by remote state, then the remote participant temporarely left the conference
+					if (sessionState != CallSession::State::PausedByRemote) {
+						err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->pauseFromConference();
+					}
 				}
 			} else {
 				// Terminate session (i.e. send a BYE) as per RFC
@@ -691,7 +694,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		 * In this case, if the session linked to the participant has to be preserved after the conference, then destroy the conference and let these two participants to connect directly thanks to a simple call.
 		 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 		 */
-		if (getParticipantCount() == 1){
+		if ((getParticipantCount() == 1) && (!preserveSession)) {
 			std::shared_ptr<LinphonePrivate::Participant> remainingParticipant = participants.front();
 			if (remainingParticipant->isAdmin()) setParticipantAdminStatus(remainingParticipant, false);
 			const bool lastParticipantPreserveSession = remainingParticipant->getPreserveSession();

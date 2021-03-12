@@ -333,6 +333,17 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 	startReferredCall(nullptr);
 }
 
+void Call::reenterConference(const Address & remoteContactAddress) {
+	// Check if the request was sent by the focus
+	ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
+	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+
+	if (conference) {
+		setConference(conference->toC());
+		conference->addParticipant(getSharedFromThis());
+	}
+}
+
 void Call::removeFromConference(const Address & remoteContactAddress) {
 	if (getConference()) {
 		// Check if the request was sent by the focus
@@ -353,8 +364,8 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	if (isInConference()) {
 		// Remove participant from local conference
 		if (getConference()) {
-			lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-				MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
+			lInfo() << "Removing terminated call (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
+			MediaConference::Conference::toCpp(getConference())->removeParticipant(getActiveSession(), true);
 		}
 	} else {
 		// Searching remote conference to terminate it
@@ -400,11 +411,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			exitFromConference(session);
 
 			break;
-		case CallSession::State::Pausing:
-		case CallSession::State::Paused:
-			break;
-		case CallSession::State::PausedByRemote:
-		{
+		case CallSession::State::Resuming:
 			// If it is not in a conference, the remote conference must be terminated if it exists
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
@@ -417,9 +424,48 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						remoteContactAddress.setUriParam("conf-id", getConferenceId());
 					}
 				}
+				// If it is in a remote conference, then terminate it
 				if (!remoteContactAddress.hasParam("isfocus")) {
 					remoteContactAddress.setParam("isfocus");
-					removeFromConference(remoteContactAddress);
+					reenterConference(remoteContactAddress);
+				}
+			}
+			break;
+		case CallSession::State::Pausing:
+		case CallSession::State::Paused:
+			if (getConference() && !isInConference()) {
+				setConference(nullptr);
+			}
+			break;
+		case CallSession::State::PausedByRemote:
+		{
+			// If it is not in a conference, the remote conference must be terminated if it exists
+			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
+				auto conference = getConference();
+				if (conference) {
+					if (isInConference()) {
+						// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call
+						lInfo() << "Call in conference has been put on hold by remote device, hence remove participant " << getRemoteAddress()->asString() << " from conference " << MediaConference::Conference::toCpp(conference)->getConferenceId();
+						MediaConference::Conference::toCpp(conference)->removeParticipant (getActiveSession(), true);
+					} else {
+						// If a call in a remote conference is paused by the local conference, then it must exit the conference (i.e. terminate the remote conference)
+						// remote conference
+						char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+						Address remoteContactAddress(remoteContactAddressStr);
+						ms_free(remoteContactAddressStr);
+
+						// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
+						if (!remoteContactAddress.hasUriParam("conf-id")) {
+							if (getConferenceId().empty() == false) {
+								remoteContactAddress.setUriParam("conf-id", getConferenceId());
+							}
+						}
+						// If it is in a remote conference, then terminate it
+						if (!remoteContactAddress.hasParam("isfocus")) {
+							remoteContactAddress.setParam("isfocus");
+							removeFromConference(remoteContactAddress);
+						}
+					}
 				}
 			}
 		}
