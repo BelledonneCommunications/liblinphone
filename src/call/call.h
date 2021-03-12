@@ -264,6 +264,7 @@ public:
 
 	LinphoneConference *getConference () const;
 	void setConference (LinphoneConference *ref);
+	void reenterConference(const Address & remoteContactAddress);
 	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
