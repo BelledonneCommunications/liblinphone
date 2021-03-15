@@ -1120,11 +1120,9 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 			no_calls = 1;
 		}
 
-ms_message("%s - BEFORE core %s call end actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd,lcm_stats[idx].number_of_LinphoneCallEnd + no_calls);
 		// Wait for calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
-ms_message("%s - AFTER core %s call end actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd,lcm_stats[idx].number_of_LinphoneCallEnd + no_calls);
 
 		// Wait for all conferences to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + 1, 5000));
@@ -1134,9 +1132,7 @@ ms_message("%s - AFTER core %s call end actual %0d initial %0d expected %0d\n", 
 		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
 		// In case of a re-registration, the number of active subscriptions on the local conference side accounts the numbers of subscriptions before and after the re-registration
 		if ((m != conf_mgr) && (m->stat.number_of_LinphoneRegistrationOk == 1) && event_log_enabled) {
-ms_message("%s - BEFORE core %s subscription terminated actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneSubscriptionTerminated, lcm_stats[idx].number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + 1);
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + 1,10000));
-ms_message("%s - AFTER core %s subscription terminated actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneSubscriptionTerminated, lcm_stats[idx].number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + 1);
 		}
 
 		if ((m != conf_mgr) || ((m == conf_mgr) && (core_held_conference == TRUE))) {
