@@ -417,7 +417,10 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&presence_server_test_suite);
 	bc_tester_add_suite(&account_creator_xmlrpc_test_suite);
 	bc_tester_add_suite(&account_creator_local_test_suite);
+#ifdef HAVE_FLEXIAPI
+	bc_tester_add_suite(&flexiapiclient_suite);
 	bc_tester_add_suite(&account_creator_flexiapi_test_suite);
+#endif
 	bc_tester_add_suite(&stun_test_suite);
 	bc_tester_add_suite(&event_test_suite);
 #ifdef HAVE_ADVANCED_IM
@@ -432,7 +435,6 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&dtmf_test_suite);
 	bc_tester_add_suite(&cpim_test_suite);
 	bc_tester_add_suite(&multipart_test_suite);
-	bc_tester_add_suite(&flexiapiclient_suite);
 	bc_tester_add_suite(&clonable_object_test_suite);
 #ifdef HAVE_DB_STORAGE
 	bc_tester_add_suite(&main_db_test_suite);
