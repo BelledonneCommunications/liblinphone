@@ -333,10 +333,27 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 	startReferredCall(nullptr);
 }
 
-void Call::reenterConference(const Address & remoteContactAddress) {
-	// Check if the request was sent by the focus
-	ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+void Call::reenterLocalConference() {
+	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(getLocalAddress()));
+	// Search local conference to add the call to again
+	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), cAddress);
+	char * contactAddressStr = nullptr;
+	if (proxyCfg && proxyCfg->op) {
+		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	} else {
+		contactAddressStr = ms_strdup(linphone_core_find_best_identity(getCore()->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
+	}
+	Address contactAddress(contactAddressStr);
+	if (contactAddressStr) {
+		ms_free(contactAddressStr);
+	}
+
+	contactAddress.setUriParam("conf-id",getConferenceId());
+
+	ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
+	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
+
+lInfo() << "DEBUG found conference " << conference << " with conference ID " << localConferenceId << " in conference " << getCurrentParams()->getPrivate()->getInConference();
 
 	if (conference) {
 		setConference(conference->toC());
@@ -412,23 +429,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 			break;
 		case CallSession::State::Resuming:
-			// If it is not in a conference, the remote conference must be terminated if it exists
-			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
-				Address remoteContactAddress(remoteContactAddressStr);
-				ms_free(remoteContactAddressStr);
-
-				// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
-				if (!remoteContactAddress.hasUriParam("conf-id")) {
-					if (getConferenceId().empty() == false) {
-						remoteContactAddress.setUriParam("conf-id", getConferenceId());
-					}
-				}
-				// If it is in a remote conference, then terminate it
-				if (!remoteContactAddress.hasParam("isfocus")) {
-					remoteContactAddress.setParam("isfocus");
-					reenterConference(remoteContactAddress);
-				}
+			// If a non null conference ID is attached to the call, it means that it is or has been part of a conference
+			if ((session->getPreviousState() != CallSession::State::Paused) && (getConferenceId().empty() == false)) {
+				reenterLocalConference();
 			}
 			break;
 		case CallSession::State::Pausing:

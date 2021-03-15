@@ -2426,7 +2426,14 @@ LinphoneStatus MediaSession::pauseFromConference () {
 	updateContactAddress (contactAddress);
 	d->op->setContactAddress(contactAddress.getInternalAddress());
 
-	return pause();
+	int ret = 0;
+
+	// Do not pause call if it is already in paused by remote state
+	if (d->state != CallSession::State::PausedByRemote) {
+		ret = pause();
+	}
+
+	return ret;
 }
 
 LinphoneStatus MediaSession::pause () {
