@@ -162,7 +162,7 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 			}
 		}
 
-		if (state == StateType::full) {
+		if ((state == StateType::partial) || (state == StateType::full)) {
 			if (conf->isMe(address)) {
 				lInfo() << "Participant " << address.asString() << " is me.";
 			} else if (participant) {
