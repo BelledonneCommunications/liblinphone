@@ -729,7 +729,10 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				return success;
 			}
 		}
-		chooseAnotherAdminIfNoneInConference();
+		// Choose another admin if local participant is not in or it is not admin
+		if (!isIn() || !getMe()->isAdmin()) {
+			chooseAnotherAdminIfNoneInConference();
+		}
 	}
 
 	if (getParticipantCount() == 0){
@@ -917,15 +920,15 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
 	bool preserveSession = true;
-	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&] (const std::shared_ptr<Participant> & p) {
-	return (p->getSession() != participant->getSession());
+	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&participant] (const std::shared_ptr<Participant> & p) {
+		return ((p->getAddress() == participant->getAddress()) && (p->getSession() == participant->getSession()));
 	});
 	if (participantIt != participants.cend()) {
 		const std::shared_ptr<Participant> & p = *participantIt;
 		preserveSession = p->getPreserveSession();
 	}
 
-	if ((getState() != ConferenceInterface::State::TerminationPending) && ((getParticipantCount() > 1) || ((getParticipantCount() == 1) && !preserveSession))) {
+	if ((getState() != ConferenceInterface::State::TerminationPending) && (isMe(participant->getAddress()) || (getParticipantCount() > 1) || ((getParticipantCount() == 1) && !preserveSession))) {
 		// Increment last notify before notifying participants so that the delta can be calculated correctly
 		++lastNotify;
 		// Send notify only if it is not in state TerminationPending and:
