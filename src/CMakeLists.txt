@@ -28,10 +28,12 @@ set(LINK_LIBS
 	ortp
 )
 
-if (XCODE)
-	list(APPEND LINK_LIBS jsoncpp_static)
-else()
-	list(APPEND LINK_LIBS jsoncpp_object)
+if (ENABLE_FLEXIAPI)
+	if (XCODE)
+		list(APPEND LINK_LIBS jsoncpp_static)
+	else()
+		list(APPEND LINK_LIBS jsoncpp_object)
+	endif()
 endif()
 
 #APPLE_LIBS is mandatory for apple compilation
@@ -326,11 +328,8 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 
 	account_creator/utils.cpp
 	account_creator/service.cpp
-
 	account_creator/main.cpp
 	account_creator/connector_xmlrpc.cpp
-	account_creator/connector_flexiapi.cpp
-	FlexiAPIClient.cc
 
 	auth-info/auth-info.cpp
 	auth-info/auth-stack.cpp
@@ -444,6 +443,13 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	variant/variant.cpp
 )
 
+if (ENABLE_FLEXIAPI)
+	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
+		account_creator/connector_flexiapi.cpp
+		FlexiAPIClient.cc
+	)
+endif()
+
 if(ENABLE_VIDEO)
 	list(APPEND LINPHONE_CXX_OBJECTS_SOURCE_FILES
 		conference/session/video-mixer.cpp
@@ -537,10 +543,12 @@ if(ENABLE_STATIC)
 		$<TARGET_OBJECTS:linphone-coreapi-static>
 	)
 
-	if (XCODE)
-		target_link_libraries(linphone PRIVATE jsoncpp_static)
-	else()
-		target_link_libraries(linphone PRIVATE jsoncpp_object)
+	if (ENABLE_FLEXIAPI)
+		if (XCODE)
+			target_link_libraries(linphone PRIVATE jsoncpp_static)
+		else()
+			target_link_libraries(linphone PRIVATE jsoncpp_object)
+		endif()
 	endif()
 
 	if (APPLE)
@@ -586,10 +594,12 @@ if(ENABLE_SHARED)
 		$<TARGET_OBJECTS:linphone-coreapi>
 	)
 
-	if (XCODE)
-		target_link_libraries(linphone PRIVATE jsoncpp_static)
-	else()
-		target_link_libraries(linphone PRIVATE jsoncpp_object)
+	if (ENABLE_FLEXIAPI)
+		if (XCODE)
+			target_link_libraries(linphone PRIVATE jsoncpp_static)
+		else()
+			target_link_libraries(linphone PRIVATE jsoncpp_object)
+		endif()
 	endif()
 
 	if(APPLE)
