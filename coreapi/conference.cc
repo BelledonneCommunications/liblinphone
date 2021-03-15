@@ -1522,13 +1522,18 @@ bool RemoteConference::update(const LinphonePrivate::ConferenceParamsInterface &
 
 void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
 	const IdentityAddress &pAddr = event->getParticipantAddress();
-	shared_ptr<Participant> confParticipant;
-	if (isMe(pAddr))
-		confParticipant = getMe();
-	else
-		confParticipant = findParticipant(pAddr);
 
-	if (!confParticipant) {
+	if (isMe(pAddr)) {
+	#ifdef HAVE_ADVANCED_IM
+		bool_t eventLogEnabled = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE );
+		if (eventLogEnabled) {
+			if (!eventHandler) {
+				eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
+			}
+			eventHandler->subscribe(getConferenceId());
+		}
+	#endif // HAVE_ADVANCED_IM
+	} else if (!findParticipant(pAddr)) {
 		LinphonePrivate::Conference::addParticipant(pAddr);
 	} else {
 		lInfo() << "Ignoring notification of addition of participant with address " << pAddr << " because it is already part of conference " << getConferenceId();
