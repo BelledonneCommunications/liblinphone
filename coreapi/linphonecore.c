@@ -2645,9 +2645,11 @@ static void linphone_core_internal_publish_state_changed(LinphoneCore *lc, Linph
 static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 	LinphoneAccountCreatorService *service = linphone_account_creator_service_new();
 
+	#ifdef HAVE_FLEXIAPI
 	const char* uri = linphone_config_get_string(lc->config, "sip", "flexiapi_url", NULL);
 
 	if (uri == NULL) {
+	#endif
 		linphone_account_creator_service_set_constructor_cb(service, linphone_account_creator_constructor_linphone_xmlrpc);
 		linphone_account_creator_service_set_destructor_cb(service, NULL);
 		linphone_account_creator_service_set_is_account_exist_cb(service, linphone_account_creator_is_account_exist_linphone_xmlrpc);
@@ -2664,6 +2666,8 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		linphone_account_creator_service_set_recover_account_cb(service, linphone_account_creator_recover_phone_account_linphone_xmlrpc);
 		linphone_account_creator_service_set_is_alias_used_cb(service, linphone_account_creator_is_phone_number_used_linphone_xmlrpc);
 		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_login_linphone_account_linphone_xmlrpc);
+
+	#ifdef HAVE_FLEXIAPI
 	} else {
 		linphone_account_creator_service_set_constructor_cb(service, NULL);
 		linphone_account_creator_service_set_destructor_cb(service, NULL);
@@ -2679,6 +2683,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_send_token_flexiapi);
 		linphone_account_creator_service_set_create_account_with_token_cb(service, linphone_account_creator_create_account_with_token);
 	}
+	#endif
 
 	linphone_core_set_account_creator_service(lc, service);
 }

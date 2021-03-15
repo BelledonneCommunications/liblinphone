@@ -72,7 +72,9 @@ static void server_account_exist(void) {
 	linphone_account_creator_service_set_user_data(
 		linphone_account_creator_get_service(creator),
 		(void*)LinphoneAccountCreatorStatusAccountExist);
-	linphone_account_creator_set_username(creator, "pauline");
+
+	linphone_account_creator_set_username(creator, linphone_address_get_username(marie->identity));
+	linphone_account_creator_set_domain(creator, linphone_address_get_domain(marie->identity));
 	linphone_account_creator_cbs_set_is_account_exist(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
@@ -290,10 +292,6 @@ test_t account_creator_flexiapi_tests[] = {
 	TEST_ONE_TAG(
 		"Server - Account linked",
 		server_account_linked,
-		"Server"),
-	TEST_ONE_TAG(
-		"Server - Account delete",
-		server_account_delete,
 		"Server"),
 	TEST_ONE_TAG(
 		"Server - Account delete",

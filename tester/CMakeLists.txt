@@ -30,10 +30,12 @@ set(OTHER_LIBS_FOR_TESTER
 	${XML2_LIBRARIES} ${XSD_LIBRARIES}
 )
 
-if (XCODE)
-	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_static)
-else()
-	list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
+if (ENABLE_FLEXIAPI)
+	if (XCODE)
+		list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_static)
+	else()
+		list(APPEND OTHER_LIBS_FOR_TESTER jsoncpp_object)
+	endif()
 endif()
 
 if(INTL_FOUND)
@@ -241,7 +243,6 @@ set(IOS_RESOURCES_FILES
 set(SOURCE_FILES_C
 	account_creator_local_tester.c
 	account_creator_xmlrpc_tester.c
-	account_creator_flexiapi_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
@@ -283,6 +284,7 @@ set(SOURCE_FILES_C
 	local_conference_tester.cpp
 	video_tester.c
 )
+
 if(ENABLE_LIME_X3DH)
 	list(APPEND SOURCE_FILES_C group_chat_secure_tester.c)
 endif()
@@ -302,13 +304,16 @@ set(SOURCE_FILES_CXX
 	multipart-tester.cpp
 	offeranswer_tester.cpp
 	shared_tester_functions.cpp
-	#account-creator-flexiapi-tester.cpp
-	flexiapiclient-tester.cpp
 	property-container-tester.cpp
 	utils-tester.cpp
 	lime-user-authentication-tester.cpp
 	vfs-encryption-tester.cpp
 )
+
+if(ENABLE_FLEXIAPI)
+	list(APPEND SOURCE_FILES_C account_creator_flexiapi_tester.c)
+	list(APPEND SOURCE_FILES_CXX flexiapiclient-tester.cpp)
+endif()
 
 if(ENABLE_ADVANCED_IM)
 	list(APPEND SOURCE_FILES_CXX conference-event-tester.cpp)
