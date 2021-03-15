@@ -138,14 +138,14 @@ FlexiAPIClient *FlexiAPIClient::accountPasswordChange(string algorithm, string p
 		params.push("old_password", oldPassword);
 	}
 
-	prepareRequest("accounts/password", "POST", params);
+	prepareRequest("accounts/me/password", "POST", params);
 	return this;
 }
 
 FlexiAPIClient *FlexiAPIClient::accountEmailChangeRequest(string email) {
 	JsonParams params;
 	params.push("email", email);
-	prepareRequest("accounts/email/request", "POST", params);
+	prepareRequest("accounts/me/email/request", "POST", params);
 	return this;
 }
 
