@@ -2446,6 +2446,9 @@ static void participant_leaves_conference_base(bool_t remote_participant_leaves,
 
 			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionOutgoingProgress,(pauline_stats.number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
 			BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionIncomingReceived,(marie_stats.number_of_LinphoneSubscriptionIncomingReceived + 1),5000));
+
+			// NOTIFY to resend list of conference participants
+			BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 		}
 	}
 
