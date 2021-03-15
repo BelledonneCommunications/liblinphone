@@ -354,8 +354,6 @@ void Call::reenterLocalConference() {
 	ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
 	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
 
-lInfo() << "DEBUG found conference " << conference << " with conference ID " << localConferenceId << " in conference " << getCurrentParams()->getPrivate()->getInConference();
-
 	if (conference) {
 		setConference(conference->toC());
 		conference->addParticipant(getSharedFromThis());
