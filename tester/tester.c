@@ -1132,9 +1132,11 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 			no_calls = 1;
 		}
 
+ms_message("%s - BEFORE core %s call end actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd,lcm_stats[idx].number_of_LinphoneCallEnd + no_calls);
 		// Wait for calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+ms_message("%s - AFTER core %s call end actual %0d initial %0d expected %0d\n", __func__, linphone_core_get_identity(m->lc), m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd,lcm_stats[idx].number_of_LinphoneCallEnd + no_calls);
 
 		// Wait for all conferences to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + 1, 5000));
