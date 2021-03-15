@@ -429,12 +429,6 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			exitFromConference(session);
 
 			break;
-		case CallSession::State::Resuming:
-			// If a non null conference ID is attached to the call, it means that it is or has been part of a conference
-			if ((session->getPreviousState() != CallSession::State::Paused) && (getConferenceId().empty() == false)) {
-				reenterLocalConference();
-			}
-			break;
 		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
 			if (getConference() && !isInConference()) {
@@ -558,6 +552,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
+				} else if (!getConferenceId().empty() && getConference() && !isInConference()) {
+					// Try to reenter conference if the call may have been part of one
+					reenterLocalConference();
 				}
 			}
 		}
