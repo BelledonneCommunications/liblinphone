@@ -244,7 +244,11 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			// reINVITE is always sent
 			potentialConfigurationChosen = linphone_call_params_is_media_encryption_supported (caller_params, encryption) && (linphone_call_params_get_media_encryption(caller_params) != encryption);
 			if (potentialConfigurationChosen && (expectedEncryption == LinphoneMediaEncryptionSRTP)) {
-				potentialConfigurationChosen = search_matching_srtp_suite(caller, callee);
+				const bool srtpSuiteMatch = search_matching_srtp_suite(caller, callee);
+				if (!srtpSuiteMatch) {
+					potentialConfigurationChosen = false;
+					expectedEncryption = linphone_call_params_get_media_encryption(caller_params);
+				}
 			}
 		} else {
 			expectedEncryption = linphone_call_params_get_media_encryption(caller_params);
@@ -2076,7 +2080,7 @@ static void unencrypted_srtp_call_with_capability_negotiations(void) {
 static void srtp_call_with_capability_negotiations_caller_unencrypted(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionNone);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2084,7 +2088,7 @@ static void srtp_call_with_capability_negotiations_caller_unencrypted(void) {
 static void srtp_call_with_capability_negotiations_callee_unencrypted(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
-	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionNone);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
