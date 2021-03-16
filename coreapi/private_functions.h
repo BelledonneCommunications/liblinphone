@@ -547,7 +547,7 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
 LINPHONE_PUBLIC void linphone_core_update_account_push_params(LinphoneCore *core);
 
-LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
+LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MSZrtpCipher ciphers[MS_MAX_ZRTP_CRYPTO_TYPES]);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZrtpHash hashes[MS_MAX_ZRTP_CRYPTO_TYPES]);

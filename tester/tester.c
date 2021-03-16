@@ -2605,8 +2605,8 @@ void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManage
 }
 
 bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr) {
-	const MSCryptoSuite *callee_suites = linphone_core_get_srtp_crypto_suites(callee_mgr->lc);
-	const MSCryptoSuite *caller_suites = linphone_core_get_srtp_crypto_suites(caller_mgr->lc);
+	const MSCryptoSuite *callee_suites = linphone_core_get_srtp_crypto_suites_array(callee_mgr->lc);
+	const MSCryptoSuite *caller_suites = linphone_core_get_srtp_crypto_suites_array(caller_mgr->lc);
 	bool_t crypto_suite_found = FALSE;
 	if (caller_suites && callee_suites) {
 		for (size_t i = 0; (callee_suites != NULL) && (callee_suites[i] != MS_CRYPTO_SUITE_INVALID); i++) {

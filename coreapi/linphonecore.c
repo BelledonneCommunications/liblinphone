@@ -8448,3 +8448,11 @@ bool_t linphone_core_has_crappy_opengl(LinphoneCore *lc) {
 	if (sound_description->flags & DEVICE_HAS_CRAPPY_OPENGL) return TRUE;
 	return FALSE;
 }
+
+void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites) {
+	linphone_config_set_string(core->config, "sip", "srtp_crypto_suites", suites);
+}
+
+const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core) {
+	return linphone_config_get_string(core->config, "sip", "srtp_crypto_suites", "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32");
+}
