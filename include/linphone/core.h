@@ -4228,6 +4228,22 @@ LINPHONE_PUBLIC void linphone_core_set_max_calls(LinphoneCore *core, int max);
 LINPHONE_PUBLIC bool_t linphone_core_sound_resources_locked(LinphoneCore *core);
 
 /**
+ * Set the crypto suites available to the core
+ * @param core core @notnil
+ * @param suites comma separated list of supported suites @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC void linphone_core_set_srtp_crypto_suites(LinphoneCore *core, const char *suites);
+
+/**
+ * Get the crypto suites available to the core
+ * @param core core @notnil
+ * @return a comma separated list of supported suites @notnil
+ * @ingroup initializing
+**/
+LINPHONE_PUBLIC const char *linphone_core_get_srtp_crypto_suites(LinphoneCore *core);
+
+/**
  * Check if a media encryption type is supported
  * @param core core @notnil
  * @param menc #LinphoneMediaEncryption

@@ -89,7 +89,7 @@ void MS2AudioStream::initZrtp() {
 }
 
 void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool localIsOfferer) {
-	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites(getCCore());
+	const MSCryptoSuite *srtpSuites = linphone_core_get_srtp_crypto_suites_array(getCCore());
 	if (srtpSuites) {
 		for(int i = 0; (srtpSuites[i] != MS_CRYPTO_SUITE_INVALID) && (i < MS_MAX_ZRTP_CRYPTO_TYPES); i++) {
 			switch (srtpSuites[i]) {
@@ -126,7 +126,7 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 		}
 	}
 
-	/* linphone_core_get_srtp_crypto_suites is used to determine sensible defaults; here each can be overridden */
+	/* linphone_core_get_zrtp_cipher_suites is used to determine sensible defaults; here each can be overridden */
 	MsZrtpCryptoTypesCount ciphersCount = linphone_core_get_zrtp_cipher_suites(getCCore(), params->ciphers); /* if not present in config file, params->ciphers is not modified */
 	if (ciphersCount != 0) /* Use zrtp_cipher_suites config only when present, keep config from srtp_crypto_suite otherwise */
 		params->ciphersCount = ciphersCount;

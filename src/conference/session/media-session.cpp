@@ -1622,7 +1622,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo>  cryptos;
-	const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(q->getCore()->getCCore());
+	const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
 	for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
 		SalSrtpCryptoAlgo newCrypto;
 		setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
