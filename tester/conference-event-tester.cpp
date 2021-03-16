@@ -1051,10 +1051,7 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 		}
 	}
 
-	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
-	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
-	LinphoneCall * confCall = linphone_core_get_call_by_remote_address(conf_mgr->lc, participantUri.c_str());
+	LinphoneCall * confCall = linphone_core_get_call_by_remote_address2(conf_mgr->lc, participant_mgr->identity);
 
 	int participantSize = (int)confListener->participants.size();
 
@@ -1080,6 +1077,9 @@ static void remove_participant_from_conference_through_call(bctbx_list_t **remov
 		expectedParticipants = (participantSize - 1);
 	}
 
+	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
+	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
+	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
 	BC_ASSERT_TRUE(confListener->participants.find(participantUri) == confListener->participants.end());
 
 	// Other participants call should not have their state modified
@@ -1151,9 +1151,7 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 	LinphoneCall * participantCall = linphone_core_get_current_call(participant_mgr->lc);
 	BC_ASSERT_PTR_NOT_NULL(participantCall);
-	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
-	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
-	LinphoneCall * confCall = linphone_core_get_call_by_remote_address(conf_mgr->lc, participantUri.c_str());
+	LinphoneCall * confCall = linphone_core_get_call_by_remote_address2(conf_mgr->lc, participant_mgr->identity);
 	BC_ASSERT_PTR_NOT_NULL(confCall);
 
 	if (pause_call) {
@@ -1222,6 +1220,10 @@ static LinphoneCall * add_participant_to_conference_through_call(bctbx_list_t **
 
 	BC_ASSERT_EQUAL((int)confListener->participants.size(), (participantSize + 1), int, "%d");
 	BC_ASSERT_EQUAL((int)confListener->participantDevices.size(), (participantDeviceSize + 1), int, "%d");
+
+	const LinphoneAddress *cParticipantAddress = linphone_call_get_to_address(participantCall);
+	std::string participantUri = L_GET_CPP_PTR_FROM_C_OBJECT(cParticipantAddress)->asStringUriOnly();
+
 	BC_ASSERT_TRUE(confListener->participants.find(participantUri) != confListener->participants.end());
 
 	// Admin check

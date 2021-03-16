@@ -793,10 +793,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		LinphoneCore * c = m->lc;
 		lcs=bctbx_list_append(lcs,c);
 
-		const LinphoneAddress *caller_uri = m->identity;
-		char * caller_address = linphone_address_as_string(caller_uri);
-		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, caller_address);
-		ms_free(caller_address);
+		LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(marie_call);
 
 		// Take call - ringing ends
@@ -814,10 +811,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 		if (it == participants) {
 			LinphoneCall * call_to_update = NULL;
 			if (update_from_callee) {
-				const LinphoneAddress *caller_uri = m->identity;
-				char* caller_address = linphone_address_as_string(caller_uri);
-				call_to_update = linphone_core_get_call_by_remote_address(marie->lc, caller_address);
-				ms_free(caller_address);
+				call_to_update = linphone_core_get_call_by_remote_address2(marie->lc, m->identity);
 			} else {
 				call_to_update = linphone_core_get_current_call(c);
 			}
@@ -853,10 +847,7 @@ static void call_accepted_while_another_one_is_updating(bool_t update_from_calle
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPausing, no_call_paused, 5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs, &marie->stat.number_of_LinphoneCallPaused, no_call_paused, 5000));
 
-	const LinphoneAddress *phead_uri = phead->identity;
-	char * phead_address = linphone_address_as_string(phead_uri);
-	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address(marie->lc, phead_address);
-	ms_free(phead_address);
+	LinphoneCall * marie_call = linphone_core_get_call_by_remote_address2(marie->lc, phead->identity);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
 	const LinphoneCallParams *marie_params = linphone_call_get_params(marie_call);
 	BC_ASSERT_TRUE(linphone_call_params_video_enabled(marie_params));
