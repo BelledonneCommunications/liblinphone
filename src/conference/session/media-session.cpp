@@ -1455,10 +1455,11 @@ int MediaSessionPrivate::setupEncryptionKey (SalSrtpCryptoAlgo & crypto, MSCrypt
 	switch (suite) {
 		case MS_AES_128_SHA1_80:
 		case MS_AES_128_SHA1_32:
-		case MS_AES_128_NO_AUTH:
-		case MS_NO_CIPHER_SRTP_SHA1_80: /* Not sure for this one */
-		case MS_NO_CIPHER_SRTCP_SHA1_80: /* Not sure for this one */
-		case MS_NO_CIPHER_SRTP_SRTCP_SHA1_80: /* Not sure for this one */
+		case MS_AES_128_SHA1_80_NO_AUTH:
+		case MS_AES_128_SHA1_32_NO_AUTH:
+		case MS_NO_CIPHER_SRTP_AES_128_SHA1_80: /* Not sure for this one */
+		case MS_NO_CIPHER_SRTCP_AES_128_SHA1_80: /* Not sure for this one */
+		case MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80: /* Not sure for this one */
 			keylen = 30;
 			break;
 		case MS_AES_256_SHA1_80:
