@@ -321,6 +321,17 @@ set(GROUP_CHAT_BENCHMARK_HEADERS
 	tools/tester.h
 )
 
+set(LINPHONETESTER_RESOURCES
+	"${CMAKE_CURRENT_SOURCE_DIR}/certificates"
+	"${CMAKE_CURRENT_SOURCE_DIR}/db"
+	"${CMAKE_CURRENT_SOURCE_DIR}/images"
+	"${CMAKE_CURRENT_SOURCE_DIR}/rcfiles"
+	"${CMAKE_CURRENT_SOURCE_DIR}/sipp"
+	"${CMAKE_CURRENT_SOURCE_DIR}/sounds"
+	"${CMAKE_CURRENT_SOURCE_DIR}/vcards"
+	"${CMAKE_CURRENT_SOURCE_DIR}/tester_hosts"
+	"${CMAKE_CURRENT_SOURCE_DIR}/local_tester_hosts"
+)
 
 # TODO: Remove me later!
 list(REMOVE_ITEM STRICT_OPTIONS_CPP "-Wconversion" "-Werror=conversion" "-Wcast-align" "-Werror=cast-align")
@@ -356,7 +367,7 @@ endif()
 
 # on mobile platforms, we compile the tester as a library so that we can link with it directly from native applications
 if(ANDROID OR IOS)
-	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX})
+	add_library(linphonetester SHARED ${HEADER_FILES} ${SOURCE_FILES_C} ${SOURCE_FILES_CXX} ${LINPHONETESTER_RESOURCES})
 	target_include_directories(linphonetester PRIVATE ${LINPHONE_INCLUDE_DIRS} ${LIBXSD_INCLUDE_DIRS})
 	target_link_libraries(linphonetester ${LINPHONE_LIBS_FOR_TOOLS} ${OTHER_LIBS_FOR_TESTER})
 	#TODO: replace by if(APPLE) when we want to make apple framework on linphone-desktop too
@@ -366,10 +377,12 @@ if(ANDROID OR IOS)
 		else()
 			set(MIN_OS ${CMAKE_OSX_DEPLOYMENT_TARGET})
 		endif()
+
 		set_target_properties(linphonetester PROPERTIES
 			FRAMEWORK TRUE
 			MACOSX_FRAMEWORK_IDENTIFIER com.belledonne-communications.linphonetester
 			MACOSX_FRAMEWORK_INFO_PLIST "${CMAKE_SOURCE_DIR}/build/osx/Info.plist.in"
+			RESOURCE "${LINPHONETESTER_RESOURCES}"
 			PUBLIC_HEADER "${HEADER_FILES}"
 		)
 	endif()
