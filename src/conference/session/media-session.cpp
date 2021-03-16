@@ -2089,43 +2089,63 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	 */
 	string authToken = getStreamsGroup().getAuthenticationToken();
 
+	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
+
 	// In case capability negotiation is enabled, the actual encryption is the negotiated one
 	LinphoneMediaEncryption enc = getNegotiatedMediaEncryption();
+	bool srtpEncryptionMatch = false;
+	if (md) {
+		srtpEncryptionMatch = true;
+		for (size_t idx = 0; idx < md->getNbStreams(); idx++) {
+			const auto & salStream = md->getStreamIdx(static_cast<unsigned int>(idx));
+			if (salStream.hasSrtp()) {
+				const auto & streamCryptos = salStream.getCryptos();
+				const auto & stream = getStreamsGroup().getStream(idx);
+				for (const auto & crypto : streamCryptos) {
+					const auto & algo = crypto.algo;
+					const bool & isUnencrypted = ((algo == MS_NO_CIPHER_SRTP_AES_128_SHA1_80) || (algo == MS_NO_CIPHER_SRTCP_AES_128_SHA1_80) || (algo == MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80));
+					srtpEncryptionMatch &= ((isUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
+				}
+			}
+		}
+	} else {
+		srtpEncryptionMatch = allStreamsEncrypted();
+	}
+
+	bool updateEncryption = false;
+	bool validNegotiatedEncryption = false;
+
 	switch (enc) {
 		case LinphoneMediaEncryptionZRTP:
-			if (atLeastOneStreamStarted()) {
-				if (allStreamsEncrypted() && !authToken.empty())
-					getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-				else {
-					/* To avoid too many traces */
-					lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
-						<< ", but isn't effective (allStreamsEncrypted=" << allStreamsEncrypted() << ", auth_token=" << authToken << ")";
-					getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-				}
-			} /* else don't update the state if all streams are shutdown */
+			updateEncryption = atLeastOneStreamStarted();
+			validNegotiatedEncryption = (allStreamsEncrypted() && !authToken.empty());
+			break;
+		case LinphoneMediaEncryptionSRTP:
+			updateEncryption = atLeastOneStreamStarted();
+			validNegotiatedEncryption = ((getNbActiveStreams() == 0) || srtpEncryptionMatch);
 			break;
 		case LinphoneMediaEncryptionDTLS:
-		case LinphoneMediaEncryptionSRTP:
-			if (atLeastOneStreamStarted()) {
-				if ((getNbActiveStreams() == 0) || allStreamsEncrypted())
-					getCurrentParams()->setMediaEncryption(enc);
-				else {
-					/* To avoid to many traces */
-					lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
-						<< ", but isn't effective (allStreamsEncrypted=" << allStreamsEncrypted() << ")";
-					getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-				}
-			} /* else don't update the state if all streams are shutdown */
+			updateEncryption = atLeastOneStreamStarted();
+			validNegotiatedEncryption = ((getNbActiveStreams() == 0) || allStreamsEncrypted());
 			break;
 		case LinphoneMediaEncryptionNone:
 			/* Check if we actually switched to ZRTP */
-			if (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty())
-				getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);
-			else
-				getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+			updateEncryption = (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty());
+			validNegotiatedEncryption = updateEncryption;
 			break;
 	}
-	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
+
+	if (updateEncryption) {
+		if (validNegotiatedEncryption) {
+			getCurrentParams()->setMediaEncryption(enc);
+		} else {
+			/* To avoid too many traces */
+			lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
+				<< ", but isn't effective (allStreamsEncrypted=" << allStreamsEncrypted() << ", auth_token=" << authToken << ")";
+			getCurrentParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
+		}
+	} /* else don't update the state if all streams are shutdown */
+
 	
 	if (md) {
 		getCurrentParams()->enableAvpf(hasAvpf(md));
