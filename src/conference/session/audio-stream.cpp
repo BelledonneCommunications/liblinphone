@@ -97,12 +97,13 @@ void MS2AudioStream::setZrtpCryptoTypesParameters(MSZrtpParams *params, bool loc
 					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
 					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS32;
 					break;
-				case MS_AES_128_NO_AUTH:
+				case MS_AES_128_SHA1_80_NO_AUTH:
+				case MS_AES_128_SHA1_32_NO_AUTH:
 					params->ciphers[params->ciphersCount++] = MS_ZRTP_CIPHER_AES1;
 					break;
-				case MS_NO_CIPHER_SRTP_SHA1_80:
-				case MS_NO_CIPHER_SRTCP_SHA1_80:
-				case MS_NO_CIPHER_SRTP_SRTCP_SHA1_80:
+				case MS_NO_CIPHER_SRTP_AES_128_SHA1_80:
+				case MS_NO_CIPHER_SRTCP_AES_128_SHA1_80:
+				case MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80:
 					params->authTags[params->authTagsCount++] = MS_ZRTP_AUTHTAG_HS80;
 					break;
 				case MS_AES_128_SHA1_80:

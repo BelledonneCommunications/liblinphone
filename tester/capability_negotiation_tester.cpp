@@ -2076,9 +2076,14 @@ static void unencrypted_srtp_call_with_capability_negotiations(void) {
 
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	// AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP and AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP are not supported hence they should not be put in the offer or accepted as answer
-	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNAUTHENTICATED_SRTP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNAUTHENTICATED_SRTP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 ,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
 
 	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+
+	// Spaces between words are added on purpose to ensure that parsing of crypto suites is correctly done
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP , AES_CM_128_HMAC_SHA1_32   UNAUTHENTICATED_SRTP");
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_256_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP, AES_CM_128_HMAC_SHA1_80 UNAUTHENTICATED_SRTP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
+	simple_call_with_capability_negotiations(pauline, marie, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
@@ -2212,17 +2217,27 @@ static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(
 }
 
 static void srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_unencrypted_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_aes256_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_256_HMAC_SHA1_80 , AES_CM_256_HMAC_SHA1_32");
+
 	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
 
 static void srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_zrtp_srtpsuite_aes256_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_zrtp_srtpsuite_unencrypted_rc");
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80");
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
+
 	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
+
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
