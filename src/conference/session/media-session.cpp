@@ -2137,7 +2137,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 
 	if (updateEncryption) {
 		if (validNegotiatedEncryption) {
-			getCurrentParams()->setMediaEncryption(enc);
+			getCurrentParams()->setMediaEncryption(((enc == LinphoneMediaEncryptionNone) ? LinphoneMediaEncryptionZRTP : enc));
 		} else {
 			/* To avoid too many traces */
 			lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
