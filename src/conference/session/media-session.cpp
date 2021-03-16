@@ -112,7 +112,6 @@ bool MediaSessionPrivate::isMediaEncryptionAccepted(const LinphoneMediaEncryptio
 }
 
 LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() const {
-	L_Q();
 	switch (state){
 		case CallSession::State::Idle:
 		case CallSession::State::IncomingReceived:
@@ -122,7 +121,7 @@ LinphoneMediaEncryption MediaSessionPrivate::getNegotiatedMediaEncryption() cons
 			return getParams()->getMediaEncryption();
 			break;
 		default: 
-			return (q->isCapabilityNegotiationEnabled()) ? negotiatedEncryption : getParams()->getMediaEncryption();
+			return negotiatedEncryption;
 			break;
 	}
 
@@ -1804,6 +1803,8 @@ void MediaSessionPrivate::updateStreams (std::shared_ptr<SalMediaDescription> & 
 		lInfo() << "Changing call media encryption to " << linphone_media_encryption_to_string(enc) << " after capability negotiation are completed";
 		// Set negotiated encryption to correctly create parameters for the reINVITE
 		negotiatedEncryption = enc;
+	} else {
+		negotiatedEncryption = getParams()->getMediaEncryption();
 	}
 
 	OfferAnswerContext ctx;
@@ -2080,7 +2081,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 	const std::shared_ptr<SalMediaDescription> & md = resultDesc;
 
 	// In case capability negotiation is enabled, the actual encryption is the negotiated one
-	LinphoneMediaEncryption enc = getNegotiatedMediaEncryption();
+	const LinphoneMediaEncryption enc = getNegotiatedMediaEncryption();
 	bool srtpEncryptionMatch = false;
 	if (md) {
 		srtpEncryptionMatch = true;
@@ -2120,12 +2121,15 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			/* Check if we actually switched to ZRTP */
 			updateEncryption = (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty());
 			validNegotiatedEncryption = updateEncryption;
+			if (updateEncryption && validNegotiatedEncryption) {
+				negotiatedEncryption = LinphoneMediaEncryptionZRTP;
+			}
 			break;
 	}
 
 	if (updateEncryption) {
 		if (validNegotiatedEncryption) {
-			getCurrentParams()->setMediaEncryption(((enc == LinphoneMediaEncryptionNone) ? LinphoneMediaEncryptionZRTP : enc));
+			getCurrentParams()->setMediaEncryption(getNegotiatedMediaEncryption());
 		} else {
 			/* To avoid too many traces */
 			lDebug() << "Encryption was requested to be " << linphone_media_encryption_to_string(enc)
