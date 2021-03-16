@@ -319,7 +319,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 						}
 					} else if (enc == LinphoneMediaEncryptionSRTP) {
 						// acap for SRTP
-						const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites(getCCore());
+						const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites_array(getCCore());
 						const std::string attrName("crypto");
 						// Copy acap crypto attributes
 						const auto & acaps = localMediaDesc->getAllAcapForStream(streamIndex);
