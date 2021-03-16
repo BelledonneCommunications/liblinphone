@@ -65,7 +65,7 @@ extern "C" {
 #endif
 
 // Required to check SRTP cryptio suite match during call
-LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
+LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
 
 LINPHONE_PUBLIC LinphoneVcardContext *linphone_core_get_vcard_context(const LinphoneCore *lc);
 LINPHONE_PUBLIC bool_t linphone_core_rtcp_enabled(const LinphoneCore *lc);
