@@ -460,7 +460,7 @@ SalStreamConfiguration SalStreamDescription::addAcapsToConfiguration(const SalSt
 				}
 			}
 		} else if (enc == LinphoneMediaEncryptionNone) {
-			lInfo() << "No acap to add to potentiual configuration for encryption " << linphone_media_encryption_to_string(enc);
+			lInfo() << "No acap to add to potential configuration for encryption " << linphone_media_encryption_to_string(enc);
 		} else {
 			lInfo() << "Adding acaps to potential configuration for encryption " << linphone_media_encryption_to_string(enc);
 			std::list<unsigned int> cfgAcaps;
