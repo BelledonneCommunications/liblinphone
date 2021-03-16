@@ -69,6 +69,7 @@ option(ENABLE_VIDEO "Build with video support." YES)
 option(ENABLE_ASSETS "Package sound assets." YES)
 option(ENABLE_PACKAGE_SOURCE "Create 'package_source' target for source archive making (CMake >= 3.11)" OFF)
 
+
 cmake_dependent_option(ENABLE_NOTIFY "Enable libnotify support." YES "ENABLE_GTK_UI;NOT APPLE" NO)
 cmake_dependent_option(ENABLE_ASSISTANT "Turn on assistant compiling." YES "ENABLE_GTK_UI" NO)
 

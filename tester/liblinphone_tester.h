@@ -52,6 +52,9 @@ extern test_suite_t push_incoming_call_test_suite;
 
 #if VIDEO_ENABLED
 	extern test_suite_t call_video_test_suite;
+#if !defined(TARGET_OS_IPHONE) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)	// Mac is not yet fully supported for tests
+	extern test_suite_t call_video_msogl_test_suite;
+#endif
 	extern test_suite_t call_video_quality_test_suite;
 #endif // if VIDEO_ENABLED
 

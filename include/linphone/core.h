@@ -3289,6 +3289,12 @@ LINPHONE_PUBLIC float linphone_core_get_static_picture_fps(LinphoneCore *core);
 
 /**
  * Get the native window handle of the video window.
+ * see #linphone_core_set_native_video_window_id for details about `window_id`
+ *
+ * There is a special case for Qt :
+ ** linphone_core_get_native_video_window_id() returns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
+ *
  * @param core #LinphoneCore object @notnil
  * @return The native window handle of the video window. @maybenil
  * @ingroup media_parameters
@@ -3310,7 +3316,22 @@ LINPHONE_PUBLIC void * linphone_core_get_native_video_window_id(const LinphoneCo
 /**
  * @ingroup media_parameters
  * Set the native video window id where the video is to be displayed.
- * For MacOS, Linux, Windows: if not set or LINPHONE_VIDEO_DISPLAY_AUTO the core will create its own window, unless the special id LINPHONE_VIDEO_DISPLAY_NONE is given.
+ *
+ * On Desktop platforms(MacOS, Linux, Windows), the display filter is "MSOGL" by default. That means :
+ ** If `window_id` is not set or set to #LINPHONE_VIDEO_DISPLAY_AUTO, then the core will create its own window, unless the special id #LINPHONE_VIDEO_DISPLAY_NONE is given.
+ ** This is currently only supported for Linux X11 (#Window type), Windows UWP (#SwapChainPanel type) and Windows (#HWND type).
+ **
+ ** The CSharp Wrapper on Windows for UWP takes directly a #SwapChainPanel without Marshalling.
+ ** On other platforms, `window_id` is a #MSOglContextInfo defined in msogl.h of mediastreamer2
+ ** There is a special case for Qt :
+ *** The "MSQOGL" filter must be selected by using #linphone_core_set_video_display_filter.
+ *** Setting window id is only used to stop rendering by passing #LINPHONE_VIDEO_DISPLAY_NONE.
+ *** linphone_core_get_native_preview_window_id() returns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist.  This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ *
+ * On mobile operating systems, #LINPHONE_VIDEO_DISPLAY_AUTO is not supported and `window_id` depends of the platform :
+ ** iOS : It is a #UIView.
+ ** Android : It is a #TextureView.
+ *
  * @param core #LinphoneCore object @notnil
  * @param window_id The native window id where the remote video is to be displayed. @maybenil
 **/
@@ -3318,16 +3339,26 @@ LINPHONE_PUBLIC void linphone_core_set_native_video_window_id(LinphoneCore *core
 
 /**
  * Get the native window handle of the video preview window.
+ * see linphone_core_set_native_video_window_id() for details about `window_id`
+ *
+ * There is a special case for Qt :
+ ** linphone_core_get_native_preview_window_id() wreturns a #QQuickFramebufferObject::Renderer and creates one if it doesn't exist. This object must be returned by your QQuickFramebufferObject::createRenderer() overload for Qt.
+ ** Note : Qt blocks GUI thread when calling createRenderer(), so it is safe to call linphone functions there if needed.
+ *
  * @param core #LinphoneCore object @notnil
  * @return The native window handle of the video preview window. @maybenil
  * @ingroup media_parameters
 **/
-LINPHONE_PUBLIC void * linphone_core_get_native_preview_window_id(const LinphoneCore *core);
+LINPHONE_PUBLIC void * linphone_core_get_native_preview_window_id(LinphoneCore *core);
 
 /**
  * Set the native window id where the preview video (local camera) is to be displayed.
  * This has to be used in conjonction with linphone_core_use_preview_window().
- * MacOS, Linux, Windows: if not set or zero the core will create its own window, unless the special id -1 is given.
+ * see linphone_core_set_native_video_window_id() for general details about `window_id`
+ *
+ * On Android : #org.linphone.mediastream.video.capture.CaptureTextureView is used for linphone_core_set_native_preview_window_id().
+ * It is inherited from #TextureView and takes care of rotating the captured image from the camera and scale it to keep it's ratio.
+ *
  * @param core #LinphoneCore object @notnil
  * @param window_id The native window id where the preview video is to be displayed. @maybenil
  * @ingroup media_parameters

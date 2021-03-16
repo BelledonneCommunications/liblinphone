@@ -39,7 +39,7 @@ MARK_AS_ADVANCED(SOCI_INCLUDE_DIRS)
 ### SECOND STEP: Find the soci core library. Respect LIB_SUFFIX
 #
 FIND_LIBRARY(SOCI_LIBRARIES
-    NAMES soci_core soci_core${_SOCI_VERSION}
+    NAMES soci_core soci_core${_SOCI_VERSION} libsoci_core libsoci_core${_SOCI_VERSION}
     PATH_SUFFIXES Frameworks lib lib64)
 MARK_AS_ADVANCED(SOCI_LIBRARIES)
 
@@ -56,7 +56,7 @@ IF(SOCI_INCLUDE_DIRS AND SOCI_LIBRARIES)
 
         FIND_LIBRARY(
             SOCI_${plugin}_PLUGIN
-            NAMES soci_${plugin} soci_${plugin}${_SOCI_VERSION}
+            NAMES soci_${plugin} soci_${plugin}${_SOCI_VERSION} libsoci_${plugin} libsoci_${plugin}${_SOCI_VERSION}
             PATH_SUFFIXES Frameworks lib lib64)
         MARK_AS_ADVANCED(SOCI_${plugin}_PLUGIN)
 

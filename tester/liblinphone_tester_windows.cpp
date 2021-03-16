@@ -16,7 +16,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-﻿#include <string>
+
+#include <string>
+#include <vector>
 
 #include "liblinphone_tester_windows.h"
 #include "tester_utils.h"
@@ -26,6 +28,8 @@ using namespace Platform;
 using namespace Windows::Foundation;
 using namespace Windows::Storage;
 using namespace Windows::System::Threading;
+using namespace Windows::UI::Core;
+using namespace Windows::ApplicationModel::Core;
 
 #define MAX_TRACE_SIZE		2048
 #define MAX_SUITE_NAME_SIZE	128
@@ -69,6 +73,28 @@ static void libLinphoneNativeOutputTraceHandler(const char *domain, OrtpLogLevel
 	nativeOutputTraceHandler((int)lev, fmt, args);
 }
 
+static void processEvents(){// Snippet
+	/*
+	auto currentThread = Windows::UI::Core::CoreWindow::GetForCurrentThread();
+	if(currentThread && currentThread->Dispatcher){
+		currentThread->Dispatcher->ProcessEvents(Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
+	}else{// Not in GUI thread
+		auto mainView = CoreApplication::MainView;
+		if( mainView && mainView->Dispatcher){
+			auto myDispatchedHandler = ref new DispatchedHandler([&](){
+				mainView->Dispatcher->ProcessEvents(CoreProcessEventsOption::ProcessOneAndAllPending);
+			});
+			mainView->Dispatcher->RunAsync(CoreDispatcherPriority::Normal,myDispatchedHandler);
+
+		}else{
+			if( CoreApplication::Views->Size > 0 && CoreApplication::Views->First() && CoreApplication::Views->First()->Current && CoreApplication::Views->First()->Current->Dispatcher){
+				auto firstView = CoreApplication::Views->First()->Current->Dispatcher;
+				firstView->ProcessEvents(Windows::UI::Core::CoreProcessEventsOption::ProcessAllIfPresent);
+			}else{// Do nothing
+			}
+		}
+	}*/
+}
 
 NativeTester::NativeTester()
 {
@@ -77,6 +103,9 @@ NativeTester::NativeTester()
 NativeTester::~NativeTester()
 {
 	liblinphone_tester_uninit();
+	for(int i = 0 ; i < m_commandLine.size() ; ++i)
+		free(_args[i]);
+	free( _args );
 }
 
 void NativeTester::setOutputTraceListener(OutputTraceListener^ traceListener)
@@ -84,30 +113,59 @@ void NativeTester::setOutputTraceListener(OutputTraceListener^ traceListener)
 	sTraceListener = traceListener;
 }
 
-void NativeTester::initialize(StorageFolder^ writableDirectory, Platform::Boolean ui)
+void NativeTester::initialize( const Platform::Array<Platform::String^>^ pParameters, StorageFolder^ writableDirectory, Platform::Boolean ui, Platform::Boolean verbose)
 {
-	if (ui) {
-		liblinphone_tester_init(nativeOutputTraceHandler);
+	Platform::Array<Platform::String^>^ parameters = ref new Platform::Array<Platform::String^>(pParameters);
+	if (ui && sTraceListener) {
+			liblinphone_tester_init(nativeOutputTraceHandler);
 	} else {
 		liblinphone_tester_init(NULL);
-		linphone_core_set_log_level_mask((OrtpLogLevel)(ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR | ORTP_FATAL));
 	}
-
+	if( verbose)
+		linphone_core_set_log_level_mask((OrtpLogLevel)(ORTP_MESSAGE | ORTP_WARNING | ORTP_ERROR | ORTP_FATAL));
+	else
+		linphone_core_set_log_level_mask((OrtpLogLevel)(ORTP_WARNING | ORTP_ERROR | ORTP_FATAL));
 	char writable_dir[MAX_WRITABLE_DIR_SIZE] = { 0 };
 	const wchar_t *wwritable_dir = writableDirectory->Path->Data();
 	wcstombs(writable_dir, wwritable_dir, sizeof(writable_dir));
 	bc_tester_set_writable_dir_prefix(writable_dir);
-	bc_tester_set_resource_dir_prefix("Assets");
 
-	if (!ui) {
-		char *xmlFile = bc_tester_file("LibLinphoneWindows10.xml");
-		char *args[] = { "--xml-file", xmlFile };
-		bc_tester_parse_args(2, args, 0);
+	Platform::String^ dataPath = Platform::String::Concat( Windows::ApplicationModel::Package::Current->InstalledLocation->Path, ref new Platform::String(L"\\share\\liblinphone_tester"));
 
-		char *logFile = bc_tester_file("LibLinphoneWindows10.log");
-		liblinphone_tester_set_log_file(logFile);
-		free(logFile);
+	wwritable_dir = dataPath->Data();
+	wcstombs(writable_dir, wwritable_dir, sizeof(writable_dir));
+	bc_tester_set_resource_dir_prefix(writable_dir);
+	bool_t haveLogFile = FALSE, haveXmlFile = FALSE;
+
+	_args = (char**)malloc(sizeof(char**)*(parameters->Length+1));
+	int countArgs = 0;
+	for(int i = 0; i < parameters->Length; ++i){
+		std::wstring parameter = parameters[i]->Data();
+		if(parameter.length() > 0){
+			int length = wcstombs(NULL, parameter.c_str(), 256)+1;
+			_args[countArgs] = (char*)malloc(sizeof(char)*length);
+			wcstombs(_args[countArgs++], parameter.c_str(), length);
+			if( parameter == L"--log-file")
+				haveLogFile = TRUE;
+			else if(parameter == L"--xml-file")
+				haveXmlFile = TRUE;
+		}
 	}
+	_args[countArgs] = NULL;
+	for(int i = 1; i < countArgs; ){
+		i +=(size_t) bc_tester_parse_args(countArgs, _args, i);
+	}
+	if(!haveLogFile){
+		char *logFile = bc_tester_file("LibLinphoneWindows10.log");
+		char *logArgs[] = { "--log-file", logFile };
+		bc_tester_parse_args(2, logArgs, 0);//logFile memory is passed to tester. Do not free it
+	}
+	if(!haveXmlFile){
+		char *xmlFile = bc_tester_file("LibLinphoneWindows10");
+		char *args[] = { "--xml-file", xmlFile };
+		bc_tester_parse_args(2, args, 0);//xmlFile memory is passed to tester. Do not free it
+	}
+	bc_tester_set_process_events_func(processEvents);
 }
 
 bool NativeTester::run(Platform::String^ suiteName, Platform::String^ caseName, Platform::Boolean verbose)
@@ -170,4 +228,26 @@ Platform::String^ NativeTester::testName(Platform::String^ suiteName, int testIn
 	wchar_t wcname[MAX_SUITE_NAME_SIZE];
 	mbstowcs(wcname, cname, sizeof(wcname));
 	return ref new String(wcname);
+}
+
+void NativeTester::parseArgs(Platform::String^ commandLine, std::vector<std::string> *argv){
+	auto data = commandLine->Data();
+	bool inside = false;
+	std::string currentParameter;
+	for(int i = 0 ; data[i] != 0 ; ++i){
+		if( data[i] == '"'){
+			inside = !inside;
+			//currentParameter += data[i];
+		} else if (data[i] == ' ') {
+			if(!inside){
+				argv->push_back(currentParameter);
+				currentParameter = "";
+			}else{
+				currentParameter += data[i];
+			}
+		}else
+			currentParameter += data[i];
+	}
+	if(currentParameter != "")
+		argv->push_back(currentParameter);
 }

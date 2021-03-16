@@ -129,6 +129,7 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	if (!BC_ASSERT_PTR_NOT_NULL(marieCr))
 		goto end;
 
+	if(!BC_ASSERT_PTR_NOT_NULL(linphone_chat_room_get_conference_address(marieCr))) goto end;
 	LinphoneAddress *confAddr = linphone_address_clone(linphone_chat_room_get_conference_address(marieCr));
 
 	BC_ASSERT_TRUE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneConferenceStateCreationPending, initialPaulineStats.number_of_LinphoneConferenceStateCreationPending + 1, 5000));
@@ -198,7 +199,8 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 
 	coresList = bctbx_list_append(coresList, manager_to_restart->lc);
 
-	// Retrieve chat room
+	// Retrieve chat room	
+	if( !BC_ASSERT_PTR_NOT_NULL(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(manager_to_restart->lc)))) goto end;
 	LinphoneAddress *restartedManagerDeviceAddr = linphone_address_clone(linphone_proxy_config_get_contact(linphone_core_get_default_proxy_config(manager_to_restart->lc)));
 	LinphoneChatRoom *restartedManagerCr = linphone_core_search_chat_room(manager_to_restart->lc, NULL, restartedManagerDeviceAddr, confAddr, NULL);
 	linphone_address_unref(restartedManagerDeviceAddr);

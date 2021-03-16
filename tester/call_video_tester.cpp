@@ -26,6 +26,7 @@
 #include "shared_tester_functions.h"
 
 #ifdef VIDEO_ENABLED
+std::string g_display_filter = "";// Global variable to test unit in order to select the display filter to use : "" use the default
 
 static void call_paused_resumed_with_video_base_call_cb(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message) {
 	if (cstate == LinphoneCallUpdatedByRemote) {
@@ -54,6 +55,11 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 
 	vpol.automatically_accept = FALSE;
 	vpol.automatically_initiate = TRUE; /* needed to present a video mline*/
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_set_video_policy(marie->lc, &vpol);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -99,8 +105,8 @@ static void call_paused_resumed_with_video_base(bool_t sdp_200_ack
 	wait_for_until(pauline->lc, marie->lc, NULL, 5, 2000);
 
 	/*check if video stream is still offered even if disabled*/
-	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
-	BC_ASSERT_EQUAL(_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_pauline)->getNbStreams(), 2, int, "%i");
+	BC_ASSERT_EQUAL((int)_linphone_call_get_local_desc(call_marie)->getNbStreams(), 2, int, "%i");
 
 	linphone_core_enable_sdp_200_ack(pauline->lc,sdp_200_ack);
 
@@ -337,6 +343,11 @@ static void call_with_video_added(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 	if (!call_ok) goto end;
 
@@ -357,6 +368,10 @@ static void call_with_video_added_2(void) {
 	LinphoneVideoPolicy  marie_policy = {0};
 	marie_policy.automatically_accept=TRUE;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_set_video_policy(marie->lc,&marie_policy);
 	linphone_core_enable_video_capture(marie->lc, TRUE);
@@ -378,6 +393,11 @@ static void call_with_video_added_random_ports(void) {
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	linphone_core_set_audio_port(marie->lc,-1);
 	linphone_core_set_video_port(marie->lc,-1);
 	linphone_core_set_audio_port(pauline->lc,-1);
@@ -398,6 +418,12 @@ static void call_with_several_video_switches(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	BC_ASSERT_TRUE(call_ok=call(pauline,marie));
 
 	if (!call_ok) goto end;
@@ -420,6 +446,11 @@ static void srtp_call_with_several_video_switches(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	bool_t call_ok;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	if (linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionSRTP)) {
 		linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
@@ -452,6 +483,11 @@ static void call_with_declined_video_base(bool_t using_policy) {
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	bool_t call_ok;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -506,6 +542,11 @@ static void call_with_declined_video_despite_policy(void) {
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
 	bool_t call_ok;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -562,6 +603,11 @@ void video_call_base_2(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 
 		linphone_core_set_video_policy(callee->lc,&callee_policy);
 		linphone_core_set_video_policy(caller->lc,&caller_policy);
+	}
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
 	}
 
 	linphone_core_enable_video_display(callee->lc, callee_video_enabled);
@@ -674,6 +720,11 @@ void video_call_base_3(LinphoneCoreManager* caller,LinphoneCoreManager* callee, 
 
 		linphone_core_set_video_policy(callee->lc,&callee_policy);
 		linphone_core_set_video_policy(caller->lc,&caller_policy);
+	}
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
 	}
 
 	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
@@ -855,6 +906,11 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 	policy.automatically_accept=TRUE;
 	linphone_core_set_video_policy(caller->lc,&policy);
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
+	}
+
 	linphone_core_enable_video_display(callee->lc, TRUE);
 	linphone_core_enable_video_capture(callee->lc, TRUE);
 	linphone_proxy_config_set_avpf_mode(linphone_core_get_default_proxy_config(callee->lc), LinphoneAVPFEnabled);
@@ -1012,6 +1068,11 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 	 * Marie is the callee
 	 */
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -1070,7 +1131,7 @@ static void _call_with_ice_video(LinphoneVideoPolicy caller_policy, LinphoneVide
 		/*The ICE reINVITE must not propose again video if was refused by callee*/
 		BC_ASSERT_FALSE(linphone_call_params_video_enabled(marie_remote_params));
 	}
-	
+
 	BC_ASSERT_TRUE(check_ice(pauline, marie, LinphoneIceStateHostConnection));
 	BC_ASSERT_TRUE(check_nb_media_starts(AUDIO_START, pauline, marie, nb_audio_starts, nb_audio_starts));
 	BC_ASSERT_TRUE(check_nb_media_starts(VIDEO_START, pauline, marie, nb_video_starts, nb_video_starts));
@@ -1192,6 +1253,11 @@ static void call_with_ice_video_and_rtt(void) {
 	LinphoneCallParams *params = NULL;
 	LinphoneCall *marie_call = NULL;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	policy.automatically_initiate = policy.automatically_accept = TRUE;
 	linphone_core_set_video_policy(pauline->lc, &policy);
 	linphone_core_set_video_policy(marie->lc, &policy);
@@ -1246,6 +1312,11 @@ static void video_call_with_early_media_no_matching_audio_codecs(void) {
 	LinphoneCall *out_call, *pauline_call;
 	LinphoneVideoPolicy vpol={0};
 	AudioStream *astream;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -1335,6 +1406,10 @@ static void accept_call_in_send_only_base(LinphoneCoreManager* pauline, Linphone
 	if (linphone_core_find_payload_type(pauline->lc,"h264", -1, -1)!=NULL) {
 		disable_all_video_codecs_except_one(pauline->lc,"h264");
 		disable_all_video_codecs_except_one(marie->lc,"h264");
+	}
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
 	}
 
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -1502,6 +1577,12 @@ static void multiple_early_media(void) {
 	pol.automatically_accept=1;
 	pol.automatically_initiate=1;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(marie1->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(marie2->lc, g_display_filter.c_str());
+	}
+
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
 	linphone_core_enable_video_display(pauline->lc, TRUE);
 
@@ -1587,7 +1668,10 @@ static void audio_call_with_ice_with_video_policy_enabled(void){
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneVideoPolicy vpol;
 
-
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+	}
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -1640,6 +1724,11 @@ static void classic_video_entry_phone_setup(void) {
 	vpol.automatically_initiate = vpol.automatically_accept = TRUE;
 	lcs = bctbx_list_append(lcs, caller_mgr->lc);
 	lcs = bctbx_list_append(lcs, callee_mgr->lc);
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(callee_mgr->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(caller_mgr->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_enable_video_capture(caller_mgr->lc, TRUE);
 	linphone_core_enable_video_display(caller_mgr->lc, TRUE);
@@ -1762,6 +1851,11 @@ static void video_call_snapshot(void) {
 	char *filename = bc_tester_file("snapshot.jpeg");
 	bool_t call_succeeded = FALSE;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
+
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
 	linphone_core_enable_video_capture(pauline->lc, TRUE);
@@ -1804,6 +1898,11 @@ static void video_call_snapshots(void) {
 	char *filename = bc_tester_file("snapshot.jpeg");
 	bool_t call_succeeded = FALSE;
 	int dummy = 0;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_enable_video_capture(marie->lc, TRUE);
 	linphone_core_enable_video_display(marie->lc, TRUE);
@@ -1862,6 +1961,11 @@ static void video_call_with_re_invite_inactive_followed_by_re_invite_base(Linpho
 	pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
 	linphone_core_set_avpf_mode(pauline->lc,LinphoneAVPFEnabled);
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	// important: VP8 has really poor performances with the mire camera, at least
 	// on iOS - so when ever h264 is available, let's use it instead
@@ -1949,6 +2053,11 @@ static void incoming_reinvite_with_invalid_ack_sdp(void){
 	LinphoneCoreManager* caller = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* callee = linphone_core_manager_new( "marie_rc");
 	LinphoneCall * inc_call;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+	}
 	BC_ASSERT_TRUE(call(caller,callee));
 	inc_call = linphone_core_get_current_call(callee->lc);
 
@@ -1987,6 +2096,12 @@ static void outgoing_reinvite_with_invalid_ack_sdp(void)  {
 	LinphoneCoreManager* caller = linphone_core_manager_new( "pauline_tcp_rc");
 	LinphoneCoreManager* callee = linphone_core_manager_new( "marie_rc");
 	LinphoneCall * out_call;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+	}
+
 	BC_ASSERT_TRUE(call(caller,callee));
 	out_call = linphone_core_get_current_call(caller->lc);
 
@@ -2024,6 +2139,11 @@ static void video_call_with_no_audio_and_no_video_codec(void){
 	LinphoneCall* out_call ;
 	LinphoneVideoPolicy callee_policy, caller_policy;
 	LinphoneCallTestParams caller_test_params = {0}, callee_test_params = {0};
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+	}
 
 	const bctbx_list_t* elem_video =linphone_core_get_video_codecs(caller->lc);
 
@@ -2074,6 +2194,10 @@ static void video_call_with_auto_video_accept_disabled_on_one_end(void){
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTcp) ? "pauline_rc" : "pauline_tcp_rc");
 	LinphoneVideoPolicy marie_policy, pauline_policy;
 
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(marie->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(pauline->lc, g_display_filter.c_str());
+	}
 
 	marie_policy.automatically_initiate=FALSE;
 	marie_policy.automatically_accept=TRUE;
@@ -2149,6 +2273,11 @@ static void video_call_with_fallback_to_static_picture_when_no_fps(void) {
 	LinphoneCall* callee_call;
 	LinphoneCall* caller_call;
 	float fps = 0;
+
+	if(g_display_filter != ""){
+		linphone_core_set_video_display_filter(caller->lc, g_display_filter.c_str());
+		linphone_core_set_video_display_filter(callee->lc, g_display_filter.c_str());
+	}
 
 	linphone_core_set_preferred_video_size_by_name(caller->lc, "QVGA");
 	linphone_core_set_preferred_video_size_by_name(callee->lc, "QVGA");
@@ -2276,7 +2405,16 @@ static test_t call_video_tests[] = {
 	TEST_NO_TAG("Video call with fallback to Static Picture when no fps", video_call_with_fallback_to_static_picture_when_no_fps),
 };
 
+int init_msogl_call_suite(){
+	if(std::string(ms_factory_get_default_video_renderer(NULL)) == "MSOGL")
+		return -1;// Do not test MSOGL as it is already used by default tests
+	else{
+		g_display_filter = "MSOGL";
+		return 0;
+	}
+}
 test_suite_t call_video_test_suite = {"Video Call", NULL, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
 								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
-
+test_suite_t call_video_msogl_test_suite = {"Video Call MSOGL", init_msogl_call_suite, NULL, liblinphone_tester_before_each, liblinphone_tester_after_each,
+								sizeof(call_video_tests) / sizeof(call_video_tests[0]), call_video_tests};
 #endif // ifdef VIDEO_ENABLED

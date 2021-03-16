@@ -4003,8 +4003,6 @@ void linphone_core_iterate(LinphoneCore *lc){
 	if (liblinphone_serialize_logs == TRUE) {
 		ortp_logv_flush();
 	}
-
-
 	/* When doing asynchronous core stop, the core goes to LinphoneGlobalShutdown state
 	Then linphone_core_iterate() needs to be called until synchronous tasks are done
 	Then the stop is finished and the status is changed to LinphoneGlobalOff */
@@ -6111,7 +6109,7 @@ void linphone_core_set_native_video_window_id(LinphoneCore *lc, void *id) {
 #endif
 }
 
-void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
+void * linphone_core_get_native_preview_window_id(LinphoneCore *lc){
 	if (lc->preview_window_id){
 		/*case where the id was set by the app previously*/
 		return lc->preview_window_id;
@@ -6124,6 +6122,8 @@ void * linphone_core_get_native_preview_window_id(const LinphoneCore *lc){
 			auto ms = dynamic_pointer_cast<LinphonePrivate::MediaSession>(Call::toCpp(call)->getActiveSession());
 			if (ms) return ms->getNativePreviewVideoWindowId();
 		}
+		if( lc->previewstream==NULL && linphone_core_video_preview_enabled(lc) && !L_GET_PRIVATE_FROM_C_OBJECT(lc)->hasCalls())
+					toggle_video_preview(lc,TRUE);
 		if (lc->previewstream)
 			return video_preview_get_native_window_id(lc->previewstream);
 #endif
