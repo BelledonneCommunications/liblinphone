@@ -242,6 +242,13 @@ LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *confere
 LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
 
 /**
+ * Get number of participants including me if in
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the number of participants including me if in being part of a #LinphoneConference
+ */
+LINPHONE_PUBLIC int linphone_conference_get_size(const LinphoneConference *conference);
+
+/**
  * For a local audio video conference, this function returns the participant hosting the conference
  * For a remote audio video conference, this function returns the focus of the conference
  * @param conference The #LinphoneConference object. @notnil
@@ -341,7 +348,6 @@ LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
-int linphone_conference_get_size(const LinphoneConference *conference);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);
