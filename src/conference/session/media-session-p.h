@@ -269,7 +269,7 @@ private:
 	int mainVideoStreamIndex = -1;
 	int mainTextStreamIndex = -1;
 
-	LinphoneMediaEncryption negotiatedEncryption = LinphoneMediaEncryptionNone;
+	mutable LinphoneMediaEncryption negotiatedEncryption = LinphoneMediaEncryptionNone;
 
 	LinphoneNatPolicy *natPolicy = nullptr;
 	std::unique_ptr<StunClient> stunClient;
