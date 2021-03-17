@@ -2070,7 +2070,7 @@ static void simple_call_with_capability_negotiations(LinphoneCoreManager* caller
 	encrypted_call_base(caller, callee, expectedEncryption, TRUE, TRUE, FALSE);
 }
 
-static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void) {
+static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(bool_t callee_supports_unencrypted) {
 	const LinphoneMediaEncryption optionalEncryption = LinphoneMediaEncryptionSRTP;
 
 	std::list<LinphoneMediaEncryption> enc_list {optionalEncryption};
@@ -2086,6 +2086,10 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void
 	marie_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
 	marie_enc_mgr_params.level = E_OPTIONAL;
 	marie_enc_mgr_params.preferences = enc_list;
+	if (callee_supports_unencrypted) {
+		// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
+		linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP, AES_CM_256_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP");
+	}
 
 	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, TRUE, FALSE, TRUE);
 	// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
@@ -2099,8 +2103,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void
 	linphone_call_params_add_custom_sdp_attribute(marie_params, "acap", "870 crypto:99 AES_CM_128_HMAC_SHA1_32 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTCP");
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_capability_negotiations (pauline_params, TRUE);
+	linphone_call_params_add_custom_sdp_attribute(pauline_params, "acap", "999 crypto:25 AES_CM_256_HMAC_SHA1_80 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
 
-	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionNone;
+	const LinphoneMediaEncryption expectedEncryption = (callee_supports_unencrypted) ? optionalEncryption : LinphoneMediaEncryptionNone;
 	encrypted_call_with_params_base(marie, pauline, expectedEncryption, marie_params, pauline_params, TRUE);
 
 	linphone_call_params_unref(marie_params);
@@ -2109,6 +2114,15 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
+
+static void unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void) {
+	call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(FALSE);
+}
+
+static void srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp(void) {
+	call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(TRUE);
+}
+
 
 static void simple_srtp_call_with_capability_negotiations(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -2540,13 +2554,14 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call changes encryption with update and capability negotiations on callee", call_changes_enc_on_update_cap_neg_callee),
 	TEST_NO_TAG("Call changes encryption with update and capability negotiations on both sides", call_changes_enc_on_update_cap_neg_both_sides),
 	TEST_NO_TAG("Unencrypted call with potential configuration same as actual one", unencrypted_call_with_potential_configuration_same_as_actual_configuration),
-	TEST_NO_TAG("Call with capability negotiations and unsupported crypto in sdp", call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
+	TEST_NO_TAG("Unencrypted call with capability negotiations and unsupported crypto in sdp", unencrypted_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
 	TEST_NO_TAG("Back to back call with capability negotiations on one side", back_to_back_calls_cap_neg_one_side),
 	TEST_NO_TAG("Back to back call with capability negotiations on both sides", back_to_back_calls_cap_neg_both_sides),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
 	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
+	TEST_NO_TAG("SRTP call with capability negotiations and unsupported crypto in sdp", srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp),
 	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (caller unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted),
 	TEST_NO_TAG("SRTP call with suite mismatch and capability negotiations (callee unencrypted)", srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted),
 	TEST_NO_TAG("SRTP call with different encryptions in call params", srtp_call_with_encryption_supported_in_call_params_only),
