@@ -176,12 +176,13 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
 	for (const auto &participant : participants) {
+lInfo() << "DEBUG " << __func__ << " participant " << participant->getAddress() << " searched address " << searchedAddr;
 		if (participant->getAddress() == searchedAddr) {
 			return participant;
 		}
 	}
 
-	lInfo() << "Unable to find participant in conference " << this << " with address " << addr.asString();
+	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with address " << addr.asString();
 	return nullptr;
 }
 
@@ -191,7 +192,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 		if (participant->getSession() == session)
 			return participant;
 	}
-	lInfo() << "Unable to find participant in conference " << this << " with call session " << session;
+	lInfo() << "Unable to find participant in conference " << getConferenceAddress() << " (" << this << ") with call session " << session;
 
 	return nullptr;
 }
