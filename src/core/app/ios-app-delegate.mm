@@ -27,6 +27,15 @@
 	return self;
 }
 
+-(std::shared_ptr<LinphonePrivate::Core>)getCore {
+	std::shared_ptr<LinphonePrivate::Core> core = pcore.lock();
+	if (!core) {
+		lWarning() << "Unable to get valid core instance.";
+		return nullptr;
+	}
+	return core;
+}
+
 @end
 
 @implementation IosAppDelegate
@@ -53,22 +62,21 @@
 	[NSNotificationCenter.defaultCenter removeObserver:self];
 }
 
-- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core{
-	pcore = core;
-}
-
 - (void)didEnterBackground:(NSNotification *)notif {
 	ms_message("[Ios App] didEnterBackground");
-	pcore->enterBackground();
+	if ([self getCore])
+		[self getCore]->enterBackground();
 }
 
 - (void)didEnterForeground:(NSNotification *)notif {
 	ms_message("[Ios App] didEnterForeground");
-	pcore->enterForeground();
+	if ([self getCore])
+		[self getCore]->enterForeground();
 }
 
 - (void)iterate {
-	linphone_core_iterate(pcore->getCCore());
+	if ([self getCore])
+		linphone_core_iterate([self getCore]->getCCore());
 }
 
 @end
@@ -133,7 +141,9 @@
 	if (currentInputPort == previousInputPort && currentOutputPort == previousOutputPort)
 	   return;
 	
-	pcore->doLater([=]() {
+	std::shared_ptr<LinphonePrivate::Core> core = [self getCore];
+	if (!core) return;
+	core->doLater([=]() {
 		
 		switch (changeReason)
 		{
@@ -143,7 +153,7 @@
 			{
 				// We need to reload for these 3 category, because the first list of AudioDevices available may not be up to date
 				// For example, bluetooth devices would possibly not be detected before a call Start, as the AudioSession may be in a category other than AVAudioSessionCategoryPlayAndRecord
-				linphone_core_reload_sound_devices(pcore->getCCore());
+				linphone_core_reload_sound_devices([self getCore]->getCCore());
 			}
 			default: {}
 		}
@@ -159,8 +169,8 @@
 				return (deviceName == currentOutputPort);
 		};
 		
-		const LinphoneAudioDevice * inputDevice = linphone_core_get_input_audio_device(pcore->getCCore());
-		const LinphoneAudioDevice * outputDevice = linphone_core_get_output_audio_device(pcore->getCCore());
+		const LinphoneAudioDevice * inputDevice = linphone_core_get_input_audio_device(core->getCCore());
+		const LinphoneAudioDevice * outputDevice = linphone_core_get_output_audio_device(core->getCCore());
 		std::string currentInputDeviceInCore( (inputDevice == NULL) ? "" : linphone_audio_device_get_device_name(inputDevice) );
 		std::string currentOutputDeviceInCore( (outputDevice == NULL) ? "" : linphone_audio_device_get_device_name(outputDevice) );
 		
@@ -168,7 +178,7 @@
 		bool inputRequiresUpdate = !deviceMatchCurrentInput(currentInputDeviceInCore);
 		bool outputRequiresUpdate = !deviceMatchCurrentOutput(currentOutputDeviceInCore);
 		
-		bctbx_list_t * deviceIt = linphone_core_get_extended_audio_devices(pcore->getCCore());
+		bctbx_list_t * deviceIt = linphone_core_get_extended_audio_devices(core->getCCore());
 		LinphoneAudioDevice * pLastDeviceSet = NULL;
 		while ( deviceIt != NULL && (inputRequiresUpdate || outputRequiresUpdate) ) {
 			LinphoneAudioDevice * pDevice = (LinphoneAudioDevice *) deviceIt->data;
@@ -176,7 +186,7 @@
 			
 			bool inputMatch = deviceMatchCurrentInput(deviceName);
 			if (inputRequiresUpdate && inputMatch) {
-				linphone_core_set_input_audio_device(pcore->getCCore(), pDevice);
+				linphone_core_set_input_audio_device(core->getCCore(), pDevice);
 				pLastDeviceSet = pDevice;
 				inputRequiresUpdate = false;
 			}
@@ -188,7 +198,7 @@
 				bool isReceiverSpecialCase = currentOutputIsReceiver && inputMatch;
 				
 				if (isReceiverSpecialCase || deviceMatchCurrentOutput(deviceName)) {
-					linphone_core_set_output_audio_device(pcore->getCCore(), pDevice);
+					linphone_core_set_output_audio_device(core->getCCore(), pDevice);
 					pLastDeviceSet = pDevice;
 					outputRequiresUpdate = false;
 				}
@@ -200,19 +210,19 @@
 			ms_warning("Current audio route input is '%s', but we could not find the matching device in the linphone devices list", currentInputPort.c_str());
 			if (!outputRequiresUpdate && pLastDeviceSet != NULL) {
 				ms_warning("Setting input device to match the current output device by default");
-				linphone_core_set_input_audio_device(pcore->getCCore(), pLastDeviceSet);
+				linphone_core_set_input_audio_device(core->getCCore(), pLastDeviceSet);
 			}
 		}
 		if (outputRequiresUpdate) {
 			ms_warning("Current audio route output is '%s', but we could not find the matching device in the linphone devices list", currentOutputPort.c_str());
 			if (!inputRequiresUpdate && pLastDeviceSet != NULL) {
 				ms_warning("Setting output device to match the current input device by default");
-				linphone_core_set_output_audio_device(pcore->getCCore(), pLastDeviceSet);
+				linphone_core_set_output_audio_device(core->getCCore(), pLastDeviceSet);
 			}
 		}
 		
 		// Notify the filter that the audio route changed
-		pcore->soundcardAudioRouteChanged();
+		core->soundcardAudioRouteChanged();
 		
 	});
 }
