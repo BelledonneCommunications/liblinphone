@@ -24,9 +24,12 @@ static void simple_call(void) {
 	simple_call_base_with_rcs("claire_rc", "pauline_rc", FALSE, FALSE, FALSE);
 };
 
-static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, LinphoneChatRoom *senderCr, bctbx_list_t *recipients, const char *msgText) {
+static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, LinphoneChatRoom *senderCr, bctbx_list_t *recipients, const char *msgText, bool_t send_file) {
 
 	stats * recipients_initial_stats = NULL;
+	char *sendFilepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+	char *receiveFilepath = bc_tester_file("receive_file.dump");
+	LinphoneChatMessage *senderMessage=NULL;
 	int counter = 1;
 	for (bctbx_list_t *it = recipients; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
@@ -39,34 +42,50 @@ static void send_chat_message_to_group_chat_room(bctbx_list_t *coresList, Linpho
 		counter++;
 	}
 
-	LinphoneChatMessage *senderMessage = _send_message(senderCr, msgText);
+	if (send_file == TRUE) {
+		_send_file_plus_text(senderCr, sendFilepath, NULL, msgText, FALSE);
+	} else {
+		senderMessage = _send_message(senderCr, msgText);
+	}
 
 	int idx = 0;
 	for (bctbx_list_t *it = recipients; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
-		BC_ASSERT_TRUE(wait_for_list(coresList, &m->stat.number_of_LinphoneMessageReceived, recipients_initial_stats[idx].number_of_LinphoneMessageReceived + 1, 5000));
+		if (send_file == TRUE) {
+			remove(receiveFilepath);
+			_receive_file_plus_text(coresList, m, &(recipients_initial_stats[idx]), receiveFilepath, sendFilepath, NULL, msgText, FALSE);
+		} else {
+			BC_ASSERT_TRUE(wait_for_list(coresList, &m->stat.number_of_LinphoneMessageReceived, recipients_initial_stats[idx].number_of_LinphoneMessageReceived + 1, 5000));
 
-		LinphoneChatMessage *recipientLastMsg = m->stat.last_received_chat_message;
-		BC_ASSERT_PTR_NOT_NULL(recipientLastMsg);
-		if (recipientLastMsg) {
-			BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recipientLastMsg), msgText);
+			LinphoneChatMessage *recipientLastMsg = m->stat.last_received_chat_message;
+			BC_ASSERT_PTR_NOT_NULL(recipientLastMsg);
+			if (recipientLastMsg) {
+				BC_ASSERT_STRING_EQUAL(linphone_chat_message_get_utf8_text(recipientLastMsg), msgText);
+			}
 		}
 
 		idx++;
 	}
+	if (send_file != TRUE) {
+		linphone_chat_message_unref(senderMessage);
+	}
 
-	linphone_chat_message_unref(senderMessage);
 	if (recipients_initial_stats) {
 		ms_free(recipients_initial_stats);
 	}
+	bc_free(sendFilepath);
+	bc_free(receiveFilepath);
 }
 
 /**
  * @param[in] encryption	true to activate message encryption
  * @param[in] external_sender	if true claire (from the external domain) will send the message, otherwise marie will do it
+ * @param[in] restart_external_participant	if true claire (from the external domain) will restart her core, otherwise marie will do it
+ * @param[in] hfts_domainA	File transfer server URL used by domain A (marie, pauline)
+ * @param[in] hfts_domainB	File transfer server URL used by domain B (claire)
  */
-static void group_chat (bool_t encryption, bool_t external_sender, bool_t restart_external_participant) {
+static void group_chat_hfts (bool_t encryption, bool_t external_sender, bool_t restart_external_participant, const char *hfts_domainA, const char *getProxy_domainA, const char *hfts_domainB, const char *getProxy_domainB) {
 	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
 	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
 	LinphoneCoreManager *claire = linphone_core_manager_create("claire_rc"); // External
@@ -82,6 +101,12 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	LinphoneChatRoom *paulineCr = NULL;
 	LinphoneChatRoom *claireCr = NULL;
 
+	// Send a file only when both domainA and domainB file transfer server are set (we might use only one of them)
+	bool_t send_file = FALSE;
+	if (hfts_domainA != NULL && hfts_domainB != NULL) {
+		send_file = TRUE;
+	}
+
 	if (encryption == TRUE) {
 		// marie and pauline are on the regular lime server
 		linphone_config_set_string(linphone_core_get_config(marie->lc),"lime","curve","c25519");
@@ -91,6 +116,19 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 		// claire uses the lime-external one
 		linphone_config_set_string(linphone_core_get_config(claire->lc),"lime","curve","c25519");
 		linphone_core_set_lime_x3dh_server_url(claire->lc, lime_server_c25519_external_url);
+	}
+
+	if (send_file == TRUE) {
+		linphone_core_set_file_transfer_server(marie->lc, hfts_domainA);
+		linphone_core_set_file_transfer_server(pauline->lc, hfts_domainA);
+		if (getProxy_domainA != NULL) {
+			linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "file_transfer_server_get_proxy", getProxy_domainA);
+			linphone_config_set_string(linphone_core_get_config(pauline->lc),"misc", "file_transfer_server_get_proxy", getProxy_domainA);
+		}
+		linphone_core_set_file_transfer_server(claire->lc, hfts_domainB);
+		if (getProxy_domainB != NULL) {
+			linphone_config_set_string(linphone_core_get_config(claire->lc), "misc", "file_transfer_server_get_proxy", getProxy_domainB);
+		}
 	}
 
 	stats initialMarieStats = marie->stat;
@@ -161,7 +199,7 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	if (!BC_ASSERT_PTR_NOT_NULL(senderCr))
 		goto end;
 	const char *msgText = "Hello";
-	send_chat_message_to_group_chat_room(coresList, senderCr, recipients, msgText);
+	send_chat_message_to_group_chat_room(coresList, senderCr, recipients, msgText, send_file);
 
 	LinphoneCoreManager * manager_to_restart = NULL;
 	if (restart_external_participant) {
@@ -185,6 +223,20 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 		}
 
 	}
+
+	if (send_file == TRUE) {
+		linphone_core_set_file_transfer_server(marie->lc, hfts_domainA);
+		linphone_core_set_file_transfer_server(pauline->lc, hfts_domainA);
+		if (getProxy_domainA != NULL) {
+			linphone_config_set_string(linphone_core_get_config(marie->lc), "misc", "file_transfer_server_get_proxy", getProxy_domainA);
+			linphone_config_set_string(linphone_core_get_config(pauline->lc),"misc", "file_transfer_server_get_proxy", getProxy_domainA);
+		}
+		linphone_core_set_file_transfer_server(claire->lc, hfts_domainB);
+		if (getProxy_domainB != NULL) {
+			linphone_config_set_string(linphone_core_get_config(claire->lc), "misc", "file_transfer_server_get_proxy", getProxy_domainB);
+		}
+	}
+
 
 	bctbx_list_t *tmpCoresManagerList = bctbx_list_append(NULL, manager_to_restart);
 	init_core_for_conference(tmpCoresManagerList);
@@ -236,7 +288,7 @@ static void group_chat (bool_t encryption, bool_t external_sender, bool_t restar
 	if (!BC_ASSERT_PTR_NOT_NULL(senderCr2))
 		goto end;
 	const char *msgText2 = "Hello again";
-	send_chat_message_to_group_chat_room(coresList, senderCr2, recipients2, msgText2);
+	send_chat_message_to_group_chat_room(coresList, senderCr2, recipients2, msgText2, send_file);
 
 	linphone_address_unref(confAddr);
 
@@ -261,6 +313,10 @@ end:
 	linphone_core_manager_destroy(claire);
 }
 
+static void group_chat (bool_t encryption, bool_t external_sender, bool_t restart_external_participant) {
+	group_chat_hfts(encryption, external_sender, restart_external_participant, NULL, NULL, NULL, NULL);
+}
+
 static void group_chat_external_domain_participant (void) {
 	group_chat(FALSE, FALSE, FALSE);
 }
@@ -279,11 +335,27 @@ static void group_chat_external_domain_participant_external_restart (void) {
 static void encrypted_message_ext_sender_external_restart(void) {
 	group_chat(TRUE, TRUE, TRUE);
 }
+static void group_chat_plain_with_file (void) {
+	group_chat_hfts(FALSE, FALSE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
+}
+static void group_chat_plain_with_file_ext_sender (void) {
+	group_chat_hfts(FALSE, TRUE, FALSE, file_transfer_url, NULL, file_transfer_url, NULL);
+}
+static void group_chat_plain_with_file_auth_fileserver (void) {
+	group_chat_hfts(FALSE, FALSE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
+}
+static void group_chat_plain_with_file_ext_sender_auth_fileserver (void) {
+	group_chat_hfts(FALSE, TRUE, FALSE, file_transfer_url_digest_auth, file_transfer_get_proxy, file_transfer_url_digest_auth_external_domain, file_transfer_get_proxy_external_domain);
+}
 
 test_t external_domain_tests[] = {
 	TEST_NO_TAG("Simple call", simple_call),
 	TEST_ONE_TAG("Message sent from domainA", group_chat_external_domain_participant, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Message sent from domainB", group_chat_external_domain_participant_ext_sender, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Message sent from domainA with file open file transfer server", group_chat_plain_with_file, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Message sent from domainB with file open file transfer server", group_chat_plain_with_file_ext_sender, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Message sent from domainA with file auth file transfer server", group_chat_plain_with_file_auth_fileserver, "LeaksMemory" /*due to core restart*/),
+	TEST_ONE_TAG("Message sent from domainB with file auth file transfer server", group_chat_plain_with_file_ext_sender_auth_fileserver, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Encrypted message sent from domainA", encrypted_message, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Encrypted message sent from domainB", encrypted_message_ext_sender, "LeaksMemory" /*due to core restart*/),
 	TEST_ONE_TAG("Message sent from domainA with external core restart", group_chat_external_domain_participant_external_restart, "LeaksMemory" /*due to core restart*/),
