@@ -2135,7 +2135,6 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	pauline_enc_mgr_params.preferences = enc_list;
 
 	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, TRUE, FALSE, TRUE);
-	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
 	if (callee_supports_unencrypted) {
 		// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
 		linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP, AES_CM_256_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP");
@@ -2149,7 +2148,6 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, TRUE, FALSE, TRUE);
 	// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
 	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
-	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", TRUE);
 
 	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(pauline->lc,optionalEncryption));
 	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(marie->lc,optionalEncryption));
@@ -2169,6 +2167,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", TRUE);
 
 	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_call);
