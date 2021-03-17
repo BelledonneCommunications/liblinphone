@@ -92,8 +92,13 @@ const char *userhostsfile = "tester_hosts";
 const char *file_transfer_url="https://transfer.example.org:9444/flexisip-http-file-transfer-server/hft.php";
 const char *file_transfer_url_tls_client_auth="https://transfer.example.org:9445/flexisip-http-file-transfer-server/hft.php";
 const char *file_transfer_url_digest_auth="https://transfer.example.org:9446/flexisip-http-file-transfer-server/hft.php";
+// Get proxy on the server using digest auth on sip.example.org
+const char *file_transfer_get_proxy="https://transfer.example.org:9446/flexisip-http-file-transfer-server/download.php";
 const char *file_transfer_url_digest_auth_any_domain="https://transfer.example.org:9447/flexisip-http-file-transfer-server/hft.php";
 const char *file_transfer_url_small_files="https://transfer.example.org:9448/flexisip-http-file-transfer-server/hft.php";
+const char *file_transfer_url_digest_auth_external_domain="https://transfer.external-domain.org:9544/flexisip-http-file-transfer-server/hft.php";
+// Get proxy on the server using digest auth on sip.external-domain.org
+const char *file_transfer_get_proxy_external_domain="https://transfer.external-domain.org:9544/flexisip-http-file-transfer-server/download.php";
 // These lime server authenticate user using Digest auth only on sip.example.org domain
 const char *lime_server_c25519_url="https://lime.wildcard1.linphone.org:8443/lime-server-c25519/lime-server.php";
 const char *lime_server_c448_url="https://lime.wildcard1.linphone.org:8443/lime-server-c448/lime-server.php";
