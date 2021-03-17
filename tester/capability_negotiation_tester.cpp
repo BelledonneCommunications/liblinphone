@@ -2100,7 +2100,8 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base
 
 	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
 	linphone_call_params_enable_capability_negotiations (marie_params, TRUE);
-	linphone_call_params_add_custom_sdp_attribute(marie_params, "acap", "870 crypto:99 AES_CM_128_HMAC_SHA1_32 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTCP");
+	linphone_call_params_add_custom_sdp_attribute(marie_params, "acap", "870 crypto:99 AES_CM_256_HMAC_SHA1_32 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTCP");
+	linphone_call_params_add_custom_sdp_media_attribute(marie_params, LinphoneStreamTypeAudio, "pcfg", "36 a=870 t=1");
 	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
 	linphone_call_params_enable_capability_negotiations (pauline_params, TRUE);
 	linphone_call_params_add_custom_sdp_attribute(pauline_params, "acap", "999 crypto:25 AES_CM_256_HMAC_SHA1_80 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
@@ -2110,6 +2111,51 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base
 
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
+
+/*
+	LinphoneCall * marie_call = linphone_core_get_current_call(marie->lc);
+	LinphoneCall * pauline_call = linphone_core_get_current_call(pauline->lc);
+
+	stats marie_stat = marie->stat;
+	stats pauline_stat = pauline->stat;
+	LinphoneCallParams * params = linphone_core_create_call_params(pauline->lc, pauline_call);
+	linphone_call_params_add_custom_sdp_media_attribute(params, LinphoneStreamTypeAudio, "pcfg", "238 a=999 t=1");
+	linphone_call_update(pauline_call, params);
+	linphone_call_params_unref(params);
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1)));
+
+	LinphoneMediaEncryption encryption = LinphoneMediaEncryptionNone;
+	bool potentialConfigurationChosen = false;
+	get_expected_encryption_from_call_params(pauline_call, marie_call, &encryption, &potentialConfigurationChosen);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1+((potentialConfigurationChosen) ? 1 : 0))));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1+((potentialConfigurationChosen) ? 1 : 0))));
+	liblinphone_tester_set_next_video_frame_decoded_cb(marie_call);
+	liblinphone_tester_set_next_video_frame_decoded_cb(pauline_call);
+
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_IframeDecoded,(pauline_stat.number_of_IframeDecoded+1)));
+	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_IframeDecoded,(marie_stat.number_of_IframeDecoded+1)));
+
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(pauline_call)));
+	BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(marie_call)));
+
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(pauline_call)));
+	BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(marie_call)));
+
+	liblinphone_tester_check_rtcp(marie, pauline);
+
+	// Check that encryption has not changed after sending update
+	if (marie_call) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marie_call)), encryption, int, "%i");
+	}
+	if (pauline_call) {
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)), encryption, int, "%i");
+	}
+*/
 
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
