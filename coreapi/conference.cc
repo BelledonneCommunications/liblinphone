@@ -1534,13 +1534,14 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 			if (!eventHandler) {
 				eventHandler = std::make_shared<RemoteConferenceEventHandler>(this, this);
 			}
+			lInfo() << "Subscribing me (address " << pAddr << ") to conference " << getConferenceAddress();
 			eventHandler->subscribe(getConferenceId());
 		}
 	#endif // HAVE_ADVANCED_IM
 	} else if (!findParticipant(pAddr)) {
-		LinphonePrivate::Conference::addParticipant(pAddr);
+		lInfo() << "Addition of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been successful";
 	} else {
-		lInfo() << "Ignoring notification of addition of participant with address " << pAddr << " because it is already part of conference " << getConferenceId();
+		lInfo() << "Addition of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been failed because the participant is still not part of the conference";
 	}
 }
 
@@ -1548,7 +1549,8 @@ void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticip
 	const IdentityAddress &pAddr = event->getParticipantAddress();
 
 	if (isMe(pAddr)) {
-		// Delete all devices of a participant
+		lInfo() << "Unsubscribing all devices of me (address " << pAddr << ") from conference " << getConferenceAddress();
+		// Unsubscribe all devices of me
 		std::for_each(getMe()->getDevices().cbegin(), getMe()->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
 			LinphoneEvent * event = device->getConferenceSubscribeEvent();
 			if (event) {
@@ -1559,67 +1561,10 @@ void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticip
 				linphone_event_terminate(event);
 			}
 		});
-	} else if (findParticipant(pAddr)) {
-		LinphonePrivate::Conference::removeParticipant(findParticipant(pAddr));
+	} else if (!findParticipant(pAddr)) {
+		lInfo() << "Removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been successful";
 	} else {
-		lInfo() << "Ignoring notification of removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceId();
-	}
-}
-
-void RemoteConference::onParticipantSetAdmin (const shared_ptr<ConferenceParticipantEvent> &event, const std::shared_ptr<Participant> &participant) {
-	const IdentityAddress &pAddr = event->getParticipantAddress();
-
-	shared_ptr<Participant> confParticipant;
-	if (isMe(pAddr))
-		confParticipant = getMe();
-	else
-		confParticipant = findParticipant(pAddr);
-
-	if (confParticipant) {
-		confParticipant->setAdmin(event->getType() == EventLog::Type::ConferenceParticipantSetAdmin);
-	} else {
-		lInfo() << "Ignoring notification of admin change for participant with address " << pAddr << " because it was not found in conference " << getConferenceId();
-	}
-}
-
-void RemoteConference::onSubjectChanged (const shared_ptr<ConferenceSubjectEvent> &event) {
-	confParams->setSubject(event->getSubject());
-}
-
-void RemoteConference::onParticipantDeviceAdded (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	const IdentityAddress &pAddr = event->getParticipantAddress();
-	shared_ptr<Participant> participant;
-	if (isMe(pAddr))
-		participant = getMe();
-	else
-		participant = findParticipant(pAddr);
-
-	if (participant) {
-		const IdentityAddress &dAddr = event->getDeviceAddress();
-
-		const auto pDevice = participant->findDevice(dAddr);
-		if (!pDevice) {
-			lInfo() << "Adding device with address " << dAddr << " to participant " << pAddr;
-			participant->addDevice(dAddr);
-		}
-	} else {
-		lInfo() << "Unable to find participant with address " << pAddr << " in conference " << getConferenceId();
-	}
-}
-
-void RemoteConference::onParticipantDeviceRemoved (const shared_ptr<ConferenceParticipantDeviceEvent> &event, const std::shared_ptr<ParticipantDevice> &device) {
-	const IdentityAddress &pAddr = event->getParticipantAddress();
-	const IdentityAddress &dAddr = event->getDeviceAddress();
-	shared_ptr<Participant> participant;
-	if (isMe(pAddr))
-		participant = getMe();
-	else
-		participant = findParticipant(pAddr);
-
-	if (participant) {
-		participant->removeDevice(dAddr);
-	} else {
-		lInfo() << "Ignoring notification of removal of device " << dAddr << " because participant with address " << pAddr << " was not found in conference " << getConferenceId();
+		lInfo() << "Removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been failed because the participant is still part of the conference";
 	}
 }
 
