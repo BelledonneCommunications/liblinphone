@@ -1563,8 +1563,8 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 					// If old stream actual configuration supported SRTP, then copy crypto parameters
 					lInfo() << "Keeping same crypto keys when making new local stream description";
 					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
-				} else if (!md->supportCapabilityNegotiation() && oldMd->supportCapabilityNegotiation()) {
-					// If current media description doesn't support capability negotiations and previous one did, try to see if encryption keys were generated as attribute capabilities
+				} else if (oldMd->supportCapabilityNegotiation()) {
+					// Search crypto attributes in acaps if previous media description did support capability negotiations
 					// Copy acap crypto attributes if old stream supports it as potential configuration
 					for (const auto & cap : oldStream.acaps) {
 						const auto & nameValuePair = cap.second;
