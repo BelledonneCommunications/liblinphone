@@ -147,18 +147,6 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		if (state == StateType::deleted) {
 			if (conf->isMe(address)) {
 				lInfo() << "Participant " << address.asString() << " requested to be deleted is me.";
-				// Unsubscribe all devices of me
-/*				std::for_each(conf->getMe()->getDevices().cbegin(), conf->getMe()->getDevices().cend(), [&] (const std::shared_ptr<ParticipantDevice> & device) {
-					LinphoneEvent * event = device->getConferenceSubscribeEvent();
-					if (event) {
-						//try to terminate subscription if any, but do not wait for answer.
-						LinphoneEventCbs *cbs = linphone_event_get_callbacks(event);
-						linphone_event_cbs_set_user_data(cbs, nullptr);
-						linphone_event_cbs_set_notify_response(cbs, nullptr);
-						linphone_event_terminate(event);
-					}
-				});
-*/
 				continue;
 			} else if (participant) {
 				conf->participants.remove(participant);
@@ -178,7 +166,6 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		} else if (state == StateType::full) {
 			if (conf->isMe(address)) {
 				lInfo() << "Participant " << address.asString() << " requested to be added is me.";
-//				subscribe(conf->getConferenceId());
 			} else if (participant) {
 				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {
