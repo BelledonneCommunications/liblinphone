@@ -388,20 +388,30 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 			// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
 			// If not, the actual configuration from the local offer has been selected
 			if (answerUnparsedCfgs.empty()) {
+				lInfo() << "Answerer chose offerer's actual configuration at index " << localCfgIdx;
 				localCfgIdx = local_offer.getActualConfigurationIndex();
-				resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, local_offer.getActualConfigurationIndex(), remoteCfgIdx);
+				resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
 			} else {
 				if (answerUnparsedCfgs.size() > 1) {
-					lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead";
+					lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead - trying to use them if default negotiation with actual configuration failed";
 				}
 				for (const auto & cfg : answerUnparsedCfgs) {
 					const auto success = resultCfgPair.second;
-					localCfgIdx = cfg.first;
 					if (success) {
 						break;
 					} else {
-						resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+						localCfgIdx = cfg.first;
+						const auto cfgLine = cfg.second;
+						// Perform negotiations only with acfg
+						if (cfgLine.find("acfg") != std::string::npos) {
+							resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+						} else {
+							lWarning() << "Unparsed configuration line " << cfgLine << " is not defining a acfg";
+						}
 					}
+				}
+				if (resultCfgPair.second) {
+					lInfo() << "Answerer chose offerer's potential configuration at index " << localCfgIdx;
 				}
 			}
 		} else {
