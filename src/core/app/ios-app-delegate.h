@@ -22,15 +22,16 @@
 #import <UserNotifications/UserNotifications.h>
 
 @interface IosObject : NSObject {
-	std::shared_ptr<LinphonePrivate::Core> pcore;
+	std::weak_ptr<LinphonePrivate::Core> pcore;
 }
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (std::shared_ptr<LinphonePrivate::Core>)getCore;
 
 @end
 
 /*
- Used only by mais core.
+ Used only by main core.
  IosAppDelegate is an object taking care of all application delegate's notifications and iteartion:
  UIApplicationDidEnterBackgroundNotification
  UIApplicationWillEnterForegroundNotification
@@ -40,7 +41,6 @@
 @interface IosAppDelegate : IosObject
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-- (void)configure:(std::shared_ptr<LinphonePrivate::Core>)core;
 
 @end
 

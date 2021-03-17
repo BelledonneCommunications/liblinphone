@@ -6906,7 +6906,7 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	// Call uninit here because there may be the need to access DB while unregistering
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->uninit();
 	lc->chat_rooms = bctbx_list_free_with_data(lc->chat_rooms, (bctbx_list_free_func)linphone_chat_room_unref);
-	getPlatformHelpers(lc)->onLinphoneCoreStop();
+	if (lc->platform_helper) getPlatformHelpers(lc)->onLinphoneCoreStop();
 
 
 	/* save all config */
@@ -6987,11 +6987,13 @@ void _linphone_core_stop_async_end(LinphoneCore *lc) {
 	lc->factory = NULL;
 
 #if TARGET_OS_IPHONE
-	getPlatformHelpers(lc)->stop();
-	/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
-	We need to unlock them at the very end of the stopping process otherwise two Cores will
-	process at the same time until this one is finally stopped */
-	LinphonePrivate::uninitSharedCore(lc);
+	if (lc->platform_helper) {
+		getPlatformHelpers(lc)->stop();
+		/* this will unlock the other Linphone Shared Core that are waiting to start (if any).
+		 We need to unlock them at the very end of the stopping process otherwise two Cores will
+		 process at the same time until this one is finally stopped */
+		LinphonePrivate::uninitSharedCore(lc);
+	}
 #else
 	if (lc->platform_helper) delete getPlatformHelpers(lc);
 	lc->platform_helper = NULL;
