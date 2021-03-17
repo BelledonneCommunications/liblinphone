@@ -2202,6 +2202,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	linphone_call_accept_update(marie_call, params1a);
 	linphone_call_params_unref(params1a);
 
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", FALSE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", FALSE);
+
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1)));
@@ -2233,6 +2236,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(pauline_call)), encryption, int, "%i");
 	}
 
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", TRUE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", TRUE);
+
 	// Update call with unsupported cfg
 	marie_stat = marie->stat;
 	pauline_stat = pauline->stat;
@@ -2249,6 +2255,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	linphone_call_params_clear_custom_sdp_attributes(params2a);
 	linphone_call_accept_update(pauline_call, params2a);
 	linphone_call_params_unref(params2a);
+
+	linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "defer_update_default", FALSE);
+	linphone_config_set_int(linphone_core_get_config(marie->lc), "sip", "defer_update_default", FALSE);
 
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdating,(marie_stat.number_of_LinphoneCallUpdating+1)));
 	BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1)));
