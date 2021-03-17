@@ -384,36 +384,51 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 		const auto remoteCfgIdx = remote_answer.getActualConfigurationIndex();
 		unsigned int localCfgIdx = local_offer.getActualConfigurationIndex();
 		if (allowCapabilityNegotiation) {
-			const auto & answerUnparsedCfgs = remote_answer.unparsed_cfgs;
+			auto answerUnparsedCfgs = remote_answer.unparsed_cfgs;
+			// Keep only acfg in unparsed configuration list
+			if (!answerUnparsedCfgs.empty()) {
+				for (auto cfgIt = answerUnparsedCfgs.begin(); cfgIt != answerUnparsedCfgs.end(); ) {
+					const auto & cfgLine = cfgIt->second;
+					if (cfgLine.find("acfg") == std::string::npos) {
+						lWarning() << "Unparsed configuration line " << cfgLine << " is not defining a acfg";
+						cfgIt = answerUnparsedCfgs.erase(cfgIt);
+					} else {
+						++cfgIt;
+					}
+				}
+			}
+
 			// remote answer has only one configuration (the actual configuration). It contains acfg attribute if a potential configuration has been selected from the offer.
 			// If not, the actual configuration from the local offer has been selected
+			auto success = resultCfgPair.second;
 			if (answerUnparsedCfgs.empty()) {
 				lInfo() << "Answerer chose offerer's actual configuration at index " << localCfgIdx;
 				localCfgIdx = local_offer.getActualConfigurationIndex();
 				resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
+				success = resultCfgPair.second;
 			} else {
 				if (answerUnparsedCfgs.size() > 1) {
 					lError() << "The answer must contain only one potential configuration - found " << answerUnparsedCfgs.size() << " instead - trying to use them if default negotiation with actual configuration failed";
 				}
 				for (const auto & cfg : answerUnparsedCfgs) {
-					const auto success = resultCfgPair.second;
+					success = resultCfgPair.second;
 					if (success) {
 						break;
 					} else {
 						localCfgIdx = cfg.first;
 						const auto cfgLine = cfg.second;
 						// Perform negotiations only with acfg
-						if (cfgLine.find("acfg") != std::string::npos) {
-							resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
-						} else {
-							lWarning() << "Unparsed configuration line " << cfgLine << " is not defining a acfg";
-						}
+						resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
 					}
 				}
-				if (resultCfgPair.second) {
-					lInfo() << "Answerer chose offerer's potential configuration at index " << localCfgIdx;
-				}
 			}
+
+			if (success) {
+				lInfo() << "Found match between answerer's configuration and offerer configuration at index " << localCfgIdx;
+			} else {
+				lInfo() << "No match found between answerer's configuration and any of offerers available configurations";
+			}
+
 		} else {
 			localCfgIdx = local_offer.getActualConfigurationIndex();
 			resultCfgPair = OfferAnswerEngine::initiateOutgoingConfiguration(factory, local_offer,remote_answer,result, localCfgIdx, remoteCfgIdx);
