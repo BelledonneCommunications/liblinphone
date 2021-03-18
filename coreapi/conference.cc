@@ -136,6 +136,10 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 			p->setAdmin(value);
 		}
 		participants.push_back(p);
+
+		time_t creationTime = time(nullptr);
+		notifyParticipantAdded(creationTime, false, p);
+
 	}
 
 	_linphone_call_set_conf_ref(call->toC(), toC());
@@ -143,8 +147,6 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 
 	if (success) {
 		lInfo() << "Participant with address " << call->getRemoteContact() << " has been added to conference " << getConferenceAddress();
-		time_t creationTime = time(nullptr);
-		notifyParticipantAdded(creationTime, false, p);
 	} else {
 		lError() << "Unable to add participant with address " << call->getRemoteContact() << " to conference " << getConferenceAddress();
 	}
@@ -158,7 +160,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		if (remoteContact) {
 			// If device is not found, then add it
 			if (p->findDevice(*remoteContact, false) == nullptr) {
-				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
+				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				_linphone_call_set_conf_ref(call->toC(), toC());
 				device->setSession(call->getActiveSession());
@@ -729,8 +731,10 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				return success;
 			}
 		}
+
+		bool_t designateAdmin = !!!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "allow_conference_without_admin", TRUE );
 		// Choose another admin if local participant is not in or it is not admin
-		if (!isIn() || !getMe()->isAdmin()) {
+		if (designateAdmin && (!isIn() || !getMe()->isAdmin())) {
 			chooseAnotherAdminIfNoneInConference();
 		}
 	}
@@ -1538,10 +1542,10 @@ void RemoteConference::onParticipantAdded (const shared_ptr<ConferenceParticipan
 			eventHandler->subscribe(getConferenceId());
 		}
 	#endif // HAVE_ADVANCED_IM
-	} else if (!findParticipant(pAddr)) {
-		lInfo() << "Addition of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been successful";
+	} else if (findParticipant(pAddr)) {
+		lInfo() << "Addition of participant with address " << pAddr << " to conference " << getConferenceAddress() << " has been successful";
 	} else {
-		lInfo() << "Addition of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been failed because the participant is still not part of the conference";
+		lWarning() << "Addition of participant with address " << pAddr << " has been failed because the participant is not part of the conference" << getConferenceAddress();
 	}
 }
 
@@ -1562,9 +1566,9 @@ void RemoteConference::onParticipantRemoved (const shared_ptr<ConferenceParticip
 			}
 		});
 	} else if (!findParticipant(pAddr)) {
-		lInfo() << "Removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been successful";
+		lInfo() << "Removal of participant with address " << pAddr << " from conference " << getConferenceAddress() << " has been successful";
 	} else {
-		lInfo() << "Removal of participant with address " << pAddr << " because it was not found in conference " << getConferenceAddress() << " has been failed because the participant is still part of the conference";
+		lWarning() << "Removal of participant with address " << pAddr << " has been failed because the participant is still part of the conference" << getConferenceAddress();
 	}
 }
 
