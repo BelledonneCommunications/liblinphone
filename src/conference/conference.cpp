@@ -177,7 +177,6 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 	IdentityAddress searchedAddr(addr);
 	searchedAddr.setGruu("");
 	for (const auto &participant : participants) {
-lInfo() << "DEBUG " << __func__ << " participant " << participant->getAddress() << " searched address " << searchedAddr;
 		if (participant->getAddress() == searchedAddr) {
 			return participant;
 		}
