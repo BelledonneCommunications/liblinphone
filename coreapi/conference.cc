@@ -264,7 +264,15 @@ bool Conference::removeParticipant (const std::shared_ptr<LinphonePrivate::Parti
 	time_t creationTime = time(nullptr);
 	notifyParticipantRemoved(creationTime, false, participant);
 
-	checkIfTerminated();
+	bool checkTermination = true;
+	auto pSession = participant->getSession();
+	// If participant that we are trying to remove from the conference is in paused by remote state, then it temporarely left the conference therefore it must not be terminated
+	if (pSession->getState() == LinphonePrivate::CallSession::State::PausedByRemote) {
+		checkTermination = false;
+	}
+	if (checkTermination) {
+		checkIfTerminated();
+	}
 
 	return true;
 }
@@ -553,13 +561,15 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		return false;
 	}
 
-	// Add participant only if creation is successful
-	bool canAddParticipant = (getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created);
+	const Address & conferenceAddress = getConferenceAddress().asAddress();
+	const string & confId = conferenceAddress.getUriParamValue("conf-id");
+	const string & callConfId = call->getConferenceId();
+
+	// Add participant only if creation is successful or call was previously part of the conference
+	bool canAddParticipant = ((callConfId.compare(confId) == 0) || ((getParticipantCount() == 0) ? (getState() == ConferenceInterface::State::CreationPending) : (getState() == ConferenceInterface::State::Created)));
 	if (canAddParticipant) {
 		LinphoneCallState state = static_cast<LinphoneCallState>(call->getState());
 		bool localEndpointCanBeAdded = false;
-		const Address & conferenceAddress = getConferenceAddress().asAddress();
-		const string & confId = conferenceAddress.getUriParamValue("conf-id");
 
 		switch(state){
 			case LinphoneCallOutgoingInit:
@@ -601,7 +611,8 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 
 				linphone_call_update(call->toC(), params);
 				linphone_call_params_unref(params);
-				localEndpointCanBeAdded = true;
+				// Add local endpoint if the call was not previously in the conference
+				localEndpointCanBeAdded = (callConfId.compare(confId) != 0);
 			}
 			break;
 			default:
@@ -626,8 +637,7 @@ bool LocalConference::addParticipant (std::shared_ptr<LinphonePrivate::Call> cal
 		return true;
 	}
 
-	ms_error("Unable to add participant to conference %p because it is in state %s",
-	this, linphone_conference_state_to_string((LinphoneConferenceState)getState()));
+	lError() << "Unable to add participant to conference " << getConferenceAddress() << " because it is in state " << linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(getState()));
 	return false;
 }
 
@@ -654,7 +664,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 	// It is allowed to remove a participant if
 	// - there are at least 2 remote participants in the conference
 	// - the remaining participant doesn't need to preserve its session after the conference ends hence the conference was not destroyed
-	bool removeParticipantAllowed = ((getParticipantCount() >= 2) || ((getParticipantCount() == 1) && !preserveSession));
+	// - session in paused by remote state which means that a remote participant temporarely left the conference
+	bool removeParticipantAllowed = ((getParticipantCount() >= 2) || ((getParticipantCount() == 1) && !preserveSession) || (sessionState == LinphonePrivate::CallSession::State::PausedByRemote));
 	if (removeParticipantAllowed) {
 		if (getState() != ConferenceInterface::State::TerminationPending) {
 
@@ -754,7 +765,8 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		}
 	}
 
-	if (getParticipantCount() == 0){
+	// If call that we are trying to remove from the conference is in paused by remote state, then it temporarely left the conference therefore it must not be terminated
+	if ((getParticipantCount() == 0) && (sessionState != LinphonePrivate::CallSession::State::PausedByRemote)){
 		leave();
 		if (getState() == ConferenceInterface::State::TerminationPending) {
 			setState(ConferenceInterface::State::Terminated);
