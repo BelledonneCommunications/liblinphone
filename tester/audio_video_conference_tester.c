@@ -2648,6 +2648,9 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, NULL, marie_conference_address, NULL);
 	BC_ASSERT_PTR_NOT_NULL(laure_conference);
 
+	//wait a bit to ensure that should NOTIFYs be sent, they reach their destination
+	wait_for_list(lcs,NULL,0,5000);
+
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -2681,9 +2684,7 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 	// Wait for subscritions to be terminated
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-ms_message("%s - BEFORE checking conference of core %s\n", __func__, linphone_core_get_identity(m->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,1,10000));
-ms_message("%s - AFTER checking conference of core %s\n", __func__, linphone_core_get_identity(m->lc));
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
@@ -2780,6 +2781,10 @@ ms_message("%s - AFTER checking conference of core %s\n", __func__, linphone_cor
 		BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(laure_stats.number_of_NotifyReceived + 1),5000));
+
+		//wait a bit to ensure that NOTIFYs reach their destination even if they are challenged
+		wait_for_list(lcs,NULL,0,5000);
+
 	}
 
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_parts, int, "%d");
