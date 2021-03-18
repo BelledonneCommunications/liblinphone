@@ -695,6 +695,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			no_participants_without_event_log++;
 		}
 
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreated + 1, 5000));
+
 		// Notify
 		int idx2 = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
