@@ -1465,7 +1465,7 @@ static void call_declined_with_retry_after(void) {
 	linphone_core_manager_destroy(caller_mgr);
 }
 
-static void call_declined_base(bool_t use_timeout) {
+static void call_declined_base(bool_t use_timeout, bool_t use_earlymedia) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
 
@@ -1478,6 +1478,8 @@ static void call_declined_base(bool_t use_timeout) {
 	BC_ASSERT_PTR_NOT_NULL(in_call=linphone_core_get_current_call(marie->lc));
 	if (in_call) {
 		linphone_call_ref(in_call);
+		if (use_earlymedia)
+			linphone_call_accept_early_media(in_call);
 		BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startRingtone, 1, int, "%d");
 		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&linphone_core_get_tone_manager_stats(pauline->lc)->number_of_startRingbackTone,1));
 		if (!use_timeout)
@@ -1508,11 +1510,19 @@ static void call_declined_base(bool_t use_timeout) {
 }
 
 static void call_declined(void) {
-	call_declined_base(FALSE);
+	call_declined_base(FALSE,FALSE);
+}
+
+static void call_declined_in_early_media(void) {
+	call_declined_base(FALSE,TRUE);
 }
 
 static void call_declined_on_timeout(void) {
-	call_declined_base(TRUE);
+	call_declined_base(TRUE,FALSE);
+}
+
+static void call_declined_on_timeout_in_early_ledia(void) {
+	call_declined_base(TRUE,TRUE);
 }
 
 static void call_terminated_by_caller(void) {
@@ -5228,6 +5238,8 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Early declined call", early_declined_call),
 	TEST_NO_TAG("Call declined", call_declined),
 	TEST_NO_TAG("Call declined on timeout",call_declined_on_timeout),
+	TEST_NO_TAG("Call declined in Early Media", call_declined_in_early_media),
+	TEST_NO_TAG("Call declined on timeout in Early Media",call_declined_on_timeout_in_early_ledia),
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
