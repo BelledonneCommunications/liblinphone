@@ -354,7 +354,6 @@ void Call::reenterLocalConference() {
 	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
 
 	if (conference) {
-		setConference(conference->toC());
 		conference->addParticipant(getSharedFromThis());
 	}
 }
