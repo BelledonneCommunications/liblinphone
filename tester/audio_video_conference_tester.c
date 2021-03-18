@@ -2627,7 +2627,6 @@ static void all_temporarely_leave_conference_base(bool_t local_enters_first) {
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
-ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_identity(c));
 			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
 			BC_ASSERT_EQUAL(linphone_conference_get_size(conference),linphone_conference_get_participant_count(conference)+linphone_conference_is_in(conference), int, "%d");
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
@@ -2651,24 +2650,24 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 		}
 	}
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + no_parts,10000));
+
 	// Wait for subscritions to be terminated
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+ms_message("%s - BEFORE checking conference of core %s\n", __func__, linphone_core_get_identity(m->lc));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,1,10000));
+ms_message("%s - AFTER checking conference of core %s\n", __func__, linphone_core_get_identity(m->lc));
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
 		if (conference) {
-			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),0, int, "%d");
-			BC_ASSERT_EQUAL(linphone_conference_get_size(conference),linphone_conference_get_participant_count(conference)+linphone_conference_is_in(conference), int, "%d");
 			BC_ASSERT_FALSE(linphone_conference_is_in(conference));
 		}
 	}
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_stats.number_of_LinphoneSubscriptionTerminated + no_parts,10000));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),0, int, "%d");
 	BC_ASSERT_EQUAL(linphone_conference_get_size(marie_conference),linphone_conference_get_participant_count(marie_conference)+linphone_conference_is_in(marie_conference), int, "%d");
 	BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
-
 
 	if (marie_conference && local_enters_first) {
 		// Marie (the local participant) rejoins the conference
@@ -2679,7 +2678,6 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 			BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference));
 		}
 	}
-
 
 	marie_stats = marie->stat;
 	stats * participants_initial_stats = NULL;
@@ -2694,11 +2692,10 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 		counter++;
 		LinphoneConference * conference = linphone_core_search_conference(m->lc, NULL, NULL, marie_conference_address, NULL);
 		BC_ASSERT_PTR_NOT_NULL(conference);
-		// Participant leaves the conference temporarely
+		// Participant rejoins the conference
 		if (conference) {
 			linphone_conference_enter(conference);
-			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
-			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
+			BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference) == local_enters_first);
 		}
 	}
 
@@ -2706,6 +2703,9 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(participants_initial_stats[counter].number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
+
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallResuming,(participants_initial_stats[counter].number_of_LinphoneCallResuming + 1),5000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallStreamsRunning,(participants_initial_stats[counter].number_of_LinphoneCallStreamsRunning + 1),5000));
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,(participants_initial_stats[counter].number_of_LinphoneSubscriptionActive + 1),5000));
 
@@ -2716,7 +2716,7 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 		// Participant leaves the conference temporarely
 		if (conference) {
 			BC_ASSERT_TRUE(linphone_conference_is_in(conference));
-			BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
+			BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference) == local_enters_first);
 		}
 		// Increment counter
 		counter++;
@@ -2729,9 +2729,10 @@ ms_message("%s - checking conference of core %s\n", __func__, linphone_core_get_
 
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionIncomingReceived,(marie_stats.number_of_LinphoneSubscriptionIncomingReceived + no_parts),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionActive,(marie_stats.number_of_LinphoneSubscriptionActive + no_parts),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stats.number_of_LinphoneCallStreamsRunning + no_parts),5000));
 	BC_ASSERT_EQUAL(linphone_conference_get_participant_count(marie_conference),no_parts, int, "%d");
 	BC_ASSERT_EQUAL(linphone_conference_get_size(marie_conference),linphone_conference_get_participant_count(marie_conference)+linphone_conference_is_in(marie_conference), int, "%d");
-	BC_ASSERT_FALSE(linphone_conference_is_in(marie_conference));
+	BC_ASSERT_TRUE(linphone_conference_is_in(marie_conference) == local_enters_first);
 
 	if (!local_enters_first) {
 		pauline_stats = pauline->stat;
