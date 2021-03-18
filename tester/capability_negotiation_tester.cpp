@@ -2070,7 +2070,7 @@ static void simple_call_with_capability_negotiations(LinphoneCoreManager* caller
 	encrypted_call_base(caller, callee, expectedEncryption, TRUE, TRUE, FALSE);
 }
 
-static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(bool_t callee_supports_unencrypted) {
+static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(bool_t pauline_supports_unencrypted) {
 	const LinphoneMediaEncryption optionalEncryption = LinphoneMediaEncryptionSRTP;
 
 	std::list<LinphoneMediaEncryption> enc_list {optionalEncryption};
@@ -2081,7 +2081,7 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base
 	pauline_enc_mgr_params.preferences = enc_list;
 
 	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, TRUE, FALSE, TRUE);
-	if (callee_supports_unencrypted) {
+	if (pauline_supports_unencrypted) {
 		// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
 		linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP, AES_CM_256_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP");
 	}
@@ -2106,7 +2106,7 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base
 	linphone_call_params_enable_capability_negotiations (pauline_params, TRUE);
 	linphone_call_params_add_custom_sdp_attribute(pauline_params, "acap", "999 crypto:25 AES_CM_256_HMAC_SHA1_80 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
 
-	const LinphoneMediaEncryption expectedEncryption = (callee_supports_unencrypted) ? optionalEncryption : LinphoneMediaEncryptionNone;
+	const LinphoneMediaEncryption expectedEncryption = (pauline_supports_unencrypted) ? optionalEncryption : LinphoneMediaEncryptionNone;
 	encrypted_call_with_params_base(marie, pauline, expectedEncryption, marie_params, pauline_params, TRUE);
 
 	linphone_call_params_unref(marie_params);
@@ -2124,7 +2124,7 @@ static void srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp
 	call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base(TRUE);
 }
 
-static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update_base(bool_t callee_supports_unencrypted) {
+static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update_base(bool_t pauline_supports_unencrypted) {
 	const LinphoneMediaEncryption optionalEncryption = LinphoneMediaEncryptionSRTP;
 
 	std::list<LinphoneMediaEncryption> enc_list {optionalEncryption};
@@ -2135,7 +2135,7 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	pauline_enc_mgr_params.preferences = enc_list;
 
 	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, TRUE, FALSE, TRUE);
-	if (callee_supports_unencrypted) {
+	if (pauline_supports_unencrypted) {
 		// AES_CM_128_HMAC_SHA1_32 UNENCRYPTED_SRTCP is not supported hence it should not be put in the offer or accepted as answer
 		linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP, AES_CM_256_HMAC_SHA1_32 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP");
 	}
@@ -2184,7 +2184,7 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_upda
 	// Update call with unsupported cfg
 	LinphoneCallParams * params1 = linphone_core_create_call_params(pauline->lc, pauline_call);
 	linphone_call_params_add_custom_sdp_media_attribute(params1, LinphoneStreamTypeAudio, "acap", "52 crypto:654 AES_256_CM_HMAC_SHA1_80 inline:fWgTsTLqHc/xC7VQl7air+at/Ko1DpXudbS0KG3s UNAUTHENTICATED_SRTP");
-	if (callee_supports_unencrypted) {
+	if (pauline_supports_unencrypted) {
 		linphone_call_params_add_custom_sdp_media_attribute(params1, LinphoneStreamTypeAudio, "pcfg", "238 a=52|1|2|999 t=1");
 		linphone_call_params_add_custom_sdp_media_attribute(params1, LinphoneStreamTypeVideo, "pcfg", "82 a=3|4|999 t=1");
 	} else {
