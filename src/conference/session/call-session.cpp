@@ -724,7 +724,7 @@ LinphoneStatus CallSessionPrivate::startUpdate (const string &subject) {
 }
 
 void CallSessionPrivate::terminate () {
-	if ((state == CallSession::State::IncomingReceived ) && (linphone_error_info_get_reason(ei) != LinphoneReasonNotAnswered)) {
+	if ((state == CallSession::State::IncomingReceived || state == CallSession::State::IncomingEarlyMedia) && (linphone_error_info_get_reason(ei) != LinphoneReasonNotAnswered)) {
 		linphone_error_info_set_reason(ei, LinphoneReasonDeclined);
 		nonOpError = true;
 	}
