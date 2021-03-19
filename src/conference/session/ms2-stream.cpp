@@ -509,7 +509,7 @@ void MS2Stream::getRtpDestination(const OfferAnswerContext &params, RtpAddressIn
 	bool isMulticast = !!ms_is_multicast(info->rtpAddr.c_str());
 	info->rtpPort = stream.rtp_port;
 	info->rtcpAddr = stream.rtcp_addr.empty() == false ? stream.rtcp_addr : info->rtpAddr;
-	info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast) ? (stream.rtcp_port ? stream.rtcp_port : stream.rtp_port + 1) : 0;
+	info->rtcpPort = (linphone_core_rtcp_enabled(getCCore()) && !isMulticast && stream.supportRtcp()) ? (stream.rtcp_port ? stream.rtcp_port : stream.rtp_port + 1) : 0;
 }
 
 /*

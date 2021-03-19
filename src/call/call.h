@@ -143,6 +143,7 @@ public:
 	const LinphoneErrorInfo *getErrorInfo () const;
 	const Address &getLocalAddress () const;
 	LinphoneCallLog *getLog () const;
+	bool supportRtcp () const;
 	RtpTransport *getMetaRtcpTransport (int streamIndex) const;
 	RtpTransport *getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;
