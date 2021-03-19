@@ -245,6 +245,21 @@ bool SalStreamConfiguration::hasImplicitAvpf() const {
 	return implicit_rtcp_fb;
 }
 
+bool SalStreamConfiguration::supportRtcp() const {
+	bool supportRtcp = true;
+	if (hasSrtp()) {
+		if (!crypto.empty()) {
+			const auto & cryptoIt = std::find_if(crypto.cbegin(), crypto.cend(), [] (const auto & c) {
+				const auto & cryptoAlgo = c.algo;
+				return ((cryptoAlgo != MS_AES_128_SHA1_32) && (cryptoAlgo != MS_AES_128_SHA1_80_NO_AUTH) && (cryptoAlgo != MS_AES_128_SHA1_32_NO_AUTH));
+			});
+			supportRtcp = (cryptoIt != crypto.cend());
+		}
+	}
+
+	return supportRtcp;
+}
+
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 bool SalStreamConfiguration::hasSrtp() const {
 	switch (proto){
