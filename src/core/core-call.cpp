@@ -269,6 +269,13 @@ void Core::soundcardActivateAudioSession (bool actived) {
 	}
 }
 
+void Core::soundcardConfigureAudioSession () {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_configure(card);
+	}
+}
+
 void Core::soundcardEnableCallkit (bool enabled) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
