@@ -579,9 +579,11 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 			// Valid local tags are > 0
 		if (stream.hasSrtp()) {
 			int cryptoIdx = Sal::findCryptoIndexFromTag(params.getLocalStreamDescription().getChosenConfiguration().crypto, static_cast<unsigned char>(stream.getChosenConfiguration().crypto_local_tag));
+
 			if (cryptoIdx >= 0) {
-				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, stream.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(stream.getChosenConfiguration().crypto[0].master_key));
-				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, stream.getChosenConfiguration().crypto[0].algo, 
+				const auto & srtpAlgo = stream.getChosenConfiguration().crypto[0].algo;
+				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, srtpAlgo, L_STRING_TO_C(stream.getChosenConfiguration().crypto[0].master_key));
+				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, srtpAlgo,
 									L_STRING_TO_C(params.getLocalStreamDescription().getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
 			} else
 				lWarning() << "Failed to find local crypto algo with tag: " << stream.getChosenConfiguration().crypto_local_tag;
