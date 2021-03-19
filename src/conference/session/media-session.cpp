@@ -3110,6 +3110,17 @@ const MediaSessionParams * MediaSession::getMediaParams () const {
 	return d->getParams();
 }
 
+bool MediaSession::supportRtcp () const {
+	L_D();
+	bool mdSupportRtcp = true;
+
+	if (d->resultDesc) {
+		mdSupportRtcp = d->resultDesc->supportRtcp();
+	}
+
+	return linphone_core_rtcp_enabled(getCore()->getCCore()) && mdSupportRtcp;
+}
+
 RtpTransport * MediaSession::getMetaRtcpTransport (int streamIndex) const {
 	L_D();
 	MS2Stream *s = dynamic_cast<MS2Stream*>(d->getStreamsGroup().getStream(streamIndex));
