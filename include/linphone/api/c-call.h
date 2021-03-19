@@ -367,6 +367,13 @@ LINPHONE_PUBLIC int linphone_call_get_stream_count (const LinphoneCall *call);
 LINPHONE_PUBLIC MSFormatType linphone_call_get_stream_type (const LinphoneCall *call, int stream_index);
 
 /**
+ * @brief Returns whether the call supports RTCP streams
+ * @return TRUE if the call supports RTCP, FALSE otherwise
+ * @donotwrap
+**/
+LINPHONE_PUBLIC bool_t linphone_call_support_rtcp (const LinphoneCall *call);
+
+/**
  * @brief Returns the meta rtp transport for the given stream index.
  * @return a pointer to the meta rtp transport if it exists, NULL otherwise.
  * @donotwrap
