@@ -2142,8 +2142,8 @@ void MediaSessionPrivate::updateCurrentParams () const {
 				const auto & stream = getStreamsGroup().getStream(idx);
 				for (const auto & crypto : streamCryptos) {
 					const auto & algo = crypto.algo;
-					const bool & isUnencrypted = ((algo == MS_NO_CIPHER_SRTP_AES_128_SHA1_80) || (algo == MS_NO_CIPHER_SRTCP_AES_128_SHA1_80) || (algo == MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80));
-					srtpEncryptionMatch &= ((isUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
+					const bool & isRtpRtcpUnencrypted = (algo == MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80);
+					srtpEncryptionMatch &= ((isRtpRtcpUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
 				}
 			}
 		}
