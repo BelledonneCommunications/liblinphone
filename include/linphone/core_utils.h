@@ -139,6 +139,13 @@ LINPHONE_PUBLIC void linphone_core_stop_dtmf_stream(LinphoneCore* core);
 LINPHONE_PUBLIC void linphone_core_activate_audio_session(LinphoneCore* core, bool_t actived);
 
 /**
+ * Special function to configure audio session with default settings. Must be called in ProviderDelegate's callbacks when answer an incoming call and start an outgoing call.
+ * @param core The #LinphoneCore object. @notnil
+ * @ingroup IOS
+ */
+LINPHONE_PUBLIC void linphone_core_configure_audio_session(LinphoneCore* core);
+
+/**
  * Special function to enable the callkit.
  * @param core The #LinphoneCore object. @notnil
  * @param enabled TRUE to enable callkit, FALSE to disable it.
