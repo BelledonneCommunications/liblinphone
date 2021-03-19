@@ -939,6 +939,10 @@ LinphoneCallLog *Call::getLog () const {
 	return getActiveSession()->getLog();
 }
 
+bool Call::supportRtcp () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->supportRtcp();
+}
+
 RtpTransport *Call::getMetaRtcpTransport (int streamIndex) const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getMetaRtcpTransport(streamIndex);
 }
