@@ -280,6 +280,8 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_TRUE(check_ice(callee, caller, LinphoneIceStateHostConnection));
 		}
 
+		int dummy=0;
+		wait_for_until(caller->lc,callee->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
 		liblinphone_tester_check_rtcp(caller, callee);
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
@@ -341,6 +343,8 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(callee_call)));
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 
+			int dummy=0;
+			wait_for_until(caller->lc,callee->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
 			liblinphone_tester_check_rtcp(caller, callee);
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");

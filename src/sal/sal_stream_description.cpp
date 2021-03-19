@@ -142,6 +142,11 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 	}
 
 	createActualCfg(salMediaDesc, sdp, media_desc);
+
+	auto actualCfg = getActualConfiguration();
+	if (!actualCfg.supportRtcp()) {
+		rtcp_port = 0;
+	}
 }
 
 void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescription * salMediaDesc, const belle_sdp_session_description_t  *sdp, const belle_sdp_media_description_t *media_desc, const SalStreamDescription::raw_capability_negotiation_attrs_t & attrs) {
@@ -1007,7 +1012,7 @@ belle_sdp_media_description_t * SalStreamDescription::toSdpMediaDescription(cons
 
 	if (rtp_port != 0) {
 		different_rtp_and_rtcp_addr = (rtcp_addr.empty() == false) && (rtp_addr.compare(rtcp_addr) != 0);
-		if ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == true)) {
+		if ((rtcp_port != 0) && ((rtcp_port != (rtp_port + 1)) || (different_rtp_and_rtcp_addr == true))) {
 			std::string rtcpAttrValue = std::to_string(rtcp_port);
 			if (different_rtp_and_rtcp_addr == true) {
 				rtcpAttrValue += " IN IP4 " + rtcp_addr;
