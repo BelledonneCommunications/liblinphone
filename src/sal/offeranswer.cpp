@@ -437,22 +437,27 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 		const auto & resultCfg = resultCfgPair.first;
 		result.addActualConfiguration(resultCfg);
 
-		// finalize stream settings based on result configuration
-		if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
-			result.rtp_addr=remote_answer.rtp_addr;
-			result.rtcp_addr=remote_answer.rtcp_addr;
-			result.rtp_port=remote_answer.rtp_port;
-			result.rtcp_port=remote_answer.rtcp_port;
-			result.bandwidth=remote_answer.bandwidth;
-		}else{
-			lInfo() <<  __func__ << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
-			result.disable();
-		}
-
 		const auto success = resultCfgPair.second;
 		if (success) {
 			remote_answer.cfgIndex = remoteCfgIdx;
 			local_offer.cfgIndex = localCfgIdx;
+
+			// finalize stream settings based on result configuration
+			if (!resultCfg.payloads.empty() && !OfferAnswerEngine::onlyTelephoneEvent(resultCfg.payloads)){
+				result.rtp_addr=remote_answer.rtp_addr;
+				result.rtp_port=remote_answer.rtp_port;
+				result.rtcp_addr=remote_answer.rtcp_addr;
+				if (resultCfg.supportRtcp()) {
+					result.rtcp_port=remote_answer.rtcp_port;
+				} else {
+					result.rtcp_port=0;
+				}
+				result.bandwidth=remote_answer.bandwidth;
+			}else{
+				lInfo() <<  __func__ << "Disable stream " << &result << " because " << ((resultCfg.payloads.empty()) ? "payload is empty" : " found event other than telephone one");
+				result.disable();
+			}
+
 			lInfo() << __func__ << " Found matching configurations: local configuration index " << local_offer.cfgIndex << " remote configuration index " << remote_answer.cfgIndex;
 		} else {
 			result.disable();
@@ -588,22 +593,6 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	result.name = local_cap.name;
 	result.type=local_cap.getType();
 
-	if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
-		result.rtp_addr=remote_offer.rtp_addr;
-		result.rtcp_addr=remote_offer.rtcp_addr;
-		result.rtp_port=remote_offer.rtp_port;
-		/*result.rtcp_port=remote_offer.rtcp_port;*/
-		result.rtcp_port=0; /* rtcp not supported yet*/
-		result.bandwidth=remote_offer.bandwidth;
-		result.multicast_role = SalMulticastReceiver;
-	} else {
-		result.rtp_addr=local_cap.rtp_addr;
-		result.rtcp_addr=local_cap.rtcp_addr;
-		result.rtp_port=local_cap.rtp_port;
-		result.rtcp_port=local_cap.rtcp_port;
-		result.bandwidth=local_cap.bandwidth;
-	}
-
 	auto remoteCfgIdx = remote_offer.getActualConfigurationIndex();
 	auto localCfgIdx = local_cap.getActualConfigurationIndex();
 
@@ -644,6 +633,27 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	if (success) {
 		remote_offer.cfgIndex = remoteCfgIdx;
 		local_cap.cfgIndex = localCfgIdx;
+
+		if (remote_offer.rtp_addr.empty() == false && ms_is_multicast(L_STRING_TO_C(remote_offer.rtp_addr))) {
+			result.rtp_addr=remote_offer.rtp_addr;
+			result.rtcp_addr=remote_offer.rtcp_addr;
+			result.rtp_port=remote_offer.rtp_port;
+			/*result.rtcp_port=remote_offer.rtcp_port;*/
+			result.rtcp_port=0; /* rtcp not supported yet*/
+			result.bandwidth=remote_offer.bandwidth;
+			result.multicast_role = SalMulticastReceiver;
+		} else {
+			result.rtp_addr=local_cap.rtp_addr;
+			result.rtcp_addr=local_cap.rtcp_addr;
+			result.rtp_port=local_cap.rtp_port;
+			result.rtcp_port=local_cap.rtcp_port;
+			if (resultCfg.supportRtcp()) {
+				result.rtcp_port=local_cap.rtcp_port;
+			} else {
+				result.rtcp_port=0;
+			}
+			result.bandwidth=local_cap.bandwidth;
+		}
 
 		if (resultCfg.bundle_only == true) {
 			/* The stream is a secondary one part of a bundle.
@@ -904,20 +914,26 @@ std::shared_ptr<SalMediaDescription> OfferAnswerEngine::initiateIncoming(MSFacto
 			stream = OfferAnswerEngine::initiateIncomingStream(factory, ls,rs,one_matching_codec, bundle_owner_mid, capabilityNegotiation);
 			// Get an up to date actual configuration as it may have changed
 			actualCfg = stream.getActualConfiguration();
-			// Handle global RTCP FB attributes
-			actualCfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
-			actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
-			// Handle media RTCP XR attribute
-			memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
-			if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
-				const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
-				if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
-				else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
-				if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
-					memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
-				} else {
-					actualCfg.rtcp_xr.enabled = TRUE;
+			if (actualCfg.supportRtcp()) {
+				// Handle global RTCP FB attributes
+				actualCfg.rtcp_fb.generic_nack_enabled = rs.getChosenConfiguration().rtcp_fb.generic_nack_enabled;
+				actualCfg.rtcp_fb.tmmbr_enabled = rs.getChosenConfiguration().rtcp_fb.tmmbr_enabled;
+				// Handle media RTCP XR attribute
+				memset(&actualCfg.rtcp_xr, 0, sizeof(actualCfg.rtcp_xr));
+				if (rs.getChosenConfiguration().rtcp_xr.enabled == TRUE) {
+					const OrtpRtcpXrConfiguration *rtcp_xr_conf = NULL;
+					if (ls.getChosenConfiguration().rtcp_xr.enabled == TRUE) rtcp_xr_conf = &ls.getChosenConfiguration().rtcp_xr;
+					else if (local_capabilities->rtcp_xr.enabled == TRUE) rtcp_xr_conf = &local_capabilities->rtcp_xr;
+					if ((rtcp_xr_conf != NULL) && (ls.getDirection() == SalStreamSendRecv)) {
+						memcpy(&actualCfg.rtcp_xr, rtcp_xr_conf, sizeof(actualCfg.rtcp_xr));
+					} else {
+						actualCfg.rtcp_xr.enabled = TRUE;
+					}
 				}
+			} else {
+				actualCfg.rtcp_xr.enabled = FALSE;
+				actualCfg.rtcp_fb.generic_nack_enabled = FALSE;
+				actualCfg.rtcp_fb.tmmbr_enabled = FALSE;
 			}
 		}else {
 			ms_message("Declining mline %zu, no corresponding stream in local capabilities description.",i);
