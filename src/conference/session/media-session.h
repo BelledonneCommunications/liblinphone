@@ -90,6 +90,7 @@ public:
 	MediaSessionParams *getCurrentParams () const;
 	float getCurrentQuality () const;
 	const MediaSessionParams *getMediaParams () const;
+	bool supportRtcp () const;
 	RtpTransport * getMetaRtcpTransport (int streamIndex) const;
 	RtpTransport * getMetaRtpTransport (int streamIndex) const;
 	float getMicrophoneVolumeGain () const;

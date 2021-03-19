@@ -348,6 +348,10 @@ RtpTransport *linphone_call_get_meta_rtp_transport (const LinphoneCall *call, in
 	return Call::toCpp(call)->getMetaRtpTransport(stream_index);
 }
 
+bool_t linphone_call_support_rtcp (const LinphoneCall *call) {
+	return Call::toCpp(call)->supportRtcp();
+}
+
 RtpTransport *linphone_call_get_meta_rtcp_transport (const LinphoneCall *call, int stream_index) {
 	return Call::toCpp(call)->getMetaRtcpTransport(stream_index);
 }

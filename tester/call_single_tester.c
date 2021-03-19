@@ -87,7 +87,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	linphone_call_ref(c1);
 	linphone_call_ref(c2);
 	liblinphone_tester_clock_start(&ts);
-	if (linphone_core_rtcp_enabled(caller->lc) && linphone_core_rtcp_enabled(callee->lc))
+	if (linphone_call_support_rtcp(c1) && linphone_call_support_rtcp(c2))
 		max_time_to_wait = 15000;
 	else
 		max_time_to_wait = 5000;
@@ -111,7 +111,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	reset_call_stats(video_stats1, linphone_call_get_video_stats(c1));
 	reset_call_stats(audio_stats2, linphone_call_get_audio_stats(c2));
 	reset_call_stats(video_stats2, linphone_call_get_video_stats(c2));
-	if (linphone_core_rtcp_enabled(caller->lc) && linphone_core_rtcp_enabled(callee->lc)) {
+	if (linphone_call_support_rtcp(c1) && linphone_call_support_rtcp(c2)) {
 		BC_ASSERT_GREATER(caller->stat.number_of_rtcp_received, 1, int, "%i");
 		BC_ASSERT_GREATER(callee->stat.number_of_rtcp_received, 1, int, "%i");
 		BC_ASSERT_GREATER(linphone_call_stats_get_round_trip_delay(audio_stats1),0.0,float,"%f");
@@ -123,7 +123,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 			BC_ASSERT_GREATER(linphone_call_stats_get_round_trip_delay(video_stats2),0.0,float,"%f");
 		}
 	} else {
-		if (linphone_core_rtcp_enabled(caller->lc)) {
+		if (linphone_call_support_rtcp(c1)) {
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats1)->sent_rtcp_packets, 0, unsigned long long, "%llu");
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats2)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			if (linphone_call_log_video_enabled(linphone_call_get_call_log(c1))) {
@@ -133,7 +133,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 				BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(video_stats2)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			}
 		}
-		if (linphone_core_rtcp_enabled(callee->lc)) {
+		if (linphone_call_support_rtcp(c2)) {
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats2)->sent_rtcp_packets, 0, unsigned long long, "%llu");
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats1)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			if (linphone_call_log_video_enabled(linphone_call_get_call_log(c1))) {
