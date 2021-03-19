@@ -7194,6 +7194,10 @@ void linphone_core_activate_audio_session (LinphoneCore* lc, bool_t actived) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardActivateAudioSession(actived);
 }
 
+void linphone_core_configure_audio_session (LinphoneCore *lc) {
+	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardConfigureAudioSession();
+}
+
 void linphone_core_enable_callkit (LinphoneCore *lc, bool_t enabled) {
 	L_GET_CPP_PTR_FROM_C_OBJECT(lc)->soundcardEnableCallkit(enabled);
 	linphone_config_set_int(lc->config, "app", "use_callkit", (int)enabled);
