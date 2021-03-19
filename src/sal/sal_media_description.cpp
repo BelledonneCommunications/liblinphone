@@ -353,6 +353,15 @@ bool SalMediaDescription::hasImplicitAvpf() const {
 	return true;
 }
 
+bool SalMediaDescription::supportRtcp() const {
+	if (streams.empty()) return false;
+	for(const auto & stream : streams){
+		if (!stream.enabled()) continue;
+		if (stream.supportRtcp()) return true;
+	}
+	return false;
+}
+
 bool SalMediaDescription::hasSrtp() const {
 	if (streams.empty()) return false;
 	for(const auto & stream : streams){
