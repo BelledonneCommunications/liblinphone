@@ -590,42 +590,44 @@ belle_sdp_session_description_t * SalMediaDescription::toSdp() const {
 		}
 	}
 
-	for (const auto & acap : acaps) {
-		const auto & idx = acap.first;
-		const auto & nameValuePair = acap.second;
-		const auto & name = nameValuePair.first;
-		const auto & value = nameValuePair.second;
+	if (supportCapabilityNegotiation()) {
+		for (const auto & acap : acaps) {
+			const auto & idx = acap.first;
+			const auto & nameValuePair = acap.second;
+			const auto & name = nameValuePair.first;
+			const auto & value = nameValuePair.second;
 
-		std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
-		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
-	}
+			std::string acapValue = std::to_string(idx) + " " + name + ":" + value;
+			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("acap",acapValue.c_str()));
+		}
 
-	std::string tcapValue;
-	SalStreamDescription::tcap_map_t::key_type prevIdx = 0;
-	for (const auto & tcap : tcaps) {
-		const auto & idx = tcap.first;
-		const auto & value = tcap.second;
-		if (mergeTcapLines) {
-			if (tcapValue.empty()) {
-				tcapValue = std::to_string(idx) + " " + value;
-				prevIdx = idx;
-			} else {
-				if (idx == (prevIdx + 1)) {
-					tcapValue += " " + value;
-				} else {
-					belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+		std::string tcapValue;
+		SalStreamDescription::tcap_map_t::key_type prevIdx = 0;
+		for (const auto & tcap : tcaps) {
+			const auto & idx = tcap.first;
+			const auto & value = tcap.second;
+			if (mergeTcapLines) {
+				if (tcapValue.empty()) {
 					tcapValue = std::to_string(idx) + " " + value;
+					prevIdx = idx;
+				} else {
+					if (idx == (prevIdx + 1)) {
+						tcapValue += " " + value;
+					} else {
+						belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
+						tcapValue = std::to_string(idx) + " " + value;
+					}
+					prevIdx = idx;
 				}
-				prevIdx = idx;
+			} else {
+				tcapValue = std::to_string(idx) + " " + value;
+				belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 			}
-		} else {
-			tcapValue = std::to_string(idx) + " " + value;
+		}
+
+		if (mergeTcapLines && !tcapValue.empty()) {
 			belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 		}
-	}
-
-	if (mergeTcapLines && !tcapValue.empty()) {
-		belle_sdp_session_description_add_attribute(session_desc, belle_sdp_attribute_create("tcap",tcapValue.c_str()));
 	}
 
 	for ( const auto & stream : streams) {
