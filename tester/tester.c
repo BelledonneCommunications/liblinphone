@@ -764,7 +764,6 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 	int counter = 1;
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-printf("%s - conf %s participant %s\n",  __func__, linphone_core_get_identity(conf_mgr->lc), linphone_core_get_identity(m->lc));
 		stats initial_stats = m->stat;
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(conf_call);
