@@ -282,6 +282,12 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 
 		liblinphone_tester_check_rtcp(caller, callee);
 
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(calleeStats)>70);
+		linphone_call_stats_unref(calleeStats);
+		calleeStats = NULL;
+
 		// Check that no reINVITE is sent while checking streams
 		BC_ASSERT_EQUAL(callee->stat.number_of_LinphoneCallStreamsRunning, (callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%i");
 		BC_ASSERT_EQUAL(caller->stat.number_of_LinphoneCallStreamsRunning, (caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%i");
@@ -336,6 +342,13 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_TRUE(linphone_call_log_video_enabled(linphone_call_get_call_log(caller_call)));
 
 			liblinphone_tester_check_rtcp(caller, callee);
+
+			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+			calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+			BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(calleeStats)>70);
+			linphone_call_stats_unref(calleeStats);
+			calleeStats = NULL;
+
 		}
 #endif // VIDEO_ENABLED
 
