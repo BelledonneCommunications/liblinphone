@@ -798,6 +798,10 @@ bool SalStreamDescription::hasImplicitAvpf() const {
 }
 
 /*these are switch case, so that when a new proto is added we can't forget to modify this function*/
+bool SalStreamDescription::supportRtcp() const {
+	return getChosenConfiguration().supportRtcp();
+}
+
 bool SalStreamDescription::hasSrtp() const {
 	return getChosenConfiguration().hasSrtp();
 }
