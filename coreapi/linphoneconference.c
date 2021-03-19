@@ -124,7 +124,11 @@ LinphoneStatus linphone_conference_remove_participant_3 (LinphoneConference *con
 }
 
 LinphoneParticipant * linphone_conference_find_participant (LinphoneConference *conference, const LinphoneAddress *uri) {
-	return MediaConference::Conference::toCpp(conference)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri))->toC();
+	shared_ptr<LinphonePrivate::Participant> p = MediaConference::Conference::toCpp(conference)->findParticipant(*L_GET_CPP_PTR_FROM_C_OBJECT(uri));
+	if (p) {
+		return p->toC();
+	}
+	return NULL;
 }
 
 int linphone_conference_update_params(LinphoneConference *conference, const LinphoneConferenceParams *params){
