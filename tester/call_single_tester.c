@@ -1521,7 +1521,7 @@ static void call_declined_on_timeout(void) {
 	call_declined_base(TRUE,FALSE);
 }
 
-static void call_declined_on_timeout_in_early_ledia(void) {
+static void call_declined_on_timeout_in_early_media(void) {
 	call_declined_base(TRUE,TRUE);
 }
 
@@ -5239,7 +5239,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Call declined", call_declined),
 	TEST_NO_TAG("Call declined on timeout",call_declined_on_timeout),
 	TEST_NO_TAG("Call declined in Early Media", call_declined_in_early_media),
-	TEST_NO_TAG("Call declined on timeout in Early Media",call_declined_on_timeout_in_early_ledia),
+	TEST_NO_TAG("Call declined on timeout in Early Media",call_declined_on_timeout_in_early_media),
 	TEST_NO_TAG("Call declined with error", call_declined_with_error),
 	TEST_NO_TAG("Call declined with retry after", call_declined_with_retry_after),
 	TEST_NO_TAG("Cancelled call", cancelled_call),
