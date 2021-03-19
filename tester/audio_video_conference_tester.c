@@ -1786,8 +1786,8 @@ static void eject_from_4_participants_conference(void) {
 
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd, marie_call_no, 10000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased, marie_call_no, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallEnd, (int)marie_call_no, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallReleased, (int)marie_call_no, 10000));
 
 end:
 
