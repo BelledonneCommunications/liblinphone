@@ -282,7 +282,10 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 
 		int dummy=0;
 		wait_for_until(caller->lc,callee->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
-		liblinphone_tester_check_rtcp(caller, callee);
+
+//		if (linphone_call_support_rtcp(callerCall) && linphone_call_support_rtcp(calleeCall)) {
+			liblinphone_tester_check_rtcp(caller, callee);
+//		}
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
@@ -345,7 +348,10 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 
 			int dummy=0;
 			wait_for_until(caller->lc,callee->lc,&dummy,1,3000); /*just to sleep while iterating 1s*/
-			liblinphone_tester_check_rtcp(caller, callee);
+
+			if (linphone_call_support_rtcp(callerCall) && linphone_call_support_rtcp(calleeCall)) {
+				liblinphone_tester_check_rtcp(caller, callee);
+			}
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 			calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
