@@ -206,6 +206,12 @@ LinphoneCoreManager * create_core_mgr_with_capability_negotiation_setup(const ch
 
 void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption encryption, const LinphoneCallParams *caller_params, LinphoneCallParams *callee_params, const bool_t enable_video) {
 
+	reset_counters(&caller->stat);
+	reset_counters(&callee->stat);
+	linphone_core_reset_tone_manager_stats(caller->lc);
+	linphone_core_reset_tone_manager_stats(callee->lc);
+
+
 	bool_t caller_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(caller_params);
 	bool_t callee_enc_mandatory = linphone_call_params_mandatory_media_encryption_enabled(callee_params);
 	const LinphoneMediaEncryption caller_encryption = linphone_call_params_get_media_encryption(caller_params);
@@ -317,6 +323,8 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 		}
 #ifdef VIDEO_ENABLED
 		else {
+			reset_counters(&caller->stat);
+			reset_counters(&callee->stat);
 			stats caller_stat = caller->stat;
 			stats callee_stat = callee->stat;
 			LinphoneCallParams * params = linphone_core_create_call_params(callee->lc, callee_call);
@@ -366,8 +374,6 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
 		}
 
-		end_call(callee, caller);
-
 	}
 
 }
@@ -380,6 +386,9 @@ void encrypted_call_base(LinphoneCoreManager* caller, LinphoneCoreManager* calle
 	linphone_call_params_enable_capability_negotiations (callee_params, enable_callee_capability_negotiations);
 
 	encrypted_call_with_params_base(caller, callee, encryption, caller_params, callee_params, enable_video);
+	if (linphone_core_get_current_call(caller->lc)) {
+		end_call(caller, callee);
+	}
 
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
@@ -1104,6 +1113,9 @@ static void call_with_tcap_line_merge_base(const bool_t caller_tcap_merge, const
 
 	const LinphoneMediaEncryption expectedEncryption = LinphoneMediaEncryptionDTLS;
 	encrypted_call_with_params_base(caller, callee, expectedEncryption, caller_params, callee_params, TRUE);
+	if (linphone_core_get_current_call(caller->lc)) {
+		end_call(caller, callee);
+	}
 
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
@@ -1705,6 +1717,9 @@ static void back_to_back_calls_cap_neg_base(bool_t enable_cap_neg_both_sides) {
 	// Callee (Pauline) supports ZRTP, no encryption and DTLS as potential configurations and DTLS as default one
 	// DTLS is expected to be chosen
 	encrypted_call_with_params_base(marie, pauline, encryption, marie_params, pauline_params, TRUE);
+	if (linphone_core_get_current_call(marie->lc)) {
+		end_call(marie, pauline);
+	}
 
 	encryption = LinphoneMediaEncryptionSRTP;
 	if (marie_params) {
@@ -1750,6 +1765,9 @@ static void back_to_back_calls_cap_neg_base(bool_t enable_cap_neg_both_sides) {
 	// Callee (Marie) supports ZRTP and SRTP as potential configurations and SRTP as default one
 	// DTLS is expected to be chosen
 	encrypted_call_with_params_base(pauline, marie, encryption, marie_params, pauline_params, TRUE);
+	if (linphone_core_get_current_call(pauline->lc)) {
+		end_call(pauline, marie);
+	}
 
 	encryption = LinphoneMediaEncryptionZRTP;
 	if (marie_params) {
@@ -1795,6 +1813,9 @@ static void back_to_back_calls_cap_neg_base(bool_t enable_cap_neg_both_sides) {
 	// Callee (Pauline) supports no encryption and ZRTP as potential configurations and ZRTP as default one
 	// DTLS is expected to be chosen
 	encrypted_call_with_params_base(pauline, marie, encryption, marie_params, pauline_params, TRUE);
+	if (linphone_core_get_current_call(pauline->lc)) {
+		end_call(pauline, marie);
+	}
 
 	if (marie_call_enc) {
 		bctbx_list_free_with_data(marie_call_enc, (bctbx_list_free_func)bctbx_free);
@@ -1983,6 +2004,9 @@ static void call_with_default_encryption(const LinphoneMediaEncryption encryptio
 	linphone_call_params_set_media_encryption(pauline_params, encryption);
 
 	encrypted_call_with_params_base(marie, pauline, marie_enc_list.front(), marie_params, pauline_params, TRUE);
+	if (linphone_core_get_current_call(marie->lc)) {
+		end_call(marie, pauline);
+	}
 
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
@@ -2127,6 +2151,9 @@ static void call_with_capability_negotiations_and_unsupported_crypto_in_sdp_base
 
 	const LinphoneMediaEncryption expectedEncryption = (pauline_supports_unencrypted) ? optionalEncryption : LinphoneMediaEncryptionNone;
 	encrypted_call_with_params_base(marie, pauline, expectedEncryption, marie_params, pauline_params, TRUE);
+	if (linphone_core_get_current_call(marie->lc)) {
+		end_call(marie, pauline);
+	}
 
 	linphone_call_params_unref(marie_params);
 	linphone_call_params_unref(pauline_params);
@@ -2467,10 +2494,75 @@ static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(
 	}
 
 
-	BC_ASSERT_TRUE(call_with_params(caller, callee, caller_params, callee_params));
+	encrypted_call_with_params_base(caller, callee, LinphoneMediaEncryptionNone, caller_params, callee_params, TRUE);
 
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
+
+	LinphoneCall * callerCall = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(callerCall);
+	LinphoneCall * calleeCall = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(calleeCall);
+
+	if (calleeCall && callerCall) {
+		// Pause callee call
+		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		// Resume callee call
+		reset_counters(&caller->stat);
+		reset_counters(&callee->stat);
+		stats caller_stat = caller->stat;
+		stats callee_stat = callee->stat;
+
+		linphone_call_resume(calleeCall);
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(calleeStats)>70);
+		linphone_call_stats_unref(calleeStats);
+		calleeStats = NULL;
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+
+		// Pause caller call
+		BC_ASSERT_TRUE(pause_call_1(caller,callerCall,callee,calleeCall));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		// Resume caller call
+		reset_counters(&caller->stat);
+		reset_counters(&callee->stat);
+		caller_stat = caller->stat;
+		callee_stat = callee->stat;
+
+		linphone_call_resume(callerCall);
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(callee),70,int,"%i");
+		LinphoneCallStats *callerStats = linphone_call_get_audio_stats(linphone_core_get_current_call(caller->lc));
+		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(callerStats)>70);
+		linphone_call_stats_unref(callerStats);
+		callerStats = NULL;
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		stats = rtp_session_get_stats(linphone_call_get_stream(callerCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+
+		end_call(callee, caller);
+
+	}
+
 }
 
 static void srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted(void) {
