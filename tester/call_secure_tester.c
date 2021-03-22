@@ -101,6 +101,31 @@ static void srtp_call_with_crypto_suite_parameters_2(void) {
 
 }
 
+// This test was added to ensure correct parsing of SDP with 2 crypto attributes
+static void srtp_call_with_crypto_suite_parameters_3(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
+	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
+
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_set_media_encryption(pauline->lc,LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, FALSE);
+	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP");
+
+	LinphoneCall *call = linphone_core_invite_address(marie->lc,pauline->identity);
+	linphone_call_ref(call);
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingInit, 1));
+	BC_ASSERT_TRUE(wait_for(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallOutgoingProgress, 1));
+	BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneCallError, 1, 6000));
+	BC_ASSERT_EQUAL(linphone_call_get_reason(call), LinphoneReasonNotAcceptable, int, "%d");
+	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallIncomingReceived, 0, int, "%d");
+	linphone_call_unref(call);
+
+	linphone_core_manager_destroy(pauline);
+	linphone_core_manager_destroy(marie);
+}
+
 static void srtp_call_with_crypto_suite_parameters_and_mandatory_encryption(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	linphone_core_set_media_encryption(marie->lc,LinphoneMediaEncryptionSRTP);
@@ -739,6 +764,7 @@ test_t call_secure_tests[] = {
 	TEST_NO_TAG("SRTP call with different crypto suite", srtp_call_with_different_crypto_suite),
 	TEST_NO_TAG("SRTP call with crypto suite parameters", srtp_call_with_crypto_suite_parameters),
 	TEST_NO_TAG("SRTP call with crypto suite parameters 2", srtp_call_with_crypto_suite_parameters_2),
+	TEST_NO_TAG("SRTP call with crypto suite parameters 3", srtp_call_with_crypto_suite_parameters_3),
 	TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption", srtp_call_with_crypto_suite_parameters_and_mandatory_encryption),
 	TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 2", srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_2),
 	TEST_NO_TAG("SRTP call with crypto suite parameters and mandatory encryption 3", srtp_call_with_crypto_suite_parameters_and_mandatory_encryption_3),
