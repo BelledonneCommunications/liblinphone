@@ -2093,10 +2093,15 @@ void MediaSessionPrivate::updateCurrentParams () const {
 				for (const auto & crypto : streamCryptos) {
 					const auto & algo = crypto.algo;
 					const bool & isRtpRtcpUnencrypted = (algo == MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80);
-					srtpEncryptionMatch &= ((isRtpRtcpUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
+					if (isEncryptionMandatory()) {
+						srtpEncryptionMatch &= stream->isEncrypted();
+					} else {
+						srtpEncryptionMatch &= ((isRtpRtcpUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
+					}
 				}
 			}
 		}
+		
 	} else {
 		srtpEncryptionMatch = allStreamsEncrypted();
 	}

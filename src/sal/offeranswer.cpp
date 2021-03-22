@@ -738,7 +738,7 @@ std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfi
 			resultCfg.crypto.clear();
 			SalSrtpCryptoAlgo crypto_result;
 			if (!OfferAnswerEngine::matchCryptoAlgo(localCfg.crypto, remoteCfg.crypto, crypto_result, resultCfg.crypto_local_tag, true)) {
-				lInfo() <<  __func__ << " No matching crypto algo for remote stream's offer [" << &remote_offer << "[";
+				lInfo() <<  __func__ << " No matching crypto algo for remote stream's offer [" << &remote_offer << "]";
 				success = false;
 				return std::make_pair(resultCfg, success);
 			}
