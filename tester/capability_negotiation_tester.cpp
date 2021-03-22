@@ -394,6 +394,106 @@ void encrypted_call_base(LinphoneCoreManager* caller, LinphoneCoreManager* calle
 
 }
 
+static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager* callee) {
+	LinphoneCall * callerCall = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(callerCall);
+	LinphoneCall * calleeCall = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(calleeCall);
+
+	if (calleeCall && callerCall) {
+
+		// Pause callee call
+		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		// Resume callee call
+		reset_counters(&caller->stat);
+		reset_counters(&callee->stat);
+		stats caller_stat = caller->stat;
+		stats callee_stat = callee->stat;
+
+		linphone_call_resume(calleeCall);
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+		LinphoneMediaEncryption encryption =  LinphoneMediaEncryptionNone;
+		bool potentialConfigurationChosen = false;
+
+		get_expected_encryption_from_call_params(calleeCall, callerCall, &encryption, &potentialConfigurationChosen);
+
+		int expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+		if (calleeCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
+		}
+		if (callerCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
+		}
+
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(calleeStats)>70);
+		linphone_call_stats_unref(calleeStats);
+		calleeStats = NULL;
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+
+		// Pause caller call
+		BC_ASSERT_TRUE(pause_call_1(caller,callerCall,callee,calleeCall));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		// Resume caller call
+		reset_counters(&caller->stat);
+		reset_counters(&callee->stat);
+		caller_stat = caller->stat;
+		callee_stat = callee->stat;
+
+		linphone_call_resume(callerCall);
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+		get_expected_encryption_from_call_params(callerCall, calleeCall, &encryption, &potentialConfigurationChosen);
+
+		expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+		if (calleeCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
+		}
+		if (callerCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
+		}
+
+
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(callee),70,int,"%i");
+		LinphoneCallStats *callerStats = linphone_call_get_audio_stats(linphone_core_get_current_call(caller->lc));
+		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(callerStats)>70);
+		linphone_call_stats_unref(callerStats);
+		callerStats = NULL;
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		stats = rtp_session_get_stats(linphone_call_get_stream(callerCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+	}
+}
+
 void call_with_update_and_incompatible_encs_in_call_params_base (const bool_t enable_ice) {
 	const LinphoneMediaEncryption encryption = LinphoneMediaEncryptionSRTP; // Desired encryption
 	std::list<LinphoneMediaEncryption> marie_enc_list;
@@ -2498,68 +2598,14 @@ static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(
 	linphone_call_params_unref(caller_params);
 	linphone_call_params_unref(callee_params);
 
+	pause_resume_calls(caller, callee);
+
 	LinphoneCall * callerCall = linphone_core_get_current_call(caller->lc);
 	BC_ASSERT_PTR_NOT_NULL(callerCall);
 	LinphoneCall * calleeCall = linphone_core_get_current_call(callee->lc);
 	BC_ASSERT_PTR_NOT_NULL(calleeCall);
 
 	if (calleeCall && callerCall) {
-
-		// Pause callee call
-		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
-		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
-
-		// Resume callee call
-		reset_counters(&caller->stat);
-		reset_counters(&callee->stat);
-		stats caller_stat = caller->stat;
-		stats callee_stat = callee->stat;
-
-		linphone_call_resume(calleeCall);
-		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
-		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
-		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
-
-		liblinphone_tester_check_rtcp(caller, callee);
-
-		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
-		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(calleeStats)>70);
-		linphone_call_stats_unref(calleeStats);
-		calleeStats = NULL;
-
-		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
-		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
-		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
-
-		// Pause caller call
-		BC_ASSERT_TRUE(pause_call_1(caller,callerCall,callee,calleeCall));
-		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
-
-		// Resume caller call
-		reset_counters(&caller->stat);
-		reset_counters(&callee->stat);
-		caller_stat = caller->stat;
-		callee_stat = callee->stat;
-
-		linphone_call_resume(callerCall);
-		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
-		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
-		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
-
-		liblinphone_tester_check_rtcp(caller, callee);
-
-		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(callee),70,int,"%i");
-		LinphoneCallStats *callerStats = linphone_call_get_audio_stats(linphone_core_get_current_call(caller->lc));
-		BC_ASSERT_TRUE(linphone_call_stats_get_download_bandwidth(callerStats)>70);
-		linphone_call_stats_unref(callerStats);
-		callerStats = NULL;
-
-		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
-		stats = rtp_session_get_stats(linphone_call_get_stream(callerCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
-		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
-
-
 		end_call(callee, caller);
 	}
 
