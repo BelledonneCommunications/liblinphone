@@ -364,7 +364,7 @@ void MS2Stream::fillPotentialCfgGraph(OfferAnswerContext & ctx){
 										addAcapToStream(localMediaDesc, streamIndex, attrName, attrValue);
 									}
 								} else {
-									lError() << "Unable to create parameters for cryptop attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
+									lError() << "Unable to create parameters for crypto attribute with tag " << crypto.tag << " and master key " << crypto.master_key;
 								}
 							}
 						}
