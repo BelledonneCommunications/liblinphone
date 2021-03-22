@@ -373,7 +373,6 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 		if (calleeCall) {
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), expectedEncryption, int, "%i");
 		}
-
 	}
 
 }
@@ -2505,6 +2504,7 @@ static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(
 	BC_ASSERT_PTR_NOT_NULL(calleeCall);
 
 	if (calleeCall && callerCall) {
+
 		// Pause callee call
 		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
@@ -2559,17 +2559,26 @@ static void encrypted_call_with_suite_mismatch_and_capability_negotiations_base(
 		stats = rtp_session_get_stats(linphone_call_get_stream(callerCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
 		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
 
-		end_call(callee, caller);
 
+		end_call(callee, caller);
 	}
 
 }
 
 static void srtp_call_with_suite_mismatch_and_capability_negotiations_caller_unencrypted(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+
+	encryption_params marie_enc_mgr_params;
+	marie_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	marie_enc_mgr_params.level = E_DISABLED;
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, FALSE, FALSE, TRUE);
+
 	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP");
 
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	encryption_params pauline_enc_mgr_params;
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	pauline_enc_mgr_params.level = E_DISABLED;
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, FALSE, FALSE, TRUE);
+
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_256_HMAC_SHA1_80 , AES_CM_256_HMAC_SHA1_32");
 
 	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
@@ -2579,10 +2588,17 @@ static void srtp_call_with_suite_mismatch_and_capability_negotiations_caller_une
 }
 
 static void srtp_call_with_suite_mismatch_and_capability_negotiations_callee_unencrypted(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+
+	encryption_params marie_enc_mgr_params;
+	marie_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	marie_enc_mgr_params.level = E_DISABLED;
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_mgr_params, FALSE, FALSE, TRUE);
 	linphone_core_set_srtp_crypto_suites(marie->lc, "AES_CM_128_HMAC_SHA1_80");
 
-	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	encryption_params pauline_enc_mgr_params;
+	pauline_enc_mgr_params.encryption = LinphoneMediaEncryptionNone;
+	pauline_enc_mgr_params.level = E_DISABLED;
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_mgr_params, FALSE, FALSE, TRUE);
 	linphone_core_set_srtp_crypto_suites(pauline->lc, "AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP UNENCRYPTED_SRTCP");
 
 	encrypted_call_with_suite_mismatch_and_capability_negotiations_base(marie, pauline, LinphoneMediaEncryptionSRTP);
