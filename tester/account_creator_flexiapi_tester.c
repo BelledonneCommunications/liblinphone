@@ -50,8 +50,9 @@ static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator));
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
+		(long)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))
+	);
 	BC_ASSERT_EQUAL(
 		status,
 		expected_status,

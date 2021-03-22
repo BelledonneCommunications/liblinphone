@@ -55,8 +55,9 @@ static LinphoneAccountCreator * _linphone_account_creator_new(LinphoneCore *lc, 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
 
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)((uintptr_t)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator)));
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
+		(long)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))
+	);
 	BC_ASSERT_EQUAL(
 		status,
 		expected_status,
@@ -104,6 +105,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	// First attempt with the first password
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
@@ -128,6 +130,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	// Second attempt with the second password
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
@@ -152,6 +155,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -175,6 +179,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	// Fourth attempt with the password and sha256
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
@@ -200,6 +205,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	// Another attempt with previous password if previous suite crashed before the update
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
@@ -225,6 +231,7 @@ static void server_delete_account_test(void) {
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	// fifth attempt with the second password
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
@@ -342,7 +349,9 @@ static void server_account_created_with_email(void) {
 		"%i");
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -428,7 +437,9 @@ static void server_account_created_with_phone_number(void) {
 		"%i");
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -851,7 +862,9 @@ static void server_activate_phone_number_for_account(void) {
 		"%i");
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1161,7 +1174,9 @@ static void server_update_account_password_with_correct_password(void) {
 		"%i");
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
+
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1227,8 +1242,9 @@ static void server_update_account_password_for_non_existent_account(void) {
 
 static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_current_callbacks(creator);
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)((uintptr_t)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator)));
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)(
+		(long)linphone_account_creator_service_get_user_data(linphone_account_creator_get_service(creator))
+	);
 	BC_ASSERT_EQUAL(
 		status,
 		expected_status,
@@ -1309,6 +1325,7 @@ static void server_recover_phone_account_exists(void) {
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1338,6 +1355,7 @@ static void server_recover_phone_account_exists(void) {
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1367,6 +1385,7 @@ static void server_recover_phone_account_exists(void) {
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1396,6 +1415,7 @@ static void server_recover_phone_account_exists(void) {
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
@@ -1425,6 +1445,7 @@ static void server_recover_phone_account_exists(void) {
 
 	ms_free(stats);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());

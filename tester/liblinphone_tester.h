@@ -642,6 +642,8 @@ LinphoneAccountCreatorStats* new_linphone_account_creator_stats(void) ;
 void account_creator_set_cb_done(LinphoneAccountCreatorCbs *cbs);
 void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs);
 
+void lime_delete_DRSessions(const char *limedb);
+
 #ifdef __cplusplus
 };
 #endif
