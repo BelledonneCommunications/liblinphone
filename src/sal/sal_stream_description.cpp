@@ -1229,8 +1229,6 @@ void SalStreamDescription::sdpParsePayloadTypes(SalStreamConfiguration & cfg, co
 void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration & cfg, const belle_sdp_media_description_t *media_desc) const {
 	belle_sip_list_t *attribute_it;
 	belle_sdp_attribute_t *attribute;
-	char tmp[257]={0}, tmp2[129]={0}, parameters[257]={0};
-	int nb;
 
 	cfg.crypto.clear();
 	for ( attribute_it=belle_sdp_media_description_get_attributes ( media_desc )
@@ -1239,37 +1237,12 @@ void SalStreamDescription::sdpParseMediaCryptoParameters(SalStreamConfiguration 
 		attribute=BELLE_SDP_ATTRIBUTE ( attribute_it->data );
 
 		if ( keywordcmp ( "crypto",belle_sdp_attribute_get_name ( attribute ) ) ==0 && belle_sdp_attribute_get_value ( attribute ) !=NULL ) {
-			SalSrtpCryptoAlgo cryptoEl;
-			nb = sscanf ( belle_sdp_attribute_get_value ( attribute ), "%d %256s inline:%128s %256s",
-							&cryptoEl.tag,
-							tmp,
-							tmp2, parameters );
-
-			if ( nb >= 3 ) {
-				MSCryptoSuite cs;
-				MSCryptoSuiteNameParams np;
-
-				np.name=tmp;
-				np.params=parameters[0]!='\0' ? parameters : NULL;
-				cs=ms_crypto_suite_build_from_name_params(&np);
-				if (cs==MS_CRYPTO_SUITE_INVALID){
-					ms_warning ( "Failed to parse crypto-algo: '%s'", tmp );
-					cryptoEl.algo = MS_CRYPTO_SUITE_INVALID;
-				}else{
-					cryptoEl.master_key = tmp2;
-					size_t sep = cryptoEl.master_key.find("|");
-					// Erase all characters after | if it is found
-					if (sep != std::string::npos) cryptoEl.master_key.erase(cryptoEl.master_key.begin() + static_cast<long>(sep), cryptoEl.master_key.end());
-					cryptoEl.algo = cs;
-					ms_message ( "Found valid crypto line (tag:%d algo:'%s' key:'%s' parameters:'%s'",
-									cryptoEl.tag,
-									tmp,
-									cryptoEl.master_key.c_str(), parameters );
-					cfg.crypto.push_back(cryptoEl);
-				}
-
+			const std::string cryptoAttrVal = belle_sdp_attribute_get_value ( attribute );
+			const auto cryptoEl = SalStreamConfiguration::fillStrpCryptoAlgoFromString(cryptoAttrVal);
+			if (cryptoEl.algo!=MS_CRYPTO_SUITE_INVALID){
+				cfg.crypto.push_back(cryptoEl);
 			}else{
-				ms_warning ( "sdp has a strange a= line (%s) nb=%i",belle_sdp_attribute_get_value ( attribute ),nb );
+				ms_warning ( "sdp has a strange a= line (%s)",belle_sdp_attribute_get_value ( attribute ) );
 			}
 		}
 	}
