@@ -595,7 +595,7 @@ static void server_activate_account_not_activated(void) {
 	linphone_account_creator_set_email(creator, "user_1@linphone.org");
 	linphone_account_creator_set_password(creator, "password");
 	get_activation_code(creator, &stats->cb_done);
-	account_creator_reset_cb_done(creator->cbs);
+	account_creator_reset_cb_done(bctbx_list_get_data(creator->callbacks));
 
 	linphone_account_creator_service_set_user_data(
 		linphone_account_creator_get_service(creator),
@@ -614,6 +614,7 @@ static void server_activate_account_not_activated(void) {
 
 	wait_for_until(marie->lc, NULL, &stats->cb_done, 1, TIMEOUT_REQUEST);
 	linphone_account_creator_unref(creator);
+	linphone_account_creator_cbs_unref(cbs);
 
 	creator = _linphone_account_creator_new(marie->lc, XMLRPC_URL);
 	cbs = linphone_factory_create_account_creator_cbs(linphone_factory_get());
