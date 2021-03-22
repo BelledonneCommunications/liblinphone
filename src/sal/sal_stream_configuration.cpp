@@ -483,7 +483,7 @@ SalDtlsRole SalStreamConfiguration::getDtlsRoleFromSetupAttribute(const std::str
 SalSrtpCryptoAlgo SalStreamConfiguration::fillStrpCryptoAlgoFromString(const std::string & value) {
 	unsigned int tag;
 	char name[257]={0}, masterKey[129]={0}, parameters[257]={0};
-	const auto nb = sscanf ( value.c_str(), "%u %256s inline:%128s %256s", &tag, name, masterKey, parameters );
+	const auto nb = sscanf ( value.c_str(), "%u %256s inline:%128s %256[A-Z_ ]", &tag, name, masterKey, parameters );
 
 	SalSrtpCryptoAlgo keyEnc;
 	keyEnc.algo = MS_CRYPTO_SUITE_INVALID;
