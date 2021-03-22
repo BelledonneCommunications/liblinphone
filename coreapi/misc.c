@@ -597,8 +597,7 @@ void linphone_core_set_tone(LinphoneCore *lc, LinphoneToneID id, const char *aud
 	L_GET_PRIVATE_FROM_C_OBJECT(lc)->getToneManager()->setTone(LinphoneReasonNone, id, audiofile);
 }
 
-const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc){
-	const char *config= linphone_core_get_srtp_crypto_suites(lc);
+const MSCryptoSuite * linphone_core_generate_srtp_crypto_suites_array_from_string(LinphoneCore *lc, const char *config){
 	char *tmp=ms_strdup(config);
 
 	char *sep;
@@ -650,6 +649,16 @@ const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *l
 	}
 	lc->rtp_conf.srtp_suites=result;
 	return result;
+}
+
+const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc){
+	const char *config= linphone_core_get_srtp_crypto_suites(lc);
+	return linphone_core_generate_srtp_crypto_suites_array_from_string(lc, config);
+}
+
+const MSCryptoSuite * linphone_core_get_all_supported_srtp_crypto_suites(LinphoneCore *lc){
+	const char *config= "AES_CM_128_HMAC_SHA1_80, AES_CM_128_HMAC_SHA1_32, AES_256_CM_HMAC_SHA1_80, AES_256_CM_HMAC_SHA1_32,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTP,AES_CM_128_HMAC_SHA1_80 UNENCRYPTED_SRTCP UNENCRYPTED_SRTP,AES_CM_128_HMAC_SHA1_80 UNAUTHENTICATED_SRTP,AES_CM_128_HMAC_SHA1_32 UNAUTHENTICATED_SRTP";
+	return linphone_core_generate_srtp_crypto_suites_array_from_string(lc, config);
 }
 
 static char * seperate_string_list(char **str) {
