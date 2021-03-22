@@ -1248,7 +1248,7 @@ void MediaSessionPrivate::makeLocalStreamDecription(std::shared_ptr<SalMediaDesc
 	md->streams[idx].addActualConfiguration(cfg);
 }
 
-void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool isCapabilityNegotiationReInvite) {
+void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const bool supportsCapabilityNegotiationAttributes, const bool isCapabilityNegotiationReInvite, const bool forceCryptoKeyGeneration) {
 	L_Q();
 	const auto & core = q->getCore()->getCCore();
 	std::shared_ptr<SalMediaDescription> md = std::make_shared<SalMediaDescription>(supportsCapabilityNegotiationAttributes, getParams()->getPrivate()->tcapLinesMerged());
@@ -1384,7 +1384,7 @@ void MediaSessionPrivate::makeLocalMediaDescription(bool localIsOfferer, const b
 		PayloadTypeHandler::clearPayloadList(textCodecs);
 	}
 
-	setupEncryptionKeys(md);
+	setupEncryptionKeys(md, forceCryptoKeyGeneration);
 	setupImEncryptionEngineParameters(md);
 	setupRtcpFb(md);
 	setupRtcpXr(md);
@@ -1517,7 +1517,7 @@ void MediaSessionPrivate::setupImEncryptionEngineParameters (std::shared_ptr<Sal
 	}
 }
 
-void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md) {
+void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescription> & md, const bool forceKeyGeneration) {
 	L_Q();
 	std::shared_ptr<SalMediaDescription> & oldMd = localDesc;
 	bool keepSrtpKeys = !!linphone_config_get_int(linphone_core_get_config(q->getCore()->getCCore()), "sip", "keep_srtp_keys", 1);
@@ -1541,7 +1541,10 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 
 			// Actual configuration
 			if (newStreamActualCfg.hasSrtp()) {
-				if (oldStreamActualCfg.hasSrtp()) {
+				if (forceKeyGeneration) {
+					// Generate new crypto keys
+					newStreamActualCfgCrypto = generateNewCryptoKeys();
+				} else if (oldStreamActualCfg.hasSrtp()) {
 					// If old stream actual configuration supported SRTP, then copy crypto parameters
 					lInfo() << "Keeping same crypto keys when making new local stream description";
 					newStreamActualCfgCrypto = oldStreamActualCfgCrypto;
@@ -1568,7 +1571,7 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 			// If capability negotiation is enabled, search keys among acaps
 			if (md->supportCapabilityNegotiation()) {
 				// If both old and new stream support SRTP as potential configuration
-				if (newStreamSupportsSrtp) {
+				if (newStreamSupportsSrtp && !forceKeyGeneration) {
 					if (oldStreamSupportsSrtp && oldMd->supportCapabilityNegotiation()) {
 						// Copy acap crypto attributes if old stream supports it as potential configuration
 						for (const auto & cap : oldStream.acaps) {
@@ -1598,17 +1601,29 @@ void MediaSessionPrivate::setupEncryptionKeys (std::shared_ptr<SalMediaDescripti
 				newStreamActualCfgCrypto = generateNewCryptoKeys();
 			}
 		}
+
+		if (newStreamActualCfg.hasSrtp() && newStreamActualCfgCrypto.empty()) {
+			lInfo() << "Don't put stream " << i << " on local offer for CallSession [" << q << "] because it requires protocol " << sal_media_proto_to_string(newStreamActualCfg.getProto()) << " but no suitable crypto key has been found.";
+			newStreamActualCfg.dir = SalStreamInactive;
+			md->streams[i].disable();
+		}
 	}
 }
 
 std::vector<SalSrtpCryptoAlgo> MediaSessionPrivate::generateNewCryptoKeys() const {
 	L_Q();
 	std::vector<SalSrtpCryptoAlgo>  cryptos;
-	const MSCryptoSuite *suites = linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
+	const bool doNotUseParams = (direction == LinphoneCallIncoming) && (state == CallSession::State::Idle);
+	const MSCryptoSuite *suites = (doNotUseParams) ? linphone_core_get_all_supported_srtp_crypto_suites(q->getCore()->getCCore()) : linphone_core_get_srtp_crypto_suites_array(q->getCore()->getCCore());
+	size_t cryptoId = 0;
 	for (size_t j = 0; (suites != nullptr) && (suites[j] != MS_CRYPTO_SUITE_INVALID); j++) {
-		SalSrtpCryptoAlgo newCrypto;
-		setupEncryptionKey(newCrypto, suites[j], static_cast<unsigned int>(j) + 1);
-		cryptos.emplace(std::next(cryptos.begin(),static_cast<long>(j)),newCrypto);
+		MSCryptoSuite suite = suites[j];
+		if (doNotUseParams || !isEncryptionMandatory() || (isEncryptionMandatory() && !ms_crypto_suite_is_unencrypted(suite))) {
+			SalSrtpCryptoAlgo newCrypto;
+			setupEncryptionKey(newCrypto, suite, static_cast<unsigned int>(cryptoId) + 1);
+			cryptos.emplace(std::next(cryptos.begin(),static_cast<ptrdiff_t>(cryptoId)),newCrypto);
+			cryptoId++;
+		}
 	}
 
 	return cryptos;
@@ -2094,7 +2109,7 @@ void MediaSessionPrivate::updateCurrentParams () const {
 					const auto & algo = crypto.algo;
 					const bool & isRtpRtcpUnencrypted = (algo == MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80);
 					if (isEncryptionMandatory()) {
-						srtpEncryptionMatch &= (algo != MS_NO_CIPHER_SRTP_AES_128_SHA1_80) && (algo != MS_NO_CIPHER_SRTP_AES_128_SHA1_80) && (algo != MS_NO_CIPHER_SRTP_SRTCP_AES_128_SHA1_80) && stream->isEncrypted();
+						srtpEncryptionMatch &= !ms_crypto_suite_is_unencrypted(algo) && stream->isEncrypted();
 					} else {
 						srtpEncryptionMatch &= ((isRtpRtcpUnencrypted) ? !stream->isEncrypted() : stream->isEncrypted());
 					}
@@ -2255,7 +2270,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	if (msp || localDesc == nullptr) makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), q->isCapabilityNegotiationEnabled());
 
 	// already accepting
-	if (state == CallSession::State::IncomingReceived && params && localDesc == nullptr) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled());
+	if (state == CallSession::State::IncomingReceived && params) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled(), false, true);
 
 	updateRemoteSessionIdAndVer();
 
