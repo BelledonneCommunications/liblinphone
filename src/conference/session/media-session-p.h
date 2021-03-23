@@ -39,7 +39,7 @@
 LINPHONE_BEGIN_NAMESPACE
 
 
-class MediaSessionPrivate : public CallSessionPrivate, private IceServiceListener {
+class LINPHONE_INTERNAL_PUBLIC MediaSessionPrivate : public CallSessionPrivate, private IceServiceListener {
 	friend class StreamsGroup;
 public:
 	static int resumeAfterFailedTransfer (void *userData, unsigned int);

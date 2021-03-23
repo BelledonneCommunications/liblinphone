@@ -131,7 +131,7 @@ private:
 	
 };
 
-class IceServiceListener{
+class LINPHONE_INTERNAL_PUBLIC IceServiceListener{
 public:
 	virtual void onGatheringFinished(IceService &service) = 0;
 	virtual void onIceCompleted(IceService &service) = 0;
