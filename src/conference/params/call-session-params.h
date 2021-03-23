@@ -21,6 +21,7 @@
 #define _L_CALL_SESSION_PARAMS_H_
 
 #include "object/clonable-object.h"
+#include "utils/general-internal.h"
 
 #include "linphone/types.h"
 #include "content/content.h"
@@ -34,7 +35,7 @@ LINPHONE_BEGIN_NAMESPACE
 class CallSessionParamsPrivate;
 class Core;
 
-class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
+class LINPHONE_INTERNAL_PUBLIC CallSessionParams : public ClonableObject {
 	friend class CallSession;
 	friend class CallSessionPrivate;
 	friend class ClientGroupChatRoom;
