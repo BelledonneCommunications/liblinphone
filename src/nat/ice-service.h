@@ -134,7 +134,7 @@ private:
 	bool mIceWasDisabled = false; // Remember that at some point ICE was disabled by an incoming offer or answer.
 };
 
-class IceServiceListener{
+class LINPHONE_INTERNAL_PUBLIC IceServiceListener{
 public:
 	virtual void onGatheringFinished(IceService &service) = 0;
 	virtual void onIceCompleted(IceService &service) = 0;

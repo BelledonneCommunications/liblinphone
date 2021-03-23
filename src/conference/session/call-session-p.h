@@ -32,7 +32,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class CallSessionPrivate : public ObjectPrivate, public CoreListener {
+class LINPHONE_INTERNAL_PUBLIC CallSessionPrivate : public ObjectPrivate, public CoreListener {
 public:
 	int computeDuration () const;
 	virtual void initializeParamsAccordingToIncomingCallParams ();
