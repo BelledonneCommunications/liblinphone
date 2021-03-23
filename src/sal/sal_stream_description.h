@@ -42,7 +42,7 @@ class SalCallOp;
 class OfferAnswerEngine;
 
 struct SalConfigurationCmp {
-	bool operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const;
+	bool operator()(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type& rhs) const;
 };
 
 class LINPHONE_PUBLIC SalStreamDescription {
@@ -56,10 +56,10 @@ class LINPHONE_PUBLIC SalStreamDescription {
 	public:
 
 		struct raw_capability_negotiation_attrs_t {
-			bellesip::SDP::SDPPotentialCfgGraph::session_description_unparsed_config::mapped_type unparsed_cfgs;
-			bellesip::SDP::SDPPotentialCfgGraph::media_description_acap acaps;
-			bellesip::SDP::SDPPotentialCfgGraph::media_description_base_cap tcaps;
-			bellesip::SDP::SDPPotentialCfgGraph::media_description_config cfgs;
+			bellesip::SDP::PotentialCfgGraph::session_description_unparsed_config::mapped_type unparsed_cfgs;
+			bellesip::SDP::PotentialCfgGraph::media_description_acap acaps;
+			bellesip::SDP::PotentialCfgGraph::media_description_base_cap tcaps;
+			bellesip::SDP::PotentialCfgGraph::media_description_config cfgs;
 		};
 
 		using acap_t = std::pair<std::string, std::string>;
@@ -68,9 +68,9 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		// Map of the available configurations
 		// TODO: handle multiple cfgs with same index
-		using cfg_map = std::map<bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
+		using cfg_map = std::map<bellesip::SDP::PotentialCfgGraph::media_description_config::key_type, SalStreamConfiguration, SalConfigurationCmp>;
 
-		static bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type actualConfigurationIndex;
+		static bellesip::SDP::PotentialCfgGraph::media_description_config::key_type actualConfigurationIndex;
 		static const tcap_map_t::value_type & encryptionToTcap(const tcap_map_t & caps, const LinphoneMediaEncryption encEnum, const bool avpf);
 
 		SalStreamDescription();
@@ -95,16 +95,16 @@ class LINPHONE_PUBLIC SalStreamDescription {
 		// Returned values:
 		// - 0: actual configuration
 		// - 1 to 2^31-1: configuration number as received in the SDP acfg or pcfg attribute
-		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getChosenConfigurationIndex() const;
-		const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & getActualConfigurationIndex() const;
+		const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & getChosenConfigurationIndex() const;
+		const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & getActualConfigurationIndex() const;
 
-		bool hasConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const;
-		const SalStreamConfiguration & getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const;
+		bool hasConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & index) const;
+		const SalStreamConfiguration & getConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & index) const;
 		const SalStreamConfiguration & getActualConfiguration() const;
 		const SalStreamConfiguration & getChosenConfiguration() const;
 
 		void addActualConfiguration(const SalStreamConfiguration & cfg);
-		void addConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg);
+		void addConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg);
 
 		/*these are switch case, so that when a new proto is added we can't forget to modify this function*/
 		bool hasAvpf() const;
@@ -174,7 +174,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 	private:
 
-		mutable bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
+		mutable bellesip::SDP::PotentialCfgGraph::media_description_config::key_type cfgIndex = 0;
 
 		std::vector<SalIceCandidate> ice_candidates;
 		std::vector<SalIceRemoteCandidate> ice_remote_candidates;
@@ -194,7 +194,7 @@ class LINPHONE_PUBLIC SalStreamDescription {
 
 		// Potential configurations
 		SalStreamConfiguration createBasePotentialCfg() const;
-		void fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs);
+		void fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::PotentialCfgGraph::media_description_config & sdpCfgs);
 		void createPotentialConfigurationAtIdx(const unsigned int & idx, const SalStreamDescription::tcap_map_t & tcaps, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
 		void createPotentialConfiguration(const tcap_map_t & protoMap, const std::list<acap_map_t> & attrList, const bool delete_session_attributes, const bool delete_media_attributes);
 		void insertOrMergeConfiguration(const unsigned & idx, const SalStreamConfiguration & cfg);
