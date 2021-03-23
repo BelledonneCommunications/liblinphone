@@ -10,27 +10,39 @@ This changelog file was started on October 2019. Previous changes were more or l
 
 ## [Unreleased]
 
+
+
+## [4.5.0] 2021-03-29
+
 ### Added
-- EnterForeground and enterBackground automatically for ios and anroid.
-- Audio routes API to choose which device use to capture & play audio on Android & iOS.
-- Handling push notifications, activity monitor and Core iterate automatically in Core for Android.
-- Auto acquire and release of audio focus for Android.
+- Automatic handling of some mobile OS behaviours
+  * enterForeground() and enterBackground() automatically called (iOS and Android).
+  * auto acquire and release of audio focus for Android.
+  * Core.iterate() is being called automatically internally for Android, it is no longer needed to create a timer in the application to call it.
+- New audio routes API to choose which device use to capture & play audio (Android & iOS). The application can manage
+  audio route changes (bluetooth, speaker, earpiece) throug liblinphone's API.
 - Added API to play user's ringtone instead of default ringtone for Android.
-- New method linphone_core_audio_route_changed(), to fix audio issues when switching audio to some low sample rate Bluetooth devices.
 - Added callback to notify a message is about to be sent.
+- iOS: added linphone_core_configure_audio_session() to be called when used with Callkit
+  see specific documentation here: https://wiki.linphone.org/xwiki/wiki/public/view/Lib/Getting%20started/iOS/#HCallKitintegration
+
 
 ### Changed
+- Warning: some function parameters have been renamed for consistency, which modified the Swift API (where parameter names are part of the ABI).
+  As a result, adjustements in applications are expected when migrating a swift app based on liblinphone from 4.4 to 4.5.
 - Improved Android network manager.
-- to make it consistent with other liblinphone's object, linphone_core_create_subscribe(), linphone_core_create_subscribe2(),
+- To make it consistent with other liblinphone's object, linphone_core_create_subscribe(), linphone_core_create_subscribe2(),
   linphone_core_create_publish() now give ownership of the returned LinphoneEvent, which means that it is no longer need to call
   linphone_event_ref() after calling these functions. As a consequence, an application not using linphone_event_ref() should now
   use linphone_event_unref() when the LinphoneEvent is no longer used, otherwise it will create a memory leak.
 - Real time text related function linphone_chat_message_get_char() now will always return the new line character,
-  which wasn't the case before if the getChar() was done after the composing callback was triggered for this character.
+  which wasn't the case before if the get_char() was done after the composing callback was triggered for this character.
 - linphone_core_interpret_url() will unescape characters first if possible if only a username is given as input parameter.
 - linphone_chat_message_cancel_file_transfer() no longer deletes the file for outgoing messages.
 - magic search result created from filter now applies the international prefix of the default proxy config if possible.
-- file transfer progress callback will be at most notified 100 times.
+- To improve performance file transfer progress callback will be at most notified 100 times.
+- Deprecate linphone_core_audio_route_changed() that was introduced in 4.4, to fix audio issues
+  when switching audio to some low sample rate Bluetooth devices. It is now handled internally.
 
 ### Fixed
 - Internal refactoring of management of locally played tones, in order to fix race conditions.
