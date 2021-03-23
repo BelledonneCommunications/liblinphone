@@ -522,10 +522,13 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		}
 
 		bool enableCapabilityNegotiations = false;
-		if (state == CallSession::State::Updating) {
+		bool useNegotiatedMediaProtocol = true;
+		// Add capability negotiation attribute during update if they are supported
+		if (state == CallSession::State::StreamsRunning) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
+			useNegotiatedMediaProtocol = false;
 		}
-		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, true);
+		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, useNegotiatedMediaProtocol);
 	}
 	// Fix local parameter after creating new local media description
 	fixCallParams(rmd, true);
