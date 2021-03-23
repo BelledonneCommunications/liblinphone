@@ -23,6 +23,7 @@
 #include <ortp/payloadtype.h>
 
 #include "call-session-params.h"
+#include "utils/general-internal.h"
 
 // =============================================================================
 
@@ -36,7 +37,7 @@ namespace MediaConference {
 	class LocalConference;
 }
 
-class MediaSessionParams : public CallSessionParams {
+class LINPHONE_INTERNAL_PUBLIC MediaSessionParams : public CallSessionParams {
 	friend class Call;
 	friend class MediaSession;
 	friend class MediaSessionPrivate;
