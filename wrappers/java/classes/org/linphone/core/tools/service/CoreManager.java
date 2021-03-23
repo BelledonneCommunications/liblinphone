@@ -276,6 +276,11 @@ public class CoreManager {
         mCore.reloadSoundDevices();
     }
 
+    public void onHeadsetStateChanged() {
+        Log.i("[Core Manager] Headset state changed, reload sound devices");
+        mCore.reloadSoundDevices();
+    }
+
     public void onBackgroundMode() {
         Log.i("[Core Manager] App has entered background mode");
         if (mCore != null) {
