@@ -23,6 +23,7 @@
 #include <set>
 
 #include "linphone/utils/general.h"
+#include "utils/general-internal.h"
 
 #include "object-head-p.h"
 
@@ -30,7 +31,7 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
-class ClonableObjectPrivate {
+class LINPHONE_INTERNAL_PUBLIC ClonableObjectPrivate {
 	L_OBJECT_PRIVATE;
 
 public:
