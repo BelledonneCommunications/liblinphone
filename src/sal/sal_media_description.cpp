@@ -81,7 +81,7 @@ SalMediaDescription::SalMediaDescription(belle_sdp_session_description_t  *sdp) 
 
 	dir = SalStreamSendRecv;
 
-	bellesip::SDP::SDPPotentialCfgGraph potentialCfgGraph(sdp);
+	bellesip::SDP::PotentialCfgGraph potentialCfgGraph(sdp);
 
 	// if received SDP has no valid capability negotiation attributes, then assume that it doesn't support capability negotiation
 	capabilityNegotiationSupported = !potentialCfgGraph.empty();
@@ -747,7 +747,7 @@ unsigned int SalMediaDescription::getFreeTcapIdx() const {
 		std::for_each(streamTcaps.begin(), streamTcaps.end(), addToIndexList);
 	}
 
-	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(tcapIndexes);
+	return bellesip::SDP::PotentialCfgGraph::getFreeIdx(tcapIndexes);
 }
 
 unsigned int SalMediaDescription::getFreeAcapIdx() const {
@@ -762,10 +762,10 @@ unsigned int SalMediaDescription::getFreeAcapIdx() const {
 		std::for_each(streamAcaps.begin(), streamAcaps.end(), addToIndexList);
 	}
 
-	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(acapIndexes);
+	return bellesip::SDP::PotentialCfgGraph::getFreeIdx(acapIndexes);
 }
 
-void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::value_type & cfg) const {
+void SalMediaDescription::addPotentialConfigurationToSdp(belle_sdp_media_description_t * & media_desc, const std::string attrName, const bellesip::SDP::PotentialCfgGraph::media_description_config::value_type & cfg) const {
 	const auto & cfgIdx = cfg.first;
 	const auto & cfgAttr = cfg.second;
 
