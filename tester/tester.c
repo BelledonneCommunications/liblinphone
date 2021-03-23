@@ -565,6 +565,11 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 	bool_t * existing_call = NULL;
 	bctbx_list_t * participant_addresses = NULL;
 	int counter = 1;
+
+	LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(local_conference);
+	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 		participant_addresses = bctbx_list_append(participant_addresses, m->identity);
@@ -579,10 +584,14 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 		// Increment counter
 		counter++;
 
+		LinphoneAddress *participant_uri = linphone_address_new(linphone_core_get_identity(m->lc));
+		LinphoneConference * participant_conference = linphone_core_search_conference(m->lc, NULL, participant_uri, local_conference_address, NULL);
+		linphone_address_unref(participant_uri);
+		BC_ASSERT_PTR_NULL(participant_conference);
+
 	}
 
-	LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
-	LinphoneStatus status = linphone_conference_invite_participants(conference, participant_addresses, params);
+	LinphoneStatus status = linphone_conference_invite_participants(local_conference, participant_addresses, params);
 
 	if (participants != NULL) {
 		int idx = 0;
@@ -1079,6 +1088,15 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	int participant_size = linphone_conference_get_participant_count(conference);
 	bool_t local_participant_is_in = linphone_conference_is_in (conference);
 
+	LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
+	BC_ASSERT_PTR_NOT_NULL(local_conference);
+	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+
+	LinphoneAddress *participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
+	LinphoneConference * participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
+	linphone_address_unref(participant_uri);
+	BC_ASSERT_PTR_NOT_NULL(participant_conference);
+
 	stats* participants_initial_stats = NULL;
 	LinphoneCallState* participants_initial_state = NULL;
 	bctbx_list_t *participants = NULL;
@@ -1126,6 +1144,11 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	}
 
 	check_participant_removal(lcs, conf_mgr, participant_mgr, participants, participant_size, conf_initial_stats, participant_initial_stats, participants_initial_stats, participants_initial_state, local_participant_is_in);
+
+	participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
+	participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
+	linphone_address_unref(participant_uri);
+	BC_ASSERT_PTR_NULL(participant_conference);
 
 	ms_free(participants_initial_stats);
 	ms_free(participants_initial_state);
@@ -1192,6 +1215,15 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 
 	if (participant_call) {
 
+		LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
+		BC_ASSERT_PTR_NOT_NULL(local_conference);
+		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+
+		LinphoneAddress *participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
+		LinphoneConference * participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
+		linphone_address_unref(participant_uri);
+		BC_ASSERT_PTR_NOT_NULL(participant_conference);
+
 		stats initial_participant_stats = participant_mgr->stat;
 		stats initial_conf_stats = conf_mgr->stat;
 		stats* initial_other_participants_stats = NULL;
@@ -1241,6 +1273,12 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 		if (initial_other_participants_stats) {
 			ms_free(initial_other_participants_stats);
 		}
+
+		participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
+		participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
+		linphone_address_unref(participant_uri);
+		BC_ASSERT_PTR_NULL(participant_conference);
+
 	}
 
 	return participants;
