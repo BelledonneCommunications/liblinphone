@@ -3891,6 +3891,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	stats marie_initial_stats = marie->stat;
 	stats laure_initial_stats = laure->stat;
+	stats michelle_initial_stats = michelle->stat;
 
 	LinphoneCoreToneManagerStats *marie_tone_mgr_stats = linphone_core_get_tone_manager_stats(marie->lc);
 	int initial_named_tone = marie_tone_mgr_stats->number_of_startNamedTone;
@@ -3900,6 +3901,9 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPausing,(laure_initial_stats.number_of_LinphoneCallPausing + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneCallPausedByRemote,(marie_initial_stats.number_of_LinphoneCallPausedByRemote + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneCallPaused,(laure_initial_stats.number_of_LinphoneCallPaused + 1), 5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneSubscriptionTerminated,marie_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated,laure_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_initial_stats.number_of_NotifyReceived + 2),5000));
 
 	// As Marie is in a conference, the named tone should not be played even though the call is paused
 	BC_ASSERT_EQUAL(linphone_core_get_tone_manager_stats(marie->lc)->number_of_startNamedTone, initial_named_tone, int, "%d");
@@ -3915,7 +3919,7 @@ static void participant_takes_call_after_conference_started_and_rejoins_conferen
 
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 2, unsigned int, "%u");
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),3, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),2, int, "%d");
 
 	// Taking michelle out of the conference causes the conference to be destroyed
 	new_participants = terminate_participant_call(new_participants, marie, michelle);
