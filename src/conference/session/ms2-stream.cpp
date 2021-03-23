@@ -180,7 +180,7 @@ bool MS2Stream::encryptionFound(const SalStreamDescription::tcap_map_t & caps, c
 	return (it != caps.end());
 }
 
-void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, const bellesip::SDP::SDPPotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
+void MS2Stream::addAcapToStream(std::shared_ptr<SalMediaDescription> & desc, const bellesip::SDP::PotentialCfgGraph::session_description_base_cap::key_type & streamIdx, const std::string & attrName, const std::string & attrValue) {
 	const auto & acaps = desc->getAllAcapForStream(streamIdx);
 	const auto nameValueMatch = std::find_if(acaps.cbegin(), acaps.cend(), [&attrName, &attrValue] (const auto & cap) {
 		const auto & nameValuePair = cap.second;
