@@ -52,6 +52,9 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 	if (linphone_core_tunnel_available()){
 		LinphoneCoreManager *pauline = linphone_core_manager_new( "pauline_rc");
 		LinphoneCoreManager *marie = linphone_core_manager_new( "marie_rc");
+		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
+		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
+
 		LinphoneCall *pauline_call, *marie_call;
 		LinphoneProxyConfig *proxy = linphone_core_get_default_proxy_config(pauline->lc);
 		LinphoneAddress *server_addr = linphone_address_new(linphone_proxy_config_get_server_addr(proxy));
@@ -162,6 +165,7 @@ static void call_with_tunnel_base(LinphoneTunnelMode tunnel_mode, bool_t with_si
 		}
 
 		BC_ASSERT_TRUE(call(pauline,marie));
+		liblinphone_tester_check_rtcp(marie,pauline);
 		pauline_call=linphone_core_get_current_call(pauline->lc);
 		BC_ASSERT_PTR_NOT_NULL(pauline_call);
 		if (pauline_call!=NULL){
