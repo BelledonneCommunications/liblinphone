@@ -509,7 +509,8 @@ void MediaSessionPrivate::updating(bool isUpdate) {
 		}
 
 		bool enableCapabilityNegotiations = false;
-		if (state == CallSession::State::Updating) {
+		// Add capability negotiation attribute during update if they are supported
+		if (state == CallSession::State::StreamsRunning) {
 			enableCapabilityNegotiations = q->isCapabilityNegotiationEnabled();
 		}
 		makeLocalMediaDescription((rmd == nullptr), enableCapabilityNegotiations, true);
