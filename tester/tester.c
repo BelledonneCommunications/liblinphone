@@ -944,6 +944,10 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateTerminated,(participant_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&participant_mgr->stat.number_of_LinphoneConferenceStateDeleted,(participant_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),5000));
 
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(conf_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
+
 	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
 	if (conf_event_log_enabled) {
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,conf_initial_stats.number_of_LinphoneSubscriptionTerminated + 1,10000));
@@ -955,7 +959,7 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 
 	LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
 	int expected_no_participants = 0;
-	if (participant_size == 2) {
+	if (participant_size <= 2) {
 		expected_no_participants = 0;
 
 		BC_ASSERT_PTR_NULL(conference);
@@ -966,12 +970,14 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 		expected_no_participants = (participant_size - 1);
 
 		BC_ASSERT_PTR_NOT_NULL(conference);
-		BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
-		BC_ASSERT_EQUAL(linphone_conference_is_in(conference), local_participant_is_in, int, "%d");
+		if (conference) {
+			BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference), expected_no_participants, int, "%d");
+			BC_ASSERT_EQUAL(linphone_conference_is_in(conference), local_participant_is_in, int, "%d");
+		}
 	}
 
 	// Other participants call should not have their state modified
-	if (participants != NULL) {
+	if ((participants != NULL) && (participant_size > 1)) {
 		int idx = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(itm);
@@ -1007,9 +1013,9 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateTerminated,(participants_initial_stats[idx].number_of_LinphoneConferenceStateTerminated + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneConferenceStateDeleted,(participants_initial_stats[idx].number_of_LinphoneConferenceStateDeleted + 1),5000));
 
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(conf_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(conf_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 2),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 2),10000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 2),10000));
 
 				BC_ASSERT_FALSE(linphone_core_is_in_conference(conf_mgr->lc));
 
@@ -1065,7 +1071,7 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 
 	LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
 	BC_ASSERT_PTR_NOT_NULL(local_conference);
-	const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+	LinphoneAddress * local_conference_address = linphone_address_clone(linphone_conference_get_conference_address(local_conference));
 
 	LinphoneAddress *participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
 	LinphoneConference * participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
@@ -1123,6 +1129,7 @@ LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, Linph
 	participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
 	participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
 	linphone_address_unref(participant_uri);
+	linphone_address_unref(local_conference_address);
 	BC_ASSERT_PTR_NULL(participant_conference);
 
 	ms_free(participants_initial_stats);
@@ -1192,7 +1199,7 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 
 		LinphoneConference * local_conference = linphone_core_get_conference(conf_mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(local_conference);
-		const LinphoneAddress * local_conference_address = linphone_conference_get_conference_address(local_conference);
+		LinphoneAddress * local_conference_address = linphone_address_clone(linphone_conference_get_conference_address(local_conference));
 
 		LinphoneAddress *participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
 		LinphoneConference * participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
@@ -1232,8 +1239,12 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 
 		LinphoneConference * conference = linphone_core_get_conference(conf_mgr->lc);
 		BC_ASSERT_PTR_NOT_NULL(conference);
-		int participant_size = linphone_conference_get_participant_count(conference);
-		bool_t local_participant_is_in = linphone_conference_is_in (conference);
+		int participant_size = -1;
+		bool_t local_participant_is_in = TRUE;
+		if (conference) {
+			participant_size = linphone_conference_get_participant_count(conference);
+			local_participant_is_in = linphone_conference_is_in (conference);
+		}
 
 		linphone_core_terminate_call(participant_mgr->lc, participant_call);
 		participants = bctbx_list_remove(participants, participant_mgr);
@@ -1252,6 +1263,7 @@ bctbx_list_t* terminate_participant_call(bctbx_list_t *participants, LinphoneCor
 		participant_uri = linphone_address_new(linphone_core_get_identity(participant_mgr->lc));
 		participant_conference = linphone_core_search_conference(participant_mgr->lc, NULL, participant_uri, local_conference_address, NULL);
 		linphone_address_unref(participant_uri);
+		linphone_address_unref(local_conference_address);
 		BC_ASSERT_PTR_NULL(participant_conference);
 
 	}
