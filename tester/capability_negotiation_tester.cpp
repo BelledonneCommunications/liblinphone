@@ -297,7 +297,7 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-		BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
 		linphone_call_stats_unref(calleeStats);
 		calleeStats = NULL;
 
@@ -363,7 +363,7 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 			calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-			BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+			BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
 			linphone_call_stats_unref(calleeStats);
 			calleeStats = NULL;
 
@@ -430,7 +430,7 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-		BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
 		linphone_call_stats_unref(calleeStats);
 		calleeStats = NULL;
 
@@ -463,7 +463,7 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(callee),70,int,"%i");
 		LinphoneCallStats *callerStats = linphone_call_get_audio_stats(linphone_core_get_current_call(caller->lc));
-		BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(callerStats),70,int,"%i");
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(callerStats),70,int,"%i");
 		linphone_call_stats_unref(callerStats);
 		callerStats = NULL;
 
@@ -2648,7 +2648,7 @@ static void simple_call_with_capability_negotiations_with_difference_encryption_
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
 			LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-			BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+			BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
 			linphone_call_stats_unref(calleeStats);
 			calleeStats = NULL;
 		} else {
@@ -2663,7 +2663,7 @@ static void simple_call_with_capability_negotiations_with_difference_encryption_
 
 			BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),0,int,"%i");
 			LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
-			BC_ASSERT_EQUAL(linphone_call_stats_get_download_bandwidth(calleeStats),0,int,"%d");
+			BC_ASSERT_EQUAL((int)linphone_call_stats_get_download_bandwidth(calleeStats),0,int,"%d");
 			linphone_call_stats_unref(calleeStats);
 			calleeStats = NULL;
 
