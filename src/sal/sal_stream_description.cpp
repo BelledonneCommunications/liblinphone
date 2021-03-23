@@ -29,9 +29,9 @@ LINPHONE_BEGIN_NAMESPACE
 
 #define keywordcmp(key,b) strncmp(key,b,sizeof(key))
 
-bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type SalStreamDescription::actualConfigurationIndex{ 0 };
+bellesip::SDP::PotentialCfgGraph::media_description_config::key_type SalStreamDescription::actualConfigurationIndex{ 0 };
 
-bool SalConfigurationCmp::operator()(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type& rhs) const { 
+bool SalConfigurationCmp::operator()(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type& lhs, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type& rhs) const { 
 	// Compare the key minus 1 because 0 is the actual configuration hence it has the lowest priority.
 	// When iterating over the configuration map, it should be the last element taken into account
 	return ((lhs-1) < (rhs-1));
@@ -173,7 +173,7 @@ void SalStreamDescription::fillStreamDescriptionFromSdp(const SalMediaDescriptio
 
 }
 
-void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config & sdpCfgs) {
+void SalStreamDescription::fillPotentialConfigurationsFromPotentialCfgGraph(const bellesip::SDP::PotentialCfgGraph::media_description_config & sdpCfgs) {
 
 	// Iterate over the potential configuration
 	for (const auto & SDPMediaDescriptionCfgPair : sdpCfgs) {
@@ -1481,20 +1481,20 @@ const std::list<LinphoneMediaEncryption> & SalStreamDescription::getSupportedEnc
 	return supportedEncryption;
 }
 
-const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getChosenConfigurationIndex() const {
+const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getChosenConfigurationIndex() const {
 	return cfgIndex;
 }
 
-const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getActualConfigurationIndex() const {
+const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & SalStreamDescription::getActualConfigurationIndex() const {
 	return SalStreamDescription::actualConfigurationIndex;
 }
 
-bool SalStreamDescription::hasConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const {
+bool SalStreamDescription::hasConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & index) const {
 	const auto & elCount = cfgs.count(index);
 	return (elCount != 0);
 }
 
-const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & index) const {
+const SalStreamConfiguration & SalStreamDescription::getConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & index) const {
 	try {
 		const auto & cfg = cfgs.at(index);
 		return cfg;
@@ -1535,7 +1535,7 @@ void SalStreamDescription::addActualConfiguration(const SalStreamConfiguration &
 	addConfigurationAtIndex(getActualConfigurationIndex(), cfg);
 }
 
-void SalStreamDescription::addConfigurationAtIndex(const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg) {
+void SalStreamDescription::addConfigurationAtIndex(const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & idx, const SalStreamConfiguration & cfg) {
 	cfgs[idx] = cfg;
 }
 
@@ -1581,7 +1581,7 @@ unsigned int SalStreamDescription::getFreeCfgIdx() const {
 	const auto & streamCfgs = getAllCfgs();
 	std::for_each(streamCfgs.begin(), streamCfgs.end(), addToIndexList);
 
-	return bellesip::SDP::SDPPotentialCfgGraph::getFreeIdx(cfgIndexes);
+	return bellesip::SDP::PotentialCfgGraph::getFreeIdx(cfgIndexes);
 }
 
 bool SalStreamDescription::getIceMismatch() const {
