@@ -469,7 +469,7 @@ SalStreamDescription OfferAnswerEngine::initiateOutgoingStream(MSFactory* factor
 	return result;
 }
 
-std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateOutgoingConfiguration(MSFactory* factory, const SalStreamDescription & local_offer, const SalStreamDescription & remote_answer, const SalStreamDescription & result, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 	SalStreamConfiguration resultCfg = result.getActualConfiguration();
 	const SalStreamConfiguration & localCfg = local_offer.getConfigurationAtIndex(localCfgIdx);
 	const SalStreamConfiguration & remoteCfg = remote_answer.getConfigurationAtIndex(remoteCfgIdx);
@@ -668,7 +668,7 @@ SalStreamDescription OfferAnswerEngine::initiateIncomingStream(MSFactory *factor
 	return result;
 }
 
-std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::SDPPotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
+std::pair<SalStreamConfiguration, bool> OfferAnswerEngine::initiateIncomingConfiguration(MSFactory *factory, const SalStreamDescription & local_cap, const SalStreamDescription & remote_offer, const SalStreamDescription & result, bool one_matching_codec, const std::string &bundle_owner_mid, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & localCfgIdx, const bellesip::SDP::PotentialCfgGraph::media_description_config::key_type & remoteCfgIdx) {
 
 	SalStreamConfiguration resultCfg;
 	if (result.hasConfigurationAtIndex(result.getActualConfigurationIndex())) {
