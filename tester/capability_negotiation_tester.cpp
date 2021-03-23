@@ -434,10 +434,6 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 		linphone_call_stats_unref(calleeStats);
 		calleeStats = NULL;
 
-		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
-		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
-		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
-
 		// Pause caller call
 		BC_ASSERT_TRUE(pause_call_1(caller,callerCall,callee,calleeCall));
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
@@ -467,9 +463,6 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 		linphone_call_stats_unref(callerStats);
 		callerStats = NULL;
 
-		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
-		stats = rtp_session_get_stats(linphone_call_get_stream(callerCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
-		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
 	}
 }
 
