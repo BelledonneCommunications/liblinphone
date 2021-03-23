@@ -20,6 +20,7 @@
 package org.linphone.core.tools.audio;
 
 import android.content.Context;
+import android.content.IntentFilter;
 import android.media.AudioAttributes;
 import android.media.AudioManager;
 import android.media.AudioManager.OnAudioFocusChangeListener;
@@ -39,6 +40,7 @@ import java.lang.SecurityException;
 import org.linphone.core.Core;
 import org.linphone.core.AudioDevice;
 import org.linphone.core.tools.Log;
+import org.linphone.core.tools.receiver.HeadsetReceiver;
 import org.linphone.core.tools.service.CoreManager;
 
 public class AudioHelper implements OnAudioFocusChangeListener {
@@ -48,11 +50,17 @@ public class AudioHelper implements OnAudioFocusChangeListener {
     private MediaPlayer mPlayer;
     private int mVolumeBeforeEchoTest;
     private AudioDevice mPreviousDefaultOutputAudioDevice;
+    private HeadsetReceiver mHeadsetReceiver;
 
     public AudioHelper(Context context) {
         mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
         mRingingRequest = null;
         mCallRequest = null;
+
+        mHeadsetReceiver = new HeadsetReceiver();
+        IntentFilter filter = new IntentFilter(AudioManager.ACTION_HEADSET_PLUG);
+        context.registerReceiver(mHeadsetReceiver, filter);
+        
         Log.i("[Audio Helper] Helper created");
     }
 
