@@ -402,6 +402,8 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 	BC_ASSERT_PTR_NOT_NULL(calleeCall);
 
 	if (calleeCall && callerCall) {
+		LinphoneMediaEncryption calleeEncryption = linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall));
+		LinphoneMediaEncryption callerEncryption = linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall));
 
 		// Pause callee call
 		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
@@ -417,23 +419,10 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
 
-		LinphoneMediaEncryption encryption =  LinphoneMediaEncryptionNone;
-		bool potentialConfigurationChosen = false;
-
-		get_expected_encryption_from_call_params(calleeCall, callerCall, &encryption, &potentialConfigurationChosen);
-
-		int expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
-
-		/*wait for reINVITEs to complete*/
-		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
-		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
-
-		if (calleeCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
-		}
-		if (callerCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
-		}
+		// Verify that encryption didn't change
+		BC_ASSERT_EQUAL(calleeEncryption, callerEncryption, int, "%i");
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), callerEncryption, int, "%i");
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), callerEncryption, int, "%i");
 
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
 
@@ -463,21 +452,10 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
 		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
 
-		get_expected_encryption_from_call_params(callerCall, calleeCall, &encryption, &potentialConfigurationChosen);
-
-		expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
-
-		/*wait for reINVITEs to complete*/
-		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
-		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
-
-		if (calleeCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
-		}
-		if (callerCall) {
-			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
-		}
-
+		// Verify that encryption didn't change
+		BC_ASSERT_EQUAL(calleeEncryption, callerEncryption, int, "%i");
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), callerEncryption, int, "%i");
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), callerEncryption, int, "%i");
 
 		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
 
@@ -485,7 +463,7 @@ static void pause_resume_calls(LinphoneCoreManager* caller, LinphoneCoreManager*
 
 		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(callee),70,int,"%i");
 		LinphoneCallStats *callerStats = linphone_call_get_audio_stats(linphone_core_get_current_call(caller->lc));
-		BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+		BC_ASSERT_GREATER(linphone_call_stats_get_download_bandwidth(callerStats),70,int,"%i");
 		linphone_call_stats_unref(callerStats);
 		callerStats = NULL;
 
