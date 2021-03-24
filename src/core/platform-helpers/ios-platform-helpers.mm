@@ -115,7 +115,6 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
-	IosHandler *mHandler = NULL;
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
 	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
@@ -141,7 +140,6 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
-	mHandler = [[IosHandler alloc] initWithCore:core];
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -165,6 +163,7 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 
 	ms_message("IosPlatformHelpers is fully started");
 	mStart = true;
+	[mAppDelegate onStopAsyncEnd:false];
 }
 
 void IosPlatformHelpers::stop () {
@@ -321,7 +320,7 @@ void IosPlatformHelpers::onLinphoneCoreStop() {
 	}
 
 	// To avoid trigger callbacks of mHandler after linphone core stop
-	[mHandler dealloc];
+	[mAppDelegate onStopAsyncEnd:true];
 	getSharedCoreHelpers()->onLinphoneCoreStop();
 }
 

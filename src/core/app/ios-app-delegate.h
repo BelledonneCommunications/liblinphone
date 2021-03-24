@@ -35,23 +35,16 @@
  IosAppDelegate is an object taking care of all application delegate's notifications and iteartion:
  UIApplicationDidEnterBackgroundNotification
  UIApplicationWillEnterForegroundNotification
+ AVAudioSessionRouteChangeNotification
  iteration
  Its lifecicle is the same as the one from linphonecore init to destroy.
  */
-@interface IosAppDelegate : IosObject
-
-- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-
-@end
-
-/*
- IosHandler is an object taking cahrge of all ios system's notifications:
- AVAudioSessionRouteChangeNotification
- Its lifecicle is the same as the one from core start to stop.
- */
-@interface IosHandler : IosObject
+@interface IosAppDelegate : IosObject {
+	BOOL mStopAsyncEnd;
+}
 
 - (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
+- (void)onStopAsyncEnd: (BOOL)stop;
 
 @end
