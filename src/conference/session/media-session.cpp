@@ -259,7 +259,7 @@ bool MediaSessionPrivate::failure () {
 							getParams()->enableAvpf(false);
 							restartInvite();
 							return true;
-						} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
+						} else if (!isEncryptionMandatory()) {
 							if (firstStream)
 								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
@@ -786,7 +786,7 @@ void MediaSessionPrivate::setCompatibleIncomingCallParams (std::shared_ptr<SalMe
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_proxy_config_get_avpf_rr_interval(destProxy) * 1000));
 	else
 		getParams()->setAvpfRrInterval(static_cast<uint16_t>(linphone_core_get_avpf_rr_interval(lc) * 1000));
-	bool_t mandatory = linphone_core_is_media_encryption_mandatory(lc);
+	bool_t mandatory = isEncryptionMandatory();
 	if (md->hasZrtp() && linphone_core_media_encryption_supported(lc, LinphoneMediaEncryptionZRTP)) {
 		if (!mandatory || (mandatory && linphone_core_get_media_encryption(lc) == LinphoneMediaEncryptionZRTP))
 			getParams()->setMediaEncryption(LinphoneMediaEncryptionZRTP);

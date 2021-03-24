@@ -474,6 +474,179 @@ end:
 	linphone_core_manager_destroy(pauline);
 }
 
+static void mandatory_enc_call_from_optional_enc_core(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+
+	if (!linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionDTLS)) goto end;
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionDTLS);
+	linphone_core_set_media_encryption_mandatory(marie->lc, FALSE);
+
+	if (!linphone_core_media_encryption_supported(pauline->lc, LinphoneMediaEncryptionDTLS)) goto end;
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionDTLS);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, FALSE);
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_mandatory_media_encryption(marie_params, TRUE);
+	BC_ASSERT_TRUE(linphone_call_params_mandatory_media_encryption_enabled(marie_params));
+	linphone_call_params_set_media_encryption(marie_params, LinphoneMediaEncryptionSRTP);
+
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_mandatory_media_encryption(pauline_params, TRUE);
+	BC_ASSERT_TRUE(linphone_call_params_mandatory_media_encryption_enabled(pauline_params));
+	linphone_call_params_set_media_encryption(pauline_params, LinphoneMediaEncryptionSRTP);
+
+	if (BC_ASSERT_TRUE(call_with_params(pauline,marie,pauline_params,marie_params))) {
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
+
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallEncryptedOn, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallEncryptedOn, 1));
+
+		/*assert that SRTP is being used*/
+		const LinphoneCallParams *params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+		const LinphoneCallParams *old_params = linphone_call_get_params(marie_call);
+		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		linphone_call_params_enable_video(new_params, TRUE);
+		linphone_call_update(marie_call, new_params);
+		linphone_call_params_unref (new_params);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(params));
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(params));
+
+		const LinphoneCallParams *old_params1 = linphone_call_get_params(marie_call);
+		LinphoneCallParams * new_params1 = linphone_call_params_copy(old_params1);
+		linphone_call_params_enable_video(new_params1, FALSE);
+		linphone_call_update(marie_call, new_params1);
+		linphone_call_params_unref (new_params1);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdating, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(params));
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionSRTP, int, "%d");
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(params));
+
+		end_call(pauline, marie);
+	}
+	
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+
+}
+
+static void optional_enc_call_from_mandatory_enc_core(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_rc");
+
+	if (!linphone_core_media_encryption_supported(marie->lc, LinphoneMediaEncryptionSRTP)) goto end;
+	linphone_core_set_media_encryption(marie->lc, LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(marie->lc, TRUE);
+
+	if (!linphone_core_media_encryption_supported(pauline->lc, LinphoneMediaEncryptionSRTP)) goto end;
+	linphone_core_set_media_encryption(pauline->lc, LinphoneMediaEncryptionSRTP);
+	linphone_core_set_media_encryption_mandatory(pauline->lc, TRUE);
+
+	LinphoneCallParams *marie_params = linphone_core_create_call_params(marie->lc, NULL);
+	linphone_call_params_enable_mandatory_media_encryption(marie_params, FALSE);
+	BC_ASSERT_FALSE(linphone_call_params_mandatory_media_encryption_enabled(marie_params));
+	linphone_call_params_set_media_encryption(marie_params, LinphoneMediaEncryptionNone);
+
+	LinphoneCallParams *pauline_params = linphone_core_create_call_params(pauline->lc, NULL);
+	linphone_call_params_enable_mandatory_media_encryption(pauline_params, FALSE);
+	BC_ASSERT_FALSE(linphone_call_params_mandatory_media_encryption_enabled(pauline_params));
+	linphone_call_params_set_media_encryption(pauline_params, LinphoneMediaEncryptionNone);
+
+	if (BC_ASSERT_TRUE(call_with_params(pauline,marie,pauline_params,marie_params))) {
+		LinphoneCall *marie_call = linphone_core_get_current_call(marie->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(marie_call)) goto end;
+
+		LinphoneCall *pauline_call = linphone_core_get_current_call(pauline->lc);
+		if (!BC_ASSERT_PTR_NOT_NULL(pauline_call)) goto end;
+
+		/*assert that SRTP is being used*/
+		const LinphoneCallParams *params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+
+		wait_for_until(marie->lc, pauline->lc, NULL, 0, 1000);
+
+		const LinphoneCallParams *old_params = linphone_call_get_params(marie_call);
+		LinphoneCallParams * new_params = linphone_call_params_copy(old_params);
+		linphone_call_params_enable_video(new_params, TRUE);
+		linphone_call_update(marie_call, new_params);
+		linphone_call_params_unref (new_params);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallUpdating, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallUpdatedByRemote, 1));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 2));
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(params));
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+		BC_ASSERT_TRUE(linphone_call_params_video_enabled(params));
+
+
+		const LinphoneCallParams *old_params1 = linphone_call_get_params(marie_call);
+		LinphoneCallParams * new_params1 = linphone_call_params_copy(old_params1);
+		linphone_call_params_enable_video(new_params1, FALSE);
+		linphone_call_update(marie_call, new_params1);
+		linphone_call_params_unref (new_params1);
+
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc,&marie->stat.number_of_LinphoneCallUpdating, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc,&pauline->stat.number_of_LinphoneCallUpdatedByRemote, 2));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &marie->stat.number_of_LinphoneCallStreamsRunning, 3));
+		BC_ASSERT_TRUE(wait_for(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneCallStreamsRunning, 3));
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		params = linphone_call_get_current_params(pauline_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(params));
+		params = linphone_call_get_current_params(marie_call);
+		BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(params) , LinphoneMediaEncryptionNone, int, "%d");
+		BC_ASSERT_FALSE(linphone_call_params_video_enabled(params));
+
+		end_call(pauline, marie);
+	}
+	
+end:
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+
+}
+
 static void video_srtp_call_without_audio(void) {
 	/*
 	 * The purpose of this test is to ensure SRTP is still present in the SDP event if the audio stream is disabled
@@ -597,6 +770,8 @@ test_t call_secure_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP call with media relay", dtls_srtp_call_with_media_realy, "DTLS"),
 	TEST_NO_TAG("SRTP call with declined srtp", call_with_declined_srtp),
 	TEST_NO_TAG("SRTP call paused and resumed", call_srtp_paused_and_resumed),
+	TEST_NO_TAG("Mandatory encrypted call from core with optional call encryption", mandatory_enc_call_from_optional_enc_core),
+	TEST_NO_TAG("Optional encrypted call from core with mandatory call encryption", optional_enc_call_from_mandatory_enc_core),
 	TEST_NO_TAG("Call with ZRTP configured calling side only", call_with_zrtp_configured_calling_side),
 	TEST_NO_TAG("Call with ZRTP configured receiver side only", call_with_zrtp_configured_callee_side),
 	TEST_NO_TAG("Call from plain RTP to ZRTP mandatory should be silent", call_from_plain_rtp_to_zrtp),
