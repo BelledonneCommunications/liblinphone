@@ -335,7 +335,8 @@ void encrypted_call_with_params_base(LinphoneCoreManager* caller, LinphoneCoreMa
 			linphone_call_params_enable_video(params, TRUE);
 			linphone_call_update(callee_call, params);
 			linphone_call_params_unref(params);
-			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallUpdating,(callee_stat.number_of_LinphoneCallUpdating+1))); BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallUpdatedByRemote,(caller_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallUpdating,(callee_stat.number_of_LinphoneCallUpdating+1)));
+			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallUpdatedByRemote,(caller_stat.number_of_LinphoneCallUpdatedByRemote+1)));
 
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
 			BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
@@ -2561,7 +2562,7 @@ static void simple_dtls_srtp_call_with_capability_negotiations(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-static void simple_call_with_capability_negotiations_with_difference_encryption_after_resume(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption, const LinphoneMediaEncryption encryptionAfterResume) {
+static void simple_call_with_capability_negotiations_with_different_encryption_after_resume(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption, const LinphoneMediaEncryption encryptionAfterResume) {
 	linphone_core_set_support_capability_negotiation(caller->lc, 1);
 	linphone_core_set_support_capability_negotiation(callee->lc, 1);
 	bctbx_list_t * encryption_list = NULL;
@@ -2681,7 +2682,7 @@ static void simple_call_with_capability_negotiations_with_difference_encryption_
 static void simple_srtp_call_with_capability_negotiations_with_no_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionNone);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2689,7 +2690,7 @@ static void simple_srtp_call_with_capability_negotiations_with_no_encryption_aft
 static void simple_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2697,7 +2698,7 @@ static void simple_srtp_call_with_capability_negotiations_with_zrtp_encryption_a
 static void simple_srtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionDTLS);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2705,7 +2706,7 @@ static void simple_srtp_call_with_capability_negotiations_with_dtls_srtp_encrypt
 static void simple_zrtp_call_with_capability_negotiations_with_no_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionNone);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionNone);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2713,7 +2714,7 @@ static void simple_zrtp_call_with_capability_negotiations_with_no_encryption_aft
 static void simple_zrtp_call_with_capability_negotiations_with_srtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2721,7 +2722,7 @@ static void simple_zrtp_call_with_capability_negotiations_with_srtp_encryption_a
 static void simple_zrtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionDTLS);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2729,7 +2730,7 @@ static void simple_zrtp_call_with_capability_negotiations_with_dtls_srtp_encrypt
 static void simple_dtls_srtp_call_with_capability_negotiations_with_no_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionNone);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2737,7 +2738,7 @@ static void simple_dtls_srtp_call_with_capability_negotiations_with_no_encryptio
 static void simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionSRTP);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2745,7 +2746,139 @@ static void simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encrypt
 static void simple_dtls_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
-	simple_call_with_capability_negotiations_with_difference_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP);
+	simple_call_with_capability_negotiations_with_different_encryption_after_resume(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void simple_call_with_capability_negotiations_with_resume_and_media_change_base(LinphoneCoreManager* caller, LinphoneCoreManager* callee, const LinphoneMediaEncryption optionalEncryption, const LinphoneMediaEncryption encryptionAfterResume) {
+	linphone_core_set_support_capability_negotiation(caller->lc, 1);
+	linphone_core_set_support_capability_negotiation(callee->lc, 1);
+	bctbx_list_t * encryption_list = NULL;
+	encryption_list = bctbx_list_append(encryption_list, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(optionalEncryption))));
+
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(callee->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(callee->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(callee->lc,0);
+		linphone_core_set_media_encryption(callee->lc,encryptionAfterResume);
+		linphone_core_set_supported_media_encryptions(callee->lc,encryption_list);
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(callee->lc, optionalEncryption));
+	}
+
+	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(caller->lc,optionalEncryption));
+	if (linphone_core_media_encryption_supported(caller->lc,optionalEncryption)) {
+		linphone_core_set_media_encryption_mandatory(caller->lc,0);
+		linphone_core_set_media_encryption(caller->lc,LinphoneMediaEncryptionNone);
+		linphone_core_set_supported_media_encryptions(caller->lc,encryption_list);
+		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(caller->lc, optionalEncryption));
+	}
+
+	if (encryption_list) {
+		bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
+		encryption_list = NULL;
+	}
+
+	encrypted_call_base(caller, callee, optionalEncryption, TRUE, TRUE, FALSE);
+
+	LinphoneCall * callerCall = linphone_core_get_current_call(caller->lc);
+	BC_ASSERT_PTR_NOT_NULL(callerCall);
+	LinphoneCall * calleeCall = linphone_core_get_current_call(callee->lc);
+	BC_ASSERT_PTR_NOT_NULL(calleeCall);
+
+	if (calleeCall && callerCall) {
+
+		// Pause callee call
+		BC_ASSERT_TRUE(pause_call_1(callee,calleeCall,caller,callerCall));
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		// Resume callee call
+		reset_counters(&caller->stat);
+		reset_counters(&callee->stat);
+		stats caller_stat = caller->stat;
+		stats callee_stat = callee->stat;
+
+		linphone_call_resume(calleeCall);
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallResuming,callee_stat.number_of_LinphoneCallResuming+1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,callee_stat.number_of_LinphoneCallStreamsRunning + 1));
+		BC_ASSERT_TRUE(wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,caller_stat.number_of_LinphoneCallStreamsRunning + 1));
+
+		caller_stat = caller->stat;
+		callee_stat = callee->stat;
+
+		LinphoneCallParams * callerParams = linphone_core_create_call_params(caller->lc, callerCall);
+		encryption_list = bctbx_list_append(NULL, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryptionAfterResume))));
+		linphone_call_params_set_supported_encryptions(callerParams,encryption_list);
+		if (encryption_list) {
+			bctbx_list_free_with_data(encryption_list, (bctbx_list_free_func)bctbx_free);
+			encryption_list = NULL;
+		}
+		linphone_call_update(callerCall, callerParams);
+		linphone_call_params_unref(callerParams);
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallUpdating,(caller_stat.number_of_LinphoneCallUpdating+1)));
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallUpdatedByRemote,(callee_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+1)));
+		BC_ASSERT_TRUE( wait_for(callee->lc,caller->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+1)));
+
+		bool potentialConfigurationChosen = false;
+		LinphoneMediaEncryption encryption =  LinphoneMediaEncryptionNone;
+		get_expected_encryption_from_call_params(calleeCall, callerCall, &encryption, &potentialConfigurationChosen);
+
+		int expectedStreamsRunning = 1 + ((potentialConfigurationChosen) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallStreamsRunning,(caller_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallStreamsRunning,(callee_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+		BC_ASSERT_EQUAL(encryptionAfterResume, encryption, int, "%i");
+
+		wait_for_until(callee->lc, caller->lc, NULL, 5, 10000);
+
+		liblinphone_tester_check_rtcp(caller, callee);
+
+		BC_ASSERT_GREATER(linphone_core_manager_get_max_audio_down_bw(caller),70,int,"%i");
+		LinphoneCallStats *calleeStats = linphone_call_get_audio_stats(linphone_core_get_current_call(callee->lc));
+		BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
+		linphone_call_stats_unref(calleeStats);
+		calleeStats = NULL;
+
+		BC_ASSERT_EQUAL(encryptionAfterResume, encryption, int, "%i");
+		if (calleeCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
+		}
+		if (callerCall) {
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(callerCall)), encryption, int, "%i");
+		}
+
+		/*since RTCP streams are reset when call is paused/resumed, there should be no loss at all*/
+		const rtp_stats_t * stats = rtp_session_get_stats(linphone_call_get_stream(calleeCall, LinphoneStreamTypeAudio)->sessions.rtp_session);
+		BC_ASSERT_EQUAL((int)stats->cum_packet_loss, 0, int, "%d");
+
+		end_call(caller, callee);
+	}
+
+}
+
+static void simple_srtp_call_with_capability_negotiations_with_resume_and_media_change(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations_with_resume_and_media_change_base(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionZRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void simple_zrtp_call_with_capability_negotiations_with_resume_and_media_change(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations_with_resume_and_media_change_base(marie, pauline, LinphoneMediaEncryptionZRTP, LinphoneMediaEncryptionNone);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void simple_dtls_srtp_call_with_capability_negotiations_with_resume_and_media_change(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations_with_resume_and_media_change_base(marie, pauline, LinphoneMediaEncryptionDTLS, LinphoneMediaEncryptionSRTP);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -3091,6 +3224,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Back to back call with capability negotiations on one side", back_to_back_calls_cap_neg_one_side),
 	TEST_NO_TAG("Back to back call with capability negotiations on both sides", back_to_back_calls_cap_neg_both_sides),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations", simple_srtp_call_with_capability_negotiations),
+	TEST_NO_TAG("Simple SRTP call with capability negotiations with resume and media change", simple_srtp_call_with_capability_negotiations_with_resume_and_media_change),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with no encryption after resume", simple_srtp_call_with_capability_negotiations_with_no_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with ZRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with DTLS SRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume),
@@ -3119,6 +3253,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("SRTP video call with optional encryption on callee", srtp_video_call_with_optional_encryption_on_callee),
 	TEST_NO_TAG("SRTP video call with optional encryption on both sides", srtp_video_call_with_optional_encryption_on_both_sides),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations", simple_dtls_srtp_call_with_capability_negotiations, "DTLS"),
+	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with resume and media change", simple_dtls_srtp_call_with_capability_negotiations_with_resume_and_media_change, "DTLS"),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with no encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_no_encryption_after_resume, "DTLS"),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with ZRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume, "DTLS"),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with SRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encryption_after_resume, "DTLS"),
@@ -3140,6 +3275,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on callee", dtls_srtp_video_call_with_optional_encryption_on_callee, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP video call with optional encryption on both sides", dtls_srtp_video_call_with_optional_encryption_on_both_sides, "DTLS"),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations", simple_zrtp_call_with_capability_negotiations),
+	TEST_NO_TAG("Simple ZRTP call with capability negotiations with resume and media change", simple_zrtp_call_with_capability_negotiations_with_resume_and_media_change),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with no encryption after resume", simple_zrtp_call_with_capability_negotiations_with_no_encryption_after_resume),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with SRTP encryption after resume", simple_zrtp_call_with_capability_negotiations_with_srtp_encryption_after_resume),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with DTLS SRTP encryption after resume", simple_zrtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume),
