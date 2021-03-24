@@ -2146,9 +2146,9 @@ void MediaSessionPrivate::updateCurrentParams () const {
 			break;
 		case LinphoneMediaEncryptionNone:
 			/* Check if we actually switched to ZRTP */
-			updateEncryption = (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty());
-			validNegotiatedEncryption = updateEncryption;
-			if (updateEncryption && validNegotiatedEncryption) {
+			updateEncryption = true;
+			validNegotiatedEncryption = true;
+			if (atLeastOneStreamStarted() && allStreamsEncrypted() && !authToken.empty()) {
 				negotiatedEncryption = LinphoneMediaEncryptionZRTP;
 			}
 			break;
