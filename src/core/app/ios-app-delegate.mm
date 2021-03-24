@@ -52,14 +52,19 @@
 		selector:@selector(didEnterForeground:)
 			name:UIApplicationWillEnterForegroundNotification
 		  object:nil];
+		[NSNotificationCenter.defaultCenter addObserver:self
+		selector:@selector(reloadDeviceOnRouteChangeCallback:)
+			name:AVAudioSessionRouteChangeNotification
+		  object:nil];
+		mStopAsyncEnd = false;
 	}
 
 	return self;
 }
 
 - (void)dealloc {
-	[super dealloc];
 	[NSNotificationCenter.defaultCenter removeObserver:self];
+	[super dealloc];
 }
 
 - (void)didEnterBackground:(NSNotification *)notif {
@@ -79,29 +84,12 @@
 		linphone_core_iterate([self getCore]->getCCore());
 }
 
-@end
-
-@implementation IosHandler
-
-- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core {
-	self = [super initWithCore:core];
-	if (self != nil) {
-		[NSNotificationCenter.defaultCenter addObserver:self
-		selector:@selector(reloadDeviceOnRouteChangeCallback:)
-			name:AVAudioSessionRouteChangeNotification
-		  object:nil];
-	}
-
-	return self;
-}
-
-- (void)dealloc {
-	[super dealloc];
-	[NSNotificationCenter.defaultCenter removeObserver:self];
-}
-
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif
 {
+	if (mStopAsyncEnd) {
+		ms_warning("[reloadDeviceOnRouteChangeCallback] linphone_stop_async_end is already called, skipping");
+		return;
+	}
 	AVAudioSession * audioSession = [AVAudioSession sharedInstance];
 		   
 	NSDictionary * userInfo = [notif userInfo];
@@ -225,6 +213,10 @@
 		core->soundcardAudioRouteChanged();
 		
 	});
+}
+
+- (void)onStopAsyncEnd: (BOOL)stop {
+	mStopAsyncEnd = stop;
 }
 
 @end
