@@ -3484,7 +3484,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
-	const LinphoneAddress * marie_conference_address = linphone_conference_get_conference_address(marie_conference);
+	LinphoneAddress * marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(marie_conference));
 
 	LinphoneAddress *pauline_uri = linphone_address_new(linphone_core_get_identity(pauline->lc));
 	LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
@@ -3504,7 +3504,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 	int no_parts = 3;
 
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
@@ -3534,7 +3534,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	no_parts = 2;
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
@@ -3579,9 +3579,8 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		BC_ASSERT_PTR_NULL(linphone_call_get_conference(laure_marie_call));
 	}
 
-	no_parts = 1;
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
@@ -3601,7 +3600,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 				LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, get_manager(c)->identity);
 				BC_ASSERT_PTR_NOT_NULL(conf_call);
 				if (conf_call) {
-					BC_ASSERT_PTR_NULL(linphone_call_get_conference(conf_call));
+					BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(conf_call));
 				}
 				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(c, marie->identity);
 				BC_ASSERT_PTR_NOT_NULL(participant_call);
@@ -3634,6 +3633,8 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),5000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),5000));
 
+	wait_for_list(lcs ,NULL, 0, 2000);
+
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
 		LinphoneConference * conference = linphone_core_search_conference(c, NULL, NULL, marie_conference_address, NULL);
@@ -3659,10 +3660,21 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 			}
 		} else {
 			BC_ASSERT_PTR_NULL(conference);
+			if (c != marie->lc) {
+				LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(marie->lc, get_manager(c)->identity);
+				BC_ASSERT_PTR_NOT_NULL(conf_call);
+				if (conf_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(conf_call));
+				}
+				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(c, marie->identity);
+				BC_ASSERT_PTR_NOT_NULL(participant_call);
+				if (participant_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(participant_call));
+				}
+			}
+
 		}
 	}
-
-	wait_for_list(lcs ,NULL, 0, 2000);
 
 	// Pauline exits from conference hence it terminates because only Michelle and Marie are left
 	new_participants = terminate_participant_call(new_participants, marie, pauline);
@@ -3729,7 +3741,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_PTR_NULL(linphone_core_get_conference(marie->lc));
-	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),0, int, "%d");
+	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(marie->lc)), 0, unsigned int, "%u");
 	BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_calls(laure->lc)), 0, unsigned int, "%u");
 	BC_ASSERT_PTR_NULL(linphone_core_get_current_call(pauline->lc));
@@ -3745,6 +3757,9 @@ end:
 	bctbx_list_free(lcs);
 	if (new_participants) {
 		bctbx_list_free(new_participants);
+	}
+	if (marie_conference_address) {
+		linphone_address_unref(marie_conference_address);
 	}
 }
 
