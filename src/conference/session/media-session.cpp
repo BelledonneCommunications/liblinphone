@@ -2292,7 +2292,7 @@ void MediaSessionPrivate::accept (const MediaSessionParams *msp, bool wasRinging
 	if (msp || localDesc == nullptr) makeLocalMediaDescription((op->getRemoteMediaDescription() ? false : true), q->isCapabilityNegotiationEnabled(), false);
 
 	// already accepting
-	if (state == CallSession::State::IncomingReceived && params) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled(), false, true);
+	if (state == CallSession::State::IncomingReceived && params && (localDesc == nullptr)) makeLocalMediaDescription(false, q->isCapabilityNegotiationEnabled(), false, true);
 
 	updateRemoteSessionIdAndVer();
 
