@@ -1444,7 +1444,7 @@ static void file_transfer_external_body_url(bool_t use_file_body_handler_in_down
 	char *receive_filepath = bc_tester_file("receive_file.dump");
 
 	if (use_invalid_url) {
-		linphone_chat_message_set_external_body_url(msg, "https://linphone.org:444/download/0aa00aaa00a0a_a0000d00aaa0a0aaaa00.jpg");
+		linphone_chat_message_set_external_body_url(msg, "https://transfer.example.org:444/download/0aa00aaa00a0a_a0000d00aaa0a0aaaa00.jpg");
 	} else {
 		linphone_chat_message_set_external_body_url(msg, "https://www.linphone.org/sites/default/files/backgroundstory.png");
 	}
@@ -2481,7 +2481,7 @@ static void file_transfer_not_sent_if_host_not_found(void) {
 }
 
 static void file_transfer_not_sent_if_url_moved_permanently(void) {
-	file_transfer_io_error_base("http://linphone.org/toto.php");
+	file_transfer_io_error_base("http://transfer.example.org/toto.php");
 }
 
 static void file_transfer_success_after_destroying_chatroom(void) {
