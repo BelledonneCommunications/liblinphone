@@ -224,7 +224,7 @@ void MediaSessionPrivate::accepted () {
 			setState(nextState, nextStateMsg);
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning)) {
+			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning && localIsOfferer)) {
 				// If no ICE session or checklist has completed, then send re-INVITE
 				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
 				// - no ICE session is found in th stream group
@@ -2927,6 +2927,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 	if (d->getCurrentParams() == msp)
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
+		d->localIsOfferer = !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
