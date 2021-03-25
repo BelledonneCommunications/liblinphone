@@ -282,7 +282,10 @@ static void quality_reporting_interval_report (void) {
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, NULL, NULL)) {
 		linphone_reporting_set_on_report_send(call_marie, on_report_send_mandatory);
-		linphone_proxy_config_set_quality_reporting_interval(linphone_call_get_dest_proxy(call_marie), 1);
+		LinphoneProxyConfig *config = linphone_call_get_dest_proxy(call_marie);
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_quality_reporting_interval(config, 1);
+		linphone_proxy_config_done(config);
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(marie->lc));
 		BC_ASSERT_PTR_NOT_NULL(linphone_core_get_current_call(pauline->lc));
@@ -370,7 +373,10 @@ static void quality_reporting_sent_using_custom_route(void) {
 	linphone_core_cbs_unref(cbs);
 
 	// INVALID collector: sip.linphone.org do not collect reports, so it will throw a 404 Not Found error
-	linphone_proxy_config_set_quality_reporting_collector(linphone_core_get_default_proxy_config(marie->lc), "sip:sip.linphone.org");
+	LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(marie->lc);
+	linphone_proxy_config_edit(config);
+	linphone_proxy_config_set_quality_reporting_collector(config, "sip:sip.linphone.org");
+	linphone_proxy_config_done(config);
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, NULL, NULL)) {
 		end_call(marie, pauline);
@@ -409,7 +415,10 @@ static void quality_reporting_interval_report_video_and_rtt (void) {
 
 	if (create_call_for_quality_reporting_tests(marie, pauline, &call_marie, &call_pauline, marie_params, pauline_params)) {
 		linphone_reporting_set_on_report_send(call_marie, on_report_send_mandatory);
-		linphone_proxy_config_set_quality_reporting_interval(linphone_call_get_dest_proxy(call_marie), 3);
+		LinphoneProxyConfig *config = linphone_call_get_dest_proxy(call_marie);
+		linphone_proxy_config_edit(config);
+		linphone_proxy_config_set_quality_reporting_interval(config, 3);
+		linphone_proxy_config_done(config);
 
 		BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, NULL, 0, 3000));
 		BC_ASSERT_TRUE(linphone_call_params_video_enabled(linphone_call_get_current_params(call_pauline)));

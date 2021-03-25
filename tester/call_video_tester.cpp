@@ -913,7 +913,10 @@ static void video_call_established_by_reinvite_with_implicit_avpf(void) {
 
 	linphone_core_enable_video_display(callee->lc, TRUE);
 	linphone_core_enable_video_capture(callee->lc, TRUE);
-	linphone_proxy_config_set_avpf_mode(linphone_core_get_default_proxy_config(callee->lc), LinphoneAVPFEnabled);
+	LinphoneProxyConfig *config = linphone_core_get_default_proxy_config(callee->lc);
+	linphone_proxy_config_edit(config);
+	linphone_proxy_config_set_avpf_mode(config, LinphoneAVPFEnabled);
+	linphone_proxy_config_done(config);
 
 	linphone_core_enable_video_display(caller->lc, TRUE);
 	linphone_core_enable_video_capture(caller->lc, TRUE);

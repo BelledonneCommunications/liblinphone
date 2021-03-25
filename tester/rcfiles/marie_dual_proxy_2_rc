@@ -64,3 +64,6 @@ stun_server=stun.example.org
 mime=VP8
 rate=90000
 enabled=1
+
+[tester]
+test_env=1

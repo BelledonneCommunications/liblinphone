@@ -73,6 +73,9 @@ set(ROOT_HEADER_FILES
 )
 
 set(C_API_HEADER_FILES
+	c-account.h
+	c-account-cbs.h
+	c-account-params.h
 	c-address.h
 	c-audio-device.h
 	c-auth-info.h
@@ -98,6 +101,7 @@ set(C_API_HEADER_FILES
 	c-participant-device-identity.h
 	c-participant-imdn-state.h
 	c-push-notification-message.h
+	c-push-notification-config.h
 	c-search-result.h
 	c-types.h
 )
