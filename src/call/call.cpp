@@ -354,7 +354,7 @@ void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 		// Remove participant from local conference
 		if (getConference()) {
 			lInfo() << "Removing terminated call (local addres " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
-				MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
+			MediaConference::Conference::toCpp(getConference())->removeParticipant(getSharedFromThis());
 		}
 	} else {
 		// Searching remote conference to terminate it
