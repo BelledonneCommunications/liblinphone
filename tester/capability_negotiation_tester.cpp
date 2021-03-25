@@ -2603,6 +2603,34 @@ static void srtp_call_with_capability_negotiations_and_unsupported_crypto_in_sdp
 	call_with_capability_negotiations_and_unsupported_crypto_in_sdp_update_base(TRUE);
 }
 
+static void call_with_no_sdp_cap_neg_on_caller(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_no_sdp_cap_neg_on_callee(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void call_with_no_sdp_cap_neg_on_both_sides(void) {
+	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
+	linphone_core_enable_sdp_200_ack(marie->lc,TRUE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
+	linphone_core_enable_sdp_200_ack(pauline->lc,TRUE);
+	simple_call_with_capability_negotiations(marie, pauline, LinphoneMediaEncryptionSRTP, LinphoneMediaEncryptionSRTP);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 static void simple_srtp_call_with_capability_negotiations(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
 	LinphoneCoreManager* pauline = linphone_core_manager_new(transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc");
@@ -3375,6 +3403,9 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with tcap line merge on caller", call_with_tcap_line_merge_on_caller),
 	TEST_NO_TAG("Call with tcap line merge on callee", call_with_tcap_line_merge_on_callee),
 	TEST_NO_TAG("Call with tcap line merge on both sides", call_with_tcap_line_merge_on_both_sides),
+	TEST_NO_TAG("Call with no SDP and capability negotiations on caller", call_with_no_sdp_cap_neg_on_caller),
+	TEST_NO_TAG("Call with no SDP and capability negotiations on callee", call_with_no_sdp_cap_neg_on_callee),
+	TEST_NO_TAG("Call with no SDP and capability negotiations on both sides", call_with_no_sdp_cap_neg_on_both_sides),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on caller", call_with_no_sdp_on_update_cap_neg_caller),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on callee", call_with_no_sdp_on_update_cap_neg_callee),
 	TEST_NO_TAG("Call with no SDP on update and capability negotiations on both sides", call_with_no_sdp_on_update_cap_neg_both_sides),
