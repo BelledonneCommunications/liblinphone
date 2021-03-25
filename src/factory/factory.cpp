@@ -473,6 +473,10 @@ LinphoneTunnelConfig* Factory::createTunnelConfig() const {
 	return linphone_tunnel_config_new();
 }
 
+LinphoneAccountCbs *Factory::createAccountCbs() const {
+	return linphone_account_cbs_new();
+}
+
 LinphoneLoggingServiceCbs* Factory::createLoggingServiceCbs() const {
 	return linphone_logging_service_cbs_new();
 }

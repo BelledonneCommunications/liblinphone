@@ -22,6 +22,9 @@
 
 #include "linphone/utils/general.h"
 
+#include "linphone/api/c-account.h"
+#include "linphone/api/c-account-cbs.h"
+#include "linphone/api/c-account-params.h"
 #include "linphone/api/c-audio-device.h"
 #include "linphone/api/c-auth-info.h"
 #include "linphone/api/c-address.h"
@@ -44,6 +47,7 @@
 #include "linphone/api/c-participant-device.h"
 #include "linphone/api/c-participant-device-identity.h"
 #include "linphone/api/c-push-notification-message.h"
+#include "linphone/api/c-push-notification-config.h"
 #include "linphone/api/c-search-result.h"
 #include "linphone/api/c-types.h"
 

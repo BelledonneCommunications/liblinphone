@@ -31,6 +31,7 @@
 #include "private.h"
 #include "bctoolbox/crypto.hh"
 
+#include "account/account.h"
 #include "c-wrapper/internal/c-tools.h"
 
 using namespace std;
@@ -945,7 +946,7 @@ LINPHONE_PUBLIC Sal *linphone_core_get_sal (const LinphoneCore *lc) {
 }
 
 LINPHONE_PUBLIC SalOp *linphone_proxy_config_get_sal_op (const LinphoneProxyConfig *cfg) {
-	return cfg->op;
+	return Account::toCpp(cfg->account)->getOp();
 }
 
 LINPHONE_PUBLIC SalOp *linphone_call_get_op_as_sal_op (const LinphoneCall *call) {
