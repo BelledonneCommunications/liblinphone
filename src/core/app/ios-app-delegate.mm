@@ -56,7 +56,7 @@
 		selector:@selector(reloadDeviceOnRouteChangeCallback:)
 			name:AVAudioSessionRouteChangeNotification
 		  object:nil];
-		mStopAsyncEnd = false;
+		mStopAsyncEnd = true;
 	}
 
 	return self;
