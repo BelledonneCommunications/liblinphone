@@ -143,9 +143,11 @@ void MediaSessionPrivate::accepted () {
 		case CallSession::State::Connected:
 			if (q->getCore()->getCCore()->sip_conf.sdp_200_ack){
 				lInfo() << "Initializing local media description according to remote offer in 200Ok";
-				// We were waiting for an incoming offer. Now prepare the local media description according to remote offer.
-				initializeParamsAccordingToIncomingCallParams();
-				makeLocalMediaDescription(op->getRemoteMediaDescription() ? false : true, q->isCapabilityNegotiationEnabled(), false);
+				if (!localIsOfferer) {
+					// We were waiting for an incoming offer. Now prepare the local media description according to remote offer.
+					initializeParamsAccordingToIncomingCallParams();
+					makeLocalMediaDescription(op->getRemoteMediaDescription() ? localIsOfferer : true, q->isCapabilityNegotiationEnabled(), false);
+				}
 				/*
 				 * If ICE is enabled, we'll have to do the prepare() step, however since defering the sending of the ACK is complicated and
 				 * confusing from a signaling standpoint, ICE we will skip the STUN gathering by not giving enough time
@@ -2052,7 +2054,7 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
+	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack && !localIsOfferer)
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
@@ -2927,7 +2929,7 @@ LinphoneStatus MediaSession::update (const MediaSessionParams *msp, const bool i
 	if (d->getCurrentParams() == msp)
 		lWarning() << "CallSession::update() is given the current params, this is probably not what you intend to do!";
 	if (msp) {
-		d->localIsOfferer = !getCore()->getCCore()->sip_conf.sdp_200_ack;
+		d->localIsOfferer = isCapabilityNegotiationUpdate || !getCore()->getCCore()->sip_conf.sdp_200_ack;
 		d->broken = false;
 		d->setState(nextState, "Updating call");
 		d->setParams(new MediaSessionParams(*msp));
