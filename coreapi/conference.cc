@@ -643,6 +643,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				// This is the default behaviour
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
+
+			if (call) {
+				call->setConference(nullptr);
+			}
+
 		}
 	}
 	
@@ -695,6 +700,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				/* invoke removeParticipant() recursively to remove this last participant. */
 				bool success = Conference::removeParticipant(remaining_participant);
 				mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
+
+				// Detach call from conference
+				shared_ptr<Call> lastSessionCall = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+				if (lastSessionCall) {
+					lastSessionCall->setConference(nullptr);
+				}
+
 				return success;
 			}
 		}

@@ -1017,6 +1017,19 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
 
+				if (conf_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(conf_call));
+					BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_call));
+				}
+
+				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
+				BC_ASSERT_PTR_NOT_NULL(participant_call);
+
+				if (participant_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(participant_call));
+					BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+				}
+
 				bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
 				if (conf_event_log_enabled) {
 					BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,conf_initial_stats.number_of_LinphoneSubscriptionTerminated + 2,10000));
