@@ -44,6 +44,8 @@ public:
 	void setInternalCallUpdate (bool value) { internalCallUpdate = value; }
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
+	void enableCapabilityNegotiationReInvite (const bool enable);
+	bool capabilityNegotiationReInviteEnabled () const;
 	void enableCapabilityNegotiation (const bool enable);
 	bool capabilityNegotiationEnabled () const;
 	void enableTcapLineMerging (const bool enable);
@@ -68,6 +70,7 @@ public:
 
 private:
 	bool capabilityNegotiation = false;
+	bool capabilityNegotiationReInvite = true;
 	bool mergeTcapLines = false;
 	std::list<LinphoneMediaEncryption> supportedEncryptions;
 	// This parameter is used to disallow ZRTP if capability negotiation is not enabled.
