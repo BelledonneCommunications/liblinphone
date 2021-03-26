@@ -845,22 +845,24 @@ static void simple_call_compatibility_mode(void) {
 	stats* stat_marie=&marie->stat;
 	stats* stat_pauline=&pauline->stat;
 	LinphoneProxyConfig* proxy;
-	const LinphoneAddress* identity;
+	LinphoneAddress* identity;
 	LinphoneAddress* proxy_address;
 	char*tmp;
 	LinphoneSipTransports transport;
 
 	proxy = linphone_core_get_default_proxy_config(lc_marie);
 	BC_ASSERT_PTR_NOT_NULL (proxy);
-	identity = linphone_proxy_config_get_identity_address(proxy);
+	identity = linphone_address_clone(linphone_proxy_config_get_identity_address(proxy));
 
 
 	proxy_address=linphone_address_new(linphone_proxy_config_get_addr(proxy));
 	linphone_address_clean(proxy_address);
 	tmp=linphone_address_as_string_uri_only(proxy_address);
+	linphone_proxy_config_edit(proxy);
 	linphone_proxy_config_set_server_addr(proxy,tmp);
 	sprintf(route,"sip:%s",test_route);
 	linphone_proxy_config_set_route(proxy,route);
+	linphone_proxy_config_done(proxy);
 	ms_free(tmp);
 	linphone_address_unref(proxy_address);
 	linphone_core_get_sip_transports(lc_marie,&transport);
@@ -894,6 +896,8 @@ static void simple_call_compatibility_mode(void) {
 		wait_for(lc_pauline,lc_marie,&stat_marie->number_of_LinphoneCallStreamsRunning,3);
 		end_call(pauline, marie);
 	}
+
+	linphone_address_unref(identity);
 	linphone_core_manager_destroy(marie);
 	linphone_core_manager_destroy(pauline);
 }
@@ -2441,7 +2445,9 @@ static void call_with_privacy(void) {
 
 	/*test proxy config privacy*/
 	pauline_proxy = linphone_core_get_default_proxy_config(pauline->lc);
+	linphone_proxy_config_edit(pauline_proxy);
 	linphone_proxy_config_set_privacy(pauline_proxy,LinphonePrivacyId);
+	linphone_proxy_config_done(pauline_proxy);
 
 	BC_ASSERT_TRUE(call(pauline,marie));
 
@@ -2507,7 +2513,9 @@ static void call_with_privacy2(void) {
 	end_call(pauline, marie);
 
 	/*test proxy config privacy*/
+	linphone_proxy_config_edit(pauline_proxy);
 	linphone_proxy_config_set_privacy(pauline_proxy,LinphonePrivacyId);
+	linphone_proxy_config_done(pauline_proxy);
 
 	BC_ASSERT_TRUE(call(pauline,marie));
 	c1=linphone_core_get_current_call(pauline->lc);

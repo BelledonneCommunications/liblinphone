@@ -32,6 +32,7 @@
 #include "conference/participant-imdn-state.h"
 #include "sal/op.h"
 #include "sal/event-op.h"
+#include "sal/register-op.h"
 
 #include "linphone/core_utils.h"
 
@@ -152,12 +153,14 @@ void _linphone_proxy_config_release(LinphoneProxyConfig *cfg);
 void _linphone_proxy_config_unpublish(LinphoneProxyConfig *obj);
 void linphone_proxy_config_notify_publish_state_changed(LinphoneProxyConfig *cfg, LinphonePublishState state);
 LinphoneEvent *linphone_proxy_config_create_publish(LinphoneProxyConfig *cfg, const char *event, int expires);
+
 /*
  * returns service route as defined in as defined by rfc3608, might be a list instead of just one.
  * Can be NULL
  * */
 const LinphoneAddress* linphone_proxy_config_get_service_route(const LinphoneProxyConfig* cfg);
 const LinphoneAddress *_linphone_proxy_config_get_contact_without_params (const LinphoneProxyConfig *cfg);
+LinphonePrivate::SalRegisterOp *linphone_proxy_config_get_op(const LinphoneProxyConfig *cfg);
 /* Returns as a LinphoneAddress the Contact header sent in a register, fixed thanks to nat helper.*/
 LINPHONE_PUBLIC LinphoneAddress * linphone_proxy_config_get_transport_contact(LinphoneProxyConfig *cfg);
 
@@ -277,8 +280,11 @@ bool_t linphone_core_media_description_contains_video_stream(const LinphonePriva
 void linphone_core_send_initial_subscribes(LinphoneCore *lc);
 
 void linphone_proxy_config_update(LinphoneProxyConfig *cfg);
+void linphone_account_update(LinphoneAccount *account);
 LinphoneProxyConfig * linphone_core_lookup_known_proxy(LinphoneCore *lc, const LinphoneAddress *uri);
 LinphoneProxyConfig * linphone_core_lookup_proxy_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneAccount * linphone_core_lookup_known_account(LinphoneCore *lc, const LinphoneAddress *uri);
+LinphoneAccount * linphone_core_lookup_account_by_identity(LinphoneCore *lc, const LinphoneAddress *uri);
 const char *linphone_core_find_best_identity(LinphoneCore *lc, const LinphoneAddress *to);
 LINPHONE_PUBLIC void linphone_core_get_local_ip(LinphoneCore *lc, int af, const char *dest, char *result);
 
@@ -311,7 +317,6 @@ LINPHONE_PUBLIC LinphoneProxyConfigAddressComparisonResult linphone_proxy_config
  * unregister without moving the register_enable flag
  */
 void _linphone_proxy_config_unregister(LinphoneProxyConfig *obj);
-void _linphone_proxy_config_release_ops(LinphoneProxyConfig *obj);
 
 /* conference */
 void _linphone_conference_notify_participant_added(LinphoneConference *conference, const LinphoneParticipant *participant);
@@ -321,6 +326,9 @@ void _linphone_conference_notify_participant_device_removed(LinphoneConference *
 void _linphone_conference_notify_participant_admin_status_changed(LinphoneConference *conference, const LinphoneParticipant *participant);
 void _linphone_conference_notify_state_changed(LinphoneConference *conference, LinphoneConferenceState newState);
 void _linphone_conference_notify_subject_changed(LinphoneConference *conference, const char *subject);
+
+/*account*/
+void _linphone_account_notify_registration_state_changed(LinphoneAccount* account, LinphoneRegistrationState state, const char *message);
 
 /*chat*/
 LinphoneChatRoom *_linphone_server_group_chat_room_new (LinphoneCore *core, LinphonePrivate::SalCallOp *op);
@@ -442,6 +450,7 @@ const char *linphone_core_create_uuid(LinphoneCore *lc);
 void linphone_configure_op(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact);
 void linphone_configure_op_2(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *local, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact);
 void linphone_configure_op_with_proxy(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneProxyConfig *proxy);
+void linphone_configure_op_with_account(LinphoneCore *lc, LinphonePrivate::SalOp *op, const LinphoneAddress *dest, SalCustomHeader *headers, bool_t with_contact, LinphoneAccount *account);
 LinphoneContent * linphone_content_new(void);
 LinphoneContent * linphone_content_copy(const LinphoneContent *ref);
 SalBodyHandler *sal_body_handler_from_content(const LinphoneContent *content, bool parseMultipart = true);
@@ -451,7 +460,7 @@ void linphone_error_info_to_sal(const LinphoneErrorInfo* ei, SalErrorInfo* sei);
 LinphoneEventCbs *linphone_event_cbs_new(void);
 LinphoneEvent *linphone_event_new(LinphoneCore *lc, LinphoneSubscriptionDir dir, const char *name, int expires);
 LinphoneEvent *linphone_event_new_with_op(LinphoneCore *lc, LinphonePrivate::SalEventOp *op, LinphoneSubscriptionDir dir, const char *name);
-LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneProxyConfig *cfg, const LinphoneAddress *resource, const char *event, int expires);
+LinphoneEvent *_linphone_core_create_publish(LinphoneCore *core, LinphoneAccount *account, const LinphoneAddress *resource, const char *event, int expires);
 void linphone_event_unpublish(LinphoneEvent *lev);
 void linphone_event_set_current_callbacks(LinphoneEvent *ev, LinphoneEventCbs *cbs);
 /**
@@ -537,7 +546,7 @@ bool_t _linphone_core_check_payload_type_usability(const LinphoneCore *lc, const
 OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt);
 
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
-char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
+LINPHONE_PUBLIC void linphone_core_update_account_push_params(LinphoneCore *core);
 
 const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
@@ -558,6 +567,7 @@ void linphone_core_notify_global_state_changed(LinphoneCore *lc, LinphoneGlobalS
 void linphone_core_notify_call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *message);
 void linphone_core_notify_call_encryption_changed(LinphoneCore *lc, LinphoneCall *call, bool_t on, const char *authentication_token);
 void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message);
+void linphone_core_notify_account_registration_state_changed(LinphoneCore *core, LinphoneAccount *account, LinphoneRegistrationState state, const char *message);
 void linphone_core_notify_new_subscription_requested(LinphoneCore *lc, LinphoneFriend *lf, const char *url);
 void linphone_core_notify_auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
 void linphone_core_notify_authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method);
@@ -633,7 +643,10 @@ MSWebCam *get_nowebcam_device(MSFactory *f);
 
 LinphoneLimeState linphone_core_lime_for_file_sharing_enabled(const LinphoneCore *lc);
 
+LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
 int linphone_core_get_default_proxy_config_index(LinphoneCore *lc);
+LINPHONE_PUBLIC void linphone_core_set_default_account_index(LinphoneCore *core, int index);
+int linphone_core_get_default_account_index(LinphoneCore *lc);
 
 char *linphone_presence_model_to_xml(LinphonePresenceModel *model) ;
 
