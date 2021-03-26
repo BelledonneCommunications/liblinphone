@@ -721,7 +721,7 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 		 * In this case, if the session linked to the participant has to be preserved after the conference, then destroy the conference and let these two participants to connect directly thanks to a simple call.
 		 * Indeed, the conference adds latency and processing that is useless to do for 1-1 conversation.
 		 */
-		if ((getParticipantCount() == 1) && (!preserveSession)) {
+		if (getParticipantCount() == 1) {
 			std::shared_ptr<LinphonePrivate::Participant> remainingParticipant = participants.front();
 			if (remainingParticipant->isAdmin()) setParticipantAdminStatus(remainingParticipant, false);
 			const bool lastParticipantPreserveSession = remainingParticipant->getPreserveSession();
