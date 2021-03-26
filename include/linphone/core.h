@@ -239,6 +239,7 @@ typedef struct _LinphoneCoreVTable{
 	LinphoneCoreCbsAudioDevicesListUpdatedCb audio_devices_list_updated;
 	LinphoneCoreCbsImeeUserRegistrationCb imee_user_registration;
 	LinphoneCoreCbsChatRoomExhumedCb chat_room_exhumed;
+	LinphoneCoreCbsAccountRegistrationStateChangedCb account_registration_state_changed;
 	void *user_data; /**<User data associated with the above callbacks */
 } LinphoneCoreVTable;
 
@@ -334,6 +335,7 @@ LINPHONE_PUBLIC LinphoneCoreCbsGlobalStateChangedCb linphone_core_cbs_get_global
  * Set the #LinphoneCoreCbsRegistrationStateChangedCb callback.
  * @param cbs A #LinphoneCoreCbs. @notnil
  * @param cb The callback.
+ * @deprecated 30/09/2020. see linphone_account_cbs_set_registration_state_changed()
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_registration_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsRegistrationStateChangedCb cb);
 
@@ -341,6 +343,7 @@ LINPHONE_PUBLIC void linphone_core_cbs_set_registration_state_changed(LinphoneCo
  * Get the #LinphoneCoreCbsRegistrationStateChangedCb callback.
  * @param cbs A #LinphoneCoreCbs. @notnil
  * @return The callback.
+ * @deprecated 30/09/2020. see linphone_account_cbs_get_registration_state_changed()
  */
 LINPHONE_PUBLIC LinphoneCoreCbsRegistrationStateChangedCb linphone_core_cbs_get_registration_state_changed(LinphoneCoreCbs *cbs);
 
@@ -940,6 +943,20 @@ LINPHONE_PUBLIC LinphoneCoreCbsChatRoomExhumedCb linphone_core_cbs_get_chat_room
  * @donotwrap
  */
 LINPHONE_PUBLIC void linphone_core_cbs_set_chat_room_exhumed(LinphoneCoreCbs *cbs, LinphoneCoreCbsChatRoomExhumedCb cb);
+
+/*
+ * Set the account registration state changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @param cb The account registration state changed callback to be used.
+ */
+LINPHONE_PUBLIC void linphone_core_cbs_set_account_registration_state_changed(LinphoneCoreCbs *cbs, LinphoneCoreCbsAccountRegistrationStateChangedCb cb);
+
+/**
+ * Get the account registration state changed callback.
+ * @param cbs #LinphoneCoreCbs object. @notnil
+ * @return The current account registration state changed callback.
+ */
+LINPHONE_PUBLIC LinphoneCoreCbsAccountRegistrationStateChangedCb linphone_core_cbs_get_account_registration_state_changed(LinphoneCoreCbs *cbs);
 
 /**
  * @}
@@ -1788,8 +1805,6 @@ LINPHONE_PUBLIC void linphone_core_remove_proxy_config(LinphoneCore *core, Linph
 **/
 LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_proxy_config_list(const LinphoneCore *core);
 
-LINPHONE_PUBLIC void linphone_core_set_default_proxy_index(LinphoneCore *core, int index);
-
 /**
  * Search for a #LinphoneProxyConfig by it's idkey.
  * @param core the #LinphoneCore object @notnil
@@ -1815,6 +1830,73 @@ LINPHONE_PUBLIC LinphoneProxyConfig * linphone_core_get_default_proxy_config(con
  * @param config The proxy configuration to use as the default one. @maybenil
 **/
 LINPHONE_PUBLIC void linphone_core_set_default_proxy_config(LinphoneCore *core, LinphoneProxyConfig *config);
+
+/**
+ * @}
+ */
+
+/**
+ * @addtogroup accounts
+ * @{
+ */
+
+/**
+ * Add an account.
+ * This will start registration on the proxy, if registration is enabled.
+ * @param core #LinphoneCore object @notnil
+ * @param account the #LinphoneAccount to add @notnil
+ * @return 0 if successful, -1 otherwise
+**/
+LINPHONE_PUBLIC LinphoneStatus linphone_core_add_account(LinphoneCore *core, LinphoneAccount *account);
+
+/**
+ * Erase all account from config.
+ * @param core #LinphoneCore object @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_clear_accounts(LinphoneCore *core);
+
+/**
+ * Removes an account.
+ *
+ * #LinphoneCore will then automatically unregister and place the account
+ * on a deleted list. For that reason, a removed account does NOT need to be freed.
+ * @param core #LinphoneCore object @notnil
+ * @param account the #LinphoneAccount to remove @notnil
+**/
+LINPHONE_PUBLIC void linphone_core_remove_account(LinphoneCore *core, LinphoneAccount *account);
+
+/**
+ * Returns an unmodifiable list of entered accounts.
+ * @param core The #LinphoneCore object @notnil
+ * @return \bctbx_list{LinphoneAccount} @maybenil
+**/
+LINPHONE_PUBLIC const bctbx_list_t *linphone_core_get_account_list(const LinphoneCore *core);
+
+/**
+ * Search for a #LinphoneAccount by it's idkey.
+ * @param core the #LinphoneCore object @notnil
+ * @param idkey An arbitrary idkey string associated to an account. @maybenil
+ * @return the #LinphoneAccount object for the given idkey value, or NULL if none found @maybenil
+ **/
+LINPHONE_PUBLIC LinphoneAccount *linphone_core_get_account_by_idkey(LinphoneCore *core, const char *idkey);
+
+/**
+ * Returns the default account, that is the one used to determine the current identity.
+ * @param core #LinphoneCore object @notnil
+ * @return The default account. @maybenil
+**/
+LINPHONE_PUBLIC LinphoneAccount * linphone_core_get_default_account(const LinphoneCore *core);
+
+/**
+ * Sets the default account.
+ *
+ * This default account must be part of the list of already entered LinphoneAccount.
+ * Toggling it as default will make #LinphoneCore use the identity associated with
+ * the account in all incoming and outgoing calls.
+ * @param core #LinphoneCore object @notnil
+ * @param account The account to use as the default one. @maybenil
+**/
+LINPHONE_PUBLIC void linphone_core_set_default_account(LinphoneCore *core, LinphoneAccount *account);
 
 /**
  * @}
@@ -5309,6 +5391,14 @@ LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_enabled(LinphoneCore *
  * @ingroup misc
  */
 LINPHONE_PUBLIC bool_t linphone_core_is_push_notification_available(LinphoneCore *core);
+
+/**
+* Sets device_token when application didRegisterForRemoteNotificationsWithDeviceToken (IOS only).
+* @param core The #LinphoneCore @notnil
+* @param device_token, format (NSData *). @maybenil
+* @ingroup misc
+*/
+LINPHONE_PUBLIC void linphone_core_did_register_for_remote_push(LinphoneCore *core, void *device_token);
 
 /**
  * Enable or disable the automatic schedule of #linphone_core_iterate() method on Android & iOS.

@@ -380,13 +380,17 @@ static void profile_call_base(bool_t avpf1
 
 	if (avpf1) {
 		lpc = linphone_core_get_default_proxy_config(marie->lc);
+		linphone_proxy_config_edit(lpc);
 		linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 		linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+		linphone_proxy_config_done(lpc);
 	}
 	if (avpf2) {
 		lpc = linphone_core_get_default_proxy_config(pauline->lc);
+		linphone_proxy_config_edit(lpc);
 		linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 		linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+		linphone_proxy_config_done(lpc);
 	}
 
 	if (encryption_mandatory) {
@@ -459,13 +463,17 @@ static void avp_avpf_video_call(void){
 	
 	
 	lpc = linphone_core_get_default_proxy_config(marie->lc);
-		linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
+	linphone_proxy_config_edit(lpc);
+	linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+	linphone_proxy_config_done(lpc);
 	
 	
 	lpc = linphone_core_get_default_proxy_config(pauline->lc);
-		linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
+	linphone_proxy_config_edit(lpc);
+	linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+	linphone_proxy_config_done(lpc);
 
 	if (linphone_core_video_supported(marie->lc)) {
 		LinphoneVideoPolicy policy;
@@ -709,8 +717,10 @@ static OrtpPayloadType * configure_core_for_avpf_and_video(LinphoneCore *lc) {
 	policy.automatically_initiate = TRUE;
 	policy.automatically_accept = TRUE;
 	lpc = linphone_core_get_default_proxy_config(lc);
+	linphone_proxy_config_edit(lpc);
 	linphone_proxy_config_set_avpf_mode(lpc, LinphoneAVPFEnabled);
 	linphone_proxy_config_set_avpf_rr_interval(lpc, 3);
+	linphone_proxy_config_done(lpc);
 	linphone_core_set_video_device(lc, "StaticImage: Static picture");
 	linphone_core_enable_video_capture(lc, TRUE);
 	linphone_core_enable_video_display(lc, TRUE);

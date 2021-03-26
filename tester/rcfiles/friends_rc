@@ -19,3 +19,6 @@ subscribe=1
 url=sip:margaux.clerc@sip.linphone.org
 pol=deny
 subscribe=0
+
+[tester]
+test_env=1
