@@ -200,7 +200,7 @@ int Conference::removeParticipantDevice(const std::shared_ptr<LinphonePrivate::C
 				p->removeDevice(*remoteContact);
 				shared_ptr<Call> call = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
 				if (call) {
-					call->removeFromConference(*remoteContact);
+					call->terminateConference();
 				}
 
 				time_t creationTime = time(nullptr);
@@ -957,6 +957,7 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantAdded (
 }
 
 shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved (time_t creationTime,  const bool isFullState, const std::shared_ptr<Participant> &participant) {
+/*
 	bool preserveSession = true;
 	auto participantIt = std::find_if(participants.cbegin(), participants.cend(), [&participant] (const std::shared_ptr<Participant> & p) {
 		return ((p->getAddress() == participant->getAddress()) && (p->getSession() == participant->getSession()));
@@ -965,8 +966,10 @@ shared_ptr<ConferenceParticipantEvent> LocalConference::notifyParticipantRemoved
 		const std::shared_ptr<Participant> & p = *participantIt;
 		preserveSession = p->getPreserveSession();
 	}
+*/
 
-	if ((getState() != ConferenceInterface::State::TerminationPending) && (isMe(participant->getAddress()) || (getParticipantCount() > 1) || ((getParticipantCount() == 1) && ((participant->getSession() && (participant->getSession()->getState() == LinphonePrivate::CallSession::State::PausedByRemote)) || !preserveSession)))) {
+	//if ((getState() != ConferenceInterface::State::TerminationPending) && (isMe(participant->getAddress()) || (getParticipantCount() > 1) || ((getParticipantCount() == 1) && ((participant->getSession() && (participant->getSession()->getState() == LinphonePrivate::CallSession::State::PausedByRemote)) || !preserveSession)))) {
+	if (getState() != ConferenceInterface::State::TerminationPending) {
 		// Increment last notify before notifying participants so that the delta can be calculated correctly
 		++lastNotify;
 		// Send notify only if it is not in state TerminationPending and:
@@ -1247,6 +1250,7 @@ int RemoteConference::terminate () {
 			break;
 		case ConferenceInterface::State::TerminationPending:
 			if (m_focusCall) {
+				m_focusCall->setConference(nullptr);
 				// Do not terminate focus call when terminating the remote conference
 				// This is required because the local conference creates a remote conference for every participant and the call from the participant to the local conference is the focus call
 				m_focusCall = nullptr;
@@ -1339,7 +1343,10 @@ void RemoteConference::reset () {
 		ms_free(m_focusContact);
 		m_focusContact = nullptr;
 	}
-	m_focusCall = nullptr;
+	if(m_focusCall) {
+		m_focusCall->setConference(nullptr);
+		m_focusCall = nullptr;
+	}
 	m_pendingCalls.clear();
 	m_transferingCalls.clear();
 }
@@ -1373,13 +1380,9 @@ void RemoteConference::onFocusCallSateChanged (LinphoneCallState state) {
 		}
 			break;
 		case LinphoneCallError:
-			reset();
-			Conference::terminate();
 			setState(ConferenceInterface::State::CreationFailed);
 			break;
 		case LinphoneCallEnd:
-			reset();
-			Conference::terminate();
 			setState(ConferenceInterface::State::TerminationPending);
 			break;
 		default:
@@ -1483,8 +1486,11 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 		case ConferenceInterface::State::None:
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationPending:
-		case ConferenceInterface::State::CreationFailed:
 		case ConferenceInterface::State::TerminationFailed:
+			break;
+		case ConferenceInterface::State::CreationFailed:
+			reset();
+			Conference::terminate();
 			break;
 		case ConferenceInterface::State::Created:
 			if (getMe()->isAdmin() && (subject.empty() == false)) {
@@ -1507,6 +1513,7 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			onConferenceTerminated(getConferenceAddress());
 			break;
 		case ConferenceInterface::State::Deleted:
+			reset();
 			break;
 	}
 
