@@ -409,6 +409,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 	getCore()->getPrivate()->getToneManager()->update(session);
 	LinphoneCore *lc = getCore()->getCCore();
 
+lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << "(local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") in state " << Utils::toString(getState()) << " LinphoneConference " << getConference();
+
 	switch(state) {
 		case CallSession::State::OutgoingInit:
 		case CallSession::State::IncomingReceived:
@@ -440,6 +442,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
 				auto conference = getConference();
 				if (conference) {
+lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << " is in conference " << isInConference();
 					if (isInConference()) {
 						// If a call in a local conference is paused by remote, it means that the remote participant temporarely left the call
 						lInfo() << "Call in conference has been put on hold by remote device, hence remove participant " << getRemoteAddress()->asString() << " from conference " << MediaConference::Conference::toCpp(conference)->getConferenceId();
@@ -449,6 +452,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						// remote conference
 						char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
 						Address remoteContactAddress(remoteContactAddressStr);
+lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << " is in conference " << isInConference() << " remote contact address " << remoteContactAddressStr;
 						ms_free(remoteContactAddressStr);
 
 						// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
@@ -460,8 +464,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 						// If it is in a remote conference, then terminate it
 						if (!remoteContactAddress.hasParam("isfocus")) {
 							remoteContactAddress.setParam("isfocus");
-							removeFromConference(remoteContactAddress);
 						}
+						removeFromConference(remoteContactAddress);
 					}
 				}
 			}
@@ -1215,6 +1219,7 @@ LinphoneConference *Call::getConference () const{
 }
 
 void Call::setConference (LinphoneConference *ref) {
+lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << " (local address " << getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") in state " << Utils::toString(getState()) << " changing from LinphoneConference " << getConference() << " to " << ref;
 	mConfRef = ref;
 }
 
