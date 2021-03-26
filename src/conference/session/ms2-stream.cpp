@@ -815,8 +815,9 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
 			}
 			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
-		} else
+		} else {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
+		}
 	}
 
 	if (resultStreamDesc.hasZrtp()) {
