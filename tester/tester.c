@@ -2618,6 +2618,31 @@ bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreMa
 	return crypto_suite_found;
 }
 
+void check_stream_encryption(LinphoneCall * call) {
+	const LinphoneCallParams* call_params = linphone_call_get_current_params(call);
+	if (!linphone_call_params_rtp_bundle_enabled(call_params)) {
+		const LinphoneMediaEncryption enc = linphone_call_params_get_media_encryption(call_params);
+		MediaStream *astream = linphone_call_get_stream(call, LinphoneStreamTypeAudio);
+		if (astream) {
+			if (enc == LinphoneMediaEncryptionNone) {
+				BC_ASSERT_FALSE(media_stream_secured(astream));
+			} else {
+				BC_ASSERT_TRUE(media_stream_secured(astream));
+			}
+		}
+#ifdef VIDEO_ENABLED
+		MediaStream *vstream = linphone_call_get_stream(call, LinphoneStreamTypeVideo);
+		if (vstream && video_stream_started((VideoStream *)vstream)) {
+			if (enc == LinphoneMediaEncryptionNone) {
+				BC_ASSERT_FALSE(media_stream_secured(vstream));
+			} else {
+				BC_ASSERT_TRUE(media_stream_secured(vstream));
+			}
+		}
+#endif
+	}
+}
+
 /*
  * CAUTION this function is error prone. you should not use it anymore in new tests.
  * Creating callee call params before the call is actually received is not the good way
@@ -2722,7 +2747,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		caller_params = linphone_call_get_params(caller_call);
 	}
 
-	bool_t caller_capability_enabled = linphone_call_params_capability_negotiations_enabled(caller_params);
+	bool_t caller_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(caller_params);
 	const LinphoneMediaEncryption caller_local_enc = linphone_call_params_get_media_encryption(caller_params);
 	const bool_t caller_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (caller_params);
 	bctbx_list_t* caller_supported_encs = linphone_call_params_get_supported_encryptions (caller_params);
@@ -2744,7 +2769,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		linphone_call_accept(callee_mgr_current_call);
 	}
 
-	bool_t callee_capability_enabled = linphone_call_params_capability_negotiations_enabled(callee_params);
+	bool_t callee_capability_negotiations_enabled = linphone_call_params_capability_negotiations_enabled(callee_params);
 	const LinphoneMediaEncryption callee_local_enc = linphone_call_params_get_media_encryption(callee_params);
 	const bool_t callee_mand_enc = linphone_call_params_mandatory_media_encryption_enabled (callee_params);
 
@@ -2754,7 +2779,7 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 		matched_enc = caller_local_enc;
 	} else if (callee_mand_enc) {
 		matched_enc = callee_local_enc;
-	} else if (caller_capability_enabled && callee_capability_enabled) {
+	} else if (caller_capability_negotiations_enabled && callee_capability_negotiations_enabled) {
 		bool_t enc_check_result = FALSE;
 		// Find first encryption listed in the list of supported encryptions of the caller that is supported by the callee
 		for(bctbx_list_t * enc = caller_supported_encs;enc!=NULL;enc=enc->next){
@@ -2885,9 +2910,10 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 
 		LinphoneNatPolicy * caller_policy = linphone_core_get_nat_policy(caller_mgr->lc);
 		LinphoneNatPolicy * callee_policy = linphone_core_get_nat_policy(callee_mgr->lc);
+		const bool_t capability_negotiation_reinvite_enabled = linphone_core_sdp_200_ack_enabled(caller_mgr->lc) ? linphone_call_params_is_capability_negotiation_reinvite_enabled(callee_params) : linphone_call_params_is_capability_negotiation_reinvite_enabled(caller_params);
 		/*wait ice and/or capability negotiation re-invite*/
 		// If caller sets mandatory encryption, potential configurations are not added to the SDP as there is no choice to be made
-		if (!caller_mand_enc && caller_capability_enabled && callee_capability_enabled && (caller_local_enc != matched_enc)) {
+		if (!caller_mand_enc && caller_capability_negotiations_enabled && callee_capability_negotiations_enabled && (caller_local_enc != matched_enc) && capability_negotiation_reinvite_enabled) {
 			// Capability negotiation re-invite
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 			BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
@@ -2903,6 +2929,9 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2,2000));
 			BC_ASSERT_FALSE(wait_for_until(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2,2000));
 		}
+
+		check_stream_encryption(caller_call);
+		check_stream_encryption(callee_call);
 
 		if (caller_enc == LinphoneMediaEncryptionDTLS ) {
 			LinphoneCall *call = linphone_core_get_current_call(caller_mgr->lc);

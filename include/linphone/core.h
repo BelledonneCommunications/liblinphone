@@ -4279,6 +4279,22 @@ LINPHONE_PUBLIC bool_t linphone_core_tcap_lines_merged(const LinphoneCore *core)
 LINPHONE_PUBLIC void linphone_core_enable_tcap_line_merging(LinphoneCore *core, bool_t merge);
 
 /**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param core #LinphoneCore object. @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *core);
+
+/**
+ * Define whether capability negotiation (RFC5939) reINVITE is enabled
+ * @param core #LinphoneCore object. @notnil
+ * @param enable TRUE to enable capability negotiation reINVITE; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *core, bool_t enable);
+
+/**
  * Check if the capability negotiation (RFC5939) is supported or not.
  * @param core #LinphoneCore object. @notnil
  * @return TRUE if capability negotiation is supported; FALSE otherwise.

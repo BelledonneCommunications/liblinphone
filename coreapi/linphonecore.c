@@ -7760,12 +7760,20 @@ void linphone_core_set_media_encryption_mandatory(LinphoneCore *lc, bool_t m) {
 	linphone_config_set_int(lc->config, "sip", "media_encryption_mandatory", (int)m);
 }
 
+bool_t linphone_core_is_capability_negotiation_reinvite_enabled(const LinphoneCore *lc) {
+	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "capability_negotiations_reinvite", 1);
+}
+
+void linphone_core_enable_capability_negotiation_reinvite(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "capability_negotiations_reinvite", (int)enable);
+}
+
 bool_t linphone_core_is_capability_negotiation_supported(const LinphoneCore *lc) {
 	return (bool_t)!!linphone_config_get_int(lc->config, "sip", "support_capability_negotiations", 0);
 }
 
-void linphone_core_set_support_capability_negotiation(LinphoneCore *lc, bool_t c) {
-	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)c);
+void linphone_core_set_support_capability_negotiation(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "support_capability_negotiations", (int)enable);
 }
 
 bool_t linphone_core_tcap_lines_merged(const LinphoneCore *lc) {
@@ -7777,8 +7785,8 @@ bool_t linphone_core_tcap_lines_merged(const LinphoneCore *lc) {
 	return FALSE;
 }
 
-void linphone_core_enable_tcap_line_merging(LinphoneCore *lc, bool_t c) {
-	linphone_config_set_int(lc->config, "sip", "tcap_line_merge", (int)c);
+void linphone_core_enable_tcap_line_merging(LinphoneCore *lc, bool_t enable) {
+	linphone_config_set_int(lc->config, "sip", "tcap_line_merge", (int)enable);
 }
 
 void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_t * enc_list) {

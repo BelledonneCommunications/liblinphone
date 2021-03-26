@@ -79,20 +79,28 @@ SalStreamDir get_video_dir_from_call_params (const LinphoneCallParams *params) {
 	return sal_dir_from_call_params_dir(linphone_call_params_get_video_direction(params));
 }
 
+bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params) {
+	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->capabilityNegotiationReInviteEnabled();
+}
+
+void linphone_call_params_enable_capability_negotiation_reinvite(LinphoneCallParams *params, bool_t enable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiationReInvite(!!enable);
+}
+
 bool_t linphone_call_params_capability_negotiations_enabled (const LinphoneCallParams *params) {
 	return !!L_GET_PRIVATE_FROM_C_OBJECT(params)->capabilityNegotiationEnabled();
 }
 
-void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enabled) {
-	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enabled);
+void linphone_call_params_enable_capability_negotiations (LinphoneCallParams *params, bool_t enable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableCapabilityNegotiation(!!enable);
 }
 
 bool_t linphone_call_params_tcap_lines_merged (const LinphoneCallParams *params) {
 	return L_GET_PRIVATE_FROM_C_OBJECT(params)->tcapLinesMerged();
 }
 
-void linphone_call_params_enable_tcap_line_merging (LinphoneCallParams *params, bool_t enabled) {
-	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableTcapLineMerging(!!enabled);
+void linphone_call_params_enable_tcap_line_merging (LinphoneCallParams *params, bool_t enable) {
+	L_GET_PRIVATE_FROM_C_OBJECT(params)->enableTcapLineMerging(!!enable);
 }
 
 bool_t linphone_call_params_is_media_encryption_supported (const LinphoneCallParams *params, const LinphoneMediaEncryption encryption) {
