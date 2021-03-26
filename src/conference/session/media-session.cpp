@@ -2042,7 +2042,7 @@ LinphoneStatus MediaSessionPrivate::startAcceptUpdate (CallSession::State nextSt
 LinphoneStatus MediaSessionPrivate::startUpdate (const string &subject) {
 	L_Q();
 
-	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack && !localIsOfferer)
+	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack)
 		op->setLocalMediaDescription(nullptr);
 	LinphoneStatus result = CallSessionPrivate::startUpdate(subject);
 	if (q->getCore()->getCCore()->sip_conf.sdp_200_ack) {
