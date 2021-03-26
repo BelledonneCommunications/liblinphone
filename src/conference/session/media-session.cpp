@@ -224,9 +224,11 @@ void MediaSessionPrivate::accepted () {
 			updateStreams(md, nextState);
 			fixCallParams(rmd, false);
 			setState(nextState, nextStateMsg);
+			LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+			const bool capabilityNegotiationReInviteEnabled = getParams()->getPrivate()->capabilityNegotiationReInviteEnabled();
 			// If capability negotiation is enabled, a second invite must be sent if the selected configuration is not the actual one.
 			// It normally occurs after moving to state StreamsRunning. However, if ICE negotiations are not completed, then this action will be carried out together with the ICE re-INVITE
-			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning && localIsOfferer)) {
+			if (localDesc->supportCapabilityNegotiation() && (nextState == CallSession::State::StreamsRunning) && localIsOfferer && capabilityNegotiationReInviteEnabled) {
 				// If no ICE session or checklist has completed, then send re-INVITE
 				// The reINVITE to notify intermediaries that do not support capability negotiations (RFC5939) is sent in the following scenarions:
 				// - no ICE session is found in th stream group

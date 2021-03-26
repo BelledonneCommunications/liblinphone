@@ -38,6 +38,7 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 	internalCallUpdate = src->internalCallUpdate;
 	noUserConsent = src->noUserConsent;
 	capabilityNegotiation = src->capabilityNegotiation;
+	capabilityNegotiationReInvite = src->capabilityNegotiationReInvite;
 	mergeTcapLines = src->mergeTcapLines;
 	supportedEncryptions = src->supportedEncryptions;
 	disallowZrtp = src->disallowZrtp;
@@ -57,6 +58,15 @@ void CallSessionParamsPrivate::clone (const CallSessionParamsPrivate *src) {
 }
 
 // -----------------------------------------------------------------------------
+
+bool CallSessionParamsPrivate::capabilityNegotiationReInviteEnabled () const {
+	return capabilityNegotiationReInvite;
+}
+
+void CallSessionParamsPrivate::enableCapabilityNegotiationReInvite (const bool enable) {
+	capabilityNegotiationReInvite = enable;
+}
+
 
 bool CallSessionParamsPrivate::capabilityNegotiationEnabled () const {
 	return capabilityNegotiation;
@@ -168,6 +178,7 @@ void CallSessionParams::initDefault (const std::shared_ptr<Core> &core, Linphone
 	const auto & cCore = core->getCCore();
 	d->inConference = false;
 	d->capabilityNegotiation = !!linphone_core_is_capability_negotiation_supported(cCore);
+	d->capabilityNegotiationReInvite = !!linphone_core_is_capability_negotiation_reinvite_enabled(cCore);
 	d->mergeTcapLines = !!linphone_core_tcap_lines_merged(cCore);
 	d->supportedEncryptions = core->getSupportedMediaEncryptions();
 	d->disallowZrtp = !!cCore->zrtp_not_available_simulation;
