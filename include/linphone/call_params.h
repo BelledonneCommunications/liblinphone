@@ -84,6 +84,22 @@ LINPHONE_PUBLIC void linphone_call_params_enable_low_bandwidth(LinphoneCallParam
 LINPHONE_PUBLIC void linphone_call_params_enable_audio(LinphoneCallParams *call_params, bool_t enabled);
 
 /**
+ * Check if the capability negotiation (RFC5939) reINVITE is enabled or not.
+ * @param params the #LinphoneCallParams @notnil
+ * @return TRUE if capability negotiation reINVITE is enabled; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC bool_t linphone_call_params_is_capability_negotiation_reinvite_enabled(const LinphoneCallParams *params);
+
+/**
+ * Define whether capability negotiation (RFC5939) reINVITE is enabled
+ * @param params the #LinphoneCallParams @notnil
+ * @param enable TRUE to enable capability negotiation reINVITE; FALSE otherwise.
+ * @ingroup media_parameters
+ */
+LINPHONE_PUBLIC void linphone_call_params_enable_capability_negotiation_reinvite(LinphoneCallParams *params, bool_t enable);
+
+/**
  * Indicates whether capability negotiations (RFC5939) is enabled.
  * @param params the #LinphoneCallParams @notnil
  * @return a boolean indicating the enablement of capability negotiations.
