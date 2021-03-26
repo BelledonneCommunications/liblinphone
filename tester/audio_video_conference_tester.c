@@ -1192,6 +1192,15 @@ static void simple_conference_through_inviting_participants(bool_t check_for_pro
 
 		BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_NotifyReceived,(initial_laure_stat.number_of_NotifyReceived + 2),10000));
 
+		// CHeck that conference is not destroyed
+		BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_laure_stat.number_of_LinphoneConferenceStateTerminationPending + 1),1000));
+		BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,(initial_laure_stat.number_of_LinphoneConferenceStateTerminated + 1),1000));
+		BC_ASSERT_FALSE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateDeleted,(initial_laure_stat.number_of_LinphoneConferenceStateDeleted + 1),1000));
+
+		BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,(initial_marie_stat.number_of_LinphoneConferenceStateTerminationPending + 1),1000));
+		BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminated,(initial_marie_stat.number_of_LinphoneConferenceStateTerminated + 1),1000));
+		BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateDeleted,(initial_marie_stat.number_of_LinphoneConferenceStateDeleted + 1),1000));
+
 		// Conference stays active with one participant as Laure's call was created for the conference
 		conf = linphone_core_get_conference(marie->lc);
 		BC_ASSERT_PTR_NOT_NULL(conf);
