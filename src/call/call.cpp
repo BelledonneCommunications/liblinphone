@@ -429,12 +429,19 @@ lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << "(loc
 			exitFromConference(session);
 
 			break;
-		case CallSession::State::Pausing:
 		case CallSession::State::Paused:
-			if (getConference() && !isInConference()) {
-				setConference(nullptr);
+		{
+			auto conference = getConference();
+			if (conference) {
+				// Participant leaves remote conference
+				if (!isInConference()) {
+					setConference(nullptr);
+				} else {
+					MediaConference::Conference::toCpp(conference)->removeParticipant(getActiveSession(), true);
+				}
 			}
-			break;
+		}
+		break;
 		case CallSession::State::PausedByRemote:
 		{
 			// If it is not in a conference, the remote conference must be terminated if it exists
@@ -506,16 +513,14 @@ lInfo() << "dEBUG DEBUG " << __func__ << " confenrece of call " << this << " is 
 					if (isInConference()) {
 						changeSubjectInLocalConference(session->getPrivate()->getOp());
 					} else {
+						remoteContactAddress.setParam("isfocus");
 						// As the call is about to exit the conference, the contact address is missing the conference ID as well as isfocus parameter
 						if (!remoteContactAddress.hasUriParam("conf-id")) {
 							if (getConferenceId().empty() == false) {
 								remoteContactAddress.setUriParam("conf-id", getConferenceId());
 							}
 						}
-						if (!remoteContactAddress.hasParam("isfocus")) {
-							remoteContactAddress.setParam("isfocus");
-							removeFromConference(remoteContactAddress);
-						}
+						removeFromConference(remoteContactAddress);
 					}
 				}
 			}
