@@ -566,6 +566,7 @@ void record_call(const char *filename, bool_t enableVideo, const char *video_cod
 int check_nb_media_starts(unsigned int media_type, LinphoneCoreManager *caller, LinphoneCoreManager *callee, unsigned int caller_nb_media_starts, unsigned int callee_nb_media_starts);
 
 void setup_sdp_handling(const LinphoneCallTestParams* params, LinphoneCoreManager* mgr);
+void check_stream_encryption(LinphoneCall * call);
 bool_t search_matching_srtp_suite(LinphoneCoreManager* caller_mgr,LinphoneCoreManager* callee_mgr);
 
 LinphoneChatRoom * create_chat_room_client_side(bctbx_list_t *lcs, LinphoneCoreManager *lcm, stats *initialStats, bctbx_list_t *participantsAddresses, const char* initialSubject, bool_t encrypted);
