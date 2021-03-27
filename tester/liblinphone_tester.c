@@ -404,6 +404,8 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_recovery_test_suite);
 	bc_tester_add_suite(&call_with_ice_test_suite);
 	bc_tester_add_suite(&call_secure_test_suite);
+	bc_tester_add_suite(&capability_negotiation_test_suite);
+	bc_tester_add_suite(&ice_capability_negotiation_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
 #if !defined(TARGET_OS_IPHONE) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)	// Mac is not yet fully supported for tests

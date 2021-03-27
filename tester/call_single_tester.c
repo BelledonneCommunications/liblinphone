@@ -87,7 +87,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	linphone_call_ref(c1);
 	linphone_call_ref(c2);
 	liblinphone_tester_clock_start(&ts);
-	if (linphone_core_rtcp_enabled(caller->lc) && linphone_core_rtcp_enabled(callee->lc))
+	if (linphone_call_support_rtcp(c1) && linphone_call_support_rtcp(c2))
 		max_time_to_wait = 15000;
 	else
 		max_time_to_wait = 5000;
@@ -111,7 +111,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 	reset_call_stats(video_stats1, linphone_call_get_video_stats(c1));
 	reset_call_stats(audio_stats2, linphone_call_get_audio_stats(c2));
 	reset_call_stats(video_stats2, linphone_call_get_video_stats(c2));
-	if (linphone_core_rtcp_enabled(caller->lc) && linphone_core_rtcp_enabled(callee->lc)) {
+	if (linphone_call_support_rtcp(c1) && linphone_call_support_rtcp(c2)) {
 		BC_ASSERT_GREATER(caller->stat.number_of_rtcp_received, 1, int, "%i");
 		BC_ASSERT_GREATER(callee->stat.number_of_rtcp_received, 1, int, "%i");
 		BC_ASSERT_GREATER(linphone_call_stats_get_round_trip_delay(audio_stats1),0.0,float,"%f");
@@ -123,7 +123,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 			BC_ASSERT_GREATER(linphone_call_stats_get_round_trip_delay(video_stats2),0.0,float,"%f");
 		}
 	} else {
-		if (linphone_core_rtcp_enabled(caller->lc)) {
+		if (linphone_call_support_rtcp(c1)) {
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats1)->sent_rtcp_packets, 0, unsigned long long, "%llu");
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats2)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			if (linphone_call_log_video_enabled(linphone_call_get_call_log(c1))) {
@@ -133,7 +133,7 @@ void liblinphone_tester_check_rtcp(LinphoneCoreManager* caller, LinphoneCoreMana
 				BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(video_stats2)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			}
 		}
-		if (linphone_core_rtcp_enabled(callee->lc)) {
+		if (linphone_call_support_rtcp(c2)) {
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats2)->sent_rtcp_packets, 0, unsigned long long, "%llu");
 			BC_ASSERT_EQUAL(linphone_call_stats_get_rtp_stats(audio_stats1)->recv_rtcp_packets, 0, unsigned long long, "%llu");
 			if (linphone_call_log_video_enabled(linphone_call_get_call_log(c1))) {
@@ -1597,10 +1597,12 @@ void _call_with_ice_base(LinphoneCoreManager* pauline,LinphoneCoreManager* marie
 	linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
 
 	if (callee_with_ice){
-		linphone_core_set_firewall_policy(marie->lc,LinphonePolicyUseIce);
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
 	}
 	if (caller_with_ice){
-		linphone_core_set_firewall_policy(pauline->lc,LinphonePolicyUseIce);
+		enable_stun_in_core(pauline, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 
 	if (random_ports){
@@ -2743,8 +2745,12 @@ static void _call_base_with_configfile(LinphoneMediaEncryption mode, bool_t enab
 			belle_sip_mkdir(linphone_core_get_user_certificates_path(pauline->lc));
 		}
 
-		linphone_core_set_firewall_policy(marie->lc,policy);
-		linphone_core_set_firewall_policy(pauline->lc,policy);
+		if (policy == LinphonePolicyUseIce) {
+			enable_stun_in_core(marie, TRUE);
+			linphone_core_manager_wait_for_stun_resolution(marie);
+			enable_stun_in_core(pauline, TRUE);
+			linphone_core_manager_wait_for_stun_resolution(pauline);
+		}
 
 		BC_ASSERT_TRUE((call_ok=call(pauline,marie)));
 		if (!call_ok) goto end;
@@ -3851,7 +3857,8 @@ void early_media_without_sdp_in_200_base( bool_t use_video, bool_t use_ice ){
 	lcs = bctbx_list_append(lcs,marie->lc);
 	lcs = bctbx_list_append(lcs,pauline->lc);
 	if (use_ice){
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
 		/* We need RTP symmetric because ICE will put the STUN address in the C line, and no relay is made in this
 		 * scenario.*/
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "rtp", "symmetric", 1);
@@ -4869,8 +4876,12 @@ void _call_with_rtcp_mux(bool_t caller_rtcp_mux, bool_t callee_rtcp_mux, bool_t 
 	if (with_ice){
 		linphone_core_set_user_agent(pauline->lc, "Natted Linphone", NULL);
 		linphone_core_set_user_agent(marie->lc, "Natted Linphone", NULL);
-		linphone_core_set_firewall_policy(marie->lc, LinphonePolicyUseIce);
-		linphone_core_set_firewall_policy(pauline->lc, LinphonePolicyUseIce);
+
+		enable_stun_in_core(marie, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(marie);
+
+		enable_stun_in_core(pauline, TRUE);
+		linphone_core_manager_wait_for_stun_resolution(pauline);
 	}
 	if (!with_ice_reinvite) {
 		linphone_config_set_int(linphone_core_get_config(pauline->lc), "sip", "update_call_when_ice_completed", 0);

@@ -539,7 +539,8 @@ OrtpPayloadType *linphone_payload_type_get_ortp_pt(const LinphonePayloadType *pt
 LINPHONE_PUBLIC void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid);
 char * linphone_core_get_push_notification_contact_uri_parameters(LinphoneCore *core);
 
-const MSCryptoSuite * linphone_core_get_srtp_crypto_suites(LinphoneCore *lc);
+LINPHONE_PUBLIC const MSCryptoSuite * linphone_core_get_srtp_crypto_suites_array(LinphoneCore *lc);
+const MSCryptoSuite * linphone_core_get_all_supported_srtp_crypto_suites(LinphoneCore *lc);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_key_agreement_suites(LinphoneCore *lc, MSZrtpKeyAgreement keyAgreements[MS_MAX_ZRTP_CRYPTO_TYPES]);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_cipher_suites(LinphoneCore *lc, MSZrtpCipher ciphers[MS_MAX_ZRTP_CRYPTO_TYPES]);
 MsZrtpCryptoTypesCount linphone_core_get_zrtp_hash_suites(LinphoneCore *lc, MSZrtpHash hashes[MS_MAX_ZRTP_CRYPTO_TYPES]);
@@ -664,6 +665,7 @@ LinphoneXmlRpcRequestCbs * linphone_xml_rpc_request_cbs_new(void);
 void linphone_xml_rpc_request_set_current_callbacks(LinphoneXmlRpcRequest *request, LinphoneXmlRpcRequestCbs *cbs);
 
 void linphone_core_invalidate_friends_maps(LinphoneCore *lc);
+bctbx_list_t * linphone_core_get_supported_media_encryptions_at_compile_time();
 
 // The following methods are private and they allow a conversion from conference state enum to chat room state enum and viceversa.
 // This allows to easily go from one type to another one ensuring that they are synchronized and ease debugging in case they are not

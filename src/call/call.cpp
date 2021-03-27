@@ -221,7 +221,7 @@ void Call::startRemoteRing () {
 	MSSndCard *ringCard = lc->sound_conf.lsd_card ? lc->sound_conf.lsd_card : lc->sound_conf.play_sndcard;
 	std::shared_ptr<SalMediaDescription> md = static_pointer_cast<MediaSession>(getActiveSession())->getPrivate()->getLocalDesc();
 	if (md){
-		int maxRate = md->streams[0].max_rate;
+		int maxRate = md->streams[0].getMaxRate();
 		if (maxRate > 0)
 			ms_snd_card_set_preferred_sample_rate(ringCard, maxRate);
 	}
@@ -939,6 +939,10 @@ LinphoneCallLog *Call::getLog () const {
 	return getActiveSession()->getLog();
 }
 
+bool Call::supportRtcp () const {
+	return static_pointer_cast<MediaSession>(getActiveSession())->supportRtcp();
+}
+
 RtpTransport *Call::getMetaRtcpTransport (int streamIndex) const {
 	return static_pointer_cast<MediaSession>(getActiveSession())->getMetaRtcpTransport(streamIndex);
 }
@@ -1161,6 +1165,10 @@ AudioDevice* Call::getOutputAudioDevice() const {
 	}
 
 	return nullptr;
+}
+
+const std::list<LinphoneMediaEncryption> Call::getSupportedEncryptions() const {
+	return getActiveSession()->getSupportedEncryptions();
 }
 
 // -----------------------------------------------------------------------------

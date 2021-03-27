@@ -44,6 +44,15 @@ public:
 	void setInternalCallUpdate (bool value) { internalCallUpdate = value; }
 	bool getNoUserConsent () const { return noUserConsent; }
 	void setNoUserConsent (bool value) { noUserConsent = value; }
+	void enableCapabilityNegotiationReInvite (const bool enable);
+	bool capabilityNegotiationReInviteEnabled () const;
+	void enableCapabilityNegotiation (const bool enable);
+	bool capabilityNegotiationEnabled () const;
+	void enableTcapLineMerging (const bool enable);
+	bool tcapLinesMerged () const;
+	bool isMediaEncryptionSupported(const LinphoneMediaEncryption encryption) const;
+	const std::list<LinphoneMediaEncryption> getSupportedEncryptions() const;
+	void setSupportedEncryptions (const std::list<LinphoneMediaEncryption> encryptions);
 
 	SalCustomHeader * getCustomHeaders () const;
 	void setCustomHeaders (const SalCustomHeader *ch);
@@ -60,6 +69,13 @@ public:
 	LinphoneProxyConfig * proxyConfig = NULL;
 
 private:
+	bool capabilityNegotiation = false;
+	bool capabilityNegotiationReInvite = true;
+	bool mergeTcapLines = false;
+	std::list<LinphoneMediaEncryption> supportedEncryptions;
+	// This parameter is used to disallow ZRTP if capability negotiation is not enabled.
+	// Currently it is not possible to set it by the user nor get its value. It is initialized by initDefault and it is a copy of LinphoneCore member zrtp_not_available_simulation. It can only be set to TRUE for testing purposes.
+	bool disallowZrtp = false;
 	bool inConference = false;
 	bool internalCallUpdate = false;
 	bool noUserConsent = false; /* When set to true an UPDATE request will be used instead of reINVITE */
