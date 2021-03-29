@@ -122,7 +122,7 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	return _create_message_from_sintel_trailer(chat_room, FALSE);
 }
 
-LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *filepath) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
@@ -154,6 +154,7 @@ LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneCh
 	bc_free(send_filepath);
 	return msg;
 }
+
 LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
 	return create_file_transfer_message_from_file(chat_room, "sounds/sintel_trailer_opus_h264.mkv");
 }
