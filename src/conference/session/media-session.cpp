@@ -254,29 +254,30 @@ bool MediaSessionPrivate::failure () {
 				if (mediaEncrptionSrtp || avpfEnabled) {
 					lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
 					string previousCallId = op->getCallId();
-
-					for (int i = 0; i < localDesc->nb_streams; i++) {
-						if (!sal_stream_description_enabled(&localDesc->streams[i]))
+					for (auto & stream : localDesc->streams) {
+						bool firstStream = (stream == localDesc->streams[0]);
+						if (!stream.enabled())
 							continue;
 						if (mediaEncrptionSrtp) {
 							if (avpfEnabled) {
-								if (i == 0)
+								if (firstStream)
 									lInfo() << "Retrying CallSession [" << q << "] with SAVP";
 								getParams()->enableAvpf(false);
 								restartInvite();
 								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());
 								return true;
 							} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
-								if (i == 0)
+								if (firstStream)
 									lInfo() << "Retrying CallSession [" << q << "] with AVP";
 								getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-								memset(localDesc->streams[i].crypto, 0, sizeof(localDesc->streams[i].crypto));
+								stream.crypto.clear();
+								getParams()->enableAvpf(false);
 								restartInvite();
 								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());
 								return true;
 							}
 						} else if (avpfEnabled) {
-							if (i == 0)
+							if (firstStream) 
 								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->enableAvpf(false);
 							restartInvite();
@@ -1782,8 +1783,8 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	string subject;
 	if (resultDesc->hasDir(SalStreamSendRecv))
 		subject = "Call on hold";
-	else if (sal_media_description_has_dir(resultDesc, SalStreamRecvOnly) 
-				 || (sal_media_description_has_dir(resultDesc, SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
+	else if (resultDesc->hasDir(SalStreamRecvOnly)
+				 || (resultDesc->hasDir(SalStreamInactive) && state == CallSession::State::PausedByRemote))	// Stream is inactive from Remote
 		subject = "Call on hold for me too";
 	else {
 		lError() << "No reason to pause this call, it is already paused or inactive";
