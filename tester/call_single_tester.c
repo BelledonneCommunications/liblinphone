@@ -453,8 +453,8 @@ static void _direct_call_well_known_port(int iptype){
 
  	//we use new2 because we do not need to check proxy registration
 	//because if we do it, the client will try to register with the well_known port, and the test server doesn't handle it.
-	marie = linphone_core_manager_new2("marie_well_known_port_rc", FALSE);
-	pauline = linphone_core_manager_new2("pauline_well_known_port_rc", FALSE);
+	marie = linphone_core_manager_new_with_proxies_check("marie_well_known_port_rc", FALSE);
+	pauline = linphone_core_manager_new_with_proxies_check("pauline_well_known_port_rc", FALSE);
 
 	if(iptype == 6){ //if ipv6 wanted
 		if (liblinphone_tester_ipv6_available()){
@@ -505,8 +505,8 @@ static void direct_call_well_known_port_ipv6(void){
 }
 
 static void call_outbound_with_multiple_proxy(void) {
-	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_rc", FALSE);
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie   = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_tcp_rc", FALSE);
 
 	LinphoneProxyConfig* lpc = NULL;
 	LinphoneProxyConfig* registered_lpc = linphone_core_create_proxy_config(marie->lc);
@@ -545,8 +545,8 @@ static void call_outbound_with_multiple_proxy(void) {
 }
 
 static void call_outbound_using_different_proxies(void) {
-	LinphoneCoreManager* marie   = linphone_core_manager_new2( "marie_dual_proxy_rc", FALSE);// Caller
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);// Callee
+	LinphoneCoreManager* marie   = linphone_core_manager_new_with_proxies_check( "marie_dual_proxy_rc", FALSE);// Caller
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_tcp_rc", FALSE);// Callee
 	int call_count = 0;
 
 	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 10000));
@@ -635,9 +635,9 @@ static void multiple_answers_call_with_media_relay(void) {
 	/* Scenario is this: pauline calls marie, which is registered 2 times.
 	 *   Both linphones answer at the same time, and only one should get the
 	 *   call running, the other should be terminated */
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);
-	LinphoneCoreManager* marie1  = linphone_core_manager_new2( "marie_rc", FALSE);
-	LinphoneCoreManager* marie2  = linphone_core_manager_new2( "marie_rc", FALSE );
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_tcp_rc", FALSE);
+	LinphoneCoreManager* marie1  = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE);
+	LinphoneCoreManager* marie2  = linphone_core_manager_new_with_proxies_check( "marie_rc", FALSE );
 
 	/* This tests a feature of the proxy (nta_msg_ackbye()) that doesn't work with gruu.
 	 * Actually nta_msg_ackbye() is deprecated because it is not the task of the proxy to handle the race conditions of 200 Ok arriving at the same time.
@@ -1172,7 +1172,7 @@ void disable_all_video_codecs_except_one(LinphoneCore *lc, const char *mime) {
 }
 
 static void call_with_dns_time_out(void) {
-	LinphoneCoreManager* marie = linphone_core_manager_new2( "empty_rc", FALSE);
+	LinphoneCoreManager* marie = linphone_core_manager_new_with_proxies_check( "empty_rc", FALSE);
 	LinphoneSipTransports transport = {9773,0,0,0};
 
 	linphone_core_set_sip_transports(marie->lc,&transport);
@@ -1249,7 +1249,7 @@ static void early_cancelled_call(void) {
 
 static void call_called_without_any_response(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new( "marie_rc");
-	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_rc",FALSE);
+	LinphoneCoreManager* pauline = linphone_core_manager_new_with_proxies_check( "pauline_rc",FALSE);
 
 	LinphoneCall* out_call = linphone_core_invite_address(pauline->lc,marie->identity);
 
@@ -4937,7 +4937,7 @@ static void v6_to_v4_call_without_relay(void){
 
 	if (liblinphone_tester_ipv4_available() && liblinphone_tester_ipv6_available()){
 		marie = linphone_core_manager_new("marie_rc");
-		pauline = linphone_core_manager_new2("pauline_tcp_rc", FALSE);
+		pauline = linphone_core_manager_new_with_proxies_check("pauline_tcp_rc", FALSE);
 
 		lcs = bctbx_list_append(lcs, marie->lc);
 		lcs = bctbx_list_append(lcs, pauline->lc);
