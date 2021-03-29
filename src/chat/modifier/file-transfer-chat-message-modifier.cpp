@@ -109,6 +109,11 @@ void FileTransferChatMessageModifier::fileTransferOnProgress (
 	if (!message)
 		return;
 
+	size_t percentage = offset * 100 / total;
+	if (percentage <= lastNotifiedPercentage) {
+		return;
+	}
+
 	LinphoneChatMessage *msg = L_GET_C_BACK_PTR(message);
 	LinphoneChatMessageCbs *cbs = linphone_chat_message_get_callbacks(msg);
 	LinphoneContent *content = L_GET_C_BACK_PTR((Content *)currentFileContentToTransfer);
@@ -120,6 +125,7 @@ void FileTransferChatMessageModifier::fileTransferOnProgress (
 		linphone_core_notify_file_transfer_progress_indication(message->getCore()->getCCore(), msg, content, offset, total);
 	}
 	_linphone_chat_message_notify_file_transfer_progress_indication(msg, content, offset, total);
+	lastNotifiedPercentage = percentage;
 }
 
 static int _chat_message_on_send_body (
@@ -231,79 +237,81 @@ static void _chat_message_process_response_from_post_file (void *data, const bel
 }
 
 belle_sip_body_handler_t *FileTransferChatMessageModifier::prepare_upload_body_handler(shared_ptr<ChatMessage> message) {
-			// start uploading the file
-			string first_part_header;
-			belle_sip_body_handler_t *first_part_bh;
+	// start uploading the file
+	string first_part_header;
+	belle_sip_body_handler_t *first_part_bh;
 
-			bool isFileEncryptionEnabled = false;
-			EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
-			if (imee)
-				isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(message->getChatRoom());
+	bool isFileEncryptionEnabled = false;
+	EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
+	if (imee)
+		isFileEncryptionEnabled = imee->isEncryptionEnabledForFileTransfer(message->getChatRoom());
 
-			FileTransferContent *fileTransferContent = new FileTransferContent();
-			fileTransferContent->setContentType(ContentType::FileTransfer);
-			fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
-			fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
-			message->getPrivate()->addContent(fileTransferContent);
-			currentFileTransferContent = fileTransferContent;
+	FileTransferContent *fileTransferContent = new FileTransferContent();
+	fileTransferContent->setContentType(ContentType::FileTransfer);
+	fileTransferContent->setFileSize(currentFileContentToTransfer->getFileSize()); // Copy file size information
+	fileTransferContent->setFilePath(currentFileContentToTransfer->getFilePath()); // Copy file path information
+	
+	currentFileTransferContent = fileTransferContent;
+	currentFileTransferContent->setFileContent(currentFileContentToTransfer);
+	message->getPrivate()->replaceContent(currentFileContentToTransfer, currentFileTransferContent);
 
-			// shall we encrypt the file
-			if (isFileEncryptionEnabled && message->getChatRoom()) {
-				// temporary storage for the Content-disposition header value : use a generic filename to not leak it
-				// actual filename stored in msg->file_transfer_information->name will be set in encrypted msg
-				first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
+	// shall we encrypt the file
+	if (isFileEncryptionEnabled && message->getChatRoom()) {
+		// temporary storage for the Content-disposition header value : use a generic filename to not leak it
+		// actual filename stored in msg->file_transfer_information->name will be set in encrypted msg
+		first_part_header = "form-data; name=\"File\"; filename=\"filename.txt\"";
 
-				imee->generateFileTransferKey(message->getChatRoom(), message, currentFileTransferContent);
-			} else {
-				first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
-			}
+		imee->generateFileTransferKey(message->getChatRoom(), message, currentFileTransferContent);
+	} else {
+		first_part_header = "form-data; name=\"File\"; filename=\"" + currentFileContentToTransfer->getFileName() + "\"";
+	}
 
-			// create a user body handler to take care of the file and add the content disposition and content-type headers
-			first_part_bh = (belle_sip_body_handler_t *)belle_sip_user_body_handler_new(currentFileContentToTransfer->getFileSize(),
-					_chat_message_file_transfer_on_progress, nullptr, nullptr,
-					_chat_message_on_send_body, _chat_message_on_send_end, this);
-			if (!currentFileContentToTransfer->getFilePath().empty()) {
-				belle_sip_user_body_handler_t *body_handler = (belle_sip_user_body_handler_t *)first_part_bh;
-				// No need to add again the callback for progression, otherwise it will be called twice
-				first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), nullptr, this);
-				belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
-				// Ensure the file size has been set to the correct value
-				currentFileTransferContent->setFileSize(belle_sip_file_body_handler_get_file_size((belle_sip_file_body_handler_t *)first_part_bh));
-			} else if (!currentFileContentToTransfer->isEmpty()) {
-				size_t buf_size = currentFileContentToTransfer->getSize();
-				uint8_t *buf = (uint8_t *)ms_malloc(buf_size);
-				memcpy(buf, currentFileContentToTransfer->getBody().data(), buf_size);
+	// create a user body handler to take care of the file and add the content disposition and content-type headers
+	first_part_bh = (belle_sip_body_handler_t *)belle_sip_user_body_handler_new(currentFileContentToTransfer->getFileSize(),
+			_chat_message_file_transfer_on_progress, nullptr, nullptr,
+			_chat_message_on_send_body, _chat_message_on_send_end, this);
+	if (!currentFileContentToTransfer->getFilePath().empty()) {
+		belle_sip_user_body_handler_t *body_handler = (belle_sip_user_body_handler_t *)first_part_bh;
+		// No need to add again the callback for progression, otherwise it will be called twice
+		first_part_bh = (belle_sip_body_handler_t *)belle_sip_file_body_handler_new(currentFileContentToTransfer->getFilePath().c_str(), nullptr, this);
+		belle_sip_file_body_handler_set_user_body_handler((belle_sip_file_body_handler_t *)first_part_bh, body_handler);
+		// Ensure the file size has been set to the correct value
+		currentFileTransferContent->setFileSize(belle_sip_file_body_handler_get_file_size((belle_sip_file_body_handler_t *)first_part_bh));
+	} else if (!currentFileContentToTransfer->isEmpty()) {
+		size_t buf_size = currentFileContentToTransfer->getSize();
+		uint8_t *buf = (uint8_t *)ms_malloc(buf_size);
+		memcpy(buf, currentFileContentToTransfer->getBody().data(), buf_size);
 
-				EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
-				if (imee) {
-					size_t max_size = buf_size;
-					uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
-					int retval = imee->uploadingFile(message, 0, buf, &max_size, encrypted_buffer, currentFileTransferContent);
-					if (retval == 0) {
-						if (max_size > buf_size) {
-							lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
-							max_size = buf_size;
-						}
-						memcpy(buf, encrypted_buffer, buf_size);
-						// Call it once more to compute the authentication tag
-						imee->uploadingFile(message, 0, nullptr, 0, nullptr, currentFileTransferContent);
-					}
-					ms_free(encrypted_buffer);
+		EncryptionEngine *imee = message->getCore()->getEncryptionEngine();
+		if (imee) {
+			size_t max_size = buf_size;
+			uint8_t *encrypted_buffer = (uint8_t *)ms_malloc0(max_size);
+			int retval = imee->uploadingFile(message, 0, buf, &max_size, encrypted_buffer, currentFileTransferContent);
+			if (retval == 0) {
+				if (max_size > buf_size) {
+					lError() << "IM encryption engine process upload file callback returned a size bigger than the size of the buffer, so it will be truncated !";
+					max_size = buf_size;
 				}
-
-				first_part_bh = (belle_sip_body_handler_t *)belle_sip_memory_body_handler_new_from_buffer(
-						buf, buf_size, _chat_message_file_transfer_on_progress, this);
+				memcpy(buf, encrypted_buffer, buf_size);
+				// Call it once more to compute the authentication tag
+				imee->uploadingFile(message, 0, nullptr, 0, nullptr, currentFileTransferContent);
 			}
+			ms_free(encrypted_buffer);
+		}
 
-			belle_sip_body_handler_add_header(first_part_bh,
-				belle_sip_header_create("Content-disposition", first_part_header.c_str()));
-			belle_sip_body_handler_add_header(first_part_bh,
-				(belle_sip_header_t *)belle_sip_header_content_type_create(
-					currentFileContentToTransfer->getContentType().getType().c_str(),
-					currentFileContentToTransfer->getContentType().getSubType().c_str()));
+		first_part_bh = (belle_sip_body_handler_t *)belle_sip_memory_body_handler_new_from_buffer(
+				buf, buf_size, _chat_message_file_transfer_on_progress, this);
+	}
 
-			// insert it in a multipart body handler which will manage the boundaries of multipart msg
-			return (BELLE_SIP_BODY_HANDLER(belle_sip_multipart_body_handler_new(_chat_message_file_transfer_on_progress, this, first_part_bh, nullptr)));
+	belle_sip_body_handler_add_header(first_part_bh,
+		belle_sip_header_create("Content-disposition", first_part_header.c_str()));
+	belle_sip_body_handler_add_header(first_part_bh,
+		(belle_sip_header_t *)belle_sip_header_content_type_create(
+			currentFileContentToTransfer->getContentType().getType().c_str(),
+			currentFileContentToTransfer->getContentType().getSubType().c_str()));
+
+	// insert it in a multipart body handler which will manage the boundaries of multipart msg
+	return (BELLE_SIP_BODY_HANDLER(belle_sip_multipart_body_handler_new(_chat_message_file_transfer_on_progress, this, first_part_bh, nullptr)));
 }
 
 void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_http_response_event_t *event) {
@@ -324,7 +332,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			releaseHttpRequest();
 			fileUploadBeginBackgroundTask();
 			uploadFile(bh);
-		} else if (code == 200) {     // file has been uploaded correctly, get server reply and send it
+		} else if (code == 200) { // file has been uploaded correctly, get server reply and send it
 			const char *body = belle_sip_message_get_body((belle_sip_message_t *)event->response);
 			if (body && strlen(body) > 0) {
 				// if we have an encryption key for the file, we must insert it into the msg and restore the correct filename
@@ -407,9 +415,6 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				} else { // no encryption key, transfer in plain, just copy the msg sent by server
 					currentFileTransferContent->setBodyFromUtf8(body);
 				}
-
-				currentFileTransferContent->setFileContent(currentFileContentToTransfer);
-				message->getPrivate()->removeContent(currentFileContentToTransfer);
 				currentFileTransferContent = nullptr;
 
 				message->getPrivate()->setState(ChatMessage::State::FileTransferDone);
@@ -418,7 +423,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 				fileUploadEndBackgroundTask();
 			} else {
 				lWarning() << "Received empty response from server, file transfer failed";
-				message->getPrivate()->removeContent(currentFileTransferContent);
+				message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 				delete currentFileTransferContent;
 				currentFileTransferContent = nullptr;
 
@@ -428,7 +433,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			}
 		} else if (code == 400) {
 			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning file is too large";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
@@ -437,7 +442,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			fileUploadEndBackgroundTask();
 		} else if (code == 401) {
 			lWarning() << "Received HTTP code response " << code << " for file transfer, probably meaning that our credentials were rejected";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
@@ -446,7 +451,7 @@ void FileTransferChatMessageModifier::processResponseFromPostFile (const belle_h
 			fileUploadEndBackgroundTask();
 		} else {
 			lWarning() << "Unhandled HTTP code response " << code << " for file transfer";
-			message->getPrivate()->removeContent(currentFileTransferContent);
+			message->getPrivate()->replaceContent(currentFileTransferContent, currentFileContentToTransfer);
 			delete currentFileTransferContent;
 			currentFileTransferContent = nullptr;
 
@@ -521,6 +526,8 @@ int FileTransferChatMessageModifier::uploadFile (belle_sip_body_handler_t *bh) {
 		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
 	}
 
+	lastNotifiedPercentage = 0;
+
 	belle_http_request_listener_callbacks_t cbs = { 0 };
 	cbs.process_response = _chat_message_process_response_from_post_file;
 	cbs.process_io_error = _chat_message_process_io_error_upload;
@@ -591,6 +598,15 @@ void FileTransferChatMessageModifier::fileUploadEndBackgroundTask () {
 
 // ----------------------------------------------------------
 
+/* clean the download file name: we must avoid any directory separator (/ or \)
+ * so the file is saved in the intended directory */
+static std::string cleanDownloadFileName(std::string fileName) {
+	auto dirSepPos = fileName.find_last_of("/\\");
+	if (dirSepPos == std::string::npos) {
+		return fileName;
+	}
+	return fileName.substr(dirSepPos+1);
+}
 static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTransferContent *fileTransferContent) {
 	xmlChar *fileUrl = nullptr;
 	xmlDocPtr xmlMessageBody;
@@ -605,8 +621,8 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 			if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
 				/* we found a file info node, check if it has a type="file" attribute */
 				xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) {         /* this is the node we are looking for */
-					cur = cur->xmlChildrenNode;           /* now loop on the content of the file-info node */
+				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
+					cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
 					while (cur) {
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
 							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
@@ -616,7 +632,7 @@ static void fillFileTransferContentInformationsFromVndGsmaRcsFtHttpXml (FileTran
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileTransferContent->setFileName((char *)filename);
+							fileTransferContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
 							xmlFree(filename);
 						}
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"data")) {
@@ -719,8 +735,8 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 			if (!xmlStrcmp(cur->name, (const xmlChar *)"file-info")) {
 				/* we found a file info node, check if it has a type="file" attribute */
 				xmlChar *typeAttribute = xmlGetProp(cur, (const xmlChar *)"type");
-				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) {         /* this is the node we are looking for */
-					cur = cur->xmlChildrenNode;           /* now loop on the content of the file-info node */
+				if (!xmlStrcmp(typeAttribute, (const xmlChar *)"file")) { /* this is the node we are looking for */
+					cur = cur->xmlChildrenNode; /* now loop on the content of the file-info node */
 					while (cur) {
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-size")) {
 							xmlChar *fileSizeString = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
@@ -731,7 +747,7 @@ static void createFileTransferInformationsFromVndGsmaRcsFtHttpXml (FileTransferC
 
 						if (!xmlStrcmp(cur->name, (const xmlChar *)"file-name")) {
 							xmlChar *filename = xmlNodeListGetString(xmlMessageBody, cur->xmlChildrenNode, 1);
-							fileContent->setFileName((char *)filename);
+							fileContent->setFileName(cleanDownloadFileName(std::string((char *)filename)));
 
 							xmlFree(filename);
 						}
@@ -1084,6 +1100,7 @@ bool FileTransferChatMessageModifier::downloadFile (
 		currentFileContentToTransfer->setFilePath(message->getPrivate()->getFileTransferFilepath());
 	}
 
+	lastNotifiedPercentage = 0;
 	lInfo() << "Downloading file transfer content [" << fileTransferContent << "], removing it to keep only the file content [" << fileContent << "]";
 
 	belle_http_request_listener_callbacks_t cbs = { 0 };
@@ -1117,19 +1134,31 @@ void FileTransferChatMessageModifier::cancelFileTransfer () {
 	}
 
 	if (!belle_http_request_is_cancelled(httpRequest)) {
-		shared_ptr<ChatMessage> message = chatMessage.lock();
-		if (message) {
-			lInfo() << "Canceling file transfer " << currentFileContentToTransfer->getFilePath();
-			lWarning() << "Deleting incomplete file " << currentFileContentToTransfer->getFilePath();
-			int result = unlink(currentFileContentToTransfer->getFilePath().c_str());
-			if (result != 0) {
-				lError() << "Couldn't delete file " << currentFileContentToTransfer->getFilePath() << ", errno is " << result;
+		if (currentFileContentToTransfer) {
+			string filePath = currentFileContentToTransfer->getFilePath();
+			if (!filePath.empty()) {
+				lInfo() << "Canceling file transfer using file: " << filePath;
+
+				shared_ptr<ChatMessage> message = chatMessage.lock();
+				if (message && message->getDirection() == ChatMessage::Direction::Incoming) {
+					lWarning() << "Deleting incomplete file " << filePath;
+					int result = unlink(filePath.c_str());
+					if (result != 0) {
+						lError() << "Couldn't delete file " << filePath << ", errno is " << result;
+					}
+				} else {
+					lWarning() << "http request still running for ORPHAN msg: this is a memory leak";
+				}
+			} else {
+				lInfo() << "Cancelling file transfer.";
 			}
 		} else {
-			lInfo() << "Warning: http request still running for ORPHAN msg: this is a memory leak";
+			lWarning() << "Found a http request for file transfer but no Content";
 		}
+
 		belle_http_provider_cancel_request(provider, httpRequest);
 	}
+	
 	releaseHttpRequest();
 }
 

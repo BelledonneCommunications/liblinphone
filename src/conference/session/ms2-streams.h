@@ -184,6 +184,7 @@ private:
 	void setZrtpCryptoTypesParameters(MSZrtpParams *params, bool haveZrtpHash);
 	void startZrtpPrimaryChannel(const OfferAnswerContext &params);
 	static void parameterizeEqualizer(AudioStream *as, LinphoneCore *lc);
+	static void configureFlowControl(AudioStream *as, LinphoneCore *lc);
 	void forceSpeakerMuted(bool muted);
 	void postConfigureAudioStream(bool muted);
 	void setupRingbackPlayer();

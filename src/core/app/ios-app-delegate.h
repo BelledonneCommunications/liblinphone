@@ -21,14 +21,30 @@
 #include "private.h"
 #import <UserNotifications/UserNotifications.h>
 
-@interface IosAppDelegate : NSObject {
-	std::shared_ptr<LinphonePrivate::Core> pcore;
-	NSTimer* mIterateTimer;
+@interface IosObject : NSObject {
+	std::weak_ptr<LinphonePrivate::Core> pcore;
 }
 
-- (void)setCore:(std::shared_ptr<LinphonePrivate::Core>)core;
-- (void)onLinphoneCoreStart;
-- (void)onLinphoneCoreStop;
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
+- (std::shared_ptr<LinphonePrivate::Core>)getCore;
+
+@end
+
+/*
+ Used only by main core.
+ IosAppDelegate is an object taking care of all application delegate's notifications and iteartion:
+ UIApplicationDidEnterBackgroundNotification
+ UIApplicationWillEnterForegroundNotification
+ AVAudioSessionRouteChangeNotification
+ iteration
+ Its lifecicle is the same as the one from linphonecore init to destroy.
+ */
+@interface IosAppDelegate : IosObject {
+	BOOL mStopAsyncEnd;
+}
+
+- (id)initWithCore:(std::shared_ptr<LinphonePrivate::Core>)core;
 - (void)reloadDeviceOnRouteChangeCallback: (NSNotification *) notif;
+- (void)onStopAsyncEnd: (BOOL)stop;
 
 @end

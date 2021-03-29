@@ -80,7 +80,7 @@ LinphoneChatMessage* create_message_from_sintel_trailer_legacy(LinphoneChatRoom 
 	return msg;
 }
 
-LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+LinphoneChatMessage* _create_message_from_sintel_trailer(LinphoneChatRoom *chat_room, bool_t use_alt_file_transfer_progress_indication_cb) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
@@ -104,7 +104,11 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 	linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs,liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	if (use_alt_file_transfer_progress_indication_cb) {
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
+	} else {
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+	}
 	BC_ASSERT_PTR_NOT_NULL(linphone_content_get_user_data(content));
 	linphone_chat_message_add_callbacks(msg, cbs);
 	linphone_chat_message_cbs_unref(cbs);
@@ -114,7 +118,11 @@ LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_r
 	return msg;
 }
 
-LinphoneChatMessage* create_file_transfer_message_from_file(LinphoneChatRoom *chat_room, const char *filepath) {
+LinphoneChatMessage* create_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
+	return _create_message_from_sintel_trailer(chat_room, FALSE);
+}
+
+LinphoneChatMessage* create_file_transfer_message_from_sintel_trailer(LinphoneChatRoom *chat_room) {
 	FILE *file_to_send = NULL;
 	LinphoneChatMessageCbs *cbs;
 	LinphoneContent* content;
@@ -246,6 +254,60 @@ void text_message_base(LinphoneCoreManager* marie, LinphoneCoreManager* pauline)
 }
 
 /****************************** Tests starting below ******************************/
+
+static void file_transfer_content(void) {
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+	char *send_filepath = bc_tester_res("sounds/sintel_trailer_opus_h264.mkv");
+
+	LinphoneChatRoom *chat_room = linphone_core_get_chat_room(pauline->lc, laure->identity);
+
+	LinphoneContent* file_transfer_content = linphone_core_create_content(linphone_chat_room_get_core(chat_room));
+	linphone_content_set_file_path(file_transfer_content, send_filepath);
+
+	LinphoneChatMessage *message = linphone_chat_room_create_file_transfer_message(chat_room, file_transfer_content);
+	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
+	BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int, "%d");
+
+	LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
+	BC_ASSERT_PTR_NOT_NULL(content);
+	if (content) {
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_name(content), "sintel_trailer_opus_h264.mkv");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_file_path(content), send_filepath);
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content), "application");
+		BC_ASSERT_STRING_EQUAL(linphone_content_get_subtype(content), "octet-stream");
+	}
+
+	linphone_chat_message_unref(message);
+	linphone_content_unref(file_transfer_content);
+	bc_free(send_filepath);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void create_two_basic_chat_room_with_same_remote(void) {
+	LinphoneCoreManager* laure = linphone_core_manager_new("laure_tcp_rc");
+	LinphoneCoreManager* pauline = linphone_core_manager_new("pauline_tcp_rc");
+
+	LinphoneChatRoomParams *chat_room_params = linphone_core_create_default_chat_room_params(pauline->lc);
+	linphone_chat_room_params_set_backend(chat_room_params, LinphoneChatRoomBackendBasic);
+	linphone_chat_room_params_enable_encryption(chat_room_params, FALSE);
+	linphone_chat_room_params_enable_group(chat_room_params, FALSE);
+	linphone_chat_room_params_enable_rtt(chat_room_params, FALSE);
+	bctbx_list_t *participants = bctbx_list_append(NULL, laure->identity);
+	LinphoneChatRoom *chat_room = linphone_core_create_chat_room_6(pauline->lc, chat_room_params, pauline->identity, participants);
+	BC_ASSERT_PTR_NOT_NULL(chat_room);
+
+	LinphoneChatRoom *chat_room2 = linphone_core_create_chat_room_6(pauline->lc, chat_room_params, pauline->identity, participants);
+	BC_ASSERT_PTR_NOT_NULL(chat_room2);
+	BC_ASSERT_PTR_EQUAL(chat_room, chat_room2);
+
+	bctbx_list_free(participants);
+	linphone_chat_room_params_unref(chat_room_params);
+	linphone_chat_room_unref(chat_room);
+	linphone_core_manager_destroy(laure);
+	linphone_core_manager_destroy(pauline);
+}
 
 static void text_message(void) {
 	LinphoneCoreManager* marie = linphone_core_manager_new("marie_rc");
@@ -733,11 +795,17 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 
 		if (marie->stat.last_received_chat_message) {
 			LinphoneChatRoom *marie_room = linphone_core_get_chat_room(marie->lc, pauline->identity);
-			linphone_chat_room_mark_as_read(marie_room);
+
+			// We shoudln't get displayed IMDN until file has been downloaded & chat message has been markes as read
+			if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+				BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+			}
+
 			if (auto_download == -1 || (auto_download > 0 && auto_download < file_transfer_size)) {
-				// We shoudln't get displayed IMDN until file has been downloaded
+				linphone_chat_room_mark_as_read(marie_room);
 				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-					BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+					// Chat message has been markes as read but not downloaded yet, so no IMDN should be received yet
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 				}
 
 				LinphoneChatMessage *recv_msg;
@@ -783,7 +851,7 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					BC_ASSERT_TRUE(wait_for_until(marie->lc, pauline->lc, &marie->stat.number_of_LinphoneMessageNotDelivered,1, 10000));
 					belle_http_provider_set_recv_error(linphone_core_get_http_provider(marie->lc), 0);
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-						BC_ASSERT_FALSE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+						BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 					}
 				} else {
 					/* wait for a long time in case the DNS SRV resolution takes times - it should be immediate though */
@@ -804,19 +872,24 @@ void transfer_message_base4(LinphoneCoreManager* marie, LinphoneCoreManager* pau
 					}
 
 					if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-						BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
+						BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
 					}
 				}
 			} else {
-				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
-					BC_ASSERT_TRUE(wait_for_until(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneMessageDisplayed,1, 5000));
-				}
 				contents = linphone_chat_message_get_contents(msg);
 				BC_ASSERT_PTR_NOT_NULL(contents);
 				BC_ASSERT_EQUAL(1, (int)bctbx_list_size(contents), int, "%d");
 				content = (LinphoneContent *)bctbx_list_get_data(contents);
 				BC_ASSERT_PTR_NOT_NULL(content);
 				compare_files(send_filepath, linphone_content_get_file_path(content));
+
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_FALSE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+				}
+				linphone_chat_room_mark_as_read(marie_room);
+				if (linphone_factory_is_imdn_available(linphone_factory_get())) {
+					BC_ASSERT_TRUE(wait_for_until(pauline->lc, marie->lc, &pauline->stat.number_of_LinphoneMessageDisplayed, 1, 5000));
+				}
 			}
 		}
 		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneMessageInProgress, 1, int, "%d");
@@ -1356,8 +1429,8 @@ static void file_transfer_2_messages_simultaneously(void) {
 
 		/* create a chatroom on pauline's side */
 		pauline_room = linphone_core_get_chat_room(pauline->lc, marie->identity);
-		msg = create_message_from_sintel_trailer(pauline_room);
-		msg2 = create_message_from_sintel_trailer(pauline_room);
+		msg = _create_message_from_sintel_trailer(pauline_room, FALSE);
+		msg2 = _create_message_from_sintel_trailer(pauline_room, TRUE);
 
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)), 0, unsigned int, "%u");
 		if (bctbx_list_size(linphone_core_get_chat_rooms(marie->lc)) == 0) {
@@ -1401,7 +1474,7 @@ static void file_transfer_2_messages_simultaneously(void) {
 					cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 					linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 					linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+					linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
 					linphone_chat_message_add_callbacks(recvMsg2, cbs);
 					linphone_chat_message_cbs_unref(cbs);
 					linphone_chat_message_download_file(recvMsg2);
@@ -3500,6 +3573,8 @@ static void migration_from_messages_db (void) {
 }
 
 test_t message_tests[] = {
+	TEST_NO_TAG("File transfer content", file_transfer_content),
+	TEST_NO_TAG("Create two basic chat rooms with same remote", create_two_basic_chat_room_with_same_remote),
 	TEST_NO_TAG("Text message", text_message),
 	TEST_NO_TAG("Transfer forward message", text_forward_message),
 	TEST_NO_TAG("Text message UTF8", text_message_with_utf8),

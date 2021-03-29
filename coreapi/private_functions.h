@@ -133,6 +133,7 @@ LINPHONE_PUBLIC void linphone_call_start_push_incoming_notification(LinphoneCall
 LINPHONE_PUBLIC LinphoneCall *linphone_call_new_incoming_with_callid(LinphoneCore *lc, const char *callid);
 LINPHONE_PUBLIC bool_t linphone_call_is_op_configured (const LinphoneCall *call);
 
+void _linphone_core_stop_async_end(LinphoneCore *lc);
 void _linphone_core_uninit(LinphoneCore *lc);
 void linphone_core_write_auth_info(LinphoneCore *lc, LinphoneAuthInfo *ai);
 const LinphoneAuthInfo *_linphone_core_find_tls_auth_info(LinphoneCore *lc);
@@ -235,7 +236,6 @@ void linphone_notify_parse_presence(const char *content_type, const char *conten
 void linphone_notify_convert_presence_to_xml(LinphonePrivate::SalOp *op, SalPresenceModel *presence, const char *contact, char **content);
 void linphone_notify_recv(LinphoneCore *lc, LinphonePrivate::SalOp *op, SalSubscribeStatus ss, SalPresenceModel *model);
 void linphone_proxy_config_process_authentication_failure(LinphoneCore *lc, LinphonePrivate::SalOp *op);
-void linphone_core_soundcard_hint_check(LinphoneCore* lc);
 
 
 void linphone_subscription_answered(LinphoneCore *lc, LinphonePrivate::SalOp *op);
@@ -247,7 +247,6 @@ LINPHONE_PUBLIC int linphone_run_stun_tests(LinphoneCore *lc, int audioPort, int
 	char *audioCandidateAddr, int *audioCandidatePort, char *videoCandidateAddr, int *videoCandidatePort, char *textCandidateAddr, int *textCandidatePort);
 void linphone_core_resolve_stun_server(LinphoneCore *lc);
 LINPHONE_PUBLIC const struct addrinfo *linphone_core_get_stun_server_addrinfo(LinphoneCore *lc);
-LINPHONE_PUBLIC void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, bool_t enable);
 LINPHONE_PUBLIC void linphone_core_enable_short_turn_refresh(LinphoneCore *lc, bool_t enable);
 LINPHONE_PUBLIC void linphone_call_stats_fill(LinphoneCallStats *stats, MediaStream *ms, OrtpEvent *ev);
 void linphone_call_stats_update(LinphoneCallStats *stats, MediaStream *stream);
@@ -328,6 +327,7 @@ void linphone_chat_room_set_call(LinphoneChatRoom *cr, LinphoneCall *call);
 LinphoneChatRoomCbs * _linphone_chat_room_cbs_new (void);
 void _linphone_chat_room_notify_is_composing_received(LinphoneChatRoom *cr, const LinphoneAddress *remoteAddr, bool_t isComposing);
 void _linphone_chat_room_notify_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
+void _linphone_chat_room_notify_new_event(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_removed(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_participant_device_added(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
@@ -343,6 +343,7 @@ void _linphone_chat_room_notify_ephemeral_message_timer_started(LinphoneChatRoom
 void _linphone_chat_room_notify_ephemeral_message_deleted(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_undecryptable_message_received(LinphoneChatRoom *cr, LinphoneChatMessage *msg);
 void _linphone_chat_room_notify_chat_message_received(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
+void _linphone_chat_room_notify_chat_message_sending(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_chat_message_sent(LinphoneChatRoom *cr, const LinphoneEventLog *event_log);
 void _linphone_chat_room_notify_conference_address_generation(LinphoneChatRoom *cr);
 void _linphone_chat_room_notify_participant_device_fetch_requested(LinphoneChatRoom *cr, const LinphoneAddress *participantAddr);
@@ -401,8 +402,6 @@ void linphone_core_initialize_supported_content_types(LinphoneCore *lc);
 LinphoneEcCalibratorStatus ec_calibrator_get_status(EcCalibrator *ecc);
 
 void ec_calibrator_destroy(EcCalibrator *ecc);
-
-int linphone_core_preempt_sound_resources(LinphoneCore *lc);
 
 /*conferencing subsystem*/
 void _post_configure_audio_stream(AudioStream *st, LinphoneCore *lc, bool_t muted);
@@ -562,6 +561,7 @@ void linphone_core_notify_new_subscription_requested(LinphoneCore *lc, LinphoneF
 void linphone_core_notify_auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
 void linphone_core_notify_authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method);
 void linphone_core_notify_call_log_updated(LinphoneCore *lc, LinphoneCallLog *newcl);
+void linphone_core_notify_call_id_updated(LinphoneCore *lc, const char*previous, const char *current);
 void linphone_core_notify_text_message_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message);
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);

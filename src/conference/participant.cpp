@@ -72,7 +72,7 @@ shared_ptr<CallSession> Participant::createSession (
 // -----------------------------------------------------------------------------
 
 shared_ptr<ParticipantDevice> Participant::addDevice (const IdentityAddress &gruu, const string &name) {
-	shared_ptr<ParticipantDevice> device = findDevice(gruu);
+	shared_ptr<ParticipantDevice> device = findDevice(gruu, false);
 	if (device)
 		return device;
 	device = ParticipantDevice::create(this, gruu, name);
@@ -84,18 +84,24 @@ void Participant::clearDevices () {
 	devices.clear();
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu) const {
+shared_ptr<ParticipantDevice> Participant::findDevice (const IdentityAddress &gruu, const bool logFailure) const {
 	for (const auto &device : devices) {
 		if (device->getAddress() == gruu)
 			return device;
 	}
+	if (logFailure) {
+		lInfo() << "Unable to find device with address " << gruu.asString();
+	}
 	return nullptr;
 }
 
-shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session) {
+shared_ptr<ParticipantDevice> Participant::findDevice (const shared_ptr<const CallSession> &session, const bool logFailure) {
 	for (const auto &device : devices) {
 		if (device->getSession() == session)
 			return device;
+	}
+	if (logFailure) {
+		lInfo() << "Unable to find device with call session " << session;
 	}
 	return nullptr;
 }

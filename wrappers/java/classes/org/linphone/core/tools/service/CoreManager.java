@@ -32,6 +32,7 @@ import android.os.Build;
 
 import org.linphone.core.AudioDevice;
 import org.linphone.core.Call;
+import org.linphone.core.Config;
 import org.linphone.core.Core;
 import org.linphone.core.CoreListenerStub;
 import org.linphone.core.tools.Log;
@@ -254,14 +255,29 @@ public class CoreManager {
     }
 
     public void onAudioFocusLost() {
-        Log.i("[Core Manager] App has lost audio focus, pausing all calls");
         if (mCore != null) {
-            mCore.pauseAllCalls();
+            boolean pauseCallsWhenAudioFocusIsLost = mCore.getConfig().getBool("audio", "android_pause_calls_when_audio_focus_lost", true);
+            if (pauseCallsWhenAudioFocusIsLost) {
+                if (mCore.isInConference()) {
+                    Log.i("[Core Manager] App has lost audio focus, leaving conference");
+                    mCore.leaveConference();
+                } else {
+                    Log.i("[Core Manager] App has lost audio focus, pausing all calls");
+                    mCore.pauseAllCalls();
+                }
+            } else {
+                Log.w("[Core Manager] Audio focus lost but keeping calls running");
+            }
         }
     }
 
     public void onBluetoothHeadsetStateChanged() {
         Log.i("[Core Manager] Bluetooth headset state changed, reload sound devices");
+        mCore.reloadSoundDevices();
+    }
+
+    public void onHeadsetStateChanged() {
+        Log.i("[Core Manager] Headset state changed, reload sound devices");
         mCore.reloadSoundDevices();
     }
 
@@ -347,7 +363,7 @@ public class CoreManager {
             sb.append(abi).append(", ");
         }
         Log.i(sb.substring(0, sb.length() - 2));
-		Log.i("=========================================");
+        Log.i("=========================================");
     }
 
     private void dumpLinphoneInformation() {
@@ -362,6 +378,6 @@ public class CoreManager {
         Log.i(sb.substring(0, sb.length() - 2));
         Log.i("PACKAGE=", org.linphone.core.BuildConfig.LIBRARY_PACKAGE_NAME);
         Log.i("BUILD TYPE=", org.linphone.core.BuildConfig.BUILD_TYPE);
-		Log.i("=========================================");
+        Log.i("=========================================");
     }
 }

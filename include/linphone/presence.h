@@ -43,8 +43,7 @@ extern "C" {
  * @param activity The #LinphonePresenceActivityType to set for the created presence model.
  * @param description An additional description of the activity (mainly useful for the 'other' activity). Set it to NULL to not add a description. @maybenil
  * @return The created #LinphonePresenceModel, or NULL if an error occured. @maybenil
- * @see linphone_presence_model_new
- * @see linphone_presence_model_new_with_activity_and_note
+ * @see linphone_presence_model_new(), linphone_presence_model_new_with_activity_and_note()
  *
  * The created presence model has the activity specified in the parameters.
  */
@@ -57,8 +56,7 @@ LINPHONE_PUBLIC LinphonePresenceModel * linphone_presence_model_new_with_activit
  * @param note An additional note giving additional information about the contact presence. @notnil
  * @param lang The language the note is written in. It can be set to NULL in order to not specify the language of the note. @maybenil
  * @return The created #LinphonePresenceModel, or NULL if an error occured. @maybenil
- * @see linphone_presence_model_new_with_activity
- * @see linphone_presence_model_new_with_activity_and_note
+ * @see linphone_presence_model_new_with_activity(), linphone_presence_model_new_with_activity_and_note()
  *
  * The created presence model has the activity and the note specified in the parameters.
  */
@@ -209,8 +207,7 @@ LINPHONE_PUBLIC LinphoneConsolidatedPresence linphone_presence_model_get_consoli
 /**
  * Creates a default presence model.
  * @return The created presence model, NULL on error. @maybenil
- * @see linphone_presence_model_new_with_activity
- * @see linphone_presence_model_new_with_activity_and_note
+ * @see linphone_presence_model_new_with_activity(), linphone_presence_model_new_with_activity_and_note()
  *
  * The created presence model is considered 'offline'.
  */
@@ -372,7 +369,7 @@ LINPHONE_PUBLIC bctbx_list_t * linphone_presence_service_get_service_description
 /**
  * Sets the service descriptions of a presence service.
  * @param service The #LinphonePresenceService object for which to set the contact. @notnil
- * @param descriptions \bctbx_list{char *} The service descriptions. @maybenil
+ * @param descriptions The service descriptions. @bctbx_list{char *} @maybenil
  * @return 0 if successful, a value < 0 in case of error.
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_presence_service_set_service_descriptions(LinphonePresenceService *service, bctbx_list_t *descriptions);

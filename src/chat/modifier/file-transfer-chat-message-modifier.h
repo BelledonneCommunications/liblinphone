@@ -64,6 +64,7 @@ public:
 	void cancelFileTransfer ();
 	bool isFileTransferInProgressAndValid () const;
 	std::string createFakeFileTransferFromUrl (const std::string &url);
+	void fileUploadEndBackgroundTask ();
 
 private:
 	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
@@ -71,7 +72,7 @@ private:
 	// Body handler is optional, but if set this method takes owneship of it, even in error cases.
 	int startHttpTransfer (const std::string &url, const std::string &action, belle_sip_body_handler_t *bh, belle_http_request_listener_callbacks_t *cbs);
 	void fileUploadBeginBackgroundTask ();
-	void fileUploadEndBackgroundTask ();
+	
 
 	void onDownloadFailed ();
 	void releaseHttpRequest ();
@@ -84,6 +85,8 @@ private:
 	belle_http_request_t *httpRequest = nullptr;
 	belle_http_request_listener_t *httpListener = nullptr;
 	belle_http_provider_t *provider  = nullptr;
+
+	size_t lastNotifiedPercentage = 0;
 
 	BackgroundTask bgTask;
 };

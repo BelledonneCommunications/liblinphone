@@ -105,7 +105,7 @@ public:
 
 	void enterBackground ();
 	void enterForeground ();
-	bool isInBackground ();
+	bool isInBackground () const;
 
 	// ---------------------------------------------------------------------------
 	// C-Core.
@@ -125,8 +125,8 @@ public:
 	unsigned int getCallCount () const;
 	std::shared_ptr<Call> getCurrentCall () const;
 	LinphoneStatus pauseAllCalls ();
-	void soundcardHintCheck ();
 	void soundcardActivateAudioSession (bool active);
+	void soundcardConfigureAudioSession ();
 	void soundcardEnableCallkit (bool enabled);
 	void soundcardAudioRouteChanged ();
 	LinphoneStatus terminateAllCalls ();
@@ -260,6 +260,8 @@ public:
 	void destroyTimer(belle_sip_source_t *timer);
 
 	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
+	void onStopAsyncBackgroundTaskStarted(); /* Using background task to ensure stop core async ended */
+	void onStopAsyncBackgroundTaskStopped();
 private:
 	Core ();
 

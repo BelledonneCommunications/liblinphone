@@ -362,11 +362,17 @@ shared_ptr<AbstractChatRoom> CorePrivate::createChatRoom(const shared_ptr<ChatRo
 		}
 		ChatRoom::CapabilitiesMask capabilities = ChatRoomParams::toCapabilities(params);
 
-		chatRoom = createBasicChatRoom(ConferenceId(IdentityAddress(participants.front()), localAddr),
-					       capabilities,
-					       params);
-		insertChatRoom(chatRoom);
-		insertChatRoomWithDb(chatRoom);
+		IdentityAddress remoteAddr = IdentityAddress(participants.front());
+		list<IdentityAddress> emptyList;
+		chatRoom = searchChatRoom(params, localAddr, remoteAddr, emptyList);
+
+		if (chatRoom == nullptr) {
+			chatRoom = createBasicChatRoom(ConferenceId(remoteAddr, localAddr), capabilities, params);
+			insertChatRoom(chatRoom);
+			insertChatRoomWithDb(chatRoom);
+		} else {
+			lInfo() << "Found an existing BasicChatRoom with this participant, using it instead of creating a new one";
+		}
 	}
 	return chatRoom;
 }

@@ -33,6 +33,13 @@ extern "C" {
 #endif
 
 /**
+ * Instantiates a new payload type with values from source.
+ * @param[in] source The #LinphonePayloadType object to be cloned. @notnil
+ * @return The newly created #LinphonePayloadType object. @notnil
+ */
+LINPHONE_PUBLIC LinphonePayloadType *linphone_payload_type_clone(const LinphonePayloadType *orig);
+
+/**
  * Take a reference on a #LinphonePayloadType.
  * @param payload_type the #LinphonePayloadType object @notnil
  * @return the same #LinphonePayloadType object @notnil
@@ -92,7 +99,7 @@ LINPHONE_PUBLIC int linphone_payload_type_get_normal_bitrate(const LinphonePaylo
 /**
  * Change the normal bitrate of a payload type..
  * @param payload_type the #LinphonePayloadType object @notnil
- * @param bitrate The new bitrate in bits/s.
+ * @param bitrate The new bitrate in kbits/s.
  */
 LINPHONE_PUBLIC void linphone_payload_type_set_normal_bitrate(LinphonePayloadType *payload_type, int bitrate);
 

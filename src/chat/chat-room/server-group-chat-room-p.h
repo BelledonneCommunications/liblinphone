@@ -178,6 +178,7 @@ private:
 	int unnotifiedRegistrationSubscriptions = 0; /*count of not-yet notified registration subscriptions*/
 	std::shared_ptr<ParticipantDevice> mInitiatorDevice; /*pointer to the ParticipantDevice that is creating the chat room*/
 	bool joiningPendingAfterCreation = false;
+	bool needsUnref = false;
 	std::unordered_map<std::string, std::queue<std::shared_ptr<Message>>> queuedMessages;
 	Utils::Version protocolVersion;
 	L_DECLARE_PUBLIC(ServerGroupChatRoom);

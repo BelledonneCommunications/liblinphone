@@ -21,7 +21,7 @@
 ############################################################################
 
 cmake_minimum_required(VERSION 3.1)
-project(linphone VERSION 4.5.0 LANGUAGES C CXX)
+project(linphone VERSION 5.0.0 LANGUAGES C CXX)
 
 
 set(LINPHONE_MAJOR_VERSION ${PROJECT_VERSION_MAJOR})
@@ -187,7 +187,7 @@ if(ENABLE_LIME)
 	set(HAVE_LIME 1)
 endif()
 if(ENABLE_CXX_WRAPPER OR ENABLE_CSHARP_WRAPPER OR ENABLE_JAVA_WRAPPER OR ENABLE_SWIFT_WRAPPER OR ENABLE_DOC)
-	find_package(PythonInterp REQUIRED)
+	find_package(PythonInterp 3 REQUIRED)
 	check_python_module(pystache)
 	check_python_module(six)
 	if(ENABLE_DOC)

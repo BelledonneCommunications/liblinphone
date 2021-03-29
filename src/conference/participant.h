@@ -90,8 +90,8 @@ public:
 	AbstractChatRoom::SecurityLevel getSecurityLevelExcept(const std::shared_ptr<ParticipantDevice> & ignoredDevice) const;
 
 	const std::list<std::shared_ptr<ParticipantDevice>> &getDevices () const;
-	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu) const;
-	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session);
+	std::shared_ptr<ParticipantDevice> findDevice (const IdentityAddress &gruu, const bool logFailure = true) const;
+	std::shared_ptr<ParticipantDevice> findDevice (const std::shared_ptr<const CallSession> &session, const bool logFailure = true);
 
 	inline void setAdmin (bool isAdmin) { this->isThisAdmin = isAdmin; }
 	bool isAdmin () const;

@@ -74,7 +74,10 @@ static void cleanup_dead_vtable_refs(LinphoneCore *lc){
 		}\
 	}\
 	lc->vtable_notify_recursion--;\
-	if (has_cb) ms_message("Linphone core [%p] notified [%s]",lc,#function_name)
+	if (has_cb) {\
+		if (linphone_core_get_global_state(lc) == LinphoneGlobalStartup) { ms_debug("Linphone core [%p] notified [%s]",lc,#function_name); }\
+		else { ms_message("Linphone core [%p] notified [%s]",lc,#function_name); }\
+	}
 
 #define NOTIFY_IF_EXIST_INTERNAL(function_name, internal_val, ...) \
 	bctbx_list_t* iterator; \
@@ -158,6 +161,11 @@ void linphone_core_notify_authentication_requested(LinphoneCore *lc, LinphoneAut
 
 void linphone_core_notify_call_log_updated(LinphoneCore *lc, LinphoneCallLog *newcl) {
 	NOTIFY_IF_EXIST(call_log_updated, lc, newcl);
+	cleanup_dead_vtable_refs(lc);
+}
+
+void linphone_core_notify_call_id_updated(LinphoneCore *lc, const char*previous, const char *current) {
+	NOTIFY_IF_EXIST(call_id_updated, lc, previous, current);
 	cleanup_dead_vtable_refs(lc);
 }
 #if __clang__ || ((__GNUC__ == 4 && __GNUC_MINOR__ >= 6) || __GNUC__ > 4)

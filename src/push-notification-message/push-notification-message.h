@@ -27,15 +27,14 @@ LINPHONE_BEGIN_NAMESPACE
 
 class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotificationMessage, PushNotificationMessage> {
   public:
-	PushNotificationMessage(bool isUsingUserDefaults, const std::string &callId, bool isText,
+	PushNotificationMessage(const std::string &callId, bool isText,
 							const std::string &textContent, const std::string &subject, const std::string &fromAddr,
 							const std::string &localAddr, const std::string &peerAddr);
 
-	void init(bool isUsingUserDefaults, const std::string &callId, bool isText, const std::string &textContent,
+	void init(const std::string &callId, bool isText, const std::string &textContent,
 			  const std::string &subject, const std::string &fromAddr, const std::string &localAddr,
 			  const std::string &peerAddr);
 
-	bool isUsingUserDefaults() const;
 	const std::string &getCallId() const;
 	bool isText() const;
 	const std::string &getTextContent() const;
@@ -47,7 +46,6 @@ class PushNotificationMessage : public bellesip::HybridObject<LinphonePushNotifi
 	std::string toString() const override;
 
   private:
-	bool mIsUsingUserDefaults;
 	std::string mCallId;
 	bool mIsText;
 	std::string mTextContent;

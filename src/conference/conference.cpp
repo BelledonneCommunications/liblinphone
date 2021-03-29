@@ -23,6 +23,7 @@
 #include "content/content.h"
 #include "content/content-disposition.h"
 #include "content/content-type.h"
+#include "core/core.h"
 #include "logger/logger.h"
 #include "participant.h"
 
@@ -182,6 +183,7 @@ shared_ptr<Participant> Conference::findParticipant (const IdentityAddress &addr
 		}
 	}
 
+	lInfo() << "Unable to find participant in conference " << this << " with address " << addr.asString();
 	return nullptr;
 }
 
@@ -191,6 +193,7 @@ shared_ptr<Participant> Conference::findParticipant (const shared_ptr<const Call
 		if (participant->getSession() == session)
 			return participant;
 	}
+	lInfo() << "Unable to find participant in conference " << this << " with call session " << session;
 
 	return nullptr;
 }
@@ -203,6 +206,8 @@ shared_ptr<ParticipantDevice> Conference::findParticipantDevice (const shared_pt
 				return device;
 		}
 	}
+
+	lInfo() << "Unable to find participant device in conference " << this << " with call session " << session;
 
 	return nullptr;
 }
@@ -392,7 +397,11 @@ shared_ptr<ConferenceParticipantDeviceEvent> Conference::notifyParticipantDevice
 
 void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	if (this->state != state) {
-		lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+			lDebug() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		} else {
+			lInfo() << "Switching conference [" << this << "] from state " << this->state << " to " << state;
+		}
 		this->state = state;
 		notifyStateChanged(state);
 	}

@@ -31,8 +31,8 @@ import org.linphone.mediastream.Log;
 public class H264Helper {
     private static String FILTER_NAME_OPENH264_ENC = "MSOpenH264Enc" ;
     private static String FILTER_NAME_OPENH264_DEC = "MSOpenH264Dec" ;
-    private static String FILTER_NAME_MEDIA_CODEC_ENC = "MSMediaCodecH264Enc" ;
-    private static String FILTER_NAME_MEDIA_CODEC_DEC = "MSMediaCodecH264Dec" ;
+    private static String FILTER_NAME_MEDIA_CODEC_ENC = "MediaCodecH264Encoder" ;
+    private static String FILTER_NAME_MEDIA_CODEC_DEC = "MediaCodecH264Decoder" ;
 
     public static String MODE_AUTO = "Auto" ;
     public static String MODE_OPENH264 = "OpenH264" ;

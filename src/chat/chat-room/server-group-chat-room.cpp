@@ -195,15 +195,25 @@ void ServerGroupChatRoomPrivate::requestDeletion(){
 	shared_ptr<ChatRoom> chatRoom(q->getSharedFromThis()); // Take a shared_ptr here, because onChatRoomDeleteRequested() may destroy our chatroom otherwise.
 	chatRoomListener->onChatRoomDeleteRequested(chatRoom);
 	/*
-	 * The LinphoneChatRoom (C object) is also built when the ServerGroupChatRoom is created, which is unnecessary here, but
-	 * this is consistent with other kind of chatrooms.
+	 * The LinphoneChatRoom (C object) is also built when the ServerGroupChatRoom is created upon receiving an INVITE. The "wrap mode" is set to external
+	 * in this case. Not really a good choice.
+	 * However, when the chatroom is created while loading data from mysql database, the C object is not created and then the "wrap mode" will be set to
+	 * internal.
+	 * The best solution would have been to change the creation of server group chat room when receiving an INVITE.
+	 * To minimize risks, I prefer to create a dirty hack here. The C wrapping will be moved to HybridObject soon, with which no "external" or "internal" 
+	 * concepts exists (because we don't care about it). So that explicit unref() shall be removed after moving to HybridObject<>.
 	 * The destruction is defered to next main loop iteration, in order to make the self-destruction outside of the call stack that leaded to it.
 	 * TODO: remove this after switching chatrooms to HybridObject.
 	 */
-	q->getCore()->doLater([chatRoom](){
+	if (needsUnref){
 		LinphoneChatRoom * cChatRoom = L_GET_C_BACK_PTR(chatRoom);
-		if (cChatRoom) linphone_chat_room_unref(cChatRoom);
-	});
+		/* If the chatroom was created as "external" mode, explicitely unref the C object to destroy it.*/
+		if (cChatRoom){
+			q->getCore()->doLater([cChatRoom](){
+				linphone_chat_room_unref(cChatRoom);
+			});
+		}
+	}
 }
 
 /*
@@ -726,7 +736,7 @@ void ServerGroupChatRoomPrivate::determineProtocolVersion(){
 
 void ServerGroupChatRoomPrivate::addParticipantDevice (const shared_ptr<Participant> &participant, const shared_ptr<ParticipantDeviceIdentity> &deviceInfo) {
 	L_Q();
-	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo->getAddress());
+	shared_ptr<ParticipantDevice> device = participant->findDevice(deviceInfo->getAddress(), false);
 
 	if (device) {
 		// Nothing to do, but set the name and capabilities because they are not known for the initiator device.
@@ -1197,6 +1207,13 @@ ServerGroupChatRoom::ServerGroupChatRoom (const shared_ptr<Core> &core, SalCallO
 	shared_ptr<CallSession> session = getMe()->createSession(*getConference().get(), nullptr, false, d);
 	session->configure(LinphoneCallIncoming, nullptr, op, Address(op->getFrom()), Address(op->getTo()));
 	d->protocolVersion = CorePrivate::groupChatProtocolVersion;
+	
+	/*
+	 * HACK: see comment in ServerGroupChatRoomPrivate::requestDeletion() for details.
+	 * When this constructor is used, a reference to the C object is given to the core.
+	 * Thus, remember that it will have to be released.
+	 */
+	d->needsUnref = true;
 }
 
 ServerGroupChatRoom::ServerGroupChatRoom (
@@ -1246,6 +1263,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const shared_ptr<c
 		if (device || (participant->getSession() == session))
 			return participant;
 	}
+	lInfo() << "Unable to find participant in server group chat room " << this << " with call session " << session;
 	return nullptr;
 }
 
@@ -1256,6 +1274,7 @@ shared_ptr<Participant> ServerGroupChatRoom::findParticipant (const IdentityAddr
 		if (participant->getAddress() == searchedAddr)
 			return participant;
 	}
+	lInfo() << "Unable to find participant in server group chat room " << this << " with address " << participantAddress.asString();
 	return nullptr;
 }
 

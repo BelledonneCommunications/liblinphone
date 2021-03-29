@@ -97,7 +97,7 @@ LINPHONE_PUBLIC	int linphone_dial_plan_lookup_ccc_from_e164(const char* e164);
 
 /**
  * Returns a list of all known dial plans
- * @return \bctbx_list{LinphoneDialPlan} of all known dial plans @notnil
+ * @return The list of all known dial plans. \bctbx_list{LinphoneDialPlan} @notnil
 **/
 LINPHONE_PUBLIC bctbx_list_t * linphone_dial_plan_get_all_list(void);
 

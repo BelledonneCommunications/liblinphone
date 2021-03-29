@@ -428,8 +428,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 		ms_fatal("Could not find file %s in path %s, did you configured resources directory correctly?", mgr->rc_path, bc_tester_get_resource_dir_prefix());
 	}
 	LinphoneConfig * config = linphone_factory_create_config_with_factory(linphone_factory_get(), mgr->rc_local, filepath);
-	// clean
-	if (filepath) bctbx_free(filepath);
+	
 	linphone_config_set_string(config, "storage", "backend", "sqlite3");
 	linphone_config_set_string(config, "storage", "uri", mgr->database_path);
 	linphone_config_set_string(config, "storage", "call_logs_db_uri", mgr->call_logs_database_path);
@@ -438,6 +437,7 @@ LinphoneCore *linphone_core_manager_configure_lc(LinphoneCoreManager *mgr) {
 	lc = configure_lc_from(mgr->cbs, bc_tester_get_resource_dir_prefix(), config, mgr);
 
 	linphone_config_unref(config);
+	if (filepath) bctbx_free(filepath);
 	return lc;
 }
 
@@ -999,6 +999,19 @@ static LinphoneStatus check_participant_removal(bctbx_list_t * lcs, LinphoneCore
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminationPending,(conf_initial_stats.number_of_LinphoneConferenceStateTerminationPending + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateTerminated,(conf_initial_stats.number_of_LinphoneConferenceStateTerminated + 1),10000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneConferenceStateDeleted,(conf_initial_stats.number_of_LinphoneConferenceStateDeleted + 1),10000));
+
+				if (conf_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(conf_call));
+					BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_call));
+				}
+
+				LinphoneCall * participant_call = linphone_core_get_call_by_remote_address2(m->lc, conf_mgr->identity);
+				BC_ASSERT_PTR_NOT_NULL(participant_call);
+
+				if (participant_call) {
+					BC_ASSERT_PTR_NULL(linphone_call_get_conference(participant_call));
+					BC_ASSERT_FALSE(linphone_call_is_in_conference(participant_call));
+				}
 
 				bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
 				if (conf_event_log_enabled) {
@@ -1891,6 +1904,10 @@ void message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMess
 			message_external_body_url=NULL;
 		}
 	}
+	
+	if (linphone_config_get_bool(linphone_core_get_config(lc), "net", "bad_net", 0)) {
+		sal_set_send_error(linphone_core_get_sal(lc), 1500);
+	}
 }
 
 void is_composing_received(LinphoneCore *lc, LinphoneChatRoom *room) {
@@ -2442,6 +2459,36 @@ void file_transfer_progress_indication(LinphoneChatMessage *msg, LinphoneContent
 	stats *counters = get_stats(lc);
 	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
 
+	if (progress == 0) {
+		counters->number_of_LinphoneFileTransfer = 0;
+	}
+	counters->number_of_LinphoneFileTransfer++;
+
+	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
+	bctbx_message(
+		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
+		progress,
+		linphone_chat_message_is_outgoing(msg) ? "sent" : "received",
+		linphone_content_get_type(content),
+		linphone_content_get_subtype(content),
+		linphone_chat_message_is_outgoing(msg) ? "to" : "from",
+		address
+	);
+	counters->progress_of_LinphoneFileTransfer = progress;
+	if (progress == 100) {
+		counters->number_of_LinphoneFileTransferDownloadSuccessful++;
+		BC_ASSERT_LOWER(counters->number_of_LinphoneFileTransfer, 100, int, "%d");
+	}
+	free(address);
+}
+void file_transfer_progress_indication_2(LinphoneChatMessage *msg, LinphoneContent* content, size_t offset, size_t total) {
+	const LinphoneAddress *from_address = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *to_address = linphone_chat_message_get_to_address(msg);
+	int progress = (int)((offset * 100)/total);
+	LinphoneCore *lc = linphone_chat_message_get_core(msg);
+	stats *counters = get_stats(lc);
+	char *address = linphone_address_as_string(linphone_chat_message_is_outgoing(msg) ? to_address : from_address);
+
 	BC_ASSERT_EQUAL(linphone_chat_message_get_state(msg), LinphoneChatMessageStateFileTransferInProgress, int, "%d");
 	bctbx_message(
 		"File transfer  [%d%%] %s of type [%s/%s] %s [%s] \n",
@@ -2711,7 +2758,10 @@ bool_t call_with_params2(LinphoneCoreManager* caller_mgr
 			&& linphone_core_get_firewall_policy(callee_mgr->lc) == LinphonePolicyUseIce
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
 			&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed", TRUE)
-			&& linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS /*no ice-reinvite with DTLS*/) {
+			&& ( linphone_core_get_media_encryption(caller_mgr->lc) != LinphoneMediaEncryptionDTLS 
+				|| (linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)
+				&& linphone_config_get_int(linphone_core_get_config(callee_mgr->lc), "sip", "update_call_when_ice_completed_with_dtls", FALSE)) )
+			) {
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&caller_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_caller.number_of_LinphoneCallStreamsRunning+2));
 		BC_ASSERT_TRUE(wait_for(callee_mgr->lc,caller_mgr->lc,&callee_mgr->stat.number_of_LinphoneCallStreamsRunning,initial_callee.number_of_LinphoneCallStreamsRunning+2));
 

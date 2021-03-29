@@ -164,6 +164,27 @@ void CorePrivate::unregisterListener (CoreListener *listener) {
 	listeners.remove(listener);
 }
 
+void Core::onStopAsyncBackgroundTaskStarted() {
+	L_D();
+	d->stopAsyncEndEnabled = false;
+
+	function<void()> stopAsyncEnd = [d]() {
+		if (linphone_core_get_global_state(d->getCCore()) == LinphoneGlobalShutdown) {
+			_linphone_core_stop_async_end(d->getCCore());
+		}
+	};
+	function<void()> enableStopAsyncEnd = [d]() {
+		d->stopAsyncEndEnabled = true;
+	};
+
+	d->bgTask.start(getSharedFromThis(), stopAsyncEnd, enableStopAsyncEnd, linphone_config_get_int(linphone_core_get_config(getCCore()), "misc", "max_stop_async_time", 10));
+}
+
+void Core::onStopAsyncBackgroundTaskStopped() {
+	L_D();
+	d->bgTask.stop();
+}
+
 // Called by linphone_core_iterate() to check that aynchronous tasks are done.
 // It is used to give a chance to end asynchronous tasks during core stop
 // or to make sure that asynchronous tasks are finished during an aynchronous core stop.
@@ -180,6 +201,13 @@ bool CorePrivate::isShutdownDone() {
 		if (list->event) {
 			return false;
 		}
+	}
+
+
+	// Sometimes (bad network for example), backgrounds for chat message (imdn, delivery ...) take too much time.
+	// In this case, forece linphonecore to off. Using "stop core async end" background task to do this.
+	if (stopAsyncEndEnabled) {
+		return true;
 	}
 
 	for (auto it = chatRoomsById.begin(); it != chatRoomsById.end(); it++) {
@@ -261,6 +289,11 @@ void CorePrivate::uninit() {
 				}
 			}
 #endif
+			// end all file transfer background tasks before linphonecore off
+			const auto &chatRoomPrivate = cr->getPrivate();
+			for (auto &chatMessage : chatRoomPrivate->getTransientChatMessages()) {
+				chatMessage->fileUploadEndBackgroundTask();
+			}
 		}
 	}
 
@@ -319,6 +352,7 @@ void CorePrivate::notifyEnteringBackground () {
 	if (isInBackground)
 		return;
 
+	ms_message("Core [%p] notify enter background", q);
 	isInBackground = true;
 	auto listenersCopy = listeners; // Allow removal of a listener in its own call
 	for (const auto &listener : listenersCopy)
@@ -329,8 +363,7 @@ void CorePrivate::notifyEnteringBackground () {
 
 #if TARGET_OS_IPHONE
 	LinphoneCore *lc = L_GET_C_BACK_PTR(q);
-	// Stop the video preview
-	linphone_core_enable_video_preview(lc, FALSE);
+	/* Stop the dtmf stream in case it was started.*/
 	linphone_core_stop_dtmf_stream(lc);
 #endif
 }
@@ -356,13 +389,6 @@ void CorePrivate::notifyEnteringForeground () {
 	if (q->isFriendListSubscriptionEnabled())
 		enableFriendListsSubscription(true);
 
-#if TARGET_OS_IPHONE
-	linphone_core_start_dtmf_stream(lc);
-	/*start the video preview in case we are in the main view*/
-	if (linphone_core_video_display_enabled(lc) && linphone_config_get_bool(lc->config, "app", "preview_preference", 0)) {
-		linphone_core_enable_video_preview(lc, TRUE);
-	}
-#endif
 }
 
 belle_sip_main_loop_t *CorePrivate::getMainLoop(){
@@ -539,7 +565,7 @@ void Core::enterForeground () {
 	d->notifyEnteringForeground();
 }
 
-bool Core::isInBackground () {
+bool Core::isInBackground () const {
 	L_D();
 	return d->isInBackground;
 }

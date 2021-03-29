@@ -339,7 +339,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_call_send_dtmfs (LinphoneCall *call, con
  * Stop current DTMF sequence sending.
  *
  * Please note that some DTMF could be already sent,
- * depending on when this function call is delayed from #linphone_call_send_dtmfs. This
+ * depending on when this function call is delayed from #linphone_call_send_dtmfs(). This
  * function will be automatically called if call state change to anything but LinphoneCallStreamsRunning.
  * @param call The #LinphoneCall object @notnil
 **/

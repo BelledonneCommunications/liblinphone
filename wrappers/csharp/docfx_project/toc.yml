@@ -1,0 +1,4 @@
+- name: Api Documentation
+  href: api/
+  # Default was api/index.md but we prefer to jump directly to api/Linphone.html page
+  homepage: api/Linphone.html

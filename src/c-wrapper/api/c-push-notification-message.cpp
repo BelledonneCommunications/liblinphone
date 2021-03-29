@@ -23,13 +23,12 @@
 
 using namespace LinphonePrivate;
 
-LinphonePushNotificationMessage *linphone_push_notification_message_new(bool_t is_using_user_defaults,
-																		const char *call_id, bool_t is_text,
+LinphonePushNotificationMessage *linphone_push_notification_message_new(const char *call_id, bool_t is_text,
 																		const char *text_content, const char *subject,
 																		const char *from_addr, const char *local_addr,
 																		const char *peer_addr) {
 	return PushNotificationMessage::createCObject(
-		is_using_user_defaults, call_id ? call_id : "", is_text, text_content ? text_content : "",
+		call_id ? call_id : "", is_text, text_content ? text_content : "",
 		subject ? subject : "", from_addr ? from_addr : "", local_addr ? local_addr : "", peer_addr ? peer_addr : "");
 }
 
@@ -45,10 +44,6 @@ void linphone_push_notification_message_unref(LinphonePushNotificationMessage *m
 	if (msg) {
 		PushNotificationMessage::toCpp(msg)->unref();
 	}
-}
-
-bool_t linphone_push_notification_message_is_using_user_defaults(const LinphonePushNotificationMessage *msg) {
-	return PushNotificationMessage::toCpp(msg)->isUsingUserDefaults();
 }
 
 const char *linphone_push_notification_message_get_call_id(const LinphonePushNotificationMessage *msg) {

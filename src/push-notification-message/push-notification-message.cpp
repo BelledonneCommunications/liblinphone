@@ -23,19 +23,18 @@ using namespace std;
 
 LINPHONE_BEGIN_NAMESPACE
 
-PushNotificationMessage::PushNotificationMessage(bool isUsingUserDefaults, const std::string &callId, bool isText,
+PushNotificationMessage::PushNotificationMessage(const std::string &callId, bool isText,
 												 const std::string &textContent, const std::string &subject,
 												 const std::string &fromAddr, const std::string &localAddr,
 												 const std::string &peerAddr) {
-	PushNotificationMessage::init(isUsingUserDefaults, callId, isText, textContent, subject, fromAddr, localAddr,
+	PushNotificationMessage::init(callId, isText, textContent, subject, fromAddr, localAddr,
 								  peerAddr);
 }
 
-void PushNotificationMessage::init(bool isUsingUserDefaults, const std::string &callId, bool isText,
+void PushNotificationMessage::init(const std::string &callId, bool isText,
 								   const std::string &textContent, const std::string &subject,
 								   const std::string &fromAddr, const std::string &localAddr,
 								   const std::string &peerAddr) {
-	mIsUsingUserDefaults = isUsingUserDefaults;
 	mCallId = callId;
 	mIsText = isText;
 	mTextContent = textContent;
@@ -43,10 +42,6 @@ void PushNotificationMessage::init(bool isUsingUserDefaults, const std::string &
 	mFromAddr = fromAddr;
 	mLocalAddr = localAddr;
 	mPeerAddr = peerAddr;
-}
-
-bool PushNotificationMessage::isUsingUserDefaults() const {
-	return mIsUsingUserDefaults;
 }
 
 const std::string &PushNotificationMessage::getCallId() const {

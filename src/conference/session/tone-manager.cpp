@@ -441,7 +441,7 @@ void ToneManager::doStartRingbackTone(const std::shared_ptr<CallSession> &sessio
 
 	if (lc->sound_conf.remote_ring) {
 		ms_snd_card_set_stream_type(ringCard, MS_SND_CARD_STREAM_VOICE);
-		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, ringCard);
+		lc->ringstream = ring_start(lc->factory, lc->sound_conf.remote_ring, 2000, (lc->use_files) ? NULL : ringCard);
 	}
 
 }
@@ -702,17 +702,20 @@ MSFilter *ToneManager::getAudioResource(AudioResourceType rtype, MSSndCard *card
 		tmp = 0.1f;
 	#endif
 		float amp = linphone_config_get_float(lc->config, "sound", "dtmf_player_amp", tmp);
-		MSSndCard *ringcard = lc->sound_conf.lsd_card
+		MSSndCard *ringcard = NULL;
+		
+		if (!lc->use_files) {
+			ringcard = lc->sound_conf.lsd_card
 			? lc->sound_conf.lsd_card
 			: card
 				? card
 				: lc->sound_conf.ring_sndcard;
-
-		if (ringcard == NULL) return NULL;
+			if (ringcard == NULL) return NULL;
+			ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_DTMF);
+		}
 		if (!create) return NULL;
 
-		ms_snd_card_set_stream_type(ringcard, MS_SND_CARD_STREAM_DTMF);
-		ringstream = lc->ringstream = ring_start(lc->factory, NULL, 0, ringcard);
+		ringstream = lc->ringstream = ring_start(lc->factory, NULL, 0, ringcard); // passing a NULL ringcard if core if lc->use_files is enabled
 		ms_filter_call_method(lc->ringstream->gendtmf, MS_DTMF_GEN_SET_DEFAULT_AMPLITUDE, &amp);
 	} else {
 		ringstream = lc->ringstream;

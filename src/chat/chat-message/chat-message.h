@@ -142,6 +142,7 @@ public:
 
 	bool downloadFile (FileTransferContent *content);
 	bool isFileTransferInProgress () const;
+	void fileUploadEndBackgroundTask ();
 
 protected:
 	explicit ChatMessage (ChatMessagePrivate &p);

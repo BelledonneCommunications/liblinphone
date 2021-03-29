@@ -122,7 +122,7 @@ static void ReleaseStringUTFChars (JNIEnv *env, jstring string, const char *cstr
 jmethodID AndroidPlatformHelpers::getMethodId (JNIEnv *env, jclass klass, const char *method, const char *signature) {
 	jmethodID id = env->GetMethodID(klass, method, signature);
 	if (id == 0)
-		lFatal() << "Could not find java method: `" << method << ", " << signature << "`.";
+		lFatal() << "[Android Platform Helper] Could not find java method: `" << method << ", " << signature << "`.";
 	return id;
 }
 
@@ -134,7 +134,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/service/CoreManager");
 	if (!klass) {
-		lError() << "Could not find java CoreManager class.";
+		lError() << "[Android Platform Helper] Could not find java CoreManager class.";
 		return;
 	}
 
@@ -143,7 +143,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	jobject javaCore = ::LinphonePrivate::getCore(env, lc, FALSE);
 	mJavaCoreManager = env->NewObject(klass, ctor, (jobject)systemContext, (jobject)javaCore);
 	if (!mJavaCoreManager) {
-		lError() << "Could not instanciate CoreManager object.";
+		lError() << "[Android Platform Helper] Could not instanciate CoreManager object.";
 		return;
 	}
 	mJavaCoreManager = (jobject)env->NewGlobalRef(mJavaCoreManager);
@@ -154,7 +154,7 @@ void AndroidPlatformHelpers::createCoreManager (std::shared_ptr<LinphonePrivate:
 	mStartAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "startAudioForEchoTestOrCalibration", "()V");
 	mStopAudioForEchoTestOrCalibrationId = getMethodId(env, klass, "stopAudioForEchoTestOrCalibration", "()V");
 
-	lInfo() << "CoreManager is fully initialised.";
+	lInfo() << "[Android Platform Helper] CoreManager is fully initialised.";
 }
 
 void AndroidPlatformHelpers::destroyCoreManager () {
@@ -162,7 +162,7 @@ void AndroidPlatformHelpers::destroyCoreManager () {
 		JNIEnv *env = ms_get_jni_env();
 		env->DeleteGlobalRef(mJavaCoreManager);
 		mJavaCoreManager = nullptr;
-		lInfo() << "AndroidCoreManager has been destroyed.";
+		lInfo() << "[Android Platform Helper] CoreManager has been destroyed.";
 	}
 }
 
@@ -174,12 +174,12 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 	JNIEnv *env = ms_get_jni_env();
 	jclass klass = env->FindClass("org/linphone/core/tools/AndroidPlatformHelper");
 	if (!klass)
-		lFatal() << "Could not find java AndroidPlatformHelper class.";
+		lFatal() << "[Android Platform Helper] Could not find java AndroidPlatformHelper class.";
 
 	jmethodID ctor = env->GetMethodID(klass, "<init>", "(JLjava/lang/Object;Z)V");
 	mJavaHelper = env->NewObject(klass, ctor, (jlong)this, (jobject)systemContext, (jboolean)linphone_core_wifi_only_enabled(getCore()->getCCore()));
 	if (!mJavaHelper) {
-		lError() << "Could not instanciate AndroidPlatformHelper object.";
+		lError() << "[Android Platform Helper] Could not instanciate AndroidPlatformHelper object.";
 		return;
 	}
 	mJavaHelper = (jobject)env->NewGlobalRef(mJavaHelper);
@@ -207,7 +207,7 @@ AndroidPlatformHelpers::AndroidPlatformHelpers (std::shared_ptr<LinphonePrivate:
 
 	linphone_factory_set_top_resources_dir(linphone_factory_get() , getDataPath().append("share").c_str());
 	linphone_factory_set_msplugins_dir(linphone_factory_get(), getNativeLibraryDir().c_str());
-	lInfo() << "AndroidPlatformHelpers is fully initialised.";
+	lInfo() << "[Android Platform Helper] AndroidPlatformHelper is fully initialised.";
 
 	mPreviewVideoWindow = nullptr;
 	mVideoWindow = nullptr;
@@ -222,7 +222,7 @@ AndroidPlatformHelpers::~AndroidPlatformHelpers () {
 		env->DeleteGlobalRef(mJavaHelper);
 		mJavaHelper = nullptr;
 	}
-	lInfo() << "AndroidPlatformHelpers has been destroyed.";
+	lInfo() << "[Android Platform Helper] AndroidPlatformHelper has been destroyed.";
 }
 
 // -----------------------------------------------------------------------------
@@ -361,19 +361,25 @@ void AndroidPlatformHelpers::setHttpProxy(const string &host, int port) {
 
 void AndroidPlatformHelpers::setDnsServers () {
 	if (!mJavaHelper) {
-		lError() << "AndroidPlatformHelpers' mJavaHelper is null.";
+		lError() << "[Android Platform Helper] mJavaHelper is null.";
 		return;
 	}
-	if (linphone_core_get_dns_set_by_app(getCore()->getCCore())) return;
+
+	if (linphone_core_get_dns_set_by_app(getCore()->getCCore())) {
+		lWarning() << "[Android Platform Helper] Detected DNS servers have been overriden by app.";
+		return;
+	}
+
 	JNIEnv *env = ms_get_jni_env();
 	if (env) {
 		jobjectArray jservers = (jobjectArray)env->CallObjectMethod(mJavaHelper, mGetDnsServersId);
 		bctbx_list_t *l = nullptr;
 		if (env->ExceptionCheck()) {
 			env->ExceptionClear();
-			lError() << "AndroidPlatformHelpers::setDnsServers() exception.";
+			lError() << "[Android Platform Helper] setDnsServers() exception.";
 			return;
 		}
+
 		if (jservers != nullptr) {
 			int count = env->GetArrayLength(jservers);
 
@@ -381,15 +387,16 @@ void AndroidPlatformHelpers::setDnsServers () {
 				jstring jserver = (jstring)env->GetObjectArrayElement(jservers, i);
 				const char *str = GetStringUTFChars(env, jserver);
 				if (str) {
-					lInfo() << "AndroidPlatformHelpers found DNS server " << str;
+					lInfo() << "[Android Platform Helper] Found DNS server " << str;
 					l = bctbx_list_append(l, ms_strdup(str));
 					ReleaseStringUTFChars(env, jserver, str);
 				}
 			}
 		} else {
-			lError() << "AndroidPlatformHelpers::setDnsServers() failed to get DNS servers list";
+			lError() << "[Android Platform Helper] setDnsServers() failed to get DNS servers list";
 			return;
 		}
+		
 		linphone_core_set_dns_servers(getCore()->getCCore(), l);
 		bctbx_list_free_with_data(l, ms_free);
 	}

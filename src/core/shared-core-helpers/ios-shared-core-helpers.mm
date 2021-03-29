@@ -103,7 +103,7 @@ public:
 	void clearCallIdList();
 	void addNewCallIdToList(string callId);
 	void removeCallIdFromList(string callId);
-	void setChatRoomInvite(shared_ptr<ChatRoom> chatRoom);
+	void setChatRoomInvite(shared_ptr<ChatRoom> chatRoom) override;
 	string getChatRoomAddr();
 	void reinitTimer();
 
@@ -317,49 +317,49 @@ void IosSharedCoreHelpers::cleanUserDefaultsMessages() {
 
 void IosSharedCoreHelpers::putMsgInUserDefaults(LinphoneChatMessage *msg) {
    	lInfo() << "[push] " << __FUNCTION__ << " msg: [" << msg << "]";
-	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
-		NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
-		NSMutableDictionary *messages;
 
-		NSDictionary *msgDictionary = [defaults dictionaryForKey:@"messages"];
-		if (msgDictionary == nil) {
-			messages = [[NSMutableDictionary alloc] init];
-		} else {
-			messages = [[NSMutableDictionary alloc] initWithDictionary:msgDictionary];
-		}
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+	NSMutableDictionary *messages;
 
-		NSString *callId = [NSString stringWithUTF8String:linphone_chat_message_get_call_id(msg)];
-
-		NSNumber *isText = [NSNumber numberWithBool:((BOOL) linphone_chat_message_is_text(msg))];
-		const char *cTextContent = linphone_chat_message_get_utf8_text(msg);
-		NSString *textContent = [NSString stringWithUTF8String: cTextContent ? cTextContent : ""];
-		NSString *subject;
-		LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(linphone_chat_message_get_chat_room(msg));
-		if (capabilities & LinphoneChatRoomCapabilitiesOneToOne) {
-			subject = @"";
-		} else {
-			const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(msg));
-			subject = [NSString stringWithUTF8String: cSubject ? cSubject : ""];
-		}
-
-		const LinphoneAddress *cFromAddr = linphone_chat_message_get_from_address(msg);
-		const LinphoneAddress *cLocalAddr = linphone_chat_message_get_local_address(msg);
-		const LinphoneAddress *cPeerAddr = linphone_chat_message_get_peer_address(msg);
-		NSString *fromAddr = [NSString stringWithUTF8String:linphone_address_as_string(cFromAddr)];
-		NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
-		NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
-		NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
-
-		NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, nil]
-								forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", nil]];
-
-		[messages setObject:newMsg forKey:callId];
-		[defaults setObject:messages forKey:@"messages"];
-		lInfo() << "[push] add " << linphone_chat_message_get_call_id(msg) << " into UserDefaults[messages]. nb of msg:" << [messages count];
-		[defaults release];
+	NSDictionary *msgDictionary = [defaults dictionaryForKey:@"messages"];
+	if (msgDictionary == nil) {
+		messages = [[NSMutableDictionary alloc] init];
+	} else {
+		messages = [[NSMutableDictionary alloc] initWithDictionary:msgDictionary];
 	}
 
-	if (getSharedCoreState() == mainCoreStarted) notifyMessageReceived((mAppGroupId == TEST_GROUP_ID) ? "" : linphone_chat_message_get_call_id(msg));
+	NSString *callId = [NSString stringWithUTF8String:linphone_chat_message_get_call_id(msg)];
+
+	NSNumber *isText = [NSNumber numberWithBool:((BOOL) linphone_chat_message_is_text(msg))];
+	const char *cTextContent = linphone_chat_message_get_utf8_text(msg);
+	NSString *textContent = [NSString stringWithUTF8String: cTextContent ? cTextContent : ""];
+	NSString *subject;
+	LinphoneChatRoomCapabilitiesMask capabilities = linphone_chat_room_get_capabilities(linphone_chat_message_get_chat_room(msg));
+	if (capabilities & LinphoneChatRoomCapabilitiesOneToOne) {
+		subject = @"";
+	} else {
+		const char *cSubject = linphone_chat_room_get_subject(linphone_chat_message_get_chat_room(msg));
+		subject = [NSString stringWithUTF8String: cSubject ? cSubject : ""];
+	}
+
+	const LinphoneAddress *cFromAddr = linphone_chat_message_get_from_address(msg);
+	const LinphoneAddress *cLocalAddr = linphone_chat_message_get_local_address(msg);
+	const LinphoneAddress *cPeerAddr = linphone_chat_message_get_peer_address(msg);
+	NSString *fromAddr = [NSString stringWithUTF8String:linphone_address_as_string(cFromAddr)];
+	NSString *localAddr = [NSString stringWithUTF8String:linphone_address_as_string(cLocalAddr)];
+	NSString *peerAddr = [NSString stringWithUTF8String:linphone_address_as_string(cPeerAddr)];
+	NSNumber *ttl = [NSNumber numberWithUnsignedLongLong:ms_get_cur_time_ms()];
+
+	NSDictionary *newMsg = [NSDictionary dictionaryWithObjects:[NSArray arrayWithObjects:isText, textContent, subject, fromAddr, localAddr, peerAddr, ttl, nil]
+							forKeys:[NSArray arrayWithObjects:@"isText", @"textContent", @"subject", @"fromAddr", @"localAddr", @"peerAddr", @"ttl", nil]];
+
+	[messages setObject:newMsg forKey:callId];
+	[defaults setObject:messages forKey:@"messages"];
+	lInfo() << "[push] add " << linphone_chat_message_get_call_id(msg) << " into UserDefaults[messages]. nb of msg:" << [messages count];
+	[defaults release];
+
+
+	if (getSharedCoreState() == mainCoreStarted) notifyMessageReceived(linphone_chat_message_get_call_id(msg));
 }
 
 shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(const string &callId) {
@@ -370,44 +370,34 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::fetchUserDefaultsMsg(c
 	string localAddr;
 	string peerAddr;
 
-	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
-		NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
-		NSString *objcCallId = [NSString stringWithUTF8String:callId.c_str()];
-		NSMutableDictionary *messages = [[NSMutableDictionary alloc] initWithDictionary:[defaults dictionaryForKey:@"messages"]];
-		lInfo() << "[push] " << __FUNCTION__ << " userDefaults messages: [" << messages << "]";
+	NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:@(mAppGroupId.c_str())];
+	NSString *objcCallId = [NSString stringWithUTF8String:callId.c_str()];
+	NSMutableDictionary *messages = [[NSMutableDictionary alloc] initWithDictionary:[defaults dictionaryForKey:@"messages"]];
+	lInfo() << "[push] " << __FUNCTION__ << " userDefaults messages: [" << messages << "]";
 
-		NSDictionary *msgData = NULL;
-		msgData = [messages objectForKey:objcCallId];
+	NSDictionary *msgData = NULL;
+	msgData = [messages objectForKey:objcCallId];
 
-		if (msgData == nil) {
-			lInfo() << "[push] message data not found for callId : [" << callId.c_str() << "]";
-			return nullptr;
-		} else {
-			lInfo() << "[push] found message data for callId : [" << callId.c_str() << "]";
-		}
-
-		isText = [msgData[@"isText"] boolValue];
-		textContent = [[NSString stringWithString:msgData[@"textContent"]] UTF8String];
-		subject = [[NSString stringWithString:msgData[@"subject"]] UTF8String];
-		fromAddr = [[NSString stringWithString:msgData[@"fromAddr"]] UTF8String];
-		localAddr = [[NSString stringWithString:msgData[@"localAddr"]] UTF8String];
-		peerAddr = [[NSString stringWithString:msgData[@"peerAddr"]] UTF8String];
-
-		[messages removeObjectForKey:objcCallId];
-		lInfo() << "[push] push received: removed " << callId.c_str() << " from UserDefaults[messages]. nb of msg: " << [messages count];
-		[defaults setObject:messages forKey:@"messages"];
-		[defaults release];
+	if (msgData == nil) {
+		lInfo() << "[push] message data not found for callId : [" << callId.c_str() << "]";
+		return nullptr;
 	} else {
-		if (!mMsgWrittenInUserDefaults) return nullptr;
-		isText = true;
-		textContent = "textContent";
-		subject = "subject";
-		fromAddr = "sip:from.addr";
-		localAddr = "sip:local.addr";
-		peerAddr = "sip:peer.addr";
+		lInfo() << "[push] found message data for callId : [" << callId.c_str() << "]";
 	}
 
-	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(true, callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
+	isText = [msgData[@"isText"] boolValue];
+	textContent = [[NSString stringWithString:msgData[@"textContent"]] UTF8String];
+	subject = [[NSString stringWithString:msgData[@"subject"]] UTF8String];
+	fromAddr = [[NSString stringWithString:msgData[@"fromAddr"]] UTF8String];
+	localAddr = [[NSString stringWithString:msgData[@"localAddr"]] UTF8String];
+	peerAddr = [[NSString stringWithString:msgData[@"peerAddr"]] UTF8String];
+
+	[messages removeObjectForKey:objcCallId];
+	lInfo() << "[push] push received: removed " << callId.c_str() << " from UserDefaults[messages]. nb of msg: " << [messages count];
+	[defaults setObject:messages forKey:@"messages"];
+	[defaults release];
+
+	shared_ptr<PushNotificationMessage> msg = PushNotificationMessage::create(callId, isText, textContent, subject, fromAddr, localAddr, peerAddr);
 	lInfo() << "[push] PushNotificationMessage created: " << msg->toString();
 	return msg;
 }
@@ -430,11 +420,7 @@ shared_ptr<PushNotificationMessage> IosSharedCoreHelpers::getMsgFromMainCore(con
 	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
 	CFStringRef notificationName;
 
-	if (mAppGroupId != TEST_GROUP_ID) { // For testing purpose
-		notificationName = CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8);
-	} else {
-		notificationName = CFStringCreateWithCString(NULL, TEST_CALL_ID, kCFStringEncodingUTF8);
-	}
+	notificationName = CFStringCreateWithCString(NULL, callId.c_str(), kCFStringEncodingUTF8);
 
 	CFNotificationCenterAddObserver(notification, (__bridge const void *)(this), on_msg_written_in_user_defaults, notificationName, NULL, CFNotificationSuspensionBehaviorDeliverImmediately);
 
@@ -460,9 +446,6 @@ void IosSharedCoreHelpers::onMsgWrittenInUserDefaults() {
 
 void IosSharedCoreHelpers::notifyMessageReceived(const string &callId) {
 	string notifName = callId;
-
-	// For testing purpose
-	if (mAppGroupId == TEST_GROUP_ID) notifName = TEST_CALL_ID;
 
 	// post notif
 	CFNotificationCenterRef notification = CFNotificationCenterGetDarwinNotifyCenter();
@@ -845,7 +828,10 @@ shared_ptr<SharedCoreHelpers> createIosSharedCoreHelpers (shared_ptr<LinphonePri
 }
 
 void uninitSharedCore(LinphoneCore *lc) {
-	IosSharedCoreHelpers::uninitSharedCore(lc);
+	if (getPlatformHelpers(lc)->getSharedCoreHelpers()->isCoreShared()) {
+		getPlatformHelpers(lc)->getSharedCoreHelpers()->setChatRoomInvite(nullptr);
+		IosSharedCoreHelpers::uninitSharedCore(lc);
+	}
 }
 
 LINPHONE_END_NAMESPACE
