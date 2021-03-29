@@ -3468,12 +3468,6 @@ static void call_with_optional_encryption_on_both_sides_base(const LinphoneMedia
 	marie_enc_params.preferences = set_encryption_preference_with_priority(encryption, false);
 
 	encryption_params pauline_enc_params;
-	// Avoid setting the actual configuration with the same encryption as the desired one
-	if (encryption == LinphoneMediaEncryptionZRTP) {
-		pauline_enc_params.encryption = LinphoneMediaEncryptionZRTP;
-	} else {
-		pauline_enc_params.encryption = LinphoneMediaEncryptionDTLS;
-	}
 	pauline_enc_params.encryption = encryption;
 	pauline_enc_params.level = E_OPTIONAL;
 	pauline_enc_params.preferences = set_encryption_preference_with_priority(encryption, true);
@@ -3504,6 +3498,143 @@ static void dtls_srtp_video_call_with_optional_encryption_on_both_sides(void) {
 static void zrtp_video_call_with_optional_encryption_on_both_sides(void) {
 	call_with_optional_encryption_on_both_sides_base(LinphoneMediaEncryptionZRTP, TRUE);
 }
+
+static void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption) {
+	encryption_params marie_enc_params;
+	marie_enc_params.encryption = LinphoneMediaEncryptionNone;
+	marie_enc_params.level = E_OPTIONAL;
+	marie_enc_params.preferences.push_back(encryption);
+
+	encryption_params pauline_enc_params;
+	pauline_enc_params.encryption = LinphoneMediaEncryptionNone;
+	pauline_enc_params.level = E_OPTIONAL;
+	pauline_enc_params.preferences.push_back(encryption);
+
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_params, FALSE, FALSE, TRUE);
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_params, FALSE, FALSE, TRUE);
+
+	encrypted_call_base(marie, pauline, encryption, TRUE, TRUE, TRUE);
+
+	LinphoneCall *marieCall = linphone_core_get_current_call(marie->lc);
+	BC_ASSERT_PTR_NOT_NULL(marieCall);
+	LinphoneCall *paulineCall = linphone_core_get_current_call(pauline->lc);
+	BC_ASSERT_PTR_NOT_NULL(paulineCall);
+
+	if (marieCall && paulineCall) {
+		stats marie_stat = marie->stat;
+		stats pauline_stat = pauline->stat;
+		LinphoneCallParams * params0 = linphone_core_create_call_params(pauline->lc, paulineCall);
+		bctbx_list_t * encs0 = NULL;
+		encs0 = bctbx_list_append(encs0, ms_strdup(linphone_media_encryption_to_string(LinphoneMediaEncryptionNone)));
+		linphone_call_params_set_supported_encryptions (params0, encs0);
+		bctbx_list_free_with_data(encs0, (bctbx_list_free_func)bctbx_free);
+
+		linphone_call_update(paulineCall, params0);
+		linphone_call_params_unref(params0);
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1)));
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1)));
+
+		LinphoneMediaEncryption encryptionAfterUpdate = LinphoneMediaEncryptionNone;
+		LinphoneMediaEncryption expectedEncryption =  LinphoneMediaEncryptionNone;
+		bool potentialConfigurationChosen = false;
+		get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &potentialConfigurationChosen);
+		BC_ASSERT_FALSE(potentialConfigurationChosen);
+		int expectedStreamsRunning = 1;
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		wait_for_until(marie->lc, pauline->lc, NULL, 5, 2000);
+
+		// Check that encryption has not changed after sending update
+		BC_ASSERT_EQUAL(expectedEncryption, encryptionAfterUpdate, int, "%i");
+		if (marieCall) {
+			check_stream_encryption(marieCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
+		}
+		if (paulineCall) {
+			check_stream_encryption(paulineCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), expectedEncryption, int, "%i");
+		}
+
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+		pause_resume_calls(marie, pauline);
+
+		marie_stat = marie->stat;
+		pauline_stat = pauline->stat;
+
+		LinphoneCallParams * params1 = linphone_core_create_call_params(pauline->lc, paulineCall);
+		bctbx_list_t * encs1 = NULL;
+		encs1 = bctbx_list_append(encs1, ms_strdup(linphone_media_encryption_to_string(static_cast<LinphoneMediaEncryption>(encryption))));
+		linphone_call_params_set_supported_encryptions (params1, encs1);
+		bctbx_list_free_with_data(encs1, (bctbx_list_free_func)bctbx_free);
+
+		linphone_call_update(paulineCall, params1);
+		linphone_call_params_unref(params1);
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallUpdating,(pauline_stat.number_of_LinphoneCallUpdating+1)));
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallUpdatedByRemote,(marie_stat.number_of_LinphoneCallUpdatedByRemote+1)));
+
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+1)));
+		BC_ASSERT_TRUE( wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+1)));
+
+		encryptionAfterUpdate = encryption;
+		get_expected_encryption_from_call_params(paulineCall, marieCall, &expectedEncryption, &potentialConfigurationChosen);
+		BC_ASSERT_TRUE(potentialConfigurationChosen);
+		bool_t capabilityNegotiationReinviteEnabled = linphone_call_params_is_capability_negotiation_reinvite_enabled(linphone_call_get_params(paulineCall));
+		bool sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
+		expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
+
+		/*wait for reINVITEs to complete*/
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+		BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
+
+		liblinphone_tester_check_rtcp(marie, pauline);
+
+		wait_for_until(marie->lc, pauline->lc, NULL, 5, 2000);
+
+		// Check that encryption has not changed after sending update
+		BC_ASSERT_EQUAL(expectedEncryption, encryptionAfterUpdate, int, "%i");
+		if (marieCall) {
+			check_stream_encryption(marieCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
+		}
+		if (paulineCall) {
+			check_stream_encryption(paulineCall);
+			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(paulineCall)), expectedEncryption, int, "%i");
+		}
+
+		BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+		BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
+
+		pause_resume_calls(marie, pauline);
+
+		end_call(marie, pauline);
+	}
+
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
+static void srtp_call_with_toggling_encryption(void) {
+	call_with_toggling_encryption_base(LinphoneMediaEncryptionSRTP);
+}
+
+static void dtls_srtp_call_with_toggling_encryption(void) {
+	call_with_toggling_encryption_base(LinphoneMediaEncryptionDTLS);
+}
+
+static void zrtp_call_with_toggling_encryption(void) {
+	call_with_toggling_encryption_base(LinphoneMediaEncryptionZRTP);
+}
+
 
 test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Call with no encryption", call_with_no_encryption),
@@ -3544,6 +3675,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with no encryption after resume", simple_srtp_call_with_capability_negotiations_with_no_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with ZRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume),
 	TEST_NO_TAG("Simple SRTP call with capability negotiations with DTLS SRTP encryption after resume", simple_srtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume),
+	TEST_NO_TAG("SRTP call with toggling encryption", srtp_call_with_toggling_encryption),
 	TEST_NO_TAG("SRTP unencrypted call and capability negotiations", unencrypted_srtp_call_with_capability_negotiations),
 	TEST_NO_TAG("SRTP call and capability negotiations (caller unencrypted)", srtp_call_with_capability_negotiations_caller_unencrypted),
 	TEST_NO_TAG("SRTP call and capability negotiations (callee unencrypted)", srtp_call_with_capability_negotiations_callee_unencrypted),
@@ -3575,6 +3707,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with no encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_no_encryption_after_resume, "DTLS"),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with ZRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_zrtp_encryption_after_resume, "DTLS"),
 	TEST_ONE_TAG("Simple DTLS SRTP call with capability negotiations with SRTP encryption after resume", simple_dtls_srtp_call_with_capability_negotiations_with_srtp_encryption_after_resume, "DTLS"),
+	TEST_ONE_TAG("DTLS SRTP call with toggling encryption", dtls_srtp_call_with_toggling_encryption, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with different encryptions in call params", dtls_srtp_call_with_encryption_supported_in_call_params_only, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call started with video and capability negotiation", dtls_srtp_call_with_video_and_capability_negotiation, "DTLS"),
 	TEST_ONE_TAG("DTLS SRTP call with potential configuration same as actual one", dtls_srtp_call_with_potential_configuration_same_as_actual_configuration, "DTLS"),
@@ -3599,6 +3732,7 @@ test_t capability_negotiation_tests[] = {
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with no encryption after resume", simple_zrtp_call_with_capability_negotiations_with_no_encryption_after_resume),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with SRTP encryption after resume", simple_zrtp_call_with_capability_negotiations_with_srtp_encryption_after_resume),
 	TEST_NO_TAG("Simple ZRTP call with capability negotiations with DTLS SRTP encryption after resume", simple_zrtp_call_with_capability_negotiations_with_dtls_srtp_encryption_after_resume),
+	TEST_NO_TAG("ZRTP call with toggling encryption", zrtp_call_with_toggling_encryption),
 	TEST_NO_TAG("ZRTP call with differet cipher suites and capability negotiations", zrtp_call_with_different_cipher_suites_and_capability_negotiations),
 	TEST_NO_TAG("ZRTP cipher call with capability negotiations default keys on callee", zrtp_cipher_call_with_capability_negotiations_default_keys_on_callee),
 	TEST_NO_TAG("ZRTP cipher call with capability negotiations aes256", zrtp_cipher_call_with_capability_negotiations_aes256),
