@@ -62,6 +62,7 @@ public:
 	void notifyDisplay (const std::shared_ptr<ChatMessage> &message);
 
 	void onImdnMessageDelivered (const std::shared_ptr<ImdnMessage> &message);
+	void onImdnMessageNotDelivered (const std::shared_ptr<ImdnMessage> &message);
 	bool hasUndeliveredImdnMessage();
 
 	// CoreListener

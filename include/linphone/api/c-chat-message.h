@@ -383,6 +383,13 @@ LINPHONE_PUBLIC void linphone_chat_message_add_file_content (LinphoneChatMessage
 LINPHONE_PUBLIC void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *message, const char *text);
 
 /**
+ * Adds a content to the ChatMessage.
+ * @param message #LinphoneChatMessage object. @notnil
+ * @param content the #LinphoneContent object to add. @notnil
+ */
+LINPHONE_PUBLIC void linphone_chat_message_add_content (LinphoneChatMessage *message, LinphoneContent *content);
+
+/**
  * Removes a content from the ChatMessage.
  * @param message #LinphoneChatMessage object. @notnil
  * @param content the #LinphoneContent object to remove. @notnil
@@ -392,7 +399,7 @@ LINPHONE_PUBLIC void linphone_chat_message_remove_content (LinphoneChatMessage *
 /**
  * Returns the list of contents in the message.
  * @param message #LinphoneChatMessage object. @notnil
- * @return \bctbx_list{LinphoneContent} the list of #LinphoneContent. @notnil
+ * @return The list of #LinphoneContent. @bctbx_list{LinphoneContent} @notnil
  */
 LINPHONE_PUBLIC const bctbx_list_t *linphone_chat_message_get_contents(const LinphoneChatMessage *message);
 
@@ -408,7 +415,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_message_is_file_transfer_in_progress (const
  * @param message #LinphoneChatMessage object. @notnil
  * @param state The LinphoneChatMessageState the imdn have reached (only use LinphoneChatMessageStateDelivered,
  * LinphoneChatMessageStateDeliveredToUser, LinphoneChatMessageStateDisplayed and LinphoneChatMessageStateNotDelivered)
- * @return \bctbx_list{LinphoneParticipantImdnState} @tobefreed @notnil
+ * @return The list of participants. \bctbx_list{LinphoneParticipantImdnState} @tobefreed @notnil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_message_get_participants_by_imdn_state (
 	const LinphoneChatMessage *message,

@@ -103,7 +103,7 @@ typedef void (*LinphoneCoreCbsRegistrationStateChangedCb)(LinphoneCore *core, Li
 typedef LinphoneCoreCbsRegistrationStateChangedCb LinphoneCoreRegistrationStateChangedCb;
 
 /**
- * Report status change for a friend previously \link linphone_core_add_friend() added \endlink to #LinphoneCore.
+ * Report status change for a friend previously added to the #LinphoneCore with linphone_core_add_friend().
  * @param core #LinphoneCore object @notnil
  * @param linphone_friend Updated #LinphoneFriend @notnil
  */
@@ -130,10 +130,11 @@ typedef LinphoneCoreCbsNotifyPresenceReceivedForUriOrTelCb LinphoneCoreNotifyPre
 
 /**
  * Reports that a new subscription request has been received and wait for a decision.
- * Status on this subscription request is notified by \link linphone_friend_set_inc_subscribe_policy() changing policy \endlink for this friend
+ * @note A subscription request is notified by this function only if the #LinphoneSubscribePolicy for the
+ * given #LinphoneFriend has been set to #LinphoneSPWait. See linphone_friend_set_inc_subscribe_policy().
  * @param core #LinphoneCore object @notnil
- * @param linphone_friend #LinphoneFriend corresponding to the subscriber @notnil
- * @param url of the subscriber @notnil
+ * @param linphone_friend The #LinphoneFriend aimed by the subscription. @notnil
+ * @param url URI of the subscriber @notnil
  */
 typedef void (*LinphoneCoreCbsNewSubscriptionRequestedCb)(LinphoneCore *core, LinphoneFriend *linphone_friend, const char *url);
 
@@ -170,9 +171,23 @@ typedef void (*LinphoneCoreCbsCallLogUpdatedCb)(LinphoneCore *core, LinphoneCall
 typedef LinphoneCoreCbsCallLogUpdatedCb LinphoneCoreCallLogUpdatedCb;
 
 /**
- * Chat message callback prototype
+ * Callback to notify the callid of a call has been updated.
+ * This is done typically when a call retry.
+ * @param core the #LinphoneCore @notnil
+ * @param previous_call_id the previous callid. @notnil
+ * @param current_call_id the new callid. @notnil
+ */
+typedef void (*LinphoneCoreCbsCallIdUpdatedCb)(LinphoneCore *core, const char *previous_call_id, const char *current_call_id);
+
+/**
+ * Old name of #LinphoneCoreCbsCallIdUpdatedCb.
+ */
+typedef LinphoneCoreCbsCallIdUpdatedCb LinphoneCoreCallIdUpdatedCb;
+
+/**
+ * Chat message callback prototype.
  * @param core #LinphoneCore object @notnil
- * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be created by the framework in case the From-URI is not present in any chat room. @notnil
  * @param message #LinphoneChatMessage incoming message @notnil
  */
 typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
@@ -182,7 +197,7 @@ typedef void (*LinphoneCoreCbsMessageReceivedCb)(LinphoneCore *core, LinphoneCha
  * The message will be in state InProgress.
  * In case of resend this callback won't be called.
  * @param core #LinphoneCore object @notnil
- * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case the From-URI is not present in any chat room. @notnil
  * @param message #LinphoneChatMessage outgoing message @notnil
  */
 typedef void (*LinphoneCoreCbsMessageSentCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
@@ -202,7 +217,7 @@ typedef void (*LinphoneCoreCbsChatRoomReadCb)(LinphoneCore *core, LinphoneChatRo
 /**
  * Chat message not decrypted callback prototype
  * @param core #LinphoneCore object @notnil
- * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case the from-URI is not present in any chat room. @notnil
  * @param message #LinphoneChatMessage incoming message @notnil
  */
 typedef void (*LinphoneCoreCbsMessageReceivedUnableDecryptCb)(LinphoneCore *core, LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
@@ -340,7 +355,7 @@ typedef void (*LinphoneCoreCbsConfiguringStatusCb)(LinphoneCore *core, LinphoneC
 typedef LinphoneCoreCbsConfiguringStatusCb LinphoneCoreConfiguringStatusCb;
 
 /**
- * Callback prototype for reporting network change either automatically detected or notified by #linphone_core_set_network_reachable.
+ * Callback prototype for reporting network change either automatically detected or notified by #linphone_core_set_network_reachable().
  * @param core the #LinphoneCore @notnil
  * @param reachable true if network is reachable.
  */
@@ -730,7 +745,7 @@ typedef void (*LinphonePlayerCbsEofReachedCb)(LinphonePlayer *player);
 /**
  * Callback prototype
  * @param core #LinphoneCore object @notnil
- * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case \link #LinphoneAddress the from \endlink is not present in any chat room. @notnil
+ * @param chat_room #LinphoneChatRoom involved in this conversation. Can be be created by the framework in case the From-URI is not present in any chat room. @notnil
  * @param from #LinphoneAddress from @notnil
  * @param message incoming message @notnil
  * @deprecated 30/03/2017 use #LinphoneCoreMessageReceivedCb instead.

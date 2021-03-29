@@ -137,7 +137,7 @@ LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
  * @param conference A #LinphoneConference @notnil
- * @return \bctbx_list{LinphoneAddress} @maybenil
+ * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
 LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference);
@@ -145,7 +145,7 @@ LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_partic
 /**
  * Get list of all participants of one conference
  * @param conference A #LinphoneConference @notnil
- * @return \bctbx_list{LinphoneParticipant} @maybenil
+ * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
@@ -186,7 +186,7 @@ LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(Linph
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
  * @param conference The #LinphoneConference object. @notnil
- * @param addresses \bctbx_list{LinphoneAddress} @notnil
+ * @param addresses A list of SIP addresses to invite. @bctbx_list{LinphoneAddress} @notnil
  * @param params #LinphoneCallParams to use for inviting the participants. @maybenil
 **/
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneConference *conference, const bctbx_list_t *addresses, const LinphoneCallParams *params);

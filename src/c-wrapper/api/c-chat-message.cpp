@@ -318,12 +318,29 @@ LinphoneStatus linphone_chat_message_put_char (LinphoneChatMessage *msg, uint32_
 void linphone_chat_message_add_file_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
 	LinphonePrivate::FileContent *fileContent = new LinphonePrivate::FileContent();
 	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+
 	fileContent->setContentType(content->getContentType());
-	fileContent->setFileSize(linphone_content_get_size(c_content));
-	fileContent->setFileName(L_C_TO_STRING(linphone_content_get_name(c_content)));
+	// If content type hasn't been set, use application/octet-stream
+	if (fileContent->getContentType().getType().empty() && fileContent->getContentType().getSubType().empty()) {
+		LinphonePrivate::ContentType unknownContentType = LinphonePrivate::ContentType("application", "octet-stream");
+		fileContent->setContentType(unknownContentType);
+		lWarning() << "Content type hasn't been set by user, using application/octet-stream";
+	}
+
 	fileContent->setFilePath(L_C_TO_STRING(linphone_content_get_file_path(c_content)));
+	fileContent->setFileName(L_C_TO_STRING(linphone_content_get_name(c_content)));
+	// If file name isn't supplied but file path is, deduce file name from path
+	if (fileContent->getFileName().empty() && !fileContent->getFilePath().empty()) {
+		const string& filePath = fileContent->getFilePath();
+		string fileName = filePath.substr(filePath.find_last_of("/\\") + 1);
+		fileContent->setFileName(fileName);
+		lInfo() << "File name [" << fileName << "] deduced from file path [" << filePath << "]";
+	}
+
+	fileContent->setFileSize(linphone_content_get_size(c_content));
 	fileContent->setBody(content->getBody());
 	fileContent->setUserData(content->getUserData());
+
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(fileContent);
 	lInfo() << "File content [" << fileContent << "] added into message [" << msg << "]";
 }
@@ -342,6 +359,15 @@ void linphone_chat_message_add_utf8_text_content (LinphoneChatMessage *msg, cons
 	content->setContentType(contentType);
 	content->setBodyFromUtf8(L_C_TO_STRING(text));
 	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(content);
+}
+
+void linphone_chat_message_add_content (LinphoneChatMessage *msg, LinphoneContent *c_content) {
+	LinphonePrivate::Content *content = L_GET_CPP_PTR_FROM_C_OBJECT(c_content);
+	LinphonePrivate::Content *cppContent = new LinphonePrivate::Content();
+	cppContent->setContentType(content->getContentType());
+	cppContent->setBody(content->getBody());
+	cppContent->setUserData(content->getUserData());
+	L_GET_CPP_PTR_FROM_C_OBJECT(msg)->addContent(cppContent);
 }
 
 void linphone_chat_message_remove_content (LinphoneChatMessage *msg, LinphoneContent *content) {

@@ -166,6 +166,7 @@ public:
 		const std::string &message
 	) override;
 
+	void stale_session (const std::string localDeviceId, const std::string peerDeviceId) override;
 private:
 	std::shared_ptr<LimeManager> limeManager;
 	std::time_t lastLimeUpdate;

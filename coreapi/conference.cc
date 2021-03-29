@@ -152,7 +152,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 		const Address * remoteContact = static_pointer_cast<MediaSession>(call->getActiveSession())->getRemoteContactAddress();
 		if (remoteContact) {
 			// If device is not found, then add it
-			if (p->findDevice(*remoteContact) == nullptr) {
+			if (p->findDevice(*remoteContact, false) == nullptr) {
 				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p.get();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
 				_linphone_call_set_conf_ref(call->toC(), toC());
@@ -656,6 +656,11 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				// This is the default behaviour
 				err = static_pointer_cast<LinphonePrivate::MediaSession>(session)->terminate();
 			}
+
+			if (call) {
+				call->setConference(nullptr);
+			}
+
 		}
 	}
 	
@@ -710,6 +715,13 @@ int LocalConference::removeParticipant (const std::shared_ptr<LinphonePrivate::C
 				/* invoke removeParticipant() recursively to remove this last participant. */
 				bool success = Conference::removeParticipant(remainingParticipant);
 				mMixerSession->unjoinStreamsGroup(session->getStreamsGroup());
+
+				// Detach call from conference
+				shared_ptr<Call> lastSessionCall = getCore()->getCallByRemoteAddress (*session->getRemoteAddress());
+				if (lastSessionCall) {
+					lastSessionCall->setConference(nullptr);
+				}
+
 				return success;
 			}
 		}
@@ -803,6 +815,7 @@ void LocalConference::removeLocalEndpoint () {
 
 void LocalConference::leave () {
 	if (isIn()) {
+		lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress();
 		confParams->enableLocalParticipant(false);
 		removeLocalEndpoint();
 	}
@@ -1214,13 +1227,14 @@ void RemoteConference::leave () {
 	LinphoneCallState callState = static_cast<LinphoneCallState>(m_focusCall->getState());
 	switch (callState) {
 		case LinphoneCallPaused:
+			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << " while focus call is paused.";
 			break;
 		case LinphoneCallStreamsRunning:
+			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << ". Focus call is going to be paused.";
 			m_focusCall->pause();
 			break;
 		default:
-			ms_error("Could not leave the conference: bad focus call state (%s)",
-				linphone_call_state_to_string(callState));
+			lError() << getMe()->getAddress() << " cannot leave conference " << getConferenceAddress() << " because focus call is in state " << linphone_call_state_to_string(callState);
 	}
 }
 

@@ -31,6 +31,7 @@
 
 #include "mediastreamer2/msfileplayer.h"
 #include "mediastreamer2/msvolume.h"
+#include "mediastreamer2/flowcontrol.h"
 
 #include "linphone/core.h"
 
@@ -377,11 +378,9 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		}
 	}
 	if (ok) {
-		VideoStream *vs = getPeerVideoStream();
-		if (vs) audio_stream_link_video(mStream, vs);
-
 		if (mCurrentCaptureCard) ms_snd_card_unref(mCurrentCaptureCard);
 		if (mCurrentPlaybackCard) ms_snd_card_unref(mCurrentPlaybackCard);
+
 		mCurrentCaptureCard = ms_media_resource_get_soundcard(&io.input);
 		mCurrentPlaybackCard = ms_media_resource_get_soundcard(&io.output);
 		if (mCurrentCaptureCard) mCurrentCaptureCard = ms_snd_card_ref(mCurrentCaptureCard);
@@ -389,6 +388,8 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 
 		int err = audio_stream_start_from_io(mStream, audioProfile, dest.rtpAddr.c_str(), dest.rtpPort,
 			dest.rtcpAddr.c_str(), dest.rtcpPort, usedPt, &io);
+		VideoStream *vs = getPeerVideoStream();
+		if (vs) audio_stream_link_video(mStream, vs);
 		if (err == 0)
 			postConfigureAudioStream((mMuted || mMicMuted) && (listener && !listener->isPlayingRingbackTone(getMediaSession().getSharedFromThis())));
 		mStartCount++;
@@ -416,7 +417,7 @@ void MS2AudioStream::render(const OfferAnswerContext &params, CallSession::State
 		if ((requestedMediaEncryption == LinphoneMediaEncryptionZRTP) || (params.getRemoteStreamDescription().haveZrtpHash == 1)) {
 			// However, when we are receiver, if peer offers a lime-Ik attribute, we shall delay the start (and ZRTP Hello Packet sending)
 			// until the ACK has been received to ensure the caller got our 200 Ok (with lime-Ik in it) before starting its ZRTP engine
-			if (!params.localIsOfferer && params.getRemoteStreamDescription().hasLimeIk()) {
+			if (!params.localIsOfferer && sal_media_description_has_limeIk(params.remoteMediaDescription)) {
 				mStartZrtpLater = true;
 			} else {
 				startZrtpPrimaryChannel(params);
@@ -540,6 +541,25 @@ void MS2AudioStream::parameterizeEqualizer(AudioStream *as, LinphoneCore *lc) {
 	}
 }
 
+void MS2AudioStream::configureFlowControl(AudioStream *as, LinphoneCore *lc){
+	if (as->flowcontrol){
+		LinphoneConfig *config = linphone_core_get_config(lc);
+		MSAudioFlowControlConfig cfg;
+		memset(&cfg, 0, sizeof(cfg));
+		string strategy = linphone_config_get_string(config, "sound", "flow_control_strategy", "soft");
+		if (strategy == "soft")
+			cfg.strategy = MSAudioFlowControlSoft;
+		else if (strategy == "basic"){
+			cfg.strategy = MSAudioFlowControlBasic;
+		}else{
+			lError() << "Unsupported flow_control_strategy '" << strategy <<"'";
+			return;
+		}
+		cfg.silent_threshold = linphone_config_get_float(config, "sound", "flow_control_silence_threshold", 0.02f);
+		ms_filter_call_method(as->flowcontrol, MS_AUDIO_FLOW_CONTROL_SET_CONFIG, &cfg);
+	}
+}
+
 void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc, bool muted){
 	audio_stream_enable_mic(as, !muted);
 	
@@ -588,6 +608,7 @@ void MS2AudioStream::postConfigureAudioStream(AudioStream *as, LinphoneCore *lc,
 		ms_filter_call_method(f, MS_VOLUME_SET_NOISE_GATE_FLOORGAIN, &floorGain);
 	}
 	parameterizeEqualizer(as, lc);
+	configureFlowControl(as, lc);
 }
 
 void MS2AudioStream::postConfigureAudioStream(bool muted) {

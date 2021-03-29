@@ -140,7 +140,8 @@ LinphoneChatRoom *linphone_core_create_chat_room_6(LinphoneCore *lc, const Linph
 	bool withGruu = chatRoomParams ? chatRoomParams->getChatRoomBackend() == LinphonePrivate::ChatRoomParams::ChatRoomBackend::FlexisipChat : false;
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->createChatRoom(chatRoomParams, identityAddress, participantsList);
-	return L_GET_C_BACK_PTR(room);
+	if (room) return L_GET_C_BACK_PTR(room);
+	return NULL;
 }
 
 LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const LinphoneChatRoomParams *params, const LinphoneAddress *localAddr, const LinphoneAddress *remoteAddr, const bctbx_list_t *participants) {
@@ -152,7 +153,8 @@ LinphoneChatRoom *linphone_core_search_chat_room(const LinphoneCore *lc, const L
 	LinphonePrivate::IdentityAddress identityAddress = localAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(localAddr)) : L_GET_PRIVATE_FROM_C_OBJECT(lc)->getDefaultLocalAddress(nullptr, withGruu);
 	LinphonePrivate::IdentityAddress remoteAddress = remoteAddr ? LinphonePrivate::IdentityAddress(*L_GET_CPP_PTR_FROM_C_OBJECT(remoteAddr)) : LinphonePrivate::IdentityAddress();
 	shared_ptr<LinphonePrivate::AbstractChatRoom> room = L_GET_PRIVATE_FROM_C_OBJECT(lc)->searchChatRoom(chatRoomParams, identityAddress, remoteAddress, participantsList);
-	return L_GET_C_BACK_PTR(room);
+	if (room) return L_GET_C_BACK_PTR(room);
+	return NULL;
 }
 
 LinphoneChatRoomParams *linphone_core_create_default_chat_room_params(LinphoneCore *lc) {

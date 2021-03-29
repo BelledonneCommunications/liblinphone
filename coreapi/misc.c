@@ -228,6 +228,10 @@ void linphone_core_enable_forced_ice_relay(LinphoneCore *lc, bool_t enable) {
 	lc->forced_ice_relay = enable;
 }
 
+bool_t linphone_core_forced_ice_relay_enabled(const LinphoneCore *lc){
+	return lc->forced_ice_relay;
+}
+
 void linphone_core_enable_short_turn_refresh(LinphoneCore *lc, bool_t enable) {
 	lc->short_turn_refresh = enable;
 }

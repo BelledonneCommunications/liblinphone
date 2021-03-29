@@ -22,6 +22,7 @@ import abstractapi
 import logging
 import metaname
 import re
+import sys
 
 
 class ParsingError(RuntimeError):
@@ -66,7 +67,7 @@ class ChildrenList(list):
 		return children
 
 
-class TreeNode(object):
+class TreeNode:
 	def __init__(self):
 		self.parent = None
 	
@@ -161,9 +162,11 @@ class ClassReference(Reference):
 		return docTranslator.translate_class_reference(self, **kargs)
 
 	def resolve(self, api):
-		try:
-			self.relatedObject = api.classesIndex[self.cname]
-		except KeyError:
+		for index in api.enumsIndex, api.enumeratorsIndex, api.classesIndex:
+			if self.cname in index:
+				self.relatedObject = index[self.cname]
+				break
+		if self.relatedObject is None:
 			logging.warning('doc reference pointing on an unknown object ({0})'.format(self.cname))
 
 
@@ -317,6 +320,8 @@ class Parser:
 				paragraphs.append(paragraph)
 				paragraphs.append(self._parse_parameter_list(partNode))
 				paragraph = Paragraph()
+			elif partNode.tag == 'bctbxlist':
+				pass
 			else:
 				text = partNode.text
 				if text is not None:
@@ -413,6 +418,7 @@ class Translator:
 		self.textWidth = 80
 		self.nameTranslator = metaname.Translator.get(langCode)
 		self.langTranslator = abstractapi.Translator.get(langCode)
+		self.refNameTranslator = self.nameTranslator
 		self.displaySelfParam = True if langCode == 'C' else False
 	
 	def translate_description(self, description, tagAsBrief=False):
@@ -442,7 +448,10 @@ class Translator:
 		else:
 			if namespace is None:
 				description = ref.find_root()
-				namespace = description.relatedObject.find_first_ancestor_by_type(abstractapi.Namespace, abstractapi.Class)
+				namespaceTypes = (abstractapi.Namespace, abstractapi.Class)
+				namespace = description.relatedObject
+				if type(namespace) not in namespaceTypes:
+					namespace = description.relatedObject.find_first_ancestor_by_type(*namespaceTypes)
 			if namespace is abstractapi.GlobalNs:
 				commonName = None
 			elif namespace.name == ref.relatedObject.name:
@@ -451,7 +460,7 @@ class Translator:
 				commonName = namespace.name
 			else:
 				commonName = metaname.Name.find_common_parent(ref.relatedObject.name, namespace.name)
-		return ref.relatedObject.name.translate(self.nameTranslator, recursive=True, topAncestor=commonName)
+		return ref.relatedObject.name.translate(self.refNameTranslator, recursive=True, topAncestor=commonName)
 	
 	def translate_keyword(self, keyword):
 		return keyword.keyword.translate(self.langTranslator)
@@ -501,19 +510,29 @@ class Translator:
 		lines = []
 		while len(line) > width:
 			cutIndex = line.rfind(' ', 0, width)
-			if cutIndex != -1:
+			if cutIndex >= 0:
 				if self.langCode == 'Java':
 					# Do not break a line in the middle of a { }
 					while (not line[0:cutIndex].count('{') == line[0:cutIndex].count('}')) and (not line[cutIndex:].count('{') == line[cutIndex:].count('}')):
 						cutIndex += 1
-				lines.append(line[0:cutIndex])
-				line = line[cutIndex+1:]
+				if self.langCode == 'CSharp':
+					# Do not break a line in the middle of a xml tag
+					while not line[0:cutIndex].count('<') == line[0:cutIndex].count('>'):
+						cutIndex += 1
+				if line[cutIndex] == ' ':
+					# Don't keep a whitespace at the start of the next line if you cut on one
+					lines.append(line[0:cutIndex])
+					line = line[cutIndex+1:]
+				else:
+					lines.append(line[0:cutIndex])
+					line = line[cutIndex:]
 			else:
 				# Don't break http links
-				cutIndex = len(line) if ('http://' or 'https://') in line else width
+				cutIndex = len(line) if 'http://' or 'https://' in line else width
 				lines.append(line[0:cutIndex])
 				line = line[cutIndex:]
-		lines.append(line)
+		if line:
+			lines.append(line)
 		
 		if indent:
 			lines = [line if line is lines[0] else '\t' + line for line in lines]
@@ -530,16 +549,10 @@ class DoxygenTranslator(Translator):
 			lines[0] = '@brief ' + lines[0]
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
-			return '#' + Translator.translate_reference(self, ref)
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return '@ref ' + super().translate_reference(ref)
 
 	def translate_function_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, abstractapi.Method):
-			return Translator.translate_reference(self, ref) + '()'
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return super().translate_reference(ref) + '()'
 	
 	def _translate_section(self, section):
 		return '@{0} {1}'.format(
@@ -557,17 +570,28 @@ class DoxygenTranslator(Translator):
 		return text
 
 
-class JavaDocTranslator(DoxygenTranslator):
-	def __init__(self):
-		DoxygenTranslator.__init__(self, 'Java')
+class JavaDocTranslator(Translator):
+	class ReferenceTranslator(metaname.JavaTranslator):
+		def __init__(self):
+			super().__init__()
+			self.classMemberSep = '#'
 
-	def _tag_as_brief(self, lines):
-		pass
+		def translate_method_name(self, name, recursive, topAncestor):
+			res = super().translate_method_name(name, recursive, topAncestor)
+			# Mehtods that are relative to the current class must start with '#'
+			if name.prev is None or not recursive or name.prev is topAncestor:
+				res = '#' + res
+			return res
+
+	def __init__(self):
+		super().__init__('Java')
+		self.refNameTranslator = JavaDocTranslator.ReferenceTranslator()
 
 	def translate_class_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum, abstractapi.Interface)):
-			raise ReferenceTranslationError(ref.cname)
-		return '{@link ' + Translator.translate_reference(self, ref) + '}'
+		return '{@link ' + super().translate_reference(ref) + '}'
+
+	def translate_function_reference(self, ref, **kargs):
+		return '{@link ' + super().translate_reference(ref) + '}'
 	
 	def _translate_section(self, section):
 		if section.kind == 'see':
@@ -582,14 +606,6 @@ class JavaDocTranslator(DoxygenTranslator):
 			self._translate_paragraph(section.paragraph)
 		)
 
-	def translate_function_reference(self, ref, **kargs):
-		if not isinstance(ref.relatedObject, abstractapi.Method):
-			raise ReferenceTranslationError(ref.cname)
-
-		className = ref.relatedObject.name.prev.translate(self.nameTranslator)
-		methodName = ref.relatedObject.name.translate(self.nameTranslator)
-		return '{@link ' + className + '#' + methodName + '}'
-
 	def _translate_parameter_list(self, parameterList):
 		text = ''
 		for paramDesc in parameterList.parameters:
@@ -600,15 +616,15 @@ class JavaDocTranslator(DoxygenTranslator):
 		return text
 
 
-class SwiftDocTranslator(JavaDocTranslator):
+class SwiftDocTranslator(Translator):
 	def __init__(self):
-		DoxygenTranslator.__init__(self, 'Swift')
+		super().__init__('Swift')
 
 	def translate_class_reference(self, ref, **kargs):
-		if isinstance(ref.relatedObject, (abstractapi.Class, abstractapi.Enum)):
-			return '`{0}`'.format(Translator.translate_reference(self, ref))
-		else:
-			raise ReferenceTranslationError(ref.cname)
+		return '`{0}`'.format(super().translate_reference(ref))
+
+	def translate_function_reference(self, ref, **kargs):
+		return super().translate_reference(ref) + '()'
 
 	def _translate_section(self, section):
 		if section.kind == 'return':
@@ -779,15 +795,85 @@ class SphinxTranslator(Translator):
 
 
 class SandCastleTranslator(Translator):
-	def _tag_as_brief(self, lines):
-		if len(lines) > 0:
-			lines.insert(0, '<summary>')
-			lines.append('</summary>')
+	def __init__(self, langCode):
+		super().__init__(langCode)
+		self.isEndTagPlaced = False
+
+	def translate_text(self, textpart):
+		text = super().translate_text(textpart)
+		xmlSpecialCharDict = {'<': '&lt;',
+			'>': '&gt;',
+			"'": '&apos;',
+			'"': '&quot;',
+			'&': '&amp;'}
+		if sys.version_info[0] >= 3:
+			xmlTranslationTable = str.maketrans(xmlSpecialCharDict)
+		else:
+			import string
+			xmlTranslationTable = string.maketrans(xmlSpecialCharDict)
+		return text.translate(xmlTranslationTable)
+
+	def translate_description(self, description, tagAsBrief=False):
+		self.isEndTagPlaced = False
+		translatedDoc = super().translate_description(description, tagAsBrief)
+		if not tagAsBrief:
+			if not self.isEndTagPlaced:
+				translatedDoc['lines'].append({'line': '</para>'})
+				translatedDoc['lines'].append({'line': '</summary>'})
+				self.isEndTagPlaced = True		
+		return translatedDoc
 
 	def translate_function_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
-		return '<see cref="{0}()" />'.format(refStr)
+		subnResult = re.subn('(\.Get\(\))', '.Instance' , refStr)
+		if subnResult[1] > 0:
+			return '<see cref="{0}">{0}</see>'.format(subnResult[0])
+		subnResult = re.subn('(\.Get|\.Set)', '.' , subnResult[0])
+		if subnResult[1] > 0:
+			return '<see cref="{0}">{0}</see>'.format(subnResult[0])
+		return '<see cref="{0}()">{0}()</see>'.format(subnResult[0])
+		# In every cases we write the same value in the "see" tag value
+		# than in the cref value so that even if the cref is broken the
+		# text is displayed
 
 	def translate_class_reference(self, ref):
 		refStr = Translator.translate_reference(self, ref, absName=True)
-		return '<see cref="{0}" />'.format(refStr)
+		return '<see cref="{0}">{0}</see>'.format(refStr)
+	
+
+	def _translate_parameter_list(self, parameterList):
+		text = ''
+		if not self.isEndTagPlaced:
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		for paramDesc in parameterList.parameters:
+			if self.displaySelfParam or not paramDesc.is_self_parameter():
+				desc = self._translate_description(paramDesc.desc)
+				desc = desc[0] if len(desc) > 0 else ''
+				text += ('<param name="{0}">{1}</param>\n'.format(paramDesc.name.translate(self.nameTranslator), desc))
+		return text
+	
+	def _translate_section(self, section):
+		text =''
+		if not self.isEndTagPlaced:
+			text += '</para>\n'
+			text += '</summary>\n'
+			self.isEndTagPlaced = True
+
+		if section.kind == 'return':
+			section.kind = '<returns>{0}</returns>'
+		elif section.kind == 'warning':
+			section.kind = '<remarks>Warning : {0}</remarks> '
+		elif section.kind == 'note':
+			section.kind = '<remarks>Note : {0}</remarks>'
+		elif section.kind == 'see':
+			section.kind = '<remarks>See : {0}</remarks>'
+		else:
+			section.kind = section.kind + " : {0}"
+			logging.warning('SandCastle doc translate section pointing on an unknown object ({0})'.format(section.kind))
+
+		text += section.kind.format(self._translate_paragraph(section.paragraph))
+
+		return text

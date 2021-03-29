@@ -354,8 +354,8 @@ static void account_creator_reset_cb_done(LinphoneAccountCreatorCbs *cbs) {
 
 static void account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator));
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)((uintptr_t)linphone_account_creator_service_get_user_data(
+		linphone_account_creator_get_service(creator)));
 	BC_ASSERT_EQUAL(
 		status,
 		expected_status,
@@ -2137,8 +2137,8 @@ static void server_update_account_password_arg_new_password_missing(void) {
 
 static void login_linphone_account_creator_cb(LinphoneAccountCreator *creator, LinphoneAccountCreatorStatus status, const char* resp) {
 	LinphoneAccountCreatorCbs *cbs = linphone_account_creator_get_callbacks(creator);
-	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)linphone_account_creator_service_get_user_data(
-		linphone_account_creator_get_service(creator));
+	LinphoneAccountCreatorStatus expected_status = (LinphoneAccountCreatorStatus)((uintptr_t)linphone_account_creator_service_get_user_data(
+		linphone_account_creator_get_service(creator)));
 	BC_ASSERT_EQUAL(
 		status,
 		expected_status,

@@ -298,10 +298,10 @@ void MS2VideoStream::render(const OfferAnswerContext & ctx, CallSession::State t
 			io.output.type = (videoMixer == nullptr) ? MSResourceDefault : MSResourceVoid;
 		}
 		if (ok) {
-			AudioStream *as = getPeerAudioStream();
-			if (as) audio_stream_link_video(as, mStream);
 			video_stream_start_from_io(mStream, videoProfile, dest.rtpAddr.c_str(), dest.rtpPort, dest.rtcpAddr.c_str(), dest.rtcpPort,
 				usedPt, &io);
+			AudioStream *as = getPeerAudioStream();
+			if (as) audio_stream_link_video(as, mStream);
 		}
 	}
 	mStartCount++;
@@ -476,8 +476,8 @@ void MS2VideoControl::requestNotifyNextVideoFrameDecoded () {
 void MS2VideoControl::sSnapshotTakenCb(void *userdata, struct _MSFilter *f, unsigned int id, void *arg) {
 	MS2VideoControl *d = (MS2VideoControl *)userdata;
 	if (id == MS_JPEG_WRITER_SNAPSHOT_TAKEN) {
-		const char *filepath = (const char *) arg;
-		d->onSnapshotTaken(filepath);
+		MSJpegWriteEventData *data = static_cast<MSJpegWriteEventData *>(arg);
+		d->onSnapshotTaken(data->filePath);
 	}
 }
 
@@ -486,7 +486,7 @@ int MS2VideoControl::takePreviewSnapshot (const string& file) {
 	if (vs && vs->local_jpegwriter) {
 		ms_filter_clear_notify_callback(vs->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(vs->local_jpegwriter, sSnapshotTakenCb, this, TRUE);
+		ms_filter_add_notify_callback(vs->local_jpegwriter, sSnapshotTakenCb, this, FALSE);
 		return ms_filter_call_method(vs->local_jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take local snapshot: no currently running video stream on this call";
@@ -498,7 +498,7 @@ int MS2VideoControl::takeVideoSnapshot (const string& file) {
 	if (vs && vs->jpegwriter) {
 		ms_filter_clear_notify_callback(vs->jpegwriter);
 		const char *filepath = file.empty() ? nullptr : file.c_str();
-		ms_filter_add_notify_callback(vs->jpegwriter, sSnapshotTakenCb, this, TRUE);
+		ms_filter_add_notify_callback(vs->jpegwriter, sSnapshotTakenCb, this, FALSE);
 		return ms_filter_call_method(vs->jpegwriter, MS_JPEG_WRITER_TAKE_SNAPSHOT, (void *)filepath);
 	}
 	lWarning() << "Cannot take snapshot: no currently running video stream on this call";

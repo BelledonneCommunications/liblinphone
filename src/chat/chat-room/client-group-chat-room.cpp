@@ -382,7 +382,11 @@ ClientGroupChatRoom::ClientGroupChatRoom (
 
 	bool_t forceFullState = linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_package_force_full_state", FALSE);
 	getConference()->setLastNotify(forceFullState ? 0 : lastNotifyId);
-	lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	if (linphone_core_get_global_state(getCore()->getCCore()) == LinphoneGlobalStartup) {
+		lDebug() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	} else {
+		lInfo() << "Last notify set to [" << getConference()->getLastNotify() << "] for conference [" << this << "]";
+	}
 
 	if (!hasBeenLeft){
 		getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(getConference())->eventHandler.get());
@@ -826,6 +830,11 @@ void ClientGroupChatRoomPrivate::onLocallyExhumedConference (const Address &remo
 	onExhumedConference(oldConfId, newConfId);
 	
 	q->setState(ConferenceInterface::State::Created);
+
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->unsubscribe(); // Required for next subscribe to be sent
+	q->getConference()->setLastNotify(0);
+	q->getCore()->getPrivate()->remoteListEventHandler->addHandler(static_pointer_cast<RemoteConference>(q->getConference())->eventHandler.get());
+	static_pointer_cast<RemoteConference>(q->getConference())->eventHandler->subscribe(q->getConferenceId());
 
 	lInfo() << "Found " << pendingExhumeMessages.size() << " messages waiting for exhume";
 	for (auto &chatMessage : pendingExhumeMessages) {

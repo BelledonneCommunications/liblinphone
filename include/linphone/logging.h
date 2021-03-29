@@ -51,7 +51,7 @@ typedef struct _LinphoneLoggingServiceCbs LinphoneLoggingServiceCbs;
  * @brief Verbosity levels of log messages.
  */
 typedef enum _LinphoneLogLevel {
-	LinphoneLogLevelDebug   = 1,    /**< @brief Level for debug messages. */
+	LinphoneLogLevelDebug   = 1<<0, /**< @brief Level for debug messages. */
 	LinphoneLogLevelTrace   = 1<<1, /**< @brief Level for traces. */
 	LinphoneLogLevelMessage = 1<<2, /**< @brief Level for information messages. */
 	LinphoneLogLevelWarning = 1<<3, /**< @brief Level for warning messages. */

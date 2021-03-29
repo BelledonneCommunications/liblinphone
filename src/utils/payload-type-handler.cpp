@@ -305,8 +305,10 @@ std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType ty
 			continue;
 		}
 
-		if (!isPayloadTypeUsable(pt))
+		if (!isPayloadTypeUsable(pt)) {
+			lInfo() << "Codec " << pt->mime_type << "/" << pt->clock_rate << "is unusable";
 			continue;
+		}
 
 		auto clonedPt = payload_type_clone(pt);
 

@@ -154,10 +154,6 @@ LinphoneChatRoom * linphone_core_get_new_chat_room_from_conf_addr(LinphoneCore *
 	std::shared_ptr<ChatRoom> cppChatRoom = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->getPushNotificationChatRoom(Utils::cStringToCppString(chat_room_addr));
 	LinphoneChatRoom *chatRoom = L_GET_C_BACK_PTR(cppChatRoom);
 
-	if (chatRoom) {
-		// We need to take a ref on the object because this function is called from outside linphone-sdk.
-		belle_sip_object_ref(chatRoom);
-	}
 	return chatRoom;
 }
 
@@ -231,4 +227,8 @@ VideoStream * linphone_core_get_preview_stream(LinphoneCore *lc) {
 
 const char *linphone_core_get_groupchat_version(void){
 	return "1.1"; //FIXME use CorePrivate::groupChatversion
+}
+
+bool_t linphone_core_is_in_background(const LinphoneCore *lc) {
+	return L_GET_CPP_PTR_FROM_C_OBJECT(lc)->isInBackground();
 }

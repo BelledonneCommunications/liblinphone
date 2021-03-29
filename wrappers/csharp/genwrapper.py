@@ -31,7 +31,7 @@ import abstractapi as AbsApi
 import metadoc
 import metaname
 
-class CsharpTranslator(object):
+class CsharpTranslator:
 	def __init__(self):
 		self.ignore = []
 		self.docTranslator = metadoc.SandCastleTranslator('CSharp')
@@ -90,7 +90,8 @@ class CsharpTranslator(object):
 		methodDict = {}
 		methodDict['prototype'] = "static extern {return} {name}({params});".format(**methodElems)
 
-		methodDict['doc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		methodDict['briefDoc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+		methodDict['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
 
 		methodDict['has_impl'] = genImpl
 		if genImpl:
@@ -294,6 +295,10 @@ class CsharpTranslator(object):
 			listenerDict['delegate']['params_private'] += dllImportType + " " + argName
 
 		listenerDict['delegate']["c_name_setter"] = c_name_setter
+
+		listenerDict['delegate']['briefDoc'] = method.briefDescription.translate(self.docTranslator, tagAsBrief=True) if method.briefDescription is not None else None
+		listenerDict['delegate']['detailedDoc'] = method.detailedDescription.translate(self.docTranslator) if method.detailedDescription is not None else None
+		
 		return listenerDict
 
 ###########################################################################################################################################
@@ -301,7 +306,8 @@ class CsharpTranslator(object):
 	def translate_enum(self, enum):
 		enumDict = {}
 		enumDict['enumName'] = enum.name.translate(self.nameTranslator)
-		enumDict['doc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		enumDict['briefDoc'] = enum.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		enumDict['detailedDoc'] = enum.detailedDescription.translate(self.docTranslator)
 		enumDict['values'] = []
 		enumDict['isFlag'] = False
 		i = 0
@@ -309,7 +315,8 @@ class CsharpTranslator(object):
 		for enumValue in enum.enumerators:
 			enumValDict = {}
 			enumValDict['name'] = enumValue.name.translate(self.nameTranslator)
-			enumValDict['doc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+			enumValDict['briefDoc'] = enumValue.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+			enumValDict['detailedDoc'] = enumValue.detailedDescription.translate(self.docTranslator)
 			if isinstance(enumValue.value, int):
 				lastValue = enumValue.value
 				enumValDict['value'] = str(enumValue.value)
@@ -335,7 +342,8 @@ class CsharpTranslator(object):
 		classDict['isLinphoneFactory'] = classDict['className'] == "Factory"
 		classDict['isLinphoneCall'] = _class.name.to_camel_case() == "Call"
 		classDict['isLinphoneCore'] = _class.name.to_camel_case() == "Core"
-		classDict['doc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		classDict['briefDoc'] = _class.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		classDict['detailedDoc'] = _class.detailedDescription.translate(self.docTranslator)
 		classDict['dllImports'] = []
 
 		islistenable = _class.listenerInterface is not None
@@ -382,6 +390,8 @@ class CsharpTranslator(object):
 		interfaceDict['interfaceName'] = interface.name.translate(self.nameTranslator)
 		interfaceDict['set_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_set_user_data'
 		interfaceDict['get_user_data_name'] = interface.listenedClass.name.to_snake_case(fullName=True) + '_cbs_get_user_data'
+		interfaceDict['briefDoc'] = interface.briefDescription.translate(self.docTranslator, tagAsBrief=True)
+		interfaceDict['detailedDoc'] = interface.detailedDescription.translate(self.docTranslator)
 
 		interfaceDict['methods'] = []
 		for method in interface.instanceMethods:
@@ -391,25 +401,25 @@ class CsharpTranslator(object):
 
 ###########################################################################################################################################
 
-class EnumImpl(object):
+class EnumImpl:
 	def __init__(self, enum, translator):
 		namespace = enum.find_first_ancestor_by_type(AbsApi.Namespace)
 		self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
 		self.enum = translator.translate_enum(enum)
 
-class ClassImpl(object):
+class ClassImpl:
 	def __init__(self, _class, translator):
 		namespace = _class.find_first_ancestor_by_type(AbsApi.Namespace)
 		self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
 		self._class = translator.translate_class(_class)
 
-class InterfaceImpl(object):
+class InterfaceImpl:
 	def __init__(self, interface, translator):
 		namespace = interface.find_first_ancestor_by_type(AbsApi.Namespace)
 		self.namespace = namespace.name.concatenate(fullName=True) if namespace is not None else None
 		self.interface = translator.translate_interface(interface)
 
-class WrapperImpl(object):
+class WrapperImpl:
 	def __init__(self, version, enums, interfaces, classes):
 		self.version = version
 		self.enums = enums

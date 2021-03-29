@@ -45,7 +45,7 @@ public struct {{enumName}}:OptionSet
 	/// {{{line}}}
 	{{/lines}}
 	{{/doc}}
-	public static let {{name}} = {{enumName}}({{#firstValue}}[]{{/firstValue}}{{^firstValue}}rawValue: {{{value}}}{{/firstValue}})
+	public static let {{name}} = {{enumName}}({{#isNone}}[]{{/isNone}}{{^isNone}}rawValue: {{{value}}}{{/isNone}})
 	{{/values}}
 }
 {{/isFlag}}
@@ -362,7 +362,7 @@ public class {{className}} : LinphoneObject
 		/// {{{line}}}
 		{{/lines}}
 		{{/doc}}
-		public static let {{name}} = {{enumName}}(rawValue: {{{value}}})
+		public static let {{name}} = {{enumName}}({{#isNone}}[]{{/isNone}}{{^isNone}}rawValue: {{{value}}}{{/isNone}})
 		{{/values}}
 	}
 	{{/isFlag}}

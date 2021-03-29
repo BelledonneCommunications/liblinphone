@@ -32,10 +32,8 @@ class ServerGroupChatRoomPrivate;
 
 class ServerGroupChatRoom : public ChatRoom , public ConferenceListener {
 public:
-	// TODO: Make me private!
 	ServerGroupChatRoom (const std::shared_ptr<Core> &core, SalCallOp *op);
 
-	// TODO: Same idea.
 	ServerGroupChatRoom (
 		const std::shared_ptr<Core> &core,
 		const ConferenceAddress &peerAddress,

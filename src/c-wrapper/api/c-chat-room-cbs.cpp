@@ -40,6 +40,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsConferenceLeftCb conferenceLeftCb;
 	LinphoneChatRoomCbsUndecryptableMessageReceivedCb undecryptableMessageReceivedCb;
 	LinphoneChatRoomCbsChatMessageReceivedCb chatMessageReceivedCb;
+	LinphoneChatRoomCbsChatMessageSendingCb chatMessageSendingCb;
 	LinphoneChatRoomCbsChatMessageSentCb chatMessageSentCb;
 	LinphoneChatRoomCbsConferenceAddressGenerationCb conferenceAddressGenerationCb;
 	LinphoneChatRoomCbsParticipantRegistrationSubscriptionRequestedCb participantRegistrationSubscriptionRequestedCb;
@@ -49,6 +50,7 @@ struct _LinphoneChatRoomCbs {
 	LinphoneChatRoomCbsEphemeralMessageTimerStartedCb EphemeralMessageTimerStartedCb;
 	LinphoneChatRoomCbsEphemeralMessageDeletedCb ephemeralMessageDeletedCb;
 	LinphoneChatRoomCbsChatMessageParticipantImdnStateChangedCb chatMessageParticipantImdnStateChangedCb;
+	LinphoneChatRoomCbsNewEventCb newEventCb;
 };
 
 BELLE_SIP_DECLARE_VPTR_NO_EXPORT(LinphoneChatRoomCbs);
@@ -101,12 +103,28 @@ void linphone_chat_room_cbs_set_message_received (LinphoneChatRoomCbs *cbs, Linp
 	cbs->messageReceivedCb = cb;
 }
 
+LinphoneChatRoomCbsNewEventCb linphone_chat_room_cbs_get_new_event (const LinphoneChatRoomCbs *cbs) {
+	return cbs->newEventCb;
+}
+
+void linphone_chat_room_cbs_set_new_event (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsNewEventCb cb) {
+	cbs->newEventCb = cb;
+}
+
 LinphoneChatRoomCbsChatMessageReceivedCb linphone_chat_room_cbs_get_chat_message_received (const LinphoneChatRoomCbs *cbs) {
 	return cbs->chatMessageReceivedCb;
 }
 
 void linphone_chat_room_cbs_set_chat_message_received (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageReceivedCb cb) {
 	cbs->chatMessageReceivedCb = cb;
+}
+
+LinphoneChatRoomCbsChatMessageSendingCb linphone_chat_room_cbs_get_chat_message_sending (const LinphoneChatRoomCbs *cbs) {
+	return cbs->chatMessageSendingCb;
+}
+
+void linphone_chat_room_cbs_set_chat_message_sending (LinphoneChatRoomCbs *cbs, LinphoneChatRoomCbsChatMessageSendingCb cb) {
+	cbs->chatMessageSendingCb = cb;
 }
 
 LinphoneChatRoomCbsChatMessageSentCb linphone_chat_room_cbs_get_chat_message_sent (const LinphoneChatRoomCbs *cbs) {

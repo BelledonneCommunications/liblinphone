@@ -43,12 +43,12 @@ int CorePrivate::addCall (const shared_ptr<Call> &call) {
 	L_ASSERT(call);
 	if (!canWeAddCall())
 		return -1;
+
 	if (!hasCalls()){
 		/* 
 		 * Free possibly used sound ressources now. Useful for iOS, because CallKit may cause any already running AudioUnit to stop working.
 		 */
 		linphone_core_stop_dtmf_stream(q->getCCore());
-		notifySoundcardUsage(true);
 	}
 	calls.push_back(call);
 
@@ -101,9 +101,23 @@ void CorePrivate::iterateCalls (time_t currentRealTime, bool oneSecondElapsed) c
 
 void CorePrivate::notifySoundcardUsage (bool used) {
 	L_Q();
+	if (!linphone_config_get_int(linphone_core_get_config(q->getCCore()),"sound","usage_hint",1)) return;
 	MSSndCard *card = q->getCCore()->sound_conf.capt_sndcard;
-	if (!!linphone_config_get_int(linphone_core_get_config(q->getCCore()),"sound","usage_hint",1) && card && (ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW))
-		ms_snd_card_set_usage_hint(card, used);
+	if (!card || !(ms_snd_card_get_capabilities(card) & MS_SND_CARD_CAP_IS_SLOW)) return;
+	if (q->getCCore()->use_files) return;
+	
+	LinphoneConfig *config = linphone_core_get_config(q->getCCore());
+	
+	bool useRtpIo = !!linphone_config_get_int(config, "sound", "rtp_io", FALSE);
+	bool useRtpIoEnableLocalOutput = !!linphone_config_get_int(config, "sound", "rtp_io_enable_local_output", FALSE);
+	
+	if (useRtpIo && !useRtpIoEnableLocalOutput) return;
+	
+	LinphoneConference *conf_ctx = getCCore()->conf_ctx;
+	if (conf_ctx && linphone_conference_get_size(conf_ctx) >= 1) return;
+	if (used) lInfo() << "Notifying sound card that it is going to be used.";
+	else lInfo() << "Notifying sound card that is no longer needed.";
+	ms_snd_card_set_usage_hint(card, used);
 }
 
 int CorePrivate::removeCall (const shared_ptr<Call> &call) {
@@ -144,6 +158,31 @@ void CorePrivate::setVideoWindowId (bool preview, void *id) {
 		}
 	}
 #endif
+}
+
+/*
+ * setCurrentCall() is the good place to notify the soundcard about its planned usage.
+ * The currentCall is set when a first call happens (either incoming or outgoing), regardless of its state.
+ * When there are multiple calls established, only the one that uses the soundcard is the current call. It is one with which the local
+ * user is interacting with sound.
+ * When in a locally-mixed conference, the current call is set to null.
+ * 
+ * notifySoundcardUsage() is an optimization intended to "slow" soundcard, that needs several hundred of milliseconds to initialize 
+ * (in practice as of today: only iOS AudioUnit).
+ * notifySoundcardUsage(true) indicates that the sound card is likely to be used in the future (it may be already being used in fact), and so it should be kept
+ * active even if no AudioStream is still using it, which can happen during small transition phases between OutgoingRinging and StreamsRunning.
+ * notifySoundcardUsage(false) indicates that no one is going to use the soundcard in the short term, so that it can be safely shutdown, if not used by an AudioStream.
+ */
+void CorePrivate::setCurrentCall (const std::shared_ptr<Call> &call) {
+	if (!currentCall && call){
+		/* we had no current call but now we have one. */
+		notifySoundcardUsage(true);
+	}else if (!call || currentCall != call){
+		/* the current call is reset or changed.
+		 * Indeed, with CallKit the AudioUnit cannot be reused between different calls (we get silence). */
+		notifySoundcardUsage(false);
+	}
+	currentCall = call;
 }
 
 
@@ -223,38 +262,17 @@ LinphoneStatus Core::pauseAllCalls () {
 	return 0;
 }
 
-void Core::soundcardHintCheck () {
-	L_D();
-	bool noNeedForSound = true;
-	// Check if the remaining calls are paused
-	for (const auto &call : d->calls) {
-		if ((call->getState() != CallSession::State::Pausing)
-			&& (call->getState() != CallSession::State::Paused)
-			&& (call->getState() != CallSession::State::End)
-			&& (call->getState() != CallSession::State::Error)) {
-			noNeedForSound = false;
-			break;
-		}
-	}
-	// If no more calls or all calls are paused, we can free the soundcard
-	LinphoneConfig *config = linphone_core_get_config(L_GET_C_BACK_PTR(this));
-	bool useRtpIo = !!linphone_config_get_int(config, "sound", "rtp_io", FALSE);
-	bool useRtpIoEnableLocalOutput = !!linphone_config_get_int(config, "sound", "rtp_io_enable_local_output", FALSE);
-	
-	LinphoneConference *conf_ctx = getCCore()->conf_ctx;
-	if (conf_ctx && linphone_conference_get_size(conf_ctx) >= 1) return;
-	
-	if ((!d->hasCalls() || noNeedForSound)
-		&& (!L_GET_C_BACK_PTR(getSharedFromThis())->use_files && (!useRtpIo || (useRtpIo && useRtpIoEnableLocalOutput)))) {
-		lInfo() << "Notifying soundcard that we don't need it anymore for calls";
-		d->notifySoundcardUsage(false);
-	}
-}
-
 void Core::soundcardActivateAudioSession (bool actived) {
 	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
 	if (card) {
 		ms_snd_card_notify_audio_session_activated(card, actived);
+	}
+}
+
+void Core::soundcardConfigureAudioSession () {
+	MSSndCard *card = getCCore()->sound_conf.capt_sndcard;
+	if (card) {
+		ms_snd_card_configure_audio_session(card);
 	}
 }
 

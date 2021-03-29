@@ -93,16 +93,16 @@ LINPHONE_PUBLIC LinphoneChatMessage* linphone_chat_room_create_file_transfer_mes
 LINPHONE_PUBLIC LinphoneChatMessage *linphone_chat_room_create_forward_message (LinphoneChatRoom *chat_room, LinphoneChatMessage *message);
 
 /**
- * Gets the peer address \link linphone_core_get_chat_room() associated to \endlink this #LinphoneChatRoom
- * @param chat_room #LinphoneChatRoom object @notnil
- * @return #LinphoneAddress peer address @notnil
+ * Get the peer address associated to this chat room.
+ * @param chat_room #LinphoneChatRoom object. @notnil
+ * @return The peer address. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress* linphone_chat_room_get_peer_address(LinphoneChatRoom *chat_room);
 
 /**
- * Gets the local address \link linphone_core_get_chat_room() associated to \endlink this #LinphoneChatRoom
- * @param chat_room #LinphoneChatRoom object @notnil
- * @return #LinphoneAddress local address @notnil
+ * Get the local address associated to this chat room.
+ * @param chat_room #LinphoneChatRoom object. @notnil
+ * @return The local address. @notnil
  */
 LINPHONE_PUBLIC const LinphoneAddress* linphone_chat_room_get_local_address(LinphoneChatRoom *chat_room);
 
@@ -194,7 +194,7 @@ LINPHONE_PUBLIC bool_t linphone_chat_room_is_empty (LinphoneChatRoom *chat_room)
  * Gets nb_message most recent messages from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved @notnil
  * @param nb_message Number of message to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneChatMessage} @tobefreed
+ * @return A list of chat messages. \bctbx_list{LinphoneChatMessage} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *chat_room, int nb_message);
 
@@ -202,8 +202,8 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history (LinphoneChatRoom *
  * Gets the partial list of messages in the given range, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which messages should be retrieved @notnil
  * @param begin The first message of the range to be retrieved. History most recent message has index 0.
- * @param end The last message of the range to be retrieved. History oldest message has index of history size - 1 (use #linphone_chat_room_get_history_size to retrieve history size)
- * @return \bctbx_list{LinphoneChatMessage} @tobefreed
+ * @param end The last message of the range to be retrieved. History oldest message has index of history size - 1 (use #linphone_chat_room_get_history_size() to retrieve history size)
+ * @return A list of chat messages. \bctbx_list{LinphoneChatMessage} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range (LinphoneChatRoom *chat_room, int begin, int end);
 
@@ -211,7 +211,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range (LinphoneChat
  * Gets nb_events most recent chat message events from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneEventLog} @tobefreed
+ * @return A list \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events (LinphoneChatRoom *chat_room, int nb_events);
 
@@ -220,7 +220,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_message_events (Lin
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
- * @return \bctbx_list{LinphoneEventLog} @tobefreed
+ * @return The list of chat message events. \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_message_events (LinphoneChatRoom *chat_room, int begin, int end);
 
@@ -228,7 +228,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_message_event
  * Gets nb_events most recent events from chat_room chat room, sorted from oldest to most recent.
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param nb_events Number of events to retrieve. 0 means everything.
- * @return \bctbx_list{LinphoneEventLog} @tobefreed
+ * @return The list of the most recent events. \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events (LinphoneChatRoom *chat_room, int nb_events);
 
@@ -237,7 +237,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_events (LinphoneCha
  * @param chat_room The #LinphoneChatRoom object corresponding to the conversation for which events should be retrieved @notnil
  * @param begin The first event of the range to be retrieved. History most recent event has index 0.
  * @param end The last event of the range to be retrieved. History oldest event has index of history size - 1
- * @return \bctbx_list{LinphoneEventLog} @tobefreed
+ * @return The list of the found events. \bctbx_list{LinphoneEventLog} @tobefreed
  */
 LINPHONE_PUBLIC bctbx_list_t *linphone_chat_room_get_history_range_events (LinphoneChatRoom *chat_room, int begin, int end);
 
@@ -368,7 +368,7 @@ LINPHONE_PUBLIC void linphone_chat_room_add_participant (LinphoneChatRoom *chat_
  * Add several participants to a chat room at once. This may fail if this type of chat room does not handle participants.
  * Use linphone_chat_room_can_handle_participants() to know if this chat room handles participants.
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @param addresses \bctbx_list{LinphoneAddress} @notnil
+ * @param addresses The participants to add. \bctbx_list{LinphoneAddress} @notnil
  * @return TRUE if everything is OK, FALSE otherwise
  */
 LINPHONE_PUBLIC bool_t linphone_chat_room_add_participants (LinphoneChatRoom *chat_room, const bctbx_list_t *addresses);
@@ -461,7 +461,7 @@ LINPHONE_PUBLIC void linphone_chat_room_remove_participant (LinphoneChatRoom *ch
 /**
  * Remove several participants of a chat room at once.
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @param participants \bctbx_list{LinphoneParticipant} @notnil
+ * @param participants The participants to remove. \bctbx_list{LinphoneParticipant} @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_room_remove_participants (LinphoneChatRoom *chat_room, const bctbx_list_t *participants);
 
@@ -483,7 +483,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_subject (LinphoneChatRoom *chat_room
 /**
  * Gets the list of participants that are currently composing
  * @param chat_room A #LinphoneChatRoom object @notnil
- * @return \bctbx_list{LinphoneAddress} list of addresses that are in the is_composing state
+ * @return List of addresses that are in the is_composing state. \bctbx_list{LinphoneAddress}
  */
 LINPHONE_PUBLIC const bctbx_list_t * linphone_chat_room_get_composing_addresses(LinphoneChatRoom *chat_room);
 
@@ -501,7 +501,7 @@ LINPHONE_PUBLIC void linphone_chat_room_set_conference_address (LinphoneChatRoom
  * This function is meaningful only for server implementation of chatroom, and shall not by used by client applications.
  * @param chat_room A #LinphoneChatRoom object @notnil
  * @param participant_address The participant address @notnil
- * @param device_identities \bctbx_list{LinphoneParticipantDeviceIdentity} list of the participant devices to be used by the group chat room @notnil
+ * @param device_identities List of the participant devices to be used by the group chat room \bctbx_list{LinphoneParticipantDeviceIdentity} @notnil
  */
 LINPHONE_PUBLIC void linphone_chat_room_set_participant_devices(LinphoneChatRoom *chat_room, const LinphoneAddress *participant_address, const bctbx_list_t *device_identities);
 

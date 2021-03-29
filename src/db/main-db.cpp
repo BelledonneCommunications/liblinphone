@@ -2696,7 +2696,7 @@ list<shared_ptr<ChatMessage>> MainDb::getUnreadChatMessages (const ConferenceId 
 
 list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 #ifdef HAVE_DB_STORAGE
-	static const string query =
+	string query =
 		"SELECT conference_event_view.id AS event_id, type, creation_time, from_sip_address.value, to_sip_address.value, time, imdn_message_id, state, direction, is_secured, notify_id, device_sip_address.value, participant_sip_address.value, subject, delivery_notification_required, display_notification_required, security_alert, faulty_device, marked_as_read, forward_info, ephemeral_lifetime, expired_time, chat_room_id FROM conference_event_view"
 		" LEFT JOIN sip_address AS from_sip_address ON from_sip_address.id = from_sip_address_id"
 		" LEFT JOIN sip_address AS to_sip_address ON to_sip_address.id = to_sip_address_id"
@@ -2706,15 +2706,13 @@ list<shared_ptr<ChatMessage>> MainDb::getEphemeralMessages () const {
 		" SELECT event_id"
 		" FROM chat_message_ephemeral_event"
 		" WHERE expired_time > :nullTime"
-		" ORDER BY expired_time ASC"
-		" LIMIT :maxMessages)"
 		" ORDER BY expired_time ASC";
+	query += getBackend() == MainDb::Backend::Sqlite3 ? " LIMIT :maxMessages) ORDER BY expired_time ASC" : " ) ORDER BY expired_time ASC";
 
 	return L_DB_TRANSACTION {
 		L_D();
 		list<shared_ptr<ChatMessage>> chatMessages;
-		soci::rowset<soci::row> rows = (
-		d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)), soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB));
+		soci::rowset<soci::row> rows = getBackend() == MainDb::Backend::Sqlite3 ? (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)),  soci::use(EPHEMERAL_MESSAGE_TASKS_MAX_NB)) : (d->dbSession.getBackendSession()->prepare << query, soci::use(Utils::getTimeTAsTm(0)));
 		for (const auto &row : rows) {
 			const long long &dbChatRoomId = d->dbSession.resolveId(row, (int)row.size()-1);
 			ConferenceId conferenceId = d->getConferenceIdFromCache(dbChatRoomId);

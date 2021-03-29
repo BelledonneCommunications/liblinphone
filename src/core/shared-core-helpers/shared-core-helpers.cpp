@@ -66,4 +66,6 @@ void *GenericSharedCoreHelpers::getPathContext() {
     return NULL;
 }
 
+void GenericSharedCoreHelpers::setChatRoomInvite(std::shared_ptr<ChatRoom> chatRoom) {}
+
 LINPHONE_END_NAMESPACE

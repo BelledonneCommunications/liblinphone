@@ -460,7 +460,7 @@ public class AndroidPlatformHelper {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                Log.i("[Platform Helper] Preview surface texture [" + surface + "] has been updated");
+                Log.d("[Platform Helper] Preview surface texture [" + surface + "] has been updated");
             }
         });
 
@@ -540,7 +540,7 @@ public class AndroidPlatformHelper {
 
             @Override
             public void onSurfaceTextureUpdated(SurfaceTexture surface) {
-                Log.i("[Platform Helper] Surface texture [" + surface + "] has been updated");
+                Log.d("[Platform Helper] Surface texture [" + surface + "] has been updated");
             }
         });
 
