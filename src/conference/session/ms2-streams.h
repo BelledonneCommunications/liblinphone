@@ -111,6 +111,7 @@ private:
 	void initMulticast(const OfferAnswerContext &params);
 	void configureRtpSession(RtpSession *session);
 	void applyJitterBufferParams (RtpSession *session);
+	void setupSrtp(const OfferAnswerContext &params);
 	void setupDtlsParams(MediaStream *ms);
 	void initDtlsParams(MediaStream *ms);
 	void configureRtpSessionForRtcpFb (const OfferAnswerContext &params);
