@@ -576,18 +576,9 @@ void MS2Stream::render(const OfferAnswerContext &params, CallSession::State targ
 		if (isMulticast)
 			rtp_session_set_multicast_ttl(mSessions.rtp_session, stream.getChosenConfiguration().ttl);
 		rtp_session_enable_rtcp_mux(mSessions.rtp_session, stream.getChosenConfiguration().rtcp_mux);
-			// Valid local tags are > 0
-		if (stream.hasSrtp()) {
-			int cryptoIdx = Sal::findCryptoIndexFromTag(params.getLocalStreamDescription().getChosenConfiguration().crypto, static_cast<unsigned char>(stream.getChosenConfiguration().crypto_local_tag));
 
-			if (cryptoIdx >= 0) {
-				const auto & srtpAlgo = stream.getChosenConfiguration().crypto[0].algo;
-				ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, srtpAlgo, L_STRING_TO_C(stream.getChosenConfiguration().crypto[0].master_key));
-				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, srtpAlgo,
-									L_STRING_TO_C(params.getLocalStreamDescription().getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
-			} else
-				lWarning() << "Failed to find local crypto algo with tag: " << stream.getChosenConfiguration().crypto_local_tag;
-		}
+		setupSrtp(params);
+
 		ms_media_stream_sessions_set_encryption_mandatory(&ms->sessions, getMediaSessionPrivate().isEncryptionMandatory());
 		configureRtpSessionForRtcpFb(params);
 		configureRtpSessionForRtcpXr(params);
@@ -803,22 +794,34 @@ void MS2Stream::initializeSessions(MediaStream *stream){
 	
 }
 
-void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
+void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 	const auto & localStreamDesc = params.getLocalStreamDescription();
 	const auto & resultStreamDesc = params.getResultStreamDescription();
 	MediaStream * ms = getMediaStream();
-	
+
 	if (resultStreamDesc.hasSrtp()){
+		// Valid local tags are > 0
 		int cryptoIdx = Sal::findCryptoIndexFromTag(localStreamDesc.getChosenConfiguration().crypto, static_cast<unsigned char>(resultStreamDesc.getChosenConfiguration().crypto_local_tag));
 		if (cryptoIdx >= 0) {
-			if (params.localStreamDescriptionChanges & SAL_MEDIA_DESCRIPTION_CRYPTO_KEYS_CHANGED){
-				ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
-			}
-			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, resultStreamDesc.getChosenConfiguration().crypto[0].algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
+			MSCryptoSuite algo = resultStreamDesc.getChosenConfiguration().crypto[0].algo;
+			ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, L_STRING_TO_C(localStreamDesc.getChosenConfiguration().crypto[(size_t)cryptoIdx].master_key));
+			ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, L_STRING_TO_C(resultStreamDesc.getChosenConfiguration().crypto[0].master_key));
 		} else {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 		}
+	} else if (mSessions.srtp_context) {
+		// If the stream has SRTP disble, set the key to a NULL value
+		MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
+		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL);
+		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL);
 	}
+}
+
+void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
+	const auto & resultStreamDesc = params.getResultStreamDescription();
+	MediaStream * ms = getMediaStream();
+
+	setupSrtp(params);
 
 	if (resultStreamDesc.hasZrtp()) {
 		if (!mSessions.zrtp_context) {
