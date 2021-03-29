@@ -1452,7 +1452,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
-	/*wait for reINVITEs to complete*/
+	// wait for reINVITEs to complete
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
 
@@ -1519,7 +1519,7 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 	sendReInvite = (potentialConfigurationChosen && capabilityNegotiationReinviteEnabled);
 	expectedStreamsRunning = 1 + ((sendReInvite) ? 1 : 0);
 
-	/*wait for reINVITEs to complete*/
+	// wait for reINVITEs to complete
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&marie->stat.number_of_LinphoneCallStreamsRunning,(marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
 	BC_ASSERT_TRUE(wait_for(pauline->lc,marie->lc,&pauline->stat.number_of_LinphoneCallStreamsRunning,(pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning)));
 
@@ -1554,7 +1554,6 @@ static void call_with_no_sdp_on_update_base (const bool_t caller_cap_neg, const 
 
 	BC_ASSERT_EQUAL(pauline->stat.number_of_LinphoneCallStreamsRunning, (pauline_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
 	BC_ASSERT_EQUAL(marie->stat.number_of_LinphoneCallStreamsRunning, (marie_stat.number_of_LinphoneCallStreamsRunning+expectedStreamsRunning), int, "%d");
-
 
 	end_call(pauline, marie);
 
