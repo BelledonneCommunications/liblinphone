@@ -562,6 +562,7 @@ void linphone_core_notify_new_subscription_requested(LinphoneCore *lc, LinphoneF
 void linphone_core_notify_auth_info_requested(LinphoneCore *lc, const char *realm, const char *username, const char *domain);
 void linphone_core_notify_authentication_requested(LinphoneCore *lc, LinphoneAuthInfo *auth_info, LinphoneAuthMethod method);
 void linphone_core_notify_call_log_updated(LinphoneCore *lc, LinphoneCallLog *newcl);
+void linphone_core_notify_call_id_updated(LinphoneCore *lc, const char*previous, const char *current);
 void linphone_core_notify_text_message_received(LinphoneCore *lc, LinphoneChatRoom *room, const LinphoneAddress *from, const char *message);
 void linphone_core_notify_message_received(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);
 void linphone_core_notify_message_sent(LinphoneCore *lc, LinphoneChatRoom *room, LinphoneChatMessage *message);

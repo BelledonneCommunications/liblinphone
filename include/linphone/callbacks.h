@@ -171,6 +171,20 @@ typedef void (*LinphoneCoreCbsCallLogUpdatedCb)(LinphoneCore *core, LinphoneCall
 typedef LinphoneCoreCbsCallLogUpdatedCb LinphoneCoreCallLogUpdatedCb;
 
 /**
+ * Callback to notify the callid of a call has been updated.
+ * This is done typically when a call retry.
+ * @param core the #LinphoneCore @notnil
+ * @param previous_call_id the previous callid. @notnil
+ * @param current_call_id the new callid. @notnil
+ */
+typedef void (*LinphoneCoreCbsCallIdUpdatedCb)(LinphoneCore *core, const char *previous_call_id, const char *current_call_id);
+
+/**
+ * Old name of #LinphoneCoreCbsCallIdUpdatedCb.
+ */
+typedef LinphoneCoreCbsCallIdUpdatedCb LinphoneCoreCallIdUpdatedCb;
+
+/**
  * Chat message callback prototype.
  * @param core #LinphoneCore object @notnil
  * @param chat_room #LinphoneChatRoom involved in this conversation. Can be created by the framework in case the From-URI is not present in any chat room. @notnil
