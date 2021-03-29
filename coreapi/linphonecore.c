@@ -292,6 +292,14 @@ void linphone_core_cbs_set_call_log_updated(LinphoneCoreCbs *cbs, LinphoneCoreCb
 	cbs->vtable->call_log_updated = cb;
 }
 
+LinphoneCoreCbsCallIdUpdatedCb linphone_core_cbs_get_call_id_updated(LinphoneCoreCbs *cbs) {
+	return cbs->vtable->call_id_updated;
+}
+
+void linphone_core_cbs_set_call_id_updated(LinphoneCoreCbs *cbs, LinphoneCoreCbsCallIdUpdatedCb cb) {
+	cbs->vtable->call_id_updated = cb;
+}
+
 LinphoneCoreCbsChatRoomReadCb linphone_core_cbs_get_chat_room_read(LinphoneCoreCbs *cbs) {
 	return cbs->vtable->chat_room_read;
 }

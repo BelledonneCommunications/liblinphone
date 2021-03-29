@@ -251,6 +251,7 @@ bool MediaSessionPrivate::failure () {
 				bool avpfEnabled = getParams()->avpfEnabled();
 				if (mediaEncrptionSrtp || avpfEnabled) {
 					lInfo() << "Outgoing CallSession [" << q << "] failed with SRTP and/or AVPF enabled";
+					string previousCallId = op->getCallId();
 
 					for (int i = 0; i < localDesc->nb_streams; i++) {
 						if (!sal_stream_description_enabled(&localDesc->streams[i]))
@@ -261,6 +262,7 @@ bool MediaSessionPrivate::failure () {
 									lInfo() << "Retrying CallSession [" << q << "] with SAVP";
 								getParams()->enableAvpf(false);
 								restartInvite();
+								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());
 								return true;
 							} else if (!linphone_core_is_media_encryption_mandatory(q->getCore()->getCCore())) {
 								if (i == 0)
@@ -268,6 +270,7 @@ bool MediaSessionPrivate::failure () {
 								getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
 								memset(localDesc->streams[i].crypto, 0, sizeof(localDesc->streams[i].crypto));
 								restartInvite();
+								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());
 								return true;
 							}
 						} else if (avpfEnabled) {
@@ -275,6 +278,7 @@ bool MediaSessionPrivate::failure () {
 								lInfo() << "Retrying CallSession [" << q << "] with AVP";
 							getParams()->enableAvpf(false);
 							restartInvite();
+							linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());
 							return true;
 						}
 					}
