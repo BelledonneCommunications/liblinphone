@@ -60,7 +60,6 @@ set(LINPHONE_SOURCE_FILES_C
 	friendlist.c
 	im_notif_policy.c
 	info.c
-	ldapprovider.c
 	lime.c
 	im_encryption_engine.c
 	linphonecall.c
@@ -91,9 +90,6 @@ set(LINPHONE_SOURCE_FILES_C
 	xmlrpc.c
 	vtables.c
 )
-if(ENABLE_LDAP)
-	add_definitions(-DBUILD_LDAP)
-endif()
 set(LINPHONE_SOURCE_FILES_CXX
 	conference.cc
 	tester_utils.cpp

@@ -260,6 +260,13 @@ LINPHONE_PUBLIC LinphoneChatRoomCbs * linphone_factory_create_chat_room_cbs(cons
 LINPHONE_PUBLIC LinphoneChatMessageCbs * linphone_factory_create_chat_message_cbs(const LinphoneFactory *factory);
 
 /**
+ * Create a LinphoneMagicSearchCbs object that holds callbacks for events happening on a chat message.
+ * @param factory #LinphoneFactory singletion object @notnil
+ * @return A new #LinphoneMagicSearchCbs object @notnil
+ */
+LINPHONE_PUBLIC LinphoneMagicSearchCbs * linphone_factory_create_magic_search_cbs(const LinphoneFactory *factory);
+
+/**
  * Create an empty #LinphoneVcard.
  * @param factory #LinphoneFactory singletion object @notnil
  * @return a new #LinphoneVcard. @notnil

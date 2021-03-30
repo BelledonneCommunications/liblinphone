@@ -22,6 +22,7 @@
 #include <bctoolbox/list.h>
 #include <algorithm>
 
+#include "c-wrapper/c-wrapper.h"
 #include "c-wrapper/internal/c-tools.h"
 #include "linphone/utils/utils.h"
 #include "linphone/core.h"
@@ -30,7 +31,9 @@
 #include "logger/logger.h"
 #include "private.h"
 
-#include "linphone/ldapprovider.h"
+//#include "linphone/belle-sip/object.h"
+
+#include "ldap/ldap-contact-provider.h"
 
 
 using namespace std;
@@ -46,10 +49,13 @@ MagicSearch::MagicSearch (const std::shared_ptr<Core> &core) : CoreAccessor(core
 	d->mDelimiter = "+_-";
 	d->mUseDelimiter = true;
 	d->mCacheResult = nullptr;
+	mIsAsync = FALSE;
+	ms_mutex_init(&mLock, NULL);
 }
 
 MagicSearch::~MagicSearch () {
 	resetSearchCache();
+	ms_mutex_destroy(&mLock);
 }
 
 void MagicSearch::setMinWeight (const unsigned int weight) {
@@ -135,10 +141,77 @@ static string getDisplayNameFromSearchResult (const SearchResult &sr) {
 	return name;
 }
 
-list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain) const {
+class DataAsync{
+public:
+	DataAsync(){}
+	string mFilter;
+	string mWithDomain;
+};
+
+void* MagicSearch::async(void* arg){
+	belle_sip_object_pool_t * pool = belle_sip_object_pool_push();
+	MagicSearch * magic = (MagicSearch*)arg;
+	ms_mutex_lock(&magic->mLock);
+	while(magic->mRequests.size() != 0){
+		DataAsync * data = (DataAsync*)magic->mRequests.front();
+		ms_mutex_unlock(&magic->mLock);
+		magic->resetSearchCache();
+		magic->mIsAsync = TRUE;// Activate Async just for this transaction
+		magic->getContactListFromFilter(data->mFilter, data->mWithDomain);
+		magic->mIsAsync = FALSE;
+		_linphone_magic_search_notify_search_results_received(L_GET_C_BACK_PTR(magic));
+		ms_mutex_lock(&magic->mLock);
+		do{
+			delete (DataAsync*)magic->mRequests.front();
+			magic->mRequests.pop();
+		}while(magic->mRequests.size() > 1);// Remove all data but last if it exists
+	}
+	belle_sip_object_unref(pool);
+	ms_mutex_unlock(&magic->mLock);
+	return (void*)0;
+}
+
+void MagicSearch::getContactListFromFilterAsync (const string &filter, const string &withDomain) {
+	DataAsync * data = new DataAsync();
+	data->mFilter = filter;
+	data->mWithDomain = withDomain;
+	ms_mutex_lock(&mLock);
+	mRequests.push(data);
+	if( mRequests.size() == 1){
+		ms_thread_t asyncThread;
+		ms_thread_create(&asyncThread, NULL, async, this);
+	}
+	ms_mutex_unlock(&mLock);
+}
+
+
+
+/*
+static void* async(void* arg){
+	belle_sip_object_pool_t * pool = belle_sip_object_pool_push();
+	DataAsync * data = (DataAsync*)arg;
+	list<SearchResult> results = data->magic->getContactListFromFilter(data->mFilter, data->mWithDomain);
+	
+	//data->mCb(data->mData, L_GET_RESOLVED_C_LIST_FROM_CPP_LIST(results));
+	_linphone_magic_search_notify_search_results_received(L_GET_C_BACK_PTR(data->magic));
+	//data->mCb(data->mData, &results);
+	belle_sip_object_unref(pool);
+	delete data;
+	return (void*)0;
+}
+
+void MagicSearch::getContactListFromFilterAsync (const string &filter, const string &withDomain) {
+	DataAsync * d = new DataAsync();
+	d->mFilter = filter;
+	d->mWithDomain = withDomain;
+	d->magic = this;
+	ms_thread_create(&d->asyncThread, NULL, async, d);
+}
+*/
+list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, const string &withDomain) {
+	L_D();
 	list<SearchResult> *resultList;
 	list<SearchResult> returnList;
-	LinphoneProxyConfig *proxy = nullptr;
 
 	if (getSearchCache() != nullptr && !filter.empty()) {
 		resultList = continueSearch(filter, withDomain);
@@ -150,21 +223,27 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 	resultList = uniqueItemsList(*resultList);
 
 	setSearchCache(resultList);
-	returnList = *resultList;
+	d->mFilter = filter;
 
+	return getLastSearch();
+}
+std::list<SearchResult> MagicSearch::getLastSearch()const{
+	L_D();
+	list<SearchResult> returnList = *getSearchCache();
+	LinphoneProxyConfig *proxy = nullptr;
 	if (getLimitedSearch() && returnList.size() > getSearchLimit()) {
 		auto limitIterator = returnList.begin();
 		advance(limitIterator, (int)getSearchLimit());
 		returnList.erase(limitIterator, returnList.end());
 	}
 
-	if (!filter.empty()) {
+	if (!d->mFilter.empty()) {
 		proxy = linphone_core_get_default_proxy_config(this->getCore()->getCCore());
 		// Adding last item if proxy exist
 		if (proxy) {
 			const char *domain = linphone_proxy_config_get_domain(proxy);
 			if (domain) {
-				string strTmp = filter;
+				string strTmp = d->mFilter;
 				transform(strTmp.begin(), strTmp.end(), strTmp.begin(), [](unsigned char c){ return tolower(c); });
 				string filterAddress = "sip:" + strTmp + "@" + domain;
 				LinphoneAddress *lastResult = linphone_core_create_address(this->getCore()->getCCore(), filterAddress.c_str());
@@ -175,10 +254,8 @@ list<SearchResult> MagicSearch::getContactListFromFilter (const string &filter, 
 			}
 		}
 	}
-
 	return returnList;
 }
-
 static int compareStringItems(const char *a, const char *b) {
 	if (a == nullptr) a = "";
 	if (b == nullptr) b = "";
@@ -225,7 +302,7 @@ list<SearchResult> MagicSearch::getAddressFromCallLog (
 		const LinphoneAddress *addr = (linphone_call_log_get_dir(log) == LinphoneCallDir::LinphoneCallIncoming) ?
 		linphone_call_log_get_from_address(log) : linphone_call_log_get_to_address(log);
 		if (addr && linphone_call_log_get_status(log) != LinphoneCallAborted) {
-			if (filter.empty()) {
+			if (filter.empty() && withDomain.empty()) {
 				if (findAddress(currentList, addr)) continue;
 				resultList.push_back(SearchResult(0, addr, "", nullptr));
 			} else {
@@ -257,7 +334,7 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 			for (const bctbx_list_t *p = participants ; p != nullptr ; p = bctbx_list_next(p)) {
 				LinphoneParticipant *participant = static_cast<LinphoneParticipant*>(p->data);
 				const LinphoneAddress *addr = linphone_address_clone(linphone_participant_get_address(participant));
-				if (filter.empty()) {
+				if (filter.empty() && withDomain.empty()) {
 					if (findAddress(currentList, addr)) continue;
 					resultList.push_back(SearchResult(0, addr, "", nullptr));
 				} else {
@@ -291,6 +368,15 @@ list<SearchResult> MagicSearch::getAddressFromGroupChatRoomParticipants (
 	return resultList;
 }
 
+static void* clone_address( void* entry )
+{
+	return linphone_address_ref((LinphoneAddress*)entry);
+}
+static void destroy_address( void* entry )
+{
+	linphone_address_unref((LinphoneAddress*)entry);
+}
+
 class CbData{
 public:
 	CbData(){
@@ -299,22 +385,16 @@ public:
 	}
 	~CbData(){
 		if(mFriends )
-			bctbx_list_free( mFriends );
+			bctbx_list_free_with_data( mFriends, destroy_address );
 	}
 	bctbx_list_t* mFriends;
 	bool_t mEnd;
 	
 };
 
-void* clone_friend( void* entry )
-{
-	return linphone_friend_ref((LinphoneFriend*)entry);
-}
-
 void LDAPCallback( LinphoneContactSearch* id, bctbx_list_t* friends, void* data ){
 	CbData * cbData = (CbData*)data;
-
-	cbData->mFriends = bctbx_list_copy_with_data(friends, clone_friend);
+	cbData->mFriends = bctbx_list_copy_with_data(friends, clone_address);
 	cbData->mEnd = TRUE;
 }
 
@@ -324,61 +404,52 @@ list<SearchResult> MagicSearch::getAddressFromLDAPServer (
 	const list<SearchResult> &currentList
 ) const {
 	list<SearchResult> resultList;
-	LinphoneDictionary * config = linphone_dictionary_new();
-	CbData data;
-	const char * predicate = "*";
-	void * cb_data = &data;
-
-	linphone_dictionary_set_int(config, "use_tls",			0);
-	linphone_dictionary_set_int(config, "timeout",			10);
-	linphone_dictionary_set_int(config, "deref_aliases",	0);
-	linphone_dictionary_set_int(config, "max_results",		50);
-	linphone_dictionary_set_string(config, "auth_method",	"ANONYMOUS");
-	linphone_dictionary_set_string(config, "username",		"uid=tesla,dc=example,dc=com");
-	linphone_dictionary_set_string(config, "password",		"password");
-	linphone_dictionary_set_string(config, "bind_dn",		"uid=tesla,dc=example,dc=com");
-	linphone_dictionary_set_string(config, "base_object",    "dc=example,dc=com");
-	linphone_dictionary_set_string(config, "server",         "ldap.forumsys.com");//"ldap://localhost");
-	linphone_dictionary_set_string(config, "filter",         "(uid=%s)");
-	linphone_dictionary_set_string(config, "name_attribute", "sn");
-	linphone_dictionary_set_string(config, "sip_attribute",  "telephoneNumber");
-	linphone_dictionary_set_string(config, "sasl_authname",  "");
-	linphone_dictionary_set_string(config, "sasl_realm",  "");
-	linphone_dictionary_set_string(config, "attributes","telephoneNumber,givenName,sn,mobile,homePhone");
-
-	linphone_dictionary_set_string(config, "sip_scheme",  "sip");
-	linphone_dictionary_set_string(config, "sip_domain",  "linphone.org");
-
-	LinphoneLDAPContactProvider * provider = linphone_ldap_contact_provider_ref(linphone_ldap_contact_provider_create(this->getCore()->getCCore(), config));
-
-	//LinphoneContactSearch * search = linphone_contact_search_ref(
-	linphone_contact_provider_begin_search(linphone_contact_provider_cast((void*)provider) , predicate, LDAPCallback, cb_data);
-
-	while(!data.mEnd){
-		linphone_core_iterate(this->getCore()->getCCore());
+	std::string predicate = (filter.empty()?"*":filter);
+	std::vector<std::shared_ptr<LDAPContactProvider> > providers = LDAPContactProvider::create(this->getCore());
+	std::vector<CbData> allData;
+	allData.resize(providers.size());
+	
+// Requests
+	for(size_t i = 0 ; i < providers.size() ; ++i){
+		if(providers[i] && providers[i]->mStatus>=0)
+			providers[i]->search(predicate, LDAPCallback, &allData[i]);
+		else
+			allData[i].mEnd = TRUE;
 	}
-
-	// For all call log or when we reach the search limit
-	for (const bctbx_list_t *f = data.mFriends ; f != nullptr ; f = bctbx_list_next(f)) {
-		LinphoneFriend *friendItem = reinterpret_cast<LinphoneFriend*>(f->data);
-		const LinphoneAddress *addr = linphone_friend_get_address(friendItem);
-		if (addr) {
-			if (filter.empty()) {
-				if (findAddress(currentList, addr)) continue;
-				resultList.push_back(SearchResult(0, addr, "", nullptr));
-			} else {
-				unsigned int weight = searchInAddress(addr, filter, withDomain);
-				if (weight > getMinWeight()) {
+// Wait for all answers
+	bctoolboxTimeSpec startTime, timeout, currentTime;
+	bctbx_get_cur_time(&startTime);
+	currentTime = startTime;
+	for(size_t i = 0 ; i < allData.size() ; ++i){
+		timeout = startTime;
+		bctbx_timespec_add(&timeout, (int64_t) providers[i]->getTimeout());// Timeout becomes the max of all timeout
+		while(!allData[i].mEnd && bctbx_timespec_compare( &currentTime, &timeout) <= 0){
+			if(mIsAsync)
+				bctbx_sleep_ms(10);
+			else
+				linphone_core_iterate(this->getCore()->getCCore());
+			bctbx_get_cur_time(&currentTime);
+		}
+	}
+	
+	for(size_t i = 0 ; i < allData.size() ; ++i){
+		// For all call log or when we reach the search limit
+		for (const bctbx_list_t *f = allData[i].mFriends ; f != nullptr ; f = bctbx_list_next(f)) {
+			LinphoneAddress *addr = reinterpret_cast<LinphoneAddress*>(f->data);
+			if (addr) {
+				if (filter.empty() && withDomain.empty()) {
+					if (findAddress(currentList, addr)) continue;
+					resultList.push_back(SearchResult(0, addr, "", nullptr));
+				} else {
+					unsigned int weight = searchInAddress(addr, filter, withDomain);
 					if (findAddress(currentList, addr)) continue;
 					resultList.push_back(SearchResult(weight, addr, "", nullptr));
+					//if (weight > getMinWeight()) {}
 				}
 			}
 		}
 	}
-
-	//linphone_contact_search_unref(search);
-	linphone_ldap_contact_provider_unref((void*)provider);
-
+	providers.clear();
 	return resultList;
 }
 
@@ -395,13 +466,12 @@ list<SearchResult> *MagicSearch::beginNewSearch (const string &filter, const str
 			addResultsToResultsList(fResults, *resultList);
 		}
 	}
-
+	clResults = getAddressFromLDAPServer(filter, withDomain, *resultList);
+	addResultsToResultsList(clResults, *resultList);
 	clResults = getAddressFromCallLog(filter, withDomain, *resultList);
 	addResultsToResultsList(clResults, *resultList);
 	crResults = getAddressFromGroupChatRoomParticipants(filter, withDomain, *resultList);
 	addResultsToResultsList(crResults, *resultList);
-	clResults = getAddressFromLDAPServer(filter, withDomain, *resultList);
-	addResultsToResultsList(clResults, *resultList);
 
 	resultList->sort([](const SearchResult& lsr, const SearchResult& rsr) {
 		string name1 = getDisplayNameFromSearchResult(lsr);
