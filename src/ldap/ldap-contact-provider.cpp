@@ -35,34 +35,39 @@ LINPHONE_BEGIN_NAMESPACE
 
 LDAPContactProvider::LDAPContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config ){
 	mServerUri = NULL;
+	mSalContext = NULL;
 	ortp_mutex_init(&mLock, NULL);
 	mName = "LDAP";
 	mCore = core;
 	mConnected = FALSE;
-	mBindThread = 0;
+	mAwaitingMessageId = 0;
 	mLd = nullptr;
 	// register our hook into iterate so that LDAP can do its magic asynchronously.
 	linphone_core_add_iterate_hook(core->getCCore(), iterate, this);
 	if( !validConfig(config) ) {
 		ms_error( "LDAP : Invalid configuration for LDAP, aborting creation");
-		mStatus = -1;
+		mState = STATE_ERROR;
 	} else {
 		loadConfig(config);
-		mStatus = 0;
+		mState = STATE_OK;
 	}
+	mCurrentAction = ACTION_NONE;
 }
 
 LDAPContactProvider::~LDAPContactProvider(){
 	linphone_core_remove_iterate_hook(mCore->getCCore(), iterate, this);
 // Wait for bind thread to end
 	ortp_mutex_lock(&mLock);
-	while(mBindThread!=0){
-		ortp_mutex_unlock(&mLock);
-		usleep(100);
-		ortp_mutex_lock(&mLock);
-	}
 	if(mConnected==1)
 		ldap_unbind_ext_s(mLd, NULL, NULL);
+	if(mAwaitingMessageId > 0){
+			ldap_abandon_ext(mLd, mAwaitingMessageId, NULL, NULL );
+			mAwaitingMessageId = 0;
+	}
+	if( mServerUri){
+		belle_sip_object_unref(mServerUri);
+		mServerUri = NULL;
+	}
 	ortp_mutex_unlock(&mLock);
 	
 	ortp_mutex_destroy(&mLock);
@@ -102,10 +107,10 @@ void LDAPContactProvider::initializeLdap(){
 	int ret = ldap_initialize(&mLd, mServerUrl.c_str());
 	if( ret != LDAP_SUCCESS ){
 		ms_error( "LDAP : Problem initializing ldap on url '%s': %s", mConfig["server"].c_str(), ldap_err2string(ret));
-		mStatus=-1;
+		mState = STATE_ERROR;
 	} else if( (ret = ldap_set_option(mLd, LDAP_OPT_PROTOCOL_VERSION, &proto_version)) != LDAP_SUCCESS ){
 		ms_error( "LDAP : Problem setting protocol version %d: %s", proto_version, ldap_err2string(ret));
-		mStatus=-1;
+		mState = STATE_ERROR;
 	} else {
 		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
 			int reqcert = LDAP_OPT_X_TLS_ALLOW;
@@ -113,14 +118,13 @@ void LDAPContactProvider::initializeLdap(){
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
 		}
 		if( ret == LDAP_SUCCESS ) {
-			ms_message("[LDAP] initialization success");
+			ms_message("[LDAP] Initialization success");
 			mConnected = 1;
-			mStatus=0;
 		}else {
 			int err;
 			ldap_get_option(mLd, LDAP_OPT_RESULT_CODE, &err);
-			ms_error("LDAP : cannot bind address to %s : %x, err %x (%s)",mConfig["server"].c_str(), ret, err, ldap_err2string(err));
-			mStatus=-1;
+			ms_error("[LDAP] Cannot initialize address to %s : %x, err %x (%s)",mConfig["server"].c_str(), ret, err, ldap_err2string(err));
+			mState = STATE_ERROR;
 		}
 	}
 }
@@ -195,14 +199,9 @@ int LDAPContactProvider::getTimeout() const{
 
 
 void LDAPContactProvider::search(const std::string& predicate, ContactSearchCallback cb, void* cbData){
-	// if we're not yet connected, bind
-	ortp_mutex_lock(&mLock);
-	if( !mConnected ) {
-		if( !mBindThread ) 
-			bindAsync();
-	}
-	ortp_mutex_unlock(&mLock);
+
 	std::shared_ptr<LDAPContactSearch> request = std::make_shared<LDAPContactSearch>(this, predicate, cb, cbData );
+	/*
 	if( mConnected ){
 		int ret = search(request);
 		ms_message ( "LDAP : Created search %zu for '%s', msgid %d, @%p", mRequests.size(), predicate.c_str(), request->mMsgId, request.get() );
@@ -212,10 +211,12 @@ void LDAPContactProvider::search(const std::string& predicate, ContactSearchCall
 	} else {
 		ms_message("LDAP : Delayed search, wait for connection");
 	}
-
+*/
+	ortp_mutex_lock(&mLock);
 	if( request != NULL ) {
 		mRequests.push_back(request);
 	}
+	ortp_mutex_unlock(&mLock);
 }
 
 int LDAPContactProvider::search(std::shared_ptr<LDAPContactSearch> request){
@@ -312,96 +313,201 @@ int LDAPContactProvider::completeContact( LDAPFriend* lf, const char* attr_name,
 }
 
 //*******************************************	ASYNC PROCESSING
-
-
+// ACTION_NONE => ACTION_INIT => (ACTION_WAIT_DNS) => ACTION_INITIALIZE => ACTION_BIND => ACTION_WAIT_BIND => ACTION_WAIT_REQUEST
 bool_t LDAPContactProvider::iterate(void *data) {
-	LDAPContactProvider* obj = (LDAPContactProvider*)data;
+#ifdef _WIN32
+		LDAP_TIMEVAL pollTimeout = {0,0};
+#else
+		struct timeval pollTimeout = {0,0};
+#endif
+	LDAPMessage* results = NULL;
+	LDAPContactProvider* provider = (LDAPContactProvider*)data;
+	if(provider->mState == STATE_ERROR){
+		provider->handleSearchResult(NULL );
+	}else if(provider->mCurrentAction == ACTION_NONE){
+		ms_message("[LDAP] ACTION_NONE");
+		ortp_mutex_lock(&provider->mLock);
+		if( provider->mRequests.size() > 0){
+			if( provider->mState != STATE_ERROR){
+				if( provider->mConnected != 1)
+					provider->mCurrentAction = ACTION_INIT;
+				else
+					provider->mCurrentAction = ACTION_BIND;
+			}
+		}
+		ortp_mutex_unlock(&provider->mLock);
+	}else if(provider->mCurrentAction == ACTION_BIND){ // Careful : Binds are not thread-safe
+		ms_message("[LDAP] ACTION_BIND");
+		std::string auth_mechanism = provider->mConfig.at("auth_method");
+		int ret;
+		if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
+			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
+			//struct berval *serverResponse = NULL;
+	#ifdef _WIN32
+			ret = ldap_bind_s(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
+	#else//"cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
+			//ret = ldap_sasl_bind_s(provider->ld, provider->bind_dn, NULL, &passwd, NULL, NULL, &serverResponse);
+			//ret = ldap_sasl_bind_s(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &serverResponse);
+			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
+	#endif
+			ms_free(passwd.bv_val);
+			if( ret == LDAP_SUCCESS ) {
+				ms_message("[LDAP] Waiting for bind");
+				provider->mCurrentAction = ACTION_WAIT_BIND;
+			} else {
+				int err;
+				ldap_get_option(provider->mLd, LDAP_OPT_RESULT_CODE, &err);
+				ms_error("[LDAP] ldap_sasl_bind error returned %x, err %x (%s), auth_method: %s", ret, err, ldap_err2string(err), auth_mechanism.c_str() );
+				provider->mCurrentAction = ACTION_NONE;
+				provider->mState = STATE_ERROR;
+				provider->mAwaitingMessageId = 0;
+			}
+		} else {
+			ms_error("LDAP : special authentifications is not supported. You must use SIMPLE or ANONYMOUS");
+			provider->mCurrentAction = ACTION_NONE;
+			provider->mState = STATE_ERROR;
+			provider->mAwaitingMessageId = 0;
+		}
+	}else if(provider->mCurrentAction == ACTION_INITIALIZE){
+		ms_message("[LDAP] ACTION_INITIALIZE");
+		if (provider->mSalContext) {
+			belle_sip_object_unref(provider->mSalContext);
+			provider->mSalContext = NULL;
+		}
+		provider->initializeLdap();
+		if( provider->mServerUri){
+			belle_sip_object_unref(provider->mServerUri);
+			provider->mServerUri = NULL;
+		}
+		provider->mCurrentAction = ACTION_NONE;
+	}else if(provider->mCurrentAction == ACTION_WAIT_DNS){
+		ms_message("[LDAP] ACTION_WAIT_DNS");
+		// Do nothing, wait for SAL to do its work
+	}else if(provider->mCurrentAction == ACTION_INIT){
+		ms_message("[LDAP] ACTION_INIT");
+		if(provider->mConfig["use_sal"] == "0"){
+			provider->mServerUrl = provider->mConfig["server"];
+			provider->mCurrentAction = ACTION_INITIALIZE;
+		}else{
+			provider->mServerUri = belle_generic_uri_parse(provider->mConfig["server"].c_str());
+			if(provider->mServerUri){
+				belle_sip_object_ref(provider->mServerUri);
+				std::string domain = belle_generic_uri_get_host(provider->mServerUri);
+				int port = belle_generic_uri_get_port(provider->mServerUri);
+				if(port  <= 0){
+					if( belle_generic_uri_get_scheme(provider->mServerUri) == std::string("ldap"))
+						port = 389;
+					else
+						port = 636;
+					belle_generic_uri_set_port(provider->mServerUri, port);
+				}
+				
+				provider->mSalContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, stun_server_resolved, provider);
+				if (provider->mSalContext)
+					belle_sip_object_ref(provider->mSalContext);
+				else
+					ms_error("LDAP : cannot request DNS.");
+			}
+			provider->mCurrentAction = ACTION_WAIT_DNS;
+		}
+	}else if(provider->mCurrentAction == ACTION_WAIT_BIND){
+		ms_message("[LDAP] ACTION_WAIT_BIND");
+		int ret = (int)ldap_result(provider->mLd, provider->mAwaitingMessageId, LDAP_MSG_ONE, &pollTimeout, &results);
+		if(ret == LDAP_RES_BIND){
+			ret = ldap_parse_sasl_bind_result( provider->mLd, results,NULL, 1); // Auto ldap_msgfree(results)
+			if( ret == LDAP_SUCCESS){
+				ms_message("[LDAP] Bind successful");
+				provider->mConnected = 1;
+				provider->mAwaitingMessageId = 0;
+				provider->mCurrentAction = ACTION_WAIT_REQUEST;
+			}else{
+				ms_error("[LDAP] Cannot bind to server : %x (%s)", ret, ldap_err2string(ret));
+				provider->mCurrentAction = ACTION_NONE;
+				provider->mState = STATE_ERROR;
+			}
+		}
+	}else if(provider->mCurrentAction == ACTION_WAIT_REQUEST){
+		ms_message("[LDAP] ACTION_WAIT_REQUEST");
+		ortp_mutex_lock(&provider->mLock);
+		size_t requestSize = provider->mRequests.size();
+		ortp_mutex_unlock(&provider->mLock);
+		if( provider->mLd && provider->mConnected && requestSize > 0 ){
+			// never block
+			int ret = (int)ldap_result(provider->mLd, LDAP_RES_ANY, LDAP_MSG_ONE, &pollTimeout, &results);
+			switch( ret ){
+			case -1:
+			{
+	#ifdef _WIN32
+				int lastError = LdapGetLastError();
+	#else
+				int lastError = errno;
+	#endif
+				ms_warning("LDAP : Error in ldap_result : returned -1 (req_count %zu): %s", requestSize, ldap_err2string(lastError));
+				break;
+			}
+			case 0: break; // nothing to do
 	
-	if( obj->mLd && obj->mConnected && (obj->mRequests.size()> 0) ){
-		// never block
-		LDAPMessage* results = NULL;
-#ifdef _WIN32
-		LDAP_TIMEVAL timeout = {0,0};
-#else
-		struct timeval timeout = {0,0};
-#endif
-
-		int ret = (int)ldap_result(obj->mLd, LDAP_RES_ANY, LDAP_MSG_ONE, &timeout, &results);
-		switch( ret ){
-		case -1:
-		{
-#ifdef _WIN32
-			int lastError = LdapGetLastError();
-#else
-			int lastError = errno;
-#endif
-			ms_warning("LDAP : Error in ldap_result : returned -1 (req_count %zu): %s", obj->mRequests.size(), ldap_err2string(lastError));
-			break;
+			case LDAP_RES_BIND:{
+					ms_error("LDAP : iterate: unexpected LDAP_RES_BIND");
+				if( results )
+					ldap_msgfree(results);
+				break;
+			}
+			case LDAP_RES_EXTENDED:
+			case LDAP_RES_SEARCH_ENTRY:
+	#ifndef _WIN32
+			case LDAP_RES_SEARCH_REFERENCE:
+			case LDAP_RES_INTERMEDIATE:
+	#endif
+			case LDAP_RES_SEARCH_RESULT:
+			{
+				provider->handleSearchResult(results );
+				break;
+			}
+			case LDAP_RES_MODIFY:
+			case LDAP_RES_ADD:
+			case LDAP_RES_DELETE:
+	#ifdef WIN32
+			case LDAP_RES_MODRDN:
+	#else
+			case LDAP_RES_MODDN:
+	#endif
+			case LDAP_RES_COMPARE:
+			default:
+				ms_message("LDAP : Unhandled LDAP result %x", ret);
+				break;
+			}
+	
+			if( results )
+				ldap_msgfree(results);
 		}
-		case 0: break; // nothing to do
-
-		case LDAP_RES_BIND:
-		{
-			ms_error("LDAP : iterate: unexpected LDAP_RES_BIND");
-			break;
-		}
-		case LDAP_RES_EXTENDED:
-		case LDAP_RES_SEARCH_ENTRY:
-#ifndef _WIN32
-		case LDAP_RES_SEARCH_REFERENCE:
-		case LDAP_RES_INTERMEDIATE:
-#endif
-		case LDAP_RES_SEARCH_RESULT:
-		{
-			obj->handleSearchResult(results );
-			break;
-		}
-		case LDAP_RES_MODIFY:
-		case LDAP_RES_ADD:
-		case LDAP_RES_DELETE:
-#ifdef WIN32
-		case LDAP_RES_MODRDN:
-#else
-		case LDAP_RES_MODDN:
-#endif
-		case LDAP_RES_COMPARE:
-		default:
-			ms_message("LDAP : Unhandled LDAP result %x", ret);
-			break;
-		}
-
-		if( results )
-			ldap_msgfree(results);
-	}
-
-	if( obj->mLd && obj->mConnected ){
-		// check for pending searches
-		for(auto it = obj->mRequests.begin() ; it != obj->mRequests.end() ; ){
-			if(!(*it))
-				it = obj->mRequests.erase(it);
-			else if((*it)->mMsgId == 0){
-				int ret;
-				ms_message("LDAP : Found pending search %p (for %s), launching...", it->get(), (*it)->mFilter.c_str());
-				ret = obj->search(*it);
-				if( ret != LDAP_SUCCESS ){
-					it = obj->cancelSearch(it->get());
+	
+		if( provider->mLd && provider->mConnected ){
+			// check for pending searches
+			ortp_mutex_lock(&provider->mLock);
+			for(auto it = provider->mRequests.begin() ; it != provider->mRequests.end() ; ){
+				if(!(*it))
+					it = provider->mRequests.erase(it);
+				else if((*it)->mMsgId == 0){
+					int ret;
+					ms_message("LDAP : Found pending search %p (for %s), launching...", it->get(), (*it)->mFilter.c_str());
+					ret = provider->search(*it);
+					if( ret != LDAP_SUCCESS ){
+						it = provider->cancelSearch(it->get());
+					}else
+						++it;
 				}else
 					++it;
-			}else
-				++it;
+			}
+			ortp_mutex_unlock(&provider->mLock);
 		}
 	}
-	ortp_mutex_lock(&obj->mLock);
-	if( !obj->mConnected && obj->mBindThread==0){// Couldn't connect
-		obj->handleSearchResult(NULL );
-	}
-	ortp_mutex_unlock(&obj->mLock);
 	return TRUE;
 }
 
 
 
-static void stun_server_resolved(void *data, belle_sip_resolver_results_t *results) {
+void LDAPContactProvider::stun_server_resolved(void *data, belle_sip_resolver_results_t *results) {
 	LDAPContactProvider * provider = (LDAPContactProvider*)(data);
 	const struct addrinfo * addr = belle_sip_resolver_results_get_addrinfos(results);
 	if (addr) {
@@ -422,99 +528,19 @@ static void stun_server_resolved(void *data, belle_sip_resolver_results_t *resul
 			provider->mServerUrl = provider->mConfig["server"];
 		}
 		ortp_mutex_lock(&provider->mLock);
-		provider->mStatus=0;		
+		provider->mCurrentAction = ACTION_INITIALIZE;
 		ortp_mutex_unlock(&provider->mLock);
 	} else {
 		ms_error("LDAP : Server resolution failed.");
 		ortp_mutex_lock(&provider->mLock);
-		provider->mStatus=-1;
+		provider->mState = STATE_ERROR;
+		provider->mCurrentAction = ACTION_NONE;
 		ortp_mutex_unlock(&provider->mLock);
 	}
 }
-
-void* LDAPContactProvider::bind( void*arg) {
-	LDAPContactProvider* provider = (LDAPContactProvider*)arg;
-	belle_sip_object_pool_t * pool = belle_sip_object_pool_push();
-	belle_sip_resolver_context_t * salContext = NULL;
-	if(provider->mConfig["use_sal"] == "0"){
-		provider->mServerUrl = provider->mConfig["server"];
-	}else{
-		provider->mServerUri = belle_generic_uri_parse(provider->mConfig["server"].c_str());
-		if(provider->mServerUri){
-			std::string domain = belle_generic_uri_get_host(provider->mServerUri);
-			int port = belle_generic_uri_get_port(provider->mServerUri);
-			if(port  <= 0){
-				if( belle_generic_uri_get_scheme(provider->mServerUri) == std::string("ldap"))
-					port = 389;
-				else
-					port = 636;
-				belle_generic_uri_set_port(provider->mServerUri, port);
-			}
-			
-			salContext = provider->mCore->getCCore()->sal->resolveA(domain.c_str(), port, AF_INET, stun_server_resolved, provider);
-			if (salContext)
-				belle_sip_object_ref(salContext);
-			else
-				ms_error("LDAP : cannot request DNS.");
-		}
-		provider->mStatus=1;
-	}
-	ortp_mutex_lock(&provider->mLock);
-	while(provider->mStatus == 1 && salContext){
-		ortp_mutex_unlock(&provider->mLock);
-		usleep(10);// Wait for resolving
-		ortp_mutex_lock(&provider->mLock);
-	}
-	ortp_mutex_unlock(&provider->mLock);
-	if (salContext) belle_sip_object_unref(salContext);
-	provider->initializeLdap();
-	if( provider->mStatus == 0){
-		std::string auth_mechanism = provider->mConfig.at("auth_method");
-		int ret;
-	
-		if( (auth_mechanism == "ANONYMOUS") || (auth_mechanism == "SIMPLE") ) {
-			
-			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
-			struct berval *serverResponse = NULL;
-	#ifdef _WIN32
-			ret = ldap_bind_s(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
-	#else//"cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
-			//ret = ldap_sasl_bind_s(provider->ld, provider->bind_dn, NULL, &passwd, NULL, NULL, &serverResponse);
-			ret = ldap_sasl_bind_s(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &serverResponse);
-	#endif
-			ms_free(passwd.bv_val);
-			if( ret == LDAP_SUCCESS ) {
-				ms_message("LDAP bind OK");
-				provider->mConnected = 1;
-			} else {
-				int err;
-				ldap_get_option(provider->mLd, LDAP_OPT_RESULT_CODE, &err);
-				ms_error("LDAP : ldap_sasl_bind error returned %x, err %x (%s), auth_method: %s", ret, err, ldap_err2string(err), auth_mechanism.c_str() );
-			}
-		} else {
-			ms_error("LDAP : special authentifications is not supported. You must use SIMPLE or ANONYMOUS");
-		}
-	
-		
-	}
-	
-	if( provider->mServerUri)
-		belle_sip_object_unref(provider->mServerUri);
-	belle_sip_object_unref(pool);
-	ortp_mutex_lock(&provider->mLock);
-	provider->mBindThread = 0;
-	ortp_mutex_unlock(&provider->mLock);
-	return (void*)0;
-}
-
-int LDAPContactProvider::bindAsync() {
-	// perform the bind in an alternate thread, so that we don't stall the main loop
-	ms_thread_create(&mBindThread, NULL, bind, this);
-	return 0;
-}
-
 
 void LDAPContactProvider::handleSearchResult( LDAPMessage* message ) {
+	ortp_mutex_lock(&mLock);
 	if(message){
 		int msgtype = ldap_msgtype(message);
 		LDAPContactSearch* req = requestSearch(ldap_msgid(message));
@@ -573,6 +599,7 @@ void LDAPContactProvider::handleSearchResult( LDAPMessage* message ) {
 		}
 		mRequests.clear();
 	}
+	ortp_mutex_unlock(&mLock);
 }
 
 

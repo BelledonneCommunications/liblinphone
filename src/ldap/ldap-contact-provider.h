@@ -45,11 +45,25 @@ class LDAPFriend;
 
 class LINPHONE_PUBLIC LDAPContactProvider {
 public:
+	enum{
+		STATE_ERROR = -1,
+		STATE_OK = 0,
+		STATE_CONNECTED
+	};
+	enum{
+		ACTION_NONE = 0,
+		ACTION_INIT,
+		ACTION_WAIT_DNS,
+		ACTION_INITIALIZE,
+		ACTION_BIND,
+		ACTION_WAIT_BIND,
+		ACTION_WAIT_REQUEST
+	};
 //	CREATION
 	LDAPContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config );
 	virtual ~LDAPContactProvider();
 	static std::vector<std::shared_ptr<LDAPContactProvider> > create(const std::shared_ptr<Core> &core);// Read configuration and create all providers from them
-	void initializeLdap();	// call ldap_initialize and set options
+	void initializeLdap();	// call ldap_initialize and set options. Return mState
 	
 //	CONFIGURATION
 	bool_t validConfig(const std::map<std::string, std::string>& dict)const;
@@ -66,13 +80,13 @@ public:
 //	ASYNC PROCESSING
 	
 	static bool_t iterate(void *data);
-	static void* bind( void*arg);
-	int bindAsync();// Start a thread to bind
+	//static void* bind( void*arg);
+	//int bindAsync();// Start a thread to bind
 	void handleSearchResult( LDAPMessage* message );
+	static void stun_server_resolved(void *data, belle_sip_resolver_results_t *results);
 
 	std::shared_ptr<Core> mCore;
 	std::map<std::string,std::string>  mConfig;
-	int mStatus;//>=0 ok
 	std::vector<std::string> mAttributes;
 	std::vector<std::string> mNameAttributes;// Optimization to avoid split each times
 	std::vector<std::string> mSipAttributes;// Optimization to avoid split each times
@@ -82,10 +96,14 @@ public:
 
 	// bind transaction
 	bool_t mConnected;
-	ms_thread_t mBindThread;
 	std::string mName;
 	belle_generic_uri_t *mServerUri;//Used to optimized query on SAL
+	belle_sip_resolver_context_t * mSalContext;
 	std::string mServerUrl;
+	int mState;
+	int mCurrentAction;
+	int mAwaitingMessageId;
+	
 };
 
 LINPHONE_END_NAMESPACE
