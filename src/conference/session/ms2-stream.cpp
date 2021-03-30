@@ -804,8 +804,8 @@ void MS2Stream::setupSrtp(const OfferAnswerContext &params) {
 		} else {
 			lWarning() << "Failed to find local crypto algo with tag: " << resultStreamDesc.getChosenConfiguration().crypto_local_tag;
 		}
-	} else if (mSessions.srtp_context) {
-		// If the stream has SRTP disble, set the key to a NULL value
+	} else if (mSessions.srtp_context && (getMediaSessionPrivate().getNegotiatedMediaEncryption() == LinphoneMediaEncryptionNone)) {
+		// If the stream has SRTP disable, set the key to a NULL value
 		MSCryptoSuite algo = MS_CRYPTO_SUITE_INVALID;
 		ms_media_stream_sessions_set_srtp_send_key_b64(&ms->sessions, algo, NULL);
 		ms_media_stream_sessions_set_srtp_recv_key_b64(&ms->sessions, algo, NULL);
