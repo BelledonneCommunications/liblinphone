@@ -2573,7 +2573,7 @@ void check_stream_encryption(LinphoneCall * call) {
 	if (!linphone_call_params_rtp_bundle_enabled(call_params)) {
 		const LinphoneMediaEncryption enc = linphone_call_params_get_media_encryption(call_params);
 		MediaStream *astream = linphone_call_get_stream(call, LinphoneStreamTypeAudio);
-		if (astream) {
+		if (astream && audio_stream_started((AudioStream*)astream)) {
 			if (enc == LinphoneMediaEncryptionNone) {
 				BC_ASSERT_FALSE(media_stream_secured(astream));
 			} else {
