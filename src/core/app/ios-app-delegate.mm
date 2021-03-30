@@ -219,9 +219,6 @@
 	mStopAsyncEnd = stop;
 }
 
-@end
-
-
 - (NSMutableString *)stringFromToken:(NSData *)token forType:(NSString *)type {
 	NSMutableString *tokenString = nil;
 	const unsigned char *tokenBuffer = (const unsigned char *)[token bytes];

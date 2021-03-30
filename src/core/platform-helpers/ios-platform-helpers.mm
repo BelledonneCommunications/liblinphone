@@ -101,8 +101,6 @@ public:
 	void onNetworkChanged(bool reachable, bool force);
 
 	void didRegisterForRemotePush(void *token) override;
-	void start (std::shared_ptr<LinphonePrivate::Core> core) override;
-	void stop (void) override;
 
 private:
 	string toUTF8String(CFStringRef str);
@@ -120,10 +118,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
-<<<<<<< HEAD
-=======
 
->>>>>>> bdcd9cd38 (Enable auto register push notification)
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
 	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
