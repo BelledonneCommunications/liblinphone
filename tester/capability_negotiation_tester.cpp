@@ -2879,10 +2879,15 @@ static void simple_call_with_capability_negotiations_with_different_encryption_a
 		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(callee->lc, optionalEncryption));
 	}
 
+
 	BC_ASSERT_TRUE(linphone_core_media_encryption_supported(caller->lc,optionalEncryption));
 	if (linphone_core_media_encryption_supported(caller->lc,optionalEncryption)) {
 		linphone_core_set_media_encryption_mandatory(caller->lc,0);
-		linphone_core_set_media_encryption(caller->lc,LinphoneMediaEncryptionNone);
+		if (optionalEncryption == LinphoneMediaEncryptionZRTP) {
+			linphone_core_set_media_encryption(caller->lc,(encryptionAfterResume == LinphoneMediaEncryptionDTLS) ? LinphoneMediaEncryptionSRTP : LinphoneMediaEncryptionDTLS);
+		} else {
+			linphone_core_set_media_encryption(caller->lc,LinphoneMediaEncryptionNone);
+		}
 		linphone_core_set_supported_media_encryptions(caller->lc,encryption_list);
 		BC_ASSERT_TRUE(linphone_core_is_media_encryption_supported(caller->lc, optionalEncryption));
 	}
@@ -2948,6 +2953,12 @@ static void simple_call_with_capability_negotiations_with_different_encryption_a
 			BC_ASSERT_GREATER((int)linphone_call_stats_get_download_bandwidth(calleeStats),70,int,"%i");
 			linphone_call_stats_unref(calleeStats);
 			calleeStats = NULL;
+
+			if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
+				BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallEncryptedOn,caller_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+				BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallEncryptedOn,callee_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+			}
+
 		} else {
 			encryption = optionalEncryption;
 			// Resume fails because requested encryption is not supported
@@ -2964,11 +2975,6 @@ static void simple_call_with_capability_negotiations_with_different_encryption_a
 			linphone_call_stats_unref(calleeStats);
 			calleeStats = NULL;
 
-		}
-
-		if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
-			BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallEncryptedOn,caller_stat.number_of_LinphoneCallEncryptedOn+1,10000));
-			BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallEncryptedOn,callee_stat.number_of_LinphoneCallEncryptedOn+1,10000));
 		}
 
 		if (calleeCall) {
