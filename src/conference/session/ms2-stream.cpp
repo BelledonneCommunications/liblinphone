@@ -724,21 +724,16 @@ void MS2Stream::initDtlsParams (MediaStream *ms) {
 }
 
 void MS2Stream::startDtls(const OfferAnswerContext &params){
-	if (mDtlsStarted) return;
+	if (mDtlsStarted) {
+		lWarning() << "DTLS engine on stream session [" << &mSessions << "] is already started";
+		return;
+	}
 	const auto & resultStreamDesc = params.getResultStreamDescription();
 	if (!resultStreamDesc.hasDtls()) return;
 
 	if (resultStreamDesc.getChosenConfiguration().dtls_role == SalDtlsRoleInvalid){
 		lWarning() << "Unable to start DTLS engine on stream session [" << &mSessions << "], Dtls role in resulting media description is invalid";
 	}else {
-
-		// Destroy SRTP context if negotiated stream doesn't enable SRTP
-		// It will be recreated when setting SRTP keys if SRTP will be selected in the future
-		if (mSessions.srtp_context) {
-			ms_srtp_context_delete(mSessions.srtp_context);
-			mSessions.srtp_context = NULL;
-		}
-
 		if (!isTransportOwner()){
 			/* RTP bundle mode: there must be only one DTLS association per transport. */
 			return;
@@ -832,7 +827,19 @@ void MS2Stream::updateCryptoParameters(const OfferAnswerContext &params) {
 	}
 
 	if (resultStreamDesc.hasDtls()) {
+		if (!mSessions.dtls_context) {
+			MediaStream *ms = getMediaStream();
+			initDtlsParams (ms);
+			// Copy newly created dtls context into mSessions
+			media_stream_reclaim_sessions(ms, &mSessions);
+		}
+
 		startDtls(params);
+	} else {
+		mDtlsStarted = false;
+		if (mSessions.dtls_context) {
+			ms_dtls_srtp_reset_context(mSessions.dtls_context);
+		}
 	}
 
 }
