@@ -460,7 +460,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 		return LinphoneAccountCreatorUsernameStatusTooShort;
 	} else if (max_length > 0 && strlen(username) > (size_t)max_length) {
 		return LinphoneAccountCreatorUsernameStatusTooLong;
-	} else if (use_phone_number && !linphone_proxy_config_is_phone_number(NULL, username)) {
+	} else if (use_phone_number && !linphone_account_is_phone_number(NULL, username)) {
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	} else if (regex && !bctbx_is_matching_regex(username, regex)) {
 		return LinphoneAccountCreatorUsernameStatusInvalidCharacters;

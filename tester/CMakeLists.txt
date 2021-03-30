@@ -225,6 +225,7 @@ set(IOS_RESOURCES_FILES
 
 set(SOURCE_FILES_C
 	account_creator_tester.c
+	account_tester.c
 	accountmanager.c
 	audio_bypass_tester.c
 	audio_routes_tester.c
