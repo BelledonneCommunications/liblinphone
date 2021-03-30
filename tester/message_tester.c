@@ -268,7 +268,7 @@ static void file_transfer_content(void) {
 
 	LinphoneChatMessage *message = linphone_chat_room_create_file_transfer_message(chat_room, file_transfer_content);
 	const bctbx_list_t *contents = linphone_chat_message_get_contents(message);
-	BC_ASSERT_EQUAL(bctbx_list_size(contents), 1, int, "%d");
+	BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 1, int, "%d");
 
 	LinphoneContent *content = (LinphoneContent *)bctbx_list_get_data(contents);
 	BC_ASSERT_PTR_NOT_NULL(content);
