@@ -2966,6 +2966,11 @@ static void simple_call_with_capability_negotiations_with_different_encryption_a
 
 		}
 
+		if ((encryption == LinphoneMediaEncryptionDTLS) || (encryption == LinphoneMediaEncryptionZRTP)) {
+			BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&caller->stat.number_of_LinphoneCallEncryptedOn,caller_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+			BC_ASSERT_TRUE(wait_for_until(caller->lc,callee->lc,&callee->stat.number_of_LinphoneCallEncryptedOn,callee_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+		}
+
 		if (calleeCall) {
 			check_stream_encryption(calleeCall);
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(calleeCall)), encryption, int, "%i");
@@ -3500,18 +3505,20 @@ static void zrtp_video_call_with_optional_encryption_on_both_sides(void) {
 }
 
 static void call_with_toggling_encryption_base(const LinphoneMediaEncryption encryption) {
+	std::list<LinphoneMediaEncryption> enc_list {encryption};
+
 	encryption_params marie_enc_params;
 	marie_enc_params.encryption = LinphoneMediaEncryptionNone;
 	marie_enc_params.level = E_OPTIONAL;
-	marie_enc_params.preferences.push_back(encryption);
+	marie_enc_params.preferences = enc_list;
 
 	encryption_params pauline_enc_params;
 	pauline_enc_params.encryption = LinphoneMediaEncryptionNone;
 	pauline_enc_params.level = E_OPTIONAL;
-	pauline_enc_params.preferences.push_back(encryption);
+	pauline_enc_params.preferences = enc_list;
 
-	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_params, FALSE, FALSE, TRUE);
-	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_params, FALSE, FALSE, TRUE);
+	LinphoneCoreManager * marie = create_core_mgr_with_capability_negotiation_setup("marie_rc", marie_enc_params, TRUE, FALSE, TRUE);
+	LinphoneCoreManager * pauline = create_core_mgr_with_capability_negotiation_setup((transport_supported(LinphoneTransportTls) ? "pauline_rc" : "pauline_tcp_rc"), pauline_enc_params, TRUE, FALSE, TRUE);
 
 	encrypted_call_base(marie, pauline, encryption, TRUE, TRUE, TRUE);
 
@@ -3602,6 +3609,12 @@ static void call_with_toggling_encryption_base(const LinphoneMediaEncryption enc
 
 		// Check that encryption has not changed after sending update
 		BC_ASSERT_EQUAL(expectedEncryption, encryptionAfterUpdate, int, "%i");
+
+		if ((expectedEncryption == LinphoneMediaEncryptionDTLS) || (expectedEncryption == LinphoneMediaEncryptionZRTP)) {
+			BC_ASSERT_TRUE(wait_for_until(marie->lc,pauline->lc,&marie->stat.number_of_LinphoneCallEncryptedOn,marie_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+			BC_ASSERT_TRUE(wait_for_until(marie->lc,pauline->lc,&pauline->stat.number_of_LinphoneCallEncryptedOn,pauline_stat.number_of_LinphoneCallEncryptedOn+1,10000));
+		}
+
 		if (marieCall) {
 			check_stream_encryption(marieCall);
 			BC_ASSERT_EQUAL(linphone_call_params_get_media_encryption(linphone_call_get_current_params(marieCall)), expectedEncryption, int, "%i");
