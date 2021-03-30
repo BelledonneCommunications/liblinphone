@@ -364,6 +364,8 @@ static void simple_conference_with_admin_changed(void) {
 	LinphoneConference * marie_conference = linphone_core_get_conference(marie->lc);
 	BC_ASSERT_PTR_NOT_NULL(marie_conference);
 
+	if (!marie_conference) goto end;
+
 	stats* initial_participants_stats = NULL;
 
 	// Marie change Pauline's status to admin
@@ -536,6 +538,7 @@ static void simple_conference_with_admin_changed(void) {
 
 	terminate_conference(participants, marie, NULL, (LinphoneCoreManager*)focus);
 
+end :
 	destroy_mgr_in_conference(pauline);
 	destroy_mgr_in_conference(laure);
 	destroy_mgr_in_conference(marie);
