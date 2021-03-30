@@ -1236,8 +1236,11 @@ int RemoteConference::terminate () {
 	switch (state) {
 		case ConferenceInterface::State::Created:
 		case ConferenceInterface::State::CreationPending:
-			m_focusCall->setConference(nullptr);
-			m_focusCall->terminate();
+		case ConferenceInterface::State::CreationFailed:
+			if (m_focusCall) {
+				m_focusCall->setConference(nullptr);
+				m_focusCall->terminate();
+			}
 			setState(ConferenceInterface::State::TerminationPending);
 			break;
 		case ConferenceInterface::State::TerminationPending:
@@ -1289,9 +1292,14 @@ void RemoteConference::leave () {
 	switch (callState) {
 		case LinphoneCallPaused:
 			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << " while focus call is paused.";
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+				L_GET_PRIVATE(m_focusCall->getParams()))->setInConference(false);
+			notifyParticipantRemoved(creationTime, false, getMe());
 			break;
 		case LinphoneCallStreamsRunning:
 			lInfo() << getMe()->getAddress() << " is leaving conference " << getConferenceAddress() << ". Focus call is going to be paused.";
+			const_cast<LinphonePrivate::MediaSessionParamsPrivate *>(
+				L_GET_PRIVATE(m_focusCall->getParams()))->setInConference(false);
 			m_focusCall->pause();
 			notifyParticipantRemoved(creationTime, false, getMe());
 			break;
