@@ -411,7 +411,7 @@ list<SearchResult> MagicSearch::getAddressFromLDAPServer (
 	
 // Requests
 	for(size_t i = 0 ; i < providers.size() ; ++i){
-		if(providers[i] && providers[i]->mStatus>=0)
+		if(providers[i] && providers[i]->mState != LDAPContactProvider::STATE_ERROR)
 			providers[i]->search(predicate, LDAPCallback, &allData[i]);
 		else
 			allData[i].mEnd = TRUE;
