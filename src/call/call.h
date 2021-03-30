@@ -263,6 +263,8 @@ public:
 
 
 	LinphoneConference *getConference () const;
+	bool attachedToLocalConference(const std::shared_ptr<CallSession> &session) const;
+	bool attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const;
 	void setConference (LinphoneConference *ref);
 	void reenterLocalConference();
 	void exitFromConference(const std::shared_ptr<CallSession> &session);
