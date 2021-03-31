@@ -479,11 +479,10 @@ static void simple_conference_with_admin_changed(void) {
 	// - participant removed and admin rights removed
 	// - participant device removed
 	// - admin rights of participant exiting from the conference are removed
-	// - admin changed
 	idx = 0;
 	for (bctbx_list_t *it = participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
-		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_participants_stats[idx].number_of_NotifyReceived + 4),10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_participants_stats[idx].number_of_NotifyReceived + 3),10000));
 		idx++;
 	}
 
@@ -508,17 +507,13 @@ static void simple_conference_with_admin_changed(void) {
 
 		LinphoneParticipant * me = linphone_conference_get_me(conference);
 		bool_t admin_found = linphone_participant_is_admin(me);
-		bool_t second_admin_found = FALSE;
 
 		// Check that participant address that is admin is the same in all chat rooms
 		for (bctbx_list_t *it = participants_after_removal; it; it = bctbx_list_next(it)) {
 			LinphoneParticipant * p = (LinphoneParticipant *)bctbx_list_get_data(it);
 			bool_t isAdmin = linphone_participant_is_admin(p);
-			if (admin_found) {
-				second_admin_found |= isAdmin;
-			}
 			admin_found |= isAdmin;
-			if (isAdmin && !second_admin_found) {
+			if (isAdmin) {
 				if (!admin_address) {
 					admin_address = (LinphoneAddress *)(linphone_participant_get_address(p));
 				} else {
@@ -531,8 +526,7 @@ static void simple_conference_with_admin_changed(void) {
 				}
 			}
 		}
-		BC_ASSERT_TRUE(admin_found);
-		BC_ASSERT_FALSE(second_admin_found);
+		BC_ASSERT_FALSE(admin_found);
 		bctbx_list_free_with_data(participants_after_removal, (void(*)(void *))linphone_participant_unref);
 	}
 
