@@ -366,7 +366,6 @@ else()
 endif()
 
 add_subdirectory(include)
-add_subdirectory(java)
 if(ENABLE_JAVA_WRAPPER)
 	add_subdirectory(wrappers/java)
 endif()
