@@ -302,7 +302,8 @@ void _send_file_plus_text(LinphoneChatRoom* cr, const char *sendFilepath, const 
 	cbs = linphone_factory_create_chat_message_cbs(linphone_factory_get());
 	linphone_chat_message_cbs_set_file_transfer_send_chunk(cbs, tester_file_transfer_send_2);
 	linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
-	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+
+	linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
 	linphone_chat_message_add_callbacks(msg, cbs);
 	linphone_chat_message_cbs_unref(cbs);
 	linphone_chat_message_send(msg);
@@ -330,7 +331,7 @@ void _receive_file_plus_text(bctbx_list_t *coresList, LinphoneCoreManager *lcm, 
 		cbs = linphone_chat_message_get_callbacks(msg);
 		linphone_chat_message_cbs_set_msg_state_changed(cbs, liblinphone_tester_chat_message_msg_state_changed);
 		linphone_chat_message_cbs_set_file_transfer_recv(cbs, file_transfer_received);
-		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication);
+		linphone_chat_message_cbs_set_file_transfer_progress_indication(cbs, file_transfer_progress_indication_2);
 
 		BC_ASSERT_PTR_NOT_NULL(linphone_chat_message_get_external_body_url(msg));
 		LinphoneContent *fileTransferContent = linphone_chat_message_get_file_transfer_information(msg);
