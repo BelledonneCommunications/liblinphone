@@ -462,6 +462,24 @@ int SalCallOp::vfuRetryCb (void *userCtx, unsigned int events) {
 	return BELLE_SIP_STOP;
 }
 
+bool SalCallOp::checkForOrphanDialogOn2xx(belle_sip_dialog_t *dialog){
+	if (mDialog && dialog && mDialog != dialog 
+		&& belle_sip_dialog_get_state(mDialog) == BELLE_SIP_DIALOG_CONFIRMED
+		&& belle_sip_dialog_get_state(dialog) == BELLE_SIP_DIALOG_CONFIRMED){
+		/* we just got a 2xx response that established a new dialog, but a former one was already confirmed.
+		 * This is a race condition. We should simply terminate this new dialog by sending ACK and BYE.*/
+		belle_sip_request_t * ack, *bye;
+		belle_sip_client_transaction_t *bye_transaction;
+		ack = belle_sip_dialog_create_ack(dialog, belle_sip_dialog_get_local_seq_number(dialog));
+		belle_sip_dialog_send_ack(dialog, ack);
+		bye = belle_sip_dialog_create_request(dialog,"BYE");
+		bye_transaction = belle_sip_provider_create_client_transaction(mRoot->mProvider, bye);
+		belle_sip_client_transaction_send_request(bye_transaction);
+		return true;
+	}
+	return false;
+}
+
 void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event_t *event) {
 	auto op = static_cast<SalCallOp *>(userCtx);
 	auto response = belle_sip_response_event_get_response(event);
@@ -473,6 +491,10 @@ void SalCallOp::processResponseCb (void *userCtx, const belle_sip_response_event
 	}
 
 	auto dialog = belle_sip_response_event_get_dialog(event);
+	if (op->checkForOrphanDialogOn2xx(dialog)){
+		/* ignored response.*/
+		return;
+	}
 	op->setOrUpdateDialog(dialog);
 	auto dialogState = dialog ? belle_sip_dialog_get_state(dialog) : BELLE_SIP_DIALOG_NULL;
 	lInfo() << "Op [" << op << "] receiving call response [" << code << "], dialog is [" << dialog << "] in state ["
