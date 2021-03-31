@@ -585,7 +585,6 @@ static void call_outbound_using_different_proxies(void) {
 	linphone_core_manager_destroy(pauline);
 }
 
-#if 0 /* TODO: activate test when the implementation is ready */
 static void multiple_answers_call(void) {
 	/* Scenario is this: pauline calls marie, which is registered 2 times.
 	   Both linphones answer at the same time, and only one should get the
@@ -600,41 +599,46 @@ static void multiple_answers_call(void) {
 	lcs = bctbx_list_append(lcs,marie1->lc);
 	lcs = bctbx_list_append(lcs,marie2->lc);
 
-
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 2000));
-
 	BC_ASSERT_PTR_NOT_NULL( linphone_core_invite_address(pauline->lc, marie1->identity ) );
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 5000));
 
 	// marie 1 and 2 answer at the same time
 	call1 = linphone_core_get_current_call(marie1->lc);
 	call2 = linphone_core_get_current_call(marie2->lc);
 
-	BC_ASSERT_PTR_NOT_NULL_FATAL(call1);
-	BC_ASSERT_PTR_NOT_NULL_FATAL(call2);
+	if (BC_ASSERT_PTR_NOT_NULL(call1) && BC_ASSERT_PTR_NOT_NULL(call2)) {
+		BC_ASSERT_EQUAL( linphone_call_accept(call1), 0, int, "%d");
+		ms_sleep(1); /*sleep to make sure that the 200OK of marie1 reaches the server first*/
+		BC_ASSERT_EQUAL( linphone_call_accept(call2), 0, int, "%d");
 
-	BC_ASSERT_EQUAL( linphone_core_accept_call(marie1->lc, call1), 0, int, "%d");
-	BC_ASSERT_EQUAL( linphone_core_accept_call(marie2->lc, call2), 0, int, "%d");
+		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, 10000) );
+		
+		/*Pauline will send a bye to marie2, as its 200Ok arrived second*/
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 10000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallReleased, 1, 10000) );
 
-	BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 2000) );
-	BC_ASSERT_TRUE( wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, 2000) );
-	BC_ASSERT_TRUE( wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 2000) );
+		liblinphone_tester_check_rtcp(pauline, marie1);
+		
+		end_call(marie1, pauline);
+	}
 
 
 	linphone_core_manager_destroy(pauline);
 	linphone_core_manager_destroy(marie1);
 	linphone_core_manager_destroy(marie2);
+	bctbx_list_free(lcs);
 }
-#endif
 
 static void multiple_answers_call_with_media_relay(void) {
 
 	/* Scenario is this: pauline calls marie, which is registered 2 times.
 	 *   Both linphones answer at the same time, and only one should get the
-	 *   call running, the other should be terminated */
+	 *   call running, the other should be terminated.
+	 *  In this test, the server is expected to send ACK-BYE, unlike in multiple_answers_call()*/
 	LinphoneCoreManager* pauline = linphone_core_manager_new2( "pauline_tcp_rc", FALSE);
 	LinphoneCoreManager* marie1  = linphone_core_manager_new2( "marie_rc", FALSE);
 	LinphoneCoreManager* marie2  = linphone_core_manager_new2( "marie_rc", FALSE );
@@ -661,12 +665,11 @@ static void multiple_answers_call_with_media_relay(void) {
 	linphone_core_set_user_agent(marie1->lc, "Natted Linphone", NULL);
 	linphone_core_set_user_agent(marie2->lc, "Natted Linphone", NULL);
 
-	BC_ASSERT_TRUE(wait_for_until(pauline->lc, NULL, &pauline->stat.number_of_LinphoneRegistrationOk, 1, 2000));
 
 	BC_ASSERT_PTR_NOT_NULL( linphone_core_invite_address(pauline->lc, marie1->identity ) );
 
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 2000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie1->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&marie2->stat.number_of_LinphoneCallIncomingReceived, 1, 10000));
 	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneCallOutgoingProgress, 1, 2000));
 
 	// marie 1 and 2 answer at the same time
@@ -678,10 +681,10 @@ static void multiple_answers_call_with_media_relay(void) {
 		ms_sleep(1); /*sleep to make sure that the 200OK of marie1 reaches the server first*/
 		BC_ASSERT_EQUAL( linphone_call_accept(call2), 0, int, "%d");
 
-		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 2000) );
-		BC_ASSERT_TRUE( wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, 2000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &pauline->stat.number_of_LinphoneCallStreamsRunning, 1, 10000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie1->stat.number_of_LinphoneCallStreamsRunning, 1, 10000) );
 		/*the server will send a bye to marie2, as is 200Ok arrived second*/
-		BC_ASSERT_TRUE( wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 4000) );
+		BC_ASSERT_TRUE( wait_for_list(lcs, &marie2->stat.number_of_LinphoneCallEnd, 1, 10000) );
 
 		end_call(marie1, pauline);
 	}
@@ -5278,9 +5281,7 @@ test_t call_tests[] = {
 	TEST_NO_TAG("Outbound call with multiple proxy possible", call_outbound_with_multiple_proxy),
 	TEST_NO_TAG("Outbound call using different proxies", call_outbound_using_different_proxies),
 	TEST_NO_TAG("Audio call recording", audio_call_recording_test),
-#if 0 // not yet activated because not implemented
 	TEST_NO_TAG("Multiple answers to a call", multiple_answers_call),
-#endif
 	TEST_NO_TAG("Multiple answers to a call with media relay", multiple_answers_call_with_media_relay),
 	TEST_NO_TAG("Call with media relay", call_with_media_relay),
 	TEST_NO_TAG("Call with media relay (random ports)", call_with_media_relay_random_ports),
