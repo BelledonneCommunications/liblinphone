@@ -4222,7 +4222,7 @@ LINPHONE_PUBLIC bool_t linphone_core_is_media_encryption_mandatory(LinphoneCore 
 /**
  * Sets the supported media encryptions
  * @param core #LinphoneCore object. @notnil
- * @param enc_list \bctbx_list{char *} The supported media encryptions. Elements of the list are tring representation of value of enum #LinphoneMediaEncryption. You can convert enum value to strings by calling linphone_media_encryption_to_string. @notnil
+ * @param enc_list The supported media encryptions. Elements of the list are tring representation of value of enum #LinphoneMediaEncryption. You can convert enum value to strings by calling linphone_media_encryption_to_string. \bctbx_list{char *} @notnil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC void linphone_core_set_supported_media_encryptions(LinphoneCore *lc, bctbx_list_t * enc_list);
@@ -4230,7 +4230,7 @@ LINPHONE_PUBLIC void linphone_core_set_supported_media_encryptions(LinphoneCore 
 /**
  * Get list of supported media descriptions.
  * @param core #LinphoneCore object. @notnil
- * @return  \bctbx_list{char *} list of supported media encryptions as strings. They can be converted to #LinphoneMediaEncryption by calling string_to_linphone_media_encryption. @notnil
+ * @return list of supported media encryptions as strings. They can be converted to #LinphoneMediaEncryption by calling string_to_linphone_media_encryption. \bctbx_list{char *} @notnil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t * linphone_core_get_supported_media_encryptions(const LinphoneCore *lc);
