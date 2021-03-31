@@ -8,9 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This changelog file was started on October 2019. Previous changes were more or less tracked in the *NEWS* file.
 
-## [Unreleased]
+## [5.0.0] Unreleased
 
-
+### Removed
+- Legacy Java wrapper for Android
 
 ## [4.5.0] 2021-03-29
 
