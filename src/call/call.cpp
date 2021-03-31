@@ -403,10 +403,13 @@ bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &sessio
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
 
-			// Check if the contact address is the focus of a conference
+			// Try to build conference address again
+			if (!remoteContactAddress.hasUriParam("conf-id") && !getConferenceId().empty()) {
+				remoteContactAddress.setUriParam("conf-id",getConferenceId());
+			}
+
 			const auto conference = MediaConference::Conference::toCpp(cConference);
-			const ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, session->getLocalAddress());
-			return (remoteConferenceId == conference->getConferenceId());
+			return (remoteContactAddress == conference->getConferenceAddress().asAddress());
 		}
 	}
 
