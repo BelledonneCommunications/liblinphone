@@ -340,7 +340,7 @@ bool MediaSessionPrivate::failure () {
 								if (firstStream)
 									lInfo() << "Retrying CallSession [" << q << "] with AVP";
 								getParams()->setMediaEncryption(LinphoneMediaEncryptionNone);
-								stream.crypto.clear();
+								stream.cfgs[stream.getChosenConfigurationIndex()].crypto.clear();
 								getParams()->enableAvpf(false);
 								restartInvite();
 								linphone_core_notify_call_id_updated(q->getCore()->getCCore(), previousCallId.c_str(), op->getCallId().c_str());

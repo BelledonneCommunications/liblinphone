@@ -141,7 +141,7 @@ LINPHONE_PUBLIC bool_t linphone_call_params_is_media_encryption_supported (const
 /**
  * Returns the list of supported encryptions in the call
  * @param params the #LinphoneCallParams @notnil
- * @return a \bctbx_list{char *} with the list of encryptions supported in a given call
+ * @return a list of encryptions supported in a given call \bctbx_list{char *} @notnil
  * @ingroup media_parameters
  */
 LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_supported_encryptions (const LinphoneCallParams *params);
@@ -149,7 +149,7 @@ LINPHONE_PUBLIC bctbx_list_t* linphone_call_params_get_supported_encryptions (co
 /**
  * Sets the list of supported encryptions
  * @param params #LinphoneCallParams object @notnil
- * @param encs \bctbx_list{char *} with the list of encryptions supported in a given call
+ * @param encs list with the list of encryptions supported in a given call \bctbx_list{char *} @notnil
 **/
 LINPHONE_PUBLIC void linphone_call_params_set_supported_encryptions (LinphoneCallParams *params, bctbx_list_t* encs);
 
