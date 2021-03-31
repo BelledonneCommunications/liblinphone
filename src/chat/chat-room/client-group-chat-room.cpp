@@ -856,7 +856,12 @@ void ClientGroupChatRoomPrivate::onRemotelyExhumedConference (SalCallOp *op) {
 
 	if (q->getState() != ChatRoom::State::Terminated) {
 		lWarning() << "Conference is being exhumed but wasn't terminated first!";
-		addConferenceIdToPreviousList(oldConfId);
+
+		if (oldConfId == newConfId) {
+			lWarning() << "Conference is being exhumed but with the same conference id!";
+		} else {
+			addConferenceIdToPreviousList(oldConfId);
+		}
 	}
 
 	lInfo() << "Conference [" << oldConfId << "] is being exhumed into [" << newConfId << "]";
@@ -865,7 +870,9 @@ void ClientGroupChatRoomPrivate::onRemotelyExhumedConference (SalCallOp *op) {
 
 	if (q->getState() != ChatRoom::State::Terminated) {
 		// Wait for chat room to have been updated before inserting the previous ID in db
-		q->getCore()->getPrivate()->mainDb->insertNewPreviousConferenceId(newConfId, oldConfId);
+		if (oldConfId != newConfId) {
+			q->getCore()->getPrivate()->mainDb->insertNewPreviousConferenceId(newConfId, oldConfId);
+		}
 	}
 
 	confirmJoining(op);
