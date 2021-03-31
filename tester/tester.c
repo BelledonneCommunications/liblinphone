@@ -823,6 +823,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneCallReleased,conf_initial_stats.number_of_LinphoneCallReleased+counter,5000));
 		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneCallReleased,initial_stats.number_of_LinphoneCallReleased+1,5000));
 
+		BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_NotifyReceived,(initial_stats.number_of_NotifyReceived + 1),5000));
 		// Local conference
 		LinphoneCall * focus_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(focus_call);
