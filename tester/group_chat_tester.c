@@ -3458,7 +3458,7 @@ static void group_chat_room_send_multipart_custom_content_types(void) {
 
 	if (pauline->stat.last_received_chat_message) {
 		const bctbx_list_t* contents = linphone_chat_message_get_contents(pauline->stat.last_received_chat_message);
-		BC_ASSERT_EQUAL(bctbx_list_size(contents), 2, int, "%d");
+		BC_ASSERT_EQUAL((int)bctbx_list_size(contents), 2, int, "%d");
 
 		LinphoneContent *content1 = bctbx_list_get_data(contents);
 		BC_ASSERT_STRING_EQUAL(linphone_content_get_type(content1), "application");
