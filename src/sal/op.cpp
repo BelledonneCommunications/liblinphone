@@ -753,7 +753,7 @@ belle_sip_dialog_t *SalOp::linkOpWithDialog (belle_sip_dialog_t *dialog) {
 }
 
 void SalOp::setOrUpdateDialog (belle_sip_dialog_t *dialog) {
-	lInfo() << "op [" << this << "] : set_or_update_dialog() current=[" << mDialog << "] new=[" << dialog << "]";
+	lInfo() << "op [" << this << "] : setOrUpdateDialog() current=[" << mDialog << "] new=[" << dialog << "]";
 	ref();
 	if (mDialog != dialog) {
 		if (mDialog){

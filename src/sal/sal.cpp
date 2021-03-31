@@ -277,6 +277,11 @@ void Sal::processResponseEventCb (void *userCtx, const belle_sip_response_event_
 	}
 
 	auto op = static_cast<SalOp *>(belle_sip_transaction_get_application_data(BELLE_SIP_TRANSACTION(clientTransaction)));
+	if (!op){
+		/* This happens when receiving a 200 OK for an orphan dialog that has been BYEd.*/
+		lInfo() << "No Op related with this response.";
+		return;
+	}
 	if (op->mState == SalOp::State::Terminated) {
 		lInfo() << "Op [" << op << "] is terminated, nothing to do with this [" << responseCode << "]";
 		return;
