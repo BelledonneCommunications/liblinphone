@@ -201,14 +201,7 @@ ConferenceAddress &ConferenceAddress::operator= (const ConferenceAddress &other)
 }
 
 bool ConferenceAddress::operator== (const ConferenceAddress &other) const {
-	bool equal = IdentityAddress::operator==(other);
-	if (equal) {
-		bctbx_map_t* otherUriParamMap = other.getUriParams();
-		equal = (compareUriParams(otherUriParamMap) == 0);
-		bctbx_mmap_cchar_delete_with_data(otherUriParamMap, bctbx_free);
-	}
-	// If this is not smaller than other and other is not smaller than this, it means that they are identical
-	return equal;
+	return Address::operator==(other);
 }
 
 bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
@@ -216,18 +209,7 @@ bool ConferenceAddress::operator!= (const ConferenceAddress &other) const {
 }
 
 bool ConferenceAddress::operator< (const ConferenceAddress &other) const {
-	/* Scheme is not used for comparison. sip:toto@sip.linphone.org and sips:toto@sip.linphone.org refer to the same person. */
-	// Operator < ignores scheme
-	int diff = IdentityAddress::operator<(other);
-	bctbx_map_t* otherUriParamMap = other.getUriParams();
-	
-	if (diff == 0){
-		diff = compareUriParams(otherUriParamMap);
-	}
-
-	bctbx_mmap_cchar_delete_with_data(otherUriParamMap, bctbx_free);
-
-	return diff < 0;
+	return Address::operator<(other);
 }
 
 string ConferenceAddress::asString () const {

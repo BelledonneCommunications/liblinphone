@@ -298,3 +298,10 @@ bool_t sal_address_is_ipv6(const SalAddress *addr){
 	}
 	return FALSE;
 }
+
+int sal_address_equals(const SalAddress *addr_a, const SalAddress *addr_b){
+	belle_sip_header_address_t* header_addr_a = BELLE_SIP_HEADER_ADDRESS(addr_a);
+	belle_sip_header_address_t* header_addr_b = BELLE_SIP_HEADER_ADDRESS(addr_b);
+
+	return belle_sip_header_address_equals(header_addr_a, header_addr_b);
+}

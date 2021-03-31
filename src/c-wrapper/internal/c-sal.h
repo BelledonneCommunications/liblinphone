@@ -141,6 +141,7 @@ const char *sal_address_get_password(const SalAddress *addr);
 void sal_address_set_header(SalAddress *addr, const char *header_name, const char *header_value);
 const char *sal_address_get_header(const SalAddress *addr, const char *name);
 
+int sal_address_equals(const SalAddress *addr_a, const SalAddress *addr_b);
 
 void sal_set_log_handler(BctbxLogFunc log_handler);
 
