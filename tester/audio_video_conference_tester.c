@@ -45,10 +45,11 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	stats initial_pauline_stat;
 	stats initial_laure_stat;
 
-	LinphoneCall* marie_call_pauline;
-	LinphoneCall* pauline_called_by_marie;
-	LinphoneCall* marie_call_laure;
-	LinphoneConference *conference;
+	LinphoneCall* marie_call_pauline = NULL;
+	LinphoneCall* pauline_called_by_marie = NULL;
+	LinphoneCall* marie_call_laure = NULL;
+	LinphoneConference *conference = NULL;
+	LinphoneAddress * marie_conference_address = NULL;
 	const bctbx_list_t* calls;
 	bool_t is_remote_conf;
 	bool_t focus_is_up = (focus && ((LinphoneConferenceServer *)focus)->reg_state == LinphoneRegistrationOk);
@@ -173,7 +174,7 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 	}
 
 	BC_ASSERT_PTR_NOT_NULL(conference = linphone_core_get_conference(marie->lc));
-	LinphoneAddress * marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
+	marie_conference_address = linphone_address_clone(linphone_conference_get_conference_address(conference));
 	if(conference) {
 		bctbx_list_t *participants = linphone_conference_get_participant_list(conference);
 		BC_ASSERT_EQUAL((unsigned int)bctbx_list_size(participants), 2, unsigned int, "%u");
