@@ -263,11 +263,11 @@ public:
 
 
 	LinphoneConference *getConference () const;
+	void reenterLocalConference(const std::shared_ptr<CallSession> &session);
+	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	bool attachedToLocalConference(const std::shared_ptr<CallSession> &session) const;
 	bool attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const;
 	void setConference (LinphoneConference *ref);
-	void reenterLocalConference();
-	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
 	bctbx_list_t *getCallbacksList () const;
