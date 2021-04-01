@@ -377,7 +377,7 @@ void Call::terminateConference() {
 void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	auto cConference = getConference();
 	if (cConference) {
-		if (isInConference()) {
+		if (attachedToLocalConference(session)) {
 			// Remove participant from local conference
 			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 			CallSession::State sessionState = session->getState();
@@ -456,7 +456,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 			break;
 		case CallSession::State::Paused:
-			if (!isInConference()) {
+			if (attachedToLocalConference(session) && !isInConference()) {
 				setConference(nullptr);
 			}
 		break;
@@ -504,12 +504,8 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				ms_free(remoteContactAddressStr);
 
 				if (attachedToRemoteConference(session)) {
-					if (!isInConference()) {
-						if (remoteContactAddress.hasParam("isfocus")) {
-							const_cast<LinphonePrivate::CallSessionParamsPrivate *>(session->getParams()->getPrivate())->setInConference(true);
-						} else {
-							terminateConference();
-						}
+					if (!remoteContactAddress.hasParam("isfocus")) {
+						terminateConference();
 					}
 				} else {
 					// Check if the request was sent by the focus (remote conference)
@@ -538,7 +534,7 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			const auto op = session->getPrivate()->getOp();
 			const auto & confId = session->getPrivate()->getConferenceId();
 			// Try to add device to local conference
-			if (getConference() && isInConference()) {
+			if (attachedToLocalConference(session) && isInConference()) {
 				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
 			} else if (!attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
