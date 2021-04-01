@@ -21,6 +21,7 @@
 #define _L_MAGIC_SEARCH_P_H_
 
 #include "magic-search.h"
+#include "search-async-data.h"
 #include "object/object-p.h"
 #include <vector>
 
@@ -35,10 +36,12 @@ private:
 	std::string mDelimiter; // Delimiter use for the search
 	bool mUseDelimiter;
 	std::string mFilter;
-
-	mutable std::list<SearchResult> *mCacheResult;
+	bool_t mAutoResetCache; // When a new search start, let MagicSearch to clean its cache
 	
+	belle_sip_source_t * mIteration;
 
+	std::shared_ptr< std::list<SearchResult>> mCacheResult;
+	SearchAsyncData mAsyncData;
 
 	L_DECLARE_PUBLIC(MagicSearch);
 };
