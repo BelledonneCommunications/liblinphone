@@ -252,6 +252,7 @@ set(LINPHONE_CXX_OBJECTS_PRIVATE_HEADER_FILES
 	sal/sal_stream_description.h
 	sal/sal_media_description.h
 	sal/offeranswer.h
+	search/search-async-data.h
 	search/magic-search-p.h
 	search/magic-search.h
 	search/search-result.h
@@ -433,6 +434,7 @@ set(LINPHONE_CXX_OBJECTS_SOURCE_FILES
 	sal/sal_media_description.cpp
 	sal/offeranswer.cpp
 	search/magic-search.cpp
+	search/search-async-data.cpp
 	search/search-result.cpp
 	utils/background-task.cpp
 	utils/fs.cpp
