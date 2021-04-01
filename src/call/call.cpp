@@ -334,13 +334,13 @@ void Call::onCallSessionStartReferred (const shared_ptr<CallSession> &session) {
 	startReferredCall(nullptr);
 }
 
-void Call::reenterLocalConference() {
-	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(getLocalAddress()));
+void Call::reenterLocalConference(const shared_ptr<CallSession> &session) {
+	LinphoneAddress * cAddress = L_GET_C_BACK_PTR(&(session->getLocalAddress()));
 	// Search local conference to add the call to again
-	LinphoneProxyConfig * proxyCfg = linphone_core_lookup_known_proxy(getCore()->getCCore(), cAddress);
 	char * contactAddressStr = nullptr;
-	if (proxyCfg && proxyCfg->op) {
-		contactAddressStr = sal_address_as_string(proxyCfg->op->getContactAddress());
+	const auto op = session->getPrivate()->getOp();
+	if (op && op->getRemoteContactAddress()) {
+		contactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 	} else {
 		contactAddressStr = ms_strdup(linphone_core_find_best_identity(getCore()->getCCore(), const_cast<LinphoneAddress *>(cAddress)));
 	}
@@ -349,7 +349,10 @@ void Call::reenterLocalConference() {
 		ms_free(contactAddressStr);
 	}
 
-	contactAddress.setUriParam("conf-id",getConferenceId());
+	const auto & confId = session->getPrivate()->getConferenceId();
+	if (!confId.empty()) {
+		contactAddress.setUriParam("conf-id",confId);
+	}
 
 	ConferenceId localConferenceId = ConferenceId(contactAddress, contactAddress);
 	shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(localConferenceId, false);
@@ -398,14 +401,17 @@ void Call::changeSubjectInLocalConference(SalCallOp *op) {
 bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
 	if (cConference) {
-		if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-			char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+
+		const auto op = session->getPrivate()->getOp();
+		if (op && op->getRemoteContactAddress()) {
+			char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 			Address remoteContactAddress(remoteContactAddressStr);
 			ms_free(remoteContactAddressStr);
 
 			// Try to build conference address again
-			if (!remoteContactAddress.hasUriParam("conf-id") && !getConferenceId().empty()) {
-				remoteContactAddress.setUriParam("conf-id",getConferenceId());
+			const auto & confId = session->getPrivate()->getConferenceId();
+			if (!remoteContactAddress.hasUriParam("conf-id") && !confId.empty()) {
+				remoteContactAddress.setUriParam("conf-id",confId);
 			}
 
 			const auto conference = MediaConference::Conference::toCpp(cConference);
@@ -457,8 +463,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		break;
 		case CallSession::State::PausedByRemote:
 		{
-			if (attachedToRemoteConference(session) && session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+			const auto op = session->getPrivate()->getOp();
+			if (Call::attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
@@ -487,11 +494,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 		case CallSession::State::UpdatedByRemote:
 		{
 
+			const auto op = session->getPrivate()->getOp();
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject
-				changeSubjectInLocalConference(session->getPrivate()->getOp());
-			} else if (!attachedToRemoteConference(session) && session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+				changeSubjectInLocalConference(op);
+			} else if (!Call::attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
@@ -524,10 +532,12 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 				MediaConference::Conference::toCpp(getConference())->addParticipantDevice(getSharedFromThis());
 			}
 
-			if (session->getPrivate()->getOp() && session->getPrivate()->getOp()->getRemoteContactAddress()) {
-				char * remoteContactAddressStr = sal_address_as_string(session->getPrivate()->getOp()->getRemoteContactAddress());
+			const auto op = session->getPrivate()->getOp();
+			if (Call::attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
+				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
+				const auto & confId = session->getPrivate()->getConferenceId();
 
 				// Check if the request was sent by the focus
 				if (remoteContactAddress.hasParam("isfocus")) {
@@ -548,9 +558,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 					} else {
 						remoteConf = static_pointer_cast<MediaConference::RemoteConference>(conference);
 					}
-				} else if (!getConferenceId().empty() && getConference() && !isInConference()) {
+				} else if (!confId.empty() && getConference() && !isInConference()) {
 					// Try to reenter conference if the call may have been part of one
-					reenterLocalConference();
+					reenterLocalConference(session);
 				}
 			}
 		}
