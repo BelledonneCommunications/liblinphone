@@ -401,7 +401,6 @@ void Call::changeSubjectInLocalConference(SalCallOp *op) {
 bool Call::attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const {
 	const auto & cConference = getConference();
 	if (cConference) {
-
 		const auto op = session->getPrivate()->getOp();
 		if (op && op->getRemoteContactAddress()) {
 			char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
@@ -498,30 +497,39 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 			if (attachedToLocalConference(session)) {
 				// The remote participant requested to change subject
 				changeSubjectInLocalConference(op);
-			} else if (!attachedToRemoteConference(session) && op && op->getRemoteContactAddress()) {
+			} else if (op && op->getRemoteContactAddress()) {
+
 				char * remoteContactAddressStr = sal_address_as_string(op->getRemoteContactAddress());
 				Address remoteContactAddress(remoteContactAddressStr);
 				ms_free(remoteContactAddressStr);
 
-				// Check if the request was sent by the focus (remote conference)
-				if (remoteContactAddress.hasParam("isfocus")) {
-					ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
-
-					shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
-					if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
-						// It is expected that the core of the remote conference is the participant one
-						shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
-						setConference(remoteConf->toC());
-
-						// Record conf-id to be used later when terminating the remote conference
-						if (remoteContactAddress.hasUriParam("conf-id")) {
-							setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+				if (attachedToRemoteConference(session)) {
+					if (!isInConference()) {
+						if (remoteContactAddress.hasParam("isfocus")) {
+							const_cast<LinphonePrivate::CallSessionParamsPrivate *>(session->getParams()->getPrivate())->setInConference(true);
+						} else {
+							terminateConference();
 						}
+					}
+				} else {
+					// Check if the request was sent by the focus (remote conference)
+					if (remoteContactAddress.hasParam("isfocus")) {
+						ConferenceId remoteConferenceId = ConferenceId(remoteContactAddress, getLocalAddress());
 
+						shared_ptr<MediaConference::Conference> conference = getCore()->findAudioVideoConference(remoteConferenceId, false);
+						if ((conference == nullptr) && (getCore()->getCCore()->conf_ctx == nullptr)) {
+							// It is expected that the core of the remote conference is the participant one
+							shared_ptr<MediaConference::RemoteConference> remoteConf = std::shared_ptr<MediaConference::RemoteConference>(new MediaConference::RemoteConference(getCore(), getSharedFromThis(), remoteConferenceId, nullptr, ConferenceParams::create(getCore()->getCCore())), [](MediaConference::RemoteConference * c){c->unref();});
+							setConference(remoteConf->toC());
+
+							// Record conf-id to be used later when terminating the remote conference
+							if (remoteContactAddress.hasUriParam("conf-id")) {
+								setConferenceId(remoteContactAddress.getUriParamValue("conf-id"));
+							}
+
+						}
 					}
 				}
-			} else if (attachedToRemoteConference(session) && !isInConference()) {
-				terminateConference();
 			}
 		}
 		break;

@@ -835,7 +835,7 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 	}
 	BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(conf_to_focus_call));
-	BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_to_focus_call));
+	BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_to_focus_call));
 
 	// Local conference
 	LinphoneCall * focus_to_conf_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, conf_mgr->identity);
@@ -1158,7 +1158,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 		}
 
 		// Wait for calls to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 20000));
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
 
 		// Wait for all conferences to be terminated

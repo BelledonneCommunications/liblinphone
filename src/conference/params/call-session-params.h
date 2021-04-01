@@ -35,6 +35,7 @@ class CallSessionParamsPrivate;
 class Core;
 
 class LINPHONE_PUBLIC CallSessionParams : public ClonableObject {
+	friend class Call;
 	friend class CallSession;
 	friend class CallSessionPrivate;
 	friend class ClientGroupChatRoom;
