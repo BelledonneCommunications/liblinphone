@@ -520,8 +520,9 @@ void Call::onCallSessionStateChanged (const shared_ptr<CallSession> &session, Ca
 
 					}
 				}
+			} else if (attachedToRemoteConference(session) && !isInConference()) {
+				terminateConference();
 			}
-
 		}
 		break;
 		case CallSession::State::StreamsRunning:
