@@ -263,7 +263,10 @@ public:
 
 
 	LinphoneConference *getConference () const;
+	bool attachedToLocalConference(const std::shared_ptr<CallSession> &session) const;
+	bool attachedToRemoteConference(const std::shared_ptr<CallSession> &session) const;
 	void setConference (LinphoneConference *ref);
+	void reenterLocalConference();
 	void exitFromConference(const std::shared_ptr<CallSession> &session);
 	MSAudioEndpoint *getEndpoint () const;
 	void setEndpoint (MSAudioEndpoint *endpoint);
@@ -293,7 +296,8 @@ private:
 	LinphoneConference *mConfRef = nullptr;
 	MSAudioEndpoint *mEndpoint = nullptr;
 
-	void removeFromConference(const Address & remoteContactAddress);
+	void changeSubjectInLocalConference(SalCallOp *op);
+	void terminateConference();
 	
 	void *mUserData = nullptr;
 };

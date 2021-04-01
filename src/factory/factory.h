@@ -204,6 +204,8 @@ public:
 
   LinphoneTunnelConfig *createTunnelConfig() const;
 
+  LinphoneAccountCbs *createAccountCbs() const;
+
   LinphoneLoggingServiceCbs *createLoggingServiceCbs() const;
 
   LinphonePlayerCbs *createPlayerCbs() const;

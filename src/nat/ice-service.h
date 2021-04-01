@@ -53,7 +53,7 @@ public:
 	void resetSession();
 	
 	/* Returns true if the incoming offer requires a defered response, due to check-list(s) not yet completed.*/
-	bool reinviteNeedsDeferedResponse(SalMediaDescription *remoteMd);
+	bool reinviteNeedsDeferedResponse(const std::shared_ptr<SalMediaDescription> &remoteMd);
 	
 	void createStreams(const OfferAnswerContext &params);
 	/**
@@ -108,14 +108,14 @@ public:
 private:
 	MediaSessionPrivate &getMediaSessionPrivate()const;
 	LinphoneCore *getCCore()const;
-	bool iceFoundInMediaDescription (const SalMediaDescription *md);
+	bool iceFoundInMediaDescription (const std::shared_ptr<SalMediaDescription> &md);
 	const struct addrinfo *getIcePreferredStunServerAddrinfo (const struct addrinfo *ai);
-	void updateLocalMediaDescriptionFromIce(SalMediaDescription *desc);
-	void getIceDefaultAddrAndPort(uint16_t componentID, const SalMediaDescription *md, const SalStreamDescription *stream, const char **addr, int *port);
-	void clearUnusedIceCandidates (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool localIsOfferer);
-	bool checkForIceRestartAndSetRemoteCredentials (const SalMediaDescription *md, bool isOffer);
-	void createIceCheckListsAndParseIceAttributes (const SalMediaDescription *md, bool iceRestarted);
-	void updateFromRemoteMediaDescription (const SalMediaDescription *localDesc, const SalMediaDescription *remoteDesc, bool isOffer);
+	void updateLocalMediaDescriptionFromIce(std::shared_ptr<SalMediaDescription> &desc);
+	void getIceDefaultAddrAndPort(uint16_t componentID, const std::shared_ptr<SalMediaDescription> & md, const SalStreamDescription & stream, std::string & addr, int & port);
+	void clearUnusedIceCandidates (const std::shared_ptr<SalMediaDescription> &localDesc, const std::shared_ptr<SalMediaDescription> &remoteDesc, bool localIsOfferer);
+	bool checkForIceRestartAndSetRemoteCredentials (const std::shared_ptr<SalMediaDescription> &md, bool isOffer);
+	void createIceCheckListsAndParseIceAttributes (const std::shared_ptr<SalMediaDescription> &md, bool iceRestarted);
+	void updateFromRemoteMediaDescription (const std::shared_ptr<SalMediaDescription> &localDesc, const std::shared_ptr<SalMediaDescription> &remoteDesc, bool isOffer);
 	void gatheringFinished();
 	void deleteSession();
 	void checkSession(IceRole role, bool preferIpv6DefaultCandidates);

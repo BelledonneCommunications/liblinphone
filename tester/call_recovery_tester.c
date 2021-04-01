@@ -26,6 +26,7 @@
 #include "mediastreamer2/msutils.h"
 #include "belle-sip/sipstack.h"
 #include <bctoolbox/defs.h>
+#include "shared_tester_functions.h"
 
 /*Case where the caller disconnects just after initiating the call*/
 static void recovered_call_on_network_switch_in_early_state(LinphoneCoreManager* callerMgr) {

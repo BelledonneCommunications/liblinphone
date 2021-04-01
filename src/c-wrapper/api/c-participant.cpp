@@ -46,8 +46,8 @@ void linphone_participant_set_user_data(LinphoneParticipant *participant, void *
 }
 
 const LinphoneAddress *linphone_participant_get_address (const LinphoneParticipant *participant) {
-	LinphonePrivate::Address addr(LinphonePrivate::Participant::toCpp(participant)->getAddress());
-	return linphone_address_new(addr.asString().c_str());
+	const LinphonePrivate::Address & addr = LinphonePrivate::Participant::toCpp(participant)->getAddress().asAddress();
+	return L_GET_C_BACK_PTR(&addr);
 }
 
 bool_t linphone_participant_is_admin (const LinphoneParticipant *participant) {

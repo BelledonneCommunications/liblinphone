@@ -29,13 +29,14 @@
 #include "content/content-type.h"
 #include "content/content-disposition.h"
 #include "logger/logger.h"
+#include "sal/sal_media_description.h"
 #include "sal/sal.h"
 
 LINPHONE_BEGIN_NAMESPACE
 
 class SalMessageOpInterface;
 
-class SalOp {
+class LINPHONE_PUBLIC SalOp {
 public:
 	SalOp (Sal *sal);
 	virtual ~SalOp ();
@@ -261,7 +262,7 @@ protected:
 	belle_sip_dialog_t *mDialog = nullptr;
 	belle_sip_header_replaces_t *mReplaces = nullptr;
 	belle_sip_header_referred_by_t *mReferredBy = nullptr;
-	SalMediaDescription *mResult = nullptr;
+	std::shared_ptr<SalMediaDescription> mResult = nullptr;
 	belle_sdp_session_description_t *mSdpAnswer = nullptr;
 	State mState = State::Early;
 	Dir mDir = Dir::Incoming;

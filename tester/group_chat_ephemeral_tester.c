@@ -81,6 +81,7 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
+	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 	BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
 
 	LinphoneChatMessage *message[10];
@@ -198,7 +199,7 @@ static void ephemeral_message_test (bool_t encrypted, bool_t remained, bool_t ex
 		linphone_chat_message_unref(messagef[i]);
 	}
 	linphone_chat_message_unref(messageNormal);
-
+end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -264,6 +265,8 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(con
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
+	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
+
 	linphone_chat_room_enable_ephemeral(paulineCr, TRUE);
 	linphone_chat_room_set_ephemeral_lifetime(paulineCr, 1);
 
@@ -299,6 +302,7 @@ static void send_msg_from_no_ephemeral_chat_room_to_ephmeral_chat_room_curve(con
 	bctbx_list_free_with_data(history, (bctbx_list_free_func)linphone_chat_message_unref);
 	linphone_chat_message_unref(message);
 
+end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -348,6 +352,7 @@ static void mixed_ephemeral_message_test_curve(const int curveId) {
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
 
+	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 	linphone_chat_room_enable_ephemeral(marieCr, TRUE);
 	linphone_chat_room_set_ephemeral_lifetime(marieCr, 2000);
 	// Marie sends messages
@@ -416,6 +421,7 @@ static void mixed_ephemeral_message_test_curve(const int curveId) {
 	linphone_chat_message_unref(message);
 	linphone_chat_message_unref(message2);
 
+end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
@@ -464,6 +470,8 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 
 	// Check that the chat room is correctly created on Pauline's side and that the participants are added
 	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, 0);
+
+	if(!BC_ASSERT_PTR_NOT_NULL(marieCr) || !BC_ASSERT_PTR_NOT_NULL(paulineCr)) goto end;
 
 	BC_ASSERT_FALSE(linphone_chat_room_ephemeral_enabled(marieCr));
 	BC_ASSERT_EQUAL(linphone_chat_room_get_ephemeral_lifetime(marieCr), 86400, long, "%ld");
@@ -518,6 +526,7 @@ static void chat_room_ephemeral_settings_curve(const int curveId) {
 	BC_ASSERT_EQUAL(nbMarieConferenceEphemeralMessageEnabled, 1, unsigned int, "%u");
 	BC_ASSERT_EQUAL(nbMarieConferenceEphemeralMessageDisabled, 0, unsigned int, "%u");
 
+end:
 	// Clean db from chat room
 	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
 	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);

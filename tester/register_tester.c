@@ -832,8 +832,7 @@ static void proxy_transport_change_with_wrong_port(void) {
 	/*as we change proxy server destination, we should'nt be notified about the clear*/
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationCleared,0, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationOk,1, int, "%d");
-	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,1, int, "%d");
-	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,0, int, "%d");
+	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,1+counters->number_of_LinphoneRegistrationFailed, int, "%d");
 
 	linphone_core_manager_destroy(lcm);
 
@@ -865,6 +864,7 @@ static void proxy_transport_change_with_wrong_port_givin_up(void) {
 	linphone_proxy_config_done(proxy_config);
 
 	BC_ASSERT(wait_for(lcm->lc,lcm->lc,&counters->number_of_LinphoneRegistrationCleared,1));
+	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationCleared,1, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationOk,0, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationProgress,1, int, "%d");
 	BC_ASSERT_EQUAL(counters->number_of_LinphoneRegistrationFailed,0, int, "%d");

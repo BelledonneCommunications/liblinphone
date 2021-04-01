@@ -166,7 +166,7 @@ static int _linphone_core_get_payload_type_normal_bitrate(const LinphoneCore *lc
 		}else{
 			video_bw=LinphonePrivate::PayloadTypeHandler::getRemainingBandwidthForVideo(maxbw,lc->audio_bw);
 		}
-		return video_bw;
+		return LinphonePrivate::PayloadTypeHandler::getVideoPayloadTypeBandwidth(pt, video_bw);
 	}
 	return 0;
 }
@@ -197,6 +197,7 @@ static void _linphone_core_set_payload_type_normal_bitrate(LinphoneCore *lc, Ort
 		pt->normal_bitrate=bitrate*1000;
 		pt->flags|=PAYLOAD_TYPE_BITRATE_OVERRIDE;
 		linphone_core_update_allocated_audio_bandwidth(lc);
+		_linphone_core_codec_config_write(lc);
 	}else{
 		char *desc = _payload_type_get_description(pt);
 		ms_error("Cannot set an explicit bitrate for codec '%s', because it is not VBR.",desc);

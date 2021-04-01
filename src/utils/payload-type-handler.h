@@ -20,6 +20,8 @@
 #ifndef _L_PAYLOAD_TYPE_HANDLER_H_
 #define _L_PAYLOAD_TYPE_HANDLER_H_
 
+#include <list>
+
 #include "linphone/utils/general.h"
 
 #include "c-wrapper/internal/c-sal.h"
@@ -46,25 +48,27 @@ class PayloadTypeHandler : public CoreAccessor {
 public:
 	explicit PayloadTypeHandler (const std::shared_ptr<Core> &core) : CoreAccessor(core) {}
 
-	bctbx_list_t *makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const bctbx_list_t *previousList);
+	std::list<OrtpPayloadType*> makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList);
 
 	static bool bandwidthIsGreater (int bandwidth1, int bandwidth2);
 	static int getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth);
+	static int getVideoPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth);
 	static double getAudioPayloadTypeBandwidthFromCodecBitrate (const OrtpPayloadType *pt);
-	static int getMaxCodecSampleRate (const bctbx_list_t *codecs);
+	static int getMaxCodecSampleRate (const std::list<OrtpPayloadType*> & codecs);
 	static int getMinBandwidth (int downBandwidth, int upBandwidth);
 	static int getRemainingBandwidthForVideo (int total, int audio);
-	static bool isPayloadTypeNumberAvailable (const bctbx_list_t *codecs, int number, const OrtpPayloadType *ignore);
+	static bool isPayloadTypeNumberAvailable (const std::list<OrtpPayloadType*> & codecs, int number, const OrtpPayloadType *ignore);
+	static void clearPayloadList(std::list<OrtpPayloadType*> & payloads);
 
 private:
-	static int findPayloadTypeNumber (const bctbx_list_t *assigned, const OrtpPayloadType *pt);
-	static bool hasTelephoneEventPayloadType (const bctbx_list_t *tev, int rate);
+	static int findPayloadTypeNumber (const std::list<OrtpPayloadType*> & assigned, const OrtpPayloadType *pt);
+	static bool hasTelephoneEventPayloadType (const std::list<OrtpPayloadType*> & tev, int rate);
 	static bool isPayloadTypeUsableForBandwidth (const OrtpPayloadType *pt, int bandwidthLimit);
 	static int lookupTypicalVbrBitrate (int maxBandwidth, int clockRate);
 
-	void assignPayloadTypeNumbers (const bctbx_list_t *codecs);
-	bctbx_list_t *createSpecialPayloadTypes (const bctbx_list_t *codecs);
-	bctbx_list_t *createTelephoneEventPayloadTypes (const bctbx_list_t *codecs);
+	void assignPayloadTypeNumbers (const std::list<OrtpPayloadType*> & codecs);
+	std::list<OrtpPayloadType*> createSpecialPayloadTypes (const std::list<OrtpPayloadType*> & codecs);
+	std::list<OrtpPayloadType*> createTelephoneEventPayloadTypes (const std::list<OrtpPayloadType*> & codecs);
 	bool isPayloadTypeUsable (const OrtpPayloadType *pt);
 
 	static const int udpHeaderSize;

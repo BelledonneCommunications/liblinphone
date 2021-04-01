@@ -26,6 +26,7 @@
 #include "linphone/core.h"
 #include "linphone/utils/utils.h"
 
+#include "conference_private.h"
 #include "private.h"
 #include "mediastreamer2/mediastream.h"
 #include "linphone/lpconfig.h"
@@ -38,6 +39,7 @@
 #include <unistd.h>
 #endif
 
+#include "account/account.h"
 #include "c-wrapper/c-wrapper.h"
 #include "call/call.h"
 #include "chat/chat-message/chat-message-p.h"
@@ -436,41 +438,41 @@ static void auth_failure(SalOp *op, SalAuthInfo* info) {
 }
 
 static void register_success(SalOp *op, bool_t registered){
-	LinphoneProxyConfig *cfg=(LinphoneProxyConfig *)op->getUserPointer();
-	if (!cfg){
-		ms_message("Registration success for deleted proxy config, ignored");
+	LinphoneAccount *account=(LinphoneAccount *)op->getUserPointer();
+	if (!account){
+		ms_message("Registration success for deleted account, ignored");
 		return;
 	}
-	linphone_proxy_config_set_state(cfg, registered ? LinphoneRegistrationOk : LinphoneRegistrationCleared ,
+	Account::toCpp(account)->setState(registered ? LinphoneRegistrationOk : LinphoneRegistrationCleared ,
 									registered ? "Registration successful" : "Unregistration done");
 }
 
 static void register_failure(SalOp *op){
-	LinphoneProxyConfig *cfg=(LinphoneProxyConfig*)op->getUserPointer();
+	LinphoneAccount *account=(LinphoneAccount*)op->getUserPointer();
 	const SalErrorInfo *ei=op->getErrorInfo();
 	const char *details=ei->full_string;
 
-	if (cfg==NULL){
-		ms_warning("Registration failed for unknown proxy config.");
+	if (account==NULL){
+		ms_warning("Registration failed for unknown account.");
 		return ;
 	}
 	if (details==NULL)
 		details="no response timeout";
 
 	if ((ei->reason == SalReasonServiceUnavailable || ei->reason == SalReasonIOError)
-			&& linphone_proxy_config_get_state(cfg) == LinphoneRegistrationOk) {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationProgress,"Service unavailable, retrying");
+			&& linphone_account_get_state(account) == LinphoneRegistrationOk) {
+		Account::toCpp(account)->setState(LinphoneRegistrationProgress,"Service unavailable, retrying");
 	} else if (ei->protocol_code == 401 || ei->protocol_code == 407){
 		/* Do nothing. There will be an auth_requested() callback. If the callback doesn't provide an AuthInfo, then
 		 * the proxy config will transition to the failed state.*/
 	} else {
-		linphone_proxy_config_set_state(cfg,LinphoneRegistrationFailed, details);
+		Account::toCpp(account)->setState(LinphoneRegistrationFailed, details);
 	}
-	if (cfg->presence_publish_event){
+	if (Account::toCpp(account)->getPresencePublishEvent()){
 		/*prevent publish to be sent now until registration gets successful*/
-		linphone_event_terminate(cfg->presence_publish_event);
-		cfg->presence_publish_event=NULL;
-		cfg->send_publish=cfg->publish;
+		linphone_event_terminate(Account::toCpp(account)->getPresencePublishEvent());
+		Account::toCpp(account)->setPresencePublishEvent(NULL);
+		Account::toCpp(account)->setSendPublish(linphone_account_params_get_publish_enabled(linphone_account_get_params(account)));
 	}
 }
 
@@ -874,12 +876,12 @@ static void on_notify_response(SalOp *op){
 }
 
 static void refer_received(SalOp *op, const SalAddress *refer_to){
+	char *refer_uri = sal_address_as_string(refer_to);
+	LinphonePrivate::Address addr(refer_uri);
+	bctbx_free(refer_uri);
+	LinphoneCore *lc = reinterpret_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 	if (sal_address_has_param(refer_to, "text")) {
-		char *refer_uri = sal_address_as_string(refer_to);
-		LinphonePrivate::Address addr(refer_uri);
-		bctbx_free(refer_uri);
 		if (addr.isValid()) {
-			LinphoneCore *lc = reinterpret_cast<LinphoneCore *>(op->getSal()->getUserPointer());
 
 			if (linphone_core_get_global_state(lc) != LinphoneGlobalOn) {
 				static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
@@ -954,6 +956,39 @@ static void refer_received(SalOp *op, const SalAddress *refer_to){
 				}
 			}
 		}
+	} else {
+		if (linphone_core_conference_server_enabled(lc)) {
+			shared_ptr<MediaConference::Conference> conference = L_GET_CPP_PTR_FROM_C_OBJECT(lc)->findAudioVideoConference(
+				ConferenceId(ConferenceAddress(op->getTo()), ConferenceAddress(op->getTo()))
+			);
+
+			if (conference) {
+				Address fromAddr(op->getFrom());
+				shared_ptr<Participant> participant = conference->findParticipant(fromAddr);
+				if (!participant || !participant->isAdmin()) {
+					static_cast<SalReferOp *>(op)->reply(SalReasonForbidden);
+					return;
+				}
+				if (addr.hasParam("admin")) {
+					participant = conference->findParticipant(addr);
+					if (participant) {
+						bool value = Utils::stob(addr.getParamValue("admin"));
+						conference->setParticipantAdminStatus(participant, value);
+						static_cast<SalReferOp *>(op)->reply(SalReasonNone);
+						return;
+					}
+				} else {
+					participant = static_pointer_cast<MediaConference::LocalConference>(conference)->findParticipant(addr);
+					if (!participant) {
+						bool ret = static_pointer_cast<MediaConference::LocalConference>(conference)->addParticipant(
+							IdentityAddress(addr));
+						static_cast<SalReferOp *>(op)->reply(ret ? SalReasonNone : SalReasonNotAcceptable);
+						return;
+					}
+				}
+			}
+		}
+
 	}
 	static_cast<SalReferOp *>(op)->reply(SalReasonDeclined);
 }

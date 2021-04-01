@@ -102,6 +102,9 @@ static void audio_call_stereo_call(const char *codec_name, int clock_rate, int b
 	linphone_core_set_use_files(pauline->lc, TRUE);
 	linphone_core_set_record_file(pauline->lc, recordpath);
 
+	linphone_core_set_mtu(marie->lc, 4000);
+	linphone_core_set_mtu(pauline->lc, 4000);
+
 	/*stereo is supported only without volume control, echo canceller...*/
 	linphone_config_set_string(linphone_core_get_config(marie->lc),"sound","features","REMOTE_PLAYING");
 	linphone_config_set_string(linphone_core_get_config(pauline->lc),"sound","features","REMOTE_PLAYING");

@@ -17,8 +17,9 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <belle-sip/sip-uri.h>
+
 #include "address.h"
-#include "address/identity-address.h"
 #include "c-wrapper/c-wrapper.h"
 #include "containers/lru-cache.h"
 #include "logger/logger.h"
@@ -83,25 +84,6 @@ Address::Address (const string &address) : ClonableObject(*new ClonableObjectPri
 	}
 }
 
-Address::Address (const IdentityAddress &identityAddress) : ClonableObject(*new ClonableObjectPrivate) {
-	const string &username = identityAddress.getUsername();
-	if (username.empty())
-		return;
-	const string &domain = identityAddress.getDomain();
-	if (domain.empty())
-		return;
-
-	string uri = identityAddress.asString();
-	internalAddress = getSalAddressFromCache(uri);
-}
-
-Address::Address (const ConferenceAddress &conferenceAddress) : Address(IdentityAddress(conferenceAddress)) {
-	const std::string & confId = conferenceAddress.getConfId();
-	if (confId.empty() == false) {
-		setUriParam ("conf-id", confId);
-	}
-}
-
 Address::Address (const Address &other) : ClonableObject(*new ClonableObjectPrivate) {
 	SalAddress *salAddress = other.internalAddress;
 	if (salAddress)
@@ -125,7 +107,9 @@ Address &Address::operator= (const Address &other) {
 }
 
 bool Address::operator== (const Address &other) const {
-	return asString() == other.asString();
+	// If either internal addresses is NULL, then the two addresses are not the same
+	if (!internalAddress || !other.internalAddress)  return false;
+	return (sal_address_equals(internalAddress, other.internalAddress) != 0);
 }
 
 bool Address::operator!= (const Address &other) const {
@@ -402,6 +386,13 @@ const string &Address::getUriParamValue (const string &uriParamName) const {
 	return Utils::getEmptyConstRefObject<string>();
 }
 
+bctbx_map_t* Address::getUriParams () const {
+	if (internalAddress) {
+		return sal_address_get_uri_params(internalAddress);
+	}
+	return nullptr;
+}
+
 bool Address::setUriParam (const string &uriParamName, const string &uriParamValue) {
 	if (!internalAddress)
 		return false;
@@ -424,6 +415,14 @@ bool Address::removeUriParam (const string &uriParamName) {
 
 	sal_address_remove_uri_param(internalAddress, L_STRING_TO_C(uriParamName));
 	return true;
+}
+
+void Address::removeFromLeakDetector() const {
+	belle_sip_header_address_t* header_addr = BELLE_SIP_HEADER_ADDRESS(internalAddress);
+	belle_sip_uri_t* sip_uri = belle_sip_header_address_get_uri(header_addr);
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(const_cast<belle_sip_parameters_t*>(belle_sip_uri_get_headers(sip_uri))));
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(sip_uri));
+	belle_sip_object_remove_from_leak_detector(BELLE_SIP_OBJECT(header_addr));
 }
 
 LINPHONE_END_NAMESPACE

@@ -379,7 +379,9 @@ static LinphoneAddress *account_manager_check_account(AccountManager *m, Linphon
 	}
 	// modify the username of the identity of the proxy config
 	linphone_address_set_username(id_addr, linphone_address_get_username(account->modified_identity));
+	linphone_proxy_config_edit(cfg);
 	linphone_proxy_config_set_identity_address(cfg, id_addr);
+	linphone_proxy_config_done(cfg);
 
 	// create account using account creator and flexisip-account-manager
 	if (create_account){

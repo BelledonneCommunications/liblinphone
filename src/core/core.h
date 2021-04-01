@@ -46,12 +46,14 @@ class AbstractChatRoom;
 class Address;
 class Call;
 class ConferenceId;
+class ConferenceParams;
 class CorePrivate;
 class IdentityAddress;
 class EncryptionEngine;
 class ChatMessage;
 class ChatRoom;
 class PushNotificationMessage;
+class SalMediaDescription;
 class EventLog;
 
 namespace MediaConference {
@@ -169,10 +171,9 @@ public:
 	// ---------------------------------------------------------------------------
 
 	void insertAudioVideoConference (const std::shared_ptr<MediaConference::Conference> &audioVideoConference);
-
 	std::shared_ptr<MediaConference::Conference> findAudioVideoConference (const ConferenceId &conferenceId, bool logIfNotFound = true) const;
-
 	void deleteAudioVideoConference(const std::shared_ptr<const MediaConference::Conference> &audioVideoConference);
+	std::shared_ptr<MediaConference::Conference> searchAudioVideoConference(const std::shared_ptr<ConferenceParams> &params, const IdentityAddress &localAddress, const IdentityAddress &remoteAddress, const std::list<IdentityAddress> &participants) const;
 
 	// ---------------------------------------------------------------------------
 	// Paths.
@@ -257,6 +258,8 @@ public:
 	/* Stop (ie cancel) and destroy a timer created by createTimer()*/
 
 	void destroyTimer(belle_sip_source_t *timer);
+
+	bool incompatibleSecurity(const std::shared_ptr<SalMediaDescription> &md) const;
 	void onStopAsyncBackgroundTaskStarted(); /* Using background task to ensure stop core async ended */
 	void onStopAsyncBackgroundTaskStopped();
 private:

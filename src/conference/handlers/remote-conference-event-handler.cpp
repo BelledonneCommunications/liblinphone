@@ -145,9 +145,10 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 		shared_ptr<Participant> participant = conf->findParticipant(address);
 
 		if (state == StateType::deleted) {
-			if (!participant) {
-				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
-			} else {
+			if (conf->isMe(address)) {
+				lInfo() << "Participant " << address.asString() << " requested to be deleted is me.";
+				continue;
+			} else if (participant) {
 				conf->participants.remove(participant);
 
 				if (!isFullState && participant) {
@@ -159,12 +160,12 @@ void RemoteConferenceEventHandler::simpleNotifyReceived (const string &xmlBody) 
 				}
 
 				continue;
+			} else {
+				lWarning() << "Participant " << address.asString() << " removed but not in the list of participants!";
 			}
-		}
-
-		if (state == StateType::full) {
+		} else if (state == StateType::full) {
 			if (conf->isMe(address)) {
-				lInfo() << "Participant " << address.asString() << " is me.";
+				lInfo() << "Participant " << address.asString() << " requested to be added is me.";
 			} else if (participant) {
 				lWarning() << "Participant " << *participant << " added but already in the list of participants!";
 			} else {

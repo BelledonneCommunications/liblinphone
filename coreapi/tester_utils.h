@@ -36,6 +36,14 @@ typedef struct _SalOp SalOp;
 
 typedef struct _LinphoneQualityReporting LinphoneQualityReporting;
 
+#ifdef __cplusplus
+LINPHONE_BEGIN_NAMESPACE
+	class SalMediaDescription;
+LINPHONE_END_NAMESPACE
+LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
+LINPHONE_PUBLIC LinphonePrivate::SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
+#endif
+
 typedef enum _LinphoneProxyConfigAddressComparisonResult{
 	LinphoneProxyConfigAddressDifferent,
 	LinphoneProxyConfigAddressEqual,
@@ -98,8 +106,7 @@ LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_video_starts (const LinphoneC
 LINPHONE_PUBLIC unsigned int _linphone_call_get_nb_text_starts (const LinphoneCall *call);
 LINPHONE_PUBLIC belle_sip_source_t *_linphone_call_get_dtmf_timer (const LinphoneCall *call);
 LINPHONE_PUBLIC bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call);
-LINPHONE_PUBLIC SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call);
+
 LINPHONE_PUBLIC MSWebCam *_linphone_call_get_video_device (const LinphoneCall *call);
 LINPHONE_PUBLIC void _linphone_call_add_local_desc_changed_flag (LinphoneCall *call, int flag);
 LINPHONE_PUBLIC int _linphone_call_get_main_audio_stream_index (const LinphoneCall *call);
@@ -257,7 +264,6 @@ LINPHONE_PUBLIC bool_t sal_transport_available(Sal *ctx, SalTransport t);
 LINPHONE_PUBLIC const SalErrorInfo *sal_op_get_error_info(const SalOp *op);
 LINPHONE_PUBLIC bool_t sal_call_dialog_request_pending(const SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_sdp_handling(SalOp *h, SalOpSDPHandling handling);
-LINPHONE_PUBLIC SalMediaDescription * sal_call_get_final_media_description(SalOp *h);
 LINPHONE_PUBLIC const char *sal_call_get_local_tag (SalOp *op);
 LINPHONE_PUBLIC const char *sal_call_get_remote_tag (SalOp *op);
 LINPHONE_PUBLIC void sal_call_set_replaces (SalOp *op, const char *callId, const char *fromTag, const char *toTag);
