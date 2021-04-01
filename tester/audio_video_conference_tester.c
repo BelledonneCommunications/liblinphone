@@ -530,6 +530,7 @@ static void simple_conference_with_admin_changed(void) {
 		BC_ASSERT_FALSE(admin_found);
 		bctbx_list_free_with_data(participants_after_removal, (void(*)(void *))linphone_participant_unref);
 	}
+	bctbx_list_free(all_manangers_in_conf);
 
 	terminate_conference(participants, marie, NULL, (LinphoneCoreManager*)focus);
 
