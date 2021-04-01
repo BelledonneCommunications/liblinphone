@@ -1770,14 +1770,37 @@ bool MediaSessionPrivate::canSoundResourcesBeFreed() const {
 LinphoneStatus MediaSessionPrivate::pause () {
 	L_Q();
 	if (state == CallSession::State::Paused) {
-		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already paused";
+		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already paused";
 		return 0;
 	} else if (state == CallSession::State::Pausing) {
-		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already in the process of being paused";
+		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " is already in the process of being paused";
 		return 0;
 	} else if (!canSoundResourcesBeFreed()) {
-		lWarning() << "Media session (local addres " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
+		lWarning() << "Media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") is in state " << Utils::toString(state) << " hence it cannot be paused";
 		return -1;
+	}
+
+	bool isInLocalConference = getParams()->getPrivate()->getInConference();
+	if (isInLocalConference) {
+		char * contactAddressStr = NULL;
+		if (op) {
+			contactAddressStr = sal_address_as_string(op->getContactAddress());
+		} else if (destProxy && linphone_proxy_config_get_op(destProxy)) {
+			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
+		} else {
+			contactAddressStr = ms_strdup(linphone_core_get_identity(q->getCore()->getCCore()));
+		}
+		Address contactAddress(contactAddressStr);
+		ms_free(contactAddressStr);
+
+		if (!!linphone_config_get_bool(linphone_core_get_config(q->getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE) && contactAddress.hasUriParam("conf-id")) {
+			lWarning() << "Unable to pause media session (local address " << q->getLocalAddress().asString() << " remote address " << q->getRemoteAddress()->asString() << ") because it is part of a conference. Please use the dedicated conference API to execute the desired actions";
+			return -1;
+		}
+
+		params->getPrivate()->setInConference(false);
+		q->updateContactAddress (contactAddress);
+		op->setContactAddress(contactAddress.getInternalAddress());
 	}
 
 	string subject;
