@@ -101,6 +101,7 @@ private:
 	void notifyLastResponse (SalCallOp *newCallOp);
 	void processRefer (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
 	void processNotify (const belle_sip_request_event_t *event, belle_sip_server_transaction_t *serverTransaction);
+	bool checkForOrphanDialogOn2xx(belle_sip_dialog_t *dialog);
 
 	static std::string setAddrTo0000 (const std::string & value);
 	static bool isMediaDescriptionAcceptable (std::shared_ptr<SalMediaDescription> & md);
