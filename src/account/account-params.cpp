@@ -91,7 +91,11 @@ AccountParams::AccountParams (LinphoneCore *lc) {
 	string conferenceFactoryUri = lc ? linphone_config_get_default_string(lc->config, "proxy", "conference_factory_uri", "") : "";
 	setConferenceFactoryUri(conferenceFactoryUri);
 
-	mPushNotificationConfig = linphone_push_notification_config_new();
+	if (lc && lc->push_config) {
+		mPushNotificationConfig = linphone_push_notification_config_clone(lc->push_config);
+	} else {
+		mPushNotificationConfig = linphone_push_notification_config_new();
+	}
 }
 
 AccountParams::AccountParams (LinphoneCore *lc, int index) : AccountParams(lc) {

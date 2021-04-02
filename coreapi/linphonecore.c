@@ -2691,6 +2691,8 @@ bool_t linphone_core_is_push_notification_available(LinphoneCore *core) {
 }
 
 void linphone_core_update_push_notification_information(LinphoneCore *core, const char *param, const char *prid) {
+	linphone_push_notification_config_set_param(core->push_config, param);
+	linphone_push_notification_config_set_prid(core->push_config, prid);
 	bctbx_list_t* accounts = (bctbx_list_t*)linphone_core_get_account_list(core);
 	for (; accounts != NULL; accounts = accounts->next) {
 		LinphoneAccount *account = (LinphoneAccount *)accounts->data;
@@ -2759,6 +2761,8 @@ static void linphone_core_init(LinphoneCore * lc, LinphoneCoreCbs *cbs, LpConfig
 #endif
 	lc->push_notification_enabled = !!linphone_config_get_int(lc->config, "net", "push_notification", push_notification_default);
 	lc->auto_iterate_enabled = !!linphone_config_get_int(lc->config, "misc", "auto_iterate", auto_iterate_default);
+
+	lc->push_config = linphone_push_notification_config_new();
 
 #ifdef __ANDROID__
 	if (system_context) {
@@ -6824,6 +6828,8 @@ void sip_config_uninit(LinphoneCore *lc)
 	linphone_im_notif_policy_unref(lc->im_notif_policy);
 	lc->im_notif_policy = NULL;
 	lc->sip_conf = {0};
+
+	if (lc->push_config) linphone_push_notification_config_unref(lc->push_config);
 }
 
 void rtp_config_uninit(LinphoneCore *lc)
