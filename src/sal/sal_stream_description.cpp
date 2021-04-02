@@ -39,6 +39,8 @@ SalStreamDescription::SalStreamDescription(){
 	ice_candidates.clear();
 	ice_remote_candidates.clear();
 
+	rtcp_fb.generic_nack_enabled = TRUE;
+	rtcp_fb.tmmbr_enabled = TRUE;
 }
 
 SalStreamDescription::~SalStreamDescription(){
