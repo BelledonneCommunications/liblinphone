@@ -21,6 +21,7 @@
 //#include <math.h>
 #include <algorithm>
 
+#include "account/account.h"
 #include "call/call.h"
 #include "address/address.h"
 #include "chat/chat-room/client-group-chat-room.h"
@@ -50,6 +51,7 @@
 #include <mediastreamer2/msvolume.h>
 #include <ortp/b64.h>
 
+#include "conference_private.h"
 #include "private.h"
 
 using namespace std;
@@ -1783,10 +1785,11 @@ LinphoneStatus MediaSessionPrivate::pause () {
 	bool isInLocalConference = getParams()->getPrivate()->getInConference();
 	if (isInLocalConference) {
 		char * contactAddressStr = NULL;
+		const auto account = linphone_core_lookup_known_account(q->getCore()->getCCore(), L_GET_C_BACK_PTR(&(q->getLocalAddress())));
 		if (op) {
 			contactAddressStr = sal_address_as_string(op->getContactAddress());
-		} else if (destProxy && linphone_proxy_config_get_op(destProxy)) {
-			contactAddressStr = sal_address_as_string(linphone_proxy_config_get_op(destProxy)->getContactAddress());
+		} else if (account && Account::toCpp(account)->getOp()) {
+			contactAddressStr = sal_address_as_string(Account::toCpp(account)->getOp()->getContactAddress());
 		} else {
 			contactAddressStr = ms_strdup(linphone_core_get_identity(q->getCore()->getCCore()));
 		}
@@ -1801,6 +1804,12 @@ LinphoneStatus MediaSessionPrivate::pause () {
 		params->getPrivate()->setInConference(false);
 		q->updateContactAddress (contactAddress);
 		op->setContactAddress(contactAddress.getInternalAddress());
+
+		if (listener) {
+			auto callConference = listener->getCallSessionConference(q->getSharedFromThis());
+			auto conference = MediaConference::Conference::toCpp(callConference)->getSharedFromThis();
+			conference->removeParticipant(q->getSharedFromThis(), true);
+		}
 	}
 
 	string subject;
