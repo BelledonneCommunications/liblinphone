@@ -658,6 +658,11 @@ LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *
 	if (existing_call) {
 		ms_free(existing_call);
 	}
+
+	if (participant_addresses) {
+		bctbx_list_free(participant_addresses);
+	}
+
 	return status;
 
 }
@@ -685,6 +690,7 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 	}
 
 	int idx = 0;
+	bool_t conf_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(conf_mgr->lc), "misc", "conference_event_log_enabled", TRUE );
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
 
@@ -693,18 +699,21 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		// Remote conference creation
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreationPending, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreationPending + 1, 5000));
 
-		bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
-		if (event_log_enabled) {
+		bool_t p_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled", TRUE );
+		if (p_event_log_enabled) {
 			// Check subscriptions
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionOutgoingProgress,(new_participant_initial_stats[idx].number_of_LinphoneSubscriptionOutgoingProgress + 1),5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + idx - no_participants_without_event_log + 1),5000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionActive + 1,3000));
-			BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(conf_initial_stats.number_of_LinphoneSubscriptionActive + idx + 1),5000));
+			if (conf_event_log_enabled) {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + idx - no_participants_without_event_log + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(conf_initial_stats.number_of_LinphoneSubscriptionActive + idx + 1),5000));
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionActive + 1,3000));
+			}
+
 		} else {
 			no_participants_without_event_log++;
 		}
 
-		if (linphone_config_get_bool(linphone_core_get_config(m->lc), "misc", "conference_event_log_enabled",TRUE)) {
+		if (conf_event_log_enabled) {
 			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreated + 1, 5000));
 		}
 
@@ -712,8 +721,8 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		int idx2 = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m2 = (LinphoneCoreManager *)bctbx_list_get_data(itm);
-			bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m2->lc), "misc", "conference_event_log_enabled", TRUE );
-			if (event_log_enabled) {
+			//bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m2->lc), "misc", "conference_event_log_enabled", TRUE );
+			if (conf_event_log_enabled) {
 				if (bctbx_list_find(new_participants,m2)) {
 					// When a participant is added, it receives the notification only once even though more participants are added at the same time
 					if (m2 == m) {
@@ -731,8 +740,14 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 		}
 
 
-		// Number of subscription errors should not change as they the participant should received a notification
-		BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionError,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionError, int, "%0d");
+		if (p_event_log_enabled) {
+			if (conf_event_log_enabled) {
+				// Number of subscription errors should not change as they the participant should received a notification
+				BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionError,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionError, int, "%0d");
+			} else {
+				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionError,(participant_initial_stats[idx].number_of_LinphoneSubscriptionError + 1),3000));
+			}
+		}
 
 		// Number of subscription terminated should not change as they the participant should received a notification
 		BC_ASSERT_EQUAL(m->stat.number_of_LinphoneSubscriptionTerminated, new_participant_initial_stats[idx].number_of_LinphoneSubscriptionTerminated, int, "%d");
@@ -754,11 +769,19 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 
 	int* subscription_count = ((int *)(conf_mgr->user_info));
 	BC_ASSERT_TRUE(wait_for_list(lcs,subscription_count, expected_subscriptions,5000));
-	BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,expected_subscriptions,3000));
+	if (conf_event_log_enabled) {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,expected_subscriptions,3000));
+	} else {
+		BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionActive,0,int,"%d");
+	}
 
 	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionError,conf_initial_stats.number_of_LinphoneSubscriptionError, int, "%0d");
-	BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, conf_initial_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
 
+	if (conf_event_log_enabled) {
+		BC_ASSERT_EQUAL(conf_mgr->stat.number_of_LinphoneSubscriptionTerminated, conf_initial_stats.number_of_LinphoneSubscriptionTerminated, int, "%d");
+	} else {
+		BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionTerminated,(conf_initial_stats.number_of_LinphoneSubscriptionTerminated + no_new_participants),3000));
+	}
 
 	ms_free(notifyExpected);
 
