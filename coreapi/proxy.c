@@ -59,21 +59,7 @@
 using namespace LinphonePrivate;
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_address_equal(const LinphoneAddress *a, const LinphoneAddress *b) {
-	if (a == NULL && b == NULL)
-		return LinphoneProxyConfigAddressEqual;
-	else if (!a || !b)
-		return LinphoneProxyConfigAddressDifferent;
-
-	if (linphone_address_equal(a,b))
-		return LinphoneProxyConfigAddressEqual;
-	if (linphone_address_weak_equal(a,b)) {
-		/*also check both transport and uri */
-		if (linphone_address_get_secure(a) == linphone_address_get_secure(b) && linphone_address_get_transport(a) == linphone_address_get_transport(b))
-			return LinphoneProxyConfigAddressWeakEqual;
-		else
-			return LinphoneProxyConfigAddressDifferent;
-	}
-	return LinphoneProxyConfigAddressDifferent; /*either username, domain or port ar not equals*/
+	return (LinphoneProxyConfigAddressComparisonResult) Account::compareLinphoneAddresses(a, b);
 }
 
 LinphoneProxyConfigAddressComparisonResult linphone_proxy_config_is_server_config_changed(const LinphoneProxyConfig* cfg) {

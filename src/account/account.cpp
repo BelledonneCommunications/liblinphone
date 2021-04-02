@@ -119,17 +119,47 @@ bool Account::computePublishParamsHash() {
 	return previous_hash[0] != mPreviousPublishParamsHash[0] || previous_hash[1] != mPreviousPublishParamsHash[1];
 }
 
-LinphoneAccountAddressComparisonResult Account::isServerConfigChanged(std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams) {
+LinphoneAccountAddressComparisonResult Account::compareLinphoneAddresses (const LinphoneAddress *a, const LinphoneAddress *b) {
+	if (a == NULL && b == NULL)
+		return LinphoneAccountAddressEqual;
+	else if (!a || !b)
+		return LinphoneAccountAddressDifferent;
+
+	if (linphone_address_equal(a,b))
+		return LinphoneAccountAddressEqual;
+	if (linphone_address_weak_equal(a,b)) {
+		/*also check both transport and uri */
+		if (linphone_address_get_secure(a) == linphone_address_get_secure(b) && linphone_address_get_transport(a) == linphone_address_get_transport(b))
+			return LinphoneAccountAddressWeakEqual;
+		else
+			return LinphoneAccountAddressDifferent;
+	}
+	return LinphoneAccountAddressDifferent; /*either username, domain or port ar not equals*/
+}
+
+LinphoneAccountAddressComparisonResult Account::isServerConfigChanged (std::shared_ptr<AccountParams> oldParams, std::shared_ptr<AccountParams> newParams) {
 	LinphoneAddress *oldProxy = oldParams != nullptr && !oldParams->mProxy.empty() ? linphone_address_new(oldParams->mProxy.c_str()) : NULL;
 	LinphoneAddress *newProxy = !newParams->mProxy.empty() ? linphone_address_new(newParams->mProxy.c_str()) : NULL;
 	LinphoneAccountAddressComparisonResult result_identity;
 	LinphoneAccountAddressComparisonResult result;
 
-	result = (LinphoneAccountAddressComparisonResult) linphone_proxy_config_address_equal(oldParams != nullptr ? oldParams->mIdentityAddress : NULL, newParams->mIdentityAddress);
+	result = compareLinphoneAddresses(oldParams != nullptr ? oldParams->mIdentityAddress : NULL, newParams->mIdentityAddress);
 	if (result == LinphoneAccountAddressDifferent) goto end;
 	result_identity = result;
 
-	result = (LinphoneAccountAddressComparisonResult) linphone_proxy_config_address_equal(oldProxy, newProxy);
+	result = compareLinphoneAddresses(oldProxy, newProxy);
+
+	if (mContactAddress != nullptr) {
+		IdentityAddress addr(*L_GET_CPP_PTR_FROM_C_OBJECT(mContactAddress));
+		if (!addr.getGruu().empty() && result != LinphoneAccountAddressEqual) {
+			// Returning weak equal to be sure no unregister will be done
+			result = LinphoneAccountAddressWeakEqual;
+			goto end;
+		}
+	}
+
+	// This is the legacy mode, if there is no gruu and result is different,
+	// then an unregister will be triggered.
 	if (result == LinphoneAccountAddressDifferent) goto end;
 	/** If the proxies are equal use the result of the difference between the identities,
 	  * otherwise the result is weak-equal and so weak-equal must be returned even if the

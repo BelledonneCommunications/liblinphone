@@ -120,6 +120,9 @@ public:
 
 	const bctbx_list_t* getCallbacksList () const;
 
+	// Utils
+	static LinphoneAccountAddressComparisonResult compareLinphoneAddresses (const LinphoneAddress *a, const LinphoneAddress *b);
+
 	// To be removed when not using proxy config anymore
 	LinphoneProxyConfig *getConfig () const;
 	void setConfig (LinphoneProxyConfig *config);
