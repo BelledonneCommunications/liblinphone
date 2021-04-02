@@ -707,22 +707,19 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionIncomingReceived,(conf_initial_stats.number_of_LinphoneSubscriptionIncomingReceived + idx - no_participants_without_event_log + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&conf_mgr->stat.number_of_LinphoneSubscriptionActive,(conf_initial_stats.number_of_LinphoneSubscriptionActive + idx + 1),5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionActive,new_participant_initial_stats[idx].number_of_LinphoneSubscriptionActive + 1,3000));
+				BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreated + 1, 5000));
 			}
 
 		} else {
 			no_participants_without_event_log++;
 		}
 
-		if (conf_event_log_enabled) {
-			BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateCreated, new_participant_initial_stats[idx].number_of_LinphoneConferenceStateCreated + 1, 5000));
-		}
-
 		// Notify
 		int idx2 = 0;
 		for (bctbx_list_t *itm = participants; itm; itm = bctbx_list_next(itm)) {
 			LinphoneCoreManager * m2 = (LinphoneCoreManager *)bctbx_list_get_data(itm);
-			//bool_t event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m2->lc), "misc", "conference_event_log_enabled", TRUE );
-			if (conf_event_log_enabled) {
+			bool_t p2_event_log_enabled = linphone_config_get_bool(linphone_core_get_config(m2->lc), "misc", "conference_event_log_enabled", TRUE );
+			if (p2_event_log_enabled && conf_event_log_enabled) {
 				if (bctbx_list_find(new_participants,m2)) {
 					// When a participant is added, it receives the notification only once even though more participants are added at the same time
 					if (m2 == m) {
@@ -738,7 +735,6 @@ static void check_participant_added_to_conference(bctbx_list_t *lcs, LinphoneCor
 			}
 			idx2++;
 		}
-
 
 		if (p_event_log_enabled) {
 			if (conf_event_log_enabled) {
