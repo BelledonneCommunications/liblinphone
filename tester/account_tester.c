@@ -89,9 +89,54 @@ static void registration_state_changed_callback_on_account(void) {
 	linphone_core_manager_destroy(marie);
 }
 
+static void no_unregister_when_changing_transport(void) {
+	LinphoneCoreManager *marie = linphone_core_manager_create("marie_rc");
+	LinphoneCoreManager *pauline = linphone_core_manager_create("pauline_rc");
+	bctbx_list_t *coresManagerList = NULL;
+	bctbx_list_t *participantsAddresses = NULL;
+	coresManagerList = bctbx_list_append(coresManagerList, marie);
+	coresManagerList = bctbx_list_append(coresManagerList, pauline);
+	bctbx_list_t *coresList = init_core_for_conference(coresManagerList);
+	start_core_for_conference(coresManagerList);
+	participantsAddresses = bctbx_list_append(participantsAddresses, linphone_address_new(linphone_core_get_identity(pauline->lc)));
+	stats initialMarieStats = marie->stat;
+	stats initialPaulineStats = pauline->stat;
+
+	// Marie creates a new group chat room
+	const char *initialSubject = "Colleagues";
+	LinphoneChatRoom *marieCr = create_chat_room_client_side(coresList, marie, &initialMarieStats, participantsAddresses, initialSubject, FALSE);
+
+	const LinphoneAddress *confAddr = linphone_chat_room_get_conference_address(marieCr);
+
+	// Check that the chat room is correctly created on Pauline's side and that the participants are added
+	LinphoneChatRoom *paulineCr = check_creation_chat_room_client_side(coresList, pauline, &initialPaulineStats, confAddr, initialSubject, 1, FALSE);
+
+	initialPaulineStats = pauline->stat;
+
+	// Change pauline tranport
+	LinphoneAccount *pauline_account = linphone_core_get_default_account(pauline->lc);
+	LinphoneAccountParams *params = linphone_account_params_clone(linphone_account_get_params(pauline_account));
+	linphone_account_params_set_transport(params, LinphoneTransportUdp);
+	linphone_account_set_params(pauline_account, params);
+	linphone_account_params_unref(params);
+
+	// Check that pauline does not receive another invite
+	BC_ASSERT_FALSE(wait_for_list(coresList, &pauline->stat.number_of_LinphoneChatRoomConferenceJoined, initialPaulineStats.number_of_LinphoneChatRoomConferenceJoined + 1, 10000));
+
+	// Clean db from chat room
+	linphone_core_manager_delete_chat_room(marie, marieCr, coresList);
+	linphone_core_manager_delete_chat_room(pauline, paulineCr, coresList);
+
+	bctbx_list_free(coresList);
+	bctbx_list_free(coresManagerList);
+	linphone_core_manager_destroy(marie);
+	linphone_core_manager_destroy(pauline);
+}
+
 test_t account_tests[] = {
 	TEST_NO_TAG("Simple account creation", simple_account_creation),
-	TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account)
+	TEST_NO_TAG("Registration state changed callback on account", registration_state_changed_callback_on_account),
+	TEST_NO_TAG("No unregister when changing transport", no_unregister_when_changing_transport)
 };
 
 test_suite_t account_test_suite = {
