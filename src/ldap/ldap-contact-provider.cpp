@@ -31,6 +31,62 @@
 
 LINPHONE_BEGIN_NAMESPACE
 
+// Custom redefinitions
+#ifdef _WIN32
+static void ldap_unbind_ext_s(LDAP * ld, void *, void*){
+	ldap_unbind_s(ld);
+}
+static void ldap_abandon_ext(LDAP * ld,int mId, void *, void*){
+	ldap_abandon(ld,(ULONG)mId);
+}
+static int ldap_start_tls_s(LDAP * ld, void*, void*){
+	return (int)ldap_start_tls_sA(ld, NULL, NULL, NULL, NULL);
+}
+static int ldap_msgtype(LDAPMessage* message){
+	return (int)message->lm_msgtype;
+}
+static LDAPMessage* ldap_first_message(LDAP* ld, LDAPMessage* results){
+	return ldap_first_entry(ld, results);
+}
+static int ldap_msgid(LDAPMessage* message){
+	return message->lm_msgid;
+}
+static LDAPMessage* ldap_next_message(LDAP* ld, LDAPMessage* message){
+	return ldap_next_entry(ld, message);
+}
+#define LDAP_SASL_SIMPLE	((char*)0)
+#define LDAP_SASL_QUIET			2U
+#define LDAP_OPT_RESULT_CODE			0x0031
+
+static int ldap_sasl_bind_s(LDAP *ld, const char *dn, const char *mechanism, struct berval *cred, LDAPControl **serverctrls, LDAPControl **clientctrls, struct berval **servercredp){
+	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)mechanism, (const BERVAL *)cred, (PLDAPControlA *)serverctrls, (PLDAPControlA *)clientctrls, (PBERVAL *)servercredp);
+}
+static int ldap_sasl_bind(LDAP *ld, const char *dn, const char *mechanism, struct berval *cred, LDAPControl **serverctrls, LDAPControl **clientctrls, int           *MessageNumber){
+	return ldap_sasl_bindA(ld, (const PSTR)dn, (const PSTR)mechanism, (const BERVAL *)cred, (PLDAPControlA *)serverctrls, (PLDAPControlA *)clientctrls, MessageNumber);
+}
+static int ldap_sasl_interactive_bind_s(LDAP *ld, const char *dn, const char *saslMechanism, LDAPControl **serverControls, LDAPControl **clientControls, unsigned flags, void *proc, void *defaults){
+	struct berval* serverResponse = NULL;
+	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)saslMechanism, NULL, NULL, NULL, &serverResponse);
+}
+static int ldap_initialize(LDAP **ldp,const char *url ){
+	*ldp = ldap_init((PSTR)url, LDAP_PORT);// Port parameter is ignored if the port is in url
+	if( *ldp!=NULL){
+		return ldap_connect(*ldp, NULL);
+	}else
+		return LdapGetLastError();
+}
+static int ldap_search_ext(LDAP *ld, const char *base, int scope, const char *filter, char **attrs, int attrsonly, LDAPControl **serverctrls, LDAPControl **clientctrls, l_timeval *timeout, int sizelimit, int *msgidp){
+	//return (int)ldap_search_ext_s(ld, (const PSTR)base, (ULONG)scope, (const PSTR)filter, (PZPSTR)attrs, (ULONG)attrsonly, (PLDAPControlA *)serverctrls, (PLDAPControlA *) clientctrls, (l_timeval) timeout, (ULONG)sizelimit ,(PLDAPMessage*)msgidp );
+	return (int)ldap_search_ext(ld, (const PSTR)base, (ULONG)scope, (const PSTR)filter, (PZPSTR)attrs, (ULONG)attrsonly, (PLDAPControlA *)serverctrls, (PLDAPControlA *) clientctrls, timeout->tv_sec, (ULONG)sizelimit ,(ULONG*)msgidp );
+}
+static int ldap_parse_sasl_bind_result(LDAP *ld,LDAPMessage *res, struct berval	**servercredp, int freeit){
+	ULONG returnCode;
+	ldap_parse_result(ld, res, &returnCode, NULL, NULL, NULL, NULL, freeit>0);
+	return (int)returnCode ;
+}
+#else
+
+#endif
 //*******************************************	CREATION
 
 LDAPContactProvider::LDAPContactProvider(const std::shared_ptr<Core> &core, const std::map<std::string,std::string> &config ){
@@ -113,9 +169,12 @@ void LDAPContactProvider::initializeLdap(){
 		mState = STATE_ERROR;
 	} else {
 		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
+#ifndef _WIN32
 			int reqcert = LDAP_OPT_X_TLS_ALLOW;
 			ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &reqcert);
+#endif
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
+
 		}
 		if( ret == LDAP_SUCCESS ) {
 			ms_message("[LDAP] Initialization success");
@@ -344,12 +403,14 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
 			//struct berval *serverResponse = NULL;
 	#ifdef _WIN32
-			ret = ldap_bind_s(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
+			//ret = ldap_bind_s(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
+			//ret = ldap_bind(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
 	#else//"cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
 			//ret = ldap_sasl_bind_s(provider->ld, provider->bind_dn, NULL, &passwd, NULL, NULL, &serverResponse);
 			//ret = ldap_sasl_bind_s(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &serverResponse);
 			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 	#endif
+			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 			ms_free(passwd.bv_val);
 			if( ret == LDAP_SUCCESS ) {
 				ms_message("[LDAP] Waiting for bind");
