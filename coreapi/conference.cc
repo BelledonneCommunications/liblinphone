@@ -152,7 +152,7 @@ bool Conference::addParticipant (std::shared_ptr<LinphonePrivate::Call> call) {
 		success =  false;
 	}
 
-	_linphone_call_set_conf_ref(call->toC(), toC());
+	call->setConference(toC());
 	addParticipantDevice(call);
 
 	return success;
@@ -167,7 +167,7 @@ bool Conference::addParticipantDevice(std::shared_ptr<LinphonePrivate::Call> cal
 			if (p->findDevice(*remoteContact, false) == nullptr) {
 				lInfo() << "Adding device with address " << remoteContact->asString() << " to participant " << p->getAddress();
 				shared_ptr<ParticipantDevice> device = p->addDevice(*remoteContact);
-				_linphone_call_set_conf_ref(call->toC(), toC());
+				call->setConference(toC());
 				device->setSession(call->getActiveSession());
 
 				time_t creationTime = time(nullptr);

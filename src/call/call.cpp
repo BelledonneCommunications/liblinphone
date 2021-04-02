@@ -700,7 +700,10 @@ void Call::onCameraNotWorking (const std::shared_ptr<CallSession> &session, cons
 bool Call::areSoundResourcesAvailable (const shared_ptr<CallSession> &session) {
 	LinphoneCore *lc = getCore()->getCCore();
 	shared_ptr<Call> currentCall = getCore()->getCurrentCall();
-	return !linphone_core_is_in_conference(lc) && (!currentCall || (currentCall == getSharedFromThis()));
+	// If core is in a conference, then check if the call is in the same conference
+	// If the core left the conference or it is not hosting any conference, then check that there is no active call or the active one is the current one.
+	bool soundResourcesFree = linphone_core_is_in_conference(lc) ? (linphone_core_get_conference(lc) == getConference()) : (!currentCall || (currentCall == getSharedFromThis()));
+	return soundResourcesFree;
 }
 
 bool Call::isPlayingRingbackTone (const shared_ptr<CallSession> &session) {
