@@ -213,11 +213,13 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 				LinphoneConference * pauline_conference = linphone_core_search_conference(pauline->lc, NULL, pauline_uri, marie_conference_address, NULL);
 				BC_ASSERT_PTR_NULL(pauline_conference);
 				linphone_address_unref(pauline_uri);
+				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
 				LinphoneAddress *laure_uri = linphone_address_new(linphone_core_get_identity(laure->lc));
 				LinphoneConference * laure_conference = linphone_core_search_conference(laure->lc, NULL, laure_uri, marie_conference_address, NULL);
 				BC_ASSERT_PTR_NULL(laure_conference);
 				linphone_address_unref(laure_uri);
+				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated, laure_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
 				LinphoneAddress *marie_uri = linphone_address_new(linphone_core_get_identity(marie->lc));
 				LinphoneConference * marie_conference = linphone_core_search_conference(marie->lc, NULL, marie_uri, marie_conference_address, NULL);
@@ -234,13 +236,11 @@ static void simple_conference_base(LinphoneCoreManager* marie, LinphoneCoreManag
 				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminationPending,laure_stat.number_of_LinphoneConferenceStateTerminationPending+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateTerminated,laure_stat.number_of_LinphoneConferenceStateTerminated+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneConferenceStateDeleted,laure_stat.number_of_LinphoneConferenceStateDeleted+1,5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&laure->stat.number_of_LinphoneSubscriptionTerminated, laure_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
 				// Conference on Pauline's side
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminationPending,pauline_stat.number_of_LinphoneConferenceStateTerminationPending+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminated,pauline_stat.number_of_LinphoneConferenceStateTerminated+1,5000));
 				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateDeleted,pauline_stat.number_of_LinphoneConferenceStateDeleted+1,5000));
-				BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneSubscriptionTerminated, pauline_stat.number_of_LinphoneSubscriptionTerminated+1,10000));
 
 				// Conference on Marie's side
 				BC_ASSERT_TRUE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,marie_stat.number_of_LinphoneConferenceStateTerminationPending+1,5000));
