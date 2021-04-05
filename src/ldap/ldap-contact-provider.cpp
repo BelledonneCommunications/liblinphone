@@ -69,7 +69,7 @@ static int ldap_sasl_interactive_bind_s(LDAP *ld, const char *dn, const char *sa
 	return ldap_sasl_bind_sA(ld, (const PSTR)dn, (const PSTR)saslMechanism, NULL, NULL, NULL, &serverResponse);
 }
 static int ldap_initialize(LDAP **ldp,const char *url ){
-	*ldp = ldap_init((PSTR)url, LDAP_PORT);// Port parameter is ignored if the port is in url
+	*ldp = ldap_init((PSTR)url, LDAP_PORT);// Port parameter is ignored if the port is in url. For STARTTLS, the connection is on normal port
 	if( *ldp!=NULL){
 		return ldap_connect(*ldp, NULL);
 	}else
@@ -157,7 +157,15 @@ std::vector<std::shared_ptr<LDAPContactProvider> > LDAPContactProvider::create(c
 	}
 	return providers;
 }
+VERIFYSERVERCERT Verifyservercert;
 
+BOOLEAN Verifyservercert(
+  PLDAP Connection,
+  PCCERT_CONTEXT *pServerCert
+)
+{
+	return true;
+}
 void LDAPContactProvider::initializeLdap(){
 	int proto_version = LDAP_VERSION3;
 	int ret = ldap_initialize(&mLd, mServerUrl.c_str());
@@ -168,10 +176,13 @@ void LDAPContactProvider::initializeLdap(){
 		ms_error( "LDAP : Problem setting protocol version %d: %s", proto_version, ldap_err2string(ret));
 		mState = STATE_ERROR;
 	} else {
+		//ldap_set_option(NULL, LDAP_OPT_DEBUG_LEVEL, 7);
 		if(mConfig.count("use_tls")>0 && mConfig["use_tls"] == "1"){
 #ifndef _WIN32
 			int reqcert = LDAP_OPT_X_TLS_ALLOW;
 			ldap_set_option (NULL, LDAP_OPT_X_TLS_REQUIRE_CERT, &reqcert);
+#else
+			ldap_set_option(mLd, LDAP_OPT_SERVER_CERTIFICATE, &Verifyservercert);
 #endif
 			ret = ldap_start_tls_s(mLd, NULL, NULL);
 
@@ -403,14 +414,16 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			struct berval passwd = { provider->mConfig.at("password").length(), ms_strdup(provider->mConfig.at("password").c_str())};
 			//struct berval *serverResponse = NULL;
 	#ifdef _WIN32
-			//ret = ldap_bind_s(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
-			//ret = ldap_bind(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
-	#else//"cn=Marie Laroueverte,ou=people,dc=bc,dc=com",
+			ret = ldap_bind(provider->mLd,  provider->mConfig.at("bind_dn"), provider->mConfig.at("password"), LDAP_AUTH_SIMPLE);
+			if(ret>=0){
+				provider->mAwaitingMessageId = ret;
+				ret = LDAP_SUCCESS;
+			}
+	#else
 			//ret = ldap_sasl_bind_s(provider->ld, provider->bind_dn, NULL, &passwd, NULL, NULL, &serverResponse);
 			//ret = ldap_sasl_bind_s(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &serverResponse);
 			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 	#endif
-			ret = ldap_sasl_bind(provider->mLd, provider->mConfig.at("bind_dn").c_str(), NULL, &passwd, NULL, NULL, &provider->mAwaitingMessageId);
 			ms_free(passwd.bv_val);
 			if( ret == LDAP_SUCCESS ) {
 				ms_message("[LDAP] Waiting for bind");
@@ -488,11 +501,29 @@ bool_t LDAPContactProvider::iterate(void *data) {
 			}
 		}
 	}else if(provider->mCurrentAction == ACTION_WAIT_REQUEST){
-		ms_message("[LDAP] ACTION_WAIT_REQUEST");
-		ortp_mutex_lock(&provider->mLock);
-		size_t requestSize = provider->mRequests.size();
-		ortp_mutex_unlock(&provider->mLock);
-		if( provider->mLd && provider->mConnected && requestSize > 0 ){
+		ms_message("[LDAP] ACTION_WAIT_REQUEST");ortp_mutex_lock(&provider->mLock);
+		size_t requestSize = 0;
+		if( provider->mLd && provider->mConnected ){
+			// check for pending searches
+			ortp_mutex_lock(&provider->mLock);
+			for(auto it = provider->mRequests.begin() ; it != provider->mRequests.end() ; ){
+				if(!(*it))
+					it = provider->mRequests.erase(it);
+				else if((*it)->mMsgId == 0){
+					int ret;
+					ms_message("LDAP : Found pending search %p (for %s), launching...", it->get(), (*it)->mFilter.c_str());
+					ret = provider->search(*it);
+					if( ret != LDAP_SUCCESS ){
+						it = provider->cancelSearch(it->get());
+					}else
+						++it;
+				}else
+					++it;
+			}
+			requestSize = provider->mRequests.size();
+			ortp_mutex_unlock(&provider->mLock);
+		}
+		if( requestSize > 0 ){// No need to check connectivity as it is checked before
 			// never block
 			int ret = (int)ldap_result(provider->mLd, LDAP_RES_ANY, LDAP_MSG_ONE, &pollTimeout, &results);
 			switch( ret ){
@@ -543,25 +574,7 @@ bool_t LDAPContactProvider::iterate(void *data) {
 				ldap_msgfree(results);
 		}
 	
-		if( provider->mLd && provider->mConnected ){
-			// check for pending searches
-			ortp_mutex_lock(&provider->mLock);
-			for(auto it = provider->mRequests.begin() ; it != provider->mRequests.end() ; ){
-				if(!(*it))
-					it = provider->mRequests.erase(it);
-				else if((*it)->mMsgId == 0){
-					int ret;
-					ms_message("LDAP : Found pending search %p (for %s), launching...", it->get(), (*it)->mFilter.c_str());
-					ret = provider->search(*it);
-					if( ret != LDAP_SUCCESS ){
-						it = provider->cancelSearch(it->get());
-					}else
-						++it;
-				}else
-					++it;
-			}
-			ortp_mutex_unlock(&provider->mLock);
-		}
+		
 	}
 	return TRUE;
 }
