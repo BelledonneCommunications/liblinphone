@@ -449,13 +449,16 @@ std::list<list<SearchResult>> MagicSearch::getAddressFromLDAPServer (
 void MagicSearch::beginNewSearchAsync (const string &filter, const string &withDomain, SearchAsyncData * asyncData) const{
 	const bctbx_list_t *friend_lists = linphone_core_get_friends_lists(this->getCore()->getCCore());
 	asyncData->clear();
+	list<SearchResult> friendsList;
 	for (const bctbx_list_t *fl = friend_lists ; fl != nullptr ; fl = bctbx_list_next(fl)) {
 		LinphoneFriendList *fList = reinterpret_cast<LinphoneFriendList*>(fl->data);
 		// For all friends or when we reach the search limit
 		for (bctbx_list_t *f = fList->friends ; f != nullptr ; f = bctbx_list_next(f)) {
-			asyncData->createResult(searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain));
+			list<SearchResult> fResults = searchInFriend(reinterpret_cast<LinphoneFriend*>(f->data), filter, withDomain);
+			addResultsToResultsList(fResults, friendsList);
 		}
 	}
+	asyncData->createResult(friendsList);
 	getAddressFromLDAPServerStartAsync(filter, withDomain, asyncData);
 	asyncData->createResult(getAddressFromCallLog(filter, withDomain, list<SearchResult>()));
 	asyncData->createResult(getAddressFromGroupChatRoomParticipants(filter, withDomain, list<SearchResult>()));
