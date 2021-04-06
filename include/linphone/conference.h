@@ -121,33 +121,33 @@ LINPHONE_PUBLIC bool_t linphone_conference_params_local_participant_enabled(cons
 
 /**
  * Take a reference on a #LinphoneConference.
- * @param conf The #LinphoneConference to ref. @notnil
+ * @param conference The #LinphoneConference to ref. @notnil
  * @return The same #LinphoneConference object. @notnil
  */
-LINPHONE_PUBLIC LinphoneConference *linphone_conference_ref(LinphoneConference *conf);
+LINPHONE_PUBLIC LinphoneConference *linphone_conference_ref(LinphoneConference *conference);
 
 /**
  * Release a #LinphoneConference.
- * @param conf The #LinphoneConference to release. @notnil
+ * @param conference The #LinphoneConference to release. @notnil
  */
-LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conf);
+LINPHONE_PUBLIC void linphone_conference_unref(LinphoneConference *conference);
 
 /**
  * Get URIs of all participants of one conference
  * The returned bctbx_list_t contains URIs of all participant. That list must be
  * freed after use and each URI must be unref with linphone_address_unref()
- * @param conf A #LinphoneConference @notnil
- * @return The list of the participants' address. \bctbx_list{LinphoneAddress} @maybenil
+ * @param conference A #LinphoneConference @notnil
+ * @return The list of the participants' address active in the conference. \bctbx_list{LinphoneAddress} @maybenil
  * @deprecated 10/07/2020 Use linphone_conference_get_participant_list() instead.
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conf);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED bctbx_list_t *linphone_conference_get_participants(const LinphoneConference *conference);
 
 /**
  * Get list of all participants of one conference
- * @param conf A #LinphoneConference @notnil
- * @return A list of participants. \bctbx_list{LinphoneParticipant} @maybenil
+ * @param conference A #LinphoneConference @notnil
+ * @return The list of participants of the conference. \bctbx_list{LinphoneParticipant} @maybenil
  */
-LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conf);
+LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const LinphoneConference *conference);
 
 /**
  * @param conference A #LinphoneConference @notnil
@@ -156,7 +156,7 @@ LINPHONE_PUBLIC bctbx_list_t *linphone_conference_get_participant_list(const Lin
  * @return 0 if succeeded, -1 if failed
  * @deprecated 10/07/2020 Use linphone_conference_remove_participant_2() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conference, const LinphoneAddress *uri);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_conference_remove_participant(LinphoneConference *conference, const LinphoneAddress *uri);
 
 /**
  * @param conference A #LinphoneConference @notnil
@@ -173,7 +173,7 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_2(Linphone
  * @return 0 if succeeded, -1 if failed
  * @deprecated 10/07/2020 Use linphone_conference_remove_participant_2() instead.
  */
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_remove_participant_3(LinphoneConference *conference, LinphoneCall *call);
+LINPHONE_PUBLIC LINPHONE_DEPRECATED LinphoneStatus linphone_conference_remove_participant_3(LinphoneConference *conference, LinphoneCall *call);
 
 /**
  * Find a participant from a conference
@@ -185,15 +185,15 @@ LINPHONE_PUBLIC LinphoneParticipant * linphone_conference_find_participant(Linph
 
 /**
  * Invite participants to the conference, by supplying a list of #LinphoneAddress
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  * @param addresses A list of SIP addresses to invite. @bctbx_list{LinphoneAddress} @notnil
  * @param params #LinphoneCallParams to use for inviting the participants. @maybenil
 **/
-LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneConference *conf, const bctbx_list_t *addresses, const LinphoneCallParams *params);
+LINPHONE_PUBLIC LinphoneStatus linphone_conference_invite_participants(LinphoneConference *conference, const bctbx_list_t *addresses, const LinphoneCallParams *params);
 
 /**
  * Join an existing call to the conference.
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  * @param call a #LinphoneCall that has to be added to the conference. @notnil
  */
 LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant(LinphoneConference *conference, LinphoneCall *call);
@@ -208,17 +208,17 @@ LINPHONE_PUBLIC LinphoneStatus linphone_conference_add_participant_2 (LinphoneCo
 /**
  * Update parameters of the conference.
  * This is typically used enable or disable the video stream in the conference.
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  * @param params the new parameters to apply. @notnil
  */
-LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *conf, const LinphoneConferenceParams *params);
+LINPHONE_PUBLIC int linphone_conference_update_params(LinphoneConference *conference, const LinphoneConferenceParams *params);
 
 /**
  * Get current parameters of the conference.
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  * @return a #LinphoneConferenceParams . @notnil
  */
-LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conf);
+LINPHONE_PUBLIC const LinphoneConferenceParams * linphone_conference_get_current_params(const LinphoneConference *conference);
 
 /**
  * Get the conference subject
@@ -240,6 +240,13 @@ LINPHONE_PUBLIC void linphone_conference_set_subject(LinphoneConference *confere
  * @return the number of participants in a #LinphoneConference
  */
 LINPHONE_PUBLIC int linphone_conference_get_participant_count(const LinphoneConference *conference);
+
+/**
+ * Get number of participants including me if in
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the number of participants including me if in being part of a #LinphoneConference
+ */
+LINPHONE_PUBLIC int linphone_conference_get_size(const LinphoneConference *conference);
 
 /**
  * For a local audio video conference, this function returns the participant hosting the conference
@@ -274,43 +281,73 @@ LINPHONE_PUBLIC void linphone_conference_set_user_data(LinphoneConference *confe
 
 /**
  * Call generic OpenGL render preview for a given conference
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  */
-LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *conf);
+LINPHONE_PUBLIC void linphone_conference_preview_ogl_render(LinphoneConference *conference);
 
 /**
  * Call generic OpenGL render for a given conference
- * @param conf The #LinphoneConference object. @notnil
+ * @param conference The #LinphoneConference object. @notnil
  */
-LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conf);
-/**
- * Get the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @return the conference id @maybenil
- */
-LINPHONE_PUBLIC const char *linphone_conference_get_ID(const LinphoneConference *conf);
+LINPHONE_PUBLIC void linphone_conference_ogl_render(LinphoneConference *conference);
 
 /**
- * Set the conference id as string
- * @param conf The #LinphoneConference object. @notnil
- * @param conference_id the conference id to set. @maybenil
+ * Change the admin status of a participant of a conference (you need to be an admin yourself to do this).
+ * @param conference A #LinphoneConference object @notnil
+ * @param participant The Participant for which to change the admin status @notnil
+ * @param is_admin A boolean value telling whether the participant should now be an admin or not
  */
-LINPHONE_PUBLIC void linphone_conference_set_ID(LinphoneConference *conf, const char *conference_id);
+LINPHONE_PUBLIC void linphone_conference_set_participant_admin_status (LinphoneConference *conference, LinphoneParticipant *participant, bool_t is_admin);
+
+/**
+ * For a local conference, the local participant joins the conference
+ * For a remote conference, the participant rejoins the conference after leaving it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
+
+/**
+ * For a local conference, the local participant leaves the conference
+ * For a remote conference, the participant leaves the conference after joining it earlier on
+ * @param conference A #LinphoneConference object @notnil
+ * @return 0 if succeeded. Negative number if failed
+ */
+LINPHONE_PUBLIC int linphone_conference_leave(LinphoneConference *conference);
+
+/**
+ * For a local conference, it returns whether the local participant is enabled
+ * For a remote conference, it return whether the remote participant has left the conference without bein removed from it
+ * @param conference A #LinphoneConference object @notnil
+ * @return TRUE if the local participant is in a conference, FALSE otherwise.
+ */
+LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
 
 /************ */
 /* DEPRECATED */
 /* ********** */
 
-LINPHONE_PUBLIC int linphone_conference_enter(LinphoneConference *conference);
-int linphone_conference_leave(LinphoneConference *conference);
-LINPHONE_PUBLIC bool_t linphone_conference_is_in(const LinphoneConference *conference);
+/**
+ * Get the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @return the conference id @notnil
+ * @deprecated 10/07/2020 Use linphone_conference_get_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED const char *linphone_conference_get_ID(const LinphoneConference *conference);
+
+/**
+ * Set the conference id as string
+ * @param conference The #LinphoneConference object. @notnil
+ * @param conference_id the conference id to set. @notnil
+ * @deprecated 10/07/2020 Use linphone_conference_set_conference_address() instead.
+ */
+LINPHONE_PUBLIC LINPHONE_DEPRECATED void linphone_conference_set_ID(LinphoneConference *conference, const char *conference_id);
 
 LinphoneConference *linphone_local_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_local_conference_new_with_params(LinphoneCore *core, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 LinphoneConference *linphone_remote_conference_new(LinphoneCore *core, LinphoneAddress * addr);
 LinphoneConference *linphone_remote_conference_new_with_params(LinphoneCore *core, LinphoneAddress * focus, LinphoneAddress * addr, const LinphoneConferenceParams *params);
 
-int linphone_conference_get_size(const LinphoneConference *conference);
 
 /* This is actually only used by the ToneManager. TODO: encapsulate this better. */
 AudioStream *linphone_conference_get_audio_stream(LinphoneConference *conference);

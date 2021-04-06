@@ -134,6 +134,11 @@ void linphone_core_notify_registration_state_changed(LinphoneCore *lc, LinphoneP
 	cleanup_dead_vtable_refs(lc);
 }
 
+void linphone_core_notify_account_registration_state_changed(LinphoneCore *lc, LinphoneAccount *account, LinphoneRegistrationState state, const char *message) {
+	NOTIFY_IF_EXIST(account_registration_state_changed, lc, account, state, message);
+	cleanup_dead_vtable_refs(lc);
+}
+
 void linphone_core_notify_notify_presence_received(LinphoneCore *lc, LinphoneFriend * lf) {
 	if (linphone_config_get_int(lc->config, "misc", "notify_each_friend_individually_when_presence_received", 1)) {
 		NOTIFY_IF_EXIST(notify_presence_received, lc, lf);

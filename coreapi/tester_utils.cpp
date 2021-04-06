@@ -17,6 +17,10 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef WIN32
+#include <winsock2.h>
+#include <windows.h>
+#endif
 #include "tester_utils.h"
 #include "private.h"
 
@@ -132,12 +136,12 @@ bool_t _linphone_call_has_dtmf_sequence (const LinphoneCall *call) {
 
 SalMediaDescription *_linphone_call_get_local_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		Call::toCpp(call)->getActiveSession()))->getLocalDesc();
+		Call::toCpp(call)->getActiveSession()))->getLocalDesc().get();
 }
 
 SalMediaDescription *_linphone_call_get_result_desc (const LinphoneCall *call) {
 	return L_GET_PRIVATE(static_pointer_cast<LinphonePrivate::MediaSession>(
-		Call::toCpp(call)->getActiveSession()))->getResultDesc();
+		Call::toCpp(call)->getActiveSession()))->getResultDesc().get();
 }
 
 MSWebCam *_linphone_call_get_video_device (const LinphoneCall *call) {

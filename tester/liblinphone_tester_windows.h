@@ -16,10 +16,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-﻿#pragma once
+
+#pragma once
 
 #include "linphone/core.h"
 #include "liblinphone_tester.h"
+
+#include <vector>
+#include <string>
 
 namespace BelledonneCommunications
 {
@@ -41,7 +45,8 @@ namespace BelledonneCommunications
 				unsigned int nbTests(Platform::String^ suiteName);
 				Platform::String^ testSuiteName(int index);
 				Platform::String^ testName(Platform::String^ suiteName, int testIndex);
-				void initialize(Windows::Storage::StorageFolder^ writableDirectory, Platform::Boolean ui);
+				void initialize(const Platform::Array<Platform::String^>^ args, Windows::Storage::StorageFolder^ writableDirectory, Platform::Boolean ui, Platform::Boolean verbose);
+
 				bool run(Platform::String^ suiteName, Platform::String^ caseName, Platform::Boolean verbose);
 				void runAllToXml();
 
@@ -56,9 +61,13 @@ namespace BelledonneCommunications
 			private:
 				NativeTester();
 				~NativeTester();
+				void parseArgs(Platform::String^ commandLine, std::vector<std::string> *argv);
 
 				static NativeTester^ _instance;
 				Windows::Foundation::IAsyncAction^ _asyncAction;
+				std::vector<std::string> m_commandLine;
+				char _currentProcPath[255];
+				char **_args;
 			};
 		}
 	}

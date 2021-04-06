@@ -686,7 +686,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	// In plain text group chat rooms the sender authentication is disabled
 	if (!(q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Encrypted)) {
 		if (q->getSharedFromThis()->getChatRoom()->getCapabilities() & ChatRoom::Capabilities::Basic) {
-			IdentityAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
+			ConferenceAddress sipFromAddress = q->getSharedFromThis()->getFromAddress();
 			setAuthenticatedFromAddress(sipFromAddress);
 		} else {
 			lInfo() << "Sender authentication disabled for clear text group chat";
@@ -780,7 +780,7 @@ LinphoneReason ChatMessagePrivate::receive () {
 	}
 
 	// Check if this is in fact an outgoing message (case where this is a message sent by us from an other device).
-	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && Address(chatRoom->getLocalAddress()).weakEqual(fromAddress)) {
+	if (chatRoom->getCapabilities() & ChatRoom::Capabilities::Conference && chatRoom->getLocalAddress().asAddress().weakEqual(fromAddress.asAddress())) {
 		setDirection(ChatMessage::Direction::Outgoing);
 	}
 
@@ -1314,17 +1314,17 @@ const IdentityAddress &ChatMessage::getAuthenticatedFromAddress () const {
 	return d->authenticatedFromAddress;
 }
 
-const IdentityAddress &ChatMessage::getFromAddress () const {
+const ConferenceAddress &ChatMessage::getFromAddress () const {
 	L_D();
 	return d->fromAddress;
 }
 
-const IdentityAddress &ChatMessage::getToAddress () const {
+const ConferenceAddress &ChatMessage::getToAddress () const {
 	L_D();
 	return d->toAddress;
 }
 
-const IdentityAddress &ChatMessage::getLocalAdress () const {
+const ConferenceAddress &ChatMessage::getLocalAdress () const {
 	L_D();
 	if (getDirection() == Direction::Outgoing)
 		return d->fromAddress;

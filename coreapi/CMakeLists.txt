@@ -29,7 +29,6 @@ list(APPEND LINPHONE_PRIVATE_HEADER_FILES
 	enum.h
 	lime.h
 	lpc2xml.h
-	offeranswer.h
 	private.h
 	quality_reporting.h
 	sqlite3_bctbx_vfs.h
@@ -75,7 +74,6 @@ set(LINPHONE_SOURCE_FILES_C
 	lsd.c
 	misc.c
 	nat_policy.c
-	offeranswer.c
 	payload_type.c
 	player.c
 	presence.c
@@ -101,10 +99,6 @@ set(LINPHONE_SOURCE_FILES_CXX
 if(ENABLE_JAVA_WRAPPER)
 	list(APPEND LINPHONE_SOURCE_FILES_CXX ${LINPHONE_JNI_SOURCES})
 	set_source_files_properties(${LINPHONE_JNI_SOURCES} PROPERTIES GENERATED TRUE)
-else()
-	if(ANDROID)
-		list(APPEND LINPHONE_SOURCE_FILES_C linphonecore_jni.cc)
-	endif()
 endif()
 
 set(LINPHONE_SOURCE_FILES_OBJC)

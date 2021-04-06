@@ -31,6 +31,24 @@
 #endif // ifdef __cplusplus
 
 /**
+ * @addtogroup account
+ * @{
+**/
+
+/**
+ * Callback for notifying when a registration state has changed for the account.
+ * @param account #LinphoneAccount object whose registration state changed. @notnil
+ * @param state The current #LinphoneRegistrationState.
+ * @param message A non NULL informational message about the state. @notnil
+ */
+typedef void (*LinphoneAccountCbsRegistrationStateChangedCb)(LinphoneAccount *account, LinphoneRegistrationState state, const char *message);
+
+/**
+ * @}
+**/
+
+
+/**
  * @addtogroup call_control
  * @{
 **/

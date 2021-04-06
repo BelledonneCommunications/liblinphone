@@ -22,6 +22,8 @@
 #include "logger/logger.h"
 
 #include "stun-client.h"
+#include "c-wrapper/internal/c-tools.h"
+#include "c-wrapper/internal/c-tools.h"
 
 // =============================================================================
 
@@ -144,31 +146,30 @@ int StunClient::run (int audioPort, int videoPort, int textPort) {
 	return ret;
 }
 
-void StunClient::updateMediaDescription (SalMediaDescription *md) const {
+void StunClient::updateMediaDescription (std::shared_ptr<SalMediaDescription> & md) const {
 	if (!stunDiscoveryDone) return;
-	for (int i = 0; i < SAL_MEDIA_DESCRIPTION_MAX_STREAMS; i++) {
-		if (!sal_stream_description_enabled(&md->streams[i]))
+	for (auto & stream : md->streams) {
+		if (!stream.enabled())
 			continue;
-		if (md->streams[i].type == SalAudio && audioCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, audioCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
-			md->streams[i].rtp_port = audioCandidate.port;
+		if (stream.getType() == SalAudio && audioCandidate.port != 0) {
+			stream.rtp_addr = audioCandidate.address;
+			stream.rtp_port = audioCandidate.port;
 			if (
 				(
 					!audioCandidate.address.empty() &&
 					!videoCandidate.address.empty() &&
 					audioCandidate.address == videoCandidate.address
 				) ||
-				sal_media_description_get_nb_active_streams(md) == 1
+				md->getNbActiveStreams() == 1
 			) {
-				strncpy(md->addr, audioCandidate.address.c_str(), sizeof(md->addr));
-				md->addr[sizeof(md->addr) - 1] = '\0';
+				md->addr = audioCandidate.address;
 			}
-		} else if (md->streams[i].type == SalVideo && videoCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, videoCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
-			md->streams[i].rtp_port = videoCandidate.port;
-		} else if (md->streams[i].type == SalText && textCandidate.port != 0) {
-			strncpy(md->streams[i].rtp_addr, textCandidate.address.c_str(), sizeof(md->streams[i].rtp_addr));
-			md->streams[i].rtp_port = textCandidate.port;
+		} else if (stream.type == SalVideo && videoCandidate.port != 0) {
+			stream.rtp_addr = videoCandidate.address;
+			stream.rtp_port = videoCandidate.port;
+		} else if (stream.type == SalText && textCandidate.port != 0) {
+			stream.rtp_addr = textCandidate.address;
+			stream.rtp_port = textCandidate.port;
 		}
 	}
 }
@@ -224,7 +225,7 @@ int StunClient::recvStunResponse (ortp_socket_t sock, Candidate &candidate, int 
 					len = -1;
 			}
 			if (len > 0)
-				candidate.address = inet_ntoa(ia);
+				candidate.address = L_C_TO_STRING(inet_ntoa(ia));
 		}
 	}
 	return len;

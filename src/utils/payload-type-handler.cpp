@@ -48,10 +48,9 @@ const VbrCodecBitrate PayloadTypeHandler::defaultVbrCodecBitrates[] = {
 
 // =============================================================================
 
-int PayloadTypeHandler::findPayloadTypeNumber (const bctbx_list_t *assigned, const OrtpPayloadType *pt) {
+int PayloadTypeHandler::findPayloadTypeNumber (const std::list<OrtpPayloadType*> & assigned, const OrtpPayloadType *pt) {
 	const OrtpPayloadType *candidate = nullptr;
-	for (const bctbx_list_t *elem = assigned; elem != nullptr; elem = bctbx_list_next(elem)) {
-		const OrtpPayloadType *it = reinterpret_cast<const OrtpPayloadType *>(bctbx_list_get_data(elem));
+	for (const auto & it : assigned) {
 		if (
 			strcasecmp(pt->mime_type, payload_type_get_mime(it)) == 0 &&
 			it->clock_rate == pt->clock_rate &&
@@ -69,9 +68,8 @@ int PayloadTypeHandler::findPayloadTypeNumber (const bctbx_list_t *assigned, con
 	return candidate ? payload_type_get_number(candidate) : -1;
 }
 
-bool PayloadTypeHandler::hasTelephoneEventPayloadType (const bctbx_list_t *tev, int rate) {
-	for (const bctbx_list_t *it = tev; it != nullptr; it = bctbx_list_next(it)) {
-		const OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
+bool PayloadTypeHandler::hasTelephoneEventPayloadType (const std::list<OrtpPayloadType*> & tev, int rate) {
+	for (const auto & pt : tev) {
 		if (pt->clock_rate == rate)
 			return true;
 	}
@@ -110,12 +108,11 @@ int PayloadTypeHandler::lookupTypicalVbrBitrate (int maxBandwidth, int clockRate
 
 // -----------------------------------------------------------------------------
 
-void PayloadTypeHandler::assignPayloadTypeNumbers (const bctbx_list_t *codecs) {
+void PayloadTypeHandler::assignPayloadTypeNumbers (const std::list<OrtpPayloadType*> & codecs) {
 	OrtpPayloadType *red = nullptr;
 	OrtpPayloadType *t140 = nullptr;
 
-	for (const bctbx_list_t *elem = codecs; elem != nullptr; elem = bctbx_list_next(elem)) {
-		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+	for (const auto & pt : codecs) {
 		int number = payload_type_get_number(pt);
 
 		// Check if number is duplicated: it could be the case if the remote forced us to use a mapping with a previous offer.
@@ -157,8 +154,8 @@ void PayloadTypeHandler::assignPayloadTypeNumbers (const bctbx_list_t *codecs) {
 	}
 }
 
-bctbx_list_t *PayloadTypeHandler::createSpecialPayloadTypes (const bctbx_list_t *codecs) {
-	bctbx_list_t *result = nullptr;
+std::list<OrtpPayloadType*> PayloadTypeHandler::createSpecialPayloadTypes (const std::list<OrtpPayloadType*> & codecs) {
+	std::list<OrtpPayloadType*> result;
 	
 	if (linphone_core_get_use_rfc2833_for_dtmf(getCore()->getCCore())){
 		result = createTelephoneEventPayloadTypes(codecs);
@@ -166,15 +163,14 @@ bctbx_list_t *PayloadTypeHandler::createSpecialPayloadTypes (const bctbx_list_t 
 	if (linphone_core_generic_comfort_noise_enabled(getCore()->getCCore())) {
 		OrtpPayloadType *cn = payload_type_clone(&payload_type_cn);
 		payload_type_set_number(cn, 13);
-		result = bctbx_list_append(result, cn);
+		result.push_back(cn);
 	}
 	return result;
 }
 
-bctbx_list_t *PayloadTypeHandler::createTelephoneEventPayloadTypes (const bctbx_list_t *codecs) {
-	bctbx_list_t *result = nullptr;
-	for (const bctbx_list_t *it = codecs; it != nullptr; it = bctbx_list_next(it)) {
-		const OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
+std::list<OrtpPayloadType*> PayloadTypeHandler::createTelephoneEventPayloadTypes (const std::list<OrtpPayloadType*> & codecs) {
+	std::list<OrtpPayloadType*> result;
+	for (const auto & pt : codecs) {
 		if (hasTelephoneEventPayloadType(result, pt->clock_rate))
 			continue;
 
@@ -183,9 +179,9 @@ bctbx_list_t *PayloadTypeHandler::createTelephoneEventPayloadTypes (const bctbx_
 		// Let it choose the number dynamically as for normal codecs.
 		payload_type_set_number(tev, -1);
 		// But for first telephone-event, prefer the number that was configured in the core.
-		if (!result && isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
+		if (!result.empty() && isPayloadTypeNumberAvailable(codecs, getCore()->getCCore()->codecs_conf.telephone_event_pt, nullptr))
 			payload_type_set_number(tev, getCore()->getCCore()->codecs_conf.telephone_event_pt);
-		result = bctbx_list_append(result, tev);
+		result.push_back(tev);
 	}
 	return result;
 }
@@ -219,6 +215,14 @@ int PayloadTypeHandler::getAudioPayloadTypeBandwidth (const OrtpPayloadType *pt,
 	return (int)ceil(getAudioPayloadTypeBandwidthFromCodecBitrate(pt) / 1000.0);
 }
 
+int PayloadTypeHandler::getVideoPayloadTypeBandwidth (const OrtpPayloadType *pt, int maxBandwidth) {
+	if (pt->flags & PAYLOAD_TYPE_BITRATE_OVERRIDE) {
+		lDebug() << "PayloadType " << pt->mime_type << "/" << pt->clock_rate << " has bitrate override";
+		return getMinBandwidth(maxBandwidth, pt->normal_bitrate / 1000);
+	}else
+		return maxBandwidth;
+}
+
 /*
  *((codec-birate*ptime/8) + RTP header + UDP header + IP header)*8/ptime;
  * ptime=1/npacket
@@ -236,10 +240,9 @@ double PayloadTypeHandler::getAudioPayloadTypeBandwidthFromCodecBitrate (const O
 	return packet_size * 8.0 * npacket;
 }
 
-int PayloadTypeHandler::getMaxCodecSampleRate (const bctbx_list_t *codecs) {
+int PayloadTypeHandler::getMaxCodecSampleRate (const std::list<OrtpPayloadType*> & codecs) {
 	int maxSampleRate = 0;
-	for (const bctbx_list_t *it = codecs; it != nullptr; it = bctbx_list_next(it)) {
-		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
+	for (const auto & pt : codecs) {
 		int sampleRate;
 		if (strcasecmp("G722", pt->mime_type) == 0)
 			// G722 spec says 8000 but the codec actually requires 16000.
@@ -265,9 +268,8 @@ int PayloadTypeHandler::getRemainingBandwidthForVideo (int total, int audio) {
 	return remaining;
 }
 
-bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const bctbx_list_t *codecs, int number, const OrtpPayloadType *ignore) {
-	for (const bctbx_list_t *elem = codecs; elem != nullptr; elem = bctbx_list_next(elem)) {
-		const OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(elem));
+bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const std::list<OrtpPayloadType*> & codecs, int number, const OrtpPayloadType *ignore) {
+	for (const auto & pt : codecs) {
 		if ((pt != ignore) && (payload_type_get_number(pt) == number)) return false;
 	}
 	return true;
@@ -275,7 +277,7 @@ bool PayloadTypeHandler::isPayloadTypeNumberAvailable (const bctbx_list_t *codec
 
 // -----------------------------------------------------------------------------
 
-bctbx_list_t *PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const bctbx_list_t *previousList) {
+std::list<OrtpPayloadType*> PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwidthLimit, int maxCodecs, const std::list<OrtpPayloadType*> & previousList) {
 	const bctbx_list_t *allCodecs = nullptr;
 	switch (type) {
 		default:
@@ -291,7 +293,7 @@ bctbx_list_t *PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwi
 	}
 
 	int nb = 0;
-	bctbx_list_t *result = nullptr;
+	std::list<OrtpPayloadType*> result;
 	for (const bctbx_list_t *it = allCodecs; it != nullptr; it = bctbx_list_next(it)) {
 		OrtpPayloadType *pt = reinterpret_cast<OrtpPayloadType *>(bctbx_list_get_data(it));
 		if (!payload_type_enabled(pt))
@@ -308,25 +310,32 @@ bctbx_list_t *PayloadTypeHandler::makeCodecsList (SalStreamType type, int bandwi
 			continue;
 		}
 
-		pt = payload_type_clone(pt);
+		auto clonedPt = payload_type_clone(pt);
 
 		/* Look for a previously assigned number for this codec */
-		int num = findPayloadTypeNumber(previousList, pt);
+		int num = findPayloadTypeNumber(previousList, clonedPt);
 		if (num != -1) {
-			payload_type_set_number(pt, num);
-			payload_type_set_flag(pt, PAYLOAD_TYPE_FROZEN_NUMBER);
+			payload_type_set_number(clonedPt, num);
+			payload_type_set_flag(clonedPt, PAYLOAD_TYPE_FROZEN_NUMBER);
 		}
 
-		result = bctbx_list_append(result, pt);
+		result.push_back(clonedPt);
 		nb++;
 		if ((maxCodecs > 0) && (nb >= maxCodecs)) break;
 	}
 	if (type == SalAudio) {
-		bctbx_list_t *specials = createSpecialPayloadTypes(result);
-		result = bctbx_list_concat(result, specials);
+		auto specials = createSpecialPayloadTypes(result);
+		result.insert(result.cend(), specials.cbegin(), specials.cend());
 	}
 	assignPayloadTypeNumbers(result);
 	return result;
+}
+
+void PayloadTypeHandler::clearPayloadList(std::list<OrtpPayloadType*> & payloads) {
+	for (auto & pt : payloads) {
+		payload_type_destroy(pt);
+	}
+	payloads.clear();
 }
 
 LINPHONE_END_NAMESPACE

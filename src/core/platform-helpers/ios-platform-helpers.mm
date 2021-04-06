@@ -28,6 +28,7 @@
 #include <CoreLocation/CoreLocation.h>
 #include <notify_keys.h>
 #include <belr/grammarbuilder.h>
+#include <AVFoundation/AVAudioSession.h>
 
 #include "linphone/utils/general.h"
 #include "linphone/utils/utils.h"
@@ -51,7 +52,7 @@ LINPHONE_BEGIN_NAMESPACE
 class IosPlatformHelpers : public GenericPlatformHelpers {
 public:
 	IosPlatformHelpers (std::shared_ptr<LinphonePrivate::Core> core, void *systemContext);
-	~IosPlatformHelpers (){
+	~IosPlatformHelpers () {
 		[mAppDelegate dealloc];
 	}
 
@@ -99,6 +100,8 @@ public:
 	void networkChangeCallback(void);
 	void onNetworkChanged(bool reachable, bool force);
 
+	void didRegisterForRemotePush(void *token) override;
+
 private:
 	string toUTF8String(CFStringRef str);
 	void kickOffConnectivity();
@@ -115,6 +118,7 @@ private:
 	SCNetworkReachabilityFlags mCurrentFlags = 0;
 	bool mNetworkMonitoringEnabled = false;
 	static const string Framework;
+
 	IosAppDelegate *mAppDelegate = NULL; /* auto didEnterBackground/didEnterForeground and other callbacks */
 	bool mStart = false; /* generic platformhelper's funcs only work when mStart is true */
 	bool mUseAppDelgate = false; /* app delegate is only used by main core*/
@@ -140,6 +144,9 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 	mCpuLockTaskId = 0;
 	mNetworkReachable = 0; // wait until monitor to give a status;
 	mSharedCoreHelpers = createIosSharedCoreHelpers(core);
+	if (mUseAppDelgate) {
+		[mAppDelegate registerForPush];
+	}
 
 	string cpimPath = getResourceDirPath(Framework, "cpim_grammar");
 	if (!cpimPath.empty())
@@ -169,6 +176,10 @@ void IosPlatformHelpers::start (std::shared_ptr<LinphonePrivate::Core> core) {
 void IosPlatformHelpers::stop () {
 	mStart = false;
 	ms_message("IosPlatformHelpers is fully stopped");
+}
+
+void IosPlatformHelpers::didRegisterForRemotePush(void *token) {
+	[mAppDelegate didRegisterForRemotePush:(NSData *)token];
 }
 
 //Safely get an UTF-8 string from the given CFStringRef
@@ -643,47 +654,47 @@ void IosPlatformHelpers::setWifiSSID(const string &ssid) {
 }
 
 string IosPlatformHelpers::getWifiSSID(void) {
-#if TARGET_IPHONE_SIMULATOR
-	return "Sim_err_SSID_NotSupported";
-#else
-	string ssid;
-	bool shallGetWifiInfo = true;
+	#if TARGET_IPHONE_SIMULATOR
+		return "Sim_err_SSID_NotSupported";
+	#else
+		string ssid;
+		bool shallGetWifiInfo = true;
 
-	if (@available(iOS 13.0, *)) {
-		//Starting from IOS13 we need to check for authorization to get wifi information.
-		//User permission is asked in the main app
-		CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
-		if (status != kCLAuthorizationStatusAuthorizedAlways &&
-		    status != kCLAuthorizationStatusAuthorizedWhenInUse) {
-			shallGetWifiInfo = false;
-			ms_warning("User has not given authorization to access Wifi information (Authorization: [%d])", (int) status);
-		}
-	}
-	if (shallGetWifiInfo) {
-		CFArrayRef ifaceNames = CNCopySupportedInterfaces();
-		if (ifaceNames) {
-			CFIndex	i;
-			for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
-				CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
-				CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
-
-				if (ifaceInfo != NULL && CFDictionaryGetCount(ifaceInfo) > 0) {
-					CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
-					if (ifaceSSID != NULL) {
-						ssid = toUTF8String(ifaceSSID);
-						if (!ssid.empty()) {
-							CFRelease(ifaceInfo);
-							break;
-						}
-					}
-					CFRelease(ifaceInfo);
-				}
+		if (@available(iOS 13.0, *)) {
+			//Starting from IOS13 we need to check for authorization to get wifi information.
+			//User permission is asked in the main app
+			CLAuthorizationStatus status = [CLLocationManager authorizationStatus];
+			if (status != kCLAuthorizationStatusAuthorizedAlways &&
+				status != kCLAuthorizationStatusAuthorizedWhenInUse) {
+				shallGetWifiInfo = false;
+				ms_warning("User has not given authorization to access Wifi information (Authorization: [%d])", (int) status);
 			}
 		}
-		CFRelease(ifaceNames);
-	}
-	return ssid;
-#endif
+		if (shallGetWifiInfo) {
+			CFArrayRef ifaceNames = CNCopySupportedInterfaces();
+			if (ifaceNames) {
+				CFIndex	i;
+				for (i = 0; i < CFArrayGetCount(ifaceNames); ++i) {
+					CFStringRef iface = (CFStringRef) CFArrayGetValueAtIndex(ifaceNames, i);
+					CFDictionaryRef ifaceInfo = CNCopyCurrentNetworkInfo(iface);
+
+					if (ifaceInfo != NULL && CFDictionaryGetCount(ifaceInfo) > 0) {
+						CFStringRef ifaceSSID = (CFStringRef) CFDictionaryGetValue(ifaceInfo, kCNNetworkInfoKeySSID);
+						if (ifaceSSID != NULL) {
+							ssid = toUTF8String(ifaceSSID);
+							if (!ssid.empty()) {
+								CFRelease(ifaceInfo);
+								break;
+							}
+						}
+						CFRelease(ifaceInfo);
+					}
+				}
+			}
+			CFRelease(ifaceNames);
+		}
+		return ssid;
+	#endif
 }
 
 // -----------------------------------------------------------------------------

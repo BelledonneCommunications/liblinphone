@@ -52,6 +52,9 @@ extern test_suite_t push_incoming_call_test_suite;
 
 #if VIDEO_ENABLED
 	extern test_suite_t call_video_test_suite;
+#if !defined(TARGET_OS_IPHONE) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)	// Mac is not yet fully supported for tests
+	extern test_suite_t call_video_msogl_test_suite;
+#endif
 	extern test_suite_t call_video_quality_test_suite;
 #endif // if VIDEO_ENABLED
 
@@ -80,6 +83,7 @@ extern test_suite_t presence_server_test_suite;
 extern test_suite_t presence_test_suite;
 extern test_suite_t property_container_test_suite;
 extern test_suite_t proxy_config_test_suite;
+extern test_suite_t account_test_suite;
 extern test_suite_t quality_reporting_test_suite;
 extern test_suite_t register_test_suite;
 extern test_suite_t remote_provisioning_test_suite;
@@ -159,7 +163,11 @@ extern const char* userhostsfile;
 extern const char* file_transfer_url;
 extern const char* file_transfer_url_tls_client_auth;
 extern const char* file_transfer_url_digest_auth;
+extern const char* file_transfer_url_digest_auth_external_domain;
 extern const char* file_transfer_url_digest_auth_any_domain;
+extern const char* file_transfer_url_small_files;
+extern const char* file_transfer_get_proxy;
+extern const char* file_transfer_get_proxy_external_domain;
 extern const char* lime_server_c25519_url;
 extern const char* lime_server_c448_url;
 extern const char* lime_server_any_domain_c25519_url;
@@ -581,14 +589,12 @@ void liblinphone_tester_after_each(void);
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args));
 void liblinphone_tester_uninit(void);
 int liblinphone_tester_set_log_file(const char *filename);
-bool_t check_ice(LinphoneCoreManager* caller, LinphoneCoreManager* callee, LinphoneIceState state);
 
 // Add internal callback for subscriptions and notifications
 LinphoneCoreManager *create_mgr_for_conference(const char * rc_file, bool_t check_for_proxies);
 void setup_mgr_for_conference(LinphoneCoreManager *mgr);
 void destroy_mgr_in_conference(LinphoneCoreManager *mgr);
 LinphoneStatus add_participant_to_local_conference_through_invite(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, bctbx_list_t *participants, const LinphoneCallParams *params);
-LinphoneStatus accept_call_in_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);
 LinphoneStatus add_calls_to_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneConference * conference, bctbx_list_t *new_participants);
 LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreManager * focus_mgr, LinphoneCoreManager * conf_mgr, bctbx_list_t *new_participants);
 LinphoneStatus remove_participant_from_local_conference(bctbx_list_t *lcs, LinphoneCoreManager * conf_mgr, LinphoneCoreManager * participant_mgr);

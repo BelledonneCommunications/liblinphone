@@ -59,7 +59,7 @@ static bctbx_list_t *liblinphone_tester_resolve_name_to_ip_address(const char *n
 	}
 	for(ai_it = ai; ai_it != NULL ; ai_it = ai_it->ai_next){
 		char ipaddress[NI_MAXHOST] = { 0 };
-		err = getnameinfo(ai_it->ai_addr, ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
+		err = getnameinfo(ai_it->ai_addr, (socklen_t)ai_it->ai_addrlen, ipaddress, sizeof(ipaddress), NULL, 0, NI_NUMERICHOST | NI_NUMERICSERV);
 		if (err != 0){
 			ms_error("liblinphone_tester_resolve_name_to_ip_address(): getnameinfo() error : %s", gai_strerror(err));
 			continue;
@@ -393,8 +393,8 @@ void liblinphone_tester_add_suites() {
 #ifdef HAVE_LIME_X3DH
 	bc_tester_add_suite(&secure_group_chat_test_suite);
 	bc_tester_add_suite(&lime_server_auth_test_suite);
-#endif
 	bc_tester_add_suite(&ephemeral_group_chat_test_suite);
+#endif
 	bc_tester_add_suite(&local_conference_test_suite);
 #endif
 	bc_tester_add_suite(&tunnel_test_suite);
@@ -406,6 +406,9 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&call_secure_test_suite);
 #ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&call_video_test_suite);
+#if !defined(TARGET_OS_IPHONE) && !defined(__ANDROID__) && !defined(TARGET_OS_MAC)	// Mac is not yet fully supported for tests
+	bc_tester_add_suite(&call_video_msogl_test_suite);// Done only if MSOGL has not been tested in previous test
+#endif
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&audio_bypass_suite);
 	bc_tester_add_suite(&audio_routes_test_suite);
@@ -442,6 +445,7 @@ void liblinphone_tester_add_suites() {
 #endif // ifdef VIDEO_ENABLED
 	bc_tester_add_suite(&multicast_call_test_suite);
 	bc_tester_add_suite(&proxy_config_test_suite);
+	bc_tester_add_suite(&account_test_suite);
 #if HAVE_SIPP
 	bc_tester_add_suite(&complex_sip_call_test_suite);
 #endif
@@ -453,6 +457,7 @@ void liblinphone_tester_add_suites() {
 	bc_tester_add_suite(&shared_core_test_suite);
 	bc_tester_add_suite(&vfs_encryption_test_suite);
 	bc_tester_add_suite(&external_domain_test_suite);
+
 }
 
 void liblinphone_tester_init(void(*ftester_printf)(int level, const char *fmt, va_list args)) {

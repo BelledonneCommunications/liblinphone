@@ -503,6 +503,13 @@ LINPHONE_PUBLIC void linphone_factory_enable_log_collection(LinphoneFactory *fac
 LINPHONE_PUBLIC LinphoneTunnelConfig *linphone_factory_create_tunnel_config(LinphoneFactory *factory);
 
 /**
+ * Creates an object #LinphoneAccountCbs
+ * @param factory the #LinphoneFactory @notnil
+ * @return a #LinphoneAccountCbs @notnil
+ */
+LINPHONE_PUBLIC LinphoneAccountCbs *linphone_factory_create_account_cbs(LinphoneFactory *factory);
+
+/**
  * Creates an object #LinphoneLoggingServiceCbs
  * @param factory the #LinphoneFactory @notnil
  * @return a #LinphoneLoggingServiceCbs @notnil
