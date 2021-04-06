@@ -164,6 +164,8 @@ BOOLEAN Verifyservercert(
   PCCERT_CONTEXT *pServerCert
 )
 {
+	CertFreeCertificateContext(*pServerCert);
+	//CertFreeCertificateContext(*((PCCERT_CONTEXT*)pServerCert)); // if cast issue
 	return true;
 }
 void LDAPContactProvider::initializeLdap(){
