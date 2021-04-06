@@ -268,7 +268,7 @@ static void server_account_create_account_with_token(void) {
 	linphone_account_creator_cbs_set_create_account(cbs, account_creator_cb);
 
 	BC_ASSERT_EQUAL(
-		linphone_account_creator_create_account_with_token(creator),
+		linphone_account_creator_create_account_with_token_flexiapi(creator),
 		LinphoneAccountCreatorStatusRequestOk,
 		LinphoneAccountCreatorStatus,
 		"%i");
