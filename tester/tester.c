@@ -854,7 +854,7 @@ printf("%s - core %s\n", __func__, linphone_core_get_identity(m->lc));
 	}
 	BC_ASSERT_PTR_NOT_NULL(conf_to_focus_call);
 	BC_ASSERT_PTR_NOT_NULL(linphone_call_get_conference(conf_to_focus_call));
-	BC_ASSERT_TRUE(linphone_call_is_in_conference(conf_to_focus_call));
+	BC_ASSERT_FALSE(linphone_call_is_in_conference(conf_to_focus_call));
 
 	// Local conference
 	LinphoneCall * focus_to_conf_call = linphone_core_get_call_by_remote_address2(focus_mgr->lc, conf_mgr->identity);
