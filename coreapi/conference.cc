@@ -305,6 +305,7 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 	// - current state is not Deleted
 	// - current state is Deleted and trying to move to Instantiated state
 	if ((previousState != ConferenceInterface::State::Deleted) || ((previousState == ConferenceInterface::State::Deleted) && (state == ConferenceInterface::State::Instantiated))) {
+//printf("%s - conference %p  conference ID (peer=%s , local=%s) - previous state %s current state %s\n", __func__, this, conferenceId.getPeerAddress().asString().c_str(), conferenceId.getLocalAddress().asString().c_str(), linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(previousState)), linphone_conference_state_to_string(static_cast<LinphoneConferenceState>(state)));
 		shared_ptr<Conference> ref = getSharedFromThis();
 		LinphonePrivate::Conference::setState(state);
 		// TODO Delete
@@ -312,9 +313,6 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 			if (mStateChangedCb) {
 				mStateChangedCb(toC(), (LinphoneConferenceState)state, mUserData);
 			}
-		}
-		if ((state == ConferenceInterface::State::Terminated) && (!linphone_config_get_bool(linphone_core_get_config(getCore()->getCCore()), "misc", "conference_event_log_enabled", TRUE ))) {
-			setState(ConferenceInterface::State::Deleted);
 		}
 	}
 
