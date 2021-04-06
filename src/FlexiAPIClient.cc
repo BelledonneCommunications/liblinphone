@@ -40,6 +40,7 @@ using namespace std;
 FlexiAPIClient::FlexiAPIClient(LinphoneCore *lc) {
 	mCore = lc;
 	mApiKey = nullptr;
+	mTest = false;
 
 	// Assign the core there as well to keep it in the callback contexts
 	mRequestCallbacks.core = lc;
@@ -192,7 +193,7 @@ FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string passw
 FlexiAPIClient *FlexiAPIClient::adminAccountCreate(string username, string password, string algorithm, string domain,
 												   bool activated) {
 	JsonParams params;
-	params.push("username", username);
+	params.push("username", urlEncode(username));
 	params.push("password", password);
 	params.push("algorithm", algorithm);
 	params.push("activated", to_string(activated));
@@ -238,6 +239,11 @@ FlexiAPIClient *FlexiAPIClient::setApiKey(const char *key) {
 	return this;
 }
 
+FlexiAPIClient *FlexiAPIClient::setTest(bool test) {
+	mTest = test;
+	return this;
+}
+
 /**
  * Callback requests
  */
@@ -280,6 +286,9 @@ void FlexiAPIClient::prepareRequest(string path, string type, JsonParams params)
 		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", addr));
 
 		ms_free(addr);
+	} else if (mTest) {
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("From", "sip:admin_test@sip.example.org"));
+		belle_sip_message_add_header(BELLE_SIP_MESSAGE(req), belle_http_header_create("x-api-key", "no_secret_at_all"));
 	}
 
 	if (!params.empty()) {
