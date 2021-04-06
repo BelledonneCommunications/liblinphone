@@ -73,7 +73,6 @@ LinphoneProxyConfig * linphone_account_creator_configure(const LinphoneAccountCr
 	return linphone_account_creator_create_proxy_config(creator);
 }
 
-
 LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(LinphoneAccountCreator *creator, const char *username) {
 	int min_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_min_length", -1);
 	int max_length = linphone_config_get_int(linphone_core_get_config(creator->core), "assistant", "username_max_length", -1);
@@ -86,7 +85,7 @@ LinphoneAccountCreatorUsernameStatus linphone_account_creator_set_username(Linph
 		return LinphoneAccountCreatorUsernameStatusTooShort;
 	} else if (max_length > 0 && strlen(username) > (size_t)max_length) {
 		return LinphoneAccountCreatorUsernameStatusTooLong;
-	} else if (use_phone_number && !linphone_proxy_config_is_phone_number(NULL, username)) {
+	} else if (use_phone_number && !linphone_account_is_phone_number(NULL, username)) {
 		return LinphoneAccountCreatorUsernameStatusInvalid;
 	} else if (regex && !bctbx_is_matching_regex(username, regex)) {
 		return LinphoneAccountCreatorUsernameStatusInvalidCharacters;
