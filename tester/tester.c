@@ -789,10 +789,10 @@ LinphoneStatus add_calls_to_remote_conference(bctbx_list_t *lcs, LinphoneCoreMan
 
 	LinphoneCall * conf_to_focus_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, focus_mgr->identity);
 
-
 	int counter = 1;
 	for (bctbx_list_t *it = new_participants; it; it = bctbx_list_next(it)) {
 		LinphoneCoreManager * m = (LinphoneCoreManager *)bctbx_list_get_data(it);
+printf("%s - core %s\n", __func__, linphone_core_get_identity(m->lc));
 		stats initial_stats = m->stat;
 		LinphoneCall * conf_call = linphone_core_get_call_by_remote_address2(conf_mgr->lc, m->identity);
 		BC_ASSERT_PTR_NOT_NULL(conf_call);
@@ -2174,7 +2174,7 @@ void _check_friend_result_list(LinphoneCore *lc, const bctbx_list_t *resultList,
 void linphone_transfer_state_changed(LinphoneCore *lc, LinphoneCall *transfered, LinphoneCallState new_call_state) {
 	LinphoneCallLog *clog = linphone_call_get_call_log(transfered);
 	char* to=linphone_address_as_string(linphone_call_log_get_to_address(clog));
-	char* from=linphone_address_as_string(linphone_call_log_get_to_address(clog));
+	char* from=linphone_address_as_string(linphone_call_log_get_from_address(clog));
 	stats* counters;
 	ms_message("Transferred call from [%s] to [%s], new state is [%s]",from,to,linphone_call_state_to_string(new_call_state));
 	ms_free(to);
