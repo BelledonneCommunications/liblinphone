@@ -430,7 +430,6 @@ LocalConference::LocalConference (
 	if (contactAddressStr) {
 		ms_free(contactAddressStr);
 	}
-	//linphone_address_unref(cAddress);
 
 	setConferenceAddress(contactAddress);
 	setState(ConferenceInterface::State::CreationPending);
