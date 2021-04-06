@@ -1383,7 +1383,7 @@ static void sound_config_read(LinphoneCore *lc) {
 	// Wait to have restored previous sound cards to notify list has been updated
 	// Otherwise app won't be able to change audio device in callback
 	linphone_core_notify_audio_devices_list_updated(lc);
-	
+
 /*
 	tmp=linphone_config_get_int(lc->config,"sound","play_lev",80);
 	linphone_core_set_play_level(lc,tmp);
@@ -2692,7 +2692,7 @@ static void _linphone_core_init_account_creator_service(LinphoneCore *lc) {
 
 		// FlexiAPI specific endpoints
 		linphone_account_creator_service_set_login_linphone_account_cb(service, linphone_account_creator_send_token_flexiapi);
-		linphone_account_creator_service_set_create_account_with_token_cb(service, linphone_account_creator_create_account_with_token);
+		linphone_account_creator_service_set_create_account_with_token_cb(service, linphone_account_creator_create_account_with_token_flexiapi);
 	}
 	#endif
 
@@ -5143,7 +5143,7 @@ LinphoneStatus linphone_core_set_ringer_device(LinphoneCore *lc, const char * de
 
 LinphoneStatus linphone_core_set_playback_device(LinphoneCore *lc, const char * devid) {
 	MSSndCard *card = get_card_from_string_id(devid, MS_SND_CARD_CAP_PLAYBACK, lc->factory);
-	if (lc->sound_conf.play_sndcard) { 
+	if (lc->sound_conf.play_sndcard) {
 		ms_snd_card_unref(lc->sound_conf.play_sndcard);
 		lc->sound_conf.play_sndcard = NULL;
 	}
