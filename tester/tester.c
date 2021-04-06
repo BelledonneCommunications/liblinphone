@@ -1175,9 +1175,9 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 			no_calls = 1;
 		}
 
+printf("%s - core %s _ conf mgr %s no_calls %0d\n", __func__, linphone_core_get_identity(m->lc), linphone_core_get_identity(conf_mgr->lc), no_calls);
 		// Wait for calls to be terminated
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 20000));
-		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 30000));
 
 		// Wait for all conferences to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneConferenceStateTerminationPending, lcm_stats[idx].number_of_LinphoneConferenceStateTerminationPending + 1, 5000));
@@ -1189,6 +1189,8 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 		if ((m != conf_mgr) && (m->stat.number_of_LinphoneRegistrationOk == 1) && event_log_enabled) {
 			BC_ASSERT_TRUE(wait_for_list(lcs,&m->stat.number_of_LinphoneSubscriptionTerminated,lcm_stats[idx].number_of_LinphoneSubscriptionTerminated + 1,10000));
 		}
+
+		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallReleased, lcm_stats[idx].number_of_LinphoneCallReleased + no_calls, 10000));
 
 		if ((m != conf_mgr) || ((m == conf_mgr) && (core_held_conference == TRUE))) {
 			LinphoneConference *conference = linphone_core_get_conference(c);
