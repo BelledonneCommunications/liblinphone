@@ -377,13 +377,16 @@ void Call::terminateConference() {
 void Call::exitFromConference (const shared_ptr<CallSession> &session) {
 	auto cConference = getConference();
 	if (cConference) {
+//printf("%s - call %p (local %s remote %s): transfer state %s - conference state %s\n", __func__, this, session->getLocalAddress().asString().c_str(), session->getRemoteAddress()->asString().c_str(), linphone_call_state_to_string(static_cast<LinphoneCallState>(session->getTransferState())), linphone_conference_state_to_string (linphone_conference_get_state (getConference())));
 		if (attachedToLocalConference(session)) {
 			// Remove participant from local conference
 			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 			CallSession::State sessionState = session->getState();
 			auto conference = MediaConference::Conference::toCpp(cConference)->getSharedFromThis();
 			conference->removeParticipant(session, (sessionState != LinphonePrivate::CallSession::State::Released));
-		} else {
+		} else if (attachedToRemoteConference(session) && (getTransferState() == LinphonePrivate::CallSession::State::Idle)) {
+			// IOf the call has been transferred, then the conference must be kept alive
+			lInfo() << "Removing terminated call (local address " << session->getLocalAddress().asString() << " remote address " << getRemoteAddress()->asString() << ") from LinphoneConference " << getConference();
 			terminateConference();
 		}
 		setConference (nullptr);
