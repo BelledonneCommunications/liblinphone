@@ -273,7 +273,14 @@ LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_send_token
  * @param[in] creator LinphoneAccountCreator object
  * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
 **/
-LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token(LinphoneAccountCreator *creator);
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreator *creator);
+
+/**
+ * Send an FlexiAPI request to create an account as an admin
+ * @param[in] creator LinphoneAccountCreator object
+ * @return LinphoneAccountCreatorStatusRequestOk if everything is OK, or a specific error otherwise.
+**/
+LINPHONE_PUBLIC LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexiapi(LinphoneAccountCreator *creator);
 
 #ifdef __cplusplus
 }
