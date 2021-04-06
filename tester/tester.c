@@ -1176,7 +1176,7 @@ static void finish_terminate_local_conference(bctbx_list_t *lcs, stats* lcm_stat
 			no_calls = 1;
 		}
 
-printf("%s - core %s _ conf mgr %s no_calls %0d\n", __func__, linphone_core_get_identity(m->lc), linphone_core_get_identity(conf_mgr->lc), no_calls);
+printf("%s - core %s - conf mgr %s no_calls %0d\n", __func__, linphone_core_get_identity(m->lc), linphone_core_get_identity(conf_mgr->lc), no_calls);
 		// Wait for calls to be terminated
 		BC_ASSERT_TRUE(wait_for_list(lcs, &m->stat.number_of_LinphoneCallEnd, lcm_stats[idx].number_of_LinphoneCallEnd + no_calls, 30000));
 

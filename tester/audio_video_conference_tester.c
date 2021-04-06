@@ -3746,6 +3746,8 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	new_participants = terminate_participant_call(new_participants, marie, laure);
 
+	wait_for_list(lcs ,NULL, 0, 1000);
+
 	no_parts = 2;
 	BC_ASSERT_TRUE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
@@ -3756,6 +3758,7 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		if (c != laure->lc) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
+printf("%s - call between marie and laure has been terminated - core %s - conference %p (address %s)\n", __func__, linphone_core_get_identity(c), conference, linphone_address_as_string( marie_conference_address) );
 				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
 				BC_ASSERT_EQUAL(linphone_conference_get_size(conference),linphone_conference_get_participant_count(conference)+linphone_conference_is_in(conference), int, "%d");
 				BC_ASSERT_TRUE(linphone_conference_is_in(conference));
@@ -3778,9 +3781,20 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		}
 	}
 
+	stats laure_stats = laure->stat;
+	stats pauline_stats = pauline->stat;
+	stats michelle_stats = michelle->stat;
+	stats marie_stats = marie->stat;
+
 	// Marie calls Laure therefore she temporarely leaves conference
 	if (!BC_ASSERT_TRUE(call(marie,laure)))
 		goto end;
+
+	wait_for_list(lcs ,NULL, 0, 1000);
+
+	// Wait for notification of marie's exit fo conference
+	BC_ASSERT_TRUE(wait_for_list(lcs,&pauline->stat.number_of_NotifyReceived,(pauline_stats.number_of_NotifyReceived + 1),3000));
+	BC_ASSERT_TRUE(wait_for_list(lcs,&michelle->stat.number_of_NotifyReceived,(michelle_stats.number_of_NotifyReceived + 1),3000));
 
 	LinphoneCall * marie_laure_call = linphone_core_get_call_by_remote_address2(marie->lc, laure->identity);
 	BC_ASSERT_PTR_NOT_NULL(marie_laure_call);
@@ -3795,6 +3809,11 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 
 	BC_ASSERT_FALSE(linphone_core_is_in_conference(marie->lc));
 	BC_ASSERT_EQUAL(linphone_core_get_conference_size(marie->lc),no_parts+linphone_core_is_in_conference(marie->lc), int, "%d");
+	BC_ASSERT_FALSE(wait_for_list(lcs,&marie->stat.number_of_LinphoneConferenceStateTerminationPending,(marie_stats.number_of_LinphoneConferenceStateTerminationPending + 1),2000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&pauline->stat.number_of_LinphoneConferenceStateTerminationPending,(pauline_stats.number_of_LinphoneConferenceStateTerminationPending + 1),2000));
+	BC_ASSERT_FALSE(wait_for_list(lcs,&michelle->stat.number_of_LinphoneConferenceStateTerminationPending,(michelle_stats.number_of_LinphoneConferenceStateTerminationPending + 1),2000));
+
+	no_parts = 2;
 
 	for (bctbx_list_t *it = lcs; it; it = bctbx_list_next(it)) {
 		LinphoneCore * c = (LinphoneCore *)bctbx_list_get_data(it);
@@ -3802,7 +3821,9 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 		if (c != laure->lc) {
 			BC_ASSERT_PTR_NOT_NULL(conference);
 			if (conference) {
-				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),no_parts, int, "%d");
+				int current_no_parts = (c == marie->lc) ? no_parts : (no_parts - (linphone_core_is_in_conference(marie->lc) ? 0 : 1));
+printf("%s - marie calls laure again - core %s - conference %p (address %s)\n", __func__, linphone_core_get_identity(c), conference, linphone_address_as_string( marie_conference_address) );
+				BC_ASSERT_EQUAL(linphone_conference_get_participant_count(conference),current_no_parts, int, "%d");
 				BC_ASSERT_EQUAL(linphone_conference_get_size(conference),linphone_conference_get_participant_count(conference)+linphone_conference_is_in(conference), int, "%d");
 				if (c == marie->lc) {
 					BC_ASSERT_FALSE(linphone_conference_is_in(conference));
@@ -3828,10 +3849,10 @@ static void participant_quits_conference_and_is_called_by_focus(void) {
 	}
 
 
-	stats laure_stats = laure->stat;
-	stats pauline_stats = pauline->stat;
-	stats michelle_stats = michelle->stat;
-	stats marie_stats = marie->stat;
+	laure_stats = laure->stat;
+	pauline_stats = pauline->stat;
+	michelle_stats = michelle->stat;
+	marie_stats = marie->stat;
 
 	no_parts = 2;
 

@@ -316,6 +316,9 @@ void Conference::setState (LinphonePrivate::ConferenceInterface::State state) {
 		}
 	}
 
+	if (state == ConferenceInterface::State::Terminated) {
+		onConferenceTerminated(getConferenceAddress());
+	}
 }
 
 void Conference::notifyStateChanged (LinphonePrivate::ConferenceInterface::State state) {
@@ -1543,6 +1546,7 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 		case ConferenceInterface::State::Instantiated:
 		case ConferenceInterface::State::CreationPending:
 		case ConferenceInterface::State::TerminationFailed:
+		case ConferenceInterface::State::Terminated:
 			break;
 		case ConferenceInterface::State::CreationFailed:
 			reset();
@@ -1565,8 +1569,6 @@ void RemoteConference::onStateChanged(LinphonePrivate::ConferenceInterface::Stat
 			resetLastNotify();
 			terminate();
 			break;
-		case ConferenceInterface::State::Terminated:
-			onConferenceTerminated(getConferenceAddress());
 			break;
 		case ConferenceInterface::State::Deleted:
 			reset();
