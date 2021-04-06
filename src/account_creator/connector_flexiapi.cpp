@@ -415,7 +415,7 @@ LinphoneAccountCreatorStatus linphone_account_creator_send_token_flexiapi(Linpho
 	return LinphoneAccountCreatorStatusRequestOk;
 }
 
-LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token(LinphoneAccountCreator *creator) {
+LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token_flexiapi(LinphoneAccountCreator *creator) {
 	fill_domain_and_algorithm_if_needed(creator);
 
 	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
@@ -424,6 +424,37 @@ LinphoneAccountCreatorStatus linphone_account_creator_create_account_with_token(
 		->then([creator](FlexiAPIClient::Response response) {
 			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusRequestOk,
 											response.body.c_str());
+			return LinphoneAccountCreatorStatusRequestOk;
+		})
+		->error([creator](FlexiAPIClient::Response response) {
+			if (response.code == 422) {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusMissingArguments,
+												response.body.c_str())
+			} else {
+				NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusUnexpectedError,
+												response.body.c_str())
+			}
+
+			return LinphoneAccountCreatorStatusRequestFailed;
+		});
+
+	return LinphoneAccountCreatorStatusRequestOk;
+}
+
+/**
+ * The following method is only available if APP_EVERYONE_IS_ADMIN is enabled on FlexiAPI
+ */
+LinphoneAccountCreatorStatus linphone_account_creator_admin_create_account_flexiapi(LinphoneAccountCreator *creator) {
+	fill_domain_and_algorithm_if_needed(creator);
+
+	auto flexiAPIClient = make_shared<FlexiAPIClient>(creator->core);
+
+	flexiAPIClient->setTest(true)
+		->adminAccountCreate(creator->username, creator->password, "MD5", creator->domain, true)
+		->then([creator](FlexiAPIClient::Response response) {
+			NOTIFY_IF_EXIST_ACCOUNT_CREATOR(create_account, creator, LinphoneAccountCreatorStatusAccountCreated,
+											response.body.c_str());
+
 			return LinphoneAccountCreatorStatusRequestOk;
 		})
 		->error([creator](FlexiAPIClient::Response response) {
